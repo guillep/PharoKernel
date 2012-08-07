@@ -1,1 +1,45 @@
-Class	name: #RxsBranch;	superclass: #ClassRxsNode;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#piece #branch );	classVariables: #();	package: #'Regex-Core'.Class RxsBranch >> isNullable[^ piece isNullable and: [ branch isNil or: [ branch isNullable ] ]]Class RxsBranch >> tryMergingInto: aStream[	"Concatenation of a few simple characters can be optimized	to be a plain substring match. Answer the node to resume	syntax tree traversal at. Epsilon node used to terminate the branch	will implement this to answer nil, thus indicating that the branch	has ended."piece isAtomic	ifFalse: [ ^ self ].aStream nextPut: piece character.^ branch isNil	ifTrue: [ branch ]	ifFalse: [ branch tryMergingInto: aStream ]]Class RxsBranch >> piece[^ piece]Class RxsBranch >> initializePiece: aPiece branch: aBranch[	"See class comment for instance variables description."piece := aPiece.branch := aBranch]Class RxsBranch >> branch[^ branch]Class RxsBranch >> dispatchTo: aMatcher[	"Inform the matcher of the kind of the node, and it	will do whatever it has to."^ aMatcher syntaxBranch: self]Metaclass	name: #RxsBranch;	instanceVariables: #().
+Class
+	name: #RxsBranch;
+	superclass: #ClassRxsNode;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#piece #branch );
+	classVariables: #();
+	package: #'Regex-Core'.
+
+Class RxsBranch >> isNullable
+[
+^ piece isNullable and: [ branch isNil or: [ branch isNullable ] ]
+]
+
+Class RxsBranch >> tryMergingInto: aStream
+[
+	"Concatenation of a few simple characters can be optimized	to be a plain substring match. Answer the node to resume	syntax tree traversal at. Epsilon node used to terminate the branch	will implement this to answer nil, thus indicating that the branch	has ended."
+piece isAtomic	ifFalse: [ ^ self ].aStream nextPut: piece character.^ branch isNil	ifTrue: [ branch ]	ifFalse: [ branch tryMergingInto: aStream ]
+]
+
+Class RxsBranch >> piece
+[
+^ piece
+]
+
+Class RxsBranch >> initializePiece: aPiece branch: aBranch
+[
+	"See class comment for instance variables description."
+piece := aPiece.branch := aBranch
+]
+
+Class RxsBranch >> branch
+[
+^ branch
+]
+
+Class RxsBranch >> dispatchTo: aMatcher
+[
+	"Inform the matcher of the kind of the node, and it	will do whatever it has to."
+^ aMatcher syntaxBranch: self
+]
+
+Metaclass
+	name: #RxsBranch;
+	instanceVariables: #().
+

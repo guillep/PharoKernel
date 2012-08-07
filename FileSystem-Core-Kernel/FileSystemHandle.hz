@@ -1,1 +1,123 @@
-Class	name: #FileSystemHandle;	superclass: #ClassObject;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#reference #writable );	classVariables: #(#Primitives );	package: #'FileSystem-Core-Kernel'.Class FileSystemHandle >> at: index put: anObject[| buffer |buffer := ByteArray	with:		(anObject isCharacter			ifTrue: [ anObject codePoint ]			ifFalse: [ anObject ]).self	at: index	write: buffer	startingAt: 1	count: 1]Class FileSystemHandle >> truncateTo: anInteger[self subclassResponsibility]Class FileSystemHandle >> basicOpen[	"get the raw stream description from the filesystem's store"^ self fileSystem openStreamDescription: reference path writable: writable]Class FileSystemHandle >> close[self subclassResponsibility]Class FileSystemHandle >> at: offset write: buffer startingAt: start count: count[self subclassResponsibility]Class FileSystemHandle >> fileSystem[^ reference fileSystem]Class FileSystemHandle >> open[self subclassResponsibility]Class FileSystemHandle >> fullName[^ reference fullName]Class FileSystemHandle >> isOpen[self subclassResponsibility]Class FileSystemHandle >> at: index[| buffer |buffer := ByteArray new: 1.self	at: index	read: buffer	startingAt: 1	count: 1.^ buffer at: 1]Class FileSystemHandle >> flush[self subclassResponsibility]Class FileSystemHandle >> ensureClosed[reference exists	ifTrue: [ self close ]]Class FileSystemHandle >> writeStream[self subclassResponsability]Class FileSystemHandle >> filesystem[self deprecated: 'Use fileSystem' on: '3 April 2012' in: 'Pharo 1.4'.^ self fileSystem]Class FileSystemHandle >> reference[^ reference]Class FileSystemHandle >> at: offset read: buffer startingAt: start count: count[self subclassResponsibility]Class FileSystemHandle >> setReference: aReference writable: aBoolean[reference := aReference resolve.writable := aBoolean]Class FileSystemHandle >> reopen[self close.self open]Class FileSystemHandle >> readStream[self subclassResponsability]Class FileSystemHandle >> isWritable[^ writable]Metaclass	name: #FileSystemHandle;	instanceVariables: #().Metaclass FileSystemHandle >> on: aReference writable: aBoolean[^ self new setReference: aReference writable: aBoolean]Metaclass FileSystemHandle >> open: aReference writable: aBoolean[^ (self on: aReference writable: aBoolean) open]
+Class
+	name: #FileSystemHandle;
+	superclass: #ClassObject;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#reference #writable );
+	classVariables: #(#Primitives );
+	package: #'FileSystem-Core-Kernel'.
+
+Class FileSystemHandle >> at: index put: anObject
+[
+| buffer |buffer := ByteArray	with:		(anObject isCharacter			ifTrue: [ anObject codePoint ]			ifFalse: [ anObject ]).self	at: index	write: buffer	startingAt: 1	count: 1
+]
+
+Class FileSystemHandle >> truncateTo: anInteger
+[
+self subclassResponsibility
+]
+
+Class FileSystemHandle >> basicOpen
+[
+	"get the raw stream description from the filesystem's store"
+^ self fileSystem openStreamDescription: reference path writable: writable
+]
+
+Class FileSystemHandle >> close
+[
+self subclassResponsibility
+]
+
+Class FileSystemHandle >> at: offset write: buffer startingAt: start count: count
+[
+self subclassResponsibility
+]
+
+Class FileSystemHandle >> fileSystem
+[
+^ reference fileSystem
+]
+
+Class FileSystemHandle >> open
+[
+self subclassResponsibility
+]
+
+Class FileSystemHandle >> fullName
+[
+^ reference fullName
+]
+
+Class FileSystemHandle >> isOpen
+[
+self subclassResponsibility
+]
+
+Class FileSystemHandle >> at: index
+[
+| buffer |buffer := ByteArray new: 1.self	at: index	read: buffer	startingAt: 1	count: 1.^ buffer at: 1
+]
+
+Class FileSystemHandle >> flush
+[
+self subclassResponsibility
+]
+
+Class FileSystemHandle >> ensureClosed
+[
+reference exists	ifTrue: [ self close ]
+]
+
+Class FileSystemHandle >> writeStream
+[
+self subclassResponsability
+]
+
+Class FileSystemHandle >> filesystem
+[
+self deprecated: 'Use fileSystem' on: '3 April 2012' in: 'Pharo 1.4'.^ self fileSystem
+]
+
+Class FileSystemHandle >> reference
+[
+^ reference
+]
+
+Class FileSystemHandle >> at: offset read: buffer startingAt: start count: count
+[
+self subclassResponsibility
+]
+
+Class FileSystemHandle >> setReference: aReference writable: aBoolean
+[
+reference := aReference resolve.writable := aBoolean
+]
+
+Class FileSystemHandle >> reopen
+[
+self close.self open
+]
+
+Class FileSystemHandle >> readStream
+[
+self subclassResponsability
+]
+
+Class FileSystemHandle >> isWritable
+[
+^ writable
+]
+
+Metaclass
+	name: #FileSystemHandle;
+	instanceVariables: #().
+
+Metaclass FileSystemHandle >> on: aReference writable: aBoolean
+[
+^ self new setReference: aReference writable: aBoolean
+]
+
+Metaclass FileSystemHandle >> open: aReference writable: aBoolean
+[
+^ (self on: aReference writable: aBoolean) open
+]
+

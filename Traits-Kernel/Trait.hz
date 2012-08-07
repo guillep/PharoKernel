@@ -1,1 +1,222 @@
-Class	name: #Trait;	superclass: #ClassTraitDescription;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#name #environment #classTrait #category );	classVariables: #();	package: #'Traits-Kernel'.Class Trait >> rename: aString[	"The new name of the receiver is the argument, aString."| newName |(newName := aString asSymbol) ~= self name	ifFalse: [ ^ self ].(self environment includesKey: newName)	ifTrue: [ ^ self error: newName , ' already exists' ].(Undeclared includesKey: newName)	ifTrue: [ 		self			inform:				'There are references to, ' , aString printString					,						'from Undeclared. Check them after this change.' ].self environment renameClass: self as: newName.name := newName]Class Trait >> name[^ name]Class Trait >> classTrait[^ classTrait]Class Trait >> removeFromSystem: logged[self environment forgetClass: self logged: logged.self obsolete]Class Trait >> removeFromSystem[self removeFromSystem: true]Class Trait >> environment[^ environment]Class Trait >> name: aString traitComposition: aComposition methodDict: aMethodDict localSelectors: aSet organization: aClassOrganization[	"Used by copy"self name: aString.localSelectors := aSet.methodDict := aMethodDict.traitComposition := aComposition.self organization: aClassOrganization]Class Trait >> isObsolete[	"Return true if the receiver is obsolete."^ (self environment at: name ifAbsent: [ nil ]) ~~ self]Class Trait >> basicCategory: aSymbol[category := aSymbol]Class Trait >> isClassTrait[^ false]Class Trait >> basicCategory[^ category]Class Trait >> superclass[	"For compatibility with classes"^ nil]Class Trait >> variablesAndOffsetsDo: aBinaryBlock[	"This is the interface between the compiler and a class's instance or field names.  The	 class should enumerate aBinaryBlock with the field definitions (with nil offsets) followed	 by the instance variable name strings and their integer offsets (1-relative).  The order is	 important; names evaluated later will override the same names occurring earlier."	"Since Traits don't confer state there is nothing to do here."]Class Trait >> baseTrait[^ self]Class Trait >> setName: aSymbol andRegisterInCategory: categorySymbol environment: aSystemDictionary[(self isValidTraitName: aSymbol)	ifFalse: [ TraitException signal: 'Invalid trait name' ].(self environment == aSystemDictionary and: [ self name = aSymbol and: [ self category = categorySymbol ] ])	ifTrue: [ ^ self ].((aSystemDictionary includes: aSymbol) and: [ (aSystemDictionary at: aSymbol) ~~ self ])	ifTrue: [ TraitException signal: 'The name ''' , aSymbol , ''' is already used' ].(self environment notNil and: [ self name notNil and: [ self name ~= aSymbol ] ])	ifTrue: [ self environment renameClass: self as: aSymbol ].self name: aSymbol.self environment: aSystemDictionary.self environment at: self name put: self.self environment organization classify: self name under: categorySymbol.^ true]Class Trait >> subclasses[	"for compatibility with classes"^ #()]Class Trait >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex[	"This is just copied from Class.. the whole fileout is a mess."^ self	fileOutOn: aFileStream	moveSource: moveSource	toFile: fileIndex	initializing: true]Class Trait >> copy[| newTrait |newTrait := self class basicNew initialize	name: self name	traitComposition: self traitComposition copyTraitExpression	methodDict: self methodDict copy	localSelectors: self localSelectors copy	organization: self organization copy.newTrait environment: self environment.newTrait classTrait initializeFrom: self classTrait.^ newTrait]Class Trait >> allSubclassesWithLevelDo: classAndLevelBlock startingLevel: level[	"Walk the tree of subclasses, giving the class and its level"	"Empty implementation needed, compatibility with OmniBrowser"]Class Trait >> initialize[super initialize.classTrait := ClassTrait for: self]Class Trait >> classTrait: aTrait[	"Assigns the class trait associated with the receiver."[ aTrait isClassTrait ] assert.classTrait := aTrait]Class Trait >> hasClassTrait[^ classTrait notNil]Class Trait >> binding[^ self environment associationAt: name ifAbsent: [ nil -> self ]]Class Trait >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex initializing: aBool[	"File a description of the receiver on aFileStream. If the boolean argument,	moveSource, is true, then set the trailing bytes to the position of aFileStream and	to fileIndex in order to indicate where to find the source code."self crTrace: name.super fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex.self hasClassTrait	ifTrue: [ 		aFileStream			cr;			nextPutAll: '"-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!';			cr;			cr.		self classTrait fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex ]]Class Trait >> possibleVariablesFor: misspelled continuedFrom: oldResults[| results |results := misspelled correctAgainstDictionary: self classPool continuedFrom: oldResults.^ misspelled correctAgainstDictionary: self environment continuedFrom: results]Class Trait >> isBaseTrait[^ true]Class Trait >> obsolete[self name: ('AnObsolete' , self name) asSymbol.self hasClassTrait	ifTrue: [ self classTrait obsolete ].super obsolete]Class Trait >> applyChangesOfNewTraitCompositionReplacing: oldComposition[	"Duplicated on Class"| changedSelectors |changedSelectors := super applyChangesOfNewTraitCompositionReplacing: oldComposition.self classSide noteNewBaseTraitCompositionApplied: self traitComposition.^ changedSelectors]Class Trait >> environment: anObject[environment := anObject]Class Trait >> name: aSymbol[name := aSymbol]Class Trait >> isSelfEvaluating[	"Return true if the receiver printString is evaluating back to self."^ self isObsolete not]Class Trait >> isValidTraitName: aSymbol[^ (aSymbol isEmptyOrNil	or: [ aSymbol first isLetter not or: [ aSymbol anySatisfy: [ :character | character isAlphaNumeric not ] ] ]) not]Class Trait >> duplicateClassWithNewName: aSymbol[	" I am duplicated from Class, and used to duplicate a trait "| copysName class newDefinition |copysName := aSymbol asSymbol.copysName = self name	ifTrue: [ ^ self ].(Smalltalk globals includesKey: copysName)	ifTrue: [ ^ self error: copysName , ' already exists' ].newDefinition := self definition copyReplaceAll: '#' , self name asString with: '#' , copysName asString.class := self class evaluatorClass evaluate: newDefinition logged: true.class copyAllCategoriesFrom: self.class class copyAllCategoriesFrom: self class.^ class]Metaclass	name: #Trait;	instanceVariables: #().Metaclass Trait >> new[self shouldNotImplement]Metaclass Trait >> named: aSymbol uses: aTraitCompositionOrCollection category: aString env: anEnvironment[| trait oldTrait systemCategory |systemCategory := aString asSymbol.trait := anEnvironment at: aSymbol ifAbsent: [ nil ].oldTrait := trait copy.trait := trait ifNil: [ super new ].(trait isKindOf: Trait)	ifFalse: [ ^ self error: trait name , ' is not a Trait' ].trait setName: aSymbol andRegisterInCategory: systemCategory environment: anEnvironment.trait setTraitComposition: aTraitCompositionOrCollection asTraitComposition.	"... notify interested clients ..."oldTrait isNil	ifTrue: [ 		SystemAnnouncer uniqueInstance classAdded: trait inCategory: systemCategory.		^ trait ].SystemAnnouncer uniqueInstance traitDefinitionChangedFrom: oldTrait to: trait.systemCategory ~= oldTrait category	ifTrue: [ SystemAnnouncer uniqueInstance class: trait recategorizedFrom: oldTrait category to: systemCategory ].^ trait]Metaclass Trait >> defaultEnvironment[^ Smalltalk]Metaclass Trait >> named: aSymbol uses: aTraitCompositionOrCollection category: aString[| env |env := self environment.^ self	named: aSymbol	uses: aTraitCompositionOrCollection	category: aString	env: env]Metaclass Trait >> newTemplateIn: categoryString[^ String	streamContents: [ :stream | 		stream			nextPutAll: self name;			nextPutAll: ' named: #NameOfTrait';			cr;			tab;			nextPutAll: 'uses: {}';			cr;			tab;			nextPutAll: 'category: ';			nextPut: $';			nextPutAll: categoryString;			nextPut: $' ]]Metaclass Trait >> named: aSymbol[^ self named: aSymbol uses: {} category: 'Unclassified']
+Class
+	name: #Trait;
+	superclass: #ClassTraitDescription;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#name #environment #classTrait #category );
+	classVariables: #();
+	package: #'Traits-Kernel'.
+
+Class Trait >> rename: aString
+[
+	"The new name of the receiver is the argument, aString."
+| newName |(newName := aString asSymbol) ~= self name	ifFalse: [ ^ self ].(self environment includesKey: newName)	ifTrue: [ ^ self error: newName , ' already exists' ].(Undeclared includesKey: newName)	ifTrue: [ 		self			inform:				'There are references to, ' , aString printString					,						'from Undeclared. Check them after this change.' ].self environment renameClass: self as: newName.name := newName
+]
+
+Class Trait >> name
+[
+^ name
+]
+
+Class Trait >> classTrait
+[
+^ classTrait
+]
+
+Class Trait >> removeFromSystem: logged
+[
+self environment forgetClass: self logged: logged.self obsolete
+]
+
+Class Trait >> removeFromSystem
+[
+self removeFromSystem: true
+]
+
+Class Trait >> environment
+[
+^ environment
+]
+
+Class Trait >> name: aString traitComposition: aComposition methodDict: aMethodDict localSelectors: aSet organization: aClassOrganization
+[
+	"Used by copy"
+self name: aString.localSelectors := aSet.methodDict := aMethodDict.traitComposition := aComposition.self organization: aClassOrganization
+]
+
+Class Trait >> isObsolete
+[
+	"Return true if the receiver is obsolete."
+^ (self environment at: name ifAbsent: [ nil ]) ~~ self
+]
+
+Class Trait >> basicCategory: aSymbol
+[
+category := aSymbol
+]
+
+Class Trait >> isClassTrait
+[
+^ false
+]
+
+Class Trait >> basicCategory
+[
+^ category
+]
+
+Class Trait >> superclass
+[
+	"For compatibility with classes"
+^ nil
+]
+
+Class Trait >> variablesAndOffsetsDo: aBinaryBlock
+[
+	"This is the interface between the compiler and a class's instance or field names.  The	 class should enumerate aBinaryBlock with the field definitions (with nil offsets) followed	 by the instance variable name strings and their integer offsets (1-relative).  The order is	 important; names evaluated later will override the same names occurring earlier."
+	"Since Traits don't confer state there is nothing to do here."
+
+]
+
+Class Trait >> baseTrait
+[
+^ self
+]
+
+Class Trait >> setName: aSymbol andRegisterInCategory: categorySymbol environment: aSystemDictionary
+[
+(self isValidTraitName: aSymbol)	ifFalse: [ TraitException signal: 'Invalid trait name' ].(self environment == aSystemDictionary and: [ self name = aSymbol and: [ self category = categorySymbol ] ])	ifTrue: [ ^ self ].((aSystemDictionary includes: aSymbol) and: [ (aSystemDictionary at: aSymbol) ~~ self ])	ifTrue: [ TraitException signal: 'The name ''' , aSymbol , ''' is already used' ].(self environment notNil and: [ self name notNil and: [ self name ~= aSymbol ] ])	ifTrue: [ self environment renameClass: self as: aSymbol ].self name: aSymbol.self environment: aSystemDictionary.self environment at: self name put: self.self environment organization classify: self name under: categorySymbol.^ true
+]
+
+Class Trait >> subclasses
+[
+	"for compatibility with classes"
+^ #()
+]
+
+Class Trait >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex
+[
+	"This is just copied from Class.. the whole fileout is a mess."
+^ self	fileOutOn: aFileStream	moveSource: moveSource	toFile: fileIndex	initializing: true
+]
+
+Class Trait >> copy
+[
+| newTrait |newTrait := self class basicNew initialize	name: self name	traitComposition: self traitComposition copyTraitExpression	methodDict: self methodDict copy	localSelectors: self localSelectors copy	organization: self organization copy.newTrait environment: self environment.newTrait classTrait initializeFrom: self classTrait.^ newTrait
+]
+
+Class Trait >> allSubclassesWithLevelDo: classAndLevelBlock startingLevel: level
+[
+	"Walk the tree of subclasses, giving the class and its level"
+	"Empty implementation needed, compatibility with OmniBrowser"
+
+]
+
+Class Trait >> initialize
+[
+super initialize.classTrait := ClassTrait for: self
+]
+
+Class Trait >> classTrait: aTrait
+[
+	"Assigns the class trait associated with the receiver."
+[ aTrait isClassTrait ] assert.classTrait := aTrait
+]
+
+Class Trait >> hasClassTrait
+[
+^ classTrait notNil
+]
+
+Class Trait >> binding
+[
+^ self environment associationAt: name ifAbsent: [ nil -> self ]
+]
+
+Class Trait >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex initializing: aBool
+[
+	"File a description of the receiver on aFileStream. If the boolean argument,	moveSource, is true, then set the trailing bytes to the position of aFileStream and	to fileIndex in order to indicate where to find the source code."
+self crTrace: name.super fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex.self hasClassTrait	ifTrue: [ 		aFileStream			cr;			nextPutAll: '"-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- "!';			cr;			cr.		self classTrait fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex ]
+]
+
+Class Trait >> possibleVariablesFor: misspelled continuedFrom: oldResults
+[
+| results |results := misspelled correctAgainstDictionary: self classPool continuedFrom: oldResults.^ misspelled correctAgainstDictionary: self environment continuedFrom: results
+]
+
+Class Trait >> isBaseTrait
+[
+^ true
+]
+
+Class Trait >> obsolete
+[
+self name: ('AnObsolete' , self name) asSymbol.self hasClassTrait	ifTrue: [ self classTrait obsolete ].super obsolete
+]
+
+Class Trait >> applyChangesOfNewTraitCompositionReplacing: oldComposition
+[
+	"Duplicated on Class"
+| changedSelectors |changedSelectors := super applyChangesOfNewTraitCompositionReplacing: oldComposition.self classSide noteNewBaseTraitCompositionApplied: self traitComposition.^ changedSelectors
+]
+
+Class Trait >> environment: anObject
+[
+environment := anObject
+]
+
+Class Trait >> name: aSymbol
+[
+name := aSymbol
+]
+
+Class Trait >> isSelfEvaluating
+[
+	"Return true if the receiver printString is evaluating back to self."
+^ self isObsolete not
+]
+
+Class Trait >> isValidTraitName: aSymbol
+[
+^ (aSymbol isEmptyOrNil	or: [ aSymbol first isLetter not or: [ aSymbol anySatisfy: [ :character | character isAlphaNumeric not ] ] ]) not
+]
+
+Class Trait >> duplicateClassWithNewName: aSymbol
+[
+	" I am duplicated from Class, and used to duplicate a trait "
+| copysName class newDefinition |copysName := aSymbol asSymbol.copysName = self name	ifTrue: [ ^ self ].(Smalltalk globals includesKey: copysName)	ifTrue: [ ^ self error: copysName , ' already exists' ].newDefinition := self definition copyReplaceAll: '#' , self name asString with: '#' , copysName asString.class := self class evaluatorClass evaluate: newDefinition logged: true.class copyAllCategoriesFrom: self.class class copyAllCategoriesFrom: self class.^ class
+]
+
+Metaclass
+	name: #Trait;
+	instanceVariables: #().
+
+Metaclass Trait >> new
+[
+self shouldNotImplement
+]
+
+Metaclass Trait >> named: aSymbol uses: aTraitCompositionOrCollection category: aString env: anEnvironment
+[
+| trait oldTrait systemCategory |systemCategory := aString asSymbol.trait := anEnvironment at: aSymbol ifAbsent: [ nil ].oldTrait := trait copy.trait := trait ifNil: [ super new ].(trait isKindOf: Trait)	ifFalse: [ ^ self error: trait name , ' is not a Trait' ].trait setName: aSymbol andRegisterInCategory: systemCategory environment: anEnvironment.trait setTraitComposition: aTraitCompositionOrCollection asTraitComposition.	"... notify interested clients ..."oldTrait isNil	ifTrue: [ 		SystemAnnouncer uniqueInstance classAdded: trait inCategory: systemCategory.		^ trait ].SystemAnnouncer uniqueInstance traitDefinitionChangedFrom: oldTrait to: trait.systemCategory ~= oldTrait category	ifTrue: [ SystemAnnouncer uniqueInstance class: trait recategorizedFrom: oldTrait category to: systemCategory ].^ trait
+]
+
+Metaclass Trait >> defaultEnvironment
+[
+^ Smalltalk
+]
+
+Metaclass Trait >> named: aSymbol uses: aTraitCompositionOrCollection category: aString
+[
+| env |env := self environment.^ self	named: aSymbol	uses: aTraitCompositionOrCollection	category: aString	env: env
+]
+
+Metaclass Trait >> newTemplateIn: categoryString
+[
+^ String	streamContents: [ :stream | 		stream			nextPutAll: self name;			nextPutAll: ' named: #NameOfTrait';			cr;			tab;			nextPutAll: 'uses: {}';			cr;			tab;			nextPutAll: 'category: ';			nextPut: $';			nextPutAll: categoryString;			nextPut: $' ]
+]
+
+Metaclass Trait >> named: aSymbol
+[
+^ self named: aSymbol uses: {} category: 'Unclassified'
+]
+

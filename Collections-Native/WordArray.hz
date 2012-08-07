@@ -1,1 +1,97 @@
-Class	name: #WordArray;	superclass: #ClassArrayedCollection;	instanceSpecification: #(#variable #words );	instanceVariables: #();	classVariables: #();	package: #'Collections-Native'.Class WordArray >> replaceFrom: start to: stop with: replacement startingAt: repStart[	<primitive: 105>^ super	replaceFrom: start	to: stop	with: replacement	startingAt: repStart]Class WordArray >> primAddArray: rcvr and: other into: result[	"^ KedamaPlugin doPrimitive: #primitiveAddArrays."	<primitive: 'primitiveAddArrays' module: 'KedamaPlugin'>1 to: rcvr size do: [ :i | result at: i put: (rcvr at: i) + (other at: i) ].^ result]Class WordArray >> atAllPut: value[	"Fill the receiver with the given value"	<primitive: 145>super atAllPut: value]Class WordArray >> byteSize[^ self size * 4]Class WordArray >> primAddScalar: rcvr and: other into: result[	"^ KedamaPlugin doPrimitive: #primitiveAddScalar."	<primitive: 'primitiveAddScalar' module: 'KedamaPlugin'>1 to: rcvr size do: [ :i | result at: i put: (rcvr at: i) + other ].^ result]Class WordArray >> primMulScalar: rcvr and: other into: result[	"^ KedamaPlugin doPrimitive: #primitiveMulScalar."	<primitive: 'primitiveMulScalar' module: 'KedamaPlugin'>1 to: rcvr size do: [ :i | result at: i put: (rcvr at: i) * other ].^ result]Class WordArray >> primDivScalar: rcvr and: other into: result[	"^ KedamaPlugin doPrimitive: #primitiveDivScalar."	<primitive: 'primitiveDivScalar' module: 'KedamaPlugin'>1 to: rcvr size do: [ :i | result at: i put: (rcvr at: i) / other ].^ result]Class WordArray >> primDivArray: rcvr and: other into: result[	"^ KedamaPlugin doPrimitive: #primitiveDivArrays."	<primitive: 'primitiveDivArrays' module: 'KedamaPlugin'>1 to: rcvr size do: [ :i | result at: i put: (rcvr at: i) / (other at: i) ].^ result]Class WordArray >> defaultElement[	"Return the default element of the receiver"^ 0]Class WordArray >> asWordArray[^ self]Class WordArray >> primSubScalar: rcvr and: other into: result[	"^ KedamaPlugin doPrimitive: #primitiveSubScalar."	<primitive: 'primitiveSubScalar' module: 'KedamaPlugin'>1 to: rcvr size do: [ :i | result at: i put: (rcvr at: i) - other ].^ result]Class WordArray >> primSubArray: rcvr and: other into: result[	"^ KedamaPlugin doPrimitive: #primitiveSubArrays."	<primitive: 'primitiveSubArrays' module: 'KedamaPlugin'>1 to: rcvr size do: [ :i | result at: i put: (rcvr at: i) - (other at: i) ].^ result]Class WordArray >> primMulArray: rcvr and: other into: result[	"^ KedamaPlugin doPrimitive: #primitiveMulArrays."	<primitive: 'primitiveMulArrays' module: 'KedamaPlugin'>1 to: rcvr size do: [ :i | result at: i put: (rcvr at: i) * (other at: i) ].^ result]Metaclass	name: #WordArray;	instanceVariables: #().
+Class
+	name: #WordArray;
+	superclass: #ClassArrayedCollection;
+	instanceSpecification: #(#variable #words );
+	instanceVariables: #();
+	classVariables: #();
+	package: #'Collections-Native'.
+
+Class WordArray >> replaceFrom: start to: stop with: replacement startingAt: repStart
+[
+	<primitive: 105>
+^ super	replaceFrom: start	to: stop	with: replacement	startingAt: repStart
+]
+
+Class WordArray >> primAddArray: rcvr and: other into: result
+[
+	"^ KedamaPlugin doPrimitive: #primitiveAddArrays."
+	<primitive: 'primitiveAddArrays' module: 'KedamaPlugin'>
+1 to: rcvr size do: [ :i | result at: i put: (rcvr at: i) + (other at: i) ].^ result
+]
+
+Class WordArray >> atAllPut: value
+[
+	"Fill the receiver with the given value"
+	<primitive: 145>
+super atAllPut: value
+]
+
+Class WordArray >> byteSize
+[
+^ self size * 4
+]
+
+Class WordArray >> primAddScalar: rcvr and: other into: result
+[
+	"^ KedamaPlugin doPrimitive: #primitiveAddScalar."
+	<primitive: 'primitiveAddScalar' module: 'KedamaPlugin'>
+1 to: rcvr size do: [ :i | result at: i put: (rcvr at: i) + other ].^ result
+]
+
+Class WordArray >> primMulScalar: rcvr and: other into: result
+[
+	"^ KedamaPlugin doPrimitive: #primitiveMulScalar."
+	<primitive: 'primitiveMulScalar' module: 'KedamaPlugin'>
+1 to: rcvr size do: [ :i | result at: i put: (rcvr at: i) * other ].^ result
+]
+
+Class WordArray >> primDivScalar: rcvr and: other into: result
+[
+	"^ KedamaPlugin doPrimitive: #primitiveDivScalar."
+	<primitive: 'primitiveDivScalar' module: 'KedamaPlugin'>
+1 to: rcvr size do: [ :i | result at: i put: (rcvr at: i) / other ].^ result
+]
+
+Class WordArray >> primDivArray: rcvr and: other into: result
+[
+	"^ KedamaPlugin doPrimitive: #primitiveDivArrays."
+	<primitive: 'primitiveDivArrays' module: 'KedamaPlugin'>
+1 to: rcvr size do: [ :i | result at: i put: (rcvr at: i) / (other at: i) ].^ result
+]
+
+Class WordArray >> defaultElement
+[
+	"Return the default element of the receiver"
+^ 0
+]
+
+Class WordArray >> asWordArray
+[
+^ self
+]
+
+Class WordArray >> primSubScalar: rcvr and: other into: result
+[
+	"^ KedamaPlugin doPrimitive: #primitiveSubScalar."
+	<primitive: 'primitiveSubScalar' module: 'KedamaPlugin'>
+1 to: rcvr size do: [ :i | result at: i put: (rcvr at: i) - other ].^ result
+]
+
+Class WordArray >> primSubArray: rcvr and: other into: result
+[
+	"^ KedamaPlugin doPrimitive: #primitiveSubArrays."
+	<primitive: 'primitiveSubArrays' module: 'KedamaPlugin'>
+1 to: rcvr size do: [ :i | result at: i put: (rcvr at: i) - (other at: i) ].^ result
+]
+
+Class WordArray >> primMulArray: rcvr and: other into: result
+[
+	"^ KedamaPlugin doPrimitive: #primitiveMulArrays."
+	<primitive: 'primitiveMulArrays' module: 'KedamaPlugin'>
+1 to: rcvr size do: [ :i | result at: i put: (rcvr at: i) * (other at: i) ].^ result
+]
+
+Metaclass
+	name: #WordArray;
+	instanceVariables: #().
+

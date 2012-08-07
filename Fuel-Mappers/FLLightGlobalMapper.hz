@@ -1,1 +1,34 @@
-Class	name: #FLLightGlobalMapper;	superclass: #ClassFLMapper;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#globals );	classVariables: #();	package: #'Fuel-Mappers'.Class FLLightGlobalMapper >> mapAndTrace: anObject[	"Uses the Chain of Responsibility pattern to answer the cluster which maps with the received object."(globals includes: anObject)	ifTrue: [ self mapAndTraceByClusterName: anObject to: FLGlobalValueCluster ]	ifFalse: [ next mapAndTrace: anObject ]]Class FLLightGlobalMapper >> initializeWith: someObjects[self initialize.globals := someObjects]Metaclass	name: #FLLightGlobalMapper;	instanceVariables: #().Metaclass FLLightGlobalMapper >> for: globalSymbols[^ self basicNew	initializeWith: (self valuesFor: globalSymbols);	yourself]Metaclass FLLightGlobalMapper >> valuesFor: globalSymbols[	"Some globals, like ActiveHand have a nil value in the Smalltalk globals. Therefore, we cannot map nil to globalCluster. We could filter before in #defaultGlobalSymbols but that means that not even the Association will be consider global."^ (globalSymbols select: [ :each | (Smalltalk globals at: each) isNil not ])	collect: [ :aSymbol | Smalltalk globals at: aSymbol ]	as: IdentitySet]
+Class
+	name: #FLLightGlobalMapper;
+	superclass: #ClassFLMapper;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#globals );
+	classVariables: #();
+	package: #'Fuel-Mappers'.
+
+Class FLLightGlobalMapper >> mapAndTrace: anObject
+[
+	"Uses the Chain of Responsibility pattern to answer the cluster which maps with the received object."
+(globals includes: anObject)	ifTrue: [ self mapAndTraceByClusterName: anObject to: FLGlobalValueCluster ]	ifFalse: [ next mapAndTrace: anObject ]
+]
+
+Class FLLightGlobalMapper >> initializeWith: someObjects
+[
+self initialize.globals := someObjects
+]
+
+Metaclass
+	name: #FLLightGlobalMapper;
+	instanceVariables: #().
+
+Metaclass FLLightGlobalMapper >> for: globalSymbols
+[
+^ self basicNew	initializeWith: (self valuesFor: globalSymbols);	yourself
+]
+
+Metaclass FLLightGlobalMapper >> valuesFor: globalSymbols
+[
+	"Some globals, like ActiveHand have a nil value in the Smalltalk globals. Therefore, we cannot map nil to globalCluster. We could filter before in #defaultGlobalSymbols but that means that not even the Association will be consider global."
+^ (globalSymbols select: [ :each | (Smalltalk globals at: each) isNil not ])	collect: [ :aSymbol | Smalltalk globals at: aSymbol ]	as: IdentitySet
+]
+

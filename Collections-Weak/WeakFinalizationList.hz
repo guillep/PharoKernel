@@ -1,1 +1,42 @@
-Class	name: #WeakFinalizationList;	superclass: #ClassObject;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#first );	classVariables: #(#HasNewFinalization #TestItem #TestList );	package: #'Collections-Weak'.Class WeakFinalizationList >> first[^ first]Class WeakFinalizationList >> swapWithNil[| head |head := first.first := nil.^ head]Metaclass	name: #WeakFinalizationList;	instanceVariables: #().Metaclass WeakFinalizationList >> checkTestPair[HasNewFinalization := TestList swapWithNil notNil]Metaclass WeakFinalizationList >> initTestPair[TestItem := WeakFinalizerItem new list: TestList object: Object new]Metaclass WeakFinalizationList >> initialize[TestList := self new.self initTestPair.self checkTestPair]Metaclass WeakFinalizationList >> hasNewFinalization[^ HasNewFinalization == true]
+Class
+	name: #WeakFinalizationList;
+	superclass: #ClassObject;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#first );
+	classVariables: #(#HasNewFinalization #TestItem #TestList );
+	package: #'Collections-Weak'.
+
+Class WeakFinalizationList >> first
+[
+^ first
+]
+
+Class WeakFinalizationList >> swapWithNil
+[
+| head |head := first.first := nil.^ head
+]
+
+Metaclass
+	name: #WeakFinalizationList;
+	instanceVariables: #().
+
+Metaclass WeakFinalizationList >> checkTestPair
+[
+HasNewFinalization := TestList swapWithNil notNil
+]
+
+Metaclass WeakFinalizationList >> initTestPair
+[
+TestItem := WeakFinalizerItem new list: TestList object: Object new
+]
+
+Metaclass WeakFinalizationList >> initialize
+[
+TestList := self new.self initTestPair.self checkTestPair
+]
+
+Metaclass WeakFinalizationList >> hasNewFinalization
+[
+^ HasNewFinalization == true
+]
+

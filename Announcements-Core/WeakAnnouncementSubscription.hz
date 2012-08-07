@@ -1,1 +1,115 @@
-Class	name: #WeakAnnouncementSubscription;	superclass: #ClassObject;	instanceSpecification: #(#variable #weak #pointers #words );	instanceVariables: #(#list #next #announcer #announcementClass #action );	classVariables: #(#FinalizationList );	package: #'Announcements-Core'.Class WeakAnnouncementSubscription >> subscriber[^ self basicAt: 1]Class WeakAnnouncementSubscription >> finalize[announcer removeSubscription: self]Class WeakAnnouncementSubscription >> action: anObject[action := anObject]Class WeakAnnouncementSubscription >> next[^ next]Class WeakAnnouncementSubscription >> announcer[^ announcer]Class WeakAnnouncementSubscription >> announcementClass: anObject[announcementClass := anObject]Class WeakAnnouncementSubscription >> action[^ action]Class WeakAnnouncementSubscription >> subscriber: anObject[self subscriber ifNotNil: [ self error: 'subscriber already set' ].self basicAt: 1 put: anObject]Class WeakAnnouncementSubscription >> announcer: anAnnouncer[announcer := anAnnouncer]Class WeakAnnouncementSubscription >> makeStrong[| sub |sub := self subscriber.sub ifNil: [ ^ self error: 'Subscriber is nil, cannot make strong subscription' ].^ announcer	replace: self	with:		(AnnouncementSubscription new			announcer: announcer;			action: action asMessageSend;			subscriber: sub;			announcementClass: announcementClass)]Class WeakAnnouncementSubscription >> initialize[list := self class finalizationList]Class WeakAnnouncementSubscription >> announcementClass[^ announcementClass]Class WeakAnnouncementSubscription >> deliver: anAnnouncement[	" deliver an announcement to receiver. In case of failure, it will be handled in separate process"^ (self handles: anAnnouncement class)	ifTrue: [ [ action cull: anAnnouncement cull: announcer ] on: UnhandledError fork: [ :ex | ex pass ] ]]Class WeakAnnouncementSubscription >> makeWeak[^ self]Class WeakAnnouncementSubscription >> valuable: aValuable[	"Used when subscriber should be extracted from valuable object"self action: aValuable.self subscriber: aValuable receiver]Class WeakAnnouncementSubscription >> handles: anAnnouncementClass[^ announcementClass handles: anAnnouncementClass]Metaclass	name: #WeakAnnouncementSubscription;	instanceVariables: #().Metaclass WeakAnnouncementSubscription >> new[^ ((WeakFinalizationList hasNewFinalization	ifTrue: [ self ]	ifFalse: [ LegacyWeakSubscription ]) basicNew: 1) initialize]Metaclass WeakAnnouncementSubscription >> finalizationList[^ FinalizationList ifNil: [ FinalizationList := WeakFinalizationList new ]]Metaclass WeakAnnouncementSubscription >> initialize[	"self initialize"WeakArray	removeWeakDependent: self;	addWeakDependent: self	"Make sure that it is not added twice."]Metaclass WeakAnnouncementSubscription >> finalizeValues[| head |head := self finalizationList swapWithNil.[ head notNil ]	whileTrue: [ 		head finalize.		head := head next ]]
+Class
+	name: #WeakAnnouncementSubscription;
+	superclass: #ClassObject;
+	instanceSpecification: #(#variable #weak #pointers #words );
+	instanceVariables: #(#list #next #announcer #announcementClass #action );
+	classVariables: #(#FinalizationList );
+	package: #'Announcements-Core'.
+
+Class WeakAnnouncementSubscription >> subscriber
+[
+^ self basicAt: 1
+]
+
+Class WeakAnnouncementSubscription >> finalize
+[
+announcer removeSubscription: self
+]
+
+Class WeakAnnouncementSubscription >> action: anObject
+[
+action := anObject
+]
+
+Class WeakAnnouncementSubscription >> next
+[
+^ next
+]
+
+Class WeakAnnouncementSubscription >> announcer
+[
+^ announcer
+]
+
+Class WeakAnnouncementSubscription >> announcementClass: anObject
+[
+announcementClass := anObject
+]
+
+Class WeakAnnouncementSubscription >> action
+[
+^ action
+]
+
+Class WeakAnnouncementSubscription >> subscriber: anObject
+[
+self subscriber ifNotNil: [ self error: 'subscriber already set' ].self basicAt: 1 put: anObject
+]
+
+Class WeakAnnouncementSubscription >> announcer: anAnnouncer
+[
+announcer := anAnnouncer
+]
+
+Class WeakAnnouncementSubscription >> makeStrong
+[
+| sub |sub := self subscriber.sub ifNil: [ ^ self error: 'Subscriber is nil, cannot make strong subscription' ].^ announcer	replace: self	with:		(AnnouncementSubscription new			announcer: announcer;			action: action asMessageSend;			subscriber: sub;			announcementClass: announcementClass)
+]
+
+Class WeakAnnouncementSubscription >> initialize
+[
+list := self class finalizationList
+]
+
+Class WeakAnnouncementSubscription >> announcementClass
+[
+^ announcementClass
+]
+
+Class WeakAnnouncementSubscription >> deliver: anAnnouncement
+[
+	" deliver an announcement to receiver. In case of failure, it will be handled in separate process"
+^ (self handles: anAnnouncement class)	ifTrue: [ [ action cull: anAnnouncement cull: announcer ] on: UnhandledError fork: [ :ex | ex pass ] ]
+]
+
+Class WeakAnnouncementSubscription >> makeWeak
+[
+^ self
+]
+
+Class WeakAnnouncementSubscription >> valuable: aValuable
+[
+	"Used when subscriber should be extracted from valuable object"
+self action: aValuable.self subscriber: aValuable receiver
+]
+
+Class WeakAnnouncementSubscription >> handles: anAnnouncementClass
+[
+^ announcementClass handles: anAnnouncementClass
+]
+
+Metaclass
+	name: #WeakAnnouncementSubscription;
+	instanceVariables: #().
+
+Metaclass WeakAnnouncementSubscription >> new
+[
+^ ((WeakFinalizationList hasNewFinalization	ifTrue: [ self ]	ifFalse: [ LegacyWeakSubscription ]) basicNew: 1) initialize
+]
+
+Metaclass WeakAnnouncementSubscription >> finalizationList
+[
+^ FinalizationList ifNil: [ FinalizationList := WeakFinalizationList new ]
+]
+
+Metaclass WeakAnnouncementSubscription >> initialize
+[
+	"self initialize"
+WeakArray	removeWeakDependent: self;	addWeakDependent: self	"Make sure that it is not added twice."
+]
+
+Metaclass WeakAnnouncementSubscription >> finalizeValues
+[
+| head |head := self finalizationList swapWithNil.[ head notNil ]	whileTrue: [ 		head finalize.		head := head next ]
+]
+

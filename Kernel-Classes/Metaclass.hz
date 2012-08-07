@@ -1,1 +1,255 @@
-Class	name: #Metaclass;	superclass: #ClassClassDescription;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#thisClass #traitComposition #localSelectors );	classVariables: #();	package: #'Kernel-Classes'.Class Metaclass >> wantsChangeSetLogging[	"Answer whether code submitted for the receiver should be remembered by the changeSet mechanism.The metaclass follows the rule of the class itself.  7/12/96 sw"^ thisClass wantsChangeSetLogging]Class Metaclass >> acceptsLoggingOfCompilation[	"Answer whether the receiver's method submisions and class defintions should be logged to the changes file and to the current change set.  The metaclass follows the rule of the class itself.  6/18/96 sw"^ thisClass acceptsLoggingOfCompilation]Class Metaclass >> removeObsoleteSubclass: aClass[	"Do nothing."]Class Metaclass >> new[	"The receiver can only have one instance. Create it or complain that	one already exists."thisClass class ~~ self	ifTrue: [ ^ thisClass := self basicNew ]	ifFalse: [ self error: 'A Metaclass should only have one instance!' ]]Class Metaclass >> isAbstractClass[^ self theNonMetaClass isAbstractClass]Class Metaclass >> canZapMethodDictionary[	"Return true if it is safe to zap the method dictionary on #obsolete"thisClass == nil	ifTrue: [ ^ true ]	ifFalse: [ ^ thisClass canZapMethodDictionary ]]Class Metaclass >> fileOutInitializerOn: aStream[(self methodDict includesKey: #initialize)	ifTrue: [ 		aStream cr.		aStream nextChunkPut: thisClass name , ' initialize' ]]Class Metaclass >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex initializing: aBool[super fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex.(aBool and: [ moveSource not and: [ self methodDict includesKey: #initialize ] ])	ifTrue: [ 		aFileStream cr.		aFileStream cr.		aFileStream nextChunkPut: thisClass name , ' initialize'.		aFileStream cr ]]Class Metaclass >> addObsoleteSubclass: aClass[	"Do nothing."]Class Metaclass >> hasTraitComposition[^ traitComposition notNil and: [ traitComposition notEmpty ]]Class Metaclass >> soleInstance[	"The receiver has only one instance. Answer it."^ thisClass]Class Metaclass >> removeSubclass: aClass[	"Do nothing."]Class Metaclass >> environment[^ thisClass environment]Class Metaclass >> instanceVariableNames: instVarString[	"Declare additional named variables for my instance."^ ClassBuilder new class: self instanceVariableNames: instVarString]Class Metaclass >> isObsolete[	"Return true if the receiver is obsolete"^ thisClass == nil or: [ thisClass class ~~ self or: [ thisClass isObsolete ]	"or I am not the class of thisClass" ]	"Either no thisClass"	"or my instance is obsolete"]Class Metaclass >> possibleVariablesFor: misspelled continuedFrom: oldResults[^ thisClass possibleVariablesFor: misspelled continuedFrom: oldResults]Class Metaclass >> binding[^ nil -> self]Class Metaclass >> basicLocalSelectors: aSetOrNil[localSelectors := aSetOrNil]Class Metaclass >> classVarNames[	"Answer a set of the names of the class variables defined in the receiver's instance."thisClass ifNil: [ ^ Set new ].^ thisClass classVarNames]Class Metaclass >> theMetaClass[	"Sent to a class or metaclass, always return the metaclass"^ self]Class Metaclass >> name[	"Answer a String that is the name of the receiver, either 'Metaclass' or 	the name of the receiver's class followed by ' class'."thisClass == nil	ifTrue: [ ^ 'a Metaclass' ]	ifFalse: [ ^ thisClass name , ' class' ]]Class Metaclass >> definition[	"Refer to the comment in ClassDescription|definition."^ String	streamContents: [ :strm | 		strm print: self.		(self hasTraitComposition and: [ self traitComposition notEmpty ])			ifTrue: [ 				strm					crtab;					nextPutAll: 'uses: ';					print: self traitComposition ].		strm			crtab;			nextPutAll: 'instanceVariableNames: ';			store: self instanceVariablesString ]]Class Metaclass >> theNonMetaClass[	"Sent to a class or metaclass, always return the class"^ thisClass]Class Metaclass >> subclassesDo: aBlock[	"Evaluate aBlock for each of the receiver's immediate subclasses."thisClass	subclassesDo: [ :aSubclass | 		"The following test is for Class class which has to exclude		the Metaclasses being subclasses of Class."		aSubclass isMeta			ifFalse: [ aBlock value: aSubclass class ] ]]Class Metaclass >> adoptInstance: oldInstance from: oldMetaClass[	"Recreate any existing instances of the argument, oldClass, as instances of 	the receiver, which is a newly changed class. Permute variables as 	necessary."thisClass class == self	ifTrue: [ ^ self error: 'Metaclasses have only one instance' ].oldMetaClass isMeta	ifFalse: [ ^ self error: 'Argument must be Metaclass' ].oldInstance class == oldMetaClass	ifFalse: [ ^ self error: 'Not the class of argument' ].^ thisClass := self	newInstanceFrom: oldInstance	variable: self isVariable	size: self instSize	map: (self instVarMappingFrom: oldMetaClass)]Class Metaclass >> postCopy[	"Don't share the reference to the sole instance."super postCopy.thisClass := nil]Class Metaclass >> classPool[	"Answer the dictionary of class variables."^ thisClass classPool]Class Metaclass >> addSubclass: aClass[	"Do nothing."]Class Metaclass >> nonTrivial[	"Answer whether the receiver has any methods or instance variables."^ self instVarNames notEmpty or: [ self hasMethods or: [ self hasTraitComposition ] ]]Class Metaclass >> obsoleteSubclasses[	"Answer the receiver's subclasses."thisClass == nil	ifTrue: [ ^ #() ].^ thisClass obsoleteSubclasses	select: [ :aSubclass | aSubclass isMeta not ]	thenCollect: [ :aSubclass | aSubclass class ]	"Metaclass allInstancesDo:		[:m | Compiler evaluate: 'subclasses:=nil' for: m logged: false]"]Class Metaclass >> isSelfEvaluating[^ self isObsolete not]Class Metaclass >> traitComposition[traitComposition ifNil: [ traitComposition := TraitComposition new ].^ traitComposition]Class Metaclass >> isMeta[^ true]Class Metaclass >> uses: aTraitCompositionOrArray instanceVariableNames: instVarString[| newComposition newMetaClass copyOfOldMetaClass |copyOfOldMetaClass := self copy.newMetaClass := self instanceVariableNames: instVarString.newComposition := aTraitCompositionOrArray asTraitComposition.newMetaClass assertConsistantCompositionsForNew: newComposition.newMetaClass setTraitComposition: newComposition.SystemAnnouncer uniqueInstance classDefinitionChangedFrom: copyOfOldMetaClass to: newMetaClass]Class Metaclass >> removeInstVarNamed: aString[	"Remove the argument, aString, as one of the receiver's instance variables."| newArray newString |(self instVarNames includes: aString)	ifFalse: [ self error: aString , ' is not one of my instance variables' ].newArray := self instVarNames copyWithout: aString.newString := ''.newArray do: [ :aString2 | newString := aString2 , ' ' , newString ].self instanceVariableNames: newString]Class Metaclass >> basicLocalSelectors[	"Direct accessor for the instance variable localSelectors.	Since localSelectors is lazily initialized, this may 	return nil, which means that all selectors are local."^ localSelectors]Class Metaclass >> veryDeepCopyWith: deepCopier[	"Return self.  Must be created, not copied.  Do not record me."]Class Metaclass >> subclasses[	"Answer the receiver's subclasses."thisClass == nil	ifTrue: [ ^ #() ].^ thisClass subclasses select: [ :aSubclass | aSubclass isMeta not ] thenCollect: [ :aSubclass | aSubclass class ]	"Metaclass allInstancesDo:		[:m | Compiler evaluate: 'subclasses:=nil' for: m logged: false]"]Class Metaclass >> addInstVarNamed: aString[	"Add the argument, aString, as one of the receiver's instance variables."| fullString |fullString := String	streamContents: [ :strm | 		self instVarNames			do: [ :aString2 | 				strm					nextPutAll: aString2;					space ].		strm nextPutAll: aString ].self instanceVariableNames: fullString]Class Metaclass >> wantsRecompilationProgressReported[	"The metaclass follows the rule of the class itself."^ thisClass wantsRecompilationProgressReported]Class Metaclass >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex[^ self	fileOutOn: aFileStream	moveSource: moveSource	toFile: fileIndex	initializing: true]Class Metaclass >> bindingOf: varName[^ thisClass classBindingOf: varName]Class Metaclass >> traitComposition: aTraitComposition[traitComposition := aTraitComposition]Metaclass	name: #Metaclass;	instanceVariables: #().
+Class
+	name: #Metaclass;
+	superclass: #ClassClassDescription;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#thisClass #traitComposition #localSelectors );
+	classVariables: #();
+	package: #'Kernel-Classes'.
+
+Class Metaclass >> wantsChangeSetLogging
+[
+	"Answer whether code submitted for the receiver should be remembered by the changeSet mechanism.The metaclass follows the rule of the class itself.  7/12/96 sw"
+^ thisClass wantsChangeSetLogging
+]
+
+Class Metaclass >> acceptsLoggingOfCompilation
+[
+	"Answer whether the receiver's method submisions and class defintions should be logged to the changes file and to the current change set.  The metaclass follows the rule of the class itself.  6/18/96 sw"
+^ thisClass acceptsLoggingOfCompilation
+]
+
+Class Metaclass >> removeObsoleteSubclass: aClass
+[
+	"Do nothing."
+
+]
+
+Class Metaclass >> new
+[
+	"The receiver can only have one instance. Create it or complain that	one already exists."
+thisClass class ~~ self	ifTrue: [ ^ thisClass := self basicNew ]	ifFalse: [ self error: 'A Metaclass should only have one instance!' ]
+]
+
+Class Metaclass >> isAbstractClass
+[
+^ self theNonMetaClass isAbstractClass
+]
+
+Class Metaclass >> canZapMethodDictionary
+[
+	"Return true if it is safe to zap the method dictionary on #obsolete"
+thisClass == nil	ifTrue: [ ^ true ]	ifFalse: [ ^ thisClass canZapMethodDictionary ]
+]
+
+Class Metaclass >> fileOutInitializerOn: aStream
+[
+(self methodDict includesKey: #initialize)	ifTrue: [ 		aStream cr.		aStream nextChunkPut: thisClass name , ' initialize' ]
+]
+
+Class Metaclass >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex initializing: aBool
+[
+super fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex.(aBool and: [ moveSource not and: [ self methodDict includesKey: #initialize ] ])	ifTrue: [ 		aFileStream cr.		aFileStream cr.		aFileStream nextChunkPut: thisClass name , ' initialize'.		aFileStream cr ]
+]
+
+Class Metaclass >> addObsoleteSubclass: aClass
+[
+	"Do nothing."
+
+]
+
+Class Metaclass >> hasTraitComposition
+[
+^ traitComposition notNil and: [ traitComposition notEmpty ]
+]
+
+Class Metaclass >> soleInstance
+[
+	"The receiver has only one instance. Answer it."
+^ thisClass
+]
+
+Class Metaclass >> removeSubclass: aClass
+[
+	"Do nothing."
+
+]
+
+Class Metaclass >> environment
+[
+^ thisClass environment
+]
+
+Class Metaclass >> instanceVariableNames: instVarString
+[
+	"Declare additional named variables for my instance."
+^ ClassBuilder new class: self instanceVariableNames: instVarString
+]
+
+Class Metaclass >> isObsolete
+[
+	"Return true if the receiver is obsolete"
+^ thisClass == nil or: [ thisClass class ~~ self or: [ thisClass isObsolete ]	"or I am not the class of thisClass" ]	"Either no thisClass"	"or my instance is obsolete"
+]
+
+Class Metaclass >> possibleVariablesFor: misspelled continuedFrom: oldResults
+[
+^ thisClass possibleVariablesFor: misspelled continuedFrom: oldResults
+]
+
+Class Metaclass >> binding
+[
+^ nil -> self
+]
+
+Class Metaclass >> basicLocalSelectors: aSetOrNil
+[
+localSelectors := aSetOrNil
+]
+
+Class Metaclass >> classVarNames
+[
+	"Answer a set of the names of the class variables defined in the receiver's instance."
+thisClass ifNil: [ ^ Set new ].^ thisClass classVarNames
+]
+
+Class Metaclass >> theMetaClass
+[
+	"Sent to a class or metaclass, always return the metaclass"
+^ self
+]
+
+Class Metaclass >> name
+[
+	"Answer a String that is the name of the receiver, either 'Metaclass' or 	the name of the receiver's class followed by ' class'."
+thisClass == nil	ifTrue: [ ^ 'a Metaclass' ]	ifFalse: [ ^ thisClass name , ' class' ]
+]
+
+Class Metaclass >> definition
+[
+	"Refer to the comment in ClassDescription|definition."
+^ String	streamContents: [ :strm | 		strm print: self.		(self hasTraitComposition and: [ self traitComposition notEmpty ])			ifTrue: [ 				strm					crtab;					nextPutAll: 'uses: ';					print: self traitComposition ].		strm			crtab;			nextPutAll: 'instanceVariableNames: ';			store: self instanceVariablesString ]
+]
+
+Class Metaclass >> theNonMetaClass
+[
+	"Sent to a class or metaclass, always return the class"
+^ thisClass
+]
+
+Class Metaclass >> subclassesDo: aBlock
+[
+	"Evaluate aBlock for each of the receiver's immediate subclasses."
+thisClass	subclassesDo: [ :aSubclass | 		"The following test is for Class class which has to exclude		the Metaclasses being subclasses of Class."		aSubclass isMeta			ifFalse: [ aBlock value: aSubclass class ] ]
+]
+
+Class Metaclass >> adoptInstance: oldInstance from: oldMetaClass
+[
+	"Recreate any existing instances of the argument, oldClass, as instances of 	the receiver, which is a newly changed class. Permute variables as 	necessary."
+thisClass class == self	ifTrue: [ ^ self error: 'Metaclasses have only one instance' ].oldMetaClass isMeta	ifFalse: [ ^ self error: 'Argument must be Metaclass' ].oldInstance class == oldMetaClass	ifFalse: [ ^ self error: 'Not the class of argument' ].^ thisClass := self	newInstanceFrom: oldInstance	variable: self isVariable	size: self instSize	map: (self instVarMappingFrom: oldMetaClass)
+]
+
+Class Metaclass >> postCopy
+[
+	"Don't share the reference to the sole instance."
+super postCopy.thisClass := nil
+]
+
+Class Metaclass >> classPool
+[
+	"Answer the dictionary of class variables."
+^ thisClass classPool
+]
+
+Class Metaclass >> addSubclass: aClass
+[
+	"Do nothing."
+
+]
+
+Class Metaclass >> nonTrivial
+[
+	"Answer whether the receiver has any methods or instance variables."
+^ self instVarNames notEmpty or: [ self hasMethods or: [ self hasTraitComposition ] ]
+]
+
+Class Metaclass >> obsoleteSubclasses
+[
+	"Answer the receiver's subclasses."
+thisClass == nil	ifTrue: [ ^ #() ].^ thisClass obsoleteSubclasses	select: [ :aSubclass | aSubclass isMeta not ]	thenCollect: [ :aSubclass | aSubclass class ]	"Metaclass allInstancesDo:		[:m | Compiler evaluate: 'subclasses:=nil' for: m logged: false]"
+]
+
+Class Metaclass >> isSelfEvaluating
+[
+^ self isObsolete not
+]
+
+Class Metaclass >> traitComposition
+[
+traitComposition ifNil: [ traitComposition := TraitComposition new ].^ traitComposition
+]
+
+Class Metaclass >> isMeta
+[
+^ true
+]
+
+Class Metaclass >> uses: aTraitCompositionOrArray instanceVariableNames: instVarString
+[
+| newComposition newMetaClass copyOfOldMetaClass |copyOfOldMetaClass := self copy.newMetaClass := self instanceVariableNames: instVarString.newComposition := aTraitCompositionOrArray asTraitComposition.newMetaClass assertConsistantCompositionsForNew: newComposition.newMetaClass setTraitComposition: newComposition.SystemAnnouncer uniqueInstance classDefinitionChangedFrom: copyOfOldMetaClass to: newMetaClass
+]
+
+Class Metaclass >> removeInstVarNamed: aString
+[
+	"Remove the argument, aString, as one of the receiver's instance variables."
+| newArray newString |(self instVarNames includes: aString)	ifFalse: [ self error: aString , ' is not one of my instance variables' ].newArray := self instVarNames copyWithout: aString.newString := ''.newArray do: [ :aString2 | newString := aString2 , ' ' , newString ].self instanceVariableNames: newString
+]
+
+Class Metaclass >> basicLocalSelectors
+[
+	"Direct accessor for the instance variable localSelectors.	Since localSelectors is lazily initialized, this may 	return nil, which means that all selectors are local."
+^ localSelectors
+]
+
+Class Metaclass >> veryDeepCopyWith: deepCopier
+[
+	"Return self.  Must be created, not copied.  Do not record me."
+
+]
+
+Class Metaclass >> subclasses
+[
+	"Answer the receiver's subclasses."
+thisClass == nil	ifTrue: [ ^ #() ].^ thisClass subclasses select: [ :aSubclass | aSubclass isMeta not ] thenCollect: [ :aSubclass | aSubclass class ]	"Metaclass allInstancesDo:		[:m | Compiler evaluate: 'subclasses:=nil' for: m logged: false]"
+]
+
+Class Metaclass >> addInstVarNamed: aString
+[
+	"Add the argument, aString, as one of the receiver's instance variables."
+| fullString |fullString := String	streamContents: [ :strm | 		self instVarNames			do: [ :aString2 | 				strm					nextPutAll: aString2;					space ].		strm nextPutAll: aString ].self instanceVariableNames: fullString
+]
+
+Class Metaclass >> wantsRecompilationProgressReported
+[
+	"The metaclass follows the rule of the class itself."
+^ thisClass wantsRecompilationProgressReported
+]
+
+Class Metaclass >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex
+[
+^ self	fileOutOn: aFileStream	moveSource: moveSource	toFile: fileIndex	initializing: true
+]
+
+Class Metaclass >> bindingOf: varName
+[
+^ thisClass classBindingOf: varName
+]
+
+Class Metaclass >> traitComposition: aTraitComposition
+[
+traitComposition := aTraitComposition
+]
+
+Metaclass
+	name: #Metaclass;
+	instanceVariables: #().
+

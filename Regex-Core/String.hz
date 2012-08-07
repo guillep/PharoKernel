@@ -1,0 +1,72 @@
+Class String >> matchesRegexIgnoringCase: regexString
+[
+	"Test if the receiver matches a regex.  May raise RxParser>>regexErrorSignal or	child signals.	This is a part of the Regular Expression Matcher package, (c) 1996, 1999 Vassili Bykov.	Refer to `documentation' protocol of RxParser class for details."
+^ regexString asRegexIgnoringCase matches: self
+]
+
+Class String >> prefixMatchesRegex: regexString
+[
+	"Test if the receiver's prefix matches a regex.		May raise RxParser class>>regexErrorSignal or child signals.	This is a part of the Regular Expression Matcher package, (c) 1996, 1999 Vassili Bykov.	Refer to `documentation' protocol of RxParser class for details."
+^ regexString asRegex matchesPrefix: self
+]
+
+Class String >> allRegexMatches: rxString
+[
+^ rxString asRegex matchesIn: self
+]
+
+Class String >> regex: rxString matchesDo: aBlock
+[
+^ rxString asRegex matchesIn: self do: aBlock
+]
+
+Class String >> copyWithRegex: rxString matchesReplacedWith: aString
+[
+^ rxString asRegex copy: self replacingMatchesWith: aString
+]
+
+Class String >> matchesRegex: regexString
+[
+	"Test if the receiver matches a regex.  May raise RxParser>>regexErrorSignal or	child signals.	This is a part of the Regular Expression Matcher package, (c) 1996, 1999 Vassili Bykov.	Refer to `documentation' protocol of RxParser class for details."
+^ regexString asRegex matches: self
+]
+
+Class String >> asRegexIgnoringCase
+[
+	"Compile the receiver as a regex matcher. May raise RxParser>>syntaxErrorSignal	or RxParser>>compilationErrorSignal.	This is a part of the Regular Expression Matcher package, (c) 1996, 1999 Vassili Bykov.	Refer to `documentation' protocol of RxParser class for details."
+^ RxParser preferredMatcherClass for: (RxParser new parse: self) ignoreCase: true
+]
+
+Class String >> asRegex
+[
+	"Compile the receiver as a regex matcher. May raise RxParser>>syntaxErrorSignal	or RxParser>>compilationErrorSignal.	This is a part of the Regular Expression Matcher package, (c) 1996, 1999 Vassili Bykov.	Refer to `documentation' protocol of RxParser class for details."
+^ RxParser preferredMatcherClass for: (RxParser new parse: self)
+]
+
+Class String >> prefixMatchesRegexIgnoringCase: regexString
+[
+	"Test if the receiver's prefix matches a regex.		May raise RxParser class>>regexErrorSignal or child signals.	This is a part of the Regular Expression Matcher package, (c) 1996, 1999 Vassili Bykov.	Refer to `documentation' protocol of RxParser class for details."
+^ regexString asRegexIgnoringCase matchesPrefix: self
+]
+
+Class String >> regex: rxString matchesCollect: aBlock
+[
+^ rxString asRegex matchesIn: self collect: aBlock
+]
+
+Class String >> search: aString
+[
+	"compatibility method to make regexp and strings work polymorphicly"
+^ aString includesSubString: self
+]
+
+Class String >> allRangesOfRegexMatches: rxString
+[
+^ rxString asRegex matchingRangesIn: self
+]
+
+Class String >> copyWithRegex: rxString matchesTranslatedUsing: aBlock
+[
+^ rxString asRegex copy: self translatingMatchesUsing: aBlock
+]
+

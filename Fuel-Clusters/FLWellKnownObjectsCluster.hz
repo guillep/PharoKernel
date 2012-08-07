@@ -1,1 +1,39 @@
-Class	name: #FLWellKnownObjectsCluster;	superclass: #ClassFLCluster;	instanceSpecification: #(#pointers #words );	instanceVariables: #();	classVariables: #(#WellKnownObjects );	package: #'Fuel-Clusters'.Class FLWellKnownObjectsCluster >> add: anObject traceWith: aAnalysis[	"Do nothing. THis is an optimization. As you see, anObject is not added. In the conrary, #registerIndexesOn: directly serializes all the array of WellKnownObjects. See #objects"]Class FLWellKnownObjectsCluster >> registerIndexesOn: aDictionary[self objects do: [ :instance | aDictionary at: instance put: aDictionary size + 1 ]]Class FLWellKnownObjectsCluster >> objects[	" This is an optimization. We always serialize all the WellKnownObjects"^ WellKnownObjects]Metaclass	name: #FLWellKnownObjectsCluster;	instanceVariables: #().Metaclass FLWellKnownObjectsCluster >> clusterBucketIn: aClusterization[^ aClusterization primitivesBucket]Metaclass FLWellKnownObjectsCluster >> initialize[WellKnownObjects := Array	with: nil	with: true	with: false	with: Smalltalk globals]
+Class
+	name: #FLWellKnownObjectsCluster;
+	superclass: #ClassFLCluster;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #();
+	classVariables: #(#WellKnownObjects );
+	package: #'Fuel-Clusters'.
+
+Class FLWellKnownObjectsCluster >> add: anObject traceWith: aAnalysis
+[
+	"Do nothing. THis is an optimization. As you see, anObject is not added. In the conrary, #registerIndexesOn: directly serializes all the array of WellKnownObjects. See #objects"
+
+]
+
+Class FLWellKnownObjectsCluster >> registerIndexesOn: aDictionary
+[
+self objects do: [ :instance | aDictionary at: instance put: aDictionary size + 1 ]
+]
+
+Class FLWellKnownObjectsCluster >> objects
+[
+	" This is an optimization. We always serialize all the WellKnownObjects"
+^ WellKnownObjects
+]
+
+Metaclass
+	name: #FLWellKnownObjectsCluster;
+	instanceVariables: #().
+
+Metaclass FLWellKnownObjectsCluster >> clusterBucketIn: aClusterization
+[
+^ aClusterization primitivesBucket
+]
+
+Metaclass FLWellKnownObjectsCluster >> initialize
+[
+WellKnownObjects := Array	with: nil	with: true	with: false	with: Smalltalk globals
+]
+

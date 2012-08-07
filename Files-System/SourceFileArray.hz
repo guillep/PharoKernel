@@ -1,1 +1,67 @@
-Class	name: #SourceFileArray;	superclass: #ClassSequenceableCollection;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#files );	classVariables: #();	package: #'Files-System'.Class SourceFileArray >> initialize[files := Array new: 2.files at: 1 put: (SourceFiles at: 1).files at: 2 put: (SourceFiles at: 2)]Class SourceFileArray >> fileIndexFromSourcePointer: anInteger[	"Return the index of the source file which contains the source chunk addressed by anInteger"(anInteger bitAnd: 16r1000000) ~= 0	ifTrue: [ ^ 1	"sources file" ]	ifFalse: [ 		anInteger >= 16r1000000			ifTrue: [ ^ 2	"changes file" ]			ifFalse: [ ^ 0	"compatibility with StandardSourceFileArray" ] ]]Class SourceFileArray >> at: index[^ files at: index]Class SourceFileArray >> initialize: nFiles[files := Array new: nFiles]Class SourceFileArray >> sourcePointerFromFileIndex: index andPosition: position[	"Return a sourcePointer encoding the given file index and position"| hi lo |(index = 1 or: [ index = 2 ])	ifFalse: [ self error: 'invalid source file index' ].position < 0	ifTrue: [ self error: 'invalid source code pointer' ].hi := position // 16r1000000 * 2 + index.lo := position \\ 16r1000000.^ hi * 16r1000000 + lo]Class SourceFileArray >> filePositionFromSourcePointer: anInteger[	"Return the position of the source chunk addressed by anInteger"| hi lo |hi := anInteger // 33554432.lo := anInteger \\ 16777216.((anInteger bitAnd: 16777216) ~= 0 or: [ anInteger < 16777216	"compatibility with StandardSourceFileArray" ])	ifTrue: [ ^ hi * 16777216 + lo	"sources file" ]	ifFalse: [ ^ (hi - 1) * 16777216 + lo	"changes file" ]]Class SourceFileArray >> size[^ files size]Class SourceFileArray >> at: index put: aFile[^ files at: index put: aFile]Metaclass	name: #SourceFileArray;	instanceVariables: #().Metaclass SourceFileArray >> install[	"Replace SourceFiles by an instance of me with the standard sources and changes files.	This only works if SourceFiles is either an Array or an instance of this class"	"SourceFileArray install"^ SourceFiles := self new]Metaclass SourceFileArray >> new: nFiles[^ self new initialize: nFiles]
+Class
+	name: #SourceFileArray;
+	superclass: #ClassSequenceableCollection;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#files );
+	classVariables: #();
+	package: #'Files-System'.
+
+Class SourceFileArray >> initialize
+[
+files := Array new: 2.files at: 1 put: (SourceFiles at: 1).files at: 2 put: (SourceFiles at: 2)
+]
+
+Class SourceFileArray >> fileIndexFromSourcePointer: anInteger
+[
+	"Return the index of the source file which contains the source chunk addressed by anInteger"
+(anInteger bitAnd: 16r1000000) ~= 0	ifTrue: [ ^ 1	"sources file" ]	ifFalse: [ 		anInteger >= 16r1000000			ifTrue: [ ^ 2	"changes file" ]			ifFalse: [ ^ 0	"compatibility with StandardSourceFileArray" ] ]
+]
+
+Class SourceFileArray >> at: index
+[
+^ files at: index
+]
+
+Class SourceFileArray >> initialize: nFiles
+[
+files := Array new: nFiles
+]
+
+Class SourceFileArray >> sourcePointerFromFileIndex: index andPosition: position
+[
+	"Return a sourcePointer encoding the given file index and position"
+| hi lo |(index = 1 or: [ index = 2 ])	ifFalse: [ self error: 'invalid source file index' ].position < 0	ifTrue: [ self error: 'invalid source code pointer' ].hi := position // 16r1000000 * 2 + index.lo := position \\ 16r1000000.^ hi * 16r1000000 + lo
+]
+
+Class SourceFileArray >> filePositionFromSourcePointer: anInteger
+[
+	"Return the position of the source chunk addressed by anInteger"
+| hi lo |hi := anInteger // 33554432.lo := anInteger \\ 16777216.((anInteger bitAnd: 16777216) ~= 0 or: [ anInteger < 16777216	"compatibility with StandardSourceFileArray" ])	ifTrue: [ ^ hi * 16777216 + lo	"sources file" ]	ifFalse: [ ^ (hi - 1) * 16777216 + lo	"changes file" ]
+]
+
+Class SourceFileArray >> size
+[
+^ files size
+]
+
+Class SourceFileArray >> at: index put: aFile
+[
+^ files at: index put: aFile
+]
+
+Metaclass
+	name: #SourceFileArray;
+	instanceVariables: #().
+
+Metaclass SourceFileArray >> install
+[
+	"Replace SourceFiles by an instance of me with the standard sources and changes files.	This only works if SourceFiles is either an Array or an instance of this class"
+	"SourceFileArray install"
+^ SourceFiles := self new
+]
+
+Metaclass SourceFileArray >> new: nFiles
+[
+^ self new initialize: nFiles
+]
+

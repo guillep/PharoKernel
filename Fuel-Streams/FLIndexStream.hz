@@ -1,1 +1,32 @@
-Class	name: #FLIndexStream;	superclass: #ClassObject;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#stream #digits );	classVariables: #();	package: #'Fuel-Streams'.Class FLIndexStream >> initializeOn: aStream digits: aNumberOfDigits[self initialize.stream := aStream.digits := aNumberOfDigits]Class FLIndexStream >> nextIndexPut: v[1 to: digits do: [ :i | stream nextPut: (v digitAt: digits + 1 - i) ]]Class FLIndexStream >> nextIndex[| s |s := 0.1 to: digits do: [ :i | s := (s bitShift: 8) bitOr: stream next ].^ s]Metaclass	name: #FLIndexStream;	instanceVariables: #().Metaclass FLIndexStream >> on: aStream digits: aNumberOfDigits[^ self basicNew	initializeOn: aStream digits: aNumberOfDigits;	yourself]
+Class
+	name: #FLIndexStream;
+	superclass: #ClassObject;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#stream #digits );
+	classVariables: #();
+	package: #'Fuel-Streams'.
+
+Class FLIndexStream >> initializeOn: aStream digits: aNumberOfDigits
+[
+self initialize.stream := aStream.digits := aNumberOfDigits
+]
+
+Class FLIndexStream >> nextIndexPut: v
+[
+1 to: digits do: [ :i | stream nextPut: (v digitAt: digits + 1 - i) ]
+]
+
+Class FLIndexStream >> nextIndex
+[
+| s |s := 0.1 to: digits do: [ :i | s := (s bitShift: 8) bitOr: stream next ].^ s
+]
+
+Metaclass
+	name: #FLIndexStream;
+	instanceVariables: #().
+
+Metaclass FLIndexStream >> on: aStream digits: aNumberOfDigits
+[
+^ self basicNew	initializeOn: aStream digits: aNumberOfDigits;	yourself
+]
+

@@ -1,1 +1,65 @@
-Class	name: #NaturalLanguageFormTranslator;	superclass: #ClassObject;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#id #generics );	classVariables: #(#CachedTranslations );	package: #'System-Localization'.Class NaturalLanguageFormTranslator >> translate: aString[^ (self generics at: aString ifAbsent: [ nil ]) deepCopy	"Do you like to write 'form ifNotNil: [form deepCopy]'?"]Class NaturalLanguageFormTranslator >> localeID: anID[id := anID]Class NaturalLanguageFormTranslator >> localeID[^ id]Class NaturalLanguageFormTranslator >> generics[^ generics ifNil: [ generics := Dictionary new ]]Class NaturalLanguageFormTranslator >> name: formName form: translatedForm[self generics at: formName put: translatedForm]Metaclass	name: #NaturalLanguageFormTranslator;	instanceVariables: #().Metaclass NaturalLanguageFormTranslator >> isoLanguage: isoLanguage isoCountry: isoCountry[^ self localeID: (LocaleID isoLanguage: isoLanguage isoCountry: isoCountry)]Metaclass NaturalLanguageFormTranslator >> localeID: localeID[^ self cachedTranslations at: localeID ifAbsentPut: [ self new localeID: localeID ]]Metaclass NaturalLanguageFormTranslator >> cleanUp[	"Flush caches"CachedTranslations := nil]Metaclass NaturalLanguageFormTranslator >> isoLanguage: isoLanguage[	"Return the generic language translator as there is no information about the country code"^ self isoLanguage: isoLanguage isoCountry: nil]Metaclass NaturalLanguageFormTranslator >> cachedTranslations[	"CachedTranslations := nil"^ CachedTranslations ifNil: [ CachedTranslations := Dictionary new ]]
+Class
+	name: #NaturalLanguageFormTranslator;
+	superclass: #ClassObject;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#id #generics );
+	classVariables: #(#CachedTranslations );
+	package: #'System-Localization'.
+
+Class NaturalLanguageFormTranslator >> translate: aString
+[
+^ (self generics at: aString ifAbsent: [ nil ]) deepCopy	"Do you like to write 'form ifNotNil: [form deepCopy]'?"
+]
+
+Class NaturalLanguageFormTranslator >> localeID: anID
+[
+id := anID
+]
+
+Class NaturalLanguageFormTranslator >> localeID
+[
+^ id
+]
+
+Class NaturalLanguageFormTranslator >> generics
+[
+^ generics ifNil: [ generics := Dictionary new ]
+]
+
+Class NaturalLanguageFormTranslator >> name: formName form: translatedForm
+[
+self generics at: formName put: translatedForm
+]
+
+Metaclass
+	name: #NaturalLanguageFormTranslator;
+	instanceVariables: #().
+
+Metaclass NaturalLanguageFormTranslator >> isoLanguage: isoLanguage isoCountry: isoCountry
+[
+^ self localeID: (LocaleID isoLanguage: isoLanguage isoCountry: isoCountry)
+]
+
+Metaclass NaturalLanguageFormTranslator >> localeID: localeID
+[
+^ self cachedTranslations at: localeID ifAbsentPut: [ self new localeID: localeID ]
+]
+
+Metaclass NaturalLanguageFormTranslator >> cleanUp
+[
+	"Flush caches"
+CachedTranslations := nil
+]
+
+Metaclass NaturalLanguageFormTranslator >> isoLanguage: isoLanguage
+[
+	"Return the generic language translator as there is no information about the country code"
+^ self isoLanguage: isoLanguage isoCountry: nil
+]
+
+Metaclass NaturalLanguageFormTranslator >> cachedTranslations
+[
+	"CachedTranslations := nil"
+^ CachedTranslations ifNil: [ CachedTranslations := Dictionary new ]
+]
+

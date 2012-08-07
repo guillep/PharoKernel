@@ -1,5 +1,176 @@
-Class	name: #NonInteractiveUIManager;	superclass: #ClassCommandLineUIManager;	instanceSpecification: #(#pointers #words );	instanceVariables: #();	classVariables: #();	package: #UIManager.Class NonInteractiveUIManager >> nonInteractiveManager[	" Answer an instance of non-interactive manager, which will be used when image runs headless.
+Class
+	name: #NonInteractiveUIManager;
+	superclass: #ClassCommandLineUIManager;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #();
+	classVariables: #();
+	package: #UIManager.
+
+Class NonInteractiveUIManager >> nonInteractiveManager
+[
+	" Answer an instance of non-interactive manager, which will be used when image runs headless.
 	  We put it here, so subclasses can override it. 
 	
 	We already non-interactive. Just answer self
-	"^ self]Class NonInteractiveUIManager >> confirm: queryString trueChoice: trueChoice falseChoice: falseChoice[^ self nonInteractive]Class NonInteractiveUIManager >> request: queryString initialAnswer: defaultAnswer centerAt: aPoint[	"Create an instance of me whose question is queryString with the given initial answer. Answer the string the user accepts. Answer the empty string if the user cancels."(ProvideAnswerNotification signal: queryString)	ifNotNil: [ :answer | 		^ answer = #default			ifTrue: [ defaultAnswer ]			ifFalse: [ answer ] ].^ self nonInteractive]Class NonInteractiveUIManager >> lowSpaceWatcherDefaultAction: preemptedProcess[| ctx |"yeah.. space is low.. quit!! :)"ctx := preemptedProcess ifNotNil: [ preemptedProcess suspendedContext ].ctx ifNil: [ ctx := thisContext sender ].self quitFrom: ctx withMessage: 'Low space signal received.'.self halt	"what else we can do? "]Class NonInteractiveUIManager >> chooseFullFileNameMatching: patterns label: labelString[	"Let the user choose a file matching the given patterns"^ self nonInteractive]Class NonInteractiveUIManager >> chooseFileMatching: patterns label: labelString[	"Let the user choose a file matching the given patterns"^ self nonInteractive]Class NonInteractiveUIManager >> interactiveParserFor: requestor[^ (requestor respondsTo: #interactive) and: [ requestor interactive ]]Class NonInteractiveUIManager >> confirm: queryString label: titleString[^ self nonInteractive]Class NonInteractiveUIManager >> nonInteractive[^ ErrorNonInteractive signal]Class NonInteractiveUIManager >> request: queryString initialAnswer: defaultAnswer entryCompletion: anEntryCompletion[(ProvideAnswerNotification signal: queryString)	ifNotNil: [ :answer | 		^ answer = #default			ifTrue: [ defaultAnswer ]			ifFalse: [ answer ] ].^ self nonInteractive]Class NonInteractiveUIManager >> onSnapshot: resuming[	"The resuming argument is true when image boots from disk,	and false, if user just did an image snapshot."resuming	ifTrue: [ 		Smalltalk isHeadless			ifFalse: [ 				"restore old, or nil, so it will be set in #default "				uiManager beDefault.				UIManager default onSnapshot: resuming.				^ self ].		Smalltalk isInteractive			ifTrue: [ 				"use a headless but interactive manager"				^ self headlessManager onSnapshot: resuming ] ].	" this flag set to true only if we are saving a snapshot before quitting "doNotQuitOnRestart	ifTrue: [ Smalltalk snapshot: false andQuit: true ]]Class NonInteractiveUIManager >> syntaxErrorNotificationDefaultAction: aSyntaxErrorNotification[	"display and log the syntax error"super syntaxErrorNotificationDefaultAction: aSyntaxErrorNotification.	"in noninteractive mode simply quit"^ self exitFailure]Class NonInteractiveUIManager >> nonInteractive: anException[^ ErrorNonInteractive signalForException: anException]Class NonInteractiveUIManager >> multiLineRequest: queryString initialAnswer: defaultAnswer answerHeight: answerHeight[^ self nonInteractive]Class NonInteractiveUIManager >> fileExistsDefaultAction: anException[^ self nonInteractive: anException]Class NonInteractiveUIManager >> request: aStringOrText initialAnswer: defaultAnswer title: aTitle[(ProvideAnswerNotification signal: aStringOrText)	ifNotNil: [ :answer | 		^ answer = #default			ifTrue: [ defaultAnswer ]			ifFalse: [ answer ] ].^ self nonInteractive]Class NonInteractiveUIManager >> confirm: queryString trueChoice: trueChoice falseChoice: falseChoice cancelChoice: cancelChoice default: aSymbol[^ self nonInteractive]Class NonInteractiveUIManager >> fontFromUser: priorFont[^ self nonInteractive]Class NonInteractiveUIManager >> chooseDirectory: label from: dir[	"Let the user choose a directory"^ self nonInteractive]Class NonInteractiveUIManager >> chooseFrom: aList lines: linesArray title: aString[	"Choose an item from the given list. Answer the index of the selected item."^ self nonInteractive]Class NonInteractiveUIManager >> confirm: aString orCancel: cancelBlock[^ self nonInteractive]Class NonInteractiveUIManager >> fileDoesNotExistsDefaultAction: anException[^ self nonInteractive: anException]Class NonInteractiveUIManager >> chooseFrom: labelList values: valueList lines: linesArray title: aString[	"Choose an item from the given list. Answer the selected item."^ self nonInteractive]Class NonInteractiveUIManager >> confirm: queryString[(ProvideAnswerNotification signal: queryString) ifNotNil: [ :answer | ^ answer ].^ self nonInteractive]Class NonInteractiveUIManager >> chooseOrRequestFrom: labelList values: valueList lines: linesArray title: aString[^ self nonInteractive]Class NonInteractiveUIManager >> edit: aText label: labelString accept: anAction[	"Open an editor on the given string/text"^ self nonInteractive]Class NonInteractiveUIManager >> requestPassword: queryString[^ self nonInteractive]Class NonInteractiveUIManager >> request: queryString initialAnswer: defaultAnswer[(ProvideAnswerNotification signal: queryString)	ifNotNil: [ :answer | 		^ answer = #default			ifTrue: [ defaultAnswer ]			ifFalse: [ answer ] ].^ self nonInteractive]Class NonInteractiveUIManager >> request: aStringOrText initialAnswer: defaultAnswer title: aTitle entryCompletion: anEntryCompletion[(ProvideAnswerNotification signal: aStringOrText)	ifNotNil: [ :answer | 		^ answer = #default			ifTrue: [ defaultAnswer ]			ifFalse: [ answer ] ].^ self nonInteractive]Class NonInteractiveUIManager >> onDebug: process context: context title: title full: bool[^ self nonInteractive]Metaclass	name: #NonInteractiveUIManager;	instanceVariables: #().
+	"
+^ self
+]
+
+Class NonInteractiveUIManager >> confirm: queryString trueChoice: trueChoice falseChoice: falseChoice
+[
+^ self nonInteractive
+]
+
+Class NonInteractiveUIManager >> request: queryString initialAnswer: defaultAnswer centerAt: aPoint
+[
+	"Create an instance of me whose question is queryString with the given initial answer. Answer the string the user accepts. Answer the empty string if the user cancels."
+(ProvideAnswerNotification signal: queryString)	ifNotNil: [ :answer | 		^ answer = #default			ifTrue: [ defaultAnswer ]			ifFalse: [ answer ] ].^ self nonInteractive
+]
+
+Class NonInteractiveUIManager >> lowSpaceWatcherDefaultAction: preemptedProcess
+[
+| ctx |"yeah.. space is low.. quit!! :)"ctx := preemptedProcess ifNotNil: [ preemptedProcess suspendedContext ].ctx ifNil: [ ctx := thisContext sender ].self quitFrom: ctx withMessage: 'Low space signal received.'.self halt	"what else we can do? "
+]
+
+Class NonInteractiveUIManager >> chooseFullFileNameMatching: patterns label: labelString
+[
+	"Let the user choose a file matching the given patterns"
+^ self nonInteractive
+]
+
+Class NonInteractiveUIManager >> chooseFileMatching: patterns label: labelString
+[
+	"Let the user choose a file matching the given patterns"
+^ self nonInteractive
+]
+
+Class NonInteractiveUIManager >> interactiveParserFor: requestor
+[
+^ (requestor respondsTo: #interactive) and: [ requestor interactive ]
+]
+
+Class NonInteractiveUIManager >> confirm: queryString label: titleString
+[
+^ self nonInteractive
+]
+
+Class NonInteractiveUIManager >> nonInteractive
+[
+^ ErrorNonInteractive signal
+]
+
+Class NonInteractiveUIManager >> request: queryString initialAnswer: defaultAnswer entryCompletion: anEntryCompletion
+[
+(ProvideAnswerNotification signal: queryString)	ifNotNil: [ :answer | 		^ answer = #default			ifTrue: [ defaultAnswer ]			ifFalse: [ answer ] ].^ self nonInteractive
+]
+
+Class NonInteractiveUIManager >> onSnapshot: resuming
+[
+	"The resuming argument is true when image boots from disk,	and false, if user just did an image snapshot."
+resuming	ifTrue: [ 		Smalltalk isHeadless			ifFalse: [ 				"restore old, or nil, so it will be set in #default "				uiManager beDefault.				UIManager default onSnapshot: resuming.				^ self ].		Smalltalk isInteractive			ifTrue: [ 				"use a headless but interactive manager"				^ self headlessManager onSnapshot: resuming ] ].	" this flag set to true only if we are saving a snapshot before quitting "doNotQuitOnRestart	ifTrue: [ Smalltalk snapshot: false andQuit: true ]
+]
+
+Class NonInteractiveUIManager >> syntaxErrorNotificationDefaultAction: aSyntaxErrorNotification
+[
+	"display and log the syntax error"
+super syntaxErrorNotificationDefaultAction: aSyntaxErrorNotification.	"in noninteractive mode simply quit"^ self exitFailure
+]
+
+Class NonInteractiveUIManager >> nonInteractive: anException
+[
+^ ErrorNonInteractive signalForException: anException
+]
+
+Class NonInteractiveUIManager >> multiLineRequest: queryString initialAnswer: defaultAnswer answerHeight: answerHeight
+[
+^ self nonInteractive
+]
+
+Class NonInteractiveUIManager >> fileExistsDefaultAction: anException
+[
+^ self nonInteractive: anException
+]
+
+Class NonInteractiveUIManager >> request: aStringOrText initialAnswer: defaultAnswer title: aTitle
+[
+(ProvideAnswerNotification signal: aStringOrText)	ifNotNil: [ :answer | 		^ answer = #default			ifTrue: [ defaultAnswer ]			ifFalse: [ answer ] ].^ self nonInteractive
+]
+
+Class NonInteractiveUIManager >> confirm: queryString trueChoice: trueChoice falseChoice: falseChoice cancelChoice: cancelChoice default: aSymbol
+[
+^ self nonInteractive
+]
+
+Class NonInteractiveUIManager >> fontFromUser: priorFont
+[
+^ self nonInteractive
+]
+
+Class NonInteractiveUIManager >> chooseDirectory: label from: dir
+[
+	"Let the user choose a directory"
+^ self nonInteractive
+]
+
+Class NonInteractiveUIManager >> chooseFrom: aList lines: linesArray title: aString
+[
+	"Choose an item from the given list. Answer the index of the selected item."
+^ self nonInteractive
+]
+
+Class NonInteractiveUIManager >> confirm: aString orCancel: cancelBlock
+[
+^ self nonInteractive
+]
+
+Class NonInteractiveUIManager >> fileDoesNotExistsDefaultAction: anException
+[
+^ self nonInteractive: anException
+]
+
+Class NonInteractiveUIManager >> chooseFrom: labelList values: valueList lines: linesArray title: aString
+[
+	"Choose an item from the given list. Answer the selected item."
+^ self nonInteractive
+]
+
+Class NonInteractiveUIManager >> confirm: queryString
+[
+(ProvideAnswerNotification signal: queryString) ifNotNil: [ :answer | ^ answer ].^ self nonInteractive
+]
+
+Class NonInteractiveUIManager >> chooseOrRequestFrom: labelList values: valueList lines: linesArray title: aString
+[
+^ self nonInteractive
+]
+
+Class NonInteractiveUIManager >> edit: aText label: labelString accept: anAction
+[
+	"Open an editor on the given string/text"
+^ self nonInteractive
+]
+
+Class NonInteractiveUIManager >> requestPassword: queryString
+[
+^ self nonInteractive
+]
+
+Class NonInteractiveUIManager >> request: queryString initialAnswer: defaultAnswer
+[
+(ProvideAnswerNotification signal: queryString)	ifNotNil: [ :answer | 		^ answer = #default			ifTrue: [ defaultAnswer ]			ifFalse: [ answer ] ].^ self nonInteractive
+]
+
+Class NonInteractiveUIManager >> request: aStringOrText initialAnswer: defaultAnswer title: aTitle entryCompletion: anEntryCompletion
+[
+(ProvideAnswerNotification signal: aStringOrText)	ifNotNil: [ :answer | 		^ answer = #default			ifTrue: [ defaultAnswer ]			ifFalse: [ answer ] ].^ self nonInteractive
+]
+
+Class NonInteractiveUIManager >> onDebug: process context: context title: title full: bool
+[
+^ self nonInteractive
+]
+
+Metaclass
+	name: #NonInteractiveUIManager;
+	instanceVariables: #().
+

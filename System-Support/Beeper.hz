@@ -1,1 +1,61 @@
-Class	name: #Beeper;	superclass: #ClassObject;	instanceSpecification: #(#pointers #words );	instanceVariables: #();	classVariables: #();	package: #'System-Support'.Class Beeper >> play[	"This is how the default Beeper makes a beep,	by sending beep to the default sound service.	The sound system will check if sounds are enabled."SoundService default new beep]Metaclass	name: #Beeper;	instanceVariables: #(#default ).Metaclass Beeper >> setDefault: aPlayableEntity[	"Set the playable entity used when making a beep.	The playable entity should implement the message #play."default := aPlayableEntity]Metaclass Beeper >> default[	"When the default is not defined it is	initialized using #newDefault."default isNil	ifTrue: [ default := self newDefault ].^ default]Metaclass Beeper >> beepPrimitive[	"Make a primitive beep. Only use this if	you want to force this to be a primitive beep.	Otherwise use Beeper class>>beep	since this method bypasses the current	registered playable entity."SoundService soundEnabled	ifTrue: [ self primitiveBeep ]]Metaclass Beeper >> clearDefault[	"Clear the default playable.	Will be lazily initialized in Beeper class >>default."default := nil]Metaclass Beeper >> beep[	"The preferred way of producing an audible feedback.	The default playable entity (an instance of Beeper)	also uses the pluggable SoundService	mechanism, so it will use the primitive beep only	if there is no other sound mechanism available."self default ifNil: [ self beepPrimitive ] ifNotNil: [ self default play ]]Metaclass Beeper >> primitiveBeep[	"Make a primitive beep. Not to be called directly.	It is much better to use Beeper class>>beep	or Beeper class>>beepPrimitive	since this method bypasses the current	registered playable entity and does not	check SoundSettings class>>soundEnabled."	<primitive: 140>self primitiveFailed]Metaclass Beeper >> newDefault[	"Subclasses may override me to provide a default beep.	This base implementation returns an instance of Beeper	which uses the pluggable sound service."^ self new]
+Class
+	name: #Beeper;
+	superclass: #ClassObject;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #();
+	classVariables: #();
+	package: #'System-Support'.
+
+Class Beeper >> play
+[
+	"This is how the default Beeper makes a beep,	by sending beep to the default sound service.	The sound system will check if sounds are enabled."
+SoundService default new beep
+]
+
+Metaclass
+	name: #Beeper;
+	instanceVariables: #(#default ).
+
+Metaclass Beeper >> setDefault: aPlayableEntity
+[
+	"Set the playable entity used when making a beep.	The playable entity should implement the message #play."
+default := aPlayableEntity
+]
+
+Metaclass Beeper >> default
+[
+	"When the default is not defined it is	initialized using #newDefault."
+default isNil	ifTrue: [ default := self newDefault ].^ default
+]
+
+Metaclass Beeper >> beepPrimitive
+[
+	"Make a primitive beep. Only use this if	you want to force this to be a primitive beep.	Otherwise use Beeper class>>beep	since this method bypasses the current	registered playable entity."
+SoundService soundEnabled	ifTrue: [ self primitiveBeep ]
+]
+
+Metaclass Beeper >> clearDefault
+[
+	"Clear the default playable.	Will be lazily initialized in Beeper class >>default."
+default := nil
+]
+
+Metaclass Beeper >> beep
+[
+	"The preferred way of producing an audible feedback.	The default playable entity (an instance of Beeper)	also uses the pluggable SoundService	mechanism, so it will use the primitive beep only	if there is no other sound mechanism available."
+self default ifNil: [ self beepPrimitive ] ifNotNil: [ self default play ]
+]
+
+Metaclass Beeper >> primitiveBeep
+[
+	"Make a primitive beep. Not to be called directly.	It is much better to use Beeper class>>beep	or Beeper class>>beepPrimitive	since this method bypasses the current	registered playable entity and does not	check SoundSettings class>>soundEnabled."
+	<primitive: 140>
+self primitiveFailed
+]
+
+Metaclass Beeper >> newDefault
+[
+	"Subclasses may override me to provide a default beep.	This base implementation returns an instance of Beeper	which uses the pluggable sound service."
+^ self new
+]
+

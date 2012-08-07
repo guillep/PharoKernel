@@ -1,1 +1,106 @@
-Class	name: #WeakRegistry;	superclass: #ClassCollection;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#list #valueDictionary #sema );	classVariables: #(#Default );	package: #'Collections-Weak'.Class WeakRegistry >> postCopy[	"should we prohibit any attempts to copy receiver?"self	protected: [ 		| oldDict |		sema := Semaphore forMutualExclusion.		oldDict := valueDictionary.		list := WeakFinalizationList new.		valueDictionary := WeakIdentityKeyDictionary new.		self installFinalizer.		oldDict keysAndValuesDo: [ :key :value | valueDictionary at: key put: (value copyWithList: list) ] ]]Class WeakRegistry >> do: aBlock[^ self protected: [ valueDictionary keysDo: aBlock ]]Class WeakRegistry >> removeAll[	"See super"self protected: [ valueDictionary removeAll ]]Class WeakRegistry >> protected: aBlock[	"Execute aBlock protected by the accessLock"^ sema critical: aBlock ifError: [ :msg :rcvr | rcvr error: msg ]]Class WeakRegistry >> add: anObject[	"Add anObject to the receiver. Store the object as well as the associated executor."^ self add: anObject executor: anObject executor]Class WeakRegistry >> remove: oldObject ifAbsent: exceptionBlock[	"Remove oldObject as one of the receiver's elements."oldObject ifNil: [ ^ nil ].^ (self protected: [ valueDictionary removeKey: oldObject ifAbsent: nil ]) ifNil: [ exceptionBlock value ]]Class WeakRegistry >> size[	"Use #associationsDo: , to count associations with non-nil keys"| count |count := 0.self protected: [ valueDictionary associationsDo: [ :ass | count := count + 1 ] ].^ count]Class WeakRegistry >> keys[^ self protected: [ valueDictionary keys ]]Class WeakRegistry >> initialize[valueDictionary := WeakIdentityKeyDictionary new.list := WeakFinalizationList new.sema := Semaphore forMutualExclusion.self installFinalizer]Class WeakRegistry >> species[^ Set]Class WeakRegistry >> finalizeValues[	"Finalize any values, which happen to stocked in our list, due to some weak references become garbage"| finalizer |" Do the old way, if VM don't supports us"WeakFinalizationList hasNewFinalization	ifFalse: [ 		| finalizers |		finalizers := OrderedCollection new.		self protected: [ valueDictionary expiredValuesDo: [ :finItem | finalizers add: finItem ] ].		finalizers do: [ :each | [ each finalizeValues ] on: Exception fork: [ :ex | ex pass ] ].		^ self ].self protected: [ finalizer := list swapWithNil ].	"We don't need to protect a following loop from concurrent access,	because at the moment we're finalizing values, 	only we can access this list of finalizers, because valueDictionary already see them	as an unused slots, because they're associated with key == nil"[ finalizer notNil ]	whileTrue: [ 		| next |		next := finalizer next.		[ finalizer finalizeValues ] on: Exception fork: [ :ex | ex pass ].		finalizer := next ]]Class WeakRegistry >> printElementsOn: aStream[sema ifNil: [ ^ super printElementsOn: aStream ].aStream nextPutAll: '(<this WeakRegistry is locked>)']Class WeakRegistry >> installFinalizer[	" do nothing, pharo does not supports it right now	valueDictionary finalizer: #finalizeValues	"]Class WeakRegistry >> add: anObject executor: anExecutor[	" with new finalization, we can simply override associations with key == nil in valueDictionary "self	protected: [ 		| finItem |		finItem := valueDictionary			at: anObject			ifAbsent: [ 				WeakFinalizationList hasNewFinalization					ifTrue: [ valueDictionary overridingAt: anObject put: (WeakFinalizerItem new list: list object: anObject) ]					ifFalse: [ valueDictionary at: anObject put: (WeakFinalizerItem new list: list object: anObject) ] ].		finItem add: anExecutor ].^ anObject]Metaclass	name: #WeakRegistry;	instanceVariables: #().Metaclass WeakRegistry >> new[| registry |registry := super new.WeakArray addWeakDependent: registry.^ registry]Metaclass WeakRegistry >> default[^ Default ifNil: [ Default := self new ]]Metaclass WeakRegistry >> new: n[^ self new]
+Class
+	name: #WeakRegistry;
+	superclass: #ClassCollection;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#list #valueDictionary #sema );
+	classVariables: #(#Default );
+	package: #'Collections-Weak'.
+
+Class WeakRegistry >> postCopy
+[
+	"should we prohibit any attempts to copy receiver?"
+self	protected: [ 		| oldDict |		sema := Semaphore forMutualExclusion.		oldDict := valueDictionary.		list := WeakFinalizationList new.		valueDictionary := WeakIdentityKeyDictionary new.		self installFinalizer.		oldDict keysAndValuesDo: [ :key :value | valueDictionary at: key put: (value copyWithList: list) ] ]
+]
+
+Class WeakRegistry >> do: aBlock
+[
+^ self protected: [ valueDictionary keysDo: aBlock ]
+]
+
+Class WeakRegistry >> removeAll
+[
+	"See super"
+self protected: [ valueDictionary removeAll ]
+]
+
+Class WeakRegistry >> protected: aBlock
+[
+	"Execute aBlock protected by the accessLock"
+^ sema critical: aBlock ifError: [ :msg :rcvr | rcvr error: msg ]
+]
+
+Class WeakRegistry >> add: anObject
+[
+	"Add anObject to the receiver. Store the object as well as the associated executor."
+^ self add: anObject executor: anObject executor
+]
+
+Class WeakRegistry >> remove: oldObject ifAbsent: exceptionBlock
+[
+	"Remove oldObject as one of the receiver's elements."
+oldObject ifNil: [ ^ nil ].^ (self protected: [ valueDictionary removeKey: oldObject ifAbsent: nil ]) ifNil: [ exceptionBlock value ]
+]
+
+Class WeakRegistry >> size
+[
+	"Use #associationsDo: , to count associations with non-nil keys"
+| count |count := 0.self protected: [ valueDictionary associationsDo: [ :ass | count := count + 1 ] ].^ count
+]
+
+Class WeakRegistry >> keys
+[
+^ self protected: [ valueDictionary keys ]
+]
+
+Class WeakRegistry >> initialize
+[
+valueDictionary := WeakIdentityKeyDictionary new.list := WeakFinalizationList new.sema := Semaphore forMutualExclusion.self installFinalizer
+]
+
+Class WeakRegistry >> species
+[
+^ Set
+]
+
+Class WeakRegistry >> finalizeValues
+[
+	"Finalize any values, which happen to stocked in our list, due to some weak references become garbage"
+| finalizer |" Do the old way, if VM don't supports us"WeakFinalizationList hasNewFinalization	ifFalse: [ 		| finalizers |		finalizers := OrderedCollection new.		self protected: [ valueDictionary expiredValuesDo: [ :finItem | finalizers add: finItem ] ].		finalizers do: [ :each | [ each finalizeValues ] on: Exception fork: [ :ex | ex pass ] ].		^ self ].self protected: [ finalizer := list swapWithNil ].	"We don't need to protect a following loop from concurrent access,	because at the moment we're finalizing values, 	only we can access this list of finalizers, because valueDictionary already see them	as an unused slots, because they're associated with key == nil"[ finalizer notNil ]	whileTrue: [ 		| next |		next := finalizer next.		[ finalizer finalizeValues ] on: Exception fork: [ :ex | ex pass ].		finalizer := next ]
+]
+
+Class WeakRegistry >> printElementsOn: aStream
+[
+sema ifNil: [ ^ super printElementsOn: aStream ].aStream nextPutAll: '(<this WeakRegistry is locked>)'
+]
+
+Class WeakRegistry >> installFinalizer
+[
+	" do nothing, pharo does not supports it right now	valueDictionary finalizer: #finalizeValues	"
+
+]
+
+Class WeakRegistry >> add: anObject executor: anExecutor
+[
+	" with new finalization, we can simply override associations with key == nil in valueDictionary "
+self	protected: [ 		| finItem |		finItem := valueDictionary			at: anObject			ifAbsent: [ 				WeakFinalizationList hasNewFinalization					ifTrue: [ valueDictionary overridingAt: anObject put: (WeakFinalizerItem new list: list object: anObject) ]					ifFalse: [ valueDictionary at: anObject put: (WeakFinalizerItem new list: list object: anObject) ] ].		finItem add: anExecutor ].^ anObject
+]
+
+Metaclass
+	name: #WeakRegistry;
+	instanceVariables: #().
+
+Metaclass WeakRegistry >> new
+[
+| registry |registry := super new.WeakArray addWeakDependent: registry.^ registry
+]
+
+Metaclass WeakRegistry >> default
+[
+^ Default ifNil: [ Default := self new ]
+]
+
+Metaclass WeakRegistry >> new: n
+[
+^ self new
+]
+

@@ -1,1 +1,100 @@
-Class	name: #BasicClassOrganizer;	superclass: #ClassCategorizer;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#subject #classComment #commentStamp );	classVariables: #();	package: #'Kernel-Classes'.Class BasicClassOrganizer >> classComment: aString stamp: aStamp[	"Store the comment, aString, associated with the object that refers to the receiver."self commentStamp: aStamp.(aString isKindOf: RemoteString)	ifTrue: [ classComment := aString ]	ifFalse: [ 		aString isEmptyOrNil			ifTrue: [ classComment := nil ]			ifFalse: [ 				self error: 'use aClass classComment:'.				classComment := RemoteString newString: aString onFileNumber: 2 ] ]	"Later add priorSource and date and initials?"]Class BasicClassOrganizer >> commentStamp[	"Answer the comment stamp for the class"^ commentStamp]Class BasicClassOrganizer >> classComment[classComment ifNil: [ ^ '' ].^ classComment string ifNil: [ '' ]]Class BasicClassOrganizer >> subject[^ subject]Class BasicClassOrganizer >> hasComment[	"Answer whether the class classified by the receiver has a comment."^ classComment notNil]Class BasicClassOrganizer >> setSubject: aClassDescription[subject := aClassDescription]Class BasicClassOrganizer >> commentRemoteStr[^ classComment]Class BasicClassOrganizer >> dateCommentLastSubmitted[	"Answer a Date object indicating when my class comment was last submitted.  If there is no date stamp, or one of the old-time <historical>  guys, return nil"	"RecentMessageSet organization dateCommentLastSubmitted"| aStamp tokens |(aStamp := self commentStamp) isEmptyOrNil	ifTrue: [ ^ nil ].tokens := aStamp	findBetweenSubStrs:		' '.	"space is expected delimiter, but cr is sometimes seen, though of mysterious provenance"^ tokens size > 1	ifTrue: [ [ tokens second asDate ] ifError: [ nil ] ]	ifFalse: [ nil ]]Class BasicClassOrganizer >> commentStamp: aStamp[commentStamp := aStamp]Class BasicClassOrganizer >> putCommentOnFile: aFileStream numbered: sourceIndex moveSource: moveSource forClass: aClass[	"Store the comment about the class onto file, aFileStream."| header |classComment	ifNotNil: [ 		aFileStream			cr;			nextPut: $!.		header := String			streamContents: [ :strm | 				strm					nextPutAll: aClass name;					nextPutAll: ' commentStamp: '.				commentStamp ifNil: [ commentStamp := '<historical>' ].				commentStamp storeOn: strm.				strm					nextPutAll: ' prior: ';					nextPutAll: '0' ].		aFileStream nextChunkPut: header.		aClass organization fileOutCommentOn: aFileStream moveSource: moveSource toFile: sourceIndex.		aFileStream cr ]]Class BasicClassOrganizer >> fileOutCommentOn: aFileStream moveSource: moveSource toFile: fileIndex[	"Copy the class comment to aFileStream.  If moveSource is true (as in compressChanges or compressSources, then update classComment to point to the new file."| fileComment |classComment	ifNotNil: [ 		aFileStream cr.		fileComment := RemoteString newString: classComment string onFileNumber: fileIndex toFile: aFileStream.		moveSource			ifTrue: [ classComment := fileComment ] ]]Class BasicClassOrganizer >> classComment: aString[	"Store the comment, aString, associated with the object that refers to the 	receiver."(aString isKindOf: RemoteString)	ifTrue: [ classComment := aString ]	ifFalse: [ 		aString isEmptyOrNil			ifTrue: [ classComment := nil ]			ifFalse: [ 				self error: 'use aClass classComment:'.				classComment := RemoteString newString: aString onFileNumber: 2 ] ]	"Later add priorSource and date and initials?"]Class BasicClassOrganizer >> hasSubject[^ self subject notNil]Metaclass	name: #BasicClassOrganizer;	instanceVariables: #().Metaclass BasicClassOrganizer >> class: aClassDescription defaultList: aSortedCollection[| inst |inst := self defaultList: aSortedCollection.inst setSubject: aClassDescription.^ inst]Metaclass BasicClassOrganizer >> class: aClassDescription[^ self new setSubject: aClassDescription]Metaclass BasicClassOrganizer >> ambiguous[^ #ambiguous]
+Class
+	name: #BasicClassOrganizer;
+	superclass: #ClassCategorizer;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#subject #classComment #commentStamp );
+	classVariables: #();
+	package: #'Kernel-Classes'.
+
+Class BasicClassOrganizer >> classComment: aString stamp: aStamp
+[
+	"Store the comment, aString, associated with the object that refers to the receiver."
+self commentStamp: aStamp.(aString isKindOf: RemoteString)	ifTrue: [ classComment := aString ]	ifFalse: [ 		aString isEmptyOrNil			ifTrue: [ classComment := nil ]			ifFalse: [ 				self error: 'use aClass classComment:'.				classComment := RemoteString newString: aString onFileNumber: 2 ] ]	"Later add priorSource and date and initials?"
+]
+
+Class BasicClassOrganizer >> commentStamp
+[
+	"Answer the comment stamp for the class"
+^ commentStamp
+]
+
+Class BasicClassOrganizer >> classComment
+[
+classComment ifNil: [ ^ '' ].^ classComment string ifNil: [ '' ]
+]
+
+Class BasicClassOrganizer >> subject
+[
+^ subject
+]
+
+Class BasicClassOrganizer >> hasComment
+[
+	"Answer whether the class classified by the receiver has a comment."
+^ classComment notNil
+]
+
+Class BasicClassOrganizer >> setSubject: aClassDescription
+[
+subject := aClassDescription
+]
+
+Class BasicClassOrganizer >> commentRemoteStr
+[
+^ classComment
+]
+
+Class BasicClassOrganizer >> dateCommentLastSubmitted
+[
+	"Answer a Date object indicating when my class comment was last submitted.  If there is no date stamp, or one of the old-time <historical>  guys, return nil"
+	"RecentMessageSet organization dateCommentLastSubmitted"
+| aStamp tokens |(aStamp := self commentStamp) isEmptyOrNil	ifTrue: [ ^ nil ].tokens := aStamp	findBetweenSubStrs:		' '.	"space is expected delimiter, but cr is sometimes seen, though of mysterious provenance"^ tokens size > 1	ifTrue: [ [ tokens second asDate ] ifError: [ nil ] ]	ifFalse: [ nil ]
+]
+
+Class BasicClassOrganizer >> commentStamp: aStamp
+[
+commentStamp := aStamp
+]
+
+Class BasicClassOrganizer >> putCommentOnFile: aFileStream numbered: sourceIndex moveSource: moveSource forClass: aClass
+[
+	"Store the comment about the class onto file, aFileStream."
+| header |classComment	ifNotNil: [ 		aFileStream			cr;			nextPut: $!.		header := String			streamContents: [ :strm | 				strm					nextPutAll: aClass name;					nextPutAll: ' commentStamp: '.				commentStamp ifNil: [ commentStamp := '<historical>' ].				commentStamp storeOn: strm.				strm					nextPutAll: ' prior: ';					nextPutAll: '0' ].		aFileStream nextChunkPut: header.		aClass organization fileOutCommentOn: aFileStream moveSource: moveSource toFile: sourceIndex.		aFileStream cr ]
+]
+
+Class BasicClassOrganizer >> fileOutCommentOn: aFileStream moveSource: moveSource toFile: fileIndex
+[
+	"Copy the class comment to aFileStream.  If moveSource is true (as in compressChanges or compressSources, then update classComment to point to the new file."
+| fileComment |classComment	ifNotNil: [ 		aFileStream cr.		fileComment := RemoteString newString: classComment string onFileNumber: fileIndex toFile: aFileStream.		moveSource			ifTrue: [ classComment := fileComment ] ]
+]
+
+Class BasicClassOrganizer >> classComment: aString
+[
+	"Store the comment, aString, associated with the object that refers to the 	receiver."
+(aString isKindOf: RemoteString)	ifTrue: [ classComment := aString ]	ifFalse: [ 		aString isEmptyOrNil			ifTrue: [ classComment := nil ]			ifFalse: [ 				self error: 'use aClass classComment:'.				classComment := RemoteString newString: aString onFileNumber: 2 ] ]	"Later add priorSource and date and initials?"
+]
+
+Class BasicClassOrganizer >> hasSubject
+[
+^ self subject notNil
+]
+
+Metaclass
+	name: #BasicClassOrganizer;
+	instanceVariables: #().
+
+Metaclass BasicClassOrganizer >> class: aClassDescription defaultList: aSortedCollection
+[
+| inst |inst := self defaultList: aSortedCollection.inst setSubject: aClassDescription.^ inst
+]
+
+Metaclass BasicClassOrganizer >> class: aClassDescription
+[
+^ self new setSubject: aClassDescription
+]
+
+Metaclass BasicClassOrganizer >> ambiguous
+[
+^ #ambiguous
+]
+

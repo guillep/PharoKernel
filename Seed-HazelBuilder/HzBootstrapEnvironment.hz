@@ -1,1 +1,118 @@
-Class	name: #HzBootstrapEnvironment;	superclass: #ClassObject;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#bootstrapMetaclass #undeclaredVariables #globals #specialObjectsArray #behaviors #relaxed );	classVariables: #();	package: #'Seed-HazelBuilder'.Class HzBootstrapEnvironment >> globalNamed: aGlobalName[^ globals at: aGlobalName]Class HzBootstrapEnvironment >> relaxed[	"I indicate if the globals are created on usage or we need an explicit declaration"^ relaxed ifNil: [ true ]]Class HzBootstrapEnvironment >> classNames[^ behaviors keys]Class HzBootstrapEnvironment >> globals[^ globals]Class HzBootstrapEnvironment >> classes[^ behaviors values]Class HzBootstrapEnvironment >> addGlobal: aGlobalName pointingTo: anObject[globals at: aGlobalName put: anObject]Class HzBootstrapEnvironment >> globalNamed: aClassName pointTo: anObject[globals at: aClassName put: anObject]Class HzBootstrapEnvironment >> bootstrapMetaclass[^ bootstrapMetaclass]Class HzBootstrapEnvironment >> includesClassNamed: aClassName[^ self includesGlobalNamed: aClassName]Class HzBootstrapEnvironment >> bootstrapMetaclass: theMetaclass[bootstrapMetaclass := theMetaclass]Class HzBootstrapEnvironment >> specialObjectsArray: anArray[specialObjectsArray := anArray]Class HzBootstrapEnvironment >> bindingOfGlobalNamed: aGlobalName isMeta: isMeta[^ isMeta	ifTrue: [ nil -> (self globalNamed: aGlobalName) class ]	ifFalse: [ self bindingOfGlobal: aGlobalName ]]Class HzBootstrapEnvironment >> globalsNames[^ globals keys]Class HzBootstrapEnvironment >> addBehavior: behavior named: aBehaviorName[behaviors at: aBehaviorName put: behavior]Class HzBootstrapEnvironment >> initialize[globals := Dictionary new.behaviors := Dictionary new.undeclaredVariables := Set new]Class HzBootstrapEnvironment >> addUndeclaredVariable: aVariableName[undeclaredVariables add: aVariableName]Class HzBootstrapEnvironment >> undeclaredVariables[^ undeclaredVariables]Class HzBootstrapEnvironment >> bindingOfGlobal: aGlobalName[(self relaxed and: [ (self includesGlobalNamed: aGlobalName) not and: [ aGlobalName first isUppercase ] ])	ifTrue: [ self addGlobal: aGlobalName pointingTo: nil ].(self includesGlobalNamed: aGlobalName)	ifFalse: [ ^ nil ].^ globals associationAt: aGlobalName]Class HzBootstrapEnvironment >> specialObjectsArray[^ specialObjectsArray]Class HzBootstrapEnvironment >> globalNamed: aGlobalName ifAbsent: aBlock[^ globals at: aGlobalName ifAbsent: aBlock]Class HzBootstrapEnvironment >> includesGlobalNamed: aGlobalName[^ globals includesKey: aGlobalName]Metaclass	name: #HzBootstrapEnvironment;	instanceVariables: #().
+Class
+	name: #HzBootstrapEnvironment;
+	superclass: #ClassObject;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#bootstrapMetaclass #undeclaredVariables #globals #specialObjectsArray #behaviors #relaxed );
+	classVariables: #();
+	package: #'Seed-HazelBuilder'.
+
+Class HzBootstrapEnvironment >> globalNamed: aGlobalName
+[
+^ globals at: aGlobalName
+]
+
+Class HzBootstrapEnvironment >> relaxed
+[
+	"I indicate if the globals are created on usage or we need an explicit declaration"
+^ relaxed ifNil: [ true ]
+]
+
+Class HzBootstrapEnvironment >> classNames
+[
+^ behaviors keys
+]
+
+Class HzBootstrapEnvironment >> globals
+[
+^ globals
+]
+
+Class HzBootstrapEnvironment >> classes
+[
+^ behaviors values
+]
+
+Class HzBootstrapEnvironment >> addGlobal: aGlobalName pointingTo: anObject
+[
+globals at: aGlobalName put: anObject
+]
+
+Class HzBootstrapEnvironment >> globalNamed: aClassName pointTo: anObject
+[
+globals at: aClassName put: anObject
+]
+
+Class HzBootstrapEnvironment >> bootstrapMetaclass
+[
+^ bootstrapMetaclass
+]
+
+Class HzBootstrapEnvironment >> includesClassNamed: aClassName
+[
+^ self includesGlobalNamed: aClassName
+]
+
+Class HzBootstrapEnvironment >> bootstrapMetaclass: theMetaclass
+[
+bootstrapMetaclass := theMetaclass
+]
+
+Class HzBootstrapEnvironment >> specialObjectsArray: anArray
+[
+specialObjectsArray := anArray
+]
+
+Class HzBootstrapEnvironment >> bindingOfGlobalNamed: aGlobalName isMeta: isMeta
+[
+^ isMeta	ifTrue: [ nil -> (self globalNamed: aGlobalName) class ]	ifFalse: [ self bindingOfGlobal: aGlobalName ]
+]
+
+Class HzBootstrapEnvironment >> globalsNames
+[
+^ globals keys
+]
+
+Class HzBootstrapEnvironment >> addBehavior: behavior named: aBehaviorName
+[
+behaviors at: aBehaviorName put: behavior
+]
+
+Class HzBootstrapEnvironment >> initialize
+[
+globals := Dictionary new.behaviors := Dictionary new.undeclaredVariables := Set new
+]
+
+Class HzBootstrapEnvironment >> addUndeclaredVariable: aVariableName
+[
+undeclaredVariables add: aVariableName
+]
+
+Class HzBootstrapEnvironment >> undeclaredVariables
+[
+^ undeclaredVariables
+]
+
+Class HzBootstrapEnvironment >> bindingOfGlobal: aGlobalName
+[
+(self relaxed and: [ (self includesGlobalNamed: aGlobalName) not and: [ aGlobalName first isUppercase ] ])	ifTrue: [ self addGlobal: aGlobalName pointingTo: nil ].(self includesGlobalNamed: aGlobalName)	ifFalse: [ ^ nil ].^ globals associationAt: aGlobalName
+]
+
+Class HzBootstrapEnvironment >> specialObjectsArray
+[
+^ specialObjectsArray
+]
+
+Class HzBootstrapEnvironment >> globalNamed: aGlobalName ifAbsent: aBlock
+[
+^ globals at: aGlobalName ifAbsent: aBlock
+]
+
+Class HzBootstrapEnvironment >> includesGlobalNamed: aGlobalName
+[
+^ globals includesKey: aGlobalName
+]
+
+Metaclass
+	name: #HzBootstrapEnvironment;
+	instanceVariables: #().
+

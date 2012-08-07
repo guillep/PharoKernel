@@ -1,1 +1,56 @@
-Class	name: #SystemResolver;	superclass: #ClassFileSystemResolver;	instanceSpecification: #(#pointers #words );	instanceVariables: #();	classVariables: #();	package: #'FileSystem-Core-Implementation'.Class SystemResolver >> vmBinary[^ self resolveString: Smalltalk vm fullPath]Class SystemResolver >> supportedOrigins[^ #(#image #imageDirectory #changes #vmBinary #vmDirectory #workingDirectory)]Class SystemResolver >> vmDirectory[^ self resolveString: self primVmDirectoryPath]Class SystemResolver >> imageDirectory[^ self image parent]Class SystemResolver >> changes[^ self image withExtension: Smalltalk changesSuffix]Class SystemResolver >> primVmDirectoryPath[	"Answer the full path name for the current virtual machine."	<primitive: 142>self primitiveFailed]Class SystemResolver >> image[^ self resolveString: self primImagePath]Class SystemResolver >> primImagePath[	"Answer the full path name for the current image."	<primitive: 121>self primitiveFailed]Metaclass	name: #SystemResolver;	instanceVariables: #().
+Class
+	name: #SystemResolver;
+	superclass: #ClassFileSystemResolver;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #();
+	classVariables: #();
+	package: #'FileSystem-Core-Implementation'.
+
+Class SystemResolver >> vmBinary
+[
+^ self resolveString: Smalltalk vm fullPath
+]
+
+Class SystemResolver >> supportedOrigins
+[
+^ #(#image #imageDirectory #changes #vmBinary #vmDirectory #workingDirectory)
+]
+
+Class SystemResolver >> vmDirectory
+[
+^ self resolveString: self primVmDirectoryPath
+]
+
+Class SystemResolver >> imageDirectory
+[
+^ self image parent
+]
+
+Class SystemResolver >> changes
+[
+^ self image withExtension: Smalltalk changesSuffix
+]
+
+Class SystemResolver >> primVmDirectoryPath
+[
+	"Answer the full path name for the current virtual machine."
+	<primitive: 142>
+self primitiveFailed
+]
+
+Class SystemResolver >> image
+[
+^ self resolveString: self primImagePath
+]
+
+Class SystemResolver >> primImagePath
+[
+	"Answer the full path name for the current image."
+	<primitive: 121>
+self primitiveFailed
+]
+
+Metaclass
+	name: #SystemResolver;
+	instanceVariables: #().
+

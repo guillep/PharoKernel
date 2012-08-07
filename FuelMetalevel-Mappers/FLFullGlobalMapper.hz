@@ -1,1 +1,76 @@
-Class	name: #FLFullGlobalMapper;	superclass: #ClassFLMapper;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#clusterByObject #globalSymbols #globalsCluster #instanceSideCluster #classSideCluster #classVariablesCluster #globalAssociationCluster #globalCompiledMethodCluster #internalMethods #internalBehaviors );	classVariables: #();	package: #'FuelMetalevel-Mappers'.Class FLFullGlobalMapper >> addOldInternalBehaviorsToCache[	"Old internals should now be considered as globals. Therefore, we need to cache them."(internalBehaviors collect: [ :each | each binding ])	do: [ :each | 		each value isBehavior			ifTrue: [ self cacheClassAssociation: each ].		each value isTrait			ifTrue: [ self cacheTraitAssociation: each ] ]]Class FLFullGlobalMapper >> cacheClassAssociation: anAssociation[clusterByObject	at: anAssociation put: globalAssociationCluster;	at: anAssociation value put: instanceSideCluster;	at: anAssociation value class put: classSideCluster.anAssociation value classPool	associationsDo: [ :aVariableAssociation | 		classVariablesCluster declare: aVariableAssociation belongsTo: anAssociation value.		clusterByObject at: aVariableAssociation put: classVariablesCluster ]]Class FLFullGlobalMapper >> cacheTraitAssociation: anAssociation[clusterByObject	at: anAssociation put: globalAssociationCluster;	at: anAssociation value put: instanceSideCluster;	at: anAssociation value classSide put: classSideCluster]Class FLFullGlobalMapper >> initializeWithInternalBehaviors: explicitInternals internalMethods: methods globalSymbols: explicitExternals[self initialize.clusterByObject := FLLargeIdentityDictionary new.internalBehaviors := explicitInternals.internalMethods := methods.globalSymbols := explicitExternals.globalsCluster := FLGlobalValueCluster newAnalyzing.instanceSideCluster := FLGlobalClassCluster newAnalyzing.classSideCluster := FLGlobalClassSideCluster newAnalyzing.classVariablesCluster := FLGlobalClassPoolAssociationCluster newAnalyzing.globalAssociationCluster := FLGlobalAssociationCluster newAnalyzing.globalCompiledMethodCluster := FLGlobalCompiledMethodCluster newAnalyzing.self cacheGlobals]Class FLFullGlobalMapper >> removeNewInternalBehaviorsFromCache: explicitInternals[	"New internal behaviors may have been considerd as global previously. Therefore, we need to remove it from everywhere in that case."(explicitInternals collect: [ :each | each binding ])	do: [ :each | 		each value isBehavior			ifTrue: [ 				clusterByObject removeKey: each ifAbsent: [  ].				clusterByObject removeKey: each value ifAbsent: [  ].				clusterByObject removeKey: each value class ifAbsent: [  ].				each value classPool					associationsDo: [ :aVariableAssociation | 						clusterByObject removeKey: aVariableAssociation ifAbsent: [  ].						classVariablesCluster classOwnerByAssociation removeKey: aVariableAssociation ifAbsent: [  ] ] ].		each value isTrait			ifTrue: [ 				clusterByObject removeKey: each ifAbsent: [  ].				clusterByObject removeKey: each value ifAbsent: [  ].				clusterByObject removeKey: each value classSide ifAbsent: [  ] ] ]]Class FLFullGlobalMapper >> cacheGlobalAssociation: anAssociation[clusterByObject at: anAssociation put: globalAssociationCluster.	"Some globals, like ActiveHand have a nil value in the Smalltalk globals. Therefore, we cannot map nil to globalCluster. We could filter before in #defaultGlobalSymbols but that means that not even the Association will be consider global."anAssociation value isNil	ifFalse: [ clusterByObject at: anAssociation value put: globalsCluster ]]Class FLFullGlobalMapper >> resetForInternalBehaviors: explicitInternals internalMethods: methods[self reinitializeGlobalClustersForInternalBehaviors.self removeNewInternalBehaviorsFromCache: explicitInternals.self addOldInternalBehaviorsToCache.	"Now that old internal behaviors have been updated, we can set the new ones"internalBehaviors := explicitInternals.	"The methods are not cached anywhere, so we can just set the new ones"internalMethods := methods.	"For the moment we set the default symbols. In the future we can pass them by parameter also "globalSymbols := FLAnalyzer defaultGlobalSymbols]Class FLFullGlobalMapper >> cacheGlobals[Smalltalk globals	associationsDo: [ :each | 		(internalBehaviors includes: each value)			ifFalse: [ 				each value isBehavior					ifTrue: [ self cacheClassAssociation: each ].				each value isTrait					ifTrue: [ self cacheTraitAssociation: each ] ].		(globalSymbols includes: each key)			ifTrue: [ self cacheGlobalAssociation: each ] ]]Class FLFullGlobalMapper >> reinitializeGlobalClustersForInternalBehaviors[	"All clusters should be reinitialized because they contain status of the last serialization such as the instVar 'objects' or 'theClass'. Moreoever, in the instVar 'clusterByObject' of the analizer, we have already objects associated with instances of thee clusters. If we create new clusters, we will have different instances of the same cluster. In thise case, we want to use the same cluster instance, hence we reinitialize them'  '"globalsCluster initializeAnalyzing.instanceSideCluster initializeAnalyzing.classSideCluster initializeAnalyzing.globalAssociationCluster initializeAnalyzing.globalCompiledMethodCluster initializeAnalyzing.	"Most #initialize do the normal initialize of a cluster, which empties 'objects'. However, for the classPool cluster, if we send #initialize we will also be cleaning what we want to cache 'classOwnerByAssociation'. So we send a specific message #reinitialize that do not clean that.  "classVariablesCluster reinitialize]Class FLFullGlobalMapper >> shouldConsdierMethodAsGlobal: aCompiledMethod[	"Answers true when aCompiledMethod must be considered global, and false otherwise.	Global methods are those which are NOT included in the classes considered as internal, nor in the methods consider as internal, nor if they are DoIts."^ ((((internalBehaviors includes: aCompiledMethod methodClass) not	and: [ (internalBehaviors includes: aCompiledMethod methodClass theNonMetaClass) not ])	and: [ (internalMethods includes: aCompiledMethod) not ]) and: [ aCompiledMethod isInstalled ])	and: [ aCompiledMethod isDoIt not ]]Class FLFullGlobalMapper >> mapAndTrace: anObject[| aGlobalCluster |aGlobalCluster := clusterByObject	at: anObject	ifAbsent: [ 		"This is a hack to support correct behavior of globals for methods. This is just to avoid adding all 				methods to the cache"		(anObject class == CompiledMethod and: [ self shouldConsdierMethodAsGlobal: anObject ])			ifTrue: [ globalCompiledMethodCluster ]			ifFalse: [ ^ next mapAndTrace: anObject ] ].(self clusterInstanceOf: aGlobalCluster class keyInBucket: aGlobalCluster class name factory: [ aGlobalCluster ])	add: anObject	traceWith: analysis]Metaclass	name: #FLFullGlobalMapper;	instanceVariables: #().Metaclass FLFullGlobalMapper >> newWithInternalBehaviors: internals internalMethods: methods globalSymbols: globalSymbols[^ self basicNew	initializeWithInternalBehaviors: internals internalMethods: methods globalSymbols: globalSymbols;	yourself]
+Class
+	name: #FLFullGlobalMapper;
+	superclass: #ClassFLMapper;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#clusterByObject #globalSymbols #globalsCluster #instanceSideCluster #classSideCluster #classVariablesCluster #globalAssociationCluster #globalCompiledMethodCluster #internalMethods #internalBehaviors );
+	classVariables: #();
+	package: #'FuelMetalevel-Mappers'.
+
+Class FLFullGlobalMapper >> addOldInternalBehaviorsToCache
+[
+	"Old internals should now be considered as globals. Therefore, we need to cache them."
+(internalBehaviors collect: [ :each | each binding ])	do: [ :each | 		each value isBehavior			ifTrue: [ self cacheClassAssociation: each ].		each value isTrait			ifTrue: [ self cacheTraitAssociation: each ] ]
+]
+
+Class FLFullGlobalMapper >> cacheClassAssociation: anAssociation
+[
+clusterByObject	at: anAssociation put: globalAssociationCluster;	at: anAssociation value put: instanceSideCluster;	at: anAssociation value class put: classSideCluster.anAssociation value classPool	associationsDo: [ :aVariableAssociation | 		classVariablesCluster declare: aVariableAssociation belongsTo: anAssociation value.		clusterByObject at: aVariableAssociation put: classVariablesCluster ]
+]
+
+Class FLFullGlobalMapper >> cacheTraitAssociation: anAssociation
+[
+clusterByObject	at: anAssociation put: globalAssociationCluster;	at: anAssociation value put: instanceSideCluster;	at: anAssociation value classSide put: classSideCluster
+]
+
+Class FLFullGlobalMapper >> initializeWithInternalBehaviors: explicitInternals internalMethods: methods globalSymbols: explicitExternals
+[
+self initialize.clusterByObject := FLLargeIdentityDictionary new.internalBehaviors := explicitInternals.internalMethods := methods.globalSymbols := explicitExternals.globalsCluster := FLGlobalValueCluster newAnalyzing.instanceSideCluster := FLGlobalClassCluster newAnalyzing.classSideCluster := FLGlobalClassSideCluster newAnalyzing.classVariablesCluster := FLGlobalClassPoolAssociationCluster newAnalyzing.globalAssociationCluster := FLGlobalAssociationCluster newAnalyzing.globalCompiledMethodCluster := FLGlobalCompiledMethodCluster newAnalyzing.self cacheGlobals
+]
+
+Class FLFullGlobalMapper >> removeNewInternalBehaviorsFromCache: explicitInternals
+[
+	"New internal behaviors may have been considerd as global previously. Therefore, we need to remove it from everywhere in that case."
+(explicitInternals collect: [ :each | each binding ])	do: [ :each | 		each value isBehavior			ifTrue: [ 				clusterByObject removeKey: each ifAbsent: [  ].				clusterByObject removeKey: each value ifAbsent: [  ].				clusterByObject removeKey: each value class ifAbsent: [  ].				each value classPool					associationsDo: [ :aVariableAssociation | 						clusterByObject removeKey: aVariableAssociation ifAbsent: [  ].						classVariablesCluster classOwnerByAssociation removeKey: aVariableAssociation ifAbsent: [  ] ] ].		each value isTrait			ifTrue: [ 				clusterByObject removeKey: each ifAbsent: [  ].				clusterByObject removeKey: each value ifAbsent: [  ].				clusterByObject removeKey: each value classSide ifAbsent: [  ] ] ]
+]
+
+Class FLFullGlobalMapper >> cacheGlobalAssociation: anAssociation
+[
+clusterByObject at: anAssociation put: globalAssociationCluster.	"Some globals, like ActiveHand have a nil value in the Smalltalk globals. Therefore, we cannot map nil to globalCluster. We could filter before in #defaultGlobalSymbols but that means that not even the Association will be consider global."anAssociation value isNil	ifFalse: [ clusterByObject at: anAssociation value put: globalsCluster ]
+]
+
+Class FLFullGlobalMapper >> resetForInternalBehaviors: explicitInternals internalMethods: methods
+[
+self reinitializeGlobalClustersForInternalBehaviors.self removeNewInternalBehaviorsFromCache: explicitInternals.self addOldInternalBehaviorsToCache.	"Now that old internal behaviors have been updated, we can set the new ones"internalBehaviors := explicitInternals.	"The methods are not cached anywhere, so we can just set the new ones"internalMethods := methods.	"For the moment we set the default symbols. In the future we can pass them by parameter also "globalSymbols := FLAnalyzer defaultGlobalSymbols
+]
+
+Class FLFullGlobalMapper >> cacheGlobals
+[
+Smalltalk globals	associationsDo: [ :each | 		(internalBehaviors includes: each value)			ifFalse: [ 				each value isBehavior					ifTrue: [ self cacheClassAssociation: each ].				each value isTrait					ifTrue: [ self cacheTraitAssociation: each ] ].		(globalSymbols includes: each key)			ifTrue: [ self cacheGlobalAssociation: each ] ]
+]
+
+Class FLFullGlobalMapper >> reinitializeGlobalClustersForInternalBehaviors
+[
+	"All clusters should be reinitialized because they contain status of the last serialization such as the instVar 'objects' or 'theClass'. Moreoever, in the instVar 'clusterByObject' of the analizer, we have already objects associated with instances of thee clusters. If we create new clusters, we will have different instances of the same cluster. In thise case, we want to use the same cluster instance, hence we reinitialize them'  '"
+globalsCluster initializeAnalyzing.instanceSideCluster initializeAnalyzing.classSideCluster initializeAnalyzing.globalAssociationCluster initializeAnalyzing.globalCompiledMethodCluster initializeAnalyzing.	"Most #initialize do the normal initialize of a cluster, which empties 'objects'. However, for the classPool cluster, if we send #initialize we will also be cleaning what we want to cache 'classOwnerByAssociation'. So we send a specific message #reinitialize that do not clean that.  "classVariablesCluster reinitialize
+]
+
+Class FLFullGlobalMapper >> shouldConsdierMethodAsGlobal: aCompiledMethod
+[
+	"Answers true when aCompiledMethod must be considered global, and false otherwise.	Global methods are those which are NOT included in the classes considered as internal, nor in the methods consider as internal, nor if they are DoIts."
+^ ((((internalBehaviors includes: aCompiledMethod methodClass) not	and: [ (internalBehaviors includes: aCompiledMethod methodClass theNonMetaClass) not ])	and: [ (internalMethods includes: aCompiledMethod) not ]) and: [ aCompiledMethod isInstalled ])	and: [ aCompiledMethod isDoIt not ]
+]
+
+Class FLFullGlobalMapper >> mapAndTrace: anObject
+[
+| aGlobalCluster |aGlobalCluster := clusterByObject	at: anObject	ifAbsent: [ 		"This is a hack to support correct behavior of globals for methods. This is just to avoid adding all 				methods to the cache"		(anObject class == CompiledMethod and: [ self shouldConsdierMethodAsGlobal: anObject ])			ifTrue: [ globalCompiledMethodCluster ]			ifFalse: [ ^ next mapAndTrace: anObject ] ].(self clusterInstanceOf: aGlobalCluster class keyInBucket: aGlobalCluster class name factory: [ aGlobalCluster ])	add: anObject	traceWith: analysis
+]
+
+Metaclass
+	name: #FLFullGlobalMapper;
+	instanceVariables: #().
+
+Metaclass FLFullGlobalMapper >> newWithInternalBehaviors: internals internalMethods: methods globalSymbols: globalSymbols
+[
+^ self basicNew	initializeWithInternalBehaviors: internals internalMethods: methods globalSymbols: globalSymbols;	yourself
+]
+

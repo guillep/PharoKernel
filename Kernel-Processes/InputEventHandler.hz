@@ -1,1 +1,32 @@
-Class	name: #InputEventHandler;	superclass: #ClassObject;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#eventFetcher );	classVariables: #();	sharedPools: #(#EventSensorConstants );	package: #'Kernel-Processes'.Class InputEventHandler >> registerIn: anEventFetcher[eventFetcher := anEventFetcher.eventFetcher registerHandler: self]Class InputEventHandler >> unregister[eventFetcher ifNotNil: [ eventFetcher unregisterHandler: self ]]Class InputEventHandler >> handleEvent: eventBuffer[self subclassResponsibility]Class InputEventHandler >> flushEvents[]Metaclass	name: #InputEventHandler;	instanceVariables: #().
+Class
+	name: #InputEventHandler;
+	superclass: #ClassObject;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#eventFetcher );
+	classVariables: #();
+	sharedPools: #(#EventSensorConstants );	package: #'Kernel-Processes'.
+
+Class InputEventHandler >> registerIn: anEventFetcher
+[
+eventFetcher := anEventFetcher.eventFetcher registerHandler: self
+]
+
+Class InputEventHandler >> unregister
+[
+eventFetcher ifNotNil: [ eventFetcher unregisterHandler: self ]
+]
+
+Class InputEventHandler >> handleEvent: eventBuffer
+[
+self subclassResponsibility
+]
+
+Class InputEventHandler >> flushEvents
+[
+
+]
+
+Metaclass
+	name: #InputEventHandler;
+	instanceVariables: #().
+

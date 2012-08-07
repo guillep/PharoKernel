@@ -1,1 +1,84 @@
-Class	name: #FLSerialization;	superclass: #ClassObject;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#encoder #root #clusters #analyzer );	classVariables: #();	package: #'Fuel-Core'.Class FLSerialization >> instancesStep[clusters do: [ :aCluster | aCluster registerIndexesOn: encoder objectsIndexes ].clusters do: [ :aCluster | self clusterInstancesStepOf: aCluster ]]Class FLSerialization >> objects[	"Answer a collection with the serialized objects."^ encoder objectsIndexes keys]Class FLSerialization >> fuelAccept: aGeneralMapper[^ aGeneralMapper visitSubstitution: self by: nil]Class FLSerialization >> clusters[^ clusters]Class FLSerialization >> trailerStep[encoder encodeReferenceTo: root]Class FLSerialization >> headerStep[encoder encodeYourself.encoder encodePositiveInteger: clusters size]Class FLSerialization >> root[^ root]Class FLSerialization >> referencesStep[clusters do: [ :aCluster | aCluster serializeReferencesStepWith: encoder ]]Class FLSerialization >> clusterInstancesStepOf: aCluster[encoder encodeClusterClass: aCluster class.aCluster clusterSerializeStepWith: encoder.aCluster serializeInstancesStepWith: encoder.aCluster serializePostInstancesStepWith: encoder]Class FLSerialization >> run[	"Serialize the graph starting at the root object."self analysisStep.self headerStep.self instancesStep.self referencesStep.self trailerStep]Class FLSerialization >> initializeWith: anEncoder root: anObject analyzer: anAnalyzer[self initialize.encoder := anEncoder.root := anObject.analyzer := anAnalyzer]Class FLSerialization >> encoder[^ encoder]Class FLSerialization >> analysisStep[| anAnalysis |anAnalysis := analyzer analysisFor: root.clusters := anAnalysis clusterization clusters.encoder objectCount: anAnalysis clusterization objectCount]Metaclass	name: #FLSerialization;	instanceVariables: #().Metaclass FLSerialization >> with: anEncoder root: anObject analyzer: anAnalyzer[^ self basicNew	initializeWith: anEncoder root: anObject analyzer: anAnalyzer;	yourself]
+Class
+	name: #FLSerialization;
+	superclass: #ClassObject;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#encoder #root #clusters #analyzer );
+	classVariables: #();
+	package: #'Fuel-Core'.
+
+Class FLSerialization >> instancesStep
+[
+clusters do: [ :aCluster | aCluster registerIndexesOn: encoder objectsIndexes ].clusters do: [ :aCluster | self clusterInstancesStepOf: aCluster ]
+]
+
+Class FLSerialization >> objects
+[
+	"Answer a collection with the serialized objects."
+^ encoder objectsIndexes keys
+]
+
+Class FLSerialization >> fuelAccept: aGeneralMapper
+[
+^ aGeneralMapper visitSubstitution: self by: nil
+]
+
+Class FLSerialization >> clusters
+[
+^ clusters
+]
+
+Class FLSerialization >> trailerStep
+[
+encoder encodeReferenceTo: root
+]
+
+Class FLSerialization >> headerStep
+[
+encoder encodeYourself.encoder encodePositiveInteger: clusters size
+]
+
+Class FLSerialization >> root
+[
+^ root
+]
+
+Class FLSerialization >> referencesStep
+[
+clusters do: [ :aCluster | aCluster serializeReferencesStepWith: encoder ]
+]
+
+Class FLSerialization >> clusterInstancesStepOf: aCluster
+[
+encoder encodeClusterClass: aCluster class.aCluster clusterSerializeStepWith: encoder.aCluster serializeInstancesStepWith: encoder.aCluster serializePostInstancesStepWith: encoder
+]
+
+Class FLSerialization >> run
+[
+	"Serialize the graph starting at the root object."
+self analysisStep.self headerStep.self instancesStep.self referencesStep.self trailerStep
+]
+
+Class FLSerialization >> initializeWith: anEncoder root: anObject analyzer: anAnalyzer
+[
+self initialize.encoder := anEncoder.root := anObject.analyzer := anAnalyzer
+]
+
+Class FLSerialization >> encoder
+[
+^ encoder
+]
+
+Class FLSerialization >> analysisStep
+[
+| anAnalysis |anAnalysis := analyzer analysisFor: root.clusters := anAnalysis clusterization clusters.encoder objectCount: anAnalysis clusterization objectCount
+]
+
+Metaclass
+	name: #FLSerialization;
+	instanceVariables: #().
+
+Metaclass FLSerialization >> with: anEncoder root: anObject analyzer: anAnalyzer
+[
+^ self basicNew	initializeWith: anEncoder root: anObject analyzer: anAnalyzer;	yourself
+]
+

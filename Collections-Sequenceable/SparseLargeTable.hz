@@ -1,1 +1,178 @@
-Class	name: #SparseLargeTable;	superclass: #ClassArrayedCollection;	instanceSpecification: #(#variable #pointers #words );	instanceVariables: #(#base #size #chunkSize #defaultValue );	classVariables: #();	package: #'Collections-Sequenceable'.Class SparseLargeTable >> at: index put: value[self pvtCheckIndex: index.^ self noCheckAt: index put: value]Class SparseLargeTable >> printElementsOn: aStream[| element |aStream nextPut: $(.base to: size do: [ :index | 	element := self at: index.	aStream		print: element;		space ].self isEmpty	ifFalse: [ aStream skip: -1 ].aStream nextPut: $)]Class SparseLargeTable >> base[^ base]Class SparseLargeTable >> allDefaultValueSubtableAt: index[| t |t := self basicAt: index.t ifNil: [ ^ true ].t	do: [ :e | 		e ~= defaultValue			ifTrue: [ ^ false ] ].^ true]Class SparseLargeTable >> speciesNew[^ self species new: self size chunkSize: self chunkSize arrayClass: self arrayClass]Class SparseLargeTable >> similarSpeciesInstance: newSize[^ self similarInstance: newSize]Class SparseLargeTable >> initChunkSize: aChunkSize size: aSize arrayClass: aClass base: b defaultValue: d[| lastChunkSize |chunkSize := aChunkSize.size := aSize.base := b.defaultValue := d.1 to: self basicSize - 1 do: [ :in | self basicAt: in put: (aClass new: chunkSize withAll: defaultValue) ].lastChunkSize := size \\ chunkSize.lastChunkSize = 0	ifTrue: [ lastChunkSize := chunkSize ].size = 0	ifTrue: [ self basicAt: 1 put: (aClass new: 0) ]	ifFalse: [ self basicAt: self basicSize put: (aClass new: lastChunkSize withAll: defaultValue) ]]Class SparseLargeTable >> storeOn: aStream[| x |(#(#String) includes: self arrayClass name)	ifTrue: [ 		aStream nextPut: $'.		1 to: self size do: [ :i | 			aStream nextPut: (x := self at: i).			x == $'				ifTrue: [ aStream nextPut: x ] ].		aStream nextPutAll: ''' asLargeArrayChunkSize: '.		aStream nextPutAll: self chunkSize asString.		^ self ].^ super storeOn: aStream]Class SparseLargeTable >> at: index[self pvtCheckIndex: index.^ self noCheckAt: index]Class SparseLargeTable >> postCopy[super postCopy.1 to: self basicSize do: [ :i | self basicAt: i put: (self basicAt: i) copy ]]Class SparseLargeTable >> similarSpeciesInstance[^ self similarInstance]Class SparseLargeTable >> arrayClass[^ (self basicAt: 1) class]Class SparseLargeTable >> noCheckAt: index put: value[| chunkIndex t |chunkIndex := (index - base) // chunkSize + 1.chunkIndex > self basicSize	ifTrue: [ ^ value ].t := self basicAt: chunkIndex.t ifNil: [ ^ value ].^ t at: index - base + 1 - ((chunkIndex - 1) * chunkSize) put: value]Class SparseLargeTable >> privateSize: s[size := s]Class SparseLargeTable >> chunkSize[^ chunkSize]Class SparseLargeTable >> speciesNew: newSize[^ self species new: newSize chunkSize: self chunkSize arrayClass: self arrayClass]Class SparseLargeTable >> findLastNonNilSubTable[(self basicAt: self basicSize) ifNotNil: [ ^ self basicSize ].self basicSize - 1 to: 1 by: -1 do: [ :lastIndex | (self basicAt: lastIndex) ifNotNil: [ ^ lastIndex ] ].^ 0]Class SparseLargeTable >> analyzeSpaceSaving[| total elems tablesTotal nonNilTables |total := size - base + 1.elems := 0.base to: size do: [ :i | 	(self at: i) ~= defaultValue		ifTrue: [ elems := elems + 1 ] ].tablesTotal := self basicSize.nonNilTables := 0.1 to: self basicSize do: [ :i | (self basicAt: i) ifNotNil: [ nonNilTables := nonNilTables + 1 ] ].^ String	streamContents: [ :strm | 		strm nextPutAll: 'total: '.		strm nextPutAll: total printString.		strm nextPutAll: ' elements: '.		strm nextPutAll: elems printString.		strm nextPutAll: ' tables: '.		strm nextPutAll: tablesTotal printString.		strm nextPutAll: ' non-nil: '.		strm nextPutAll: nonNilTables printString ]]Class SparseLargeTable >> printOn: aStream[(#(#String) includes: self arrayClass name)	ifTrue: [ ^ self storeOn: aStream ].^ super printOn: aStream]Class SparseLargeTable >> size[^ size]Class SparseLargeTable >> zapDefaultOnlyEntries[| lastIndex newInst |1 to: self basicSize do: [ :i | 	(self allDefaultValueSubtableAt: i)		ifTrue: [ self basicAt: i put: nil ] ].lastIndex := self findLastNonNilSubTable.lastIndex = 0	ifTrue: [ ^ self ].newInst := self class	new: lastIndex * chunkSize	chunkSize: chunkSize	arrayClass: (self basicAt: lastIndex) class	base: base	defaultValue: defaultValue.newInst privateSize: self size.base to: newInst size do: [ :i | newInst at: i put: (self at: i) ].1 to: newInst basicSize do: [ :i | 	(newInst allDefaultValueSubtableAt: i)		ifTrue: [ newInst basicAt: i put: nil ] ].	" this is not allowed in production: self becomeForward: newInst. "^ newInst]Class SparseLargeTable >> copyEmpty[	"Answer a copy of the receiver that contains no elements."^ self speciesNew: 0]Class SparseLargeTable >> noCheckAt: index[| chunkIndex t |chunkIndex := (index - base) // chunkSize + 1.(chunkIndex > self basicSize or: [ chunkIndex < 1 ])	ifTrue: [ ^ defaultValue ].t := self basicAt: chunkIndex.t ifNil: [ ^ defaultValue ].^ t at: index - base + 1 - ((chunkIndex - 1) * chunkSize)]Class SparseLargeTable >> similarInstance[^ self class new: self size chunkSize: self chunkSize arrayClass: self arrayClass]Class SparseLargeTable >> pvtCheckIndex: index[index isInteger	ifFalse: [ self errorNonIntegerIndex ].index < 1	ifTrue: [ self errorSubscriptBounds: index ].index > size	ifTrue: [ self errorSubscriptBounds: index ]]Class SparseLargeTable >> similarInstance: newSize[^ self class new: newSize chunkSize: self chunkSize arrayClass: self arrayClass]Metaclass	name: #SparseLargeTable;	instanceVariables: #().Metaclass SparseLargeTable >> new: size chunkSize: chunkSize arrayClass: aClass base: b[^ self	new: size	chunkSize: chunkSize	arrayClass: Array	base: 1	defaultValue: nil]Metaclass SparseLargeTable >> new: size chunkSize: chunkSize arrayClass: aClass[^ self	new: size	chunkSize: chunkSize	arrayClass: Array	base: 1]Metaclass SparseLargeTable >> new: size chunkSize: chunkSize[^ self new: size chunkSize: chunkSize arrayClass: Array]Metaclass SparseLargeTable >> new: size[^ self new: size chunkSize: self defaultChunkSize]Metaclass SparseLargeTable >> new: size chunkSize: chunkSize arrayClass: aClass base: b defaultValue: d[| basicSize |(basicSize := (size - 1) // chunkSize + 1) = 0	ifTrue: [ basicSize := 1 ].^ (self basicNew: basicSize)	initChunkSize: chunkSize		size: size		arrayClass: aClass		base: b		defaultValue: d;	yourself]Metaclass SparseLargeTable >> defaultChunkSizeForFiles[^ 8000]Metaclass SparseLargeTable >> defaultChunkSize[^ 100]
+Class
+	name: #SparseLargeTable;
+	superclass: #ClassArrayedCollection;
+	instanceSpecification: #(#variable #pointers #words );
+	instanceVariables: #(#base #size #chunkSize #defaultValue );
+	classVariables: #();
+	package: #'Collections-Sequenceable'.
+
+Class SparseLargeTable >> at: index put: value
+[
+self pvtCheckIndex: index.^ self noCheckAt: index put: value
+]
+
+Class SparseLargeTable >> printElementsOn: aStream
+[
+| element |aStream nextPut: $(.base to: size do: [ :index | 	element := self at: index.	aStream		print: element;		space ].self isEmpty	ifFalse: [ aStream skip: -1 ].aStream nextPut: $)
+]
+
+Class SparseLargeTable >> base
+[
+^ base
+]
+
+Class SparseLargeTable >> allDefaultValueSubtableAt: index
+[
+| t |t := self basicAt: index.t ifNil: [ ^ true ].t	do: [ :e | 		e ~= defaultValue			ifTrue: [ ^ false ] ].^ true
+]
+
+Class SparseLargeTable >> speciesNew
+[
+^ self species new: self size chunkSize: self chunkSize arrayClass: self arrayClass
+]
+
+Class SparseLargeTable >> similarSpeciesInstance: newSize
+[
+^ self similarInstance: newSize
+]
+
+Class SparseLargeTable >> initChunkSize: aChunkSize size: aSize arrayClass: aClass base: b defaultValue: d
+[
+| lastChunkSize |chunkSize := aChunkSize.size := aSize.base := b.defaultValue := d.1 to: self basicSize - 1 do: [ :in | self basicAt: in put: (aClass new: chunkSize withAll: defaultValue) ].lastChunkSize := size \\ chunkSize.lastChunkSize = 0	ifTrue: [ lastChunkSize := chunkSize ].size = 0	ifTrue: [ self basicAt: 1 put: (aClass new: 0) ]	ifFalse: [ self basicAt: self basicSize put: (aClass new: lastChunkSize withAll: defaultValue) ]
+]
+
+Class SparseLargeTable >> storeOn: aStream
+[
+| x |(#(#String) includes: self arrayClass name)	ifTrue: [ 		aStream nextPut: $'.		1 to: self size do: [ :i | 			aStream nextPut: (x := self at: i).			x == $'				ifTrue: [ aStream nextPut: x ] ].		aStream nextPutAll: ''' asLargeArrayChunkSize: '.		aStream nextPutAll: self chunkSize asString.		^ self ].^ super storeOn: aStream
+]
+
+Class SparseLargeTable >> at: index
+[
+self pvtCheckIndex: index.^ self noCheckAt: index
+]
+
+Class SparseLargeTable >> postCopy
+[
+super postCopy.1 to: self basicSize do: [ :i | self basicAt: i put: (self basicAt: i) copy ]
+]
+
+Class SparseLargeTable >> similarSpeciesInstance
+[
+^ self similarInstance
+]
+
+Class SparseLargeTable >> arrayClass
+[
+^ (self basicAt: 1) class
+]
+
+Class SparseLargeTable >> noCheckAt: index put: value
+[
+| chunkIndex t |chunkIndex := (index - base) // chunkSize + 1.chunkIndex > self basicSize	ifTrue: [ ^ value ].t := self basicAt: chunkIndex.t ifNil: [ ^ value ].^ t at: index - base + 1 - ((chunkIndex - 1) * chunkSize) put: value
+]
+
+Class SparseLargeTable >> privateSize: s
+[
+size := s
+]
+
+Class SparseLargeTable >> chunkSize
+[
+^ chunkSize
+]
+
+Class SparseLargeTable >> speciesNew: newSize
+[
+^ self species new: newSize chunkSize: self chunkSize arrayClass: self arrayClass
+]
+
+Class SparseLargeTable >> findLastNonNilSubTable
+[
+(self basicAt: self basicSize) ifNotNil: [ ^ self basicSize ].self basicSize - 1 to: 1 by: -1 do: [ :lastIndex | (self basicAt: lastIndex) ifNotNil: [ ^ lastIndex ] ].^ 0
+]
+
+Class SparseLargeTable >> analyzeSpaceSaving
+[
+| total elems tablesTotal nonNilTables |total := size - base + 1.elems := 0.base to: size do: [ :i | 	(self at: i) ~= defaultValue		ifTrue: [ elems := elems + 1 ] ].tablesTotal := self basicSize.nonNilTables := 0.1 to: self basicSize do: [ :i | (self basicAt: i) ifNotNil: [ nonNilTables := nonNilTables + 1 ] ].^ String	streamContents: [ :strm | 		strm nextPutAll: 'total: '.		strm nextPutAll: total printString.		strm nextPutAll: ' elements: '.		strm nextPutAll: elems printString.		strm nextPutAll: ' tables: '.		strm nextPutAll: tablesTotal printString.		strm nextPutAll: ' non-nil: '.		strm nextPutAll: nonNilTables printString ]
+]
+
+Class SparseLargeTable >> printOn: aStream
+[
+(#(#String) includes: self arrayClass name)	ifTrue: [ ^ self storeOn: aStream ].^ super printOn: aStream
+]
+
+Class SparseLargeTable >> size
+[
+^ size
+]
+
+Class SparseLargeTable >> zapDefaultOnlyEntries
+[
+| lastIndex newInst |1 to: self basicSize do: [ :i | 	(self allDefaultValueSubtableAt: i)		ifTrue: [ self basicAt: i put: nil ] ].lastIndex := self findLastNonNilSubTable.lastIndex = 0	ifTrue: [ ^ self ].newInst := self class	new: lastIndex * chunkSize	chunkSize: chunkSize	arrayClass: (self basicAt: lastIndex) class	base: base	defaultValue: defaultValue.newInst privateSize: self size.base to: newInst size do: [ :i | newInst at: i put: (self at: i) ].1 to: newInst basicSize do: [ :i | 	(newInst allDefaultValueSubtableAt: i)		ifTrue: [ newInst basicAt: i put: nil ] ].	" this is not allowed in production: self becomeForward: newInst. "^ newInst
+]
+
+Class SparseLargeTable >> copyEmpty
+[
+	"Answer a copy of the receiver that contains no elements."
+^ self speciesNew: 0
+]
+
+Class SparseLargeTable >> noCheckAt: index
+[
+| chunkIndex t |chunkIndex := (index - base) // chunkSize + 1.(chunkIndex > self basicSize or: [ chunkIndex < 1 ])	ifTrue: [ ^ defaultValue ].t := self basicAt: chunkIndex.t ifNil: [ ^ defaultValue ].^ t at: index - base + 1 - ((chunkIndex - 1) * chunkSize)
+]
+
+Class SparseLargeTable >> similarInstance
+[
+^ self class new: self size chunkSize: self chunkSize arrayClass: self arrayClass
+]
+
+Class SparseLargeTable >> pvtCheckIndex: index
+[
+index isInteger	ifFalse: [ self errorNonIntegerIndex ].index < 1	ifTrue: [ self errorSubscriptBounds: index ].index > size	ifTrue: [ self errorSubscriptBounds: index ]
+]
+
+Class SparseLargeTable >> similarInstance: newSize
+[
+^ self class new: newSize chunkSize: self chunkSize arrayClass: self arrayClass
+]
+
+Metaclass
+	name: #SparseLargeTable;
+	instanceVariables: #().
+
+Metaclass SparseLargeTable >> new: size chunkSize: chunkSize arrayClass: aClass base: b
+[
+^ self	new: size	chunkSize: chunkSize	arrayClass: Array	base: 1	defaultValue: nil
+]
+
+Metaclass SparseLargeTable >> new: size chunkSize: chunkSize arrayClass: aClass
+[
+^ self	new: size	chunkSize: chunkSize	arrayClass: Array	base: 1
+]
+
+Metaclass SparseLargeTable >> new: size chunkSize: chunkSize
+[
+^ self new: size chunkSize: chunkSize arrayClass: Array
+]
+
+Metaclass SparseLargeTable >> new: size
+[
+^ self new: size chunkSize: self defaultChunkSize
+]
+
+Metaclass SparseLargeTable >> new: size chunkSize: chunkSize arrayClass: aClass base: b defaultValue: d
+[
+| basicSize |(basicSize := (size - 1) // chunkSize + 1) = 0	ifTrue: [ basicSize := 1 ].^ (self basicNew: basicSize)	initChunkSize: chunkSize		size: size		arrayClass: aClass		base: b		defaultValue: d;	yourself
+]
+
+Metaclass SparseLargeTable >> defaultChunkSizeForFiles
+[
+^ 8000
+]
+
+Metaclass SparseLargeTable >> defaultChunkSize
+[
+^ 100
+]
+

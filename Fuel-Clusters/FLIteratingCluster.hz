@@ -1,1 +1,87 @@
-Class	name: #FLIteratingCluster;	superclass: #ClassFLCluster;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#objects );	classVariables: #();	package: #'Fuel-Clusters'.Class FLIteratingCluster >> clusterMaterializeStepWith: aDecoder[super clusterMaterializeStepWith: aDecoder.objects := Array new: aDecoder nextEncodedPositiveInteger]Class FLIteratingCluster >> materializeInstanceWith: aDecoder[	"Hook method that each subclass should customize for its special way of materializing"^ self subclassResponsibility]Class FLIteratingCluster >> printNameOn: aStream[super printOn: aStream]Class FLIteratingCluster >> objects[^ objects]Class FLIteratingCluster >> printOn: aStream[self printNameOn: aStream.aStream nextPutAll: '->'.objects printElementsOn: aStream]Class FLIteratingCluster >> registerIndexesOn: aDictionary[self objects do: [ :instance | aDictionary at: instance put: aDictionary size + 1 ]]Class FLIteratingCluster >> serializeInstancesStepWith: anEncoder[objects do: [ :instance | self serializeInstance: instance with: anEncoder ]]Class FLIteratingCluster >> materializeInstancesStepWith: aDecoder[1 to: objects size do: [ :index | objects at: index put: (self materializeInstanceWith: aDecoder) ]]Class FLIteratingCluster >> add: anObject traceWith: aAnalysis[	"Add an object to the cluster and trace references."objects addIfNotPresent: anObject ifPresentDo: [ ^ self ].self referencesOf: anObject do: [ :aChild | aAnalysis trace: aChild ]]Class FLIteratingCluster >> referencesOf: anObject do: aBlock[	"Evaluate a block with each object referenced by anObject"]Class FLIteratingCluster >> newAnalyzingCollection[	"Answer a collection for the objects that correspond to this cluster."^ FLLargeIdentitySet new]Class FLIteratingCluster >> initializeAnalyzing[super initializeAnalyzing.objects := self newAnalyzingCollection]Class FLIteratingCluster >> clusterSerializeStepWith: anEncoder[super clusterSerializeStepWith: anEncoder.anEncoder encodePositiveInteger: objects size]Class FLIteratingCluster >> serializeInstance: anObject with: anEncoder[	"Hook method that each subclass should customize for its special way of serializing"]Metaclass	name: #FLIteratingCluster;	instanceVariables: #().
+Class
+	name: #FLIteratingCluster;
+	superclass: #ClassFLCluster;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#objects );
+	classVariables: #();
+	package: #'Fuel-Clusters'.
+
+Class FLIteratingCluster >> clusterMaterializeStepWith: aDecoder
+[
+super clusterMaterializeStepWith: aDecoder.objects := Array new: aDecoder nextEncodedPositiveInteger
+]
+
+Class FLIteratingCluster >> materializeInstanceWith: aDecoder
+[
+	"Hook method that each subclass should customize for its special way of materializing"
+^ self subclassResponsibility
+]
+
+Class FLIteratingCluster >> printNameOn: aStream
+[
+super printOn: aStream
+]
+
+Class FLIteratingCluster >> objects
+[
+^ objects
+]
+
+Class FLIteratingCluster >> printOn: aStream
+[
+self printNameOn: aStream.aStream nextPutAll: '->'.objects printElementsOn: aStream
+]
+
+Class FLIteratingCluster >> registerIndexesOn: aDictionary
+[
+self objects do: [ :instance | aDictionary at: instance put: aDictionary size + 1 ]
+]
+
+Class FLIteratingCluster >> serializeInstancesStepWith: anEncoder
+[
+objects do: [ :instance | self serializeInstance: instance with: anEncoder ]
+]
+
+Class FLIteratingCluster >> materializeInstancesStepWith: aDecoder
+[
+1 to: objects size do: [ :index | objects at: index put: (self materializeInstanceWith: aDecoder) ]
+]
+
+Class FLIteratingCluster >> add: anObject traceWith: aAnalysis
+[
+	"Add an object to the cluster and trace references."
+objects addIfNotPresent: anObject ifPresentDo: [ ^ self ].self referencesOf: anObject do: [ :aChild | aAnalysis trace: aChild ]
+]
+
+Class FLIteratingCluster >> referencesOf: anObject do: aBlock
+[
+	"Evaluate a block with each object referenced by anObject"
+
+]
+
+Class FLIteratingCluster >> newAnalyzingCollection
+[
+	"Answer a collection for the objects that correspond to this cluster."
+^ FLLargeIdentitySet new
+]
+
+Class FLIteratingCluster >> initializeAnalyzing
+[
+super initializeAnalyzing.objects := self newAnalyzingCollection
+]
+
+Class FLIteratingCluster >> clusterSerializeStepWith: anEncoder
+[
+super clusterSerializeStepWith: anEncoder.anEncoder encodePositiveInteger: objects size
+]
+
+Class FLIteratingCluster >> serializeInstance: anObject with: anEncoder
+[
+	"Hook method that each subclass should customize for its special way of serializing"
+
+]
+
+Metaclass
+	name: #FLIteratingCluster;
+	instanceVariables: #().
+

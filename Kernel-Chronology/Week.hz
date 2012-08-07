@@ -1,1 +1,58 @@
-Class	name: #Week;	superclass: #ClassTimespan;	instanceSpecification: #(#pointers #words );	instanceVariables: #();	classVariables: #(#StartDay );	sharedPools: #(#ChronologyConstants );	package: #'Kernel-Chronology'.Class Week >> index[^ (self asMonth dayOfWeek + self dayOfMonth - 2) // 7 + 1]Class Week >> asWeek[^ self]Class Week >> printOn: aStream[aStream nextPutAll: 'a Week starting: '.self start printOn: aStream]Metaclass	name: #Week;	instanceVariables: #().Metaclass Week >> startDay[^ StartDay ifNil: [ StartDay := DayNames first ]]Metaclass Week >> dayNames[^ DayNames]Metaclass Week >> nameOfDay: anIndex[^ DayNames at: anIndex]Metaclass Week >> starting: aDateAndTime duration: aDuration[	"Override - the duration is always one week.	 Week will start from the Week class>>startDay"| midnight delta adjusted |midnight := aDateAndTime asDateAndTime midnight.delta := (midnight dayOfWeek + 7 - (DayNames indexOf: self startDay) rem: 7) abs.adjusted := midnight - (Duration days: delta seconds: 0).^ super starting: adjusted duration: (Duration weeks: 1)]Metaclass Week >> indexOfDay: aSymbol[^ DayNames indexOf: aSymbol]Metaclass Week >> startDay: aSymbol[(DayNames includes: aSymbol)	ifTrue: [ StartDay := aSymbol ]	ifFalse: [ self error: aSymbol , ' is not a recognised day name' ]]
+Class
+	name: #Week;
+	superclass: #ClassTimespan;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #();
+	classVariables: #(#StartDay );
+	sharedPools: #(#ChronologyConstants );	package: #'Kernel-Chronology'.
+
+Class Week >> index
+[
+^ (self asMonth dayOfWeek + self dayOfMonth - 2) // 7 + 1
+]
+
+Class Week >> asWeek
+[
+^ self
+]
+
+Class Week >> printOn: aStream
+[
+aStream nextPutAll: 'a Week starting: '.self start printOn: aStream
+]
+
+Metaclass
+	name: #Week;
+	instanceVariables: #().
+
+Metaclass Week >> startDay
+[
+^ StartDay ifNil: [ StartDay := DayNames first ]
+]
+
+Metaclass Week >> dayNames
+[
+^ DayNames
+]
+
+Metaclass Week >> nameOfDay: anIndex
+[
+^ DayNames at: anIndex
+]
+
+Metaclass Week >> starting: aDateAndTime duration: aDuration
+[
+	"Override - the duration is always one week.	 Week will start from the Week class>>startDay"
+| midnight delta adjusted |midnight := aDateAndTime asDateAndTime midnight.delta := (midnight dayOfWeek + 7 - (DayNames indexOf: self startDay) rem: 7) abs.adjusted := midnight - (Duration days: delta seconds: 0).^ super starting: adjusted duration: (Duration weeks: 1)
+]
+
+Metaclass Week >> indexOfDay: aSymbol
+[
+^ DayNames indexOf: aSymbol
+]
+
+Metaclass Week >> startDay: aSymbol
+[
+(DayNames includes: aSymbol)	ifTrue: [ StartDay := aSymbol ]	ifFalse: [ self error: aSymbol , ' is not a recognised day name' ]
+]
+

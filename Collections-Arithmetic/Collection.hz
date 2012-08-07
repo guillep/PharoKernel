@@ -1,0 +1,174 @@
+Class Collection >> sqrt
+[
+^ self collect: [ :each | each sqrt ]
+]
+
+Class Collection >> roundTo: quantum
+[
+^ self collect: [ :ea | ea roundTo: quantum ]
+]
+
+Class Collection >> / arg
+[
+^ arg adaptToCollection: self andSend: #/
+]
+
+Class Collection >> * arg
+[
+^ arg adaptToCollection: self andSend: #*
+]
+
+Class Collection >> degreeSin
+[
+^ self collect: [ :each | each degreeSin ]
+]
+
+Class Collection >> \\ arg
+[
+^ arg adaptToCollection: self andSend: #\\
+]
+
+Class Collection >> exp
+[
+^ self collect: [ :each | each exp ]
+]
+
+Class Collection >> ln
+[
+^ self collect: [ :each | each ln ]
+]
+
+Class Collection >> truncated
+[
+^ self collect: [ :a | a truncated ]
+]
+
+Class Collection >> average
+[
+^ self sum / self size
+]
+
+Class Collection >> tan
+[
+^ self collect: [ :each | each tan ]
+]
+
+Class Collection >> ceiling
+[
+^ self collect: [ :a | a ceiling ]
+]
+
+Class Collection >> floor
+[
+^ self collect: [ :a | a floor ]
+]
+
+Class Collection >> squared
+[
+^ self collect: [ :each | each * each ]
+]
+
+Class Collection >> + arg
+[
+^ arg adaptToCollection: self andSend: #+
+]
+
+Class Collection >> cos
+[
+^ self collect: [ :each | each cos ]
+]
+
+Class Collection >> sin
+[
+^ self collect: [ :each | each sin ]
+]
+
+Class Collection >> rounded
+[
+^ self collect: [ :a | a rounded ]
+]
+
+Class Collection >> arcTan
+[
+^ self collect: [ :each | each arcTan ]
+]
+
+Class Collection >> sum
+[
+	"This is implemented using a variant of the normal inject:into: pattern. 	The reason for this is that it is not known whether we're in the normal 	number line, i.e. whether 0 is a good initial value for the sum. 	Consider a collection of measurement objects, 0 would be the unitless 	value and would not be appropriate to add with the unit-ed objects."
+| sum sample |sample := self anyOne.sum := self inject: sample into: [ :accum :each | accum + each ].^ sum - sample
+]
+
+Class Collection >> range
+[
+^ self max - self min
+]
+
+Class Collection >> max
+[
+^ self inject: self anyOne into: [ :max :each | max max: each ]
+]
+
+Class Collection >> - arg
+[
+^ arg adaptToCollection: self andSend: #-
+]
+
+Class Collection >> negated
+[
+	"Negated value of all elements in the collection"
+^ self collect: [ :a | a negated ]
+]
+
+Class Collection >> sign
+[
+^ self collect: [ :each | each sign ]
+]
+
+Class Collection >> log
+[
+^ self collect: [ :each | each log ]
+]
+
+Class Collection >> raisedTo: arg
+[
+^ arg adaptToCollection: self andSend: #raisedTo:
+]
+
+Class Collection >> arcSin
+[
+^ self collect: [ :each | each arcSin ]
+]
+
+Class Collection >> abs
+[
+	"Absolute value of all elements in the collection"
+^ self collect: [ :a | a abs ]
+]
+
+Class Collection >> // arg
+[
+^ arg adaptToCollection: self andSend: #//
+]
+
+Class Collection >> reciprocal
+[
+	"Return the reciever full of reciprocated elements"
+^ self collect: [ :a | a reciprocal ]
+]
+
+Class Collection >> arcCos
+[
+^ self collect: [ :each | each arcCos ]
+]
+
+Class Collection >> min
+[
+^ self inject: self anyOne into: [ :min :each | min min: each ]
+]
+
+Class Collection >> degreeCos
+[
+^ self collect: [ :each | each degreeCos ]
+]
+

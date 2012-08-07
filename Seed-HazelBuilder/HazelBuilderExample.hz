@@ -1,1 +1,99 @@
-Class	name: #HazelBuilderExample;	superclass: #ClassObject;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#methodBuilder );	classVariables: #();	package: #'Seed-HazelBuilder'.Class HazelBuilderExample >> buildImageWithSeed: aSeed andInitializer: anInitializer[| builder v writer |"To build the new kernel"builder := HazelKernelBuilder new.builder kernelSpec: aSeed.builder variableInitializer: anInitializer.builder methodBuilder: methodBuilder.methodBuilder builder: builder.builder buildKernel.	"To finally write the image into a file"writer := HzImageWriter new.writer format: HzCogImageFormat new.aSeed appySubstitutionsOn: writer forEnvironment: builder bootstrapEnvironment.(anInitializer extraClassesForBuilder: builder)	do: [ :c | writer substitute: (Smalltalk globals at: c name) by: (builder bootstrapEnvironment globalNamed: c name) ].writer imageFileName: 'bootstrapped'.writer writeImage: builder bootstrapEnvironment]Class HazelBuilderExample >> methodBuilder: aMethodBuilder[methodBuilder := aMethodBuilder]Class HazelBuilderExample >> basicReferencesReportSeedForJenkins[^ PharoInternalSeed new	withBasicKernel;	withGene: PharoRegexGene new;	withFileSupport;	withNonInteractiveTranscript;	processInitializer: [ :image | (image at: #HazelZygote) brokenReferencesReportForJenkins ]]Class HazelBuilderExample >> buildImageWithSpaceTally[self buildImageWithSeed: self basicMemoryUsageReportSeed]Class HazelBuilderExample >> basicWritingImage[^ PharoInternalSeed new withBasicKernel withFileSupport withNonInteractiveTranscript	processInitializer: [ :image | (image at: #HazelZygote) writeSomething ]]Class HazelBuilderExample >> buildImageWritingToFile[self buildImageWithSeed: self basicWritingImage]Class HazelBuilderExample >> basicPharoSeedWithFuel[^ PharoInternalSeed new withBasicKernel withFileSupport withNonInteractiveTranscript withFuel	processInitializer: [ :image | (image at: #HazelZygote) freshProcessQuitting ]]Class HazelBuilderExample >> buildImageWithBrokenReferencesReportForJenkins[self buildImageWithSeed: self basicReferencesReportSeedForJenkins andInitializer: ReportValueInitializer new]Class HazelBuilderExample >> buildImageWithBrokenReferencesReport[self buildImageWithSeed: self basicReferencesReportSeed andInitializer: ReportValueInitializer new]Class HazelBuilderExample >> buildImageWithSeed: aSeed[self buildImageWithSeed: aSeed andInitializer: NilValueInitializer new]Class HazelBuilderExample >> initialize[self methodBuilder: HzMethodBuilderByCopy new]Class HazelBuilderExample >> basicReferencesReportSeed[^ PharoInternalSeed new withBasicKernel withFileSupport withNonInteractiveTranscript	processInitializer: [ :image | (image at: #HazelZygote) brokenReferencesReport ]]Class HazelBuilderExample >> basicMemoryUsageReportSeed[| genes assembler seed |genes := PharoKernelGene new , PharoRegexGene new , PharoFilesGene new , PharoNonInteractiveTranscriptGene new	, PharoSpaceTallyGene new.assembler := HzPharoAssembler fromBehaviors: (genes behaviors select: #isBehavior).assembler assemble.seed := PharoInternalSeed new	withDefinitions: assembler instanceSideMappings;	withInitializationOrder: genes initializationOrder;	withPostLoadDoIts: genes postLoadDoIts;	processInitializer: [ :image | (image at: #HazelZygote) memoryUsageReport ];	yourself.assembler instanceSideMappings do: [ :m | m kernelSpec: seed ].^ seed]Class HazelBuilderExample >> buildMicroSqueakImage[	"creates an image that just quits"self buildImageWithSeed: self basicMicroSqueakSeed]Class HazelBuilderExample >> basicPharoSeed[| genes assembler seed |genes := PharoKernelGene new , PharoFilesGene new , PharoNonInteractiveTranscriptGene new.assembler := HzPharoAssembler fromBehaviors: (genes behaviors select: #isBehavior).assembler assemble.seed := PharoInternalSeed new	withDefinitions: assembler instanceSideMappings;	withInitializationOrder: genes initializationOrder;	withPostLoadDoIts: genes postLoadDoIts;	yourself.assembler instanceSideMappings do: [ :m | m kernelSpec: seed ].^ seed]Class HazelBuilderExample >> buildImage[	"creates an image that just quits"self buildImageWithSeed: self basicPharoSeed]Class HazelBuilderExample >> basicMethodsSizeReport[^ PharoInternalSeed new withBasicKernel withFileSupport withNonInteractiveTranscript	processInitializer: [ :image | (image at: #HazelZygote) methodSizeReport ]]Metaclass	name: #HazelBuilderExample;	instanceVariables: #().
+Class
+	name: #HazelBuilderExample;
+	superclass: #ClassObject;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#methodBuilder );
+	classVariables: #();
+	package: #'Seed-HazelBuilder'.
+
+Class HazelBuilderExample >> buildImageWithSeed: aSeed andInitializer: anInitializer
+[
+| builder v writer |"To build the new kernel"builder := HazelKernelBuilder new.builder kernelSpec: aSeed.builder variableInitializer: anInitializer.builder methodBuilder: methodBuilder.methodBuilder builder: builder.builder buildKernel.	"To finally write the image into a file"writer := HzImageWriter new.writer format: HzCogImageFormat new.aSeed appySubstitutionsOn: writer forEnvironment: builder bootstrapEnvironment.(anInitializer extraClassesForBuilder: builder)	do: [ :c | writer substitute: (Smalltalk globals at: c name) by: (builder bootstrapEnvironment globalNamed: c name) ].writer imageFileName: 'bootstrapped'.writer writeImage: builder bootstrapEnvironment
+]
+
+Class HazelBuilderExample >> methodBuilder: aMethodBuilder
+[
+methodBuilder := aMethodBuilder
+]
+
+Class HazelBuilderExample >> basicReferencesReportSeedForJenkins
+[
+^ PharoInternalSeed new	withBasicKernel;	withGene: PharoRegexGene new;	withFileSupport;	withNonInteractiveTranscript;	processInitializer: [ :image | (image at: #HazelZygote) brokenReferencesReportForJenkins ]
+]
+
+Class HazelBuilderExample >> buildImageWithSpaceTally
+[
+self buildImageWithSeed: self basicMemoryUsageReportSeed
+]
+
+Class HazelBuilderExample >> basicWritingImage
+[
+^ PharoInternalSeed new withBasicKernel withFileSupport withNonInteractiveTranscript	processInitializer: [ :image | (image at: #HazelZygote) writeSomething ]
+]
+
+Class HazelBuilderExample >> buildImageWritingToFile
+[
+self buildImageWithSeed: self basicWritingImage
+]
+
+Class HazelBuilderExample >> basicPharoSeedWithFuel
+[
+^ PharoInternalSeed new withBasicKernel withFileSupport withNonInteractiveTranscript withFuel	processInitializer: [ :image | (image at: #HazelZygote) freshProcessQuitting ]
+]
+
+Class HazelBuilderExample >> buildImageWithBrokenReferencesReportForJenkins
+[
+self buildImageWithSeed: self basicReferencesReportSeedForJenkins andInitializer: ReportValueInitializer new
+]
+
+Class HazelBuilderExample >> buildImageWithBrokenReferencesReport
+[
+self buildImageWithSeed: self basicReferencesReportSeed andInitializer: ReportValueInitializer new
+]
+
+Class HazelBuilderExample >> buildImageWithSeed: aSeed
+[
+self buildImageWithSeed: aSeed andInitializer: NilValueInitializer new
+]
+
+Class HazelBuilderExample >> initialize
+[
+self methodBuilder: HzMethodBuilderByCopy new
+]
+
+Class HazelBuilderExample >> basicReferencesReportSeed
+[
+^ PharoInternalSeed new withBasicKernel withFileSupport withNonInteractiveTranscript	processInitializer: [ :image | (image at: #HazelZygote) brokenReferencesReport ]
+]
+
+Class HazelBuilderExample >> basicMemoryUsageReportSeed
+[
+| genes assembler seed |genes := PharoKernelGene new , PharoRegexGene new , PharoFilesGene new , PharoNonInteractiveTranscriptGene new	, PharoSpaceTallyGene new.assembler := HzPharoAssembler fromBehaviors: (genes behaviors select: #isBehavior).assembler assemble.seed := PharoInternalSeed new	withDefinitions: assembler instanceSideMappings;	withInitializationOrder: genes initializationOrder;	withPostLoadDoIts: genes postLoadDoIts;	processInitializer: [ :image | (image at: #HazelZygote) memoryUsageReport ];	yourself.assembler instanceSideMappings do: [ :m | m kernelSpec: seed ].^ seed
+]
+
+Class HazelBuilderExample >> buildMicroSqueakImage
+[
+	"creates an image that just quits"
+self buildImageWithSeed: self basicMicroSqueakSeed
+]
+
+Class HazelBuilderExample >> basicPharoSeed
+[
+| genes assembler seed |genes := PharoKernelGene new , PharoFilesGene new , PharoNonInteractiveTranscriptGene new.assembler := HzPharoAssembler fromBehaviors: (genes behaviors select: #isBehavior).assembler assemble.seed := PharoInternalSeed new	withDefinitions: assembler instanceSideMappings;	withInitializationOrder: genes initializationOrder;	withPostLoadDoIts: genes postLoadDoIts;	yourself.assembler instanceSideMappings do: [ :m | m kernelSpec: seed ].^ seed
+]
+
+Class HazelBuilderExample >> buildImage
+[
+	"creates an image that just quits"
+self buildImageWithSeed: self basicPharoSeed
+]
+
+Class HazelBuilderExample >> basicMethodsSizeReport
+[
+^ PharoInternalSeed new withBasicKernel withFileSupport withNonInteractiveTranscript	processInitializer: [ :image | (image at: #HazelZygote) methodSizeReport ]
+]
+
+Metaclass
+	name: #HazelBuilderExample;
+	instanceVariables: #().
+

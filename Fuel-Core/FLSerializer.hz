@@ -1,1 +1,158 @@
-Class	name: #FLSerializer;	superclass: #ClassObject;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#analyzer #serializationFactory #signature #version #stream #header );	classVariables: #();	package: #'Fuel-Core'.Class FLSerializer >> at: key putAdditionalObject: anObject[	"This is useful if we want to attach objects to a package that will also be serialized. The way they are stored is key-value."header at: key putAdditionalObject: anObject]Class FLSerializer >> serialize: anObject toFileNamed: aFilename[	"Serialize the graph starting at the root object received and answers the FLSerialization object"StandardFileStream forceNewFileNamed: aFilename do: [ :aFileStream | self serialize: anObject on: aFileStream ]]Class FLSerializer >> encodeSignatureWith: anEncoder[anEncoder encodeBytes: self signature asByteArray]Class FLSerializer >> setDefaultSerialization[^ serializationFactory := [ :anObject :anEncoder | (FLSerialization with: anEncoder root: anObject analyzer: self analyzer)	run;	yourself ]]Class FLSerializer >> defaultAnalyzer[^ FLAnalyzer newDefault]Class FLSerializer >> signature[^ signature]Class FLSerializer >> encodeVersionWith: anEncoder[anEncoder encodeUint16: self version]Class FLSerializer >> version: anObject[version := anObject]Class FLSerializer >> analyzer[analyzer isNil	ifTrue: [ analyzer := self defaultAnalyzer ].^ analyzer]Class FLSerializer >> addPreMaterializationAction: aCleanBlockClosure[header addPreMaterializationAction: aCleanBlockClosure]Class FLSerializer >> stream: aStream[stream := aStream]Class FLSerializer >> signature: anObject[signature := anObject]Class FLSerializer >> initialize[super initialize.self signature: self class defaultSignature.self version: self class currentVersion.header := FLHeader new]Class FLSerializer >> serialize: anObject on: aStream[	"Serialize the graph starting at the root object received and answers the FLSerialization object"FLEncoder	on: aStream	do: [ :anEncoder | 		self encodeSignatureWith: anEncoder.		self encodeVersionWith: anEncoder.	"For the moment, we serialize the header as light. Not sure how well it will work because the header can have closures... but Fuel core cannot serialize methods fully...so... "		FLSerializer newDefault serializationFactory value: header value: anEncoder.		^ self serializationFactory value: anObject value: anEncoder ]]Class FLSerializer >> addPostMaterializationAction: aCleanBlockClosure[header addPostMaterializationAction: aCleanBlockClosure]Class FLSerializer >> serialize: anObject[	"Serialize the graph starting at the root object received and answers the FLSerialization object"^ self serialize: anObject on: stream]Class FLSerializer >> version[^ version]Class FLSerializer >> serializationFactory[^ serializationFactory	ifNil: [ 		self setDefaultSerialization.		serializationFactory ]]Class FLSerializer >> analyzer: anObject[analyzer := anObject]Class FLSerializer >> fuelAccept: aGeneralMapper[^ aGeneralMapper visitSubstitution: self by: nil]Metaclass	name: #FLSerializer;	instanceVariables: #().Metaclass FLSerializer >> serialize: anObject on: aStream[self newDefault serialize: anObject on: aStream]Metaclass FLSerializer >> serializeToByteArray: anObject[	"No stream is needed by the user. An internal in-memory stream will be used. This method returns a ByteArray representing the serialization"| aStream |aStream := WriteStream on: (ByteArray new: 100).self newDefault serialize: anObject on: aStream.^ aStream contents]Metaclass FLSerializer >> currentVersion[	"If you change this method, you should also create a version in ConfigurationOfFuel and FLMaterializer >> currentVersion"^ 18]Metaclass FLSerializer >> defaultSignature[^ 'FUEL']Metaclass FLSerializer >> newLight[^ self new]Metaclass FLSerializer >> newDefault[^ self newLight]Metaclass FLSerializer >> serialize: anObject toFileNamed: aFilename[self newDefault serialize: anObject toFileNamed: aFilename]Metaclass FLSerializer >> on: aStream[^ self newLight	stream: aStream;	yourself]
+Class
+	name: #FLSerializer;
+	superclass: #ClassObject;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#analyzer #serializationFactory #signature #version #stream #header );
+	classVariables: #();
+	package: #'Fuel-Core'.
+
+Class FLSerializer >> at: key putAdditionalObject: anObject
+[
+	"This is useful if we want to attach objects to a package that will also be serialized. The way they are stored is key-value."
+header at: key putAdditionalObject: anObject
+]
+
+Class FLSerializer >> serialize: anObject toFileNamed: aFilename
+[
+	"Serialize the graph starting at the root object received and answers the FLSerialization object"
+StandardFileStream forceNewFileNamed: aFilename do: [ :aFileStream | self serialize: anObject on: aFileStream ]
+]
+
+Class FLSerializer >> encodeSignatureWith: anEncoder
+[
+anEncoder encodeBytes: self signature asByteArray
+]
+
+Class FLSerializer >> setDefaultSerialization
+[
+^ serializationFactory := [ :anObject :anEncoder | (FLSerialization with: anEncoder root: anObject analyzer: self analyzer)	run;	yourself ]
+]
+
+Class FLSerializer >> defaultAnalyzer
+[
+^ FLAnalyzer newDefault
+]
+
+Class FLSerializer >> signature
+[
+^ signature
+]
+
+Class FLSerializer >> encodeVersionWith: anEncoder
+[
+anEncoder encodeUint16: self version
+]
+
+Class FLSerializer >> version: anObject
+[
+version := anObject
+]
+
+Class FLSerializer >> analyzer
+[
+analyzer isNil	ifTrue: [ analyzer := self defaultAnalyzer ].^ analyzer
+]
+
+Class FLSerializer >> addPreMaterializationAction: aCleanBlockClosure
+[
+header addPreMaterializationAction: aCleanBlockClosure
+]
+
+Class FLSerializer >> stream: aStream
+[
+stream := aStream
+]
+
+Class FLSerializer >> signature: anObject
+[
+signature := anObject
+]
+
+Class FLSerializer >> initialize
+[
+super initialize.self signature: self class defaultSignature.self version: self class currentVersion.header := FLHeader new
+]
+
+Class FLSerializer >> serialize: anObject on: aStream
+[
+	"Serialize the graph starting at the root object received and answers the FLSerialization object"
+FLEncoder	on: aStream	do: [ :anEncoder | 		self encodeSignatureWith: anEncoder.		self encodeVersionWith: anEncoder.	"For the moment, we serialize the header as light. Not sure how well it will work because the header can have closures... but Fuel core cannot serialize methods fully...so... "		FLSerializer newDefault serializationFactory value: header value: anEncoder.		^ self serializationFactory value: anObject value: anEncoder ]
+]
+
+Class FLSerializer >> addPostMaterializationAction: aCleanBlockClosure
+[
+header addPostMaterializationAction: aCleanBlockClosure
+]
+
+Class FLSerializer >> serialize: anObject
+[
+	"Serialize the graph starting at the root object received and answers the FLSerialization object"
+^ self serialize: anObject on: stream
+]
+
+Class FLSerializer >> version
+[
+^ version
+]
+
+Class FLSerializer >> serializationFactory
+[
+^ serializationFactory	ifNil: [ 		self setDefaultSerialization.		serializationFactory ]
+]
+
+Class FLSerializer >> analyzer: anObject
+[
+analyzer := anObject
+]
+
+Class FLSerializer >> fuelAccept: aGeneralMapper
+[
+^ aGeneralMapper visitSubstitution: self by: nil
+]
+
+Metaclass
+	name: #FLSerializer;
+	instanceVariables: #().
+
+Metaclass FLSerializer >> serialize: anObject on: aStream
+[
+self newDefault serialize: anObject on: aStream
+]
+
+Metaclass FLSerializer >> serializeToByteArray: anObject
+[
+	"No stream is needed by the user. An internal in-memory stream will be used. This method returns a ByteArray representing the serialization"
+| aStream |aStream := WriteStream on: (ByteArray new: 100).self newDefault serialize: anObject on: aStream.^ aStream contents
+]
+
+Metaclass FLSerializer >> currentVersion
+[
+	"If you change this method, you should also create a version in ConfigurationOfFuel and FLMaterializer >> currentVersion"
+^ 18
+]
+
+Metaclass FLSerializer >> defaultSignature
+[
+^ 'FUEL'
+]
+
+Metaclass FLSerializer >> newLight
+[
+^ self new
+]
+
+Metaclass FLSerializer >> newDefault
+[
+^ self newLight
+]
+
+Metaclass FLSerializer >> serialize: anObject toFileNamed: aFilename
+[
+self newDefault serialize: anObject toFileNamed: aFilename
+]
+
+Metaclass FLSerializer >> on: aStream
+[
+^ self newLight	stream: aStream;	yourself
+]
+

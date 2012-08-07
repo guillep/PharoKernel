@@ -1,1 +1,117 @@
-Class	name: #ExternalDropHandler;	superclass: #ClassObject;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#action #type #extension );	classVariables: #(#DefaultHandler #RegisteredHandlers );	package: #'System-Support'.Class ExternalDropHandler >> matchesExtension: aExtension[(self extension isNil or: [ aExtension isNil ])	ifTrue: [ ^ false ].FileSystem disk isCaseSensitive	ifTrue: [ ^ extension = aExtension ]	ifFalse: [ ^ extension sameAs: aExtension ]]Class ExternalDropHandler >> type: aType extension: anExtension action: anAction[action := anAction.type := aType.extension := anExtension]Class ExternalDropHandler >> type[^ type]Class ExternalDropHandler >> handle: dropStream in: pasteUp dropEvent: anEvent[^ action cull: dropStream cull: pasteUp cull: anEvent]Class ExternalDropHandler >> extension[^ extension]Class ExternalDropHandler >> matchesTypes: types[(self type isNil or: [ types isNil ])	ifTrue: [ ^ false ].^ types anySatisfy: [ :mimeType | mimeType beginsWith: self type ]]Metaclass	name: #ExternalDropHandler;	instanceVariables: #().Metaclass ExternalDropHandler >> unwantedSelectors[	"private - answer a collection well known unwanted selectors "^ #(#removeLineFeeds: #addFileToNewZip: #compressFile: #putUpdate:)]Metaclass ExternalDropHandler >> registerHandler: aHandler[self registeredHandlers add: aHandler]Metaclass ExternalDropHandler >> defaultImageHandler[^ ExternalDropHandler	type: 'image/'	extension: nil	action: [ :stream :pasteUp :event | 		| image sketch |		stream binary.		image := Form fromBinaryStream: (RWBinaryOrTextStream with: stream contents) reset.		sketch := World drawingClass withForm: image.		pasteUp addMorph: sketch centeredNear: event position.		image := sketch := nil ]]Metaclass ExternalDropHandler >> type: aType extension: anExtension action: anAction[^ self new type: aType extension: anExtension action: anAction]Metaclass ExternalDropHandler >> defaultHandler: externalDropHandler[DefaultHandler := externalDropHandler]Metaclass ExternalDropHandler >> chooseServiceFrom: aCollection[	"private - choose a service from aCollection asking the user if  	needed"aCollection size = 1	ifTrue: [ ^ aCollection anyOne ].^ UIManager default chooseFrom: (aCollection collect: [ :each | each label ]) values: aCollection]Metaclass ExternalDropHandler >> lookupExternalDropHandler: stream[| types extension serviceHandler |types := stream mimeTypes.types	ifNotNil: [ 		self registeredHandlers			do: [ :handler | 				(handler matchesTypes: types)					ifTrue: [ ^ handler ] ] ].extension := stream name asFileReference extension.self registeredHandlers	do: [ :handler | 		(handler matchesExtension: extension)			ifTrue: [ ^ handler ] ].serviceHandler := self lookupServiceBasedHandler: stream.^ serviceHandler ifNil: [ self defaultHandler ]]Metaclass ExternalDropHandler >> defaultHandler[DefaultHandler	ifNil: [ DefaultHandler := ExternalDropHandler type: nil extension: nil action: [ :dropStream | dropStream edit ] ].^ DefaultHandler]Metaclass ExternalDropHandler >> resetRegisteredHandlers[RegisteredHandlers := nil]Metaclass ExternalDropHandler >> initialize[	"ExternalDropHandler initialize"self resetRegisteredHandlers.self	registerHandler: self defaultImageHandler;	registerHandler: self defaultGZipHandler]Metaclass ExternalDropHandler >> registerStandardExternalDropHandlers[	"ExternalDropHandler registerStandardExternalDropHandlers"self registeredHandlers	add:		(ExternalDropHandler			type: 'image/'			extension: nil			action: [ :stream :pasteUp :event | pasteUp addMorph: (World drawingClass withForm: (Form fromBinaryStream: stream binary)) centeredNear: event position ])]Metaclass ExternalDropHandler >> defaultGZipHandler[^ ExternalDropHandler type: nil extension: 'gz' action: [ :stream :pasteUp :event | stream viewGZipContents ]]Metaclass ExternalDropHandler >> lookupServiceBasedHandler: dropStream[	"the file was just droped, let's do our job"| fileName services theOne |fileName := dropStream name.services := (Smalltalk tools fileList itemsForFile: fileName asFileReference)	reject: [ :svc | self unwantedSelectors includes: svc selector ].	"no service, default behavior"services isEmpty	ifTrue: [ ^ nil ].theOne := self chooseServiceFrom: services.^ theOne	ifNotNil: [ ExternalDropHandler type: nil extension: nil action: [ :stream | theOne performServiceFor: stream ] ]]Metaclass ExternalDropHandler >> registeredHandlers[RegisteredHandlers ifNil: [ RegisteredHandlers := OrderedCollection new ].^ RegisteredHandlers]
+Class
+	name: #ExternalDropHandler;
+	superclass: #ClassObject;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#action #type #extension );
+	classVariables: #(#DefaultHandler #RegisteredHandlers );
+	package: #'System-Support'.
+
+Class ExternalDropHandler >> matchesExtension: aExtension
+[
+(self extension isNil or: [ aExtension isNil ])	ifTrue: [ ^ false ].FileSystem disk isCaseSensitive	ifTrue: [ ^ extension = aExtension ]	ifFalse: [ ^ extension sameAs: aExtension ]
+]
+
+Class ExternalDropHandler >> type: aType extension: anExtension action: anAction
+[
+action := anAction.type := aType.extension := anExtension
+]
+
+Class ExternalDropHandler >> type
+[
+^ type
+]
+
+Class ExternalDropHandler >> handle: dropStream in: pasteUp dropEvent: anEvent
+[
+^ action cull: dropStream cull: pasteUp cull: anEvent
+]
+
+Class ExternalDropHandler >> extension
+[
+^ extension
+]
+
+Class ExternalDropHandler >> matchesTypes: types
+[
+(self type isNil or: [ types isNil ])	ifTrue: [ ^ false ].^ types anySatisfy: [ :mimeType | mimeType beginsWith: self type ]
+]
+
+Metaclass
+	name: #ExternalDropHandler;
+	instanceVariables: #().
+
+Metaclass ExternalDropHandler >> unwantedSelectors
+[
+	"private - answer a collection well known unwanted selectors "
+^ #(#removeLineFeeds: #addFileToNewZip: #compressFile: #putUpdate:)
+]
+
+Metaclass ExternalDropHandler >> registerHandler: aHandler
+[
+self registeredHandlers add: aHandler
+]
+
+Metaclass ExternalDropHandler >> defaultImageHandler
+[
+^ ExternalDropHandler	type: 'image/'	extension: nil	action: [ :stream :pasteUp :event | 		| image sketch |		stream binary.		image := Form fromBinaryStream: (RWBinaryOrTextStream with: stream contents) reset.		sketch := World drawingClass withForm: image.		pasteUp addMorph: sketch centeredNear: event position.		image := sketch := nil ]
+]
+
+Metaclass ExternalDropHandler >> type: aType extension: anExtension action: anAction
+[
+^ self new type: aType extension: anExtension action: anAction
+]
+
+Metaclass ExternalDropHandler >> defaultHandler: externalDropHandler
+[
+DefaultHandler := externalDropHandler
+]
+
+Metaclass ExternalDropHandler >> chooseServiceFrom: aCollection
+[
+	"private - choose a service from aCollection asking the user if  	needed"
+aCollection size = 1	ifTrue: [ ^ aCollection anyOne ].^ UIManager default chooseFrom: (aCollection collect: [ :each | each label ]) values: aCollection
+]
+
+Metaclass ExternalDropHandler >> lookupExternalDropHandler: stream
+[
+| types extension serviceHandler |types := stream mimeTypes.types	ifNotNil: [ 		self registeredHandlers			do: [ :handler | 				(handler matchesTypes: types)					ifTrue: [ ^ handler ] ] ].extension := stream name asFileReference extension.self registeredHandlers	do: [ :handler | 		(handler matchesExtension: extension)			ifTrue: [ ^ handler ] ].serviceHandler := self lookupServiceBasedHandler: stream.^ serviceHandler ifNil: [ self defaultHandler ]
+]
+
+Metaclass ExternalDropHandler >> defaultHandler
+[
+DefaultHandler	ifNil: [ DefaultHandler := ExternalDropHandler type: nil extension: nil action: [ :dropStream | dropStream edit ] ].^ DefaultHandler
+]
+
+Metaclass ExternalDropHandler >> resetRegisteredHandlers
+[
+RegisteredHandlers := nil
+]
+
+Metaclass ExternalDropHandler >> initialize
+[
+	"ExternalDropHandler initialize"
+self resetRegisteredHandlers.self	registerHandler: self defaultImageHandler;	registerHandler: self defaultGZipHandler
+]
+
+Metaclass ExternalDropHandler >> registerStandardExternalDropHandlers
+[
+	"ExternalDropHandler registerStandardExternalDropHandlers"
+self registeredHandlers	add:		(ExternalDropHandler			type: 'image/'			extension: nil			action: [ :stream :pasteUp :event | pasteUp addMorph: (World drawingClass withForm: (Form fromBinaryStream: stream binary)) centeredNear: event position ])
+]
+
+Metaclass ExternalDropHandler >> defaultGZipHandler
+[
+^ ExternalDropHandler type: nil extension: 'gz' action: [ :stream :pasteUp :event | stream viewGZipContents ]
+]
+
+Metaclass ExternalDropHandler >> lookupServiceBasedHandler: dropStream
+[
+	"the file was just droped, let's do our job"
+| fileName services theOne |fileName := dropStream name.services := (Smalltalk tools fileList itemsForFile: fileName asFileReference)	reject: [ :svc | self unwantedSelectors includes: svc selector ].	"no service, default behavior"services isEmpty	ifTrue: [ ^ nil ].theOne := self chooseServiceFrom: services.^ theOne	ifNotNil: [ ExternalDropHandler type: nil extension: nil action: [ :stream | theOne performServiceFor: stream ] ]
+]
+
+Metaclass ExternalDropHandler >> registeredHandlers
+[
+RegisteredHandlers ifNil: [ RegisteredHandlers := OrderedCollection new ].^ RegisteredHandlers
+]
+

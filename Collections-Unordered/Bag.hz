@@ -1,1 +1,149 @@
-Class	name: #Bag;	superclass: #ClassCollection;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#contents );	classVariables: #();	package: #'Collections-Unordered'.Class Bag >> at: index put: anObject[self errorNotKeyed]Class Bag >> do: aBlock[	"Refer to the comment in Collection|do:."contents associationsDo: [ :assoc | assoc value timesRepeat: [ aBlock value: assoc key ] ]]Class Bag >> cumulativeCounts[	"Answer with a collection of cumulative percents covered by elements so far."| s n |s := self size / 100.0.n := 0.^ self sortedCounts asArray	collect: [ :a | 		n := n + a key.		(n / s roundTo: 0.1) -> a value ]]Class Bag >> add: newObject[	"Include newObject as one of the receiver's elements. Answer newObject."^ self add: newObject withOccurrences: 1]Class Bag >> removeAll[	"Implementation Note: as contents will be overwritten, a shallowCopy of self would be modified.	An alternative implementation preserving capacity would be to create a new contents:	self setContents: (self class contentsClass new: contents size)."contents removeAll]Class Bag >> at: index[self errorNotKeyed]Class Bag >> postCopy[super postCopy.contents := contents copy]Class Bag >> sortedCounts[	"Answer with a collection of counts with elements, sorted by decreasing	count."	"Suggested by l. Uzonyi"^ (Array	new: contents size	streamContents: [ :stream | contents associationsDo: [ :each | stream nextPut: each value -> each key ] ])	sort: [ :x :y | x >= y ];	yourself]Class Bag >> setContents: aDictionary[contents := aDictionary]Class Bag >> = aBag[	"Two bags are equal if	 (a) they are the same 'kind' of thing.	 (b) they have the same size.	 (c) each element occurs the same number of times in both of them"(aBag isKindOf: Bag)	ifFalse: [ ^ false ].self size = aBag size	ifFalse: [ ^ false ].contents	associationsDo: [ :assoc | 		(aBag occurrencesOf: assoc key) = assoc value			ifFalse: [ ^ false ] ].^ true]Class Bag >> sum[	"Faster than the superclass implementation when you hold many instances of the same value (which you probably do, otherwise you wouldn't be using a Bag)."| sum first |first := true.contents	keysAndValuesDo: [ :value :count | 		first			ifTrue: [ 				sum := value * count.				first := false ]			ifFalse: [ sum := sum + (value * count) ] ].first	ifTrue: [ self errorEmptyCollection ].^ sum]Class Bag >> asBag[^ self]Class Bag >> asSet[	"Answer a set with the elements of the receiver."^ contents keys asSet]Class Bag >> valuesAndCounts[^ contents]Class Bag >> size[	"Answer how many elements the receiver contains."| tally |tally := 0.contents do: [ :each | tally := tally + each ].^ tally]Class Bag >> includes: anObject[	"Refer to the comment in Collection|includes:."^ contents includesKey: anObject]Class Bag >> add: newObject withOccurrences: anInteger[	"Add newObject anInteger times to the receiver. Answer newObject."contents at: newObject put: (contents at: newObject ifAbsent: [ 0 ]) + anInteger.^ newObject]Class Bag >> sortedElements[	"Answer with a collection of elements with counts, sorted by element."	"Suggested by l. Uzonyi"^ contents associations	sort;	yourself]Class Bag >> occurrencesOf: anObject[	"Refer to the comment in Collection|occurrencesOf:."(self includes: anObject)	ifTrue: [ ^ contents at: anObject ]	ifFalse: [ ^ 0 ]]Class Bag >> remove: oldObject ifAbsent: exceptionBlock[	"Refer to the comment in Collection|remove:ifAbsent:."| count |count := contents at: oldObject ifAbsent: [ ^ exceptionBlock value ].count = 1	ifTrue: [ contents removeKey: oldObject ]	ifFalse: [ contents at: oldObject put: count - 1 ].^ oldObject]Metaclass	name: #Bag;	instanceVariables: #().Metaclass Bag >> newFrom: aCollection[	"Answer an instance of me containing the same elements as aCollection."^ self withAll: aCollection	"Examples:	Bag newFrom: {1. 2. 3. 3}	{1. 2. 3. 3} as: Bag"]Metaclass Bag >> new[^ self new: 4]Metaclass Bag >> contentsClass[^ Dictionary]Metaclass Bag >> new: nElements[^ super new setContents: (self contentsClass new: nElements)]
+Class
+	name: #Bag;
+	superclass: #ClassCollection;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#contents );
+	classVariables: #();
+	package: #'Collections-Unordered'.
+
+Class Bag >> at: index put: anObject
+[
+self errorNotKeyed
+]
+
+Class Bag >> do: aBlock
+[
+	"Refer to the comment in Collection|do:."
+contents associationsDo: [ :assoc | assoc value timesRepeat: [ aBlock value: assoc key ] ]
+]
+
+Class Bag >> cumulativeCounts
+[
+	"Answer with a collection of cumulative percents covered by elements so far."
+| s n |s := self size / 100.0.n := 0.^ self sortedCounts asArray	collect: [ :a | 		n := n + a key.		(n / s roundTo: 0.1) -> a value ]
+]
+
+Class Bag >> add: newObject
+[
+	"Include newObject as one of the receiver's elements. Answer newObject."
+^ self add: newObject withOccurrences: 1
+]
+
+Class Bag >> removeAll
+[
+	"Implementation Note: as contents will be overwritten, a shallowCopy of self would be modified.	An alternative implementation preserving capacity would be to create a new contents:	self setContents: (self class contentsClass new: contents size)."
+contents removeAll
+]
+
+Class Bag >> at: index
+[
+self errorNotKeyed
+]
+
+Class Bag >> postCopy
+[
+super postCopy.contents := contents copy
+]
+
+Class Bag >> sortedCounts
+[
+	"Answer with a collection of counts with elements, sorted by decreasing	count."
+	"Suggested by l. Uzonyi"
+^ (Array	new: contents size	streamContents: [ :stream | contents associationsDo: [ :each | stream nextPut: each value -> each key ] ])	sort: [ :x :y | x >= y ];	yourself
+]
+
+Class Bag >> setContents: aDictionary
+[
+contents := aDictionary
+]
+
+Class Bag >> = aBag
+[
+	"Two bags are equal if	 (a) they are the same 'kind' of thing.	 (b) they have the same size.	 (c) each element occurs the same number of times in both of them"
+(aBag isKindOf: Bag)	ifFalse: [ ^ false ].self size = aBag size	ifFalse: [ ^ false ].contents	associationsDo: [ :assoc | 		(aBag occurrencesOf: assoc key) = assoc value			ifFalse: [ ^ false ] ].^ true
+]
+
+Class Bag >> sum
+[
+	"Faster than the superclass implementation when you hold many instances of the same value (which you probably do, otherwise you wouldn't be using a Bag)."
+| sum first |first := true.contents	keysAndValuesDo: [ :value :count | 		first			ifTrue: [ 				sum := value * count.				first := false ]			ifFalse: [ sum := sum + (value * count) ] ].first	ifTrue: [ self errorEmptyCollection ].^ sum
+]
+
+Class Bag >> asBag
+[
+^ self
+]
+
+Class Bag >> asSet
+[
+	"Answer a set with the elements of the receiver."
+^ contents keys asSet
+]
+
+Class Bag >> valuesAndCounts
+[
+^ contents
+]
+
+Class Bag >> size
+[
+	"Answer how many elements the receiver contains."
+| tally |tally := 0.contents do: [ :each | tally := tally + each ].^ tally
+]
+
+Class Bag >> includes: anObject
+[
+	"Refer to the comment in Collection|includes:."
+^ contents includesKey: anObject
+]
+
+Class Bag >> add: newObject withOccurrences: anInteger
+[
+	"Add newObject anInteger times to the receiver. Answer newObject."
+contents at: newObject put: (contents at: newObject ifAbsent: [ 0 ]) + anInteger.^ newObject
+]
+
+Class Bag >> sortedElements
+[
+	"Answer with a collection of elements with counts, sorted by element."
+	"Suggested by l. Uzonyi"
+^ contents associations	sort;	yourself
+]
+
+Class Bag >> occurrencesOf: anObject
+[
+	"Refer to the comment in Collection|occurrencesOf:."
+(self includes: anObject)	ifTrue: [ ^ contents at: anObject ]	ifFalse: [ ^ 0 ]
+]
+
+Class Bag >> remove: oldObject ifAbsent: exceptionBlock
+[
+	"Refer to the comment in Collection|remove:ifAbsent:."
+| count |count := contents at: oldObject ifAbsent: [ ^ exceptionBlock value ].count = 1	ifTrue: [ contents removeKey: oldObject ]	ifFalse: [ contents at: oldObject put: count - 1 ].^ oldObject
+]
+
+Metaclass
+	name: #Bag;
+	instanceVariables: #().
+
+Metaclass Bag >> newFrom: aCollection
+[
+	"Answer an instance of me containing the same elements as aCollection."
+^ self withAll: aCollection	"Examples:	Bag newFrom: {1. 2. 3. 3}	{1. 2. 3. 3} as: Bag"
+]
+
+Metaclass Bag >> new
+[
+^ self new: 4
+]
+
+Metaclass Bag >> contentsClass
+[
+^ Dictionary
+]
+
+Metaclass Bag >> new: nElements
+[
+^ super new setContents: (self contentsClass new: nElements)
+]
+

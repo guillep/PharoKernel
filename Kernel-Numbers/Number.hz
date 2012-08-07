@@ -1,1 +1,709 @@
-Class	name: #Number;	superclass: #ClassMagnitude;	instanceSpecification: #(#pointers #words );	instanceVariables: #();	classVariables: #();	package: #'Kernel-Numbers'.Class Number >> week[^ self sign weeks]Class Number >> adaptToFloat: rcvr andCompare: selector[	"If I am involved in comparison with a Float, convert rcvr to a	Fraction. This way, no bit is lost and comparison is exact."rcvr isFinite	ifFalse: [ 		selector == #=			ifTrue: [ ^ false ].		selector == #~=			ifTrue: [ ^ true ].		rcvr isNaN			ifTrue: [ ^ false ].		(selector = #< or: [ selector = #<= ])			ifTrue: [ ^ rcvr positive not ].		(selector = #> or: [ selector = #>= ])			ifTrue: [ ^ rcvr positive ].		^ self error: 'unknow comparison selector' ].^ rcvr asTrueFraction perform: selector with: self]Class Number >> truncated[	"Answer an integer nearest the receiver toward zero."^ self quo: 1]Class Number >> tan[	"The receiver represents an angle measured in radians. Answer its 	tangent."^ self asFloat tan]Class Number >> printString[^ self printStringBase: 10]Class Number >> rem: aNumber[	"Remainder defined in terms of quo:. Answer a Number with the same 	sign as self. e.g. 9 rem: 4 = 1, -9 rem: 4 = -1. 0.9 rem: 0.4 = 0.1."^ self - ((self quo: aNumber) * aNumber)]Class Number >> \\ aNumber[	"modulo. Remainder defined in terms of //. Answer a Number with the 	same sign as aNumber. e.g. 9\\4 = 1, -9\\4 = 3, 9\\-4 = -3, 0.9\\0.4 = 0.1."^ self - (self // aNumber * aNumber)]Class Number >> raisedTo: aNumber[	"Answer the receiver raised to aNumber."aNumber isInteger	ifTrue: [ 		"Do the special case of integer power"		^ self raisedToInteger: aNumber ].aNumber isFraction	ifTrue: [ 		"Special case for fraction power"		^ (self nthRoot: aNumber denominator) raisedToInteger: aNumber numerator ].self < 0	ifTrue: [ ^ ArithmeticError signal: 'Negative numbers can''t be raised to float powers.' ].0 = aNumber	ifTrue: [ ^ self class one ].	"Special case of exponent=0"1 = aNumber	ifTrue: [ ^ self ].	"Special case of exponent=1"0 = self	ifTrue: [ 		"Special case of self = 0"		aNumber < 0			ifTrue: [ ^ (ZeroDivide dividend: self) signal ]			ifFalse: [ ^ self ] ].^ (aNumber * self ln) exp	"Otherwise use logarithms"]Class Number >> arg[	"Answer the argument of the receiver (see Complex | arg)."self isZero	ifTrue: [ self error: 'Zero (0 + 0 i) does not have an argument.' ].0 < self	ifTrue: [ ^ 0 ]	ifFalse: [ ^ Float pi ]]Class Number >> // aNumber[	"Integer quotient defined by division with truncation toward negative 	infinity. 9//4 = 2, -9//4 = -3. -0.9//0.4 = -3. \\ answers the remainder 	from this division."^ (self / aNumber) floor]Class Number >> strictlyPositive[	"Answer whether the receiver is mathematically positive."^ self > 0]Class Number >> adaptToCollection: rcvr andSend: selector[	"If I am involved in arithmetic with a Collection, return a Collection of	the results of each element combined with me in that expression."^ rcvr collect: [ :element | element perform: selector with: self ]]Class Number >> arcTan[	"The receiver is the tangent of an angle. Answer the angle measured in 	radians."^ self asFloat arcTan]Class Number >> cos[	"The receiver represents an angle measured in radians. Answer its cosine."^ self asFloat cos]Class Number >> nanoSecond[^ self sign nanoSeconds]Class Number >> weeks[^ Duration weeks: self]Class Number >> sign[	"Answer 1 if the receiver is greater than 0, -1 if less than 0, else 0."self > 0	ifTrue: [ ^ 1 ].self < 0	ifTrue: [ ^ -1 ].^ 0]Class Number >> printOn: aStream showingDecimalPlaces: placesDesired[	"Print a representation of the receiver on aStream in decimal notation with prescribed number of places after decimal separator."| rounder rounded roundedFractionPart |placesDesired <= 0	ifTrue: [ ^ self rounded printOn: aStream ].rounder := 10 raisedToInteger: placesDesired.rounded := self roundTo: rounder reciprocal.rounded negative	ifTrue: [ aStream nextPut: $- ].rounded := rounded abs.rounded integerPart truncated printOn: aStream.aStream nextPut: $..roundedFractionPart := (rounded fractionPart * rounder) truncated.roundedFractionPart	printOn: aStream	base: 10	length: placesDesired	padded: true]Class Number >> degreesToRadians[	"The receiver is assumed to represent degrees. Answer the conversion to 	radians."^ self asFloat degreesToRadians]Class Number >> adaptToPoint: rcvr andSend: selector[	"If I am involved in arithmetic with a Point, convert me to a Point."^ rcvr perform: selector with: self @ self]Class Number >> roundDownTo: aNumber[	"Answer the next multiple of aNumber toward negative infinity that is nearest the receiver. 	Examples:               3.1479 roundDownTo: 0.01 -> 3.14               3.1479 roundDownTo: 0.1 -> 3.1               1923 roundDownTo: 10 -> 1920               3.1479 roundDownTo: 0.005 -> 3.145               -3.1479 roundDownTo: 0.01 -> -3.15"^ (self / aNumber) floor * aNumber]Class Number >> to: stop[	"Answer an Interval from the receiver up to the argument, stop, 	incrementing by 1."^ Interval from: self to: stop by: 1]Class Number >> arcCos[	"The receiver is the cosine of an angle. Answer the angle measured in 	radians."^ self asFloat arcCos]Class Number >> log: aNumber[	"Answer the log base aNumber of the receiver."^ self ln / aNumber ln]Class Number >> abs[	"Answer a Number that is the absolute value (positive magnitude) of the 	receiver."self < 0	ifTrue: [ ^ self negated ]	ifFalse: [ ^ self ]]Class Number >> minute[^ self sign minutes]Class Number >> even[	"Answer whether the receiver is an even number."^ self \\ 2 = 0]Class Number >> printOn: aStream base: base[	"This method should print a representation of the number for the given base,	excluding the base prefix (and the letter r for radix)"^ self subclassResponsibility]Class Number >> * aNumber[	"Answer the result of multiplying the receiver by aNumber."self subclassResponsibility]Class Number >> roundTo: quantum[	"Answer the nearest number that is a multiple of quantum."^ (self / quantum) rounded * quantum]Class Number >> log[	"Answer the base-10 log of the receiver."^ self asFloat log]Class Number >> to: stop do: aBlock[	"Normally compiled in-line, and therefore not overridable.	Evaluate aBlock for each element of the interval (self to: stop by: 1)."| nextValue |nextValue := self.[ nextValue <= stop ]	whileTrue: [ 		aBlock value: nextValue.		nextValue := nextValue + 1 ]]Class Number >> reciprocal[	"Returns the reciprocal of self.	In case self is 0 the / signals ZeroDivide"^ 1 / self]Class Number >> printOn: aStream[self printOn: aStream base: 10]Class Number >> negated[	"Answer a Number that is the negation of the receiver."^ 0 - self]Class Number >> adaptToInteger: rcvr andSend: selector[	"If I am involved in arithmetic with a Integer, convert us and evaluate exprBlock."^ self subclassResponsibility]Class Number >> ln[	"Answer the natural log of the receiver."^ self asFloat ln]Class Number >> nthRoot: aPositiveInteger[	"Answer the nth root of the receiver."self subclassResponsibility]Class Number >> floorLog: radix[	"Answer the floor of the log base radix of the receiver."^ self asFloat floorLog: radix]Class Number >> copySignTo: aNumber[	"Return a number with same magnitude as aNumber and same sign as self."^ self positive	ifTrue: [ aNumber abs ]	ifFalse: [ aNumber withNegativeSign ]]Class Number >> isOrAreStringWith: aNoun[| result |result := self = 1	ifTrue: [ ' is one ' ]	ifFalse: [ 		self = 0			ifTrue: [ ' are no ' ]			ifFalse: [ ' are ' , self printString , ' ' ] ].result := result , aNoun.self = 1	ifFalse: [ result := result , 's' ].^ result	"#(0 1 2 98.6) do:	[:num | Transcript cr; show: 'There', (num isOrAreStringWith: 'way'), ' to skin a cat']"]Class Number >> integerPart[	"Added for ANSI compatibility"^ self truncated]Class Number >> asScaledDecimal[	"Answer a scaled decimal number approximating the receiver."#Numeric.^ self asScaledDecimal: 8]Class Number >> day[^ self sign days]Class Number >> sign: aNumber[	"Return a Number with the same sign as aNumber"^ aNumber copySignTo: self]Class Number >> hour[^ self sign hours]Class Number >> interpolateTo: aNumber at: param[^ self + ((aNumber - self) * param)]Class Number >> asFloat[	"Answer a floating-point number approximating the receiver."self subclassResponsibility]Class Number >> seconds[^ Duration seconds: self]Class Number >> isInfinite[^ false]Class Number >> asSmallAngleDegrees[	"Return the receiver normalized to lie within the range (-180, 180)"| pos |pos := self \\ 360.pos > 180	ifTrue: [ pos := pos - 360 ].^ pos	"#(-500 -300 -150 -5 0 5 150 300 500 1200) collect: [:n | n asSmallAngleDegrees]"]Class Number >> nanoSeconds[^ Duration nanoSeconds: self]Class Number >> stringForReadout[^ self rounded printString]Class Number >> floor[	"Answer the integer nearest the receiver toward negative infinity."| truncation |truncation := self truncated.self >= 0	ifTrue: [ ^ truncation ].self = truncation	ifTrue: [ ^ truncation ]	ifFalse: [ ^ truncation - 1 ]]Class Number >> isDivisibleBy: aNumber[aNumber = 0	ifTrue: [ ^ false ].aNumber isInteger	ifFalse: [ ^ false ].^ self \\ aNumber = 0]Class Number >> sin[	"The receiver represents an angle measured in radians. Answer its sine."^ self asFloat sin]Class Number >> withNegativeSign[	"Answer a number with same magnitude than receiver and negative sign."^ self abs negated]Class Number >> ** exponent[	" A shortcut methog for raisedTo: "^ self raisedTo: exponent]Class Number >> arcSin[	"The receiver is the sine of an angle. Answer the angle measured in 	radians."^ self asFloat arcSin]Class Number >> fractionPart[	"Added for ANSI compatibility"^ self - self integerPart]Class Number >> isNumber[^ true]Class Number >> - aNumber[	"Answer the difference between the receiver and aNumber."self subclassResponsibility]Class Number >> asInteger[	"Answer an Integer nearest the receiver toward zero."^ self truncated]Class Number >> rounded[	"Answer the integer nearest the receiver."^ (self + (self sign / 2)) truncated]Class Number >> isZero[^ self = 0]Class Number >> minutes[^ Duration minutes: self]Class Number >> % aNumber[	"modulo. Remainder defined in terms of //. Answer a Number with the 	same sign as aNumber. e.g. 9\\4 = 1, -9\\4 = 3, 9\\-4 = -3, 0.9\\0.4 = 0.1."^ self \\ aNumber]Class Number >> raisedToInteger: anInteger[	"The 0 raisedToInteger: 0 is an special case. In some contexts must be 1 and in others must	be handled as an indeterminate form.	I take the first context because that's the way that was previously handled.	Maybe further discussion is required on this topic."| bitProbe result |anInteger negative	ifTrue: [ ^ (self raisedToInteger: anInteger negated) reciprocal ].bitProbe := 1 bitShift: anInteger highBit - 1.result := self class one.[ (anInteger bitAnd: bitProbe) = 0	ifFalse: [ result := result * self ].bitProbe := bitProbe bitShift: -1.bitProbe > 0 ] whileTrue: [ result := result * result ].^ result]Class Number >> adaptToString: rcvr andSend: selector[	"If I am involved in arithmetic with a String, convert it to a Number."^ rcvr asNumber perform: selector with: self]Class Number >> truncateTo: aNumber[	"Answer the next multiple of aNumber toward zero that is nearest the receiver.	Examples:               3.1479 truncateTo: 0.01 -> 3.14               3.1479 truncateTo: 0.1 -> 3.1               1923 truncateTo: 10 -> 1920               3.1479 truncateTo: 0.005 -> 3.145               -3.1479 truncateTo: 0.01 -> -3.14"^ (self quo: aNumber) * aNumber]Class Number >> degreeCos[	"Answer the cosine of the receiver taken as an angle in degrees."^ (90 - ((180 + self) \\ 360 - 180) abs) degreesToRadians sin]Class Number >> to: stop by: step do: aBlock[	"Normally compiled in-line, and therefore not overridable.	Evaluate aBlock for each element of the interval (self to: stop by: step)."| nextValue |nextValue := self.step = 0	ifTrue: [ self error: 'step must be non-zero' ].step < 0	ifTrue: [ 		[ stop <= nextValue ]			whileTrue: [ 				aBlock value: nextValue.				nextValue := nextValue + step ] ]	ifFalse: [ 		[ stop >= nextValue ]			whileTrue: [ 				aBlock value: nextValue.				nextValue := nextValue + step ] ]]Class Number >> second[^ self sign seconds]Class Number >> hours[^ Duration hours: self]Class Number >> @ y[	"Primitive. Answer a Point whose x value is the receiver and whose y 	value is the argument. Optional. No Lookup. See Object documentation 	whatIsAPrimitive."	<primitive: 18>^ Point x: self y: y]Class Number >> asDuration[^ Duration nanoSeconds: self asInteger]Class Number >> squared[	"Answer the receiver multipled by itself."^ self * self]Class Number >> asPoint[	"Answer a Point with the receiver as both coordinates; often used to 	supply the same value in two dimensions, as with symmetrical gridding 	or scaling."^ self @ self]Class Number >> asNumber[^ self]Class Number >> asSmallPositiveDegrees[	"Return the receiver normalized to lie within the range (0, 360)"^ self \\ 360]Class Number >> asB3DVector3[^ self @ self @ self]Class Number >> arcTan: denominator[	"The receiver is the tangent of an angle. Answer the angle measured in 	radians."^ self asFloat arcTan: denominator]Class Number >> roundUpTo: aNumber[	"Answer the next multiple of aNumber toward infinity that is nearest the receiver.	Examples:               3.1479 roundUpTo: 0.01 -> 3.15               3.1479 roundUpTo: 0.1 -> 3.2               1923 roundUpTo: 10 -> 1930               3.1479 roundUpTo: 0.005 -> 3.15               -3.1479 roundUpTo: 0.01 -> -3.14"^ (self / aNumber) ceiling * aNumber]Class Number >> degreeSin[	"Answer the sine of the receiver taken as an angle in degrees."^ (90 - self) degreeCos]Class Number >> printStringBase: base[^ String streamContents: [ :strm | self printOn: strm base: base ]]Class Number >> storeOn: aStream base: base[	"This method should print a representation of the number for the given base,	including the base prefix (with letter r for radix)"^ self subclassResponsibility]Class Number >> storeStringBase: base[^ String streamContents: [ :strm | self storeOn: strm base: base ]]Class Number >> storeOn: aStream[self printOn: aStream]Class Number >> odd[	"Answer whether the receiver is an odd number."^ self even == false]Class Number >> isNaN[^ false]Class Number >> adaptToFraction: rcvr andSend: selector[	"If I am involved in arithmetic with a Fraction, convert us and evaluate exprBlock."^ self subclassResponsibility]Class Number >> quo: aNumber[	"Integer quotient defined by division with truncation toward zero. 		-9 quo: 4 = -2.	-0.9 quo: 0.4 = -2. 		rem: answers the remainder from this division."^ (self / aNumber) truncated]Class Number >> negative[	"Answer whether the receiver is mathematically negative."^ self < 0]Class Number >> reduce[	"If self is close to an integer, return that integer"^ self]Class Number >> days[^ Duration days: self]Class Number >> exp[	"Answer the exponential of the receiver as a floating point number."^ self asFloat exp]Class Number >> radiansToDegrees[	"The receiver is assumed to represent radians. Answer the conversion to 	degrees."^ self asFloat radiansToDegrees]Class Number >> round: numberOfWishedDecimal[self subclassResponsibility]Class Number >> printShowingDecimalPlaces: placesDesired[	"Print the receiver showing precisely the given number of places desired.  If placesDesired is positive, a decimal point and that many digits after the decimal point will always be shown.  If placesDesired is zero, a whole number will be shown, without a decimal point."^ String	new: placesDesired + 10	streamContents: [ :aStream | self printOn: aStream showingDecimalPlaces: placesDesired ]	"23 printShowingDecimalPlaces: 223.5698 printShowingDecimalPlaces: 2-234.567 printShowingDecimalPlaces: 523.4567 printShowingDecimalPlaces: 023.5567 printShowingDecimalPlaces: 0-23.4567 printShowingDecimalPlaces: 0-23.5567 printShowingDecimalPlaces: 0100000000 printShowingDecimalPlaces: 10.98 printShowingDecimalPlaces: 5-0.98 printShowingDecimalPlaces: 22.567 printShowingDecimalPlaces: 2-2.567 printShowingDecimalPlaces: 20 printShowingDecimalPlaces: 2"]Class Number >> adaptToFloat: rcvr andSend: selector[	"If I am involved in arithmetic with a Float, convert me to a Float."^ rcvr perform: selector with: self asFloat]Class Number >> milliSecond[^ self sign milliSeconds]Class Number >> ceiling[	"Answer the integer nearest the receiver toward  infinity."| truncation |truncation := self truncated.self <= 0	ifTrue: [ ^ truncation ].^ self = truncation	ifTrue: [ truncation ]	ifFalse: [ truncation + 1 ]]Class Number >> asScaledDecimal: scale[	"Answer the receiver converted to a ScaledDecimal."^ ScaledDecimal newFromNumber: self scale: scale]Class Number >> / aNumber[	"Answer the result of dividing the receiver by aNumber."self subclassResponsibility]Class Number >> milliSeconds[^ Duration milliSeconds: self]Class Number >> sqrt[	"Answer the square root of the receiver."self subclassResponsibility]Class Number >> positive[	"Answer whether the receiver is positive or equal to 0. (ST-80 protocol).	See also strictlyPositive"^ self >= 0]Class Number >> + aNumber[	"Answer the sum of the receiver and aNumber."self subclassResponsibility]Class Number >> detentBy: detent atMultiplesOf: grid snap: snap[	"Map all values that are within detent/2 of any multiple of grid to that multiple.  Otherwise, if snap is true, return self, meaning that the values in the dead zone will never be returned.  If snap is false, then expand the range between dead zones so that it covers the range between multiples of the grid, and scale the value by that factor."| r1 r2 |r1 := self roundTo: grid.	"Nearest multiple of grid"(self roundTo: detent) = r1	ifTrue: [ ^ r1 ].	"Snap to that multiple..."snap	ifTrue: [ ^ self ].	"...or return self"r2 := self < r1	ifTrue: [ r1 - (detent asFloat / 2) ]	ifFalse: [ r1 + (detent asFloat / 2) ].	"Nearest end of dead zone"	"Scale values between dead zones to fill range between multiples"^ r1 + ((self - r2) * grid asFloat / (grid - detent))	"	(170 to: 190 by: 2) collect: [:a | a detentBy: 10 atMultiplesOf: 90 snap: true] 	(170 to: 190 by: 2) collect: [:a | a detentBy: 10 atMultiplesOf: 90 snap: false]	(3.9 to: 4.1 by: 0.02) collect: [:a | a detentBy: 0.1 atMultiplesOf: 1.0 snap: true] 	(-3.9 to: -4.1 by: -0.02) collect: [:a | a detentBy: 0.1 atMultiplesOf: 1.0 snap: false]"]Class Number >> closeTo: num[	"are these two numbers close?"num isFloat	ifTrue: [ ^ num closeTo: self asFloat ].^ [ self = num ] ifError: [ false ]]Class Number >> to: stop by: step[	"Answer an Interval from the receiver up to the argument, stop, 	incrementing by step."^ Interval from: self to: stop by: step]Metaclass	name: #Number;	instanceVariables: #().Metaclass Number >> readScaledDecimal: integerPart fractionPart: fractionPart digits: fractionDigits base: base sign: sign from: aStream[	"Complete creation of a ScaledDecimal, reading scale from aStream. Answer	a ScaledDecimal, or nil if parsing fails.	<number>s[<scale>]"| scale decimalMultiplier decimalFraction |aStream atEnd	ifTrue: [ ^ nil ].aStream next == $s	ifFalse: [ ^ nil ].	"<number>s<scale>"(aStream atEnd not and: [ aStream peek digitValue between: 0 and: 9 ])	ifTrue: [ scale := Integer readFrom: aStream ]	ifFalse: [ ^ nil ].scale isNil	ifTrue: [ 		"<number>s"		fractionDigits = 0			ifTrue: [ 				"<integer>s"				scale := 0 ]			ifFalse: [ 				"<integer>.<fraction>s"				scale := fractionDigits ] ].fractionPart isNil	ifTrue: [ ^ integerPart * sign asScaledDecimal: scale ]	ifFalse: [ 		decimalMultiplier := base raisedTo: fractionDigits.		decimalFraction := (integerPart * decimalMultiplier + fractionPart) * sign / decimalMultiplier.		^ decimalFraction asScaledDecimal: scale ]]Metaclass Number >> readSmalltalkSyntaxFrom: stringOrStream[	"Answer a number as described on aStream.  The number may	be any accepted Smalltalk literal Number format.	It can include a leading radix specification, as in 16rFADE.	It can as well be NaN, Infinity or -Infinity for conveniency.	If stringOrStream does not start with a valid number description, fail."^ (SqNumberParser on: stringOrStream) nextNumber]Metaclass Number >> readFrom: stringOrStream base: base[	"Answer a number as described on aStream in the given number base.	If stringOrStream does not start with a valid number description, answer 0 for backward compatibility. This is not clever and should better be changed."^ (SqNumberParser on: stringOrStream) nextNumberBase: base]Metaclass Number >> readRemainderOf: integerPart from: aStream base: base withSign: sign[	"Read optional fractional part and exponent or decimal scale, and return the final result"	"Changed 200/01/19 For ANSI Numeric Literals support."	"Number readFrom: '3r-22.2'"| value fractionDigits fracpos fractionPart fraction pos v foundDecimal |#Numeric.value := integerPart.fractionDigits := 0.foundDecimal := false.(aStream peekFor: $.)	ifTrue: [ 		"<integer>.<fraction>"		foundDecimal := true.		(aStream atEnd not and: [ aStream peek digitValue between: 0 and: base - 1 ])			ifTrue: [ 				fracpos := aStream position.				fractionPart := Integer readFrom: aStream base: base.				fraction := fractionPart asFloat / (base raisedTo: aStream position - fracpos).				fractionDigits := aStream position - fracpos.				value := value asFloat + fraction ] ].pos := aStream position.(v := self	readScaledDecimal: integerPart	fractionPart: fractionPart	digits: fractionDigits	base: base	sign: sign	from: aStream) ifNil: [ aStream position: pos ] ifNotNil: [ ^ v	"<number>s<scale>>" ].pos := aStream position.(v := self readExponent: value base: base from: aStream)	ifNil: [ 		aStream position: pos.		(foundDecimal and: [ fractionDigits = 0 ])			ifTrue: [ 				"oops - just <integer>."				aStream skip: -1.	"un-gobble the period"				^ value * sign ] ]	ifNotNil: [ value := v	"<number>(e|d|q)<exponent>>" ].(value isFloat and: [ value = 0.0 and: [ sign = -1 ] ])	ifTrue: [ ^ Float negativeZero ]	ifFalse: [ ^ value * sign ]]Metaclass Number >> readFrom: stringOrStream ifFail: aBlock[	"Answer a number as described on aStream.  The number may	be any accepted Smalltalk literal Number format.	It can include a leading radix specification, as in 16rFADE.	It can as well be NaN, Infinity or -Infinity for conveniency.	If input does not represent a valid number, then execute fail block	and leave the stream positioned before offending character"^ (ExtendedNumberParser on: stringOrStream)	failBlock: aBlock;	nextNumber]Metaclass Number >> one[^ 1]Metaclass Number >> readExponent: baseValue base: base from: aStream[	"Complete creation of a number, reading exponent from aStream. Answer the	number, or nil if parsing fails.	<number>(e|d|q)<exponent>>"| sign exp value |('edq' includes: aStream next)	ifFalse: [ ^ nil ].sign := aStream peek == $-	ifTrue: [ 		aStream next.		-1 ]	ifFalse: [ 1 ].(aStream atEnd or: [ (aStream peek digitValue between: 0 and: 9) not ])	ifTrue: [ ^ nil ].	"Avoid throwing an error"exp := (Integer readFrom: aStream base: 10) * sign.value := baseValue * (base raisedTo: exp).^ value]Metaclass Number >> readFrom: stringOrStream[	"Answer a number as described on aStream.  The number may	be any accepted Smalltalk literal Number format.	It can include a leading radix specification, as in 16rFADE.	It can as well be NaN, Infinity or -Infinity for conveniency.	If stringOrStream does not start with a valid number description, fail."^ (ExtendedNumberParser on: stringOrStream) nextNumber]Metaclass Number >> squeezeNumberOutOfString: stringOrStream[	"Try and find a number in this string. First, look if the string 	starts with a number. Then, see if it ends with a number. Then,	remove a character from the front and see if the remaining 	string makes a number. Repeat the process until no characters	are left or the number has been found. As soon as a number is	found, it is returned. Otherwise, the method fails."^ SqNumberParser squeezeNumberOutOfString: stringOrStream]Metaclass Number >> squeezeNumberOutOfString: stringOrStream ifFail: aBlock[	"Try and find a number in this string. First, look if the string 	starts with a number. Then, see if it ends with a number. Then,	remove a character from the front and see if the remaining 	string makes a number. Repeat the process until no characters	are left or the number has been found. As soon as a number is	found, it is returned. Otherwise, the method fails."^ SqNumberParser squeezeNumberOutOfString: stringOrStream onError: aBlock]
+Class
+	name: #Number;
+	superclass: #ClassMagnitude;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #();
+	classVariables: #();
+	package: #'Kernel-Numbers'.
+
+Class Number >> week
+[
+^ self sign weeks
+]
+
+Class Number >> adaptToFloat: rcvr andCompare: selector
+[
+	"If I am involved in comparison with a Float, convert rcvr to a	Fraction. This way, no bit is lost and comparison is exact."
+rcvr isFinite	ifFalse: [ 		selector == #=			ifTrue: [ ^ false ].		selector == #~=			ifTrue: [ ^ true ].		rcvr isNaN			ifTrue: [ ^ false ].		(selector = #< or: [ selector = #<= ])			ifTrue: [ ^ rcvr positive not ].		(selector = #> or: [ selector = #>= ])			ifTrue: [ ^ rcvr positive ].		^ self error: 'unknow comparison selector' ].^ rcvr asTrueFraction perform: selector with: self
+]
+
+Class Number >> truncated
+[
+	"Answer an integer nearest the receiver toward zero."
+^ self quo: 1
+]
+
+Class Number >> tan
+[
+	"The receiver represents an angle measured in radians. Answer its 	tangent."
+^ self asFloat tan
+]
+
+Class Number >> printString
+[
+^ self printStringBase: 10
+]
+
+Class Number >> rem: aNumber
+[
+	"Remainder defined in terms of quo:. Answer a Number with the same 	sign as self. e.g. 9 rem: 4 = 1, -9 rem: 4 = -1. 0.9 rem: 0.4 = 0.1."
+^ self - ((self quo: aNumber) * aNumber)
+]
+
+Class Number >> \\ aNumber
+[
+	"modulo. Remainder defined in terms of //. Answer a Number with the 	same sign as aNumber. e.g. 9\\4 = 1, -9\\4 = 3, 9\\-4 = -3, 0.9\\0.4 = 0.1."
+^ self - (self // aNumber * aNumber)
+]
+
+Class Number >> raisedTo: aNumber
+[
+	"Answer the receiver raised to aNumber."
+aNumber isInteger	ifTrue: [ 		"Do the special case of integer power"		^ self raisedToInteger: aNumber ].aNumber isFraction	ifTrue: [ 		"Special case for fraction power"		^ (self nthRoot: aNumber denominator) raisedToInteger: aNumber numerator ].self < 0	ifTrue: [ ^ ArithmeticError signal: 'Negative numbers can''t be raised to float powers.' ].0 = aNumber	ifTrue: [ ^ self class one ].	"Special case of exponent=0"1 = aNumber	ifTrue: [ ^ self ].	"Special case of exponent=1"0 = self	ifTrue: [ 		"Special case of self = 0"		aNumber < 0			ifTrue: [ ^ (ZeroDivide dividend: self) signal ]			ifFalse: [ ^ self ] ].^ (aNumber * self ln) exp	"Otherwise use logarithms"
+]
+
+Class Number >> arg
+[
+	"Answer the argument of the receiver (see Complex | arg)."
+self isZero	ifTrue: [ self error: 'Zero (0 + 0 i) does not have an argument.' ].0 < self	ifTrue: [ ^ 0 ]	ifFalse: [ ^ Float pi ]
+]
+
+Class Number >> // aNumber
+[
+	"Integer quotient defined by division with truncation toward negative 	infinity. 9//4 = 2, -9//4 = -3. -0.9//0.4 = -3. \\ answers the remainder 	from this division."
+^ (self / aNumber) floor
+]
+
+Class Number >> strictlyPositive
+[
+	"Answer whether the receiver is mathematically positive."
+^ self > 0
+]
+
+Class Number >> adaptToCollection: rcvr andSend: selector
+[
+	"If I am involved in arithmetic with a Collection, return a Collection of	the results of each element combined with me in that expression."
+^ rcvr collect: [ :element | element perform: selector with: self ]
+]
+
+Class Number >> arcTan
+[
+	"The receiver is the tangent of an angle. Answer the angle measured in 	radians."
+^ self asFloat arcTan
+]
+
+Class Number >> cos
+[
+	"The receiver represents an angle measured in radians. Answer its cosine."
+^ self asFloat cos
+]
+
+Class Number >> nanoSecond
+[
+^ self sign nanoSeconds
+]
+
+Class Number >> weeks
+[
+^ Duration weeks: self
+]
+
+Class Number >> sign
+[
+	"Answer 1 if the receiver is greater than 0, -1 if less than 0, else 0."
+self > 0	ifTrue: [ ^ 1 ].self < 0	ifTrue: [ ^ -1 ].^ 0
+]
+
+Class Number >> printOn: aStream showingDecimalPlaces: placesDesired
+[
+	"Print a representation of the receiver on aStream in decimal notation with prescribed number of places after decimal separator."
+| rounder rounded roundedFractionPart |placesDesired <= 0	ifTrue: [ ^ self rounded printOn: aStream ].rounder := 10 raisedToInteger: placesDesired.rounded := self roundTo: rounder reciprocal.rounded negative	ifTrue: [ aStream nextPut: $- ].rounded := rounded abs.rounded integerPart truncated printOn: aStream.aStream nextPut: $..roundedFractionPart := (rounded fractionPart * rounder) truncated.roundedFractionPart	printOn: aStream	base: 10	length: placesDesired	padded: true
+]
+
+Class Number >> degreesToRadians
+[
+	"The receiver is assumed to represent degrees. Answer the conversion to 	radians."
+^ self asFloat degreesToRadians
+]
+
+Class Number >> adaptToPoint: rcvr andSend: selector
+[
+	"If I am involved in arithmetic with a Point, convert me to a Point."
+^ rcvr perform: selector with: self @ self
+]
+
+Class Number >> roundDownTo: aNumber
+[
+	"Answer the next multiple of aNumber toward negative infinity that is nearest the receiver. 	Examples:               3.1479 roundDownTo: 0.01 -> 3.14               3.1479 roundDownTo: 0.1 -> 3.1               1923 roundDownTo: 10 -> 1920               3.1479 roundDownTo: 0.005 -> 3.145               -3.1479 roundDownTo: 0.01 -> -3.15"
+^ (self / aNumber) floor * aNumber
+]
+
+Class Number >> to: stop
+[
+	"Answer an Interval from the receiver up to the argument, stop, 	incrementing by 1."
+^ Interval from: self to: stop by: 1
+]
+
+Class Number >> arcCos
+[
+	"The receiver is the cosine of an angle. Answer the angle measured in 	radians."
+^ self asFloat arcCos
+]
+
+Class Number >> log: aNumber
+[
+	"Answer the log base aNumber of the receiver."
+^ self ln / aNumber ln
+]
+
+Class Number >> abs
+[
+	"Answer a Number that is the absolute value (positive magnitude) of the 	receiver."
+self < 0	ifTrue: [ ^ self negated ]	ifFalse: [ ^ self ]
+]
+
+Class Number >> minute
+[
+^ self sign minutes
+]
+
+Class Number >> even
+[
+	"Answer whether the receiver is an even number."
+^ self \\ 2 = 0
+]
+
+Class Number >> printOn: aStream base: base
+[
+	"This method should print a representation of the number for the given base,	excluding the base prefix (and the letter r for radix)"
+^ self subclassResponsibility
+]
+
+Class Number >> * aNumber
+[
+	"Answer the result of multiplying the receiver by aNumber."
+self subclassResponsibility
+]
+
+Class Number >> roundTo: quantum
+[
+	"Answer the nearest number that is a multiple of quantum."
+^ (self / quantum) rounded * quantum
+]
+
+Class Number >> log
+[
+	"Answer the base-10 log of the receiver."
+^ self asFloat log
+]
+
+Class Number >> to: stop do: aBlock
+[
+	"Normally compiled in-line, and therefore not overridable.	Evaluate aBlock for each element of the interval (self to: stop by: 1)."
+| nextValue |nextValue := self.[ nextValue <= stop ]	whileTrue: [ 		aBlock value: nextValue.		nextValue := nextValue + 1 ]
+]
+
+Class Number >> reciprocal
+[
+	"Returns the reciprocal of self.	In case self is 0 the / signals ZeroDivide"
+^ 1 / self
+]
+
+Class Number >> printOn: aStream
+[
+self printOn: aStream base: 10
+]
+
+Class Number >> negated
+[
+	"Answer a Number that is the negation of the receiver."
+^ 0 - self
+]
+
+Class Number >> adaptToInteger: rcvr andSend: selector
+[
+	"If I am involved in arithmetic with a Integer, convert us and evaluate exprBlock."
+^ self subclassResponsibility
+]
+
+Class Number >> ln
+[
+	"Answer the natural log of the receiver."
+^ self asFloat ln
+]
+
+Class Number >> nthRoot: aPositiveInteger
+[
+	"Answer the nth root of the receiver."
+self subclassResponsibility
+]
+
+Class Number >> floorLog: radix
+[
+	"Answer the floor of the log base radix of the receiver."
+^ self asFloat floorLog: radix
+]
+
+Class Number >> copySignTo: aNumber
+[
+	"Return a number with same magnitude as aNumber and same sign as self."
+^ self positive	ifTrue: [ aNumber abs ]	ifFalse: [ aNumber withNegativeSign ]
+]
+
+Class Number >> isOrAreStringWith: aNoun
+[
+| result |result := self = 1	ifTrue: [ ' is one ' ]	ifFalse: [ 		self = 0			ifTrue: [ ' are no ' ]			ifFalse: [ ' are ' , self printString , ' ' ] ].result := result , aNoun.self = 1	ifFalse: [ result := result , 's' ].^ result	"#(0 1 2 98.6) do:	[:num | Transcript cr; show: 'There', (num isOrAreStringWith: 'way'), ' to skin a cat']"
+]
+
+Class Number >> integerPart
+[
+	"Added for ANSI compatibility"
+^ self truncated
+]
+
+Class Number >> asScaledDecimal
+[
+	"Answer a scaled decimal number approximating the receiver."
+#Numeric.^ self asScaledDecimal: 8
+]
+
+Class Number >> day
+[
+^ self sign days
+]
+
+Class Number >> sign: aNumber
+[
+	"Return a Number with the same sign as aNumber"
+^ aNumber copySignTo: self
+]
+
+Class Number >> hour
+[
+^ self sign hours
+]
+
+Class Number >> interpolateTo: aNumber at: param
+[
+^ self + ((aNumber - self) * param)
+]
+
+Class Number >> asFloat
+[
+	"Answer a floating-point number approximating the receiver."
+self subclassResponsibility
+]
+
+Class Number >> seconds
+[
+^ Duration seconds: self
+]
+
+Class Number >> isInfinite
+[
+^ false
+]
+
+Class Number >> asSmallAngleDegrees
+[
+	"Return the receiver normalized to lie within the range (-180, 180)"
+| pos |pos := self \\ 360.pos > 180	ifTrue: [ pos := pos - 360 ].^ pos	"#(-500 -300 -150 -5 0 5 150 300 500 1200) collect: [:n | n asSmallAngleDegrees]"
+]
+
+Class Number >> nanoSeconds
+[
+^ Duration nanoSeconds: self
+]
+
+Class Number >> stringForReadout
+[
+^ self rounded printString
+]
+
+Class Number >> floor
+[
+	"Answer the integer nearest the receiver toward negative infinity."
+| truncation |truncation := self truncated.self >= 0	ifTrue: [ ^ truncation ].self = truncation	ifTrue: [ ^ truncation ]	ifFalse: [ ^ truncation - 1 ]
+]
+
+Class Number >> isDivisibleBy: aNumber
+[
+aNumber = 0	ifTrue: [ ^ false ].aNumber isInteger	ifFalse: [ ^ false ].^ self \\ aNumber = 0
+]
+
+Class Number >> sin
+[
+	"The receiver represents an angle measured in radians. Answer its sine."
+^ self asFloat sin
+]
+
+Class Number >> withNegativeSign
+[
+	"Answer a number with same magnitude than receiver and negative sign."
+^ self abs negated
+]
+
+Class Number >> ** exponent
+[
+	" A shortcut methog for raisedTo: "
+^ self raisedTo: exponent
+]
+
+Class Number >> arcSin
+[
+	"The receiver is the sine of an angle. Answer the angle measured in 	radians."
+^ self asFloat arcSin
+]
+
+Class Number >> fractionPart
+[
+	"Added for ANSI compatibility"
+^ self - self integerPart
+]
+
+Class Number >> isNumber
+[
+^ true
+]
+
+Class Number >> - aNumber
+[
+	"Answer the difference between the receiver and aNumber."
+self subclassResponsibility
+]
+
+Class Number >> asInteger
+[
+	"Answer an Integer nearest the receiver toward zero."
+^ self truncated
+]
+
+Class Number >> rounded
+[
+	"Answer the integer nearest the receiver."
+^ (self + (self sign / 2)) truncated
+]
+
+Class Number >> isZero
+[
+^ self = 0
+]
+
+Class Number >> minutes
+[
+^ Duration minutes: self
+]
+
+Class Number >> % aNumber
+[
+	"modulo. Remainder defined in terms of //. Answer a Number with the 	same sign as aNumber. e.g. 9\\4 = 1, -9\\4 = 3, 9\\-4 = -3, 0.9\\0.4 = 0.1."
+^ self \\ aNumber
+]
+
+Class Number >> raisedToInteger: anInteger
+[
+	"The 0 raisedToInteger: 0 is an special case. In some contexts must be 1 and in others must	be handled as an indeterminate form.	I take the first context because that's the way that was previously handled.	Maybe further discussion is required on this topic."
+| bitProbe result |anInteger negative	ifTrue: [ ^ (self raisedToInteger: anInteger negated) reciprocal ].bitProbe := 1 bitShift: anInteger highBit - 1.result := self class one.[ (anInteger bitAnd: bitProbe) = 0	ifFalse: [ result := result * self ].bitProbe := bitProbe bitShift: -1.bitProbe > 0 ] whileTrue: [ result := result * result ].^ result
+]
+
+Class Number >> adaptToString: rcvr andSend: selector
+[
+	"If I am involved in arithmetic with a String, convert it to a Number."
+^ rcvr asNumber perform: selector with: self
+]
+
+Class Number >> truncateTo: aNumber
+[
+	"Answer the next multiple of aNumber toward zero that is nearest the receiver.	Examples:               3.1479 truncateTo: 0.01 -> 3.14               3.1479 truncateTo: 0.1 -> 3.1               1923 truncateTo: 10 -> 1920               3.1479 truncateTo: 0.005 -> 3.145               -3.1479 truncateTo: 0.01 -> -3.14"
+^ (self quo: aNumber) * aNumber
+]
+
+Class Number >> degreeCos
+[
+	"Answer the cosine of the receiver taken as an angle in degrees."
+^ (90 - ((180 + self) \\ 360 - 180) abs) degreesToRadians sin
+]
+
+Class Number >> to: stop by: step do: aBlock
+[
+	"Normally compiled in-line, and therefore not overridable.	Evaluate aBlock for each element of the interval (self to: stop by: step)."
+| nextValue |nextValue := self.step = 0	ifTrue: [ self error: 'step must be non-zero' ].step < 0	ifTrue: [ 		[ stop <= nextValue ]			whileTrue: [ 				aBlock value: nextValue.				nextValue := nextValue + step ] ]	ifFalse: [ 		[ stop >= nextValue ]			whileTrue: [ 				aBlock value: nextValue.				nextValue := nextValue + step ] ]
+]
+
+Class Number >> second
+[
+^ self sign seconds
+]
+
+Class Number >> hours
+[
+^ Duration hours: self
+]
+
+Class Number >> @ y
+[
+	"Primitive. Answer a Point whose x value is the receiver and whose y 	value is the argument. Optional. No Lookup. See Object documentation 	whatIsAPrimitive."
+	<primitive: 18>
+^ Point x: self y: y
+]
+
+Class Number >> asDuration
+[
+^ Duration nanoSeconds: self asInteger
+]
+
+Class Number >> squared
+[
+	"Answer the receiver multipled by itself."
+^ self * self
+]
+
+Class Number >> asPoint
+[
+	"Answer a Point with the receiver as both coordinates; often used to 	supply the same value in two dimensions, as with symmetrical gridding 	or scaling."
+^ self @ self
+]
+
+Class Number >> asNumber
+[
+^ self
+]
+
+Class Number >> asSmallPositiveDegrees
+[
+	"Return the receiver normalized to lie within the range (0, 360)"
+^ self \\ 360
+]
+
+Class Number >> asB3DVector3
+[
+^ self @ self @ self
+]
+
+Class Number >> arcTan: denominator
+[
+	"The receiver is the tangent of an angle. Answer the angle measured in 	radians."
+^ self asFloat arcTan: denominator
+]
+
+Class Number >> roundUpTo: aNumber
+[
+	"Answer the next multiple of aNumber toward infinity that is nearest the receiver.	Examples:               3.1479 roundUpTo: 0.01 -> 3.15               3.1479 roundUpTo: 0.1 -> 3.2               1923 roundUpTo: 10 -> 1930               3.1479 roundUpTo: 0.005 -> 3.15               -3.1479 roundUpTo: 0.01 -> -3.14"
+^ (self / aNumber) ceiling * aNumber
+]
+
+Class Number >> degreeSin
+[
+	"Answer the sine of the receiver taken as an angle in degrees."
+^ (90 - self) degreeCos
+]
+
+Class Number >> printStringBase: base
+[
+^ String streamContents: [ :strm | self printOn: strm base: base ]
+]
+
+Class Number >> storeOn: aStream base: base
+[
+	"This method should print a representation of the number for the given base,	including the base prefix (with letter r for radix)"
+^ self subclassResponsibility
+]
+
+Class Number >> storeStringBase: base
+[
+^ String streamContents: [ :strm | self storeOn: strm base: base ]
+]
+
+Class Number >> storeOn: aStream
+[
+self printOn: aStream
+]
+
+Class Number >> odd
+[
+	"Answer whether the receiver is an odd number."
+^ self even == false
+]
+
+Class Number >> isNaN
+[
+^ false
+]
+
+Class Number >> adaptToFraction: rcvr andSend: selector
+[
+	"If I am involved in arithmetic with a Fraction, convert us and evaluate exprBlock."
+^ self subclassResponsibility
+]
+
+Class Number >> quo: aNumber
+[
+	"Integer quotient defined by division with truncation toward zero. 		-9 quo: 4 = -2.	-0.9 quo: 0.4 = -2. 		rem: answers the remainder from this division."
+^ (self / aNumber) truncated
+]
+
+Class Number >> negative
+[
+	"Answer whether the receiver is mathematically negative."
+^ self < 0
+]
+
+Class Number >> reduce
+[
+	"If self is close to an integer, return that integer"
+^ self
+]
+
+Class Number >> days
+[
+^ Duration days: self
+]
+
+Class Number >> exp
+[
+	"Answer the exponential of the receiver as a floating point number."
+^ self asFloat exp
+]
+
+Class Number >> radiansToDegrees
+[
+	"The receiver is assumed to represent radians. Answer the conversion to 	degrees."
+^ self asFloat radiansToDegrees
+]
+
+Class Number >> round: numberOfWishedDecimal
+[
+self subclassResponsibility
+]
+
+Class Number >> printShowingDecimalPlaces: placesDesired
+[
+	"Print the receiver showing precisely the given number of places desired.  If placesDesired is positive, a decimal point and that many digits after the decimal point will always be shown.  If placesDesired is zero, a whole number will be shown, without a decimal point."
+^ String	new: placesDesired + 10	streamContents: [ :aStream | self printOn: aStream showingDecimalPlaces: placesDesired ]	"23 printShowingDecimalPlaces: 223.5698 printShowingDecimalPlaces: 2-234.567 printShowingDecimalPlaces: 523.4567 printShowingDecimalPlaces: 023.5567 printShowingDecimalPlaces: 0-23.4567 printShowingDecimalPlaces: 0-23.5567 printShowingDecimalPlaces: 0100000000 printShowingDecimalPlaces: 10.98 printShowingDecimalPlaces: 5-0.98 printShowingDecimalPlaces: 22.567 printShowingDecimalPlaces: 2-2.567 printShowingDecimalPlaces: 20 printShowingDecimalPlaces: 2"
+]
+
+Class Number >> adaptToFloat: rcvr andSend: selector
+[
+	"If I am involved in arithmetic with a Float, convert me to a Float."
+^ rcvr perform: selector with: self asFloat
+]
+
+Class Number >> milliSecond
+[
+^ self sign milliSeconds
+]
+
+Class Number >> ceiling
+[
+	"Answer the integer nearest the receiver toward  infinity."
+| truncation |truncation := self truncated.self <= 0	ifTrue: [ ^ truncation ].^ self = truncation	ifTrue: [ truncation ]	ifFalse: [ truncation + 1 ]
+]
+
+Class Number >> asScaledDecimal: scale
+[
+	"Answer the receiver converted to a ScaledDecimal."
+^ ScaledDecimal newFromNumber: self scale: scale
+]
+
+Class Number >> / aNumber
+[
+	"Answer the result of dividing the receiver by aNumber."
+self subclassResponsibility
+]
+
+Class Number >> milliSeconds
+[
+^ Duration milliSeconds: self
+]
+
+Class Number >> sqrt
+[
+	"Answer the square root of the receiver."
+self subclassResponsibility
+]
+
+Class Number >> positive
+[
+	"Answer whether the receiver is positive or equal to 0. (ST-80 protocol).	See also strictlyPositive"
+^ self >= 0
+]
+
+Class Number >> + aNumber
+[
+	"Answer the sum of the receiver and aNumber."
+self subclassResponsibility
+]
+
+Class Number >> detentBy: detent atMultiplesOf: grid snap: snap
+[
+	"Map all values that are within detent/2 of any multiple of grid to that multiple.  Otherwise, if snap is true, return self, meaning that the values in the dead zone will never be returned.  If snap is false, then expand the range between dead zones so that it covers the range between multiples of the grid, and scale the value by that factor."
+| r1 r2 |r1 := self roundTo: grid.	"Nearest multiple of grid"(self roundTo: detent) = r1	ifTrue: [ ^ r1 ].	"Snap to that multiple..."snap	ifTrue: [ ^ self ].	"...or return self"r2 := self < r1	ifTrue: [ r1 - (detent asFloat / 2) ]	ifFalse: [ r1 + (detent asFloat / 2) ].	"Nearest end of dead zone"	"Scale values between dead zones to fill range between multiples"^ r1 + ((self - r2) * grid asFloat / (grid - detent))	"	(170 to: 190 by: 2) collect: [:a | a detentBy: 10 atMultiplesOf: 90 snap: true] 	(170 to: 190 by: 2) collect: [:a | a detentBy: 10 atMultiplesOf: 90 snap: false]	(3.9 to: 4.1 by: 0.02) collect: [:a | a detentBy: 0.1 atMultiplesOf: 1.0 snap: true] 	(-3.9 to: -4.1 by: -0.02) collect: [:a | a detentBy: 0.1 atMultiplesOf: 1.0 snap: false]"
+]
+
+Class Number >> closeTo: num
+[
+	"are these two numbers close?"
+num isFloat	ifTrue: [ ^ num closeTo: self asFloat ].^ [ self = num ] ifError: [ false ]
+]
+
+Class Number >> to: stop by: step
+[
+	"Answer an Interval from the receiver up to the argument, stop, 	incrementing by step."
+^ Interval from: self to: stop by: step
+]
+
+Metaclass
+	name: #Number;
+	instanceVariables: #().
+
+Metaclass Number >> readScaledDecimal: integerPart fractionPart: fractionPart digits: fractionDigits base: base sign: sign from: aStream
+[
+	"Complete creation of a ScaledDecimal, reading scale from aStream. Answer	a ScaledDecimal, or nil if parsing fails.	<number>s[<scale>]"
+| scale decimalMultiplier decimalFraction |aStream atEnd	ifTrue: [ ^ nil ].aStream next == $s	ifFalse: [ ^ nil ].	"<number>s<scale>"(aStream atEnd not and: [ aStream peek digitValue between: 0 and: 9 ])	ifTrue: [ scale := Integer readFrom: aStream ]	ifFalse: [ ^ nil ].scale isNil	ifTrue: [ 		"<number>s"		fractionDigits = 0			ifTrue: [ 				"<integer>s"				scale := 0 ]			ifFalse: [ 				"<integer>.<fraction>s"				scale := fractionDigits ] ].fractionPart isNil	ifTrue: [ ^ integerPart * sign asScaledDecimal: scale ]	ifFalse: [ 		decimalMultiplier := base raisedTo: fractionDigits.		decimalFraction := (integerPart * decimalMultiplier + fractionPart) * sign / decimalMultiplier.		^ decimalFraction asScaledDecimal: scale ]
+]
+
+Metaclass Number >> readSmalltalkSyntaxFrom: stringOrStream
+[
+	"Answer a number as described on aStream.  The number may	be any accepted Smalltalk literal Number format.	It can include a leading radix specification, as in 16rFADE.	It can as well be NaN, Infinity or -Infinity for conveniency.	If stringOrStream does not start with a valid number description, fail."
+^ (SqNumberParser on: stringOrStream) nextNumber
+]
+
+Metaclass Number >> readFrom: stringOrStream base: base
+[
+	"Answer a number as described on aStream in the given number base.	If stringOrStream does not start with a valid number description, answer 0 for backward compatibility. This is not clever and should better be changed."
+^ (SqNumberParser on: stringOrStream) nextNumberBase: base
+]
+
+Metaclass Number >> readRemainderOf: integerPart from: aStream base: base withSign: sign
+[
+	"Read optional fractional part and exponent or decimal scale, and return the final result"
+	"Changed 200/01/19 For ANSI Numeric Literals support."
+	"Number readFrom: '3r-22.2'"
+| value fractionDigits fracpos fractionPart fraction pos v foundDecimal |#Numeric.value := integerPart.fractionDigits := 0.foundDecimal := false.(aStream peekFor: $.)	ifTrue: [ 		"<integer>.<fraction>"		foundDecimal := true.		(aStream atEnd not and: [ aStream peek digitValue between: 0 and: base - 1 ])			ifTrue: [ 				fracpos := aStream position.				fractionPart := Integer readFrom: aStream base: base.				fraction := fractionPart asFloat / (base raisedTo: aStream position - fracpos).				fractionDigits := aStream position - fracpos.				value := value asFloat + fraction ] ].pos := aStream position.(v := self	readScaledDecimal: integerPart	fractionPart: fractionPart	digits: fractionDigits	base: base	sign: sign	from: aStream) ifNil: [ aStream position: pos ] ifNotNil: [ ^ v	"<number>s<scale>>" ].pos := aStream position.(v := self readExponent: value base: base from: aStream)	ifNil: [ 		aStream position: pos.		(foundDecimal and: [ fractionDigits = 0 ])			ifTrue: [ 				"oops - just <integer>."				aStream skip: -1.	"un-gobble the period"				^ value * sign ] ]	ifNotNil: [ value := v	"<number>(e|d|q)<exponent>>" ].(value isFloat and: [ value = 0.0 and: [ sign = -1 ] ])	ifTrue: [ ^ Float negativeZero ]	ifFalse: [ ^ value * sign ]
+]
+
+Metaclass Number >> readFrom: stringOrStream ifFail: aBlock
+[
+	"Answer a number as described on aStream.  The number may	be any accepted Smalltalk literal Number format.	It can include a leading radix specification, as in 16rFADE.	It can as well be NaN, Infinity or -Infinity for conveniency.	If input does not represent a valid number, then execute fail block	and leave the stream positioned before offending character"
+^ (ExtendedNumberParser on: stringOrStream)	failBlock: aBlock;	nextNumber
+]
+
+Metaclass Number >> one
+[
+^ 1
+]
+
+Metaclass Number >> readExponent: baseValue base: base from: aStream
+[
+	"Complete creation of a number, reading exponent from aStream. Answer the	number, or nil if parsing fails.	<number>(e|d|q)<exponent>>"
+| sign exp value |('edq' includes: aStream next)	ifFalse: [ ^ nil ].sign := aStream peek == $-	ifTrue: [ 		aStream next.		-1 ]	ifFalse: [ 1 ].(aStream atEnd or: [ (aStream peek digitValue between: 0 and: 9) not ])	ifTrue: [ ^ nil ].	"Avoid throwing an error"exp := (Integer readFrom: aStream base: 10) * sign.value := baseValue * (base raisedTo: exp).^ value
+]
+
+Metaclass Number >> readFrom: stringOrStream
+[
+	"Answer a number as described on aStream.  The number may	be any accepted Smalltalk literal Number format.	It can include a leading radix specification, as in 16rFADE.	It can as well be NaN, Infinity or -Infinity for conveniency.	If stringOrStream does not start with a valid number description, fail."
+^ (ExtendedNumberParser on: stringOrStream) nextNumber
+]
+
+Metaclass Number >> squeezeNumberOutOfString: stringOrStream
+[
+	"Try and find a number in this string. First, look if the string 	starts with a number. Then, see if it ends with a number. Then,	remove a character from the front and see if the remaining 	string makes a number. Repeat the process until no characters	are left or the number has been found. As soon as a number is	found, it is returned. Otherwise, the method fails."
+^ SqNumberParser squeezeNumberOutOfString: stringOrStream
+]
+
+Metaclass Number >> squeezeNumberOutOfString: stringOrStream ifFail: aBlock
+[
+	"Try and find a number in this string. First, look if the string 	starts with a number. Then, see if it ends with a number. Then,	remove a character from the front and see if the remaining 	string makes a number. Repeat the process until no characters	are left or the number has been found. As soon as a number is	found, it is returned. Otherwise, the method fails."
+^ SqNumberParser squeezeNumberOutOfString: stringOrStream onError: aBlock
+]
+

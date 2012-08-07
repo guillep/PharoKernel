@@ -1,1 +1,67 @@
-Class	name: #FLSimpleStack;	superclass: #ClassObject;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#array #slotIndex );	classVariables: #();	package: #'Fuel-Collections'.Class FLSimpleStack >> push: anObject[	"Adds a new object of any kind on top of the stack."array at: slotIndex put: anObject.array size = slotIndex	ifTrue: [ self grow ].slotIndex := slotIndex + 1.^ anObject]Class FLSimpleStack >> pop[	"Returns the first element and remove it from the stack."slotIndex := slotIndex - 1.^ array at: slotIndex]Class FLSimpleStack >> capacity[^ array size]Class FLSimpleStack >> initialize: hintSize[array := Array new: hintSize.slotIndex := 1]Class FLSimpleStack >> printOn: aStream[	"Append a sequence of characters that identify the receiver to aStream."super printOn: aStream.array printElementsOn: aStream]Class FLSimpleStack >> isEmpty[^ 1 = slotIndex]Class FLSimpleStack >> grow[	"Become larger in capacity."| newArray |newArray := Array new: array size * 2.newArray	replaceFrom: 1	to: array size	with: array	startingAt: 1.array := newArray]Metaclass	name: #FLSimpleStack;	instanceVariables: #().Metaclass FLSimpleStack >> new[^ self new: self hintSize]Metaclass FLSimpleStack >> hintSize[^ 64]Metaclass FLSimpleStack >> new: nElements[	"Create a Set large enough to hold nElements without growing"^ self basicNew initialize: nElements]
+Class
+	name: #FLSimpleStack;
+	superclass: #ClassObject;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#array #slotIndex );
+	classVariables: #();
+	package: #'Fuel-Collections'.
+
+Class FLSimpleStack >> push: anObject
+[
+	"Adds a new object of any kind on top of the stack."
+array at: slotIndex put: anObject.array size = slotIndex	ifTrue: [ self grow ].slotIndex := slotIndex + 1.^ anObject
+]
+
+Class FLSimpleStack >> pop
+[
+	"Returns the first element and remove it from the stack."
+slotIndex := slotIndex - 1.^ array at: slotIndex
+]
+
+Class FLSimpleStack >> capacity
+[
+^ array size
+]
+
+Class FLSimpleStack >> initialize: hintSize
+[
+array := Array new: hintSize.slotIndex := 1
+]
+
+Class FLSimpleStack >> printOn: aStream
+[
+	"Append a sequence of characters that identify the receiver to aStream."
+super printOn: aStream.array printElementsOn: aStream
+]
+
+Class FLSimpleStack >> isEmpty
+[
+^ 1 = slotIndex
+]
+
+Class FLSimpleStack >> grow
+[
+	"Become larger in capacity."
+| newArray |newArray := Array new: array size * 2.newArray	replaceFrom: 1	to: array size	with: array	startingAt: 1.array := newArray
+]
+
+Metaclass
+	name: #FLSimpleStack;
+	instanceVariables: #().
+
+Metaclass FLSimpleStack >> new
+[
+^ self new: self hintSize
+]
+
+Metaclass FLSimpleStack >> hintSize
+[
+^ 64
+]
+
+Metaclass FLSimpleStack >> new: nElements
+[
+	"Create a Set large enough to hold nElements without growing"
+^ self basicNew initialize: nElements
+]
+

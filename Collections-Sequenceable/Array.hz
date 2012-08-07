@@ -1,1 +1,190 @@
-Class	name: #Array;	superclass: #ClassArrayedCollection;	instanceSpecification: #(#variable #pointers #words );	instanceVariables: #();	classVariables: #();	package: #'Collections-Sequenceable'.Class Array >> hasLiteral: literal[	"Answer true if literal is identical to any literal in this array, even 	if imbedded in further array structure. This method is only intended 	for private use by CompiledMethod hasLiteralSymbol:"| lit |1 to: self size do: [ :index | 	((lit := self at: index) literalEqual: literal)		ifTrue: [ ^ true ].	(Array == lit class and: [ lit hasLiteral: literal ])		ifTrue: [ ^ true ] ].^ false]Class Array >> isArray[^ true]Class Array >> elementsForwardIdentityTo: otherArray copyHash: copyHash[	"This primitive performs a bulk mutation, causing all pointers to the elements of this array to be replaced by pointers to the corresponding elements of otherArray.  The identityHashes remain with the pointers rather than with the objects so that the objects in this array should still be properly indexed in any existing hashed structures after the mutation."	<primitive: 249>self primitiveFailed]Class Array >> atWrap: index[	"Optimized to go through the primitive if possible"	<primitive: 60>^ self at: (index - 1) \\ self size + 1]Class Array >> storeOn: aStream[	"Use the literal form if possible."self shouldBePrintedAsLiteral	ifTrue: [ 		aStream			nextPut: $#;			nextPut: $(.		self			do: [ :element | 				element storeOn: aStream.				aStream space ].		aStream nextPut: $) ]	ifFalse: [ super storeOn: aStream ]]Class Array >> elementsForwardIdentityTo: otherArray[	"This primitive performs a bulk mutation, causing all pointers to the elements of this array to be replaced by pointers to the corresponding elements of otherArray.  The identityHashes remain with the pointers rather than with the objects so that the objects in this array should still be properly indexed in any existing hashed structures after the mutation."	<primitive: 72>self primitiveFailed]Class Array >> copyWithDependent: newElement[self size = 0	ifTrue: [ ^ DependentsArray with: newElement ].^ self copyWith: newElement]Class Array >> asArray[	"Answer with the receiver itself."^ self]Class Array >> atWrap: index put: anObject[	"Optimized to go through the primitive if possible"	<primitive: 61>^ self at: (index - 1) \\ self size + 1 put: anObject]Class Array >> hasLiteralSuchThat: testBlock[	"Answer true if testBlock returns true for any literal in this array, even if imbedded in 	further Arrays or CompiledMethods.  This method is only intended for private use by 	CompiledMethod 	hasLiteralSuchThat:"| lit |1 to: self size do: [ :index | 	(testBlock value: (lit := self at: index))		ifTrue: [ ^ true ].	(lit hasLiteralSuchThat: testBlock)		ifTrue: [ ^ true ] ].^ false]Class Array >> refersToLiteral: literal[	"Answer true if literal is identical to any literal in this array, even if imbedded in further array structures or closure methods"1 to: self size do: [ :index | 	| lit |	(literal literalEqual: (lit := self at: index))		ifTrue: [ ^ true ].	(lit refersToLiteral: literal)		ifTrue: [ ^ true ] ].^ false]Class Array >> elementsExchangeIdentityWith: otherArray[	"This primitive performs a bulk mutation, causing all pointers to the elements of this array to be replaced by pointers to the corresponding elements of otherArray.  At the same time, all pointers to the elements of otherArray are replaced by pointers to the corresponding elements of this array.  The identityHashes remain with the pointers rather than with the objects so that objects in hashed structures should still be properly indexed after the mutation."	<primitive: 128>otherArray class == Array	ifFalse: [ ^ self error: 'arg must be array' ].self size = otherArray size	ifFalse: [ ^ self error: 'arrays must be same size' ].(self anySatisfy: [ :obj | obj class == SmallInteger ])	ifTrue: [ ^ self error: 'can''t become SmallIntegers' ].(otherArray anySatisfy: [ :obj | obj class == SmallInteger ])	ifTrue: [ ^ self error: 'can''t become SmallIntegers' ].self	with: otherArray	do: [ :a :b | 		a == b			ifTrue: [ ^ self error: 'can''t become yourself' ] ].	"Must have failed because not enough space in forwarding table (see ObjectMemory-prepareForwardingTableForBecoming:with:twoWay:).  Do GC and try again only once"(Smalltalk bytesLeft: true) = Smalltalk primitiveGarbageCollect	ifTrue: [ ^ self primitiveFailed ].^ self elementsExchangeIdentityWith: otherArray]Class Array >> storeOnStream: aStream[self shouldBePrintedAsLiteral	ifTrue: [ super storeOnStream: aStream ]	ifFalse: [ aStream writeCollection: self ]]Class Array >> sorted: aSortBlockOrNil[	"Return a new sequenceable collection which contains the same elements as self but its elements are sorted by aSortBlockOrNil. The block should take two arguments and return true if the first element should preceed the second one. If aSortBlock is nil then <= is used for comparison."^ self copy sort: aSortBlockOrNil]Class Array >> literalEqual: other[self class == other class	ifFalse: [ ^ false ].self size = other size	ifFalse: [ ^ false ].self	with: other	do: [ :e1 :e2 | 		(e1 literalEqual: e2)			ifFalse: [ ^ false ] ].^ true]Class Array >> isLiteral[^ self class == Array and: [ self allSatisfy: [ :each | each isLiteral ] ]]Class Array >> printOn: aStream[self shouldBePrintedAsLiteral	ifTrue: [ 		self printAsLiteralFormOn: aStream.		^ self ].self isSelfEvaluating	ifTrue: [ 		self printAsSelfEvaluatingFormOn: aStream.		^ self ].super printOn: aStream]Class Array >> printAsLiteralFormOn: aStream[aStream nextPut: $#.self printElementsOn: aStream]Class Array >> shouldBePrintedAsLiteral[^ self class == Array and: [ self allSatisfy: [ :each | each shouldBePrintedAsLiteral ] ]]Class Array >> isSelfEvaluating[^ (self allSatisfy: [ :each | each isSelfEvaluating ]) and: [ self class == Array ]]Class Array >> replaceFrom: start to: stop with: replacement startingAt: repStart[	"Primitive. This destructively replaces elements from start to stop in the receiver starting at index, repStart, in the collection, replacement. Answer the receiver. Range checks are performed in the primitive only. Optional. See Object documentation whatIsAPrimitive."	<primitive: 105>super	replaceFrom: start	to: stop	with: replacement	startingAt: repStart]Class Array >> printAsSelfEvaluatingFormOn: aStream[aStream nextPut: ${.self do: [ :el | el printOn: aStream ] separatedBy: [ aStream nextPutAll: '. ' ].aStream nextPut: $}]Metaclass	name: #Array;	instanceVariables: #().Metaclass Array >> empty[	"A canonicalized empty Array instance."^ #()]Metaclass Array >> braceWith: a with: b with: c[	"This method is used in compilation of brace constructs.	It MUST NOT be deleted or altered."| array |array := self new: 3.array at: 1 put: a.array at: 2 put: b.array at: 3 put: c.^ array]Metaclass Array >> braceStream: nElements[	"This method is used in compilation of brace constructs.	It MUST NOT be deleted or altered."^ WriteStream basicNew braceArray: (self new: nElements)]Metaclass Array >> braceWith: a with: b[	"This method is used in compilation of brace constructs.	It MUST NOT be deleted or altered."| array |array := self new: 2.array at: 1 put: a.array at: 2 put: b.^ array]Metaclass Array >> new: sizeRequested[	"Answer an instance of this class with the number of indexable	variables specified by the argument, sizeRequested.		This is a shortcut (direct call of primitive, no #initialize, for performance"	"This method runs primitively if successful"	<primitive: 71>^ self basicNew: sizeRequested	"Exceptional conditions will be handled in basicNew:"]Metaclass Array >> braceWith: a[	"This method is used in compilation of brace constructs.	It MUST NOT be deleted or altered."| array |array := self new: 1.array at: 1 put: a.^ array]Metaclass Array >> braceWith: a with: b with: c with: d[	"This method is used in compilation of brace constructs.	It MUST NOT be deleted or altered."| array |array := self new: 4.array at: 1 put: a.array at: 2 put: b.array at: 3 put: c.array at: 4 put: d.^ array]Metaclass Array >> braceWithNone[	"This method is used in compilation of brace constructs.	It MUST NOT be deleted or altered."^ self new: 0]
+Class
+	name: #Array;
+	superclass: #ClassArrayedCollection;
+	instanceSpecification: #(#variable #pointers #words );
+	instanceVariables: #();
+	classVariables: #();
+	package: #'Collections-Sequenceable'.
+
+Class Array >> hasLiteral: literal
+[
+	"Answer true if literal is identical to any literal in this array, even 	if imbedded in further array structure. This method is only intended 	for private use by CompiledMethod hasLiteralSymbol:"
+| lit |1 to: self size do: [ :index | 	((lit := self at: index) literalEqual: literal)		ifTrue: [ ^ true ].	(Array == lit class and: [ lit hasLiteral: literal ])		ifTrue: [ ^ true ] ].^ false
+]
+
+Class Array >> isArray
+[
+^ true
+]
+
+Class Array >> elementsForwardIdentityTo: otherArray copyHash: copyHash
+[
+	"This primitive performs a bulk mutation, causing all pointers to the elements of this array to be replaced by pointers to the corresponding elements of otherArray.  The identityHashes remain with the pointers rather than with the objects so that the objects in this array should still be properly indexed in any existing hashed structures after the mutation."
+	<primitive: 249>
+self primitiveFailed
+]
+
+Class Array >> atWrap: index
+[
+	"Optimized to go through the primitive if possible"
+	<primitive: 60>
+^ self at: (index - 1) \\ self size + 1
+]
+
+Class Array >> storeOn: aStream
+[
+	"Use the literal form if possible."
+self shouldBePrintedAsLiteral	ifTrue: [ 		aStream			nextPut: $#;			nextPut: $(.		self			do: [ :element | 				element storeOn: aStream.				aStream space ].		aStream nextPut: $) ]	ifFalse: [ super storeOn: aStream ]
+]
+
+Class Array >> elementsForwardIdentityTo: otherArray
+[
+	"This primitive performs a bulk mutation, causing all pointers to the elements of this array to be replaced by pointers to the corresponding elements of otherArray.  The identityHashes remain with the pointers rather than with the objects so that the objects in this array should still be properly indexed in any existing hashed structures after the mutation."
+	<primitive: 72>
+self primitiveFailed
+]
+
+Class Array >> copyWithDependent: newElement
+[
+self size = 0	ifTrue: [ ^ DependentsArray with: newElement ].^ self copyWith: newElement
+]
+
+Class Array >> asArray
+[
+	"Answer with the receiver itself."
+^ self
+]
+
+Class Array >> atWrap: index put: anObject
+[
+	"Optimized to go through the primitive if possible"
+	<primitive: 61>
+^ self at: (index - 1) \\ self size + 1 put: anObject
+]
+
+Class Array >> hasLiteralSuchThat: testBlock
+[
+	"Answer true if testBlock returns true for any literal in this array, even if imbedded in 	further Arrays or CompiledMethods.  This method is only intended for private use by 	CompiledMethod 	hasLiteralSuchThat:"
+| lit |1 to: self size do: [ :index | 	(testBlock value: (lit := self at: index))		ifTrue: [ ^ true ].	(lit hasLiteralSuchThat: testBlock)		ifTrue: [ ^ true ] ].^ false
+]
+
+Class Array >> refersToLiteral: literal
+[
+	"Answer true if literal is identical to any literal in this array, even if imbedded in further array structures or closure methods"
+1 to: self size do: [ :index | 	| lit |	(literal literalEqual: (lit := self at: index))		ifTrue: [ ^ true ].	(lit refersToLiteral: literal)		ifTrue: [ ^ true ] ].^ false
+]
+
+Class Array >> elementsExchangeIdentityWith: otherArray
+[
+	"This primitive performs a bulk mutation, causing all pointers to the elements of this array to be replaced by pointers to the corresponding elements of otherArray.  At the same time, all pointers to the elements of otherArray are replaced by pointers to the corresponding elements of this array.  The identityHashes remain with the pointers rather than with the objects so that objects in hashed structures should still be properly indexed after the mutation."
+	<primitive: 128>
+otherArray class == Array	ifFalse: [ ^ self error: 'arg must be array' ].self size = otherArray size	ifFalse: [ ^ self error: 'arrays must be same size' ].(self anySatisfy: [ :obj | obj class == SmallInteger ])	ifTrue: [ ^ self error: 'can''t become SmallIntegers' ].(otherArray anySatisfy: [ :obj | obj class == SmallInteger ])	ifTrue: [ ^ self error: 'can''t become SmallIntegers' ].self	with: otherArray	do: [ :a :b | 		a == b			ifTrue: [ ^ self error: 'can''t become yourself' ] ].	"Must have failed because not enough space in forwarding table (see ObjectMemory-prepareForwardingTableForBecoming:with:twoWay:).  Do GC and try again only once"(Smalltalk bytesLeft: true) = Smalltalk primitiveGarbageCollect	ifTrue: [ ^ self primitiveFailed ].^ self elementsExchangeIdentityWith: otherArray
+]
+
+Class Array >> storeOnStream: aStream
+[
+self shouldBePrintedAsLiteral	ifTrue: [ super storeOnStream: aStream ]	ifFalse: [ aStream writeCollection: self ]
+]
+
+Class Array >> sorted: aSortBlockOrNil
+[
+	"Return a new sequenceable collection which contains the same elements as self but its elements are sorted by aSortBlockOrNil. The block should take two arguments and return true if the first element should preceed the second one. If aSortBlock is nil then <= is used for comparison."
+^ self copy sort: aSortBlockOrNil
+]
+
+Class Array >> literalEqual: other
+[
+self class == other class	ifFalse: [ ^ false ].self size = other size	ifFalse: [ ^ false ].self	with: other	do: [ :e1 :e2 | 		(e1 literalEqual: e2)			ifFalse: [ ^ false ] ].^ true
+]
+
+Class Array >> isLiteral
+[
+^ self class == Array and: [ self allSatisfy: [ :each | each isLiteral ] ]
+]
+
+Class Array >> printOn: aStream
+[
+self shouldBePrintedAsLiteral	ifTrue: [ 		self printAsLiteralFormOn: aStream.		^ self ].self isSelfEvaluating	ifTrue: [ 		self printAsSelfEvaluatingFormOn: aStream.		^ self ].super printOn: aStream
+]
+
+Class Array >> printAsLiteralFormOn: aStream
+[
+aStream nextPut: $#.self printElementsOn: aStream
+]
+
+Class Array >> shouldBePrintedAsLiteral
+[
+^ self class == Array and: [ self allSatisfy: [ :each | each shouldBePrintedAsLiteral ] ]
+]
+
+Class Array >> isSelfEvaluating
+[
+^ (self allSatisfy: [ :each | each isSelfEvaluating ]) and: [ self class == Array ]
+]
+
+Class Array >> replaceFrom: start to: stop with: replacement startingAt: repStart
+[
+	"Primitive. This destructively replaces elements from start to stop in the receiver starting at index, repStart, in the collection, replacement. Answer the receiver. Range checks are performed in the primitive only. Optional. See Object documentation whatIsAPrimitive."
+	<primitive: 105>
+super	replaceFrom: start	to: stop	with: replacement	startingAt: repStart
+]
+
+Class Array >> printAsSelfEvaluatingFormOn: aStream
+[
+aStream nextPut: ${.self do: [ :el | el printOn: aStream ] separatedBy: [ aStream nextPutAll: '. ' ].aStream nextPut: $}
+]
+
+Metaclass
+	name: #Array;
+	instanceVariables: #().
+
+Metaclass Array >> empty
+[
+	"A canonicalized empty Array instance."
+^ #()
+]
+
+Metaclass Array >> braceWith: a with: b with: c
+[
+	"This method is used in compilation of brace constructs.	It MUST NOT be deleted or altered."
+| array |array := self new: 3.array at: 1 put: a.array at: 2 put: b.array at: 3 put: c.^ array
+]
+
+Metaclass Array >> braceStream: nElements
+[
+	"This method is used in compilation of brace constructs.	It MUST NOT be deleted or altered."
+^ WriteStream basicNew braceArray: (self new: nElements)
+]
+
+Metaclass Array >> braceWith: a with: b
+[
+	"This method is used in compilation of brace constructs.	It MUST NOT be deleted or altered."
+| array |array := self new: 2.array at: 1 put: a.array at: 2 put: b.^ array
+]
+
+Metaclass Array >> new: sizeRequested
+[
+	"Answer an instance of this class with the number of indexable	variables specified by the argument, sizeRequested.		This is a shortcut (direct call of primitive, no #initialize, for performance"
+	"This method runs primitively if successful"
+	<primitive: 71>
+^ self basicNew: sizeRequested	"Exceptional conditions will be handled in basicNew:"
+]
+
+Metaclass Array >> braceWith: a
+[
+	"This method is used in compilation of brace constructs.	It MUST NOT be deleted or altered."
+| array |array := self new: 1.array at: 1 put: a.^ array
+]
+
+Metaclass Array >> braceWith: a with: b with: c with: d
+[
+	"This method is used in compilation of brace constructs.	It MUST NOT be deleted or altered."
+| array |array := self new: 4.array at: 1 put: a.array at: 2 put: b.array at: 3 put: c.array at: 4 put: d.^ array
+]
+
+Metaclass Array >> braceWithNone
+[
+	"This method is used in compilation of brace constructs.	It MUST NOT be deleted or altered."
+^ self new: 0
+]
+

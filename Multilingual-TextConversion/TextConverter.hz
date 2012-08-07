@@ -1,1 +1,119 @@
-Class	name: #TextConverter;	superclass: #ClassObject;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#latin1Map #latin1Encodings );	classVariables: #();	sharedPools: #(#EventSensorConstants );	package: #'Multilingual-TextConversion'.Class TextConverter >> convertToSystemString: aString[| writeStream |writeStream := String new writeStream.self nextPutAll: aString toStream: writeStream.self emitSequenceToResetStateIfNeededOn: writeStream.^ writeStream contents]Class TextConverter >> saveStateOf: aStream[^ aStream position]Class TextConverter >> nextFromStream: aStream[self subclassResponsibility]Class TextConverter >> nextPut: aCharacter toStream: aStream[self subclassResponsibility]Class TextConverter >> convertFromSystemString: aString[| readStream writeStream |readStream := aString readStream.writeStream := String new writeStream.[ readStream atEnd ] whileFalse: [ writeStream nextPut: (self nextFromStream: readStream) ].^ writeStream contents]Class TextConverter >> nextPutAll: aString toStream: aStream[	"Handle fast conversion if ByteString"| lastIndex nextIndex |aString class == ByteString	ifFalse: [ 		aString do: [ :char | self nextPut: char toStream: aStream ].		^ self ].aStream isBinary	ifTrue: [ 		aStream basicNextPutAll: aString.		^ self ].self nextPutByteString: aString toStream: aStream.^ self]Class TextConverter >> initialize[latin1Map := self class latin1Map.latin1Encodings := self class latin1Encodings]Class TextConverter >> nextPutByteString: aString toStream: aStream[	"This is a reasonable default which speeds up conversion of encodings which have a partial match with latin1 encoding (for instance ascii supersets)"| lastIndex nextIndex |lastIndex := 1.[ nextIndex := ByteString findFirstInString: aString inSet: latin1Map startingAt: lastIndex.nextIndex = 0 ]	whileFalse: [ 		aStream next: nextIndex - lastIndex putAll: aString startingAt: lastIndex.		aStream basicNextPutAll: (latin1Encodings at: (aString byteAt: nextIndex) + 1).		lastIndex := nextIndex + 1 ].aStream next: aString size - lastIndex + 1 putAll: aString startingAt: lastIndex]Class TextConverter >> installLineEndConvention: lineEndStringOrNil[lineEndStringOrNil	ifNotNil: [ 		latin1Encodings := latin1Encodings copy.		latin1Encodings at: Character cr asciiValue + 1 put: (self convertFromSystemString: lineEndStringOrNil).		latin1Map := ByteString nonAsciiMap copy.		latin1Map at: Character cr asciiValue + 1 put: 1 ]]Class TextConverter >> emitSequenceToResetStateIfNeededOn: aStream[]Class TextConverter >> restoreStateOf: aStream with: aConverterState[aStream position: aConverterState]Metaclass	name: #TextConverter;	instanceVariables: #(#latin1Map #latin1Encodings ).Metaclass TextConverter >> newForEncoding: aString[| class encoding |aString ifNil: [ ^ Latin1TextConverter new ].encoding := aString asLowercase.class := self allSubclasses detect: [ :each | each encodingNames includes: encoding ] ifNone: [  ].class isNil	ifTrue: [ ^ nil ].^ class new]Metaclass TextConverter >> defaultSystemConverter[^ LanguageEnvironment defaultSystemConverter]Metaclass TextConverter >> defaultConverterClassForEncoding: encodingName[	"TextConverter defaultConverterClassForEncoding: 'shift-jis'"^ self allSubclasses detect: [ :class | class encodingNames includes: encodingName ] ifNone: [  ]]Metaclass TextConverter >> default[^ UTF8TextConverter new]Metaclass TextConverter >> allEncodingNames[	"TextConverter allEncodingNames"| encodingNames |encodingNames := Set new.self allSubclasses	do: [ :each | 		| names |		names := each encodingNames.		names notEmpty			ifTrue: [ encodingNames add: names first asSymbol ] ].^ encodingNames]Metaclass TextConverter >> encodingNames[^ #() copy]Metaclass TextConverter >> latin1Encodings[	"Answer an Array mapping latin1 characters to conversion string"^ latin1Encodings	ifNil: [ 		self initializeLatin1MapAndEncodings.		latin1Encodings ]]Metaclass TextConverter >> initializeLatin1MapAndEncodings[	"Initialize the latin1Map and latin1Encodings.	These variables ensure that conversions from latin1 ByteString is reasonably fast"| latin1 utf8 |latin1Map := ByteArray new: 256.latin1Encodings := Array new: 256.0 to: 255 do: [ :i | 	utf8 := (String new: 8) writeStream.	latin1 := String with: (Character value: i).	self new nextPut: latin1 first toStream: utf8.	utf8 := utf8 contents.	latin1 = utf8		ifTrue: [ latin1Map at: i + 1 put: 0	"no translation needed" ]		ifFalse: [ 			latin1Map at: i + 1 put: 1.	"translation needed"			latin1Encodings at: i + 1 put: utf8 ] ]]Metaclass TextConverter >> latin1Map[	"Answer a ByteArray map telling if latin1 characters needs conversion or not"^ latin1Map	ifNil: [ 		self initializeLatin1MapAndEncodings.		latin1Map ]]
+Class
+	name: #TextConverter;
+	superclass: #ClassObject;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#latin1Map #latin1Encodings );
+	classVariables: #();
+	sharedPools: #(#EventSensorConstants );	package: #'Multilingual-TextConversion'.
+
+Class TextConverter >> convertToSystemString: aString
+[
+| writeStream |writeStream := String new writeStream.self nextPutAll: aString toStream: writeStream.self emitSequenceToResetStateIfNeededOn: writeStream.^ writeStream contents
+]
+
+Class TextConverter >> saveStateOf: aStream
+[
+^ aStream position
+]
+
+Class TextConverter >> nextFromStream: aStream
+[
+self subclassResponsibility
+]
+
+Class TextConverter >> nextPut: aCharacter toStream: aStream
+[
+self subclassResponsibility
+]
+
+Class TextConverter >> convertFromSystemString: aString
+[
+| readStream writeStream |readStream := aString readStream.writeStream := String new writeStream.[ readStream atEnd ] whileFalse: [ writeStream nextPut: (self nextFromStream: readStream) ].^ writeStream contents
+]
+
+Class TextConverter >> nextPutAll: aString toStream: aStream
+[
+	"Handle fast conversion if ByteString"
+| lastIndex nextIndex |aString class == ByteString	ifFalse: [ 		aString do: [ :char | self nextPut: char toStream: aStream ].		^ self ].aStream isBinary	ifTrue: [ 		aStream basicNextPutAll: aString.		^ self ].self nextPutByteString: aString toStream: aStream.^ self
+]
+
+Class TextConverter >> initialize
+[
+latin1Map := self class latin1Map.latin1Encodings := self class latin1Encodings
+]
+
+Class TextConverter >> nextPutByteString: aString toStream: aStream
+[
+	"This is a reasonable default which speeds up conversion of encodings which have a partial match with latin1 encoding (for instance ascii supersets)"
+| lastIndex nextIndex |lastIndex := 1.[ nextIndex := ByteString findFirstInString: aString inSet: latin1Map startingAt: lastIndex.nextIndex = 0 ]	whileFalse: [ 		aStream next: nextIndex - lastIndex putAll: aString startingAt: lastIndex.		aStream basicNextPutAll: (latin1Encodings at: (aString byteAt: nextIndex) + 1).		lastIndex := nextIndex + 1 ].aStream next: aString size - lastIndex + 1 putAll: aString startingAt: lastIndex
+]
+
+Class TextConverter >> installLineEndConvention: lineEndStringOrNil
+[
+lineEndStringOrNil	ifNotNil: [ 		latin1Encodings := latin1Encodings copy.		latin1Encodings at: Character cr asciiValue + 1 put: (self convertFromSystemString: lineEndStringOrNil).		latin1Map := ByteString nonAsciiMap copy.		latin1Map at: Character cr asciiValue + 1 put: 1 ]
+]
+
+Class TextConverter >> emitSequenceToResetStateIfNeededOn: aStream
+[
+
+]
+
+Class TextConverter >> restoreStateOf: aStream with: aConverterState
+[
+aStream position: aConverterState
+]
+
+Metaclass
+	name: #TextConverter;
+	instanceVariables: #(#latin1Map #latin1Encodings ).
+
+Metaclass TextConverter >> newForEncoding: aString
+[
+| class encoding |aString ifNil: [ ^ Latin1TextConverter new ].encoding := aString asLowercase.class := self allSubclasses detect: [ :each | each encodingNames includes: encoding ] ifNone: [  ].class isNil	ifTrue: [ ^ nil ].^ class new
+]
+
+Metaclass TextConverter >> defaultSystemConverter
+[
+^ LanguageEnvironment defaultSystemConverter
+]
+
+Metaclass TextConverter >> defaultConverterClassForEncoding: encodingName
+[
+	"TextConverter defaultConverterClassForEncoding: 'shift-jis'"
+^ self allSubclasses detect: [ :class | class encodingNames includes: encodingName ] ifNone: [  ]
+]
+
+Metaclass TextConverter >> default
+[
+^ UTF8TextConverter new
+]
+
+Metaclass TextConverter >> allEncodingNames
+[
+	"TextConverter allEncodingNames"
+| encodingNames |encodingNames := Set new.self allSubclasses	do: [ :each | 		| names |		names := each encodingNames.		names notEmpty			ifTrue: [ encodingNames add: names first asSymbol ] ].^ encodingNames
+]
+
+Metaclass TextConverter >> encodingNames
+[
+^ #() copy
+]
+
+Metaclass TextConverter >> latin1Encodings
+[
+	"Answer an Array mapping latin1 characters to conversion string"
+^ latin1Encodings	ifNil: [ 		self initializeLatin1MapAndEncodings.		latin1Encodings ]
+]
+
+Metaclass TextConverter >> initializeLatin1MapAndEncodings
+[
+	"Initialize the latin1Map and latin1Encodings.	These variables ensure that conversions from latin1 ByteString is reasonably fast"
+| latin1 utf8 |latin1Map := ByteArray new: 256.latin1Encodings := Array new: 256.0 to: 255 do: [ :i | 	utf8 := (String new: 8) writeStream.	latin1 := String with: (Character value: i).	self new nextPut: latin1 first toStream: utf8.	utf8 := utf8 contents.	latin1 = utf8		ifTrue: [ latin1Map at: i + 1 put: 0	"no translation needed" ]		ifFalse: [ 			latin1Map at: i + 1 put: 1.	"translation needed"			latin1Encodings at: i + 1 put: utf8 ] ]
+]
+
+Metaclass TextConverter >> latin1Map
+[
+	"Answer a ByteArray map telling if latin1 characters needs conversion or not"
+^ latin1Map	ifNil: [ 		self initializeLatin1MapAndEncodings.		latin1Map ]
+]
+

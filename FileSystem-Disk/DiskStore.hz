@@ -1,1 +1,243 @@
-Class	name: #DiskStore;	superclass: #ClassFileSystemStore;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#maxFileNameLength );	classVariables: #(#Primitives #CurrentFS );	package: #'FileSystem-Disk'.Class DiskStore >> basicOpen: aPath writable: aBoolean[| string encoded |string := self stringFromPath: aPath.encoded := Primitives encode: string.^ Primitives open: encoded writable: aBoolean]Class DiskStore >> isFile: aPath[| entry |aPath isRoot	ifTrue: [ ^ false ].entry := self basicEntryAt: aPath.^ entry == #badDirectoryPath	ifTrue: [ false ]	ifFalse: [ self basicIsFile: entry ]]Class DiskStore >> forReferencePrintOn: aStream[]Class DiskStore >> basicIsFile: anEntry[^ (anEntry at: 4) not]Class DiskStore >> basicIsDirectory: anEntry[^ anEntry at: 4]Class DiskStore >> openFileStream: path writable: writable[| fullPath |fullPath := self stringFromPath: path.	"redirect over the default implementation"^ writable	ifFalse: [ FileStream readOnlyFileNamed: fullPath ]	ifTrue: [ FileStream fileNamed: fullPath ]]Class DiskStore >> maxFileNameLength[^ maxFileNameLength]Class DiskStore >> rootNode[^ #('' 0 0 true 0)]Class DiskStore >> basicIsSymlink: anEntry[^ anEntry size >= 7	ifTrue: [ anEntry at: 7 ]	ifFalse: [ false ]]Class DiskStore >> isFIle: aPath[| entry |aPath isRoot	ifTrue: [ ^ false ].entry := self basicEntryAt: aPath.^ entry == #badDirectoryPath	ifTrue: [ false ]	ifFalse: [ (entry at: 4) not ]]Class DiskStore >> createDirectory: path[	"Create a directory for the argument path. 	If the path refers to an existing file, raise FileExists.	If the path refers to an existing directory, raise DirectoryExists.	If the parent directory of the path does not exist, raise DirectoryDoesNotExist"| parent encodedPathString pathString result |pathString := self stringFromPath: path.encodedPathString := Primitives encode: pathString.result := Primitives createDirectory: encodedPathString.result	ifNil: [ 		parent := path parent.		(self exists: path)			ifTrue: [ 				(self isFile: path)					ifTrue: [ self signalFileExists: path ]					ifFalse: [ self signalDirectoryExists: path ] ].		(self isDirectory: parent)			ifFalse: [ ^ self signalDirectoryDoesNotExist: parent ].		self primitiveFailed ].^ self]Class DiskStore >> = other[^ self species = other species]Class DiskStore >> hash[^ self species hash]Class DiskStore >> rename: sourcePath to: destinationPath[| sourcePathString encodedSourcePathString targetPathString encodedTargetPathString result |sourcePathString := self stringFromPath: sourcePath.encodedSourcePathString := Primitives encode: sourcePathString.targetPathString := self stringFromPath: destinationPath.encodedTargetPathString := Primitives encode: targetPathString.^ Primitives rename: encodedSourcePathString to: encodedTargetPathString]Class DiskStore >> initialize[super initialize.maxFileNameLength := Smalltalk vm maxFilenameLength ifNil: [ 255 ]]Class DiskStore >> basicEntryAt: aPath[| encodedPath encodedBasename |encodedPath := Primitives encode: (self stringFromPath: aPath parent).encodedBasename := Primitives encode: aPath basename.^ (Primitives lookupDirectory: encodedPath filename: encodedBasename) ifNil: [ #badDirectoryPath ]]Class DiskStore >> isDirectory: aPath[| entry |aPath isRoot	ifTrue: [ ^ true ].entry := self basicEntryAt: aPath.^ entry == #badDirectoryPath	ifTrue: [ false ]	ifFalse: [ self basicIsDirectory: entry ]]Class DiskStore >> directoryAt: aPath ifAbsent: absentBlock nodesDo: aBlock[| encodedPathString index entry pathString |index := 1.pathString := self stringFromPath: aPath.encodedPathString := Primitives encode: pathString.entry := Primitives lookupEntryIn: encodedPathString index: index.entry = #badDirectoryPath	ifTrue: [ ^ absentBlock value ].[ entry isNil ]	whileFalse: [ 		entry at: 1 put: (Primitives decode: entry first).		aBlock value: entry.		index := index + 1.		entry := Primitives lookupEntryIn: encodedPathString index: index ].^ self]Class DiskStore >> basicSize: anEntry[^ anEntry at: 5]Class DiskStore >> basicCreationTime: anEntry[	" the entry contains the seconds since the squeak epoch in local time"^ (DateAndTime fromSeconds: (anEntry at: 2) offset: 0) translateTo: DateAndTime localOffset]Class DiskStore >> isSymlink: aPath[| entry |aPath isRoot	ifTrue: [ ^ false ].entry := self basicEntryAt: aPath.^ entry == #badDirectoryPath	ifTrue: [ false ]	ifFalse: [ self basicIsSymlink: entry ]]Class DiskStore >> basicPosixPermissions: anEntry[^ anEntry size >= 6	ifTrue: [ anEntry at: 6 ]	ifFalse: [ nil ]]Class DiskStore >> isReadable: aPath[(self exists: aPath)	ifFalse: [ ^ false ].self flag: 'TODO: we need a decent primitive for this...'.(self basicOpen: aPath writable: false)	ifNotNilDo: [ :id | 		Primitives close: id.		^ true ].^ false]Class DiskStore >> basicModificationTime: anEntry[	" the entry contains the seconds since the squeak epoch in local time"^ (DateAndTime fromSeconds: (anEntry at: 3) offset: 0) translateTo: DateAndTime localOffset]Class DiskStore >> delete: path[| pathString encodedPathString |pathString := self stringFromPath: path.encodedPathString := Primitives encode: pathString.(self isDirectory: path)	ifTrue: [ Primitives deleteDirectory: encodedPathString ]	ifFalse: [ 		StandardFileStream			retryWithGC: [ Primitives deleteFile: encodedPathString ]			until: [ :result | result notNil ]			forFileNamed: pathString ]]Class DiskStore >> nodeAt: aPath ifPresent: presentBlock ifAbsent: absentBlock[| entry |aPath isRoot	ifTrue: [ ^ presentBlock value: self rootNode ].entry := self basicEntryAt: aPath.^ entry == #badDirectoryPath	ifTrue: absentBlock	ifFalse: [ 		entry at: 1 put: aPath basename.		presentBlock value: entry ]]Class DiskStore >> basenameFromEntry: entry[^ entry at: 1]Class DiskStore >> checkName: aFileName fixErrors: fixErrors[	"Check a string aFileName for validity as a file name. Answer the original file name if it is valid. If the name is not valid (e.g., it is too long or contains illegal characters) and fixing is false, raise an error. If fixing is true, fix the name (usually by truncating and/or tranforming characters), and answer the corrected name. The default behavior is just to truncate the name to the maximum length for this platform. Subclasses can do any kind of checking and correction appropriate for their platform."| maxLength |aFileName size = 0	ifTrue: [ self error: 'zero length file name' ].maxLength := self maxFileNameLength.aFileName size > maxLength	ifTrue: [ 		fixErrors			ifTrue: [ ^ aFileName contractTo: maxLength ]			ifFalse: [ self error: 'file name is too long' ] ].^ aFileName]Class DiskStore >> handleClass[^ FileHandle]Class DiskStore >> isWritable: aPath[(self exists: aPath)	ifFalse: [ ^ false ].self flag: 'TODO: we need a decent primitive for this...'.(self basicOpen: aPath writable: true)	ifNotNilDo: [ :id | 		Primitives close: id.		^ true ].^ false]Class DiskStore >> defaultWorkingDirectory[| pathString |pathString := Primitives decode: Primitives imageFile.^ (self pathFromString: pathString) parent]Metaclass	name: #DiskStore;	instanceVariables: #().Metaclass DiskStore >> reset[CurrentFS := nil]Metaclass DiskStore >> current[^ self currentFileSystem store]Metaclass DiskStore >> delimiter[^ self current delimiter]Metaclass DiskStore >> createDefault[^ self new]Metaclass DiskStore >> startUp: resuming[self checkVMVersion.resuming	ifTrue: [ self reset ]]Metaclass DiskStore >> isActiveClass[^ self delimiter = Primitives delimiter]Metaclass DiskStore >> currentFilesystem[self deprecated: 'Use #currentFileSystem' on: '3 April 2012' in: 'Pharo 1.4'.^ self currentFileSystem]Metaclass DiskStore >> maxFileNameLength[self subclassResponsibility]Metaclass DiskStore >> shutDown: quitting[	"Force to detect filesystem after image restart"self reset]Metaclass DiskStore >> currentFileSystem[^ CurrentFS ifNil: [ CurrentFS := FileSystem store: self activeClass createDefault ]]Metaclass DiskStore >> useFilePlugin[Primitives := FilePluginPrims new]Metaclass DiskStore >> activeClass[self	allSubclassesDo: [ :ea | 		ea isActiveClass			ifTrue: [ ^ ea ] ].^ self]Metaclass DiskStore >> initialize[self useFilePlugin.Smalltalk	removeFromStartUpList: self;	removeFromShutDownList: self;	addToStartUpList: self after: OSPlatform;	addToShutDownList: self]Metaclass DiskStore >> checkVMVersion[	"Display a warning if the VM is too old"| displayError |displayError := [ ^ self inform: 'Your VM is too old for this image. Please download the latest VM.' ].[ VirtualMachine interpreterSourceDate > '2012-07-08+2:00' asDate	ifFalse: displayError ]	on: Error	do: [ :e | displayError value ]]
+Class
+	name: #DiskStore;
+	superclass: #ClassFileSystemStore;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#maxFileNameLength );
+	classVariables: #(#Primitives #CurrentFS );
+	package: #'FileSystem-Disk'.
+
+Class DiskStore >> basicOpen: aPath writable: aBoolean
+[
+| string encoded |string := self stringFromPath: aPath.encoded := Primitives encode: string.^ Primitives open: encoded writable: aBoolean
+]
+
+Class DiskStore >> isFile: aPath
+[
+| entry |aPath isRoot	ifTrue: [ ^ false ].entry := self basicEntryAt: aPath.^ entry == #badDirectoryPath	ifTrue: [ false ]	ifFalse: [ self basicIsFile: entry ]
+]
+
+Class DiskStore >> forReferencePrintOn: aStream
+[
+
+]
+
+Class DiskStore >> basicIsFile: anEntry
+[
+^ (anEntry at: 4) not
+]
+
+Class DiskStore >> basicIsDirectory: anEntry
+[
+^ anEntry at: 4
+]
+
+Class DiskStore >> openFileStream: path writable: writable
+[
+| fullPath |fullPath := self stringFromPath: path.	"redirect over the default implementation"^ writable	ifFalse: [ FileStream readOnlyFileNamed: fullPath ]	ifTrue: [ FileStream fileNamed: fullPath ]
+]
+
+Class DiskStore >> maxFileNameLength
+[
+^ maxFileNameLength
+]
+
+Class DiskStore >> rootNode
+[
+^ #('' 0 0 true 0)
+]
+
+Class DiskStore >> basicIsSymlink: anEntry
+[
+^ anEntry size >= 7	ifTrue: [ anEntry at: 7 ]	ifFalse: [ false ]
+]
+
+Class DiskStore >> isFIle: aPath
+[
+| entry |aPath isRoot	ifTrue: [ ^ false ].entry := self basicEntryAt: aPath.^ entry == #badDirectoryPath	ifTrue: [ false ]	ifFalse: [ (entry at: 4) not ]
+]
+
+Class DiskStore >> createDirectory: path
+[
+	"Create a directory for the argument path. 	If the path refers to an existing file, raise FileExists.	If the path refers to an existing directory, raise DirectoryExists.	If the parent directory of the path does not exist, raise DirectoryDoesNotExist"
+| parent encodedPathString pathString result |pathString := self stringFromPath: path.encodedPathString := Primitives encode: pathString.result := Primitives createDirectory: encodedPathString.result	ifNil: [ 		parent := path parent.		(self exists: path)			ifTrue: [ 				(self isFile: path)					ifTrue: [ self signalFileExists: path ]					ifFalse: [ self signalDirectoryExists: path ] ].		(self isDirectory: parent)			ifFalse: [ ^ self signalDirectoryDoesNotExist: parent ].		self primitiveFailed ].^ self
+]
+
+Class DiskStore >> = other
+[
+^ self species = other species
+]
+
+Class DiskStore >> hash
+[
+^ self species hash
+]
+
+Class DiskStore >> rename: sourcePath to: destinationPath
+[
+| sourcePathString encodedSourcePathString targetPathString encodedTargetPathString result |sourcePathString := self stringFromPath: sourcePath.encodedSourcePathString := Primitives encode: sourcePathString.targetPathString := self stringFromPath: destinationPath.encodedTargetPathString := Primitives encode: targetPathString.^ Primitives rename: encodedSourcePathString to: encodedTargetPathString
+]
+
+Class DiskStore >> initialize
+[
+super initialize.maxFileNameLength := Smalltalk vm maxFilenameLength ifNil: [ 255 ]
+]
+
+Class DiskStore >> basicEntryAt: aPath
+[
+| encodedPath encodedBasename |encodedPath := Primitives encode: (self stringFromPath: aPath parent).encodedBasename := Primitives encode: aPath basename.^ (Primitives lookupDirectory: encodedPath filename: encodedBasename) ifNil: [ #badDirectoryPath ]
+]
+
+Class DiskStore >> isDirectory: aPath
+[
+| entry |aPath isRoot	ifTrue: [ ^ true ].entry := self basicEntryAt: aPath.^ entry == #badDirectoryPath	ifTrue: [ false ]	ifFalse: [ self basicIsDirectory: entry ]
+]
+
+Class DiskStore >> directoryAt: aPath ifAbsent: absentBlock nodesDo: aBlock
+[
+| encodedPathString index entry pathString |index := 1.pathString := self stringFromPath: aPath.encodedPathString := Primitives encode: pathString.entry := Primitives lookupEntryIn: encodedPathString index: index.entry = #badDirectoryPath	ifTrue: [ ^ absentBlock value ].[ entry isNil ]	whileFalse: [ 		entry at: 1 put: (Primitives decode: entry first).		aBlock value: entry.		index := index + 1.		entry := Primitives lookupEntryIn: encodedPathString index: index ].^ self
+]
+
+Class DiskStore >> basicSize: anEntry
+[
+^ anEntry at: 5
+]
+
+Class DiskStore >> basicCreationTime: anEntry
+[
+	" the entry contains the seconds since the squeak epoch in local time"
+^ (DateAndTime fromSeconds: (anEntry at: 2) offset: 0) translateTo: DateAndTime localOffset
+]
+
+Class DiskStore >> isSymlink: aPath
+[
+| entry |aPath isRoot	ifTrue: [ ^ false ].entry := self basicEntryAt: aPath.^ entry == #badDirectoryPath	ifTrue: [ false ]	ifFalse: [ self basicIsSymlink: entry ]
+]
+
+Class DiskStore >> basicPosixPermissions: anEntry
+[
+^ anEntry size >= 6	ifTrue: [ anEntry at: 6 ]	ifFalse: [ nil ]
+]
+
+Class DiskStore >> isReadable: aPath
+[
+(self exists: aPath)	ifFalse: [ ^ false ].self flag: 'TODO: we need a decent primitive for this...'.(self basicOpen: aPath writable: false)	ifNotNilDo: [ :id | 		Primitives close: id.		^ true ].^ false
+]
+
+Class DiskStore >> basicModificationTime: anEntry
+[
+	" the entry contains the seconds since the squeak epoch in local time"
+^ (DateAndTime fromSeconds: (anEntry at: 3) offset: 0) translateTo: DateAndTime localOffset
+]
+
+Class DiskStore >> delete: path
+[
+| pathString encodedPathString |pathString := self stringFromPath: path.encodedPathString := Primitives encode: pathString.(self isDirectory: path)	ifTrue: [ Primitives deleteDirectory: encodedPathString ]	ifFalse: [ 		StandardFileStream			retryWithGC: [ Primitives deleteFile: encodedPathString ]			until: [ :result | result notNil ]			forFileNamed: pathString ]
+]
+
+Class DiskStore >> nodeAt: aPath ifPresent: presentBlock ifAbsent: absentBlock
+[
+| entry |aPath isRoot	ifTrue: [ ^ presentBlock value: self rootNode ].entry := self basicEntryAt: aPath.^ entry == #badDirectoryPath	ifTrue: absentBlock	ifFalse: [ 		entry at: 1 put: aPath basename.		presentBlock value: entry ]
+]
+
+Class DiskStore >> basenameFromEntry: entry
+[
+^ entry at: 1
+]
+
+Class DiskStore >> checkName: aFileName fixErrors: fixErrors
+[
+	"Check a string aFileName for validity as a file name. Answer the original file name if it is valid. If the name is not valid (e.g., it is too long or contains illegal characters) and fixing is false, raise an error. If fixing is true, fix the name (usually by truncating and/or tranforming characters), and answer the corrected name. The default behavior is just to truncate the name to the maximum length for this platform. Subclasses can do any kind of checking and correction appropriate for their platform."
+| maxLength |aFileName size = 0	ifTrue: [ self error: 'zero length file name' ].maxLength := self maxFileNameLength.aFileName size > maxLength	ifTrue: [ 		fixErrors			ifTrue: [ ^ aFileName contractTo: maxLength ]			ifFalse: [ self error: 'file name is too long' ] ].^ aFileName
+]
+
+Class DiskStore >> handleClass
+[
+^ FileHandle
+]
+
+Class DiskStore >> isWritable: aPath
+[
+(self exists: aPath)	ifFalse: [ ^ false ].self flag: 'TODO: we need a decent primitive for this...'.(self basicOpen: aPath writable: true)	ifNotNilDo: [ :id | 		Primitives close: id.		^ true ].^ false
+]
+
+Class DiskStore >> defaultWorkingDirectory
+[
+| pathString |pathString := Primitives decode: Primitives imageFile.^ (self pathFromString: pathString) parent
+]
+
+Metaclass
+	name: #DiskStore;
+	instanceVariables: #().
+
+Metaclass DiskStore >> reset
+[
+CurrentFS := nil
+]
+
+Metaclass DiskStore >> current
+[
+^ self currentFileSystem store
+]
+
+Metaclass DiskStore >> delimiter
+[
+^ self current delimiter
+]
+
+Metaclass DiskStore >> createDefault
+[
+^ self new
+]
+
+Metaclass DiskStore >> startUp: resuming
+[
+self checkVMVersion.resuming	ifTrue: [ self reset ]
+]
+
+Metaclass DiskStore >> isActiveClass
+[
+^ self delimiter = Primitives delimiter
+]
+
+Metaclass DiskStore >> currentFilesystem
+[
+self deprecated: 'Use #currentFileSystem' on: '3 April 2012' in: 'Pharo 1.4'.^ self currentFileSystem
+]
+
+Metaclass DiskStore >> maxFileNameLength
+[
+self subclassResponsibility
+]
+
+Metaclass DiskStore >> shutDown: quitting
+[
+	"Force to detect filesystem after image restart"
+self reset
+]
+
+Metaclass DiskStore >> currentFileSystem
+[
+^ CurrentFS ifNil: [ CurrentFS := FileSystem store: self activeClass createDefault ]
+]
+
+Metaclass DiskStore >> useFilePlugin
+[
+Primitives := FilePluginPrims new
+]
+
+Metaclass DiskStore >> activeClass
+[
+self	allSubclassesDo: [ :ea | 		ea isActiveClass			ifTrue: [ ^ ea ] ].^ self
+]
+
+Metaclass DiskStore >> initialize
+[
+self useFilePlugin.Smalltalk	removeFromStartUpList: self;	removeFromShutDownList: self;	addToStartUpList: self after: OSPlatform;	addToShutDownList: self
+]
+
+Metaclass DiskStore >> checkVMVersion
+[
+	"Display a warning if the VM is too old"
+| displayError |displayError := [ ^ self inform: 'Your VM is too old for this image. Please download the latest VM.' ].[ VirtualMachine interpreterSourceDate > '2012-07-08+2:00' asDate	ifFalse: displayError ]	on: Error	do: [ :e | displayError value ]
+]
+

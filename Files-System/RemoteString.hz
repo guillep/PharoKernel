@@ -1,1 +1,100 @@
-Class	name: #RemoteString;	superclass: #ClassObject;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#sourceFileNumber #filePositionHi );	classVariables: #();	package: #'Files-System'.Class RemoteString >> fileStream[	"Answer the file stream with position set at the beginning of my string.	Answer a read only copy to avoid syntax errors when accessed via	multiple processes."| theFile |(sourceFileNumber == nil or: [ (SourceFiles at: sourceFileNumber) == nil ])	ifTrue: [ ^ nil ].theFile := (SourceFiles at: sourceFileNumber) readOnlyCopy.filePositionHi > theFile size	ifTrue: [ self error: 'RemoteString past end of file' ].theFile position: filePositionHi.^ theFile]Class RemoteString >> string[	"Answer the receiver's string if remote files are enabled.	Use a read only copy to avoid syntax errors when accessed via	multiple processes."| theFile |(sourceFileNumber == nil or: [ (SourceFiles at: sourceFileNumber) == nil ])	ifTrue: [ ^ '' ].theFile := (SourceFiles at: sourceFileNumber) readOnlyCopy.^ [ filePositionHi > theFile size	ifTrue: [ self error: 'RemoteString past end of file' ].theFile position: filePositionHi.theFile nextChunk ]	ensure: [ theFile close ]]Class RemoteString >> text[	"Answer the receiver's string asText if remote files are enabled.	Use a read only copy to avoid syntax errors when accessed via	multiple processes."	"| theFile |	self haltOnce.	(sourceFileNumber == nil or: [(SourceFiles at: sourceFileNumber) == nil]) ifTrue: [^ nil].	theFile := (SourceFiles at: sourceFileNumber) readOnlyCopy.	^[theFile position: filePositionHi.	theFile position > theFile size ifTrue: [		self error: 'RemoteString past end of file' ].	theFile nextChunkText string ] ensure: [theFile close]"	"Code saved should only be ascii and we do not want to have the encoding at the end of the chunk	this is why we extract the string and convert instead of invoking nextChunkText"^ self string asText]Class RemoteString >> setSourcePointer: aSourcePointer[sourceFileNumber := SourceFiles fileIndexFromSourcePointer: aSourcePointer.filePositionHi := SourceFiles filePositionFromSourcePointer: aSourcePointer]Class RemoteString >> checkSum: aString[	"Construct a checksum of the string.  A three byte number represented as Base64 characters."| sum shift bytes |sum := aString size.shift := 0.aString	do: [ :char | 		(shift := shift + 7) > 16			ifTrue: [ shift := shift - 17 ].	"shift by 7 to keep a change of adjacent chars from xoring to same value"		sum := sum bitXor: (char asInteger bitShift: shift) ].bytes := ByteArray new: 3.sum := sum + 16r10000000000.1 to: 3 do: [ :ind | bytes at: ind put: (sum digitAt: ind) ].^ bytes base64Encoded]Class RemoteString >> position[	"Answer the location of the string on a file."^ filePositionHi]Class RemoteString >> string: aString onFileNumber: fileNumber[	"Store this as my string if source files exist."| theFile |(SourceFiles at: fileNumber) == nil	ifFalse: [ 		theFile := SourceFiles at: fileNumber.		theFile			setToEnd;			cr.		self string: aString onFileNumber: fileNumber toFile: theFile ]]Class RemoteString >> fileNumber: fileNumber position: position[sourceFileNumber := fileNumber.filePositionHi := position]Class RemoteString >> sourcePointer[sourceFileNumber ifNil: [ ^ 0 ].^ SourceFiles sourcePointerFromFileIndex: sourceFileNumber andPosition: filePositionHi]Class RemoteString >> sourceFileNumber[	"Answer the index of the file on which the string is stored."^ sourceFileNumber]Class RemoteString >> string: aString onFileNumber: fileNumber toFile: aFileStream[	"Store this as the receiver's string if source files exist."| position |position := aFileStream position.self fileNumber: fileNumber position: position.aFileStream nextChunkPut: aString.^ self]Class RemoteString >> last[^ self string ifNotNil: [ :s | s last ]]Metaclass	name: #RemoteString;	instanceVariables: #().Metaclass RemoteString >> newString: aString onFileNumber: sourceIndex[	"Answer an instance of me for string, aString, on file indexed by 	sourceIndex. Put the string on the file and create the remote reference."^ self new string: aString onFileNumber: sourceIndex]Metaclass RemoteString >> newFileNumber: sourceIndex position: anInteger[	"Answer an instance of me fora file indexed by sourceIndex, at the 	position anInteger. Assume that the string is already stored on the file 	and the instance will be used to access it."^ self new fileNumber: sourceIndex position: anInteger]Metaclass RemoteString >> newString: aString onFileNumber: sourceIndex toFile: aFileStream[	"Answer an instance of me for string, aString, on file indexed by 	sourceIndex. Put the string on the file, aFileStream, and create the 	remote reference. Assume that the index corresponds properly to 	aFileStream."^ self new string: aString onFileNumber: sourceIndex toFile: aFileStream]
+Class
+	name: #RemoteString;
+	superclass: #ClassObject;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#sourceFileNumber #filePositionHi );
+	classVariables: #();
+	package: #'Files-System'.
+
+Class RemoteString >> fileStream
+[
+	"Answer the file stream with position set at the beginning of my string.	Answer a read only copy to avoid syntax errors when accessed via	multiple processes."
+| theFile |(sourceFileNumber == nil or: [ (SourceFiles at: sourceFileNumber) == nil ])	ifTrue: [ ^ nil ].theFile := (SourceFiles at: sourceFileNumber) readOnlyCopy.filePositionHi > theFile size	ifTrue: [ self error: 'RemoteString past end of file' ].theFile position: filePositionHi.^ theFile
+]
+
+Class RemoteString >> string
+[
+	"Answer the receiver's string if remote files are enabled.	Use a read only copy to avoid syntax errors when accessed via	multiple processes."
+| theFile |(sourceFileNumber == nil or: [ (SourceFiles at: sourceFileNumber) == nil ])	ifTrue: [ ^ '' ].theFile := (SourceFiles at: sourceFileNumber) readOnlyCopy.^ [ filePositionHi > theFile size	ifTrue: [ self error: 'RemoteString past end of file' ].theFile position: filePositionHi.theFile nextChunk ]	ensure: [ theFile close ]
+]
+
+Class RemoteString >> text
+[
+	"Answer the receiver's string asText if remote files are enabled.	Use a read only copy to avoid syntax errors when accessed via	multiple processes."
+	"| theFile |	self haltOnce.	(sourceFileNumber == nil or: [(SourceFiles at: sourceFileNumber) == nil]) ifTrue: [^ nil].	theFile := (SourceFiles at: sourceFileNumber) readOnlyCopy.	^[theFile position: filePositionHi.	theFile position > theFile size ifTrue: [		self error: 'RemoteString past end of file' ].	theFile nextChunkText string ] ensure: [theFile close]"
+	"Code saved should only be ascii and we do not want to have the encoding at the end of the chunk	this is why we extract the string and convert instead of invoking nextChunkText"
+^ self string asText
+]
+
+Class RemoteString >> setSourcePointer: aSourcePointer
+[
+sourceFileNumber := SourceFiles fileIndexFromSourcePointer: aSourcePointer.filePositionHi := SourceFiles filePositionFromSourcePointer: aSourcePointer
+]
+
+Class RemoteString >> checkSum: aString
+[
+	"Construct a checksum of the string.  A three byte number represented as Base64 characters."
+| sum shift bytes |sum := aString size.shift := 0.aString	do: [ :char | 		(shift := shift + 7) > 16			ifTrue: [ shift := shift - 17 ].	"shift by 7 to keep a change of adjacent chars from xoring to same value"		sum := sum bitXor: (char asInteger bitShift: shift) ].bytes := ByteArray new: 3.sum := sum + 16r10000000000.1 to: 3 do: [ :ind | bytes at: ind put: (sum digitAt: ind) ].^ bytes base64Encoded
+]
+
+Class RemoteString >> position
+[
+	"Answer the location of the string on a file."
+^ filePositionHi
+]
+
+Class RemoteString >> string: aString onFileNumber: fileNumber
+[
+	"Store this as my string if source files exist."
+| theFile |(SourceFiles at: fileNumber) == nil	ifFalse: [ 		theFile := SourceFiles at: fileNumber.		theFile			setToEnd;			cr.		self string: aString onFileNumber: fileNumber toFile: theFile ]
+]
+
+Class RemoteString >> fileNumber: fileNumber position: position
+[
+sourceFileNumber := fileNumber.filePositionHi := position
+]
+
+Class RemoteString >> sourcePointer
+[
+sourceFileNumber ifNil: [ ^ 0 ].^ SourceFiles sourcePointerFromFileIndex: sourceFileNumber andPosition: filePositionHi
+]
+
+Class RemoteString >> sourceFileNumber
+[
+	"Answer the index of the file on which the string is stored."
+^ sourceFileNumber
+]
+
+Class RemoteString >> string: aString onFileNumber: fileNumber toFile: aFileStream
+[
+	"Store this as the receiver's string if source files exist."
+| position |position := aFileStream position.self fileNumber: fileNumber position: position.aFileStream nextChunkPut: aString.^ self
+]
+
+Class RemoteString >> last
+[
+^ self string ifNotNil: [ :s | s last ]
+]
+
+Metaclass
+	name: #RemoteString;
+	instanceVariables: #().
+
+Metaclass RemoteString >> newString: aString onFileNumber: sourceIndex
+[
+	"Answer an instance of me for string, aString, on file indexed by 	sourceIndex. Put the string on the file and create the remote reference."
+^ self new string: aString onFileNumber: sourceIndex
+]
+
+Metaclass RemoteString >> newFileNumber: sourceIndex position: anInteger
+[
+	"Answer an instance of me fora file indexed by sourceIndex, at the 	position anInteger. Assume that the string is already stored on the file 	and the instance will be used to access it."
+^ self new fileNumber: sourceIndex position: anInteger
+]
+
+Metaclass RemoteString >> newString: aString onFileNumber: sourceIndex toFile: aFileStream
+[
+	"Answer an instance of me for string, aString, on file indexed by 	sourceIndex. Put the string on the file, aFileStream, and create the 	remote reference. Assume that the index corresponds properly to 	aFileStream."
+^ self new string: aString onFileNumber: sourceIndex toFile: aFileStream
+]
+

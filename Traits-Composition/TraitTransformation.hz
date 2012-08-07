@@ -1,1 +1,130 @@
-Class	name: #TraitTransformation;	superclass: #ClassObject;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#subject );	classVariables: #();	package: #'Traits-Composition'.Class TraitTransformation >> theNonMetaClass[^ self subject theNonMetaClass]Class TraitTransformation >> addExclusionOf: aSymbol[^ self - {aSymbol}]Class TraitTransformation >> subject[^ subject]Class TraitTransformation >> copyTraitExpression[^ self shallowCopy	subject: self subject copyTraitExpression;	yourself]Class TraitTransformation >> isMeta[^ self subject isMeta]Class TraitTransformation >> traitTransformations[^ {subject}]Class TraitTransformation >> changedSelectorsComparedTo: aTraitTransformation[| selectors otherSelectors changedSelectors aliases otherAliases |selectors := self allSelectors asIdentitySet.otherSelectors := aTraitTransformation allSelectors asIdentitySet.changedSelectors := IdentitySet	withAll: ((selectors difference: otherSelectors) union: (otherSelectors difference: selectors)).aliases := self allAliasesDict.otherAliases := aTraitTransformation allAliasesDict.aliases	keysAndValuesDo: [ :key :value | 		value ~~ (otherAliases at: key ifAbsent: [ nil ])			ifTrue: [ changedSelectors add: key ] ].otherAliases	keysAndValuesDo: [ :key :value | 		value ~~ (aliases at: key ifAbsent: [ nil ])			ifTrue: [ changedSelectors add: key ] ].^ changedSelectors]Class TraitTransformation >> postCopy[super postCopy.subject := subject copy]Class TraitTransformation >> copy[self error: 'should not be called'.^ super copy]Class TraitTransformation >> subject: aTraitTransformation[subject := aTraitTransformation]Class TraitTransformation >> isEmpty[self subclassResponsibility]Class TraitTransformation >> - anArray[TraitCompositionException signal: 'Invalid trait exclusion. Exclusions have to be specified after aliases.']Class TraitTransformation >> @ anArrayOfAssociations[TraitCompositionException signal: 'Invalid trait exclusion. Aliases have to be specified before exclusions.']Class TraitTransformation >> allAliasesDict[	"Return a dictionary with all alias associations that are defined in this transformation."^ self subject allAliasesDict]Class TraitTransformation >> collectMethodsFor: aSelector into: methodDescription[	"Collect instances of LocatedMethod into methodDescription	for each method that has the selector aSelector and is not excluded	or for which aSelector is an alias."self subclassResponsibility]Class TraitTransformation >> allSelectors[^ self subclassResponsibility]Class TraitTransformation >> printOn: aStream[aStream print: self subject]Class TraitTransformation >> aliasesForSelector: aSymbol[	"Return a collection of alias selectors that are defined in this transformation."^ self subject aliasesForSelector: aSymbol]Class TraitTransformation >> normalized[^ self isEmpty	ifFalse: [ 		self subject: self subject normalized.		self ]	ifTrue: [ self subject normalized ]]Class TraitTransformation >> selectors[^ self allSelectors]Class TraitTransformation >> sourceCodeTemplate[^ self subject sourceCodeTemplate]Class TraitTransformation >> removeAlias: aSymbol[self subject removeAlias: aSymbol]Class TraitTransformation >> trait[^ self subject trait]Metaclass	name: #TraitTransformation;	instanceVariables: #().
+Class
+	name: #TraitTransformation;
+	superclass: #ClassObject;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#subject );
+	classVariables: #();
+	package: #'Traits-Composition'.
+
+Class TraitTransformation >> theNonMetaClass
+[
+^ self subject theNonMetaClass
+]
+
+Class TraitTransformation >> addExclusionOf: aSymbol
+[
+^ self - {aSymbol}
+]
+
+Class TraitTransformation >> subject
+[
+^ subject
+]
+
+Class TraitTransformation >> copyTraitExpression
+[
+^ self shallowCopy	subject: self subject copyTraitExpression;	yourself
+]
+
+Class TraitTransformation >> isMeta
+[
+^ self subject isMeta
+]
+
+Class TraitTransformation >> traitTransformations
+[
+^ {subject}
+]
+
+Class TraitTransformation >> changedSelectorsComparedTo: aTraitTransformation
+[
+| selectors otherSelectors changedSelectors aliases otherAliases |selectors := self allSelectors asIdentitySet.otherSelectors := aTraitTransformation allSelectors asIdentitySet.changedSelectors := IdentitySet	withAll: ((selectors difference: otherSelectors) union: (otherSelectors difference: selectors)).aliases := self allAliasesDict.otherAliases := aTraitTransformation allAliasesDict.aliases	keysAndValuesDo: [ :key :value | 		value ~~ (otherAliases at: key ifAbsent: [ nil ])			ifTrue: [ changedSelectors add: key ] ].otherAliases	keysAndValuesDo: [ :key :value | 		value ~~ (aliases at: key ifAbsent: [ nil ])			ifTrue: [ changedSelectors add: key ] ].^ changedSelectors
+]
+
+Class TraitTransformation >> postCopy
+[
+super postCopy.subject := subject copy
+]
+
+Class TraitTransformation >> copy
+[
+self error: 'should not be called'.^ super copy
+]
+
+Class TraitTransformation >> subject: aTraitTransformation
+[
+subject := aTraitTransformation
+]
+
+Class TraitTransformation >> isEmpty
+[
+self subclassResponsibility
+]
+
+Class TraitTransformation >> - anArray
+[
+TraitCompositionException signal: 'Invalid trait exclusion. Exclusions have to be specified after aliases.'
+]
+
+Class TraitTransformation >> @ anArrayOfAssociations
+[
+TraitCompositionException signal: 'Invalid trait exclusion. Aliases have to be specified before exclusions.'
+]
+
+Class TraitTransformation >> allAliasesDict
+[
+	"Return a dictionary with all alias associations that are defined in this transformation."
+^ self subject allAliasesDict
+]
+
+Class TraitTransformation >> collectMethodsFor: aSelector into: methodDescription
+[
+	"Collect instances of LocatedMethod into methodDescription	for each method that has the selector aSelector and is not excluded	or for which aSelector is an alias."
+self subclassResponsibility
+]
+
+Class TraitTransformation >> allSelectors
+[
+^ self subclassResponsibility
+]
+
+Class TraitTransformation >> printOn: aStream
+[
+aStream print: self subject
+]
+
+Class TraitTransformation >> aliasesForSelector: aSymbol
+[
+	"Return a collection of alias selectors that are defined in this transformation."
+^ self subject aliasesForSelector: aSymbol
+]
+
+Class TraitTransformation >> normalized
+[
+^ self isEmpty	ifFalse: [ 		self subject: self subject normalized.		self ]	ifTrue: [ self subject normalized ]
+]
+
+Class TraitTransformation >> selectors
+[
+^ self allSelectors
+]
+
+Class TraitTransformation >> sourceCodeTemplate
+[
+^ self subject sourceCodeTemplate
+]
+
+Class TraitTransformation >> removeAlias: aSymbol
+[
+self subject removeAlias: aSymbol
+]
+
+Class TraitTransformation >> trait
+[
+^ self subject trait
+]
+
+Metaclass
+	name: #TraitTransformation;
+	instanceVariables: #().
+

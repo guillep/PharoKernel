@@ -1,1 +1,105 @@
-Class	name: #WeakKeyAssociation;	superclass: #ClassMagnitude;	instanceSpecification: #(#variable #weak #pointers #words );	instanceVariables: #(#value );	classVariables: #();	package: #'Collections-Support'.Class WeakKeyAssociation >> hash[	"Hash is reimplemented because = is implemented."^ self key hash]Class WeakKeyAssociation >> expired[^ value == self]Class WeakKeyAssociation >> printOn: aStream[self key printOn: aStream.aStream nextPutAll: '->'.value printOn: aStream]Class WeakKeyAssociation >> isVariableBinding[	"Return true if I represent a literal variable binding"^ true]Class WeakKeyAssociation >> value: anObject[	"Store the argument, anObject, as the value of the receiver."anObject == self	ifTrue: [ self error: 'Using the WeakAssociation as its own value' ].value := anObject]Class WeakKeyAssociation >> name[^ self key isString	ifTrue: [ self key ]	ifFalse: [ self key printString ]]Class WeakKeyAssociation >> key: anObject[	"Store the argument, anObject, as the lookup key of the receiver."self basicAt: 1 put: anObject]Class WeakKeyAssociation >> value[	"Answer the value of the receiver."^ value == self	ifTrue: [ nil ]	ifFalse: [ value ]]Class WeakKeyAssociation >> = aLookupKey[	"XXX why doesn't this consider the value? mvl"self species = aLookupKey species	ifTrue: [ ^ self key = aLookupKey key ]	ifFalse: [ ^ false ]]Class WeakKeyAssociation >> expire[	"Release the value if the key has gone. Return true if a modification was made."(self basicAt: 1)	ifNil: [ 		value == self			ifTrue: [ ^ false ].		value := self.		^ true ].^ false]Class WeakKeyAssociation >> key[	"Answer the lookup key of the receiver."^ self basicAt: 1]Class WeakKeyAssociation >> storeOn: aStream[	"Store in the format (key->value)"aStream	nextPut: $(;	nextPutAll: self class name.self expired	ifTrue: [ aStream nextPutAll: ' expired' ]	ifFalse: [ 		aStream nextPutAll: ' key: '.		self key storeOn: aStream.		aStream nextPutAll: ' value:'.		value storeOn: aStream ].aStream nextPut: $)]Class WeakKeyAssociation >> key: aKey value: anObject[	"Store the arguments as the variables of the receiver."self basicAt: 1 put: aKey.value := anObject]Class WeakKeyAssociation >> < aLookupKey[	"Refer to the comment in Magnitude|<."^ self key < aLookupKey key]Metaclass	name: #WeakKeyAssociation;	instanceVariables: #().Metaclass WeakKeyAssociation >> key: newKey value: newValue[	"Answer an instance of me with the arguments as the key and value of 	the association."^ (self basicNew: 1) key: newKey value: newValue]Metaclass WeakKeyAssociation >> expired[	"Answer an object that is already expired. Used for printing"^ (self key: nil value: nil)	expire;	yourself]
+Class
+	name: #WeakKeyAssociation;
+	superclass: #ClassMagnitude;
+	instanceSpecification: #(#variable #weak #pointers #words );
+	instanceVariables: #(#value );
+	classVariables: #();
+	package: #'Collections-Support'.
+
+Class WeakKeyAssociation >> hash
+[
+	"Hash is reimplemented because = is implemented."
+^ self key hash
+]
+
+Class WeakKeyAssociation >> expired
+[
+^ value == self
+]
+
+Class WeakKeyAssociation >> printOn: aStream
+[
+self key printOn: aStream.aStream nextPutAll: '->'.value printOn: aStream
+]
+
+Class WeakKeyAssociation >> isVariableBinding
+[
+	"Return true if I represent a literal variable binding"
+^ true
+]
+
+Class WeakKeyAssociation >> value: anObject
+[
+	"Store the argument, anObject, as the value of the receiver."
+anObject == self	ifTrue: [ self error: 'Using the WeakAssociation as its own value' ].value := anObject
+]
+
+Class WeakKeyAssociation >> name
+[
+^ self key isString	ifTrue: [ self key ]	ifFalse: [ self key printString ]
+]
+
+Class WeakKeyAssociation >> key: anObject
+[
+	"Store the argument, anObject, as the lookup key of the receiver."
+self basicAt: 1 put: anObject
+]
+
+Class WeakKeyAssociation >> value
+[
+	"Answer the value of the receiver."
+^ value == self	ifTrue: [ nil ]	ifFalse: [ value ]
+]
+
+Class WeakKeyAssociation >> = aLookupKey
+[
+	"XXX why doesn't this consider the value? mvl"
+self species = aLookupKey species	ifTrue: [ ^ self key = aLookupKey key ]	ifFalse: [ ^ false ]
+]
+
+Class WeakKeyAssociation >> expire
+[
+	"Release the value if the key has gone. Return true if a modification was made."
+(self basicAt: 1)	ifNil: [ 		value == self			ifTrue: [ ^ false ].		value := self.		^ true ].^ false
+]
+
+Class WeakKeyAssociation >> key
+[
+	"Answer the lookup key of the receiver."
+^ self basicAt: 1
+]
+
+Class WeakKeyAssociation >> storeOn: aStream
+[
+	"Store in the format (key->value)"
+aStream	nextPut: $(;	nextPutAll: self class name.self expired	ifTrue: [ aStream nextPutAll: ' expired' ]	ifFalse: [ 		aStream nextPutAll: ' key: '.		self key storeOn: aStream.		aStream nextPutAll: ' value:'.		value storeOn: aStream ].aStream nextPut: $)
+]
+
+Class WeakKeyAssociation >> key: aKey value: anObject
+[
+	"Store the arguments as the variables of the receiver."
+self basicAt: 1 put: aKey.value := anObject
+]
+
+Class WeakKeyAssociation >> < aLookupKey
+[
+	"Refer to the comment in Magnitude|<."
+^ self key < aLookupKey key
+]
+
+Metaclass
+	name: #WeakKeyAssociation;
+	instanceVariables: #().
+
+Metaclass WeakKeyAssociation >> key: newKey value: newValue
+[
+	"Answer an instance of me with the arguments as the key and value of 	the association."
+^ (self basicNew: 1) key: newKey value: newValue
+]
+
+Metaclass WeakKeyAssociation >> expired
+[
+	"Answer an object that is already expired. Used for printing"
+^ (self key: nil value: nil)	expire;	yourself
+]
+

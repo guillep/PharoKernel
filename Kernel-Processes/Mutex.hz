@@ -1,1 +1,23 @@
-Class	name: #Mutex;	superclass: #ClassObject;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#semaphore #owner );	classVariables: #();	package: #'Kernel-Processes'.Class Mutex >> critical: aBlock[	"Evaluate aBlock protected by the receiver."| activeProcess |activeProcess := Processor activeProcess.activeProcess == owner	ifTrue: [ ^ aBlock value ].^ semaphore	critical: [ 		owner := activeProcess.		aBlock			ensure: [ owner := nil ] ]]Class Mutex >> initialize[super initialize.semaphore := Semaphore forMutualExclusion]Metaclass	name: #Mutex;	instanceVariables: #().
+Class
+	name: #Mutex;
+	superclass: #ClassObject;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#semaphore #owner );
+	classVariables: #();
+	package: #'Kernel-Processes'.
+
+Class Mutex >> critical: aBlock
+[
+	"Evaluate aBlock protected by the receiver."
+| activeProcess |activeProcess := Processor activeProcess.activeProcess == owner	ifTrue: [ ^ aBlock value ].^ semaphore	critical: [ 		owner := activeProcess.		aBlock			ensure: [ owner := nil ] ]
+]
+
+Class Mutex >> initialize
+[
+super initialize.semaphore := Semaphore forMutualExclusion
+]
+
+Metaclass
+	name: #Mutex;
+	instanceVariables: #().
+

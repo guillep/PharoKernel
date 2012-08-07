@@ -1,1 +1,217 @@
-Class	name: #SystemAnnouncer;	superclass: #ClassAnnouncer;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#suspended #private );	classVariables: #();	package: #'System-Announcements'.Class SystemAnnouncer >> traitDefinitionChangedFrom: oldTrait to: newTrait[self announce: (ClassModifiedClassDefinition classDefinitionChangedFrom: oldTrait to: newTrait)]Class SystemAnnouncer >> isSuspended[^ suspended ifNil: [ suspended := false ]]Class SystemAnnouncer >> methodChangedFrom: oldMethod to: newMethod selector: newSelector inClass: aClass[self	methodChangedFrom: oldMethod	to: newMethod	selector: newSelector	inClass: aClass	oldProtocol: nil	newProtocol: nil	requestor: nil]Class SystemAnnouncer >> classRemoved: aClass fromCategory: aCategoryName[self announce: (ClassRemoved class: aClass category: aCategoryName)]Class SystemAnnouncer >> class: aClass oldComment: oldComment newComment: newComment oldStamp: oldStamp newStamp: newStamp[	"A class was commented in the system."self	announce:		(ClassCommented			class: aClass			oldComment: oldComment			newComment: newComment			oldStamp: oldStamp			newStamp: newStamp)]Class SystemAnnouncer >> classCommented: aClass[	"A class with the given name was commented in the system."self announce: (ClassCommented classCommented: aClass)]Class SystemAnnouncer >> methodAdded: aMethod selector: aSymbol inClass: aClass[	"A method with the given selector was added to aClass, but not put in a protocol."self announce: (MethodAdded method: aMethod selector: aSymbol class: aClass)]Class SystemAnnouncer >> classReorganized: aClass[self announce: (ClassReorganized class: aClass)]Class SystemAnnouncer >> methodRemoved: aMethod[^ self methodRemoved: aMethod selector: aMethod selector class: aMethod methodClass]Class SystemAnnouncer >> methodAdded: aMethod selector: aSymbol inProtocol: aCategoryName class: aClass[	"A method with the given selector was added to aClass in protocol aCategoryName."self	announce:		(MethodAdded			method: aMethod			selector: aSymbol			protocol: aCategoryName			class: aClass)]Class SystemAnnouncer >> suspendAllWhile: aBlock[| oldSuspended |oldSuspended := self isSuspended.suspended := true.aBlock	ensure: [ suspended := oldSuspended ]]Class SystemAnnouncer >> classAdded: aClass inCategory: aCategoryName[self announce: (ClassAdded class: aClass category: aCategoryName)]Class SystemAnnouncer >> methodAdded: aMethod[^ self methodAdded: aMethod selector: aMethod selector inClass: aMethod methodClass]Class SystemAnnouncer >> evaluated: textOrStream[^ self evaluated: textOrStream context: nil]Class SystemAnnouncer >> methodAdded: aMethod selector: aSymbol inClass: aClass requestor: requestor[	"A method with the given selector was added to aClass, but not put in a protocol."self	announce:		(MethodAdded			method: aMethod			selector: aSymbol			protocol: nil			class: aClass			requestor: requestor)]Class SystemAnnouncer >> class: aClass recategorizedFrom: oldCategory to: newCategory[self announce: (ClassRecategorized class: aClass recategorizedFrom: oldCategory to: newCategory)]Class SystemAnnouncer >> evaluated: expression context: aContext[self announce: (ExpressionEvaluated expression: expression context: aContext)]Class SystemAnnouncer >> unsubscribe: anObject[self private unsubscribe: anObject.super unsubscribe: anObject]Class SystemAnnouncer >> classCategoryRenamedFrom: anOldClassCategoryName to: aNewClassCategoryName[self announce: (CategoryRenamed classCategoryRenamedFrom: anOldClassCategoryName to: aNewClassCategoryName)]Class SystemAnnouncer >> basicAnnounce: anAnnouncement[self flag: #todo.	"Remove Me in cleaning step"super announce: anAnnouncement]Class SystemAnnouncer >> selector: selector recategorizedFrom: oldCategory to: newCategory inClass: aClass[self	announce:		(MethodRecategorized			method: (aClass compiledMethodAt: selector ifAbsent: [ nil ])			selector: selector			class: aClass			newProtocol: newCategory			oldProtocol: oldCategory)]Class SystemAnnouncer >> methodRemoved: aMethod selector: aSymbol inProtocol: protocol class: aClass[	"A method with the given selector was removed from the class."self	announce:		(MethodRemoved			methodRemoved: aMethod			selector: aSymbol			protocol: protocol			class: aClass)]Class SystemAnnouncer >> announce: anAnnouncement[self isSuspended	ifFalse: [ 		self private announce: anAnnouncement.		super announce: anAnnouncement ]]Class SystemAnnouncer >> methodRemoved: aMethod selector: aSymbol class: aClass[	"A method with the given selector was removed from the class."self	announce:		(MethodRemoved			methodRemoved: aMethod			selector: aSymbol			protocol: nil			class: aClass)]Class SystemAnnouncer >> classCategoryRemoved: aClassCategoryName[self announce: (CategoryRemoved categoryName: aClassCategoryName)]Class SystemAnnouncer >> methodChangedFrom: oldMethod to: newMethod[self	methodChangedFrom: oldMethod	to: newMethod	selector: newMethod selector	inClass: newMethod methodClass	oldProtocol: nil	newProtocol: nil	requestor: nil]Class SystemAnnouncer >> doSilently: aBlock[self flag: #todo.	"Remove Me"self suspendAllWhile: aBlock]Class SystemAnnouncer >> classRenamed: aClass from: oldClassName to: newClassName inCategory: aCategoryName[self	announce:		(ClassRenamed			class: aClass			category: aCategoryName			oldName: oldClassName			newName: newClassName)]Class SystemAnnouncer >> private[^ private ifNil: [ private := Announcer new ]]Class SystemAnnouncer >> methodChangedFrom: oldMethod to: newMethod selector: aSymbol inClass: aClass oldProtocol: oldProtocol newProtocol: newProtocol requestor: requestor[self	announce:		(MethodModified			methodChangedFrom: oldMethod			to: newMethod			selector: aSymbol			inClass: aClass			oldProtocol: oldProtocol			newProtocol: newProtocol			requestor: requestor)]Class SystemAnnouncer >> classCategoryAdded: aClassCategoryName[self announce: (CategoryAdded categoryName: aClassCategoryName)]Class SystemAnnouncer >> methodAdded: aMethod selector: aSymbol inProtocol: aCategoryName class: aClass requestor: requestor[	"A method with the given selector was added to aClass in protocol aCategoryName."self	announce:		(MethodAdded			method: aMethod			selector: aSymbol			protocol: aCategoryName			class: aClass			requestor: requestor)]Class SystemAnnouncer >> methodChangedFrom: oldMethod to: newMethod selector: aSymbol inClass: aClass requestor: requestor[self	methodChangedFrom: oldMethod	to: newMethod	selector: aSymbol	inClass: aClass	oldProtocol: nil	newProtocol: nil	requestor: requestor]Class SystemAnnouncer >> classDefinitionChangedFrom: oldClass to: newClass[self announce: (ClassModifiedClassDefinition classDefinitionChangedFrom: oldClass to: newClass)]Metaclass	name: #SystemAnnouncer;	instanceVariables: #(#announcer ).Metaclass SystemAnnouncer >> uniqueInstance[	"Answer a system annoncer."^ announcer ifNil: [ announcer := self new ]]Metaclass SystemAnnouncer >> reset[announcer := nil]Metaclass SystemAnnouncer >> unload[self uniqueInstance unsubscribe: self]Metaclass SystemAnnouncer >> announcer: anAnnouncer[announcer := anAnnouncer]Metaclass SystemAnnouncer >> restoreAllNotifications[	"self restoreAllNotifications"| collector |self reset.collector := PragmaCollector filter: [ :pragma | pragma keyword = #systemEventRegistration ].collector reset.collector do: [ :pragma | pragma methodClass theNonMetaClass perform: pragma selector ]]
+Class
+	name: #SystemAnnouncer;
+	superclass: #ClassAnnouncer;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#suspended #private );
+	classVariables: #();
+	package: #'System-Announcements'.
+
+Class SystemAnnouncer >> traitDefinitionChangedFrom: oldTrait to: newTrait
+[
+self announce: (ClassModifiedClassDefinition classDefinitionChangedFrom: oldTrait to: newTrait)
+]
+
+Class SystemAnnouncer >> isSuspended
+[
+^ suspended ifNil: [ suspended := false ]
+]
+
+Class SystemAnnouncer >> methodChangedFrom: oldMethod to: newMethod selector: newSelector inClass: aClass
+[
+self	methodChangedFrom: oldMethod	to: newMethod	selector: newSelector	inClass: aClass	oldProtocol: nil	newProtocol: nil	requestor: nil
+]
+
+Class SystemAnnouncer >> classRemoved: aClass fromCategory: aCategoryName
+[
+self announce: (ClassRemoved class: aClass category: aCategoryName)
+]
+
+Class SystemAnnouncer >> class: aClass oldComment: oldComment newComment: newComment oldStamp: oldStamp newStamp: newStamp
+[
+	"A class was commented in the system."
+self	announce:		(ClassCommented			class: aClass			oldComment: oldComment			newComment: newComment			oldStamp: oldStamp			newStamp: newStamp)
+]
+
+Class SystemAnnouncer >> classCommented: aClass
+[
+	"A class with the given name was commented in the system."
+self announce: (ClassCommented classCommented: aClass)
+]
+
+Class SystemAnnouncer >> methodAdded: aMethod selector: aSymbol inClass: aClass
+[
+	"A method with the given selector was added to aClass, but not put in a protocol."
+self announce: (MethodAdded method: aMethod selector: aSymbol class: aClass)
+]
+
+Class SystemAnnouncer >> classReorganized: aClass
+[
+self announce: (ClassReorganized class: aClass)
+]
+
+Class SystemAnnouncer >> methodRemoved: aMethod
+[
+^ self methodRemoved: aMethod selector: aMethod selector class: aMethod methodClass
+]
+
+Class SystemAnnouncer >> methodAdded: aMethod selector: aSymbol inProtocol: aCategoryName class: aClass
+[
+	"A method with the given selector was added to aClass in protocol aCategoryName."
+self	announce:		(MethodAdded			method: aMethod			selector: aSymbol			protocol: aCategoryName			class: aClass)
+]
+
+Class SystemAnnouncer >> suspendAllWhile: aBlock
+[
+| oldSuspended |oldSuspended := self isSuspended.suspended := true.aBlock	ensure: [ suspended := oldSuspended ]
+]
+
+Class SystemAnnouncer >> classAdded: aClass inCategory: aCategoryName
+[
+self announce: (ClassAdded class: aClass category: aCategoryName)
+]
+
+Class SystemAnnouncer >> methodAdded: aMethod
+[
+^ self methodAdded: aMethod selector: aMethod selector inClass: aMethod methodClass
+]
+
+Class SystemAnnouncer >> evaluated: textOrStream
+[
+^ self evaluated: textOrStream context: nil
+]
+
+Class SystemAnnouncer >> methodAdded: aMethod selector: aSymbol inClass: aClass requestor: requestor
+[
+	"A method with the given selector was added to aClass, but not put in a protocol."
+self	announce:		(MethodAdded			method: aMethod			selector: aSymbol			protocol: nil			class: aClass			requestor: requestor)
+]
+
+Class SystemAnnouncer >> class: aClass recategorizedFrom: oldCategory to: newCategory
+[
+self announce: (ClassRecategorized class: aClass recategorizedFrom: oldCategory to: newCategory)
+]
+
+Class SystemAnnouncer >> evaluated: expression context: aContext
+[
+self announce: (ExpressionEvaluated expression: expression context: aContext)
+]
+
+Class SystemAnnouncer >> unsubscribe: anObject
+[
+self private unsubscribe: anObject.super unsubscribe: anObject
+]
+
+Class SystemAnnouncer >> classCategoryRenamedFrom: anOldClassCategoryName to: aNewClassCategoryName
+[
+self announce: (CategoryRenamed classCategoryRenamedFrom: anOldClassCategoryName to: aNewClassCategoryName)
+]
+
+Class SystemAnnouncer >> basicAnnounce: anAnnouncement
+[
+self flag: #todo.	"Remove Me in cleaning step"super announce: anAnnouncement
+]
+
+Class SystemAnnouncer >> selector: selector recategorizedFrom: oldCategory to: newCategory inClass: aClass
+[
+self	announce:		(MethodRecategorized			method: (aClass compiledMethodAt: selector ifAbsent: [ nil ])			selector: selector			class: aClass			newProtocol: newCategory			oldProtocol: oldCategory)
+]
+
+Class SystemAnnouncer >> methodRemoved: aMethod selector: aSymbol inProtocol: protocol class: aClass
+[
+	"A method with the given selector was removed from the class."
+self	announce:		(MethodRemoved			methodRemoved: aMethod			selector: aSymbol			protocol: protocol			class: aClass)
+]
+
+Class SystemAnnouncer >> announce: anAnnouncement
+[
+self isSuspended	ifFalse: [ 		self private announce: anAnnouncement.		super announce: anAnnouncement ]
+]
+
+Class SystemAnnouncer >> methodRemoved: aMethod selector: aSymbol class: aClass
+[
+	"A method with the given selector was removed from the class."
+self	announce:		(MethodRemoved			methodRemoved: aMethod			selector: aSymbol			protocol: nil			class: aClass)
+]
+
+Class SystemAnnouncer >> classCategoryRemoved: aClassCategoryName
+[
+self announce: (CategoryRemoved categoryName: aClassCategoryName)
+]
+
+Class SystemAnnouncer >> methodChangedFrom: oldMethod to: newMethod
+[
+self	methodChangedFrom: oldMethod	to: newMethod	selector: newMethod selector	inClass: newMethod methodClass	oldProtocol: nil	newProtocol: nil	requestor: nil
+]
+
+Class SystemAnnouncer >> doSilently: aBlock
+[
+self flag: #todo.	"Remove Me"self suspendAllWhile: aBlock
+]
+
+Class SystemAnnouncer >> classRenamed: aClass from: oldClassName to: newClassName inCategory: aCategoryName
+[
+self	announce:		(ClassRenamed			class: aClass			category: aCategoryName			oldName: oldClassName			newName: newClassName)
+]
+
+Class SystemAnnouncer >> private
+[
+^ private ifNil: [ private := Announcer new ]
+]
+
+Class SystemAnnouncer >> methodChangedFrom: oldMethod to: newMethod selector: aSymbol inClass: aClass oldProtocol: oldProtocol newProtocol: newProtocol requestor: requestor
+[
+self	announce:		(MethodModified			methodChangedFrom: oldMethod			to: newMethod			selector: aSymbol			inClass: aClass			oldProtocol: oldProtocol			newProtocol: newProtocol			requestor: requestor)
+]
+
+Class SystemAnnouncer >> classCategoryAdded: aClassCategoryName
+[
+self announce: (CategoryAdded categoryName: aClassCategoryName)
+]
+
+Class SystemAnnouncer >> methodAdded: aMethod selector: aSymbol inProtocol: aCategoryName class: aClass requestor: requestor
+[
+	"A method with the given selector was added to aClass in protocol aCategoryName."
+self	announce:		(MethodAdded			method: aMethod			selector: aSymbol			protocol: aCategoryName			class: aClass			requestor: requestor)
+]
+
+Class SystemAnnouncer >> methodChangedFrom: oldMethod to: newMethod selector: aSymbol inClass: aClass requestor: requestor
+[
+self	methodChangedFrom: oldMethod	to: newMethod	selector: aSymbol	inClass: aClass	oldProtocol: nil	newProtocol: nil	requestor: requestor
+]
+
+Class SystemAnnouncer >> classDefinitionChangedFrom: oldClass to: newClass
+[
+self announce: (ClassModifiedClassDefinition classDefinitionChangedFrom: oldClass to: newClass)
+]
+
+Metaclass
+	name: #SystemAnnouncer;
+	instanceVariables: #(#announcer ).
+
+Metaclass SystemAnnouncer >> uniqueInstance
+[
+	"Answer a system annoncer."
+^ announcer ifNil: [ announcer := self new ]
+]
+
+Metaclass SystemAnnouncer >> reset
+[
+announcer := nil
+]
+
+Metaclass SystemAnnouncer >> unload
+[
+self uniqueInstance unsubscribe: self
+]
+
+Metaclass SystemAnnouncer >> announcer: anAnnouncer
+[
+announcer := anAnnouncer
+]
+
+Metaclass SystemAnnouncer >> restoreAllNotifications
+[
+	"self restoreAllNotifications"
+| collector |self reset.collector := PragmaCollector filter: [ :pragma | pragma keyword = #systemEventRegistration ].collector reset.collector do: [ :pragma | pragma methodClass theNonMetaClass perform: pragma selector ]
+]
+

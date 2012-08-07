@@ -1,1 +1,1067 @@
-Class	name: #CompiledMethod;	superclass: #ClassByteArray;	instanceSpecification: #(#variable #byte );	instanceVariables: #();	classVariables: #(#SmallFrame #LargeFrame );	package: #'Kernel-Methods'.Class CompiledMethod >> fixAdditionalMethodStateMethodReference: anAdditionalMethodState[anAdditionalMethodState method: self.anAdditionalMethodState pragmas do: [ :each | each instVarAt: 1 put: self ]]Class CompiledMethod >> methodClass[	"answer the class that I am installed in"^ self numLiterals > 0	ifTrue: [ (self literalAt: self numLiterals) value ]	ifFalse: [ nil ]]Class CompiledMethod >> symbolic[	"Answer a String that contains a list of all the byte codes in a method 	with a short description of each."| aStream |aStream := (String new: 1000) writeStream.self longPrintOn: aStream.^ aStream contents]Class CompiledMethod >> isAbstract[	"Answer true if I am abstract"^ self markerOrNil == self class abstractMarker]Class CompiledMethod >> debuggerMap[^ DebuggerMethodMap forMethod: self]Class CompiledMethod >> linesOfCode[	"An approximate measure of lines of code.	Includes comments, but excludes empty lines."| lines |lines := 0.self sourceCode	lineIndicesDo: [ :start :endWithoutDelimiters :end | 		endWithoutDelimiters > start			ifTrue: [ lines := lines + 1 ] ].^ lines]Class CompiledMethod >> isRequired[^ self isRequired: self markerOrNil]Class CompiledMethod >> penultimateLiteral[	"Answer the penultimate literal of the receiver, which holds either	 the receiver's selector or its properties (which will hold the selector)."| pIndex |^ (pIndex := self numLiterals - 1) > 0	ifTrue: [ self literalAt: pIndex ]	ifFalse: [ nil ]]Class CompiledMethod >> pcPreviousTo: pc[| scanner client prevPc |self flag: 'belongs in DebuggerMethodMap?'.pc > self endPC	ifTrue: [ ^ self endPC ].scanner := InstructionStream on: self.client := InstructionClient new.[ scanner pc < pc ]	whileTrue: [ 		prevPc := scanner pc.		scanner interpretNextInstructionFor: client ].^ prevPc]Class CompiledMethod >> clearFlag[	"Clear the user-level flag bit"self objectAt: 1 put: (self header bitAnd: (1 << 29) bitInvert)]Class CompiledMethod >> allLiterals[^ self literals]Class CompiledMethod >> tempsSubSequenceFrom: tempNamesStream[^ Array	streamContents: [ :tsss | 		[ 		tempNamesStream skipSeparators.		tempNamesStream atEnd or: [ '[]()' includes: tempNamesStream peek ] ]			whileFalse: [ 				tsss					nextPut:						(String							streamContents: [ :s | 								[ 								s nextPut: tempNamesStream next.								tempNamesStream peek ifNil: [ true ] ifNotNil: [ :peek | ' []()' includes: peek ] ] whileFalse ]) ] ]	"thisContext method tempsSubSequenceFrom: 'les temps perdu(sont n''est pas la)' readStream"	"thisContext method tempsSubSequenceFrom: ('les temps perdu(sont n''est pas la)' readStream skipTo: $(; yourself)"]Class CompiledMethod >> literalAt: index[	"Answer the literal indexed by the argument."^ self objectAt: index + 1]Class CompiledMethod >> headerDescription[	"Answer a description containing the information about the form of the 	receiver and the form of the context needed to run the receiver."| s |s := '' writeStream.self header printOn: s.s	cr;	nextPutAll: '"primitive: '.self primitive printOn: s.s	cr;	nextPutAll: ' numArgs: '.self numArgs printOn: s.s	cr;	nextPutAll: ' numTemps: '.self numTemps printOn: s.s	cr;	nextPutAll: ' numLiterals: '.self numLiterals printOn: s.s	cr;	nextPutAll: ' frameSize: '.self frameSize printOn: s.s	nextPut: $";	cr.^ s contents]Class CompiledMethod >> putSource: sourceStr fromParseNode: methodNode class: class category: catName withStamp: changeStamp inFile: fileIndex priorMethod: priorMethod[^ self	putSource: sourceStr	fromParseNode: methodNode	inFile: fileIndex	withPreamble: [ :file | 		class			printCategoryChunk: catName			on: file			withStamp: changeStamp			priorMethod: priorMethod.		file cr ]]Class CompiledMethod >> isImplicitlyRequired: marker[^ marker == self class implicitRequirementMarker]Class CompiledMethod >> timeStampFromFile: file[	"return the timestamp of this method for a given source filestream"| preamble stamp tokens tokenCount |preamble := self getPreambleFrom: file at: (0 max: self filePosition - 3).stamp := String new.tokens := (preamble findString: 'methodsFor:' startingAt: 1) > 0	ifTrue: [ Scanner new scanTokens: preamble ]	ifFalse: [ Array new	"ie cant be back ref" ].(((tokenCount := tokens size) between: 7 and: 8) and: [ (tokens at: tokenCount - 5) == #methodsFor: ])	ifTrue: [ 		(tokens at: tokenCount - 3) == #stamp:			ifTrue: [ 				"New format gives change stamp and unified prior pointer"				stamp := tokens at: tokenCount - 2 ] ].((tokenCount between: 5 and: 6) and: [ (tokens at: tokenCount - 3) == #methodsFor: ])	ifTrue: [ 		(tokens at: tokenCount - 1) == #stamp:			ifTrue: [ 				"New format gives change stamp and unified prior pointer"				stamp := tokens at: tokenCount ] ].^ stamp]Class CompiledMethod >> sameLiteralsAs: method[	"Compare my literals to those of method. This is needed to compare compiled methods."| numLits literal1 literal2 |(numLits := self numLiterals) ~= method numLiterals	ifTrue: [ ^ false ].	"The last literal requires special checking instead of using #literalEqual:"1 to: numLits - 1 do: [ :index | 	literal1 := self literalAt: index.	literal2 := method literalAt: index.	(literal1 == literal2 or: [ literal1 literalEqual: literal2 ])		ifFalse: [ 			(index = 1 and: [ self isNamedPrimitive | self isExternalCallPrimitive ])				ifTrue: [ 					literal1 isArray						ifTrue: [ 							(literal2 isArray and: [ literal1 allButLast = literal2 allButLast ])								ifFalse: [ ^ false ] ]						ifFalse: [ 							"ExternalLibraryFunction"							(literal1 analogousCodeTo: literal2)								ifFalse: [ ^ false ] ] ]				ifFalse: [ 					index = (numLits - 1)						ifTrue: [ 							"properties"							(self properties analogousCodeTo: method properties)								ifFalse: [ ^ false ] ]						ifFalse: [ ^ false ] ] ] ].	"Class side methods have non unique (nil -> a Metaclass) as literal and cannot be compared equal"literal1 := self literalAt: numLits.literal2 := method literalAt: numLits.^ literal1 class == literal2 class	and: [ 		literal1 isVariableBinding			ifTrue: [ literal1 key = literal2 key and: [ literal1 value = literal2 value ] ]			ifFalse: [ literal1 = literal2 ] ]]Class CompiledMethod >> numTemps[	"Answer the number of temporary variables used by the receiver."^ (self header bitShift: -18) bitAnd: 16r3F]Class CompiledMethod >> isExternalCallPrimitive[^ self primitive = 120]Class CompiledMethod >> hasInstVarRef[	"Answer whether the method references an instance variable."| scanner end printer |scanner := InstructionStream on: self.printer := InstVarRefLocator new.end := self endPC.[ scanner pc <= end ]	whileTrue: [ 		(printer interpretNextInstructionUsing: scanner)			ifTrue: [ ^ true ] ].^ false]Class CompiledMethod >> sendsSelector: aSymbol[^ self messages includes: aSymbol]Class CompiledMethod >> isCompiledMethod[^ true]Class CompiledMethod >> isReturnSelf[	"Answer whether the receiver is a quick return of self."^ self primitive = 256]Class CompiledMethod >> receiver: receiver withArguments: argArray executeMethod: compiledMethod[	"Execute compiledMethod against the receiver and the arguments in argArray"	"Please do not use this method. It is just there to make sure that we can invoke this primitive with right order of arguments"	<primitive: 188>^ receiver withArgs: argArray executeMethod: compiledMethod]Class CompiledMethod >> removeProperty: propName[	"Remove the property propName if it exists.	 Do _not_ raise an error if the property is missing."| value |value := self propertyValueAt: propName ifAbsent: [ ^ nil ].self penultimateLiteral: (self penultimateLiteral copyWithout: (Association key: propName value: value)).^ value]Class CompiledMethod >> penultimateLiteral: anObject[	"Answer the penultimate literal of the receiver, which holds either	 the receiver's selector or its properties (which will hold the selector)."| pIndex |(pIndex := self numLiterals - 1) > 0	ifTrue: [ self literalAt: pIndex put: anObject ]	ifFalse: [ self error: 'insufficient literals' ]]Class CompiledMethod >> printOn: aStream[	"Overrides method inherited from the byte arrayed collection."aStream	nextPut: $(;	print: self methodClass;	nextPutAll: '>>';	nextPutAll: self selector storeString;	space;	nextPut: $".self printNameOn: aStream.aStream	nextPut: $(;	print: self identityHash;	nextPut: $);	nextPut: $";	nextPut: $)]Class CompiledMethod >> methodClass: aClass[	"set the class binding in the last literal to aClass"^ self numLiterals > 0	ifTrue: [ self literalAt: self numLiterals put: aClass binding ]]Class CompiledMethod >> defaultSelector[	"Invent and answer an appropriate message selector (a Symbol) for me, 	that is, one that will parse with the correct number of arguments."^ #DoIt numArgs: self numArgs]Class CompiledMethod >> isExplicitlyRequired: marker[^ marker == self class explicitRequirementMarker]Class CompiledMethod >> printPrimitiveOn: aStream[	"Print the primitive on aStream"| primDecl |self isPrimitive	ifFalse: [ ^ self ].self isExternalCallPrimitive	ifTrue: [ 		^ aStream			print: (self literalAt: 1);			cr ].aStream nextPutAll: '<primitive: '.self isNamedPrimitive	ifTrue: [ 		primDecl := self literalAt: 1.		(primDecl at: 2) asString printOn: aStream.		(primDecl at: 1)			ifNotNil: [ :moduleName | 				aStream nextPutAll: ' module: '.				moduleName asString printOn: aStream ] ]	ifFalse: [ aStream print: self primitive ].self primitiveErrorVariableName	ifNotNil: [ :primitiveErrorVariableName | 		aStream			nextPutAll: ' error: ';			nextPutAll: primitiveErrorVariableName ].aStream	nextPut: $>;	cr]Class CompiledMethod >> isDeprecated[^ (self sendsSelector: #deprecated:) or: [ self sendsSelector: #deprecated:on:in: ]]Class CompiledMethod >> scanLongLoad: extension[	"Answer whether the receiver contains a long load whose extension is the 	argument."| scanner |scanner := InstructionStream on: self.^ scanner scanFor: [ :instr | instr = 128 and: [ scanner followingByte = extension ] ]]Class CompiledMethod >> hasReportableSlip[	"Answer whether the receiver contains anything that should be brought 	to the attention of the author when filing out. Customize the lists here 	to suit your preferences. If slips do not get reported in spite of your 	best efforts here, make certain that the Preference 'checkForSlips' is set 	to true."#(#doOnlyOnce: #halt #halt: #hottest #printDirectlyToDisplay #toRemove #urgent #haltOnce #haltOnce: #haltIf:)	do: [ :aLit | 		(self hasLiteral: aLit)			ifTrue: [ ^ true ] ].#(#Transcript #AA #BB #CC #DD #EE)	do: [ :aSymbol | 		(Smalltalk globals associationAt: aSymbol ifAbsent: [  ])			ifNotNil: [ :assoc | 				(self hasLiteral: assoc)					ifTrue: [ ^ true ] ] ].^ false]Class CompiledMethod >> setSourcePointer: srcPointer[	"We can't change the trailer of existing method, since	it could have completely different format. Therefore we need to	generate a copy with new trailer, containing an scrPointer, and then	#become it"| trailer copy |trailer := CompiledMethodTrailer new sourcePointer: srcPointer.copy := self copyWithTrailerBytes: trailer.self becomeForward: copy.^ copy]Class CompiledMethod >> objectAt: index[	"Primitive. Answer the method header (if index=1) or a literal (if index 	>1) from the receiver. Essential. See Object documentation 	whatIsAPrimitive."	<primitive: 68>self primitiveFailed]Class CompiledMethod >> isRequired: marker[marker ifNil: [ ^ false ].(self isImplicitlyRequired: marker)	ifTrue: [ ^ true ].(self isExplicitlyRequired: marker)	ifTrue: [ ^ true ].(self isSubclassResponsibility: marker)	ifTrue: [ ^ true ].^ false]Class CompiledMethod >> sourcePointer[	"Answer the integer which can be used to find the source file and position for this method.	The actual interpretation of this number is up to the SourceFileArray stored in the global variable SourceFiles."^ self trailer sourcePointer]Class CompiledMethod >> dateMethodLastSubmitted[	"Answer a Date object indicating when a method was last submitted.  If there is no date stamp, return nil"	"(CompiledMethod compiledMethodAt: #dateMethodLastSubmitted) dateMethodLastSubmitted"| aStamp tokens |aStamp := self timeStamp.tokens := aStamp	findBetweenSubStrs:		' '.	"space is expected delimiter, but cr is sometimes seen, though of mysterious provenance"^ tokens size > 1	ifTrue: [ [ tokens second asDate ] ifError: [ nil ] ]	ifFalse: [ nil ]]Class CompiledMethod >> flushCache[	"Tell the interpreter to remove all references to this method from its method lookup cache, if it has one. This primitive must be called whenever a method is redefined or removed.	NOTE:  Only one of two selective flush methods (Symbol or CompiledMethod) needs to be used."	<primitive: 116>]Class CompiledMethod >> refersToLiteral: aLiteral[	"Answer true if any literal in this method is literal, even if embedded in array structure or within its pragmas."	"only iterate to numLiterals - 1, as the last has the classBinding and the last-but-one needs special treatment"2 to: self numLiterals - 1 do: [ :index | 	| literal |	literal := self objectAt: index.	(aLiteral literalEqual: literal)		ifTrue: [ ^ true ].	(literal refersToLiteral: aLiteral)		ifTrue: [ ^ true ] ].	"last-but-one has the additional method state -or- the method's own selector!"^ (self objectAt: self numLiterals) refersToLiteral: aLiteral]Class CompiledMethod >> author[	"Answer the author of the current version of the receiver. retrieved from the sources or changes file. Answer the empty string if no time stamp is available."	"(CompiledMethod compiledMethodAt: #author) author"self timeStamp	ifNotEmpty: [ :s | 		| subS |		subS := s subStrings first.		subS first isLetter			ifTrue: [ ^ subS ] ].^ '']Class CompiledMethod >> scanVeryLongStore: extension offset: offset[	"Answer whether the receiver contains a long load with the given offset.	Note that the constant +32 is the known difference between a	store and a storePop for instVars, and it will always fail on literal variables,	but these only use store (followed by pop) anyway."| scanner |scanner := InstructionStream on: self.^ scanner	scanFor: [ :instr | 		| ext |		(instr = 132			and: [ 				(ext := scanner followingByte) = extension					or: [ 						"might be a store/pop into rcvr"						ext = (extension + 32) ] ]) and: [ scanner thirdByte = offset ] ]]Class CompiledMethod >> indexOfLiteral: literal[	"Answer the literal index of the argument, literal, or zero if none."2 to: self numLiterals - 1 do: [ :index | 	literal == (self objectAt: index)		ifTrue: [ ^ index - 1 ] ].	"exclude superclass + selector/properties"^ 0]Class CompiledMethod >> copyWithSource: aString[^ self copyWithTrailerBytes: (CompiledMethodTrailer new sourceCode: aString)]Class CompiledMethod >> selector: aSelector[	"Set a method's selector.  This is either the penultimate literal,	 or, if the method has any properties or pragmas, the selector of	 the MethodProperties stored in the penultimate literal."| penultimateLiteral nl |(penultimateLiteral := self penultimateLiteral) isMethodProperties	ifTrue: [ penultimateLiteral selector: aSelector ]	ifFalse: [ 		(nl := self numLiterals) < 2			ifTrue: [ self error: 'insufficient literals to hold selector' ].		self literalAt: nl - 1 put: aSelector ]]Class CompiledMethod >> isImplicitlyRequired[^ self isImplicitlyRequired: self markerOrNil]Class CompiledMethod >> markerOrNil[	"If I am a marker method, answer the symbol used to mark me.  Otherwise	answer nil.	What is a marker method?  It is method with body like 		'self subclassResponsibility' or '^ self subclassResponsibility' 	used to indicate ('mark') a special property.	Marker methods compile to bytecode like:		9 <70> self		10 <D0> send: <literal 1>		11 <87> pop		12 <78> returnSelf	for the first form, or 		9 <70> self		10 <D0> send: <literal 1>		11 <7C> returnTop	for the second form."| e |((e := self endPC) = 19 or: [ e = 20 ])	ifFalse: [ ^ nil ].self numLiterals = 3	ifFalse: [ ^ nil ].(self at: 17) = 16r70	ifFalse: [ ^ nil ].	"push self"(self at: 18) = 16rD0	ifFalse: [ ^ nil ].	"send <literal 1>"	"If we reach this point, we have a marker method that sends self <literal 1>"^ self literalAt: 1]Class CompiledMethod >> getPreambleFrom: aFileStream at: position[| writeStream |writeStream := String new writeStream.position to: 0 by: -1 do: [ :p | 	| c |	aFileStream position: p.	c := aFileStream basicNext.	c == $!		ifTrue: [ ^ writeStream contents reversed ]		ifFalse: [ writeStream nextPut: c ] ]]Class CompiledMethod >> = aCompiledMethod[	"Answer whether the receiver implements the same code as aCompiledMethod."| numLits |self == aCompiledMethod	ifTrue: [ ^ true ].self class = aCompiledMethod class	ifFalse: [ ^ false ].self size = aCompiledMethod size	ifFalse: [ ^ false ].self header = aCompiledMethod header	ifFalse: [ ^ false ].self initialPC to: self endPC do: [ :i | 	(self at: i) = (aCompiledMethod at: i)		ifFalse: [ ^ false ] ].(self sameLiteralsAs: aCompiledMethod)	ifFalse: [ ^ false ].^ true]Class CompiledMethod >> putSource: sourceStr fromParseNode: methodNode class: class category: catName inFile: fileIndex priorMethod: priorMethod[^ self	putSource: sourceStr	fromParseNode: methodNode	inFile: fileIndex	withPreamble: [ :file | 		class printCategoryChunk: catName on: file priorMethod: priorMethod.		file cr ]]Class CompiledMethod >> isBinarySelector[^ self selector allSatisfy: [ :each | each isSpecial ]]Class CompiledMethod >> who[	"Answer an Array of the class in which the receiver is defined and the 	selector to which it corresponds."^ {(self methodClass).(self selector)}]Class CompiledMethod >> initialPC[	"Answer the program counter for the receiver's first bytecode."^ (self numLiterals + 1) * Smalltalk wordSize + 1]Class CompiledMethod >> longPrintOn: aStream[	"List of all the byte codes in a method with a short description of each"self longPrintOn: aStream indent: 0]Class CompiledMethod >> voidCogVMState[	"Tell the VM to remove all references to any machine code form of the method.	 This primitive must be called whenever a method is in use and modified.  This is	 more aggressive (and *much* more costly) than flushCache since it must search	 through all context objects, making sure that none have a (hidden) machine code pc	 in the receiver.  Since modifying a method will likely change the generated machine code,	 modifying a method (rather than redefining it) requires this more aggressive flush."	<primitive: 215>^ self flushCache]Class CompiledMethod >> isPrimitive[^ self primitive > 0]Class CompiledMethod >> messages[	"Answer a Set of all the message selectors sent by this method."| scanner aSet |aSet := Set new.scanner := InstructionStream on: self.scanner	scanFor: [ :x | 		scanner addSelectorTo: aSet.		false	"keep scanning" ].^ aSet]Class CompiledMethod >> numLiterals[	"Answer the number of literals used by the receiver."^ (self header bitShift: -9) bitAnd: 16rFF]Class CompiledMethod >> isDoIt[^ self selector isDoIt]Class CompiledMethod >> origin[self properties at: #traitSource ifPresent: [ :traitMethod | ^ traitMethod methodClass ].^ self methodClass traitOrClassOfSelector: self selector]Class CompiledMethod >> pragmas[| selectorOrProperties |^ (selectorOrProperties := self penultimateLiteral) isMethodProperties	ifTrue: [ selectorOrProperties pragmas ]	ifFalse: [ #() ]]Class CompiledMethod >> abstractPCForConcretePC: concretePC[	"Answer the abstractPC matching concretePC."| abstractPC scanner client |self flag: 'belongs in DebuggerMethodMap?'.abstractPC := 1.scanner := InstructionStream on: self.client := InstructionClient new.[ (scanner atEnd or: [ scanner pc >= concretePC ])	ifTrue: [ ^ abstractPC ].abstractPC := abstractPC + 1.scanner interpretNextInstructionFor: client.true ] whileTrue]Class CompiledMethod >> scanFor: byte[	"Answer whether the receiver contains the argument as a bytecode."^ (InstructionStream on: self) scanFor: [ :instr | instr = byte ]	"Smalltalk browseAllSelect: [:m | m scanFor: 134]"]Class CompiledMethod >> embeddSourceInTrailer[	"When receiver is deinstalled from its class, its not managed anymore by development tools	and it's hard to predict, how long a method could stay in the image, because if it contains blocks,	they could still reference it. 	Therefore we trying to preserve as much as we can , actually by embedding the method's source code into its trailer	"self trailer hasSourcePointer	ifTrue: [ ^ self becomeForward: (self copyWithSource: self sourceCode) ]]Class CompiledMethod >> pragmaAt: aKey[	"Answer the pragma with selector aKey, or nil if none."| propertiesOrSelector |^ (propertiesOrSelector := self penultimateLiteral) isMethodProperties	ifTrue: [ propertiesOrSelector at: aKey ifAbsent: [ nil ] ]	ifFalse: [ nil ]]Class CompiledMethod >> isInstalled[self methodClass	ifNotNil: [ :class | self selector ifNotNil: [ :selector | ^ self == (class methodDict at: selector ifAbsent: [  ]) ] ].^ false]Class CompiledMethod >> symbolicLinesDo: aBlock[	"Evaluate aBlock with each of the lines in the symbolic output."| aStream pc |aStream := ReadWriteStream on: (String new: 64).self isQuick	ifTrue: [ 		self longPrintOn: aStream.		aBlock value: 0 value: aStream contents.		^ self ].self isPrimitive	ifTrue: [ 		self printPrimitiveOn: aStream.		aBlock value: 1 value: aStream contents.		aStream resetContents ].pc := self initialPC.(InstructionPrinter on: self)	indent: 0;	printPC: false;	printInstructionsOn: aStream		do: [ :printer :scanner :stream | 				| line index |				line := stream contents allButLast.				(line includes: Character cr)					ifTrue: [ line := (line copyUpTo: Character cr) , '...'' (continues)' ].				(index := line indexOf: $>) > 0					ifTrue: [ 						[ (line at: index + 1) isSeparator ] whileTrue: [ index := index + 1 ].						line := ((line copyFrom: 1 to: index)							copyReplaceAll: (String with: Character tab)							with: (String new: 8 withAll: Character space)) , (line copyFrom: index + 1 to: line size) ].				aBlock value: pc value: line.				pc := scanner pc.				stream resetContents ]	"explorer provides pc anyway"]Class CompiledMethod >> comment[	"Return the first comment of the receiver"	"(self>>#comment) comment"^ self methodClass firstPrecodeCommentFor: self selector]Class CompiledMethod >> isProvided: marker[marker ifNil: [ ^ true ].^ (self isRequired: marker) not and: [ (self isDisabled: marker) not ]]Class CompiledMethod >> isSubclassResponsibility: marker[^ marker == self class subclassResponsibilityMarker]Class CompiledMethod >> literalsDo: aBlock[	"Evaluate aBlock for each of the literals referenced by the receiver."1 to: self numLiterals do: [ :index | aBlock value: (self objectAt: index + 1) ]]Class CompiledMethod >> readsField: varIndex[	"Answer whether the receiver loads the instance variable indexed by the 	 argument."	"eem 5/24/2008 Rewritten to no longer assume the compiler uses the	 most compact encoding available (for EncoderForLongFormV3 support)."| varIndexCode scanner |varIndexCode := varIndex - 1.self isReturnField	ifTrue: [ ^ self returnField = varIndexCode ].^ (scanner := InstructionStream on: self)	scanFor: [ :b | 		b < 16			ifTrue: [ b = varIndexCode ]			ifFalse: [ 				b = 128					ifTrue: [ scanner followingByte = varIndexCode and: [ varIndexCode <= 63 ] ]					ifFalse: [ b = 132 and: [ (scanner followingByte between: 64 and: 95) and: [ scanner thirdByte = varIndexCode ] ] ] ] ]]Class CompiledMethod >> propertyKeysAndValuesDo: aBlock[	"Enumerate the receiver with all the keys and values."| propertiesOrSelector |(propertiesOrSelector := self penultimateLiteral) isMethodProperties	ifTrue: [ propertiesOrSelector propertyKeysAndValuesDo: aBlock ]]Class CompiledMethod >> isReturnField[	"Answer whether the receiver is a quick return of an instance variable."^ self primitive between: 264 and: 519]Class CompiledMethod >> flag[	"Answer the user-level flag bit"^ ((self header bitShift: -29) bitAnd: 1) = 1]Class CompiledMethod >> isQuick[	"Answer whether the receiver is a quick return (of self or of an instance 	variable)."^ self primitive between: 256 and: 519]Class CompiledMethod >> zapSourcePointer[	"If receiver has trailer with source pointer,	replace it with empty trailer. But do this only if receiver has a trailer with source pointer, but something else"self trailer hasSourcePointer	ifTrue: [ self becomeForward: (self copyWithTrailerBytes: CompiledMethodTrailer empty) ]]Class CompiledMethod >> isExplicitlyRequired[^ self isExplicitlyRequired: self markerOrNil]Class CompiledMethod >> isNamedPrimitive[^ self primitive = 117]Class CompiledMethod >> properties[	"Answer the method properties of the receiver."| propertiesOrSelector |^ (propertiesOrSelector := self penultimateLiteral) isMethodProperties	ifTrue: [ propertiesOrSelector ]	ifFalse: [ self class methodPropertiesClass forMethod: self selector: propertiesOrSelector ]]Class CompiledMethod >> writesField: varIndex[	"Answer whether the receiver stores into the instance variable indexed	 by the argument."	"eem 5/24/2008 Rewritten to no longer assume the compler uses the	 most compact encoding available (for EncoderForLongFormV3 support)."| varIndexCode scanner |self isQuick	ifTrue: [ ^ false ].varIndexCode := varIndex - 1.^ (scanner := InstructionStream on: self)	scanFor: [ :b | 		b >= 96			and: [ 				b <= 103					ifTrue: [ b - 96 = varIndexCode ]					ifFalse: [ 						(b = 129 or: [ b = 130 ])							ifTrue: [ scanner followingByte = varIndexCode and: [ varIndexCode <= 63 ] ]							ifFalse: [ b = 132 and: [ (scanner followingByte between: 160 and: 223) and: [ scanner thirdByte = varIndexCode ] ] ] ] ] ]]Class CompiledMethod >> propertyValueAt: propName put: propValue[	"Set or add the property with key propName and value propValue.	 If the receiver does not yet have a method properties create one and replace	 the selector with it.  Otherwise, either relace propValue in the method properties	 or replace method properties with one containing the new property."| propertiesOrSelector |(propertiesOrSelector := self penultimateLiteral) isMethodProperties	ifFalse: [ 		self			penultimateLiteral:				((self class methodPropertiesClass					selector: propertiesOrSelector					with: (Association key: propName asSymbol value: propValue))					setMethod: self;					yourself).		^ propValue ].(propertiesOrSelector includesProperty: propName)	ifTrue: [ ^ propertiesOrSelector at: propName put: propValue ].self penultimateLiteral: (propertiesOrSelector copyWith: (Association key: propName asSymbol value: propValue)).^ propValue]Class CompiledMethod >> scanner[^ InstructionStream on: self]Class CompiledMethod >> primitiveErrorVariableName[	"Answer the primitive error code temp name, or nil if none."self isPrimitive	ifTrue: [ 		self pragmas			do: [ :pragma | 				| kwds ecIndex |				((kwds := pragma keyword keywords) first = 'primitive:' and: [ (ecIndex := kwds indexOf: 'error:') > 0 ])					ifTrue: [ ^ pragma argumentAt: ecIndex ] ] ].^ nil]Class CompiledMethod >> definition[	"Polymorphic to class definition"^ self sourceCode]Class CompiledMethod >> postCopy[1 to: self literals size do: [ :index | 	| literal |	literal := self literalAt: index.	literal class == AdditionalMethodState		ifTrue: [ 			literal := literal copy.			self literalAt: index put: literal.			self fixAdditionalMethodStateMethodReference: literal ] ]]Class CompiledMethod >> fileIndex[^ SourceFiles fileIndexFromSourcePointer: self sourcePointer]Class CompiledMethod >> isDisabled[^ self isDisabled: self markerOrNil]Class CompiledMethod >> hasLiteralThorough: literal[	"Answer true if any literal in this method is literal,	even if embedded in array structure."(self penultimateLiteral isMethodProperties and: [ self penultimateLiteral hasLiteralThorough: literal ])	ifTrue: [ ^ true ].2 to: self numLiterals - 1 do: [ :index | 	| lit |	(((lit := self objectAt: index) literalEqual: literal)		or: [ (lit isVariableBinding and: [ lit key == literal ]) or: [ lit isArray and: [ lit hasLiteral: literal ] ] ])		ifTrue: [ ^ true ] ].	"exclude superclass + selector/properties"^ false]Class CompiledMethod >> hasLiteral: literal[	"Answer whether the receiver references the argument, literal."2 to: self numLiterals - 1 do: [ :index "exclude superclass + selector/properties" | 	((self objectAt: index) literalEqual: literal)		ifTrue: [ ^ true ] ].^ false]Class CompiledMethod >> numArgs[	"Answer the number of arguments the receiver takes."^ (self header bitShift: -24) bitAnd: 16r0F]Class CompiledMethod >> properties: aMethodProperties[	"Set the method-properties of the receiver to aMethodProperties."self	literalAt: self numLiterals - 1	put:		(aMethodProperties isEmpty			ifTrue: [ aMethodProperties selector ]			ifFalse: [ 				aMethodProperties					setMethod: self;					yourself ])]Class CompiledMethod >> filePosition[^ SourceFiles filePositionFromSourcePointer: self sourcePointer]Class CompiledMethod >> methodClassAssociation: aBinding[	"sets the association to the class that I am installed in"^ self literalAt: self numLiterals put: aBinding]Class CompiledMethod >> storeLiteralsOn: aStream forClass: aBehavior[	"Store the literals referenced by the receiver on aStream, each terminated by a space."| literal |2 to: self numLiterals + 1 do: [ :index | 	aBehavior storeLiteral: (self objectAt: index) on: aStream.	aStream space ]]Class CompiledMethod >> isDisabled: marker[^ marker == self class disabledMarker]Class CompiledMethod >> literalAt: index put: value[	"Replace the literal indexed by the first argument with the second 	argument. Answer the second argument."^ self objectAt: index + 1 put: value]Class CompiledMethod >> longPrintRelativeOn: aStream indent: tabs[	"List of all the byte codes in a method with a short description of each"self isQuick	ifTrue: [ ^ self longPrintOn: aStream indent: tabs ].self isPrimitive	ifTrue: [ 		aStream tab: tabs.		self printPrimitiveOn: aStream ].(RelativeInstructionPrinter on: self)	indent: tabs;	printCode: false;	printInstructionsOn: aStream]Class CompiledMethod >> isSelfEvaluating[^ self methodClass notNil and: [ (#(#DoIt #DoItIn: nil) includes: self selector) not ]]Class CompiledMethod >> isSubclassResponsibility[^ self isSubclassResponsibility: self markerOrNil]Class CompiledMethod >> removeProperty: propName ifAbsent: aBlock[	"Remove the property propName if it exists.	 Answer the evaluation of aBlock if the property is missing."| value |value := self propertyValueAt: propName ifAbsent: [ ^ aBlock value ].self penultimateLiteral: (self penultimateLiteral copyWithout: (Association key: propName value: value)).^ value]Class CompiledMethod >> scanVeryLongLoad: extension offset: offset[	"Answer whether the receiver contains a long load whose extension is the 	argument."| scanner |scanner := InstructionStream on: self.^ scanner	scanFor: [ :instr | (instr = 132 and: [ scanner followingByte = extension ]) and: [ scanner thirdByte = offset ] ]]Class CompiledMethod >> searchForClass[	"search me in all classes, if found, return my class. Slow!"self systemNavigation	allBehaviorsDo: [ :class | (class methodDict keyAtIdentityValue: self ifAbsent: [ nil ]) ifNotNil: [ ^ class ] ].^ nil]Class CompiledMethod >> setSourcePosition: position inFile: fileIndex[self setSourcePointer: (SourceFiles sourcePointerFromFileIndex: fileIndex andPosition: position)]Class CompiledMethod >> referredInstVars[| allInstVarNames instVarNames |allInstVarNames := self methodClass allInstVarNames.self isReturnField	ifTrue: [ ^ Set with: (allInstVarNames at: self returnField + 1) ].instVarNames := Set new.self	abstractBytecodeMessagesDo: [ :msg | 		(#(#popIntoReceiverVariable: #pushReceiverVariable: #storeIntoReceiverVariable:) includes: msg selector)			ifTrue: [ instVarNames add: (allInstVarNames at: msg argument + 1) ] ].^ instVarNames	"Dictionary fromPairs: (Point selectors collect: [:s| { s. (Point >> s) referredInstVars}])"]Class CompiledMethod >> primitive[	"Answer the primitive index associated with the receiver.	Zero indicates that this is not a primitive method.	We currently allow 10 bits of primitive index, but they are in two places	for  backward compatibility.  The time to unpack is negligible,	since the reconstituted full index is stored in the method cache."| primBits |primBits := self header bitAnd: 16r100001FF.^ (primBits bitAnd: 16r1FF) + (primBits bitShift: -19)]Class CompiledMethod >> sendsToSuper[	"Answer whether the receiver sends any message to super."| scanner |scanner := InstructionStream on: self.^ scanner	scanFor: [ :instr | instr = 16r85 or: [ instr = 16r84 and: [ scanner followingByte between: 16r20 and: 16r3F ] ] ]]Class CompiledMethod >> header[	"Answer the word containing the information about the form of the 	receiver and the form of the context needed to run the receiver."^ self objectAt: 1]Class CompiledMethod >> argumentNames[	"Return an array with the argument names of the method's selector"| keywords stream argumentNames delimiters |delimiters := {(Character space).(Character cr)}.keywords := self selector keywords.stream := self getSource readStream.argumentNames := OrderedCollection new.keywords	do: [ :each | 		| argumentName |		stream match: each.		[ stream peekFor: Character space ] whileTrue.		argumentName := ReadWriteStream on: String new.		[ (delimiters includes: stream peek) or: [ stream peek isNil ] ] whileFalse: [ argumentName nextPut: stream next ].		argumentName isEmpty			ifFalse: [ argumentNames add: argumentName contents trimBoth ] ].^ (argumentNames copyFrom: 1 to: self numArgs) asArray]Class CompiledMethod >> mapFromBlockKeys: keys toSchematicTemps: schematicTempNamesString[	"Decode a schematicTempNamesString that encodes the layout of temp names	 in a method and any closures/blocks within it, matching keys in keys to	 vectors of temp names."| map tempNames |map := Dictionary new.tempNames := schematicTempNamesString readStream.keys	do: [ :key | 		| tempSequence tempIndex |		tempSequence := OrderedCollection new.		tempIndex := 0.		[ 		(tempNames			skipSeparators;			peek) ifNil: [ true ] ifNotNil: [ :ch | '[]' includes: ch ] ]			whileFalse: [ 				tempNames peek = $(					ifTrue: [ 						tempSequence							addAllLast:								((self									tempsSubSequenceFrom:										(tempNames											next;											yourself))									withIndexCollect: [ :temp :index | 										{temp.										{(tempIndex + 1).										index}} ]).						tempNames peek ~= $)							ifTrue: [ self error: 'parse error' ].						tempIndex := tempIndex + 1.						tempNames next ]					ifFalse: [ 						tempSequence							addAllLast:								((self tempsSubSequenceFrom: tempNames)									withIndexCollect: [ :temp :index | 										{temp.										(tempIndex := tempIndex + 1)} ]) ] ].		map at: key put: tempSequence asArray.		[ tempNames peek = $] ] whileTrue: [ tempNames next ].		tempNames peek = $[			ifTrue: [ tempNames next ] ].^ map]Class CompiledMethod >> category[^ self methodClass organization categoryOfElement: self selector]Class CompiledMethod >> scanLongStore: extension[	"Answer whether the receiver contains a long store whose extension is 	the argument."| scanner |scanner := InstructionStream on: self.^ scanner scanFor: [ :instr | (instr = 129 or: [ instr = 130 ]) and: [ scanner followingByte = extension ] ]]Class CompiledMethod >> schematicTempNamesString[	"Answer the schematicTempNames string"^ self methodNode schematicTempNamesString]Class CompiledMethod >> trailer[	"Answer the receiver's trailer"^ CompiledMethodTrailer new method: self]Class CompiledMethod >> isProvided[^ self isProvided: self markerOrNil]Class CompiledMethod >> startpcsToBlockExtents[	"Answer a Dictionary of startpc to Interval of blockExtent, using the	 identical numbering scheme described in and orchestrated by	 BlockNode>>analyseArguments:temporaries:rootNode:.  This is	 used in part to find the temp names for any block in a method, as	 needed by the debugger.  The other half is to recompile the method,	 obtaining the temp names for each block extent.  By indirecting through	 the blockExtent instead of using the startpc directly we decouple the	 debugger's access to temp names from the exact bytecode; insulating	 debugging from minor changes in the compiler (e.g. changes in literal	 pooling, adding prefix bytecodes, adding inst vars to CompiledMethod	 in literals towards the end of the literal frame, etc).  If the recompilation	 doesn't produce exactly the same bytecode at exactly the same offset	 no matter; the blockExtents will be the same."| index |self flag: 'belongs in DebuggerMethodMap'.index := 0.^ self	blockExtentsInto: Dictionary new	from: self initialPC	to: self endPC	scanner: (InstructionStream on: self)	numberer: [ 		| value |		value := index.		index := index + 2.		value ]]Class CompiledMethod >> classBinding[^ self literalAt: self numLiterals]Class CompiledMethod >> propertyValueAt: propName[| propertiesOrSelector |^ (propertiesOrSelector := self penultimateLiteral) isMethodProperties	ifTrue: [ propertiesOrSelector propertyValueAt: propName ifAbsent: [ nil ] ]	ifFalse: [ nil ]]Class CompiledMethod >> abstractBytecodeMessagesFrom: startpc to: endpc do: aBlock[	"Evaluate aBlock with the sequence of abstract bytecodes from startpc through endpc in the receiver"| scanner |scanner := InstructionStream new method: self pc: startpc.[ scanner pc <= endpc ]	whileTrue: [ 		[ scanner interpretNextInstructionFor: nil ]			on: MessageNotUnderstood			do: [ :ex | aBlock value: ex message ] ]	"| m msgs |	 msgs := OrderedCollection new.	 (m := CompiledMethod >> #abstractBytecodeMessagesFrom:to:)		abstractBytecodeMessagesFrom: m initialPC		to: m endPC		do: [:msg| msgs add: msg selector].	 msgs"]Class CompiledMethod >> abstractBytecodeMessagesDo: aBlock[	"Evaluate aBlock with the sequence of abstract bytecodes in the receiver"self abstractBytecodeMessagesFrom: self initialPC to: self endPC do: aBlock	"| msgs |	 msgs := OrderedCollection new.	 CompiledMethod >> #abstractBytecodeMessagesFrom:to: abstractBytecodeMessagesDo:		[:msg| msgs add: msg selector].	 msgs"]Class CompiledMethod >> abstractSymbolic[	"Answer a String that contains a list of all the byte codes in a method with a	 short description of each, using relative addresses and not including code bytes."| aStream |aStream := (String new: 1000) writeStream.self longPrintRelativeOn: aStream indent: 0.^ aStream contents]Class CompiledMethod >> putSource: sourceStr fromParseNode: methodNode inFile: fileIndex withPreamble: preambleBlock[	"Store the source code for the receiver on an external file.	If no sources are available, i.e., SourceFile is nil, then store	temp names for decompilation at the end of the method.	If the fileIndex is 1, print on *.sources;  if it is 2, print on *.changes,	in each case, storing a 4-byte source code pointer at the method end."| file remoteString |(SourceFiles == nil or: [ (file := SourceFiles at: fileIndex) == nil ])	ifTrue: [ ^ self becomeForward: (self copyWithTempsFromMethodNode: methodNode) ].Smalltalk assureStartupStampLogged.file setToEnd.preambleBlock value: file.	"Write the preamble"remoteString := RemoteString newString: sourceStr onFileNumber: fileIndex toFile: file.file nextChunkPut: ' '.InMidstOfFileinNotification signal	ifFalse: [ file flush ].self setSourcePosition: remoteString position inFile: fileIndex]Class CompiledMethod >> sourceFileStreamIfAbsent: aBlock[^ self sourceFileStream ifNil: aBlock]Class CompiledMethod >> hasLiteralSuchThat: litBlock[	"Answer true if litBlock returns true for any literal in this method, even if embedded in array structure."(self penultimateLiteral isMethodProperties and: [ self penultimateLiteral hasLiteralSuchThat: litBlock ])	ifTrue: [ ^ true ].2 to: self numLiterals + 1 do: [ :index | 	| lit |	lit := self objectAt: index.	((litBlock value: lit) or: [ lit isArray and: [ lit hasLiteralSuchThat: litBlock ] ])		ifTrue: [ ^ true ] ].^ false]Class CompiledMethod >> abstractBytecodeMessageAt: pc[	"Answer the abstract bytecode message at pc in the receiver."^ [ (InstructionStream new method: self pc: pc) interpretNextInstructionFor: nil ]	on: MessageNotUnderstood	do: [ :ex | ex message ]]Class CompiledMethod >> frameSize[	"Answer the size of temporary frame needed to run the receiver."	"NOTE:  Versions 2.7 and later use two sizes of contexts."(self header noMask: 16r20000)	ifTrue: [ ^ SmallFrame ]	ifFalse: [ ^ LargeFrame ]]Class CompiledMethod >> propertyValueAt: propName ifAbsent: aBlock[| propertiesOrSelector |^ (propertiesOrSelector := self penultimateLiteral) isMethodProperties	ifTrue: [ propertiesOrSelector propertyValueAt: propName ifAbsent: aBlock ]	ifFalse: [ aBlock value ]]Class CompiledMethod >> selector[	"Answer a method's selector.  This is either the penultimate literal,	 or, if the method has any properties or pragmas, the selector of	 the MethodProperties stored in the penultimate literal."| penultimateLiteral |^ (penultimateLiteral := self penultimateLiteral) isMethodProperties	ifTrue: [ penultimateLiteral selector ]	ifFalse: [ penultimateLiteral ]]Class CompiledMethod >> getSourceReplacingSelectorWith: newSelector[| oldKeywords newKeywords args newSelectorWithArgs source oldSelector s |source := self sourceCode.oldSelector := self parserClass new parseSelector: source.oldSelector = newSelector	ifTrue: [ ^ source ].oldKeywords := oldSelector keywords.newKeywords := (newSelector ifNil: [ self defaultSelector ]) keywords.[ oldKeywords size = newKeywords size ] assert.args := (self methodClass parserClass new parseArgsAndTemps: source string notifying: nil) copyFrom: 1 to: self numArgs.newSelectorWithArgs := String	streamContents: [ :stream | 		newKeywords			withIndexDo: [ :keyword :index | 				stream nextPutAll: keyword.				stream space.				args size >= index					ifTrue: [ 						stream							nextPutAll: (args at: index);							space ] ] ].s := source string readStream.oldKeywords do: [ :each | s match: each ].args isEmpty	ifFalse: [ s match: args last ].^ newSelectorWithArgs trimBoth , s upToEnd]Class CompiledMethod >> storeOn: aStream[| noneYet |aStream nextPutAll: '(('.aStream nextPutAll: self class name.aStream nextPutAll: ' newMethod: '.aStream store: self size - self initialPC + 1.aStream nextPutAll: ' header: '.aStream store: self header.aStream nextPut: $).noneYet := self storeElementsFrom: self initialPC to: self endPC on: aStream.1 to: self numLiterals do: [ :index | 	noneYet		ifTrue: [ noneYet := false ]		ifFalse: [ aStream nextPut: $; ].	aStream nextPutAll: ' literalAt: '.	aStream store: index.	aStream nextPutAll: ' put: '.	aStream store: (self literalAt: index) ].noneYet	ifFalse: [ aStream nextPutAll: '; yourself' ].aStream nextPut: $)]Class CompiledMethod >> writesRef: literalAssociation[	"Answer whether the receiver stores into the argument."	"eem 5/24/2008 Rewritten to no longer assume the compler uses the	 most compact encoding available (for EncoderForLongFormV3 support)."| litIndex scanner |(litIndex := self indexOfLiteral: literalAssociation) = 0	ifTrue: [ ^ false ].litIndex := litIndex - 1.^ (scanner := InstructionStream on: self)	scanFor: [ :b | 		(b = 129 or: [ b = 130 ])			ifTrue: [ scanner followingByte - 192 = litIndex ]			ifFalse: [ b = 132 and: [ scanner followingByte >= 224 and: [ scanner thirdByte = litIndex ] ] ] ]]Class CompiledMethod >> returnField[	"Answer the index of the instance variable returned by a quick return 	method."| prim |prim := self primitive.prim < 264	ifTrue: [ self error: 'only meaningful for quick-return' ]	ifFalse: [ ^ prim - 264 ]]Class CompiledMethod >> endPC[	"Answer the index of the last bytecode."^ self trailer endPC]Class CompiledMethod >> objectAt: index put: value[	"Primitive. Store the value argument into a literal in the receiver. An 	index of 2 corresponds to the first literal. Fails if the index is less than 2 	or greater than the number of literals. Answer the value as the result. 	Normally only the compiler sends this message, because only the 	compiler stores values in CompiledMethods. Essential. See Object 	documentation whatIsAPrimitive."	<primitive: 69>self primitiveFailed]Class CompiledMethod >> searchForSelector[	"search me in all classes, if found, return my selector. Slow!"self systemNavigation	allBehaviorsDo: [ :class | 		| selector |		(selector := class methodDict keyAtIdentityValue: self ifAbsent: [ nil ]) ifNotNil: [ ^ selector ] ].^ nil]Class CompiledMethod >> blockExtentsInto: aDictionary from: initialPC to: endPC scanner: scanner numberer: numbererBlock[	"Support routine for startpcsToBlockExtents"| extentStart blockSizeOrLocator |self flag: 'belongs in DebuggerMethodMap'.extentStart := numbererBlock value.[ scanner pc <= endPC ]	whileTrue: [ 		blockSizeOrLocator := scanner interpretNextInstructionFor: BlockStartLocator new.		blockSizeOrLocator isInteger			ifTrue: [ 				self					blockExtentsInto: aDictionary					from: scanner pc					to: scanner pc + blockSizeOrLocator - 1					scanner: scanner					numberer: numbererBlock ] ].aDictionary at: initialPC put: (extentStart to: numbererBlock value).^ aDictionary]Class CompiledMethod >> literalStrings[| litStrs |litStrs := OrderedCollection new: self numLiterals.self	literalsDo: [ :lit | 		lit isVariableBinding			ifTrue: [ litStrs addLast: lit key ]			ifFalse: [ 				lit isSymbol					ifTrue: [ litStrs addAll: lit keywords ]					ifFalse: [ litStrs addLast: lit printString ] ] ].^ litStrs]Class CompiledMethod >> veryDeepCopyWith: deepCopier[	"Return self.  I am always shared.  Do not record me.  Only use this for blocks.  Normally methodDictionaries should not be copied this way."]Class CompiledMethod >> longPrintOn: aStream indent: tabs[	"List of all the byte codes in a method with a short description of each"self isQuick	ifTrue: [ 		self isReturnSpecial			ifTrue: [ 				^ aStream					tab: tabs;					nextPutAll: 'Quick return ' , (#('self' 'true' 'false' 'nil' '-1' '0' '1' '2') at: self primitive - 255) ].		^ aStream nextPutAll: 'Quick return field ' , self returnField printString , ' (0-based)' ].self isPrimitive	ifTrue: [ 		aStream tab: tabs.		self printPrimitiveOn: aStream ].(InstructionPrinter on: self)	indent: tabs;	printInstructionsOn: aStream]Class CompiledMethod >> getSource[	"Retrieve or reconstruct the source code for this method."| trailer source class |trailer := self trailer.class := self methodClass.trailer sourceCode ifNotNil: [ :code | ^ code ].trailer hasSourcePointer	ifFalse: [ 		"No source pointer -- decompile without temp names"		^ (class decompilerClass new decompile: self selector in: class method: self) decompileString ].	"Situation normal;  read the sourceCode from the file"source := [ self getSourceFromFile ]	on: Error	do: [ :ex | ex return: nil ].	"An error can happen here if, for example, the changes file has been truncated by an aborted download.  The present solution is to ignore the error and fall back on the decompiler.  A more thorough solution should probably trigger a systematic invalidation of all source pointers past the end of the changes file.  Consider that, as time goes on, the changes file will eventually grow large enough to cover the lost code, and then instead of falling into this error case, random source code will get returned."source isEmptyOrNil	ifTrue: [ 		"Something really wrong -- decompile blind (no temps)"		^ (class decompilerClass new decompile: self selector in: class method: self) decompileString ].^ source]Class CompiledMethod >> asString[^ self sourceCode]Class CompiledMethod >> methodClassAssociation[	"answer the association to the class that I am installed in, or nil if none."^ self literalAt: self numLiterals]Class CompiledMethod >> isReturnSpecial[	"Answer whether the receiver is a quick return of self or constant."^ self primitive between: 256 and: 263]Class CompiledMethod >> sourceFileStream[	"Answer the sources file stream with position set at the beginning of my source string"| pos |(pos := self filePosition) = 0	ifTrue: [ ^ nil ].^ (RemoteString newFileNumber: self fileIndex position: pos) fileStream]Class CompiledMethod >> copyWithTrailerBytes: trailer[	"Testing:	(CompiledMethod compiledMethodAt: #copyWithTrailerBytes:)		tempNamesPut: 'copy end '"| copy end start penultimateLiteral |start := self initialPC.end := self endPC.copy := trailer createMethod: end - start + 1 class: self class header: self header.1 to: self numLiterals do: [ :i | copy literalAt: i put: (self literalAt: i) ].(penultimateLiteral := self penultimateLiteral) isMethodProperties	ifTrue: [ 		copy			penultimateLiteral:				(penultimateLiteral copy					setMethod: copy;					yourself) ].start to: end do: [ :i | copy at: i put: (self at: i) ].^ copy]Class CompiledMethod >> literals[	"Answer an Array of the literals referenced by the receiver."| literals numberLiterals |literals := Array new: (numberLiterals := self numLiterals).1 to: numberLiterals do: [ :index | literals at: index put: (self objectAt: index + 1) ].^ literals]Class CompiledMethod >> sourceCode[^ self getSource]Class CompiledMethod >> getSourceFromFile[	"Read the source code from file, determining source file index and	file position from the last 3 bytes of this method."| position |(position := self filePosition) = 0	ifTrue: [ ^ nil ].^ (RemoteString newFileNumber: self fileIndex position: position) string]Class CompiledMethod >> readsRef: literalAssociation[	"Answer whether the receiver loads the argument."	"eem 5/24/2008 Rewritten to no longer assume the compler uses the	 most compact encoding available (for EncoderForLongFormV3 support)."| litIndex scanner |(litIndex := self indexOfLiteral: literalAssociation) = 0	ifTrue: [ ^ false ].litIndex := litIndex - 1.^ (scanner := InstructionStream on: self)	scanFor: [ :b | 		b >= 64			and: [ 				b <= 95					ifTrue: [ b - 64 = litIndex ]					ifFalse: [ 						b = 128							ifTrue: [ scanner followingByte - 192 = litIndex ]							ifFalse: [ b = 132 and: [ (scanner followingByte between: 128 and: 159) and: [ scanner thirdByte = litIndex ] ] ] ] ] ]]Class CompiledMethod >> isConflict[^ self markerOrNil == self class conflictMarker]Class CompiledMethod >> needsFrameSize: newFrameSize[	"Set the largeFrameBit to accomodate the newFrameSize"| largeFrameBit header |largeFrameBit := 16r20000.self numTemps + newFrameSize > LargeFrame	ifTrue: [ ^ self error: 'Cannot compile -- stack including temps is too deep' ].header := self objectAt: 1.(header bitAnd: largeFrameBit) ~= 0	ifTrue: [ header := header - largeFrameBit ].self	objectAt: 1	put:		header			+				((self numTemps + newFrameSize > SmallFrame or: [ self primitive = 84	"perform:withArguments:" ])					ifTrue: [ largeFrameBit ]					ifFalse: [ 0 ])]Class CompiledMethod >> tempNames[^ self methodNode tempNames]Class CompiledMethod >> timeStamp[	"Answer the authoring time-stamp for the given method, retrieved from the sources or changes file. Answer the empty string if no time stamp is available."	"(CompiledMethod compiledMethodAt: #timeStamp) timeStamp"| stamp file |file := self sourceFileStreamIfAbsent: [ ^ String new ].stamp := self timeStampFromFile: file.file close.^ stamp]Class CompiledMethod >> method[	"polymorphic with closure"^ self]Class CompiledMethod >> valueWithReceiver: aReceiver arguments: anArray[	"This should be changed when all the VM will support passign of extra arguments		^self receiver: aReceiver withArguments: anArray executeMethod: self"^ aReceiver withArgs: anArray executeMethod: self]Class CompiledMethod >> messagesDo: aBlock[^ self messages do: aBlock]Metaclass	name: #CompiledMethod;	instanceVariables: #().Metaclass CompiledMethod >> toReturnSelf[	"Answer an instance of me that is a quick return of the instance (^self)."^ self toReturnSelfTrailerBytes: CompiledMethodTrailer empty]Metaclass CompiledMethod >> cleanUp[self allInstances	do: [ :e | 		e isInstalled			ifFalse: [ e zapSourcePointer ] ]	"pay attention since zapSourcePointer creates a new compiled method. So iterating while	changing it is a bad idea. This is why we use allInstances do and not allInstancesDo:"]Metaclass CompiledMethod >> disabledMarker[^ #shouldNotImplement]Metaclass CompiledMethod >> methodPropertiesClass[	"Answer the class to use to create a method's properties, which can be a poor man's way	 to add instance variables to subclassses of CompiledMethod.  Subclasses of CompiledMethod	 should define a corresponding subclass of AdditionalMethodState that adds any instance variables	 required, and override this method to answer that class."^ AdditionalMethodState]Metaclass CompiledMethod >> smallFrameSize[^ SmallFrame]Metaclass CompiledMethod >> newMethod: numberOfBytes header: headerWord[	"Primitive. Answer an instance of me. The number of literals (and other 	information) is specified the headerWord. The first argument specifies 	the number of fields for bytecodes in the method. Fail if either 	argument is not a SmallInteger, or if numberOfBytes is negative. Once 	the header of a method is set by this primitive, it cannot be changed in 	any way. Essential. See Object documentation whatIsAPrimitive."	<primitive: 79>(numberOfBytes isInteger and: [ headerWord isInteger and: [ numberOfBytes >= 0 ] ])	ifTrue: [ 		"args okay; space must be low"		OutOfMemory signal.	"retry if user proceeds"		^ self newMethod: numberOfBytes header: headerWord ].^ self primitiveFailed]Metaclass CompiledMethod >> newInstanceFrom: oldInstance variable: variable size: instSize map: map[	"Create a new instance of the receiver based on the given old instance.	The supplied map contains a mapping of the old instVar names into	the receiver's instVars"| new |new := self newFrom: oldInstance.1 to: instSize do: [ :offset | 	(map at: offset) > 0		ifTrue: [ new instVarAt: offset put: (oldInstance instVarAt: (map at: offset)) ] ].^ new]Metaclass CompiledMethod >> newFrom: aCompiledMethod[| inst |inst := super basicNew: aCompiledMethod size.1 to: aCompiledMethod size do: [ :index | inst at: index put: (aCompiledMethod at: index) ].^ inst]Metaclass CompiledMethod >> implicitRequirementMarker[^ #requirement]Metaclass CompiledMethod >> basicNew: size[self error: 'CompiledMethods may only be created with newMethod:header:']Metaclass CompiledMethod >> conflictMarker[^ #traitConflict]Metaclass CompiledMethod >> explicitRequirementMarker[^ #explicitRequirement]Metaclass CompiledMethod >> new[	"This will not make a meaningful method, but it could be used	to invoke some otherwise useful method in this class."^ self newMethod: 2 header: 1024]Metaclass CompiledMethod >> toReturnSelfTrailerBytes: trailer[	"Answer an instance of me that is a quick return of the instance (^self)."^ self	newBytes: 0	trailerBytes: trailer	nArgs: 0	nTemps: 0	nStack: 0	nLits: 2	primitive: 256]Metaclass CompiledMethod >> initialize[	"CompiledMethod initialize"	"Initialize class variables specifying the size of the temporary frame	needed to run instances of me."SmallFrame := 16.	"Context range for temps+stack"LargeFrame := 56]Metaclass CompiledMethod >> toReturnField: field trailerBytes: trailer[	"Answer an instance of me that is a quick return of the instance variable 	indexed by the argument, field."^ self	newBytes: 0	trailerBytes: trailer	nArgs: 0	nTemps: 0	nStack: 0	nLits: 2	primitive: 264 + field]Metaclass CompiledMethod >> subclassResponsibilityMarker[^ #subclassResponsibility]Metaclass CompiledMethod >> fullFrameSize[	"CompiledMethod fullFrameSize"^ LargeFrame]Metaclass CompiledMethod >> abstractMarker[^ #subclassResponsibility]Metaclass CompiledMethod >> receiver: receiver withArguments: argArray executeMethod: compiledMethod[	"Execute compiledMethod against the receiver and the arguments in argArray"	"Please do not use this method. It is just there to make sure that we can invoke this primitive with right order of arguments"	<primitive: 188>^ receiver withArgs: argArray executeMethod: compiledMethod]Metaclass CompiledMethod >> basicNew[self error: 'CompiledMethods may only be created with newMethod:header:']Metaclass CompiledMethod >> newBytes: numberOfBytes trailerBytes: trailer nArgs: nArgs nTemps: nTemps nStack: stackSize nLits: nLits primitive: primitiveIndex[	"Answer an instance of me. The header is specified by the message 	arguments. The remaining parts are not as yet determined."| largeBit primBits |nTemps > 63	ifTrue: [ ^ self error: 'Cannot compile -- too many temporary variables' ].nLits > 255	ifTrue: [ ^ self error: 'Cannot compile -- too many literals variables' ].largeBit := nTemps + stackSize > SmallFrame	ifTrue: [ 1 ]	ifFalse: [ 0 ].primBits := primitiveIndex <= 16r1FF	ifTrue: [ primitiveIndex ]	ifFalse: [ 		"For now the high bit of primitive no. is in the 29th bit of header"		primitiveIndex > 16r3FF			ifTrue: [ self error: 'prim num too large' ].		(primitiveIndex bitAnd: 16r1FF) + ((primitiveIndex bitAnd: 16r200) bitShift: 19) ].^ trailer	createMethod: numberOfBytes	class: self	header: (nArgs bitShift: 24) + (nTemps bitShift: 18) + (largeBit bitShift: 17) + (nLits bitShift: 9) + primBits]Metaclass CompiledMethod >> newBytes: numberOfBytes trailerBytes: trailer nArgs: nArgs nTemps: nTemps nStack: stackSize nLits: nLits primitive: primitiveIndex flag: flag[	"Answer an instance of me. The header is specified by the message 	arguments. The remaining parts are not as yet determined."| largeBit primBits flagBit |nTemps > 63	ifTrue: [ ^ self error: 'Cannot compile -- too many temporary variables' ].nLits > 255	ifTrue: [ ^ self error: 'Cannot compile -- too many literals variables' ].largeBit := nTemps + stackSize > SmallFrame	ifTrue: [ 1 ]	ifFalse: [ 0 ].	"For now the high bit of the primitive no. is in a high bit of the header"primBits := (primitiveIndex bitAnd: 16r1FF) + ((primitiveIndex bitAnd: 16r200) bitShift: 19).flagBit := flag	ifTrue: [ 1 ]	ifFalse: [ 0 ].	"Copy the source code trailer to the end"^ trailer	createMethod: numberOfBytes	class: self	header:		(nArgs bitShift: 24) + (nTemps bitShift: 18) + (largeBit bitShift: 17) + (nLits bitShift: 9) + primBits			+ (flagBit bitShift: 29)]Metaclass CompiledMethod >> toReturnConstant: index trailerBytes: trailer[	"Answer an instance of me that is a quick return of the constant	indexed in (true false nil -1 0 1 2)."^ self	newBytes: 0	trailerBytes: trailer	nArgs: 0	nTemps: 0	nStack: 0	nLits: 2	primitive: 256 + index]Metaclass CompiledMethod >> primitive: primNum numArgs: numArgs numTemps: numTemps stackSize: stackSize literals: literals bytecodes: bytecodes trailer: trailerBytes[	"Create method with given attributes.  numTemps includes numArgs.  stackSize does not include numTemps."| compiledMethod |compiledMethod := self	newBytes: bytecodes size	trailerBytes: trailerBytes	nArgs: numArgs	nTemps: numTemps	nStack: 0	nLits: literals size	primitive: primNum.(WriteStream with: compiledMethod)	position: compiledMethod initialPC - 1;	nextPutAll: bytecodes.literals withIndexDo: [ :obj :i | compiledMethod literalAt: i put: obj ].compiledMethod needsFrameSize: stackSize.^ compiledMethod]
+Class
+	name: #CompiledMethod;
+	superclass: #ClassByteArray;
+	instanceSpecification: #(#variable #byte );
+	instanceVariables: #();
+	classVariables: #(#SmallFrame #LargeFrame );
+	package: #'Kernel-Methods'.
+
+Class CompiledMethod >> fixAdditionalMethodStateMethodReference: anAdditionalMethodState
+[
+anAdditionalMethodState method: self.anAdditionalMethodState pragmas do: [ :each | each instVarAt: 1 put: self ]
+]
+
+Class CompiledMethod >> methodClass
+[
+	"answer the class that I am installed in"
+^ self numLiterals > 0	ifTrue: [ (self literalAt: self numLiterals) value ]	ifFalse: [ nil ]
+]
+
+Class CompiledMethod >> symbolic
+[
+	"Answer a String that contains a list of all the byte codes in a method 	with a short description of each."
+| aStream |aStream := (String new: 1000) writeStream.self longPrintOn: aStream.^ aStream contents
+]
+
+Class CompiledMethod >> isAbstract
+[
+	"Answer true if I am abstract"
+^ self markerOrNil == self class abstractMarker
+]
+
+Class CompiledMethod >> debuggerMap
+[
+^ DebuggerMethodMap forMethod: self
+]
+
+Class CompiledMethod >> linesOfCode
+[
+	"An approximate measure of lines of code.	Includes comments, but excludes empty lines."
+| lines |lines := 0.self sourceCode	lineIndicesDo: [ :start :endWithoutDelimiters :end | 		endWithoutDelimiters > start			ifTrue: [ lines := lines + 1 ] ].^ lines
+]
+
+Class CompiledMethod >> isRequired
+[
+^ self isRequired: self markerOrNil
+]
+
+Class CompiledMethod >> penultimateLiteral
+[
+	"Answer the penultimate literal of the receiver, which holds either	 the receiver's selector or its properties (which will hold the selector)."
+| pIndex |^ (pIndex := self numLiterals - 1) > 0	ifTrue: [ self literalAt: pIndex ]	ifFalse: [ nil ]
+]
+
+Class CompiledMethod >> pcPreviousTo: pc
+[
+| scanner client prevPc |self flag: 'belongs in DebuggerMethodMap?'.pc > self endPC	ifTrue: [ ^ self endPC ].scanner := InstructionStream on: self.client := InstructionClient new.[ scanner pc < pc ]	whileTrue: [ 		prevPc := scanner pc.		scanner interpretNextInstructionFor: client ].^ prevPc
+]
+
+Class CompiledMethod >> clearFlag
+[
+	"Clear the user-level flag bit"
+self objectAt: 1 put: (self header bitAnd: (1 << 29) bitInvert)
+]
+
+Class CompiledMethod >> allLiterals
+[
+^ self literals
+]
+
+Class CompiledMethod >> tempsSubSequenceFrom: tempNamesStream
+[
+^ Array	streamContents: [ :tsss | 		[ 		tempNamesStream skipSeparators.		tempNamesStream atEnd or: [ '[]()' includes: tempNamesStream peek ] ]			whileFalse: [ 				tsss					nextPut:						(String							streamContents: [ :s | 								[ 								s nextPut: tempNamesStream next.								tempNamesStream peek ifNil: [ true ] ifNotNil: [ :peek | ' []()' includes: peek ] ] whileFalse ]) ] ]	"thisContext method tempsSubSequenceFrom: 'les temps perdu(sont n''est pas la)' readStream"	"thisContext method tempsSubSequenceFrom: ('les temps perdu(sont n''est pas la)' readStream skipTo: $(; yourself)"
+]
+
+Class CompiledMethod >> literalAt: index
+[
+	"Answer the literal indexed by the argument."
+^ self objectAt: index + 1
+]
+
+Class CompiledMethod >> headerDescription
+[
+	"Answer a description containing the information about the form of the 	receiver and the form of the context needed to run the receiver."
+| s |s := '' writeStream.self header printOn: s.s	cr;	nextPutAll: '"primitive: '.self primitive printOn: s.s	cr;	nextPutAll: ' numArgs: '.self numArgs printOn: s.s	cr;	nextPutAll: ' numTemps: '.self numTemps printOn: s.s	cr;	nextPutAll: ' numLiterals: '.self numLiterals printOn: s.s	cr;	nextPutAll: ' frameSize: '.self frameSize printOn: s.s	nextPut: $";	cr.^ s contents
+]
+
+Class CompiledMethod >> putSource: sourceStr fromParseNode: methodNode class: class category: catName withStamp: changeStamp inFile: fileIndex priorMethod: priorMethod
+[
+^ self	putSource: sourceStr	fromParseNode: methodNode	inFile: fileIndex	withPreamble: [ :file | 		class			printCategoryChunk: catName			on: file			withStamp: changeStamp			priorMethod: priorMethod.		file cr ]
+]
+
+Class CompiledMethod >> isImplicitlyRequired: marker
+[
+^ marker == self class implicitRequirementMarker
+]
+
+Class CompiledMethod >> timeStampFromFile: file
+[
+	"return the timestamp of this method for a given source filestream"
+| preamble stamp tokens tokenCount |preamble := self getPreambleFrom: file at: (0 max: self filePosition - 3).stamp := String new.tokens := (preamble findString: 'methodsFor:' startingAt: 1) > 0	ifTrue: [ Scanner new scanTokens: preamble ]	ifFalse: [ Array new	"ie cant be back ref" ].(((tokenCount := tokens size) between: 7 and: 8) and: [ (tokens at: tokenCount - 5) == #methodsFor: ])	ifTrue: [ 		(tokens at: tokenCount - 3) == #stamp:			ifTrue: [ 				"New format gives change stamp and unified prior pointer"				stamp := tokens at: tokenCount - 2 ] ].((tokenCount between: 5 and: 6) and: [ (tokens at: tokenCount - 3) == #methodsFor: ])	ifTrue: [ 		(tokens at: tokenCount - 1) == #stamp:			ifTrue: [ 				"New format gives change stamp and unified prior pointer"				stamp := tokens at: tokenCount ] ].^ stamp
+]
+
+Class CompiledMethod >> sameLiteralsAs: method
+[
+	"Compare my literals to those of method. This is needed to compare compiled methods."
+| numLits literal1 literal2 |(numLits := self numLiterals) ~= method numLiterals	ifTrue: [ ^ false ].	"The last literal requires special checking instead of using #literalEqual:"1 to: numLits - 1 do: [ :index | 	literal1 := self literalAt: index.	literal2 := method literalAt: index.	(literal1 == literal2 or: [ literal1 literalEqual: literal2 ])		ifFalse: [ 			(index = 1 and: [ self isNamedPrimitive | self isExternalCallPrimitive ])				ifTrue: [ 					literal1 isArray						ifTrue: [ 							(literal2 isArray and: [ literal1 allButLast = literal2 allButLast ])								ifFalse: [ ^ false ] ]						ifFalse: [ 							"ExternalLibraryFunction"							(literal1 analogousCodeTo: literal2)								ifFalse: [ ^ false ] ] ]				ifFalse: [ 					index = (numLits - 1)						ifTrue: [ 							"properties"							(self properties analogousCodeTo: method properties)								ifFalse: [ ^ false ] ]						ifFalse: [ ^ false ] ] ] ].	"Class side methods have non unique (nil -> a Metaclass) as literal and cannot be compared equal"literal1 := self literalAt: numLits.literal2 := method literalAt: numLits.^ literal1 class == literal2 class	and: [ 		literal1 isVariableBinding			ifTrue: [ literal1 key = literal2 key and: [ literal1 value = literal2 value ] ]			ifFalse: [ literal1 = literal2 ] ]
+]
+
+Class CompiledMethod >> numTemps
+[
+	"Answer the number of temporary variables used by the receiver."
+^ (self header bitShift: -18) bitAnd: 16r3F
+]
+
+Class CompiledMethod >> isExternalCallPrimitive
+[
+^ self primitive = 120
+]
+
+Class CompiledMethod >> hasInstVarRef
+[
+	"Answer whether the method references an instance variable."
+| scanner end printer |scanner := InstructionStream on: self.printer := InstVarRefLocator new.end := self endPC.[ scanner pc <= end ]	whileTrue: [ 		(printer interpretNextInstructionUsing: scanner)			ifTrue: [ ^ true ] ].^ false
+]
+
+Class CompiledMethod >> sendsSelector: aSymbol
+[
+^ self messages includes: aSymbol
+]
+
+Class CompiledMethod >> isCompiledMethod
+[
+^ true
+]
+
+Class CompiledMethod >> isReturnSelf
+[
+	"Answer whether the receiver is a quick return of self."
+^ self primitive = 256
+]
+
+Class CompiledMethod >> receiver: receiver withArguments: argArray executeMethod: compiledMethod
+[
+	"Execute compiledMethod against the receiver and the arguments in argArray"
+	"Please do not use this method. It is just there to make sure that we can invoke this primitive with right order of arguments"
+	<primitive: 188>
+^ receiver withArgs: argArray executeMethod: compiledMethod
+]
+
+Class CompiledMethod >> removeProperty: propName
+[
+	"Remove the property propName if it exists.	 Do _not_ raise an error if the property is missing."
+| value |value := self propertyValueAt: propName ifAbsent: [ ^ nil ].self penultimateLiteral: (self penultimateLiteral copyWithout: (Association key: propName value: value)).^ value
+]
+
+Class CompiledMethod >> penultimateLiteral: anObject
+[
+	"Answer the penultimate literal of the receiver, which holds either	 the receiver's selector or its properties (which will hold the selector)."
+| pIndex |(pIndex := self numLiterals - 1) > 0	ifTrue: [ self literalAt: pIndex put: anObject ]	ifFalse: [ self error: 'insufficient literals' ]
+]
+
+Class CompiledMethod >> printOn: aStream
+[
+	"Overrides method inherited from the byte arrayed collection."
+aStream	nextPut: $(;	print: self methodClass;	nextPutAll: '>>';	nextPutAll: self selector storeString;	space;	nextPut: $".self printNameOn: aStream.aStream	nextPut: $(;	print: self identityHash;	nextPut: $);	nextPut: $";	nextPut: $)
+]
+
+Class CompiledMethod >> methodClass: aClass
+[
+	"set the class binding in the last literal to aClass"
+^ self numLiterals > 0	ifTrue: [ self literalAt: self numLiterals put: aClass binding ]
+]
+
+Class CompiledMethod >> defaultSelector
+[
+	"Invent and answer an appropriate message selector (a Symbol) for me, 	that is, one that will parse with the correct number of arguments."
+^ #DoIt numArgs: self numArgs
+]
+
+Class CompiledMethod >> isExplicitlyRequired: marker
+[
+^ marker == self class explicitRequirementMarker
+]
+
+Class CompiledMethod >> printPrimitiveOn: aStream
+[
+	"Print the primitive on aStream"
+| primDecl |self isPrimitive	ifFalse: [ ^ self ].self isExternalCallPrimitive	ifTrue: [ 		^ aStream			print: (self literalAt: 1);			cr ].aStream nextPutAll: '<primitive: '.self isNamedPrimitive	ifTrue: [ 		primDecl := self literalAt: 1.		(primDecl at: 2) asString printOn: aStream.		(primDecl at: 1)			ifNotNil: [ :moduleName | 				aStream nextPutAll: ' module: '.				moduleName asString printOn: aStream ] ]	ifFalse: [ aStream print: self primitive ].self primitiveErrorVariableName	ifNotNil: [ :primitiveErrorVariableName | 		aStream			nextPutAll: ' error: ';			nextPutAll: primitiveErrorVariableName ].aStream	nextPut: $>;	cr
+]
+
+Class CompiledMethod >> isDeprecated
+[
+^ (self sendsSelector: #deprecated:) or: [ self sendsSelector: #deprecated:on:in: ]
+]
+
+Class CompiledMethod >> scanLongLoad: extension
+[
+	"Answer whether the receiver contains a long load whose extension is the 	argument."
+| scanner |scanner := InstructionStream on: self.^ scanner scanFor: [ :instr | instr = 128 and: [ scanner followingByte = extension ] ]
+]
+
+Class CompiledMethod >> hasReportableSlip
+[
+	"Answer whether the receiver contains anything that should be brought 	to the attention of the author when filing out. Customize the lists here 	to suit your preferences. If slips do not get reported in spite of your 	best efforts here, make certain that the Preference 'checkForSlips' is set 	to true."
+#(#doOnlyOnce: #halt #halt: #hottest #printDirectlyToDisplay #toRemove #urgent #haltOnce #haltOnce: #haltIf:)	do: [ :aLit | 		(self hasLiteral: aLit)			ifTrue: [ ^ true ] ].#(#Transcript #AA #BB #CC #DD #EE)	do: [ :aSymbol | 		(Smalltalk globals associationAt: aSymbol ifAbsent: [  ])			ifNotNil: [ :assoc | 				(self hasLiteral: assoc)					ifTrue: [ ^ true ] ] ].^ false
+]
+
+Class CompiledMethod >> setSourcePointer: srcPointer
+[
+	"We can't change the trailer of existing method, since	it could have completely different format. Therefore we need to	generate a copy with new trailer, containing an scrPointer, and then	#become it"
+| trailer copy |trailer := CompiledMethodTrailer new sourcePointer: srcPointer.copy := self copyWithTrailerBytes: trailer.self becomeForward: copy.^ copy
+]
+
+Class CompiledMethod >> objectAt: index
+[
+	"Primitive. Answer the method header (if index=1) or a literal (if index 	>1) from the receiver. Essential. See Object documentation 	whatIsAPrimitive."
+	<primitive: 68>
+self primitiveFailed
+]
+
+Class CompiledMethod >> isRequired: marker
+[
+marker ifNil: [ ^ false ].(self isImplicitlyRequired: marker)	ifTrue: [ ^ true ].(self isExplicitlyRequired: marker)	ifTrue: [ ^ true ].(self isSubclassResponsibility: marker)	ifTrue: [ ^ true ].^ false
+]
+
+Class CompiledMethod >> sourcePointer
+[
+	"Answer the integer which can be used to find the source file and position for this method.	The actual interpretation of this number is up to the SourceFileArray stored in the global variable SourceFiles."
+^ self trailer sourcePointer
+]
+
+Class CompiledMethod >> dateMethodLastSubmitted
+[
+	"Answer a Date object indicating when a method was last submitted.  If there is no date stamp, return nil"
+	"(CompiledMethod compiledMethodAt: #dateMethodLastSubmitted) dateMethodLastSubmitted"
+| aStamp tokens |aStamp := self timeStamp.tokens := aStamp	findBetweenSubStrs:		' '.	"space is expected delimiter, but cr is sometimes seen, though of mysterious provenance"^ tokens size > 1	ifTrue: [ [ tokens second asDate ] ifError: [ nil ] ]	ifFalse: [ nil ]
+]
+
+Class CompiledMethod >> flushCache
+[
+	"Tell the interpreter to remove all references to this method from its method lookup cache, if it has one. This primitive must be called whenever a method is redefined or removed.	NOTE:  Only one of two selective flush methods (Symbol or CompiledMethod) needs to be used."
+	<primitive: 116>
+
+]
+
+Class CompiledMethod >> refersToLiteral: aLiteral
+[
+	"Answer true if any literal in this method is literal, even if embedded in array structure or within its pragmas."
+	"only iterate to numLiterals - 1, as the last has the classBinding and the last-but-one needs special treatment"
+2 to: self numLiterals - 1 do: [ :index | 	| literal |	literal := self objectAt: index.	(aLiteral literalEqual: literal)		ifTrue: [ ^ true ].	(literal refersToLiteral: aLiteral)		ifTrue: [ ^ true ] ].	"last-but-one has the additional method state -or- the method's own selector!"^ (self objectAt: self numLiterals) refersToLiteral: aLiteral
+]
+
+Class CompiledMethod >> author
+[
+	"Answer the author of the current version of the receiver. retrieved from the sources or changes file. Answer the empty string if no time stamp is available."
+	"(CompiledMethod compiledMethodAt: #author) author"
+self timeStamp	ifNotEmpty: [ :s | 		| subS |		subS := s subStrings first.		subS first isLetter			ifTrue: [ ^ subS ] ].^ ''
+]
+
+Class CompiledMethod >> scanVeryLongStore: extension offset: offset
+[
+	"Answer whether the receiver contains a long load with the given offset.	Note that the constant +32 is the known difference between a	store and a storePop for instVars, and it will always fail on literal variables,	but these only use store (followed by pop) anyway."
+| scanner |scanner := InstructionStream on: self.^ scanner	scanFor: [ :instr | 		| ext |		(instr = 132			and: [ 				(ext := scanner followingByte) = extension					or: [ 						"might be a store/pop into rcvr"						ext = (extension + 32) ] ]) and: [ scanner thirdByte = offset ] ]
+]
+
+Class CompiledMethod >> indexOfLiteral: literal
+[
+	"Answer the literal index of the argument, literal, or zero if none."
+2 to: self numLiterals - 1 do: [ :index | 	literal == (self objectAt: index)		ifTrue: [ ^ index - 1 ] ].	"exclude superclass + selector/properties"^ 0
+]
+
+Class CompiledMethod >> copyWithSource: aString
+[
+^ self copyWithTrailerBytes: (CompiledMethodTrailer new sourceCode: aString)
+]
+
+Class CompiledMethod >> selector: aSelector
+[
+	"Set a method's selector.  This is either the penultimate literal,	 or, if the method has any properties or pragmas, the selector of	 the MethodProperties stored in the penultimate literal."
+| penultimateLiteral nl |(penultimateLiteral := self penultimateLiteral) isMethodProperties	ifTrue: [ penultimateLiteral selector: aSelector ]	ifFalse: [ 		(nl := self numLiterals) < 2			ifTrue: [ self error: 'insufficient literals to hold selector' ].		self literalAt: nl - 1 put: aSelector ]
+]
+
+Class CompiledMethod >> isImplicitlyRequired
+[
+^ self isImplicitlyRequired: self markerOrNil
+]
+
+Class CompiledMethod >> markerOrNil
+[
+	"If I am a marker method, answer the symbol used to mark me.  Otherwise	answer nil.	What is a marker method?  It is method with body like 		'self subclassResponsibility' or '^ self subclassResponsibility' 	used to indicate ('mark') a special property.	Marker methods compile to bytecode like:		9 <70> self		10 <D0> send: <literal 1>		11 <87> pop		12 <78> returnSelf	for the first form, or 		9 <70> self		10 <D0> send: <literal 1>		11 <7C> returnTop	for the second form."
+| e |((e := self endPC) = 19 or: [ e = 20 ])	ifFalse: [ ^ nil ].self numLiterals = 3	ifFalse: [ ^ nil ].(self at: 17) = 16r70	ifFalse: [ ^ nil ].	"push self"(self at: 18) = 16rD0	ifFalse: [ ^ nil ].	"send <literal 1>"	"If we reach this point, we have a marker method that sends self <literal 1>"^ self literalAt: 1
+]
+
+Class CompiledMethod >> getPreambleFrom: aFileStream at: position
+[
+| writeStream |writeStream := String new writeStream.position to: 0 by: -1 do: [ :p | 	| c |	aFileStream position: p.	c := aFileStream basicNext.	c == $!		ifTrue: [ ^ writeStream contents reversed ]		ifFalse: [ writeStream nextPut: c ] ]
+]
+
+Class CompiledMethod >> = aCompiledMethod
+[
+	"Answer whether the receiver implements the same code as aCompiledMethod."
+| numLits |self == aCompiledMethod	ifTrue: [ ^ true ].self class = aCompiledMethod class	ifFalse: [ ^ false ].self size = aCompiledMethod size	ifFalse: [ ^ false ].self header = aCompiledMethod header	ifFalse: [ ^ false ].self initialPC to: self endPC do: [ :i | 	(self at: i) = (aCompiledMethod at: i)		ifFalse: [ ^ false ] ].(self sameLiteralsAs: aCompiledMethod)	ifFalse: [ ^ false ].^ true
+]
+
+Class CompiledMethod >> putSource: sourceStr fromParseNode: methodNode class: class category: catName inFile: fileIndex priorMethod: priorMethod
+[
+^ self	putSource: sourceStr	fromParseNode: methodNode	inFile: fileIndex	withPreamble: [ :file | 		class printCategoryChunk: catName on: file priorMethod: priorMethod.		file cr ]
+]
+
+Class CompiledMethod >> isBinarySelector
+[
+^ self selector allSatisfy: [ :each | each isSpecial ]
+]
+
+Class CompiledMethod >> who
+[
+	"Answer an Array of the class in which the receiver is defined and the 	selector to which it corresponds."
+^ {(self methodClass).(self selector)}
+]
+
+Class CompiledMethod >> initialPC
+[
+	"Answer the program counter for the receiver's first bytecode."
+^ (self numLiterals + 1) * Smalltalk wordSize + 1
+]
+
+Class CompiledMethod >> longPrintOn: aStream
+[
+	"List of all the byte codes in a method with a short description of each"
+self longPrintOn: aStream indent: 0
+]
+
+Class CompiledMethod >> voidCogVMState
+[
+	"Tell the VM to remove all references to any machine code form of the method.	 This primitive must be called whenever a method is in use and modified.  This is	 more aggressive (and *much* more costly) than flushCache since it must search	 through all context objects, making sure that none have a (hidden) machine code pc	 in the receiver.  Since modifying a method will likely change the generated machine code,	 modifying a method (rather than redefining it) requires this more aggressive flush."
+	<primitive: 215>
+^ self flushCache
+]
+
+Class CompiledMethod >> isPrimitive
+[
+^ self primitive > 0
+]
+
+Class CompiledMethod >> messages
+[
+	"Answer a Set of all the message selectors sent by this method."
+| scanner aSet |aSet := Set new.scanner := InstructionStream on: self.scanner	scanFor: [ :x | 		scanner addSelectorTo: aSet.		false	"keep scanning" ].^ aSet
+]
+
+Class CompiledMethod >> numLiterals
+[
+	"Answer the number of literals used by the receiver."
+^ (self header bitShift: -9) bitAnd: 16rFF
+]
+
+Class CompiledMethod >> isDoIt
+[
+^ self selector isDoIt
+]
+
+Class CompiledMethod >> origin
+[
+self properties at: #traitSource ifPresent: [ :traitMethod | ^ traitMethod methodClass ].^ self methodClass traitOrClassOfSelector: self selector
+]
+
+Class CompiledMethod >> pragmas
+[
+| selectorOrProperties |^ (selectorOrProperties := self penultimateLiteral) isMethodProperties	ifTrue: [ selectorOrProperties pragmas ]	ifFalse: [ #() ]
+]
+
+Class CompiledMethod >> abstractPCForConcretePC: concretePC
+[
+	"Answer the abstractPC matching concretePC."
+| abstractPC scanner client |self flag: 'belongs in DebuggerMethodMap?'.abstractPC := 1.scanner := InstructionStream on: self.client := InstructionClient new.[ (scanner atEnd or: [ scanner pc >= concretePC ])	ifTrue: [ ^ abstractPC ].abstractPC := abstractPC + 1.scanner interpretNextInstructionFor: client.true ] whileTrue
+]
+
+Class CompiledMethod >> scanFor: byte
+[
+	"Answer whether the receiver contains the argument as a bytecode."
+^ (InstructionStream on: self) scanFor: [ :instr | instr = byte ]	"Smalltalk browseAllSelect: [:m | m scanFor: 134]"
+]
+
+Class CompiledMethod >> embeddSourceInTrailer
+[
+	"When receiver is deinstalled from its class, its not managed anymore by development tools	and it's hard to predict, how long a method could stay in the image, because if it contains blocks,	they could still reference it. 	Therefore we trying to preserve as much as we can , actually by embedding the method's source code into its trailer	"
+self trailer hasSourcePointer	ifTrue: [ ^ self becomeForward: (self copyWithSource: self sourceCode) ]
+]
+
+Class CompiledMethod >> pragmaAt: aKey
+[
+	"Answer the pragma with selector aKey, or nil if none."
+| propertiesOrSelector |^ (propertiesOrSelector := self penultimateLiteral) isMethodProperties	ifTrue: [ propertiesOrSelector at: aKey ifAbsent: [ nil ] ]	ifFalse: [ nil ]
+]
+
+Class CompiledMethod >> isInstalled
+[
+self methodClass	ifNotNil: [ :class | self selector ifNotNil: [ :selector | ^ self == (class methodDict at: selector ifAbsent: [  ]) ] ].^ false
+]
+
+Class CompiledMethod >> symbolicLinesDo: aBlock
+[
+	"Evaluate aBlock with each of the lines in the symbolic output."
+| aStream pc |aStream := ReadWriteStream on: (String new: 64).self isQuick	ifTrue: [ 		self longPrintOn: aStream.		aBlock value: 0 value: aStream contents.		^ self ].self isPrimitive	ifTrue: [ 		self printPrimitiveOn: aStream.		aBlock value: 1 value: aStream contents.		aStream resetContents ].pc := self initialPC.(InstructionPrinter on: self)	indent: 0;	printPC: false;	printInstructionsOn: aStream		do: [ :printer :scanner :stream | 				| line index |				line := stream contents allButLast.				(line includes: Character cr)					ifTrue: [ line := (line copyUpTo: Character cr) , '...'' (continues)' ].				(index := line indexOf: $>) > 0					ifTrue: [ 						[ (line at: index + 1) isSeparator ] whileTrue: [ index := index + 1 ].						line := ((line copyFrom: 1 to: index)							copyReplaceAll: (String with: Character tab)							with: (String new: 8 withAll: Character space)) , (line copyFrom: index + 1 to: line size) ].				aBlock value: pc value: line.				pc := scanner pc.				stream resetContents ]	"explorer provides pc anyway"
+]
+
+Class CompiledMethod >> comment
+[
+	"Return the first comment of the receiver"
+	"(self>>#comment) comment"
+^ self methodClass firstPrecodeCommentFor: self selector
+]
+
+Class CompiledMethod >> isProvided: marker
+[
+marker ifNil: [ ^ true ].^ (self isRequired: marker) not and: [ (self isDisabled: marker) not ]
+]
+
+Class CompiledMethod >> isSubclassResponsibility: marker
+[
+^ marker == self class subclassResponsibilityMarker
+]
+
+Class CompiledMethod >> literalsDo: aBlock
+[
+	"Evaluate aBlock for each of the literals referenced by the receiver."
+1 to: self numLiterals do: [ :index | aBlock value: (self objectAt: index + 1) ]
+]
+
+Class CompiledMethod >> readsField: varIndex
+[
+	"Answer whether the receiver loads the instance variable indexed by the 	 argument."
+	"eem 5/24/2008 Rewritten to no longer assume the compiler uses the	 most compact encoding available (for EncoderForLongFormV3 support)."
+| varIndexCode scanner |varIndexCode := varIndex - 1.self isReturnField	ifTrue: [ ^ self returnField = varIndexCode ].^ (scanner := InstructionStream on: self)	scanFor: [ :b | 		b < 16			ifTrue: [ b = varIndexCode ]			ifFalse: [ 				b = 128					ifTrue: [ scanner followingByte = varIndexCode and: [ varIndexCode <= 63 ] ]					ifFalse: [ b = 132 and: [ (scanner followingByte between: 64 and: 95) and: [ scanner thirdByte = varIndexCode ] ] ] ] ]
+]
+
+Class CompiledMethod >> propertyKeysAndValuesDo: aBlock
+[
+	"Enumerate the receiver with all the keys and values."
+| propertiesOrSelector |(propertiesOrSelector := self penultimateLiteral) isMethodProperties	ifTrue: [ propertiesOrSelector propertyKeysAndValuesDo: aBlock ]
+]
+
+Class CompiledMethod >> isReturnField
+[
+	"Answer whether the receiver is a quick return of an instance variable."
+^ self primitive between: 264 and: 519
+]
+
+Class CompiledMethod >> flag
+[
+	"Answer the user-level flag bit"
+^ ((self header bitShift: -29) bitAnd: 1) = 1
+]
+
+Class CompiledMethod >> isQuick
+[
+	"Answer whether the receiver is a quick return (of self or of an instance 	variable)."
+^ self primitive between: 256 and: 519
+]
+
+Class CompiledMethod >> zapSourcePointer
+[
+	"If receiver has trailer with source pointer,	replace it with empty trailer. But do this only if receiver has a trailer with source pointer, but something else"
+self trailer hasSourcePointer	ifTrue: [ self becomeForward: (self copyWithTrailerBytes: CompiledMethodTrailer empty) ]
+]
+
+Class CompiledMethod >> isExplicitlyRequired
+[
+^ self isExplicitlyRequired: self markerOrNil
+]
+
+Class CompiledMethod >> isNamedPrimitive
+[
+^ self primitive = 117
+]
+
+Class CompiledMethod >> properties
+[
+	"Answer the method properties of the receiver."
+| propertiesOrSelector |^ (propertiesOrSelector := self penultimateLiteral) isMethodProperties	ifTrue: [ propertiesOrSelector ]	ifFalse: [ self class methodPropertiesClass forMethod: self selector: propertiesOrSelector ]
+]
+
+Class CompiledMethod >> writesField: varIndex
+[
+	"Answer whether the receiver stores into the instance variable indexed	 by the argument."
+	"eem 5/24/2008 Rewritten to no longer assume the compler uses the	 most compact encoding available (for EncoderForLongFormV3 support)."
+| varIndexCode scanner |self isQuick	ifTrue: [ ^ false ].varIndexCode := varIndex - 1.^ (scanner := InstructionStream on: self)	scanFor: [ :b | 		b >= 96			and: [ 				b <= 103					ifTrue: [ b - 96 = varIndexCode ]					ifFalse: [ 						(b = 129 or: [ b = 130 ])							ifTrue: [ scanner followingByte = varIndexCode and: [ varIndexCode <= 63 ] ]							ifFalse: [ b = 132 and: [ (scanner followingByte between: 160 and: 223) and: [ scanner thirdByte = varIndexCode ] ] ] ] ] ]
+]
+
+Class CompiledMethod >> propertyValueAt: propName put: propValue
+[
+	"Set or add the property with key propName and value propValue.	 If the receiver does not yet have a method properties create one and replace	 the selector with it.  Otherwise, either relace propValue in the method properties	 or replace method properties with one containing the new property."
+| propertiesOrSelector |(propertiesOrSelector := self penultimateLiteral) isMethodProperties	ifFalse: [ 		self			penultimateLiteral:				((self class methodPropertiesClass					selector: propertiesOrSelector					with: (Association key: propName asSymbol value: propValue))					setMethod: self;					yourself).		^ propValue ].(propertiesOrSelector includesProperty: propName)	ifTrue: [ ^ propertiesOrSelector at: propName put: propValue ].self penultimateLiteral: (propertiesOrSelector copyWith: (Association key: propName asSymbol value: propValue)).^ propValue
+]
+
+Class CompiledMethod >> scanner
+[
+^ InstructionStream on: self
+]
+
+Class CompiledMethod >> primitiveErrorVariableName
+[
+	"Answer the primitive error code temp name, or nil if none."
+self isPrimitive	ifTrue: [ 		self pragmas			do: [ :pragma | 				| kwds ecIndex |				((kwds := pragma keyword keywords) first = 'primitive:' and: [ (ecIndex := kwds indexOf: 'error:') > 0 ])					ifTrue: [ ^ pragma argumentAt: ecIndex ] ] ].^ nil
+]
+
+Class CompiledMethod >> definition
+[
+	"Polymorphic to class definition"
+^ self sourceCode
+]
+
+Class CompiledMethod >> postCopy
+[
+1 to: self literals size do: [ :index | 	| literal |	literal := self literalAt: index.	literal class == AdditionalMethodState		ifTrue: [ 			literal := literal copy.			self literalAt: index put: literal.			self fixAdditionalMethodStateMethodReference: literal ] ]
+]
+
+Class CompiledMethod >> fileIndex
+[
+^ SourceFiles fileIndexFromSourcePointer: self sourcePointer
+]
+
+Class CompiledMethod >> isDisabled
+[
+^ self isDisabled: self markerOrNil
+]
+
+Class CompiledMethod >> hasLiteralThorough: literal
+[
+	"Answer true if any literal in this method is literal,	even if embedded in array structure."
+(self penultimateLiteral isMethodProperties and: [ self penultimateLiteral hasLiteralThorough: literal ])	ifTrue: [ ^ true ].2 to: self numLiterals - 1 do: [ :index | 	| lit |	(((lit := self objectAt: index) literalEqual: literal)		or: [ (lit isVariableBinding and: [ lit key == literal ]) or: [ lit isArray and: [ lit hasLiteral: literal ] ] ])		ifTrue: [ ^ true ] ].	"exclude superclass + selector/properties"^ false
+]
+
+Class CompiledMethod >> hasLiteral: literal
+[
+	"Answer whether the receiver references the argument, literal."
+2 to: self numLiterals - 1 do: [ :index "exclude superclass + selector/properties" | 	((self objectAt: index) literalEqual: literal)		ifTrue: [ ^ true ] ].^ false
+]
+
+Class CompiledMethod >> numArgs
+[
+	"Answer the number of arguments the receiver takes."
+^ (self header bitShift: -24) bitAnd: 16r0F
+]
+
+Class CompiledMethod >> properties: aMethodProperties
+[
+	"Set the method-properties of the receiver to aMethodProperties."
+self	literalAt: self numLiterals - 1	put:		(aMethodProperties isEmpty			ifTrue: [ aMethodProperties selector ]			ifFalse: [ 				aMethodProperties					setMethod: self;					yourself ])
+]
+
+Class CompiledMethod >> filePosition
+[
+^ SourceFiles filePositionFromSourcePointer: self sourcePointer
+]
+
+Class CompiledMethod >> methodClassAssociation: aBinding
+[
+	"sets the association to the class that I am installed in"
+^ self literalAt: self numLiterals put: aBinding
+]
+
+Class CompiledMethod >> storeLiteralsOn: aStream forClass: aBehavior
+[
+	"Store the literals referenced by the receiver on aStream, each terminated by a space."
+| literal |2 to: self numLiterals + 1 do: [ :index | 	aBehavior storeLiteral: (self objectAt: index) on: aStream.	aStream space ]
+]
+
+Class CompiledMethod >> isDisabled: marker
+[
+^ marker == self class disabledMarker
+]
+
+Class CompiledMethod >> literalAt: index put: value
+[
+	"Replace the literal indexed by the first argument with the second 	argument. Answer the second argument."
+^ self objectAt: index + 1 put: value
+]
+
+Class CompiledMethod >> longPrintRelativeOn: aStream indent: tabs
+[
+	"List of all the byte codes in a method with a short description of each"
+self isQuick	ifTrue: [ ^ self longPrintOn: aStream indent: tabs ].self isPrimitive	ifTrue: [ 		aStream tab: tabs.		self printPrimitiveOn: aStream ].(RelativeInstructionPrinter on: self)	indent: tabs;	printCode: false;	printInstructionsOn: aStream
+]
+
+Class CompiledMethod >> isSelfEvaluating
+[
+^ self methodClass notNil and: [ (#(#DoIt #DoItIn: nil) includes: self selector) not ]
+]
+
+Class CompiledMethod >> isSubclassResponsibility
+[
+^ self isSubclassResponsibility: self markerOrNil
+]
+
+Class CompiledMethod >> removeProperty: propName ifAbsent: aBlock
+[
+	"Remove the property propName if it exists.	 Answer the evaluation of aBlock if the property is missing."
+| value |value := self propertyValueAt: propName ifAbsent: [ ^ aBlock value ].self penultimateLiteral: (self penultimateLiteral copyWithout: (Association key: propName value: value)).^ value
+]
+
+Class CompiledMethod >> scanVeryLongLoad: extension offset: offset
+[
+	"Answer whether the receiver contains a long load whose extension is the 	argument."
+| scanner |scanner := InstructionStream on: self.^ scanner	scanFor: [ :instr | (instr = 132 and: [ scanner followingByte = extension ]) and: [ scanner thirdByte = offset ] ]
+]
+
+Class CompiledMethod >> searchForClass
+[
+	"search me in all classes, if found, return my class. Slow!"
+self systemNavigation	allBehaviorsDo: [ :class | (class methodDict keyAtIdentityValue: self ifAbsent: [ nil ]) ifNotNil: [ ^ class ] ].^ nil
+]
+
+Class CompiledMethod >> setSourcePosition: position inFile: fileIndex
+[
+self setSourcePointer: (SourceFiles sourcePointerFromFileIndex: fileIndex andPosition: position)
+]
+
+Class CompiledMethod >> referredInstVars
+[
+| allInstVarNames instVarNames |allInstVarNames := self methodClass allInstVarNames.self isReturnField	ifTrue: [ ^ Set with: (allInstVarNames at: self returnField + 1) ].instVarNames := Set new.self	abstractBytecodeMessagesDo: [ :msg | 		(#(#popIntoReceiverVariable: #pushReceiverVariable: #storeIntoReceiverVariable:) includes: msg selector)			ifTrue: [ instVarNames add: (allInstVarNames at: msg argument + 1) ] ].^ instVarNames	"Dictionary fromPairs: (Point selectors collect: [:s| { s. (Point >> s) referredInstVars}])"
+]
+
+Class CompiledMethod >> primitive
+[
+	"Answer the primitive index associated with the receiver.	Zero indicates that this is not a primitive method.	We currently allow 10 bits of primitive index, but they are in two places	for  backward compatibility.  The time to unpack is negligible,	since the reconstituted full index is stored in the method cache."
+| primBits |primBits := self header bitAnd: 16r100001FF.^ (primBits bitAnd: 16r1FF) + (primBits bitShift: -19)
+]
+
+Class CompiledMethod >> sendsToSuper
+[
+	"Answer whether the receiver sends any message to super."
+| scanner |scanner := InstructionStream on: self.^ scanner	scanFor: [ :instr | instr = 16r85 or: [ instr = 16r84 and: [ scanner followingByte between: 16r20 and: 16r3F ] ] ]
+]
+
+Class CompiledMethod >> header
+[
+	"Answer the word containing the information about the form of the 	receiver and the form of the context needed to run the receiver."
+^ self objectAt: 1
+]
+
+Class CompiledMethod >> argumentNames
+[
+	"Return an array with the argument names of the method's selector"
+| keywords stream argumentNames delimiters |delimiters := {(Character space).(Character cr)}.keywords := self selector keywords.stream := self getSource readStream.argumentNames := OrderedCollection new.keywords	do: [ :each | 		| argumentName |		stream match: each.		[ stream peekFor: Character space ] whileTrue.		argumentName := ReadWriteStream on: String new.		[ (delimiters includes: stream peek) or: [ stream peek isNil ] ] whileFalse: [ argumentName nextPut: stream next ].		argumentName isEmpty			ifFalse: [ argumentNames add: argumentName contents trimBoth ] ].^ (argumentNames copyFrom: 1 to: self numArgs) asArray
+]
+
+Class CompiledMethod >> mapFromBlockKeys: keys toSchematicTemps: schematicTempNamesString
+[
+	"Decode a schematicTempNamesString that encodes the layout of temp names	 in a method and any closures/blocks within it, matching keys in keys to	 vectors of temp names."
+| map tempNames |map := Dictionary new.tempNames := schematicTempNamesString readStream.keys	do: [ :key | 		| tempSequence tempIndex |		tempSequence := OrderedCollection new.		tempIndex := 0.		[ 		(tempNames			skipSeparators;			peek) ifNil: [ true ] ifNotNil: [ :ch | '[]' includes: ch ] ]			whileFalse: [ 				tempNames peek = $(					ifTrue: [ 						tempSequence							addAllLast:								((self									tempsSubSequenceFrom:										(tempNames											next;											yourself))									withIndexCollect: [ :temp :index | 										{temp.										{(tempIndex + 1).										index}} ]).						tempNames peek ~= $)							ifTrue: [ self error: 'parse error' ].						tempIndex := tempIndex + 1.						tempNames next ]					ifFalse: [ 						tempSequence							addAllLast:								((self tempsSubSequenceFrom: tempNames)									withIndexCollect: [ :temp :index | 										{temp.										(tempIndex := tempIndex + 1)} ]) ] ].		map at: key put: tempSequence asArray.		[ tempNames peek = $] ] whileTrue: [ tempNames next ].		tempNames peek = $[			ifTrue: [ tempNames next ] ].^ map
+]
+
+Class CompiledMethod >> category
+[
+^ self methodClass organization categoryOfElement: self selector
+]
+
+Class CompiledMethod >> scanLongStore: extension
+[
+	"Answer whether the receiver contains a long store whose extension is 	the argument."
+| scanner |scanner := InstructionStream on: self.^ scanner scanFor: [ :instr | (instr = 129 or: [ instr = 130 ]) and: [ scanner followingByte = extension ] ]
+]
+
+Class CompiledMethod >> schematicTempNamesString
+[
+	"Answer the schematicTempNames string"
+^ self methodNode schematicTempNamesString
+]
+
+Class CompiledMethod >> trailer
+[
+	"Answer the receiver's trailer"
+^ CompiledMethodTrailer new method: self
+]
+
+Class CompiledMethod >> isProvided
+[
+^ self isProvided: self markerOrNil
+]
+
+Class CompiledMethod >> startpcsToBlockExtents
+[
+	"Answer a Dictionary of startpc to Interval of blockExtent, using the	 identical numbering scheme described in and orchestrated by	 BlockNode>>analyseArguments:temporaries:rootNode:.  This is	 used in part to find the temp names for any block in a method, as	 needed by the debugger.  The other half is to recompile the method,	 obtaining the temp names for each block extent.  By indirecting through	 the blockExtent instead of using the startpc directly we decouple the	 debugger's access to temp names from the exact bytecode; insulating	 debugging from minor changes in the compiler (e.g. changes in literal	 pooling, adding prefix bytecodes, adding inst vars to CompiledMethod	 in literals towards the end of the literal frame, etc).  If the recompilation	 doesn't produce exactly the same bytecode at exactly the same offset	 no matter; the blockExtents will be the same."
+| index |self flag: 'belongs in DebuggerMethodMap'.index := 0.^ self	blockExtentsInto: Dictionary new	from: self initialPC	to: self endPC	scanner: (InstructionStream on: self)	numberer: [ 		| value |		value := index.		index := index + 2.		value ]
+]
+
+Class CompiledMethod >> classBinding
+[
+^ self literalAt: self numLiterals
+]
+
+Class CompiledMethod >> propertyValueAt: propName
+[
+| propertiesOrSelector |^ (propertiesOrSelector := self penultimateLiteral) isMethodProperties	ifTrue: [ propertiesOrSelector propertyValueAt: propName ifAbsent: [ nil ] ]	ifFalse: [ nil ]
+]
+
+Class CompiledMethod >> abstractBytecodeMessagesFrom: startpc to: endpc do: aBlock
+[
+	"Evaluate aBlock with the sequence of abstract bytecodes from startpc through endpc in the receiver"
+| scanner |scanner := InstructionStream new method: self pc: startpc.[ scanner pc <= endpc ]	whileTrue: [ 		[ scanner interpretNextInstructionFor: nil ]			on: MessageNotUnderstood			do: [ :ex | aBlock value: ex message ] ]	"| m msgs |	 msgs := OrderedCollection new.	 (m := CompiledMethod >> #abstractBytecodeMessagesFrom:to:)		abstractBytecodeMessagesFrom: m initialPC		to: m endPC		do: [:msg| msgs add: msg selector].	 msgs"
+]
+
+Class CompiledMethod >> abstractBytecodeMessagesDo: aBlock
+[
+	"Evaluate aBlock with the sequence of abstract bytecodes in the receiver"
+self abstractBytecodeMessagesFrom: self initialPC to: self endPC do: aBlock	"| msgs |	 msgs := OrderedCollection new.	 CompiledMethod >> #abstractBytecodeMessagesFrom:to: abstractBytecodeMessagesDo:		[:msg| msgs add: msg selector].	 msgs"
+]
+
+Class CompiledMethod >> abstractSymbolic
+[
+	"Answer a String that contains a list of all the byte codes in a method with a	 short description of each, using relative addresses and not including code bytes."
+| aStream |aStream := (String new: 1000) writeStream.self longPrintRelativeOn: aStream indent: 0.^ aStream contents
+]
+
+Class CompiledMethod >> putSource: sourceStr fromParseNode: methodNode inFile: fileIndex withPreamble: preambleBlock
+[
+	"Store the source code for the receiver on an external file.	If no sources are available, i.e., SourceFile is nil, then store	temp names for decompilation at the end of the method.	If the fileIndex is 1, print on *.sources;  if it is 2, print on *.changes,	in each case, storing a 4-byte source code pointer at the method end."
+| file remoteString |(SourceFiles == nil or: [ (file := SourceFiles at: fileIndex) == nil ])	ifTrue: [ ^ self becomeForward: (self copyWithTempsFromMethodNode: methodNode) ].Smalltalk assureStartupStampLogged.file setToEnd.preambleBlock value: file.	"Write the preamble"remoteString := RemoteString newString: sourceStr onFileNumber: fileIndex toFile: file.file nextChunkPut: ' '.InMidstOfFileinNotification signal	ifFalse: [ file flush ].self setSourcePosition: remoteString position inFile: fileIndex
+]
+
+Class CompiledMethod >> sourceFileStreamIfAbsent: aBlock
+[
+^ self sourceFileStream ifNil: aBlock
+]
+
+Class CompiledMethod >> hasLiteralSuchThat: litBlock
+[
+	"Answer true if litBlock returns true for any literal in this method, even if embedded in array structure."
+(self penultimateLiteral isMethodProperties and: [ self penultimateLiteral hasLiteralSuchThat: litBlock ])	ifTrue: [ ^ true ].2 to: self numLiterals + 1 do: [ :index | 	| lit |	lit := self objectAt: index.	((litBlock value: lit) or: [ lit isArray and: [ lit hasLiteralSuchThat: litBlock ] ])		ifTrue: [ ^ true ] ].^ false
+]
+
+Class CompiledMethod >> abstractBytecodeMessageAt: pc
+[
+	"Answer the abstract bytecode message at pc in the receiver."
+^ [ (InstructionStream new method: self pc: pc) interpretNextInstructionFor: nil ]	on: MessageNotUnderstood	do: [ :ex | ex message ]
+]
+
+Class CompiledMethod >> frameSize
+[
+	"Answer the size of temporary frame needed to run the receiver."
+	"NOTE:  Versions 2.7 and later use two sizes of contexts."
+(self header noMask: 16r20000)	ifTrue: [ ^ SmallFrame ]	ifFalse: [ ^ LargeFrame ]
+]
+
+Class CompiledMethod >> propertyValueAt: propName ifAbsent: aBlock
+[
+| propertiesOrSelector |^ (propertiesOrSelector := self penultimateLiteral) isMethodProperties	ifTrue: [ propertiesOrSelector propertyValueAt: propName ifAbsent: aBlock ]	ifFalse: [ aBlock value ]
+]
+
+Class CompiledMethod >> selector
+[
+	"Answer a method's selector.  This is either the penultimate literal,	 or, if the method has any properties or pragmas, the selector of	 the MethodProperties stored in the penultimate literal."
+| penultimateLiteral |^ (penultimateLiteral := self penultimateLiteral) isMethodProperties	ifTrue: [ penultimateLiteral selector ]	ifFalse: [ penultimateLiteral ]
+]
+
+Class CompiledMethod >> getSourceReplacingSelectorWith: newSelector
+[
+| oldKeywords newKeywords args newSelectorWithArgs source oldSelector s |source := self sourceCode.oldSelector := self parserClass new parseSelector: source.oldSelector = newSelector	ifTrue: [ ^ source ].oldKeywords := oldSelector keywords.newKeywords := (newSelector ifNil: [ self defaultSelector ]) keywords.[ oldKeywords size = newKeywords size ] assert.args := (self methodClass parserClass new parseArgsAndTemps: source string notifying: nil) copyFrom: 1 to: self numArgs.newSelectorWithArgs := String	streamContents: [ :stream | 		newKeywords			withIndexDo: [ :keyword :index | 				stream nextPutAll: keyword.				stream space.				args size >= index					ifTrue: [ 						stream							nextPutAll: (args at: index);							space ] ] ].s := source string readStream.oldKeywords do: [ :each | s match: each ].args isEmpty	ifFalse: [ s match: args last ].^ newSelectorWithArgs trimBoth , s upToEnd
+]
+
+Class CompiledMethod >> storeOn: aStream
+[
+| noneYet |aStream nextPutAll: '(('.aStream nextPutAll: self class name.aStream nextPutAll: ' newMethod: '.aStream store: self size - self initialPC + 1.aStream nextPutAll: ' header: '.aStream store: self header.aStream nextPut: $).noneYet := self storeElementsFrom: self initialPC to: self endPC on: aStream.1 to: self numLiterals do: [ :index | 	noneYet		ifTrue: [ noneYet := false ]		ifFalse: [ aStream nextPut: $; ].	aStream nextPutAll: ' literalAt: '.	aStream store: index.	aStream nextPutAll: ' put: '.	aStream store: (self literalAt: index) ].noneYet	ifFalse: [ aStream nextPutAll: '; yourself' ].aStream nextPut: $)
+]
+
+Class CompiledMethod >> writesRef: literalAssociation
+[
+	"Answer whether the receiver stores into the argument."
+	"eem 5/24/2008 Rewritten to no longer assume the compler uses the	 most compact encoding available (for EncoderForLongFormV3 support)."
+| litIndex scanner |(litIndex := self indexOfLiteral: literalAssociation) = 0	ifTrue: [ ^ false ].litIndex := litIndex - 1.^ (scanner := InstructionStream on: self)	scanFor: [ :b | 		(b = 129 or: [ b = 130 ])			ifTrue: [ scanner followingByte - 192 = litIndex ]			ifFalse: [ b = 132 and: [ scanner followingByte >= 224 and: [ scanner thirdByte = litIndex ] ] ] ]
+]
+
+Class CompiledMethod >> returnField
+[
+	"Answer the index of the instance variable returned by a quick return 	method."
+| prim |prim := self primitive.prim < 264	ifTrue: [ self error: 'only meaningful for quick-return' ]	ifFalse: [ ^ prim - 264 ]
+]
+
+Class CompiledMethod >> endPC
+[
+	"Answer the index of the last bytecode."
+^ self trailer endPC
+]
+
+Class CompiledMethod >> objectAt: index put: value
+[
+	"Primitive. Store the value argument into a literal in the receiver. An 	index of 2 corresponds to the first literal. Fails if the index is less than 2 	or greater than the number of literals. Answer the value as the result. 	Normally only the compiler sends this message, because only the 	compiler stores values in CompiledMethods. Essential. See Object 	documentation whatIsAPrimitive."
+	<primitive: 69>
+self primitiveFailed
+]
+
+Class CompiledMethod >> searchForSelector
+[
+	"search me in all classes, if found, return my selector. Slow!"
+self systemNavigation	allBehaviorsDo: [ :class | 		| selector |		(selector := class methodDict keyAtIdentityValue: self ifAbsent: [ nil ]) ifNotNil: [ ^ selector ] ].^ nil
+]
+
+Class CompiledMethod >> blockExtentsInto: aDictionary from: initialPC to: endPC scanner: scanner numberer: numbererBlock
+[
+	"Support routine for startpcsToBlockExtents"
+| extentStart blockSizeOrLocator |self flag: 'belongs in DebuggerMethodMap'.extentStart := numbererBlock value.[ scanner pc <= endPC ]	whileTrue: [ 		blockSizeOrLocator := scanner interpretNextInstructionFor: BlockStartLocator new.		blockSizeOrLocator isInteger			ifTrue: [ 				self					blockExtentsInto: aDictionary					from: scanner pc					to: scanner pc + blockSizeOrLocator - 1					scanner: scanner					numberer: numbererBlock ] ].aDictionary at: initialPC put: (extentStart to: numbererBlock value).^ aDictionary
+]
+
+Class CompiledMethod >> literalStrings
+[
+| litStrs |litStrs := OrderedCollection new: self numLiterals.self	literalsDo: [ :lit | 		lit isVariableBinding			ifTrue: [ litStrs addLast: lit key ]			ifFalse: [ 				lit isSymbol					ifTrue: [ litStrs addAll: lit keywords ]					ifFalse: [ litStrs addLast: lit printString ] ] ].^ litStrs
+]
+
+Class CompiledMethod >> veryDeepCopyWith: deepCopier
+[
+	"Return self.  I am always shared.  Do not record me.  Only use this for blocks.  Normally methodDictionaries should not be copied this way."
+
+]
+
+Class CompiledMethod >> longPrintOn: aStream indent: tabs
+[
+	"List of all the byte codes in a method with a short description of each"
+self isQuick	ifTrue: [ 		self isReturnSpecial			ifTrue: [ 				^ aStream					tab: tabs;					nextPutAll: 'Quick return ' , (#('self' 'true' 'false' 'nil' '-1' '0' '1' '2') at: self primitive - 255) ].		^ aStream nextPutAll: 'Quick return field ' , self returnField printString , ' (0-based)' ].self isPrimitive	ifTrue: [ 		aStream tab: tabs.		self printPrimitiveOn: aStream ].(InstructionPrinter on: self)	indent: tabs;	printInstructionsOn: aStream
+]
+
+Class CompiledMethod >> getSource
+[
+	"Retrieve or reconstruct the source code for this method."
+| trailer source class |trailer := self trailer.class := self methodClass.trailer sourceCode ifNotNil: [ :code | ^ code ].trailer hasSourcePointer	ifFalse: [ 		"No source pointer -- decompile without temp names"		^ (class decompilerClass new decompile: self selector in: class method: self) decompileString ].	"Situation normal;  read the sourceCode from the file"source := [ self getSourceFromFile ]	on: Error	do: [ :ex | ex return: nil ].	"An error can happen here if, for example, the changes file has been truncated by an aborted download.  The present solution is to ignore the error and fall back on the decompiler.  A more thorough solution should probably trigger a systematic invalidation of all source pointers past the end of the changes file.  Consider that, as time goes on, the changes file will eventually grow large enough to cover the lost code, and then instead of falling into this error case, random source code will get returned."source isEmptyOrNil	ifTrue: [ 		"Something really wrong -- decompile blind (no temps)"		^ (class decompilerClass new decompile: self selector in: class method: self) decompileString ].^ source
+]
+
+Class CompiledMethod >> asString
+[
+^ self sourceCode
+]
+
+Class CompiledMethod >> methodClassAssociation
+[
+	"answer the association to the class that I am installed in, or nil if none."
+^ self literalAt: self numLiterals
+]
+
+Class CompiledMethod >> isReturnSpecial
+[
+	"Answer whether the receiver is a quick return of self or constant."
+^ self primitive between: 256 and: 263
+]
+
+Class CompiledMethod >> sourceFileStream
+[
+	"Answer the sources file stream with position set at the beginning of my source string"
+| pos |(pos := self filePosition) = 0	ifTrue: [ ^ nil ].^ (RemoteString newFileNumber: self fileIndex position: pos) fileStream
+]
+
+Class CompiledMethod >> copyWithTrailerBytes: trailer
+[
+	"Testing:	(CompiledMethod compiledMethodAt: #copyWithTrailerBytes:)		tempNamesPut: 'copy end '"
+| copy end start penultimateLiteral |start := self initialPC.end := self endPC.copy := trailer createMethod: end - start + 1 class: self class header: self header.1 to: self numLiterals do: [ :i | copy literalAt: i put: (self literalAt: i) ].(penultimateLiteral := self penultimateLiteral) isMethodProperties	ifTrue: [ 		copy			penultimateLiteral:				(penultimateLiteral copy					setMethod: copy;					yourself) ].start to: end do: [ :i | copy at: i put: (self at: i) ].^ copy
+]
+
+Class CompiledMethod >> literals
+[
+	"Answer an Array of the literals referenced by the receiver."
+| literals numberLiterals |literals := Array new: (numberLiterals := self numLiterals).1 to: numberLiterals do: [ :index | literals at: index put: (self objectAt: index + 1) ].^ literals
+]
+
+Class CompiledMethod >> sourceCode
+[
+^ self getSource
+]
+
+Class CompiledMethod >> getSourceFromFile
+[
+	"Read the source code from file, determining source file index and	file position from the last 3 bytes of this method."
+| position |(position := self filePosition) = 0	ifTrue: [ ^ nil ].^ (RemoteString newFileNumber: self fileIndex position: position) string
+]
+
+Class CompiledMethod >> readsRef: literalAssociation
+[
+	"Answer whether the receiver loads the argument."
+	"eem 5/24/2008 Rewritten to no longer assume the compler uses the	 most compact encoding available (for EncoderForLongFormV3 support)."
+| litIndex scanner |(litIndex := self indexOfLiteral: literalAssociation) = 0	ifTrue: [ ^ false ].litIndex := litIndex - 1.^ (scanner := InstructionStream on: self)	scanFor: [ :b | 		b >= 64			and: [ 				b <= 95					ifTrue: [ b - 64 = litIndex ]					ifFalse: [ 						b = 128							ifTrue: [ scanner followingByte - 192 = litIndex ]							ifFalse: [ b = 132 and: [ (scanner followingByte between: 128 and: 159) and: [ scanner thirdByte = litIndex ] ] ] ] ] ]
+]
+
+Class CompiledMethod >> isConflict
+[
+^ self markerOrNil == self class conflictMarker
+]
+
+Class CompiledMethod >> needsFrameSize: newFrameSize
+[
+	"Set the largeFrameBit to accomodate the newFrameSize"
+| largeFrameBit header |largeFrameBit := 16r20000.self numTemps + newFrameSize > LargeFrame	ifTrue: [ ^ self error: 'Cannot compile -- stack including temps is too deep' ].header := self objectAt: 1.(header bitAnd: largeFrameBit) ~= 0	ifTrue: [ header := header - largeFrameBit ].self	objectAt: 1	put:		header			+				((self numTemps + newFrameSize > SmallFrame or: [ self primitive = 84	"perform:withArguments:" ])					ifTrue: [ largeFrameBit ]					ifFalse: [ 0 ])
+]
+
+Class CompiledMethod >> tempNames
+[
+^ self methodNode tempNames
+]
+
+Class CompiledMethod >> timeStamp
+[
+	"Answer the authoring time-stamp for the given method, retrieved from the sources or changes file. Answer the empty string if no time stamp is available."
+	"(CompiledMethod compiledMethodAt: #timeStamp) timeStamp"
+| stamp file |file := self sourceFileStreamIfAbsent: [ ^ String new ].stamp := self timeStampFromFile: file.file close.^ stamp
+]
+
+Class CompiledMethod >> method
+[
+	"polymorphic with closure"
+^ self
+]
+
+Class CompiledMethod >> valueWithReceiver: aReceiver arguments: anArray
+[
+	"This should be changed when all the VM will support passign of extra arguments		^self receiver: aReceiver withArguments: anArray executeMethod: self"
+^ aReceiver withArgs: anArray executeMethod: self
+]
+
+Class CompiledMethod >> messagesDo: aBlock
+[
+^ self messages do: aBlock
+]
+
+Metaclass
+	name: #CompiledMethod;
+	instanceVariables: #().
+
+Metaclass CompiledMethod >> toReturnSelf
+[
+	"Answer an instance of me that is a quick return of the instance (^self)."
+^ self toReturnSelfTrailerBytes: CompiledMethodTrailer empty
+]
+
+Metaclass CompiledMethod >> cleanUp
+[
+self allInstances	do: [ :e | 		e isInstalled			ifFalse: [ e zapSourcePointer ] ]	"pay attention since zapSourcePointer creates a new compiled method. So iterating while	changing it is a bad idea. This is why we use allInstances do and not allInstancesDo:"
+]
+
+Metaclass CompiledMethod >> disabledMarker
+[
+^ #shouldNotImplement
+]
+
+Metaclass CompiledMethod >> methodPropertiesClass
+[
+	"Answer the class to use to create a method's properties, which can be a poor man's way	 to add instance variables to subclassses of CompiledMethod.  Subclasses of CompiledMethod	 should define a corresponding subclass of AdditionalMethodState that adds any instance variables	 required, and override this method to answer that class."
+^ AdditionalMethodState
+]
+
+Metaclass CompiledMethod >> smallFrameSize
+[
+^ SmallFrame
+]
+
+Metaclass CompiledMethod >> newMethod: numberOfBytes header: headerWord
+[
+	"Primitive. Answer an instance of me. The number of literals (and other 	information) is specified the headerWord. The first argument specifies 	the number of fields for bytecodes in the method. Fail if either 	argument is not a SmallInteger, or if numberOfBytes is negative. Once 	the header of a method is set by this primitive, it cannot be changed in 	any way. Essential. See Object documentation whatIsAPrimitive."
+	<primitive: 79>
+(numberOfBytes isInteger and: [ headerWord isInteger and: [ numberOfBytes >= 0 ] ])	ifTrue: [ 		"args okay; space must be low"		OutOfMemory signal.	"retry if user proceeds"		^ self newMethod: numberOfBytes header: headerWord ].^ self primitiveFailed
+]
+
+Metaclass CompiledMethod >> newInstanceFrom: oldInstance variable: variable size: instSize map: map
+[
+	"Create a new instance of the receiver based on the given old instance.	The supplied map contains a mapping of the old instVar names into	the receiver's instVars"
+| new |new := self newFrom: oldInstance.1 to: instSize do: [ :offset | 	(map at: offset) > 0		ifTrue: [ new instVarAt: offset put: (oldInstance instVarAt: (map at: offset)) ] ].^ new
+]
+
+Metaclass CompiledMethod >> newFrom: aCompiledMethod
+[
+| inst |inst := super basicNew: aCompiledMethod size.1 to: aCompiledMethod size do: [ :index | inst at: index put: (aCompiledMethod at: index) ].^ inst
+]
+
+Metaclass CompiledMethod >> implicitRequirementMarker
+[
+^ #requirement
+]
+
+Metaclass CompiledMethod >> basicNew: size
+[
+self error: 'CompiledMethods may only be created with newMethod:header:'
+]
+
+Metaclass CompiledMethod >> conflictMarker
+[
+^ #traitConflict
+]
+
+Metaclass CompiledMethod >> explicitRequirementMarker
+[
+^ #explicitRequirement
+]
+
+Metaclass CompiledMethod >> new
+[
+	"This will not make a meaningful method, but it could be used	to invoke some otherwise useful method in this class."
+^ self newMethod: 2 header: 1024
+]
+
+Metaclass CompiledMethod >> toReturnSelfTrailerBytes: trailer
+[
+	"Answer an instance of me that is a quick return of the instance (^self)."
+^ self	newBytes: 0	trailerBytes: trailer	nArgs: 0	nTemps: 0	nStack: 0	nLits: 2	primitive: 256
+]
+
+Metaclass CompiledMethod >> initialize
+[
+	"CompiledMethod initialize"
+	"Initialize class variables specifying the size of the temporary frame	needed to run instances of me."
+SmallFrame := 16.	"Context range for temps+stack"LargeFrame := 56
+]
+
+Metaclass CompiledMethod >> toReturnField: field trailerBytes: trailer
+[
+	"Answer an instance of me that is a quick return of the instance variable 	indexed by the argument, field."
+^ self	newBytes: 0	trailerBytes: trailer	nArgs: 0	nTemps: 0	nStack: 0	nLits: 2	primitive: 264 + field
+]
+
+Metaclass CompiledMethod >> subclassResponsibilityMarker
+[
+^ #subclassResponsibility
+]
+
+Metaclass CompiledMethod >> fullFrameSize
+[
+	"CompiledMethod fullFrameSize"
+^ LargeFrame
+]
+
+Metaclass CompiledMethod >> abstractMarker
+[
+^ #subclassResponsibility
+]
+
+Metaclass CompiledMethod >> receiver: receiver withArguments: argArray executeMethod: compiledMethod
+[
+	"Execute compiledMethod against the receiver and the arguments in argArray"
+	"Please do not use this method. It is just there to make sure that we can invoke this primitive with right order of arguments"
+	<primitive: 188>
+^ receiver withArgs: argArray executeMethod: compiledMethod
+]
+
+Metaclass CompiledMethod >> basicNew
+[
+self error: 'CompiledMethods may only be created with newMethod:header:'
+]
+
+Metaclass CompiledMethod >> newBytes: numberOfBytes trailerBytes: trailer nArgs: nArgs nTemps: nTemps nStack: stackSize nLits: nLits primitive: primitiveIndex
+[
+	"Answer an instance of me. The header is specified by the message 	arguments. The remaining parts are not as yet determined."
+| largeBit primBits |nTemps > 63	ifTrue: [ ^ self error: 'Cannot compile -- too many temporary variables' ].nLits > 255	ifTrue: [ ^ self error: 'Cannot compile -- too many literals variables' ].largeBit := nTemps + stackSize > SmallFrame	ifTrue: [ 1 ]	ifFalse: [ 0 ].primBits := primitiveIndex <= 16r1FF	ifTrue: [ primitiveIndex ]	ifFalse: [ 		"For now the high bit of primitive no. is in the 29th bit of header"		primitiveIndex > 16r3FF			ifTrue: [ self error: 'prim num too large' ].		(primitiveIndex bitAnd: 16r1FF) + ((primitiveIndex bitAnd: 16r200) bitShift: 19) ].^ trailer	createMethod: numberOfBytes	class: self	header: (nArgs bitShift: 24) + (nTemps bitShift: 18) + (largeBit bitShift: 17) + (nLits bitShift: 9) + primBits
+]
+
+Metaclass CompiledMethod >> newBytes: numberOfBytes trailerBytes: trailer nArgs: nArgs nTemps: nTemps nStack: stackSize nLits: nLits primitive: primitiveIndex flag: flag
+[
+	"Answer an instance of me. The header is specified by the message 	arguments. The remaining parts are not as yet determined."
+| largeBit primBits flagBit |nTemps > 63	ifTrue: [ ^ self error: 'Cannot compile -- too many temporary variables' ].nLits > 255	ifTrue: [ ^ self error: 'Cannot compile -- too many literals variables' ].largeBit := nTemps + stackSize > SmallFrame	ifTrue: [ 1 ]	ifFalse: [ 0 ].	"For now the high bit of the primitive no. is in a high bit of the header"primBits := (primitiveIndex bitAnd: 16r1FF) + ((primitiveIndex bitAnd: 16r200) bitShift: 19).flagBit := flag	ifTrue: [ 1 ]	ifFalse: [ 0 ].	"Copy the source code trailer to the end"^ trailer	createMethod: numberOfBytes	class: self	header:		(nArgs bitShift: 24) + (nTemps bitShift: 18) + (largeBit bitShift: 17) + (nLits bitShift: 9) + primBits			+ (flagBit bitShift: 29)
+]
+
+Metaclass CompiledMethod >> toReturnConstant: index trailerBytes: trailer
+[
+	"Answer an instance of me that is a quick return of the constant	indexed in (true false nil -1 0 1 2)."
+^ self	newBytes: 0	trailerBytes: trailer	nArgs: 0	nTemps: 0	nStack: 0	nLits: 2	primitive: 256 + index
+]
+
+Metaclass CompiledMethod >> primitive: primNum numArgs: numArgs numTemps: numTemps stackSize: stackSize literals: literals bytecodes: bytecodes trailer: trailerBytes
+[
+	"Create method with given attributes.  numTemps includes numArgs.  stackSize does not include numTemps."
+| compiledMethod |compiledMethod := self	newBytes: bytecodes size	trailerBytes: trailerBytes	nArgs: numArgs	nTemps: numTemps	nStack: 0	nLits: literals size	primitive: primNum.(WriteStream with: compiledMethod)	position: compiledMethod initialPC - 1;	nextPutAll: bytecodes.literals withIndexDo: [ :obj :i | compiledMethod literalAt: i put: obj ].compiledMethod needsFrameSize: stackSize.^ compiledMethod
+]
+

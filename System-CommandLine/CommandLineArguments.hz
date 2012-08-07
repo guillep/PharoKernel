@@ -1,1 +1,85 @@
-Class	name: #CommandLineArguments;	superclass: #ClassObject;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#arguments );	classVariables: #();	package: #'System-CommandLine'.Class CommandLineArguments >> includesSubCommand: aName[self	withFirstArgument: [ :arg | 		arg = aName			ifTrue: [ ^ true ] ].^ false]Class CommandLineArguments >> argumentAt: index[^ arguments at: index]Class CommandLineArguments >> withFirstArgument: aBlock[self arguments ifEmpty: [ ^ self ].^ aBlock value: self arguments first]Class CommandLineArguments >> allFilesWithExtension: anExtension[^ self arguments select: [ :arg | arg endsWith: anExtension ]]Class CommandLineArguments >> hasFileWithExtension: aFileExtension[	"return true if the first argument has the given file extension"^ self arguments anySatisfy: [ :arg | arg endsWith: aFileExtension ]]Class CommandLineArguments >> copySubcommand[	"return a new copy of this CommandLine without the first arguments"^ self class withArguments: arguments allButFirst]Class CommandLineArguments >> commandLineArguments[	"self commandLineArguments"| documentPath args |args := OrderedCollection withAll: Smalltalk arguments.documentPath := Smalltalk vm documentPath.documentPath isEmptyOrNil	ifFalse: [ args addFirst: documentPath ].^ args]Class CommandLineArguments >> initialize[| documentPath |arguments := OrderedCollection withAll: Smalltalk arguments.documentPath := Smalltalk vm documentPath.documentPath isEmptyOrNil	ifFalse: [ arguments addFirst: documentPath ]]Class CommandLineArguments >> hasArguments[^ arguments size > 0]Class CommandLineArguments >> hasOption: aString[| option |option := (aString size = 1	ifTrue: [ '-' ]	ifFalse: [ '--' ]) , aString.^ self arguments includes: option]Class CommandLineArguments >> arguments[^ arguments]Class CommandLineArguments >> initializeWithArguments: aCollection[super initialize.arguments := aCollection]Metaclass	name: #CommandLineArguments;	instanceVariables: #(#singleton ).Metaclass CommandLineArguments >> withArguments: aCollection[^ self basicNew	initializeWithArguments: aCollection;	yourself]Metaclass CommandLineArguments >> default[^ singleton ifNil: [ singleton := self new initialize ]]
+Class
+	name: #CommandLineArguments;
+	superclass: #ClassObject;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#arguments );
+	classVariables: #();
+	package: #'System-CommandLine'.
+
+Class CommandLineArguments >> includesSubCommand: aName
+[
+self	withFirstArgument: [ :arg | 		arg = aName			ifTrue: [ ^ true ] ].^ false
+]
+
+Class CommandLineArguments >> argumentAt: index
+[
+^ arguments at: index
+]
+
+Class CommandLineArguments >> withFirstArgument: aBlock
+[
+self arguments ifEmpty: [ ^ self ].^ aBlock value: self arguments first
+]
+
+Class CommandLineArguments >> allFilesWithExtension: anExtension
+[
+^ self arguments select: [ :arg | arg endsWith: anExtension ]
+]
+
+Class CommandLineArguments >> hasFileWithExtension: aFileExtension
+[
+	"return true if the first argument has the given file extension"
+^ self arguments anySatisfy: [ :arg | arg endsWith: aFileExtension ]
+]
+
+Class CommandLineArguments >> copySubcommand
+[
+	"return a new copy of this CommandLine without the first arguments"
+^ self class withArguments: arguments allButFirst
+]
+
+Class CommandLineArguments >> commandLineArguments
+[
+	"self commandLineArguments"
+| documentPath args |args := OrderedCollection withAll: Smalltalk arguments.documentPath := Smalltalk vm documentPath.documentPath isEmptyOrNil	ifFalse: [ args addFirst: documentPath ].^ args
+]
+
+Class CommandLineArguments >> initialize
+[
+| documentPath |arguments := OrderedCollection withAll: Smalltalk arguments.documentPath := Smalltalk vm documentPath.documentPath isEmptyOrNil	ifFalse: [ arguments addFirst: documentPath ]
+]
+
+Class CommandLineArguments >> hasArguments
+[
+^ arguments size > 0
+]
+
+Class CommandLineArguments >> hasOption: aString
+[
+| option |option := (aString size = 1	ifTrue: [ '-' ]	ifFalse: [ '--' ]) , aString.^ self arguments includes: option
+]
+
+Class CommandLineArguments >> arguments
+[
+^ arguments
+]
+
+Class CommandLineArguments >> initializeWithArguments: aCollection
+[
+super initialize.arguments := aCollection
+]
+
+Metaclass
+	name: #CommandLineArguments;
+	instanceVariables: #(#singleton ).
+
+Metaclass CommandLineArguments >> withArguments: aCollection
+[
+^ self basicNew	initializeWithArguments: aCollection;	yourself
+]
+
+Metaclass CommandLineArguments >> default
+[
+^ singleton ifNil: [ singleton := self new initialize ]
+]
+

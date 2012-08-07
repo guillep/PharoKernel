@@ -1,1 +1,243 @@
-Class	name: #TraitBehavior;	superclass: #ClassObject;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#methodDict #traitComposition #localSelectors #users );	classVariables: #();	package: #'Traits-Kernel'.Class TraitBehavior >> whichSelectorsReferTo: literal[	"Answer a Set of selectors whose methods access the argument as aliteral."| special byte |special := Smalltalk hasSpecialSelector: literal ifTrueSetByte: [ :b | byte := b ].^ self whichSelectorsReferTo: literal special: special byte: byte	"Rectangle whichSelectorsReferTo: #+."]Class TraitBehavior >> initialize[super initialize.self methodDict: MethodDictionary new.self traitComposition: nil.users := IdentitySet new]Class TraitBehavior >> allClassVarNames[^ #()]Class TraitBehavior >> inheritsFrom: aClass[	"Used by RB"^ false]Class TraitBehavior >> allSuperclassesDo: aBlock[]Class TraitBehavior >> traitsProvidingSelector: aSymbol[| result |result := OrderedCollection new.self hasTraitComposition	ifFalse: [ ^ result ].(self traitComposition methodDescriptionsForSelector: aSymbol)	do: [ :methodDescription | 		methodDescription selector = aSymbol			ifTrue: [ result addAll: (methodDescription locatedMethods collect: [ :each | each methodClass ]) ] ].^ result]Class TraitBehavior >> methodDict: aDictionary[methodDict := aDictionary]Class TraitBehavior >> selectorsWithArgs: numberOfArgs[	"Return all selectors defined in this class that take this number of arguments.  Could use String.keywords.  Could see how compiler does this."| list |list := OrderedCollection new.self	selectorsDo: [ :aSel | 		| num |		num := aSel count: [ :char | char == $: ].		num = 0			ifTrue: [ 				aSel last isLetter					ifFalse: [ num := 1 ] ].		num = numberOfArgs			ifTrue: [ list add: aSel ] ].^ list]Class TraitBehavior >> hasTraitComposition[^ traitComposition notNil and: [ traitComposition notEmpty ]]Class TraitBehavior >> allSuperclasses[^ OrderedCollection new]Class TraitBehavior >> addUser: aClassOrTrait[users add: aClassOrTrait]Class TraitBehavior >> isTrait[^ true]Class TraitBehavior >> poolDictionaryNames[^ #()]Class TraitBehavior >> users[^ users]Class TraitBehavior >> allSubclassesDo: aBlock[]Class TraitBehavior >> withAllSubclasses[^ Array with: self]Class TraitBehavior >> addSelectorSilently: selector withMethod: compiledMethod[self pureAddSelectorSilently: selector withMethod: compiledMethod.self notifyUsersOfChangedSelector: selector]Class TraitBehavior >> recompile: selector from: oldClass[	"Compile the method associated with selector in the receiver's method dictionary."	"ar 7/10/1999: Use oldClass compiledMethodAt: not self compiledMethodAt:"| method trailer methodNode |method := oldClass compiledMethodAt: selector.trailer := method trailer.methodNode := self compilerClass new	compile: (oldClass sourceCodeAt: selector)	in: self	notifying: nil	ifFail: [ ^ self ].	"Assume OK after proceed from SyntaxError"selector == methodNode selector	ifFalse: [ self error: 'selector changed!' ].self basicAddSelector: selector withMethod: (methodNode generate: trailer)]Class TraitBehavior >> basicLocalSelectors: aSetOrNil[localSelectors := aSetOrNil]Class TraitBehavior >> classVarNames[^ #()]Class TraitBehavior >> whichClassIncludesSelector: aSymbol[	"Traits compatibile implementation for:		Answer the class on the receiver's superclass chain where the 	argument, aSymbol (a message selector), will be found. Answer nil if none found."^ (self includesSelector: aSymbol)	ifTrue: [ self ]	ifFalse: [ nil ]]Class TraitBehavior >> sharedPools[^ OrderedCollection new]Class TraitBehavior >> precodeCommentOrInheritedCommentFor: aSelector[^ self firstPrecodeCommentFor: aSelector]Class TraitBehavior >> instVarNames[^ #()]Class TraitBehavior >> classPool[^ Dictionary new]Class TraitBehavior >> allSubclasses[^ Array new]Class TraitBehavior >> removeSelector: selector[self pureRemoveSelector: selector.self notifyUsersOfChangedSelector: selector]Class TraitBehavior >> basicAddSelector: selector withMethod: compiledMethod[	"Add the message selector with the corresponding compiled method to the 	receiver's method dictionary.	Do this without sending system change notifications"| oldMethodOrNil |oldMethodOrNil := self lookupSelector: selector.self methodDict at: selector put: compiledMethod.compiledMethod methodClass: self.compiledMethod selector: selector.	"Now flush the method cache, when we replace a method"oldMethodOrNil ifNotNil: [ oldMethodOrNil flushCache ]]Class TraitBehavior >> allInstVarNames[^ #()]Class TraitBehavior >> allSelectors[^ self selectors asSet]Class TraitBehavior >> thoroughWhichSelectorsReferTo: literal special: specialFlag byte: specialByte[	"Answer a set of selectors whose methods access the argument as a 	literal. Dives into the compact literal notation, making it slow but 	thorough "| selectors |selectors := IdentitySet new.self	selectorsAndMethodsDo: [ :sel :method | 		((method refersToLiteral: literal) or: [ specialFlag and: [ method scanFor: specialByte ] ])			ifTrue: [ selectors add: sel ] ].^ selectors]Class TraitBehavior >> addTraitSelector: aSymbol withMethod: aCompiledMethod[	"Add aMethod with selector aSymbol to my	methodDict. aMethod must not be defined locally."| source methodAndNode |[ (self includesLocalSelector: aSymbol) not ] assert.self ensureLocalSelectors.source := aCompiledMethod getSourceReplacingSelectorWith: aSymbol.methodAndNode := self	compile: source	classified: aCompiledMethod category	notifying: nil	trailer: self defaultMethodTrailer	ifFail: [ ^ nil ].methodAndNode method	putSource: source	fromParseNode: methodAndNode node	inFile: 2	withPreamble: [ :f | 		f			cr;			nextPut: $!;			nextChunkPut: 'Trait method';			cr ].self basicAddSelector: aSymbol withMethod: methodAndNode method	"self 		addAndClassifySelector: aSymbol 		withMethod: methodAndNode method 		inProtocol: aCompiledMethod category 		notifying: nil"]Class TraitBehavior >> traitComposition[traitComposition ifNil: [ traitComposition := TraitComposition new ].^ traitComposition]Class TraitBehavior >> instSize[^ 0]Class TraitBehavior >> classesComposedWithMe[^ users gather: [ :u | u classesComposedWithMe ]]Class TraitBehavior >> removeFromTraitCompositionOfUsers[self users do: [ :each | each removeFromComposition: self ]]Class TraitBehavior >> basicLocalSelectors[	"Direct accessor for the instance variable localSelectors.	Since localSelectors is lazily initialized, this may 	return nil, which means that all selectors are local."^ localSelectors]Class TraitBehavior >> zapAllMethods[	"Remove all methods in this trait which is assumed to be obsolete"methodDict := MethodDictionary new.self hasClassTrait	ifTrue: [ self classTrait zapAllMethods ]]Class TraitBehavior >> methodDict[^ methodDict]Class TraitBehavior >> removeUser: aClassOrTrait[users remove: aClassOrTrait ifAbsent: [  ]]Class TraitBehavior >> subclassDefinerClass[^ nil subclassDefinerClass]Class TraitBehavior >> subclasses[^ Array new]Class TraitBehavior >> lookupSelector: selector[^ (self includesSelector: selector)	ifTrue: [ self compiledMethodAt: selector ]	ifFalse: [ nil ]]Class TraitBehavior >> traitComposition: aTraitComposition[traitComposition := aTraitComposition]Metaclass	name: #TraitBehavior;	instanceVariables: #().
+Class
+	name: #TraitBehavior;
+	superclass: #ClassObject;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#methodDict #traitComposition #localSelectors #users );
+	classVariables: #();
+	package: #'Traits-Kernel'.
+
+Class TraitBehavior >> whichSelectorsReferTo: literal
+[
+	"Answer a Set of selectors whose methods access the argument as aliteral."
+| special byte |special := Smalltalk hasSpecialSelector: literal ifTrueSetByte: [ :b | byte := b ].^ self whichSelectorsReferTo: literal special: special byte: byte	"Rectangle whichSelectorsReferTo: #+."
+]
+
+Class TraitBehavior >> initialize
+[
+super initialize.self methodDict: MethodDictionary new.self traitComposition: nil.users := IdentitySet new
+]
+
+Class TraitBehavior >> allClassVarNames
+[
+^ #()
+]
+
+Class TraitBehavior >> inheritsFrom: aClass
+[
+	"Used by RB"
+^ false
+]
+
+Class TraitBehavior >> allSuperclassesDo: aBlock
+[
+
+]
+
+Class TraitBehavior >> traitsProvidingSelector: aSymbol
+[
+| result |result := OrderedCollection new.self hasTraitComposition	ifFalse: [ ^ result ].(self traitComposition methodDescriptionsForSelector: aSymbol)	do: [ :methodDescription | 		methodDescription selector = aSymbol			ifTrue: [ result addAll: (methodDescription locatedMethods collect: [ :each | each methodClass ]) ] ].^ result
+]
+
+Class TraitBehavior >> methodDict: aDictionary
+[
+methodDict := aDictionary
+]
+
+Class TraitBehavior >> selectorsWithArgs: numberOfArgs
+[
+	"Return all selectors defined in this class that take this number of arguments.  Could use String.keywords.  Could see how compiler does this."
+| list |list := OrderedCollection new.self	selectorsDo: [ :aSel | 		| num |		num := aSel count: [ :char | char == $: ].		num = 0			ifTrue: [ 				aSel last isLetter					ifFalse: [ num := 1 ] ].		num = numberOfArgs			ifTrue: [ list add: aSel ] ].^ list
+]
+
+Class TraitBehavior >> hasTraitComposition
+[
+^ traitComposition notNil and: [ traitComposition notEmpty ]
+]
+
+Class TraitBehavior >> allSuperclasses
+[
+^ OrderedCollection new
+]
+
+Class TraitBehavior >> addUser: aClassOrTrait
+[
+users add: aClassOrTrait
+]
+
+Class TraitBehavior >> isTrait
+[
+^ true
+]
+
+Class TraitBehavior >> poolDictionaryNames
+[
+^ #()
+]
+
+Class TraitBehavior >> users
+[
+^ users
+]
+
+Class TraitBehavior >> allSubclassesDo: aBlock
+[
+
+]
+
+Class TraitBehavior >> withAllSubclasses
+[
+^ Array with: self
+]
+
+Class TraitBehavior >> addSelectorSilently: selector withMethod: compiledMethod
+[
+self pureAddSelectorSilently: selector withMethod: compiledMethod.self notifyUsersOfChangedSelector: selector
+]
+
+Class TraitBehavior >> recompile: selector from: oldClass
+[
+	"Compile the method associated with selector in the receiver's method dictionary."
+	"ar 7/10/1999: Use oldClass compiledMethodAt: not self compiledMethodAt:"
+| method trailer methodNode |method := oldClass compiledMethodAt: selector.trailer := method trailer.methodNode := self compilerClass new	compile: (oldClass sourceCodeAt: selector)	in: self	notifying: nil	ifFail: [ ^ self ].	"Assume OK after proceed from SyntaxError"selector == methodNode selector	ifFalse: [ self error: 'selector changed!' ].self basicAddSelector: selector withMethod: (methodNode generate: trailer)
+]
+
+Class TraitBehavior >> basicLocalSelectors: aSetOrNil
+[
+localSelectors := aSetOrNil
+]
+
+Class TraitBehavior >> classVarNames
+[
+^ #()
+]
+
+Class TraitBehavior >> whichClassIncludesSelector: aSymbol
+[
+	"Traits compatibile implementation for:		Answer the class on the receiver's superclass chain where the 	argument, aSymbol (a message selector), will be found. Answer nil if none found."
+^ (self includesSelector: aSymbol)	ifTrue: [ self ]	ifFalse: [ nil ]
+]
+
+Class TraitBehavior >> sharedPools
+[
+^ OrderedCollection new
+]
+
+Class TraitBehavior >> precodeCommentOrInheritedCommentFor: aSelector
+[
+^ self firstPrecodeCommentFor: aSelector
+]
+
+Class TraitBehavior >> instVarNames
+[
+^ #()
+]
+
+Class TraitBehavior >> classPool
+[
+^ Dictionary new
+]
+
+Class TraitBehavior >> allSubclasses
+[
+^ Array new
+]
+
+Class TraitBehavior >> removeSelector: selector
+[
+self pureRemoveSelector: selector.self notifyUsersOfChangedSelector: selector
+]
+
+Class TraitBehavior >> basicAddSelector: selector withMethod: compiledMethod
+[
+	"Add the message selector with the corresponding compiled method to the 	receiver's method dictionary.	Do this without sending system change notifications"
+| oldMethodOrNil |oldMethodOrNil := self lookupSelector: selector.self methodDict at: selector put: compiledMethod.compiledMethod methodClass: self.compiledMethod selector: selector.	"Now flush the method cache, when we replace a method"oldMethodOrNil ifNotNil: [ oldMethodOrNil flushCache ]
+]
+
+Class TraitBehavior >> allInstVarNames
+[
+^ #()
+]
+
+Class TraitBehavior >> allSelectors
+[
+^ self selectors asSet
+]
+
+Class TraitBehavior >> thoroughWhichSelectorsReferTo: literal special: specialFlag byte: specialByte
+[
+	"Answer a set of selectors whose methods access the argument as a 	literal. Dives into the compact literal notation, making it slow but 	thorough "
+| selectors |selectors := IdentitySet new.self	selectorsAndMethodsDo: [ :sel :method | 		((method refersToLiteral: literal) or: [ specialFlag and: [ method scanFor: specialByte ] ])			ifTrue: [ selectors add: sel ] ].^ selectors
+]
+
+Class TraitBehavior >> addTraitSelector: aSymbol withMethod: aCompiledMethod
+[
+	"Add aMethod with selector aSymbol to my	methodDict. aMethod must not be defined locally."
+| source methodAndNode |[ (self includesLocalSelector: aSymbol) not ] assert.self ensureLocalSelectors.source := aCompiledMethod getSourceReplacingSelectorWith: aSymbol.methodAndNode := self	compile: source	classified: aCompiledMethod category	notifying: nil	trailer: self defaultMethodTrailer	ifFail: [ ^ nil ].methodAndNode method	putSource: source	fromParseNode: methodAndNode node	inFile: 2	withPreamble: [ :f | 		f			cr;			nextPut: $!;			nextChunkPut: 'Trait method';			cr ].self basicAddSelector: aSymbol withMethod: methodAndNode method	"self 		addAndClassifySelector: aSymbol 		withMethod: methodAndNode method 		inProtocol: aCompiledMethod category 		notifying: nil"
+]
+
+Class TraitBehavior >> traitComposition
+[
+traitComposition ifNil: [ traitComposition := TraitComposition new ].^ traitComposition
+]
+
+Class TraitBehavior >> instSize
+[
+^ 0
+]
+
+Class TraitBehavior >> classesComposedWithMe
+[
+^ users gather: [ :u | u classesComposedWithMe ]
+]
+
+Class TraitBehavior >> removeFromTraitCompositionOfUsers
+[
+self users do: [ :each | each removeFromComposition: self ]
+]
+
+Class TraitBehavior >> basicLocalSelectors
+[
+	"Direct accessor for the instance variable localSelectors.	Since localSelectors is lazily initialized, this may 	return nil, which means that all selectors are local."
+^ localSelectors
+]
+
+Class TraitBehavior >> zapAllMethods
+[
+	"Remove all methods in this trait which is assumed to be obsolete"
+methodDict := MethodDictionary new.self hasClassTrait	ifTrue: [ self classTrait zapAllMethods ]
+]
+
+Class TraitBehavior >> methodDict
+[
+^ methodDict
+]
+
+Class TraitBehavior >> removeUser: aClassOrTrait
+[
+users remove: aClassOrTrait ifAbsent: [  ]
+]
+
+Class TraitBehavior >> subclassDefinerClass
+[
+^ nil subclassDefinerClass
+]
+
+Class TraitBehavior >> subclasses
+[
+^ Array new
+]
+
+Class TraitBehavior >> lookupSelector: selector
+[
+^ (self includesSelector: selector)	ifTrue: [ self compiledMethodAt: selector ]	ifFalse: [ nil ]
+]
+
+Class TraitBehavior >> traitComposition: aTraitComposition
+[
+traitComposition := aTraitComposition
+]
+
+Metaclass
+	name: #TraitBehavior;
+	instanceVariables: #().
+

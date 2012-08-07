@@ -1,1 +1,48 @@
-Class	name: #WindowsStore;	superclass: #ClassDiskStore;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#disk );	classVariables: #(#Disks );	package: #'FileSystem-Disk'.Class WindowsStore >> pathFromString: aString[| normalized pathClass |normalized := aString copy replaceAll: UnixStore delimiter with: self delimiter.pathClass := (Path isAbsoluteWindowsPath: normalized)	ifTrue: [ AbsolutePath ]	ifFalse: [ RelativePath ].^ pathClass withAll: (pathClass canonicalizeElements: (self delimiter split: normalized))]Class WindowsStore >> checkName: aFileName fixErrors: fixing[	"Check if the file name contains any invalid characters"| fName badChars hasBadChars |fName := super checkName: aFileName fixErrors: fixing.badChars := (#($: $< $> $| $/ $\ $? $* $") , ((0 to: 31) collect: [ :n | n asCharacter ])) asSet.(fName includesAnyOf: badChars)	ifFalse: [ ^ fName ].fixing	ifFalse: [ ^ self error: 'filename contains invalid characters' ].^ fName	collect: [ :char | 		(badChars includes: char)			ifTrue: [ $# ]			ifFalse: [ char ] ]]Class WindowsStore >> printPath: aPath on: aStream[aPath printOn: aStream delimiter: self delimiter]Metaclass	name: #WindowsStore;	instanceVariables: #().Metaclass WindowsStore >> isCaseSensitive[^ false]Metaclass WindowsStore >> separator[^ $\]Metaclass WindowsStore >> maxFileNameLength[self flag: 'TODO: more tests needed here!'.^ 255]Metaclass WindowsStore >> delimiter[^ $\]
+Class
+	name: #WindowsStore;
+	superclass: #ClassDiskStore;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#disk );
+	classVariables: #(#Disks );
+	package: #'FileSystem-Disk'.
+
+Class WindowsStore >> pathFromString: aString
+[
+| normalized pathClass |normalized := aString copy replaceAll: UnixStore delimiter with: self delimiter.pathClass := (Path isAbsoluteWindowsPath: normalized)	ifTrue: [ AbsolutePath ]	ifFalse: [ RelativePath ].^ pathClass withAll: (pathClass canonicalizeElements: (self delimiter split: normalized))
+]
+
+Class WindowsStore >> checkName: aFileName fixErrors: fixing
+[
+	"Check if the file name contains any invalid characters"
+| fName badChars hasBadChars |fName := super checkName: aFileName fixErrors: fixing.badChars := (#($: $< $> $| $/ $\ $? $* $") , ((0 to: 31) collect: [ :n | n asCharacter ])) asSet.(fName includesAnyOf: badChars)	ifFalse: [ ^ fName ].fixing	ifFalse: [ ^ self error: 'filename contains invalid characters' ].^ fName	collect: [ :char | 		(badChars includes: char)			ifTrue: [ $# ]			ifFalse: [ char ] ]
+]
+
+Class WindowsStore >> printPath: aPath on: aStream
+[
+aPath printOn: aStream delimiter: self delimiter
+]
+
+Metaclass
+	name: #WindowsStore;
+	instanceVariables: #().
+
+Metaclass WindowsStore >> isCaseSensitive
+[
+^ false
+]
+
+Metaclass WindowsStore >> separator
+[
+^ $\
+]
+
+Metaclass WindowsStore >> maxFileNameLength
+[
+self flag: 'TODO: more tests needed here!'.^ 255
+]
+
+Metaclass WindowsStore >> delimiter
+[
+^ $\
+]
+

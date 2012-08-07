@@ -1,1 +1,114 @@
-Class	name: #Halt;	superclass: #ClassException;	instanceSpecification: #(#pointers #words );	instanceVariables: #();	classVariables: #();	package: #'Kernel-Exceptions'.Class Halt >> defaultAction[	"No one has handled this error, but now give them a chance to decide how to debug it.  If none handle this either then open debugger (see UnhandedError-defaultAction)"^ UIManager default unhandledErrorDefaultAction: self]Metaclass	name: #Halt;	instanceVariables: #(#isHaltOnceEnabled #callsUntilHaltOnCount ).Metaclass Halt >> disableHaltOnce[isHaltOnceEnabled := false]Metaclass Halt >> callsUntilHaltOnCount: anInteger[callsUntilHaltOnCount := anInteger]Metaclass Halt >> isHaltOnceEnabled[^ isHaltOnceEnabled ifNil: [ isHaltOnceEnabled := false ]]Metaclass Halt >> callsUntilHaltOnCount[^ callsUntilHaltOnCount]Metaclass Halt >> haltIfBlockWithCallingObject: aBlock[| callingObject |callingObject := thisContext sender sender receiver.(aBlock cull: callingObject)	ifTrue: [ self signal ]	ifFalse: [ ^ self ]]Metaclass Halt >> once[	"To enable, use self enableHaltOnce"self isHaltOnceEnabled	ifTrue: [ 		self disableHaltOnce.		^ self signal ]]Metaclass Halt >> haltIfCallChainContains: aSelector[| cntxt |cntxt := thisContext.[ cntxt sender isNil ]	whileFalse: [ 		cntxt := cntxt sender.		cntxt selector = aSelector			ifTrue: [ self signal ] ]]Metaclass Halt >> now: aString[	"set a breakpoint with some explanation"self signal: aString]Metaclass Halt >> halt: aString[	"backward compatible method with self halt:"self signal: aString]Metaclass Halt >> initialize[isHaltOnceEnabled := false.callsUntilHaltOnCount := 1]Metaclass Halt >> ifShiftPressed[self if: [ Sensor shiftPressed ]]Metaclass Halt >> now[self signal]Metaclass Halt >> onCount: anInteger[	"Halt on the anInteger-th time through"| currentCount |currentCount := self isCounting	ifTrue: [ self callsUntilHaltOnCount ]	ifFalse: [ anInteger ].self callsUntilHaltOnCount: currentCount - 1.self callsUntilHaltOnCount = 0	ifTrue: [ self signal ]]Metaclass Halt >> enableHaltOnce[isHaltOnceEnabled := true]Metaclass Halt >> halt[	"backward compatible method with self halt"self signal]Metaclass Halt >> if: condition[	"This is the typical message to use for inserting breakpoints during 	debugging.		The argument can be one of the following:		- a block: if the Block has one arg, the calling object is bound to that.		- an expression 		- a selector: Halt if found in the call chain"condition isSymbol	ifTrue: [ ^ self haltIfCallChainContains: condition ].condition isBlock	ifTrue: [ ^ self haltIfBlockWithCallingObject: condition ].condition	ifTrue: [ self signal ]]Metaclass Halt >> stopCounting[callsUntilHaltOnCount := 0]Metaclass Halt >> isCounting[^ callsUntilHaltOnCount > 0]
+Class
+	name: #Halt;
+	superclass: #ClassException;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #();
+	classVariables: #();
+	package: #'Kernel-Exceptions'.
+
+Class Halt >> defaultAction
+[
+	"No one has handled this error, but now give them a chance to decide how to debug it.  If none handle this either then open debugger (see UnhandedError-defaultAction)"
+^ UIManager default unhandledErrorDefaultAction: self
+]
+
+Metaclass
+	name: #Halt;
+	instanceVariables: #(#isHaltOnceEnabled #callsUntilHaltOnCount ).
+
+Metaclass Halt >> disableHaltOnce
+[
+isHaltOnceEnabled := false
+]
+
+Metaclass Halt >> callsUntilHaltOnCount: anInteger
+[
+callsUntilHaltOnCount := anInteger
+]
+
+Metaclass Halt >> isHaltOnceEnabled
+[
+^ isHaltOnceEnabled ifNil: [ isHaltOnceEnabled := false ]
+]
+
+Metaclass Halt >> callsUntilHaltOnCount
+[
+^ callsUntilHaltOnCount
+]
+
+Metaclass Halt >> haltIfBlockWithCallingObject: aBlock
+[
+| callingObject |callingObject := thisContext sender sender receiver.(aBlock cull: callingObject)	ifTrue: [ self signal ]	ifFalse: [ ^ self ]
+]
+
+Metaclass Halt >> once
+[
+	"To enable, use self enableHaltOnce"
+self isHaltOnceEnabled	ifTrue: [ 		self disableHaltOnce.		^ self signal ]
+]
+
+Metaclass Halt >> haltIfCallChainContains: aSelector
+[
+| cntxt |cntxt := thisContext.[ cntxt sender isNil ]	whileFalse: [ 		cntxt := cntxt sender.		cntxt selector = aSelector			ifTrue: [ self signal ] ]
+]
+
+Metaclass Halt >> now: aString
+[
+	"set a breakpoint with some explanation"
+self signal: aString
+]
+
+Metaclass Halt >> halt: aString
+[
+	"backward compatible method with self halt:"
+self signal: aString
+]
+
+Metaclass Halt >> initialize
+[
+isHaltOnceEnabled := false.callsUntilHaltOnCount := 1
+]
+
+Metaclass Halt >> ifShiftPressed
+[
+self if: [ Sensor shiftPressed ]
+]
+
+Metaclass Halt >> now
+[
+self signal
+]
+
+Metaclass Halt >> onCount: anInteger
+[
+	"Halt on the anInteger-th time through"
+| currentCount |currentCount := self isCounting	ifTrue: [ self callsUntilHaltOnCount ]	ifFalse: [ anInteger ].self callsUntilHaltOnCount: currentCount - 1.self callsUntilHaltOnCount = 0	ifTrue: [ self signal ]
+]
+
+Metaclass Halt >> enableHaltOnce
+[
+isHaltOnceEnabled := true
+]
+
+Metaclass Halt >> halt
+[
+	"backward compatible method with self halt"
+self signal
+]
+
+Metaclass Halt >> if: condition
+[
+	"This is the typical message to use for inserting breakpoints during 	debugging.		The argument can be one of the following:		- a block: if the Block has one arg, the calling object is bound to that.		- an expression 		- a selector: Halt if found in the call chain"
+condition isSymbol	ifTrue: [ ^ self haltIfCallChainContains: condition ].condition isBlock	ifTrue: [ ^ self haltIfBlockWithCallingObject: condition ].condition	ifTrue: [ self signal ]
+]
+
+Metaclass Halt >> stopCounting
+[
+callsUntilHaltOnCount := 0
+]
+
+Metaclass Halt >> isCounting
+[
+^ callsUntilHaltOnCount > 0
+]
+

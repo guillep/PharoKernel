@@ -1,1 +1,42 @@
-Class	name: #AbstractEnumerationVisitor;	superclass: #ClassFileSystemVisitor;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#out #block );	classVariables: #();	package: #'FileSystem-Core-Implementation'.Class AbstractEnumerationVisitor >> visit: aReference with: aGuide[out := (Array new: 10) writeStream.aGuide show: aReference.^ out contents]Class AbstractEnumerationVisitor >> initializeWithBlock: aBlock[self initialize.block := aBlock]Class AbstractEnumerationVisitor >> preorder: aReference[^ self visit: aReference with: (PreorderGuide for: self)]Class AbstractEnumerationVisitor >> postorder: aReference[^ self visit: aReference with: (PostorderGuide for: self)]Class AbstractEnumerationVisitor >> visitReference: anEntry[self subclassResponsibility]Class AbstractEnumerationVisitor >> breadthFirst: aReference[^ self visit: aReference with: (BreadthFirstGuide for: self)]Metaclass	name: #AbstractEnumerationVisitor;	instanceVariables: #().
+Class
+	name: #AbstractEnumerationVisitor;
+	superclass: #ClassFileSystemVisitor;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#out #block );
+	classVariables: #();
+	package: #'FileSystem-Core-Implementation'.
+
+Class AbstractEnumerationVisitor >> visit: aReference with: aGuide
+[
+out := (Array new: 10) writeStream.aGuide show: aReference.^ out contents
+]
+
+Class AbstractEnumerationVisitor >> initializeWithBlock: aBlock
+[
+self initialize.block := aBlock
+]
+
+Class AbstractEnumerationVisitor >> preorder: aReference
+[
+^ self visit: aReference with: (PreorderGuide for: self)
+]
+
+Class AbstractEnumerationVisitor >> postorder: aReference
+[
+^ self visit: aReference with: (PostorderGuide for: self)
+]
+
+Class AbstractEnumerationVisitor >> visitReference: anEntry
+[
+self subclassResponsibility
+]
+
+Class AbstractEnumerationVisitor >> breadthFirst: aReference
+[
+^ self visit: aReference with: (BreadthFirstGuide for: self)
+]
+
+Metaclass
+	name: #AbstractEnumerationVisitor;
+	instanceVariables: #().
+

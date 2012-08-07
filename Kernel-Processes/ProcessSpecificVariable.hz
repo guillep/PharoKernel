@@ -1,1 +1,56 @@
-Class	name: #ProcessSpecificVariable;	superclass: #ClassObject;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#index );	classVariables: #();	package: #'Kernel-Processes'.Class ProcessSpecificVariable >> index: anInteger[index := anInteger]Class ProcessSpecificVariable >> value[^ (Processor activeProcess psValueAt: index) ifNil: [ self default ]]Class ProcessSpecificVariable >> valueOrNil[	"a faster version, which doesn't using ifAbsent: to  avoid using block closure"^ Processor activeProcess psValueAt: index]Class ProcessSpecificVariable >> default[	"Answer the default value for the variable. The default for the default value is nil."^ nil]Metaclass	name: #ProcessSpecificVariable;	instanceVariables: #(#hash #soleInstance ).Metaclass ProcessSpecificVariable >> soleInstance[^ soleInstance ifNil: [ soleInstance := self new ]]Metaclass ProcessSpecificVariable >> value[	"Answer the current value for this variable in the current context."^ self soleInstance value]Metaclass ProcessSpecificVariable >> new[| instance |instance := super new.instance index: (Process allocatePSKey: instance).^ instance]Metaclass ProcessSpecificVariable >> initialize[	"Add Process::env if it is missing"(Process instVarNames includes: 'env')	ifFalse: [ Process addInstVarNamed: 'env' ]]
+Class
+	name: #ProcessSpecificVariable;
+	superclass: #ClassObject;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#index );
+	classVariables: #();
+	package: #'Kernel-Processes'.
+
+Class ProcessSpecificVariable >> index: anInteger
+[
+index := anInteger
+]
+
+Class ProcessSpecificVariable >> value
+[
+^ (Processor activeProcess psValueAt: index) ifNil: [ self default ]
+]
+
+Class ProcessSpecificVariable >> valueOrNil
+[
+	"a faster version, which doesn't using ifAbsent: to  avoid using block closure"
+^ Processor activeProcess psValueAt: index
+]
+
+Class ProcessSpecificVariable >> default
+[
+	"Answer the default value for the variable. The default for the default value is nil."
+^ nil
+]
+
+Metaclass
+	name: #ProcessSpecificVariable;
+	instanceVariables: #(#hash #soleInstance ).
+
+Metaclass ProcessSpecificVariable >> soleInstance
+[
+^ soleInstance ifNil: [ soleInstance := self new ]
+]
+
+Metaclass ProcessSpecificVariable >> value
+[
+	"Answer the current value for this variable in the current context."
+^ self soleInstance value
+]
+
+Metaclass ProcessSpecificVariable >> new
+[
+| instance |instance := super new.instance index: (Process allocatePSKey: instance).^ instance
+]
+
+Metaclass ProcessSpecificVariable >> initialize
+[
+	"Add Process::env if it is missing"
+(Process instVarNames includes: 'env')	ifFalse: [ Process addInstVarNamed: 'env' ]
+]
+

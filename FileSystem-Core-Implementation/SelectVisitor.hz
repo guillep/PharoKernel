@@ -1,1 +1,52 @@
-Class	name: #SelectVisitor;	superclass: #ClassAbstractEnumerationVisitor;	instanceSpecification: #(#pointers #words );	instanceVariables: #();	classVariables: #();	package: #'FileSystem-Core-Implementation'.Class SelectVisitor >> visitReference: anEntry[(block value: anEntry)	ifTrue: [ out nextPut: anEntry ]]Metaclass	name: #SelectVisitor;	instanceVariables: #().Metaclass SelectVisitor >> breadthFirst: aReference select: aBlock[^ (self select: aBlock) breadthFirst: aReference]Metaclass SelectVisitor >> postorder: aReference[^ self postorder: aReference select: [ :entry | true ]]Metaclass SelectVisitor >> preorder: aReference select: aBlock[^ (self select: aBlock) preorder: aReference]Metaclass SelectVisitor >> preorder: aReference[^ self preorder: aReference select: [ :entry | true ]]Metaclass SelectVisitor >> breadthFirst: aReference[^ self breadthFirst: aReference select: [ :entry | true ]]Metaclass SelectVisitor >> select: aBlock[^ self basicNew initializeWithBlock: aBlock]Metaclass SelectVisitor >> postorder: aReference select: aBlock[^ (self select: aBlock) postorder: aReference]
+Class
+	name: #SelectVisitor;
+	superclass: #ClassAbstractEnumerationVisitor;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #();
+	classVariables: #();
+	package: #'FileSystem-Core-Implementation'.
+
+Class SelectVisitor >> visitReference: anEntry
+[
+(block value: anEntry)	ifTrue: [ out nextPut: anEntry ]
+]
+
+Metaclass
+	name: #SelectVisitor;
+	instanceVariables: #().
+
+Metaclass SelectVisitor >> breadthFirst: aReference select: aBlock
+[
+^ (self select: aBlock) breadthFirst: aReference
+]
+
+Metaclass SelectVisitor >> postorder: aReference
+[
+^ self postorder: aReference select: [ :entry | true ]
+]
+
+Metaclass SelectVisitor >> preorder: aReference select: aBlock
+[
+^ (self select: aBlock) preorder: aReference
+]
+
+Metaclass SelectVisitor >> preorder: aReference
+[
+^ self preorder: aReference select: [ :entry | true ]
+]
+
+Metaclass SelectVisitor >> breadthFirst: aReference
+[
+^ self breadthFirst: aReference select: [ :entry | true ]
+]
+
+Metaclass SelectVisitor >> select: aBlock
+[
+^ self basicNew initializeWithBlock: aBlock
+]
+
+Metaclass SelectVisitor >> postorder: aReference select: aBlock
+[
+^ (self select: aBlock) postorder: aReference
+]
+

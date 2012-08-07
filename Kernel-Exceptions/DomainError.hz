@@ -1,1 +1,62 @@
-Class	name: #DomainError;	superclass: #ClassArithmeticError;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#from #to );	classVariables: #();	package: #'Kernel-Exceptions'.Class DomainError >> to[^ to]Class DomainError >> from[^ from]Class DomainError >> from: start[from := start]Class DomainError >> to: end[to := end]Metaclass	name: #DomainError;	instanceVariables: #().Metaclass DomainError >> signal: signallerText from: start to: end[^ self new	from: start;	to: end;	signal: signallerText]Metaclass DomainError >> signalFrom: start to: end[| msgStart msgEnd |msgStart := (start isFloat and: [ start isFinite not ])	ifTrue: [ '(-infinity' ]	ifFalse: [ '[' , start printString ].msgEnd := (end isFloat and: [ end isFinite not ])	ifTrue: [ 'infinity)' ]	ifFalse: [ end printString , ']' ].^ self	signal: 'Value outside ' , msgStart , ' , ' , msgEnd from: start;	to: end]Metaclass DomainError >> signal: signallerText to: end[^ self signal: signallerText from: Float infinity negated to: end]Metaclass DomainError >> signal: signallerText from: start[^ self signal: signallerText from: start to: Float infinity]Metaclass DomainError >> signalFrom: start[^ self signalFrom: start to: Float infinity]Metaclass DomainError >> signalTo: end[^ self signalFrom: Float infinity negated to: end]
+Class
+	name: #DomainError;
+	superclass: #ClassArithmeticError;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#from #to );
+	classVariables: #();
+	package: #'Kernel-Exceptions'.
+
+Class DomainError >> to
+[
+^ to
+]
+
+Class DomainError >> from
+[
+^ from
+]
+
+Class DomainError >> from: start
+[
+from := start
+]
+
+Class DomainError >> to: end
+[
+to := end
+]
+
+Metaclass
+	name: #DomainError;
+	instanceVariables: #().
+
+Metaclass DomainError >> signal: signallerText from: start to: end
+[
+^ self new	from: start;	to: end;	signal: signallerText
+]
+
+Metaclass DomainError >> signalFrom: start to: end
+[
+| msgStart msgEnd |msgStart := (start isFloat and: [ start isFinite not ])	ifTrue: [ '(-infinity' ]	ifFalse: [ '[' , start printString ].msgEnd := (end isFloat and: [ end isFinite not ])	ifTrue: [ 'infinity)' ]	ifFalse: [ end printString , ']' ].^ self	signal: 'Value outside ' , msgStart , ' , ' , msgEnd from: start;	to: end
+]
+
+Metaclass DomainError >> signal: signallerText to: end
+[
+^ self signal: signallerText from: Float infinity negated to: end
+]
+
+Metaclass DomainError >> signal: signallerText from: start
+[
+^ self signal: signallerText from: start to: Float infinity
+]
+
+Metaclass DomainError >> signalFrom: start
+[
+^ self signalFrom: start to: Float infinity
+]
+
+Metaclass DomainError >> signalTo: end
+[
+^ self signalFrom: Float infinity negated to: end
+]
+

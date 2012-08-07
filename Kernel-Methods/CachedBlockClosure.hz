@@ -1,1 +1,38 @@
-Class	name: #CachedBlockClosure;	superclass: #ClassBlockClosure;	instanceSpecification: #(#variable #pointers #words );	instanceVariables: #(#cachedValue );	classVariables: #();	package: #'Kernel-Methods'.Class CachedBlockClosure >> outerContext: aContext startpc: aStartpc numArgs: argCount cachedValue: aValue copiedValues: anArrayOrNil[cachedValue := aValue.super	outerContext: aContext	startpc: aStartpc	numArgs: argCount	copiedValues: anArrayOrNil]Class CachedBlockClosure >> value[^ self	becomeUncached;	value]Class CachedBlockClosure >> becomeCached[	"The receiver is already cached."^ self]Class CachedBlockClosure >> becomeUncached[self	becomeForward:		(BlockClosure			outerContext: outerContext			startpc: startpc			numArgs: numArgs			copiedValues: self)]Class CachedBlockClosure >> once[^ cachedValue]Metaclass	name: #CachedBlockClosure;	instanceVariables: #().
+Class
+	name: #CachedBlockClosure;
+	superclass: #ClassBlockClosure;
+	instanceSpecification: #(#variable #pointers #words );
+	instanceVariables: #(#cachedValue );
+	classVariables: #();
+	package: #'Kernel-Methods'.
+
+Class CachedBlockClosure >> outerContext: aContext startpc: aStartpc numArgs: argCount cachedValue: aValue copiedValues: anArrayOrNil
+[
+cachedValue := aValue.super	outerContext: aContext	startpc: aStartpc	numArgs: argCount	copiedValues: anArrayOrNil
+]
+
+Class CachedBlockClosure >> value
+[
+^ self	becomeUncached;	value
+]
+
+Class CachedBlockClosure >> becomeCached
+[
+	"The receiver is already cached."
+^ self
+]
+
+Class CachedBlockClosure >> becomeUncached
+[
+self	becomeForward:		(BlockClosure			outerContext: outerContext			startpc: startpc			numArgs: numArgs			copiedValues: self)
+]
+
+Class CachedBlockClosure >> once
+[
+^ cachedValue
+]
+
+Metaclass
+	name: #CachedBlockClosure;
+	instanceVariables: #().
+

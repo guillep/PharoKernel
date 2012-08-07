@@ -1,0 +1,23 @@
+Class BlockClosure >> cleanCopy
+[
+	"Answer a copy of myself preserving in outerContext just the receiver and method, which are the only needed by a clean block closure."
+^ self shallowCopy	cleanOuterContext;	yourself
+]
+
+Class BlockClosure >> fuelAccept: aGeneralMapper
+[
+^ self shouldBeSubstitutedByCleanCopy	ifTrue: [ aGeneralMapper visitSubstitution: self by: self cleanCopy ]	ifFalse: [ aGeneralMapper visitVariableObject: self ]
+]
+
+Class BlockClosure >> cleanOuterContext
+[
+	"Clean my outerContext preserving just the receiver and method, which are the only needed by a clean block closure."
+outerContext := outerContext cleanCopy
+]
+
+Class BlockClosure >> shouldBeSubstitutedByCleanCopy
+[
+	"The 'self sender isNil not' is just to avoid an infinitive loop for the substitution. As you can see, the copy of this closure has a cleaned outer context (see #cleanOuterContext) and such context has a nil sender (see #cleanCopy)"
+^ self isClean and: [ self sender isNil not ]
+]
+

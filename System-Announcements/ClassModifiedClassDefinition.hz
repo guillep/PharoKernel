@@ -1,1 +1,57 @@
-Class	name: #ClassModifiedClassDefinition;	superclass: #ClassSystemAnnouncement;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#newClassDefinition #oldClassDefinition );	classVariables: #();	package: #'System-Announcements'.Class ClassModifiedClassDefinition >> oldClassDefinition[^ oldClassDefinition]Class ClassModifiedClassDefinition >> newClassDefinition[^ newClassDefinition]Class ClassModifiedClassDefinition >> oldItem[^ self oldClassDefinition]Class ClassModifiedClassDefinition >> oldClassDefinition: aClass[oldClassDefinition := aClass]Class ClassModifiedClassDefinition >> anyChanges[self	flag:		'We should get rid of this please. normally if you send a changed event, is because something changed, so this is nonsense'.	"	^ self event isSuperclassModified		| self event areInstVarsModified			| self event areClassVarsModified				| self event areSharedPoolsModified					| self event isTraitCompositionModified."^ true]Class ClassModifiedClassDefinition >> item[^ self newClassDefinition]Class ClassModifiedClassDefinition >> newClassDefinition: aClass[newClassDefinition := aClass]Class ClassModifiedClassDefinition >> classAffected[^ self newClassDefinition]Metaclass	name: #ClassModifiedClassDefinition;	instanceVariables: #().Metaclass ClassModifiedClassDefinition >> classDefinitionChangedFrom: oldClass to: newClass[^ self new	oldClassDefinition: oldClass;	newClassDefinition: newClass;	yourself]
+Class
+	name: #ClassModifiedClassDefinition;
+	superclass: #ClassSystemAnnouncement;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#newClassDefinition #oldClassDefinition );
+	classVariables: #();
+	package: #'System-Announcements'.
+
+Class ClassModifiedClassDefinition >> oldClassDefinition
+[
+^ oldClassDefinition
+]
+
+Class ClassModifiedClassDefinition >> newClassDefinition
+[
+^ newClassDefinition
+]
+
+Class ClassModifiedClassDefinition >> oldItem
+[
+^ self oldClassDefinition
+]
+
+Class ClassModifiedClassDefinition >> oldClassDefinition: aClass
+[
+oldClassDefinition := aClass
+]
+
+Class ClassModifiedClassDefinition >> anyChanges
+[
+self	flag:		'We should get rid of this please. normally if you send a changed event, is because something changed, so this is nonsense'.	"	^ self event isSuperclassModified		| self event areInstVarsModified			| self event areClassVarsModified				| self event areSharedPoolsModified					| self event isTraitCompositionModified."^ true
+]
+
+Class ClassModifiedClassDefinition >> item
+[
+^ self newClassDefinition
+]
+
+Class ClassModifiedClassDefinition >> newClassDefinition: aClass
+[
+newClassDefinition := aClass
+]
+
+Class ClassModifiedClassDefinition >> classAffected
+[
+^ self newClassDefinition
+]
+
+Metaclass
+	name: #ClassModifiedClassDefinition;
+	instanceVariables: #().
+
+Metaclass ClassModifiedClassDefinition >> classDefinitionChangedFrom: oldClass to: newClass
+[
+^ self new	oldClassDefinition: oldClass;	newClassDefinition: newClass;	yourself
+]
+

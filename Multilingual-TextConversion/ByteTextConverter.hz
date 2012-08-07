@@ -1,1 +1,84 @@
-Class	name: #ByteTextConverter;	superclass: #ClassTextConverter;	instanceSpecification: #(#pointers #words );	instanceVariables: #();	classVariables: #();	sharedPools: #(#EventSensorConstants );	package: #'Multilingual-TextConversion'.Class ByteTextConverter >> nextPut: unicodeCharacter toStream: aStream[	"Write the unicode character to aStream."aStream isBinary	ifTrue: [ aStream basicNextPut: unicodeCharacter charCode ]	ifFalse: [ aStream basicNextPut: (self unicodeToByte: unicodeCharacter) ]]Class ByteTextConverter >> unicodeToByte: unicodeChar[^ unicodeChar charCode < 128	ifTrue: [ unicodeChar ]	ifFalse: [ self class unicodeToByteTable at: unicodeChar charCode ifAbsent: [ 0 asCharacter ] ]]Class ByteTextConverter >> byteToUnicode: char[	"Map from my byte based encoding to unicode.	Due to the leading char encoding this is not strictly true, but hopefully at some point we can get rid of the leading char overhead."| value |value := char charCode.value < 128	ifTrue: [ ^ char ].value > 255	ifTrue: [ ^ char ].^ self class byteToUnicodeTable at: value - 128 + 1]Class ByteTextConverter >> nextFromStream: aStream[	"Read the next byte (we are only dealing with byte based encodings here) character from aStream and return the result converted to unicode."| byteOrChar |byteOrChar := aStream basicNext.aStream isBinary	ifTrue: [ ^ byteOrChar ].^ byteOrChar ifNotNil: [ self byteToUnicode: byteOrChar ]]Metaclass	name: #ByteTextConverter;	instanceVariables: #(#byteToUnicode #unicodeToByte ).Metaclass ByteTextConverter >> initializeTables[	"Initialize the mappings to and from Unicode."byteToUnicode := Array new: 128.unicodeToByte := Dictionary new.	"Mind the offset because first 128 characters are not stored into byteToUnicodeSpec"	"Some entries are nil, make them pass-through for compatibility, for now"self byteToUnicodeSpec	keysAndValuesDo: [ :index :unicode | 		| unicodeValue |		unicodeValue := unicode ifNil: [ 127 + index ] ifNotNil: [ unicode ].		byteToUnicode at: index put: (Character value: unicodeValue).		unicodeToByte at: unicodeValue put: (127 + index) asCharacter ]]Metaclass ByteTextConverter >> byteToUnicodeTable[	"Return the table mapping from my byte based encoding to unicode"^ byteToUnicode]Metaclass ByteTextConverter >> unicodeToByteTable[	"Return the table mapping from unicode to my byte based encoding"^ unicodeToByte]Metaclass ByteTextConverter >> byteToUnicodeSpec[	"Sepcify a table mapping the entries 0x80 to 0xFF to their unicode counterparts by returning a 128 element array..	The entries 0x00 to 0x7F map to identical values so we don't need to specify them.	See #generateByteToUnicodeSpec: for an automated way to generate these mappings."self subclassResponsibility]Metaclass ByteTextConverter >> parseUnicodeOrgSpec: url[	"Parse and return a mapping from byte to unicode values from url."	"self parseUnicodeOrgSpec: 'http://unicode.org/Public/MAPPINGS/ISO8859/8859-2.TXT'."| mapping |mapping := Dictionary new: 256.(ZnClient new	systemPolicy;	beOneShot;	get: url;	contents)	linesDo: [ :each | 		(each isEmpty or: [ each beginsWith: '#' ])			ifFalse: [ 				| tokens hexReader |				hexReader := [ :string | 				Integer					readFrom:						(string readStream							skip: 2;							yourself)					base: 16 ].				tokens := each findTokens: String tab.				(tokens last = '<control>' or: [ tokens last = '#UNDEFINED' ])					ifFalse: [ mapping at: (hexReader value: tokens first) put: (hexReader value: tokens second) ] ] ].^ mapping]Metaclass ByteTextConverter >> languageEnvironment[self subclassResponsibility]Metaclass ByteTextConverter >> generateByteToUnicodeSpec: url[	"Return the formatted source code for an array mapping 	the top 128 byte to unicode values from a Unicode.org url"	"self generateByteToUnicodeSpec: 'http://unicode.org/Public/MAPPINGS/ISO8859/8859-2.TXT'."| mapping |mapping := self parseUnicodeOrgSpec: url.^ String	streamContents: [ :stream | 		stream			tab;			<< '"';			<< self name;			<< ' generateByteToUnicodeSpec: ';			print: url;			<< '"';			cr;			cr;			tab;			<< '^ #('.		128 to: 255 do: [ :each | 			| unicode |			each \\ 8 = 0				ifTrue: [ 					stream						cr;						tab ].			(unicode := mapping at: each ifAbsent: [ nil ]) isNil				ifTrue: [ 					stream						print: nil;						space ]				ifFalse: [ 					(stream << '16r')						<< (unicode printPaddedWith: $0 to: 4 base: 16);						space ] ].		stream			nextPut: $);			cr ]]Metaclass ByteTextConverter >> initialize[	"ByteTextConverter initialize"self allSubclassesDo: [ :subclass | subclass initializeTables ]]
+Class
+	name: #ByteTextConverter;
+	superclass: #ClassTextConverter;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #();
+	classVariables: #();
+	sharedPools: #(#EventSensorConstants );	package: #'Multilingual-TextConversion'.
+
+Class ByteTextConverter >> nextPut: unicodeCharacter toStream: aStream
+[
+	"Write the unicode character to aStream."
+aStream isBinary	ifTrue: [ aStream basicNextPut: unicodeCharacter charCode ]	ifFalse: [ aStream basicNextPut: (self unicodeToByte: unicodeCharacter) ]
+]
+
+Class ByteTextConverter >> unicodeToByte: unicodeChar
+[
+^ unicodeChar charCode < 128	ifTrue: [ unicodeChar ]	ifFalse: [ self class unicodeToByteTable at: unicodeChar charCode ifAbsent: [ 0 asCharacter ] ]
+]
+
+Class ByteTextConverter >> byteToUnicode: char
+[
+	"Map from my byte based encoding to unicode.	Due to the leading char encoding this is not strictly true, but hopefully at some point we can get rid of the leading char overhead."
+| value |value := char charCode.value < 128	ifTrue: [ ^ char ].value > 255	ifTrue: [ ^ char ].^ self class byteToUnicodeTable at: value - 128 + 1
+]
+
+Class ByteTextConverter >> nextFromStream: aStream
+[
+	"Read the next byte (we are only dealing with byte based encodings here) character from aStream and return the result converted to unicode."
+| byteOrChar |byteOrChar := aStream basicNext.aStream isBinary	ifTrue: [ ^ byteOrChar ].^ byteOrChar ifNotNil: [ self byteToUnicode: byteOrChar ]
+]
+
+Metaclass
+	name: #ByteTextConverter;
+	instanceVariables: #(#byteToUnicode #unicodeToByte ).
+
+Metaclass ByteTextConverter >> initializeTables
+[
+	"Initialize the mappings to and from Unicode."
+byteToUnicode := Array new: 128.unicodeToByte := Dictionary new.	"Mind the offset because first 128 characters are not stored into byteToUnicodeSpec"	"Some entries are nil, make them pass-through for compatibility, for now"self byteToUnicodeSpec	keysAndValuesDo: [ :index :unicode | 		| unicodeValue |		unicodeValue := unicode ifNil: [ 127 + index ] ifNotNil: [ unicode ].		byteToUnicode at: index put: (Character value: unicodeValue).		unicodeToByte at: unicodeValue put: (127 + index) asCharacter ]
+]
+
+Metaclass ByteTextConverter >> byteToUnicodeTable
+[
+	"Return the table mapping from my byte based encoding to unicode"
+^ byteToUnicode
+]
+
+Metaclass ByteTextConverter >> unicodeToByteTable
+[
+	"Return the table mapping from unicode to my byte based encoding"
+^ unicodeToByte
+]
+
+Metaclass ByteTextConverter >> byteToUnicodeSpec
+[
+	"Sepcify a table mapping the entries 0x80 to 0xFF to their unicode counterparts by returning a 128 element array..	The entries 0x00 to 0x7F map to identical values so we don't need to specify them.	See #generateByteToUnicodeSpec: for an automated way to generate these mappings."
+self subclassResponsibility
+]
+
+Metaclass ByteTextConverter >> parseUnicodeOrgSpec: url
+[
+	"Parse and return a mapping from byte to unicode values from url."
+	"self parseUnicodeOrgSpec: 'http://unicode.org/Public/MAPPINGS/ISO8859/8859-2.TXT'."
+| mapping |mapping := Dictionary new: 256.(ZnClient new	systemPolicy;	beOneShot;	get: url;	contents)	linesDo: [ :each | 		(each isEmpty or: [ each beginsWith: '#' ])			ifFalse: [ 				| tokens hexReader |				hexReader := [ :string | 				Integer					readFrom:						(string readStream							skip: 2;							yourself)					base: 16 ].				tokens := each findTokens: String tab.				(tokens last = '<control>' or: [ tokens last = '#UNDEFINED' ])					ifFalse: [ mapping at: (hexReader value: tokens first) put: (hexReader value: tokens second) ] ] ].^ mapping
+]
+
+Metaclass ByteTextConverter >> languageEnvironment
+[
+self subclassResponsibility
+]
+
+Metaclass ByteTextConverter >> generateByteToUnicodeSpec: url
+[
+	"Return the formatted source code for an array mapping 	the top 128 byte to unicode values from a Unicode.org url"
+	"self generateByteToUnicodeSpec: 'http://unicode.org/Public/MAPPINGS/ISO8859/8859-2.TXT'."
+| mapping |mapping := self parseUnicodeOrgSpec: url.^ String	streamContents: [ :stream | 		stream			tab;			<< '"';			<< self name;			<< ' generateByteToUnicodeSpec: ';			print: url;			<< '"';			cr;			cr;			tab;			<< '^ #('.		128 to: 255 do: [ :each | 			| unicode |			each \\ 8 = 0				ifTrue: [ 					stream						cr;						tab ].			(unicode := mapping at: each ifAbsent: [ nil ]) isNil				ifTrue: [ 					stream						print: nil;						space ]				ifFalse: [ 					(stream << '16r')						<< (unicode printPaddedWith: $0 to: 4 base: 16);						space ] ].		stream			nextPut: $);			cr ]
+]
+
+Metaclass ByteTextConverter >> initialize
+[
+	"ByteTextConverter initialize"
+self allSubclassesDo: [ :subclass | subclass initializeTables ]
+]
+

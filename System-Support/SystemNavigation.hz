@@ -1,1 +1,476 @@
-Class	name: #SystemNavigation;	superclass: #ClassObject;	instanceSpecification: #(#pointers #words );	instanceVariables: #(#browserClass #environment );	classVariables: #();	package: #'System-Support'.Class SystemNavigation >> numberOfImplementorsOf: aSelector[	"Answer a count of the implementors of the given selector found in the  	system"	"self new numberOfImplementorsOf: #contents.  	self new numberOfImplementorsOf: #nobodyImplementsThis.  	self new numberOfimplementorsOf: #numberOfImplementorsOf:."| aCount |aCount := 0.self	allBehaviorsDo: [ :class | 		(class includesSelector: aSelector)			ifTrue: [ aCount := aCount + 1 ] ].^ aCount]Class SystemNavigation >> allUnreferencedClassVariablesOf: aClass[	"Answer a list of the names of all the receiver's unreferenced class  	vars, including those defined in superclasses"| aList |aList := OrderedCollection new.aClass withAllSuperclasses	reverseDo: [ :aSuperClass | 		aSuperClass classVarNames			do: [ :var | 				(self allReferencesTo: (aSuperClass classPool associationAt: var)) isEmpty					ifTrue: [ aList add: var ] ] ].^ aList]Class SystemNavigation >> isMessage: selector sentInPackageNamed: packageName[^ (self allSendersOf: selector inPackageNamed: packageName) notEmpty]Class SystemNavigation >> allUnusedClassesWithout: classesAndMessagesPair[	"Enumerates all classes in the system and returns a list of those that are 	apparently unused. A class is considered in use if it (a) has subclasses  	or (b) is referred to by some method or (c) has its name in use as a  	literal."	"SystemNavigation new unusedClasses"| unused |self flag: #rewriteMePlease.unused := Smalltalk globals classNames asIdentitySet copyWithoutAll: (self allGlobalRefsWithout: classesAndMessagesPair).^ unused	reject: [ :cName | 		| cl |		cl := Smalltalk globals at: cName.		cl subclasses isEmpty not ]]Class SystemNavigation >> allUnsentMessages[	"SystemNavigation new allUnSentMessages"	"Answer the set of selectors that are implemented by some object in the  	system but not sent by any."^ self	allUnSentMessagesWithout:		{{}.		{}}]Class SystemNavigation >> allSendersOf: selector inClass: aClass[| sortedSenders special byte |sortedSenders := SortedCollection new.special := Smalltalk hasSpecialSelector: selector ifTrueSetByte: [ :b | byte := b ].self	addSelectorsReferingTo: selector	in: aClass	to: sortedSenders	special: special	byte: byte.^ sortedSenders]Class SystemNavigation >> allUnimplementedCalls[	"Answer an Array of each message that is sent by an expression in a  	method but is not implemented by any object in the system."| aStream all |all := self allImplementedMessages.aStream := (Array new: 50) writeStream.self	allBehaviorsDo: [ :cl | 		cl			selectorsAndMethodsDo: [ :sel :meth | 				| secondStream |				secondStream := (String new: 5) writeStream.				meth messages					do: [ :m | 						(all includes: m)							ifFalse: [ 								secondStream									nextPutAll: m;									space ] ].				secondStream position = 0					ifFalse: [ aStream nextPut: cl name , ' ' , sel , ' calls: ' , secondStream contents ] ] ].^ aStream contents]Class SystemNavigation >> allBehaviorsDo: aBlock[	"Execute a block on each class, metaclass, trait and trait class"self environment	allClassesDo: [ :aClass | 		aBlock			value: aClass;			value: aClass class ].self environment	allTraitsDo: [ :aTrait | 		aBlock			value: aTrait;			value: aTrait classTrait ]]Class SystemNavigation >> allClassesInPackageNamed: packageName[	"Returns the list of classes that belongs to a Monticello package."	"It would be probably better to delegate that query to the package itself"| classes organization |organization := Smalltalk globals organization.classes := (organization classesInCategory: packageName) asSet.(organization categoriesMatching: packageName , '-*')	do: [ :category | classes addAll: (organization classesInCategory: category) ].^ classes asArray]Class SystemNavigation >> isThereAnImplementorOf: aSelector[	"Answer true if there is at least one implementor of the selector found  	in the system, false if there are no implementors"	"self new isThereAnImplementorOf: #contents.  	self new isThereAnImplementorOf: #nobodyImplementsThis."self	allBehaviorsDo: [ :class | 		(class includesSelector: aSelector)			ifTrue: [ ^ true ] ].^ false]Class SystemNavigation >> obsoleteClasses[	"SystemNavigation new obsoleteClasses inspect"	"NOTE:  Also try inspecting comments below"| obs |obs := OrderedCollection new.Smalltalk garbageCollect.Metaclass	allInstancesDo: [ :m | 		| c |		c := m soleInstance.		(c ~~ nil and: [ 'AnOb*' match: c name asString ])			ifTrue: [ obs add: c ] ].^ obs asArray	"Likely in a ClassDict or Pool...(Association allInstances select: [:a | (a value isKindOf: Class) and: ['AnOb*' match: a value name]]) asArray"	"Obsolete class refs or super pointer in last lit of a method...| n l found |Smalltalk browseAllSelect:	[:m | found := false.	1 to: m numLiterals do:		[:i | (((l := m literalAt: i) isMemberOf: Association)				and: [(l value isKindOf: Behavior)				and: ['AnOb*' match: l value name]])			ifTrue: [found := true]].	found]"]Class SystemNavigation >> environment[^ environment]Class SystemNavigation >> allImplementedMessagesWithout: classesAndMessagesPair[	"Answer a Set of all the messages that are implemented in the system,  	computed in the absence of the supplied classes and messages. Note this  	reports messages that are in the absent selectors set."| messages absentClasses |messages := IdentitySet new: CompiledMethod instanceCount.absentClasses := classesAndMessagesPair first.self flag: #shouldBeRewrittenUsingSmalltalkAllClassesDo:.	"sd 29/04/03"Smalltalk classNames , Smalltalk traitNames	do: [ :name | 		((absentClasses includes: name)			ifTrue: [ {} ]			ifFalse: [ 				{(Smalltalk globals at: name).				((Smalltalk globals at: name) classSide)} ]) do: [ :each | messages addAll: each selectors ] ].^ messages]Class SystemNavigation >> allClassesWithUnimplementedCalls[	"Answer an Array of classes that have messages with calls to methods that aren't implemented	anywhere in the system"| all dict |dict := Dictionary new.all := self systemNavigation allImplementedMessages.self systemNavigation	allBehaviorsDo: [ :cl | 		cl			selectorsAndMethodsDo: [ :sel :meth | 				meth isPrimitive					ifFalse: [ 						meth messages							do: [ :m | 								(all includes: m)									ifFalse: [ ((dict at: cl ifAbsentPut: [ Dictionary new ]) at: sel ifAbsentPut: [ OrderedCollection new ]) add: m ] ] ] ] ].^ dict]Class SystemNavigation >> allMethodsInCategory: category[	"Answer the collection of methods that are contained in a particular method category"	"SystemNavigation new allMethodsInCategory: 'printing'"| aCollection |aCollection := Set new.self	allBehaviorsDo: [ :behavior | 		(category = ClassOrganizer allCategory			ifTrue: [ behavior organization allMethodSelectors ]			ifFalse: [ behavior organization listAtCategoryNamed: category ])			do: [ :sel | aCollection add: (self createMethodNamed: sel realParent: behavior) ] ].^ aCollection]Class SystemNavigation >> isMessage: selector sentInClassCategory: category[^ (self allSendersOf: selector inClassCategory: category) notEmpty]Class SystemNavigation >> initialize[super initialize.self environment: Smalltalk globals]Class SystemNavigation >> methodsWithInitials: targetInitials[	"Based on a do-it contributed to the Squeak mailing list by Goran Hultgen: Browse methods whose initials (in the time-stamp, as logged to disk) match the given initials. Print out the complete time-stamp table to the Transcript. Answer a list of (initials -> count) associations.CAUTION: It may take several minutes for this to complete."	"Time millisecondsToRun: [SystemNavigation new methodsWithInitials: 'bf'] "| initials timeStamp allSubmitters |initials := ''.timeStamp := ''.allSubmitters := Bag new.self	browseAllSelect: [ :cm | 		timeStamp := cm timeStamp.		initials := timeStamp isEmpty			ifTrue: [ '' ]			ifFalse: [ timeStamp substrings first ].		initials := initials isEmpty			ifTrue: [ '<no time stamp>' ]			ifFalse: [ 				initials first isDigit					ifTrue: [ '<date>' ]					ifFalse: [ initials ] ].		allSubmitters add: initials.		initials = targetInitials ]	name: 'Methods with initials ' , targetInitials	autoSelect: nil.allSubmitters sortedCounts	do: [ :elem | 		Transcript			cr;			show: elem asString ].^ allSubmitters]Class SystemNavigation >> allContributors[	"Return the list of initials and names of method authors."	"I am wondering why a bag is used instead of a set. AlexandreBergel 12/29/2010 11:37"	"SystemNavigation new allContributors"| contributorsNames |contributorsNames := Bag new.self	allBehaviorsDo: [ :behavior | 		behavior			methodsDo: [ :compiledMethod | 				| stamp |				stamp := compiledMethod timeStamp.				stamp notEmpty					ifTrue: [ contributorsNames add: compiledMethod timeStamp substrings first ] ] ].^ contributorsNames]Class SystemNavigation >> allGlobalRefs[	"Answer a set of symbols that may be refs to Global names.  In some sense we should only need the associations, but this will also catch, eg, HTML tag types."^ self	allGlobalRefsWithout:		{{}.		{}}]Class SystemNavigation >> allClassesUsingSharedPool: aString[	"Answer an Array of all classes that uses the shared pool named aString."| aCollection |aCollection := ReadWriteStream on: Array new.self	allClassesDo: [ :class | 		(class includesSharedPoolNamed: aString)			ifTrue: [ aCollection nextPut: class ] ].^ aCollection contents]Class SystemNavigation >> allSendersOf: selector inClassCategory: category[| classes sortedSenders special byte |classes := self environment organization classesInCategory: category.sortedSenders := SortedCollection new.classes ifEmpty: [ ^ sortedSenders ].special := Smalltalk hasSpecialSelector: selector ifTrueSetByte: [ :b | byte := b ].classes	do: [ :class | 		self			addSelectorsReferingTo: selector			in: class			to: sortedSenders			special: special			byte: byte ].^ sortedSenders]Class SystemNavigation >> hierarchyOfImplementorsOf: aSelector forClass: aClass[	"Answer a list of classes in the hierarchy both above and below the given class which implement the given selector."	"SystemNavigation new hierarchyOfImplementorsOf: #contents forClass: StringHolder"^ (self hierarchyOfClassesSurrounding: aClass) select: [ :cl | cl includesSelector: aSelector ]]Class SystemNavigation >> isMessage: selector sentInClass: aClass[^ (self allSendersOf: selector inClass: aClass) notEmpty]Class SystemNavigation >> allSentMessagesWithout: classesAndMessagesPair[	"Answer the set of selectors which are sent somewhere in the system,  	computed in the absence of the supplied classes and messages."| sent absentClasses absentSelectors |sent := IdentitySet new: CompiledMethod instanceCount.absentClasses := classesAndMessagesPair first.absentSelectors := classesAndMessagesPair second.self	allBehaviorsDo: [ :class | 		((absentClasses includes: class)			ifTrue: [ {} ]			ifFalse: [ 				{class.				(class classSide)} ])			do: [ :each | 				(absentSelectors isEmpty					ifTrue: [ each selectors ]					ifFalse: [ each selectors copyWithoutAll: absentSelectors ])					do: [ :sel | 						"Include all sels, but not if sent by self"						(each compiledMethodAt: sel)							literalsDo: [ :m | 								m isSymbol									ifTrue: [ 										"might be sent"										m == sel											ifFalse: [ sent add: m ] ].								(m isMemberOf: Array)									ifTrue: [ 										"might be performed"										m											do: [ :x | 												x isSymbol													ifTrue: [ 														x == sel															ifFalse: [ sent add: x ] ] ] ] ] ] ] ].	"The following may be sent without being in any literal frame"1 to: Smalltalk specialSelectorSize do: [ :index | sent add: (Smalltalk specialSelectorAt: index) ].^ sent]Class SystemNavigation >> selectAllMethods: aBlock[	"Answer a SortedCollection of each method that, when used as the block  	argument to aBlock, gives a true result."| aCollection |aCollection := SortedCollection new.self	allBehaviorsDo: [ :class | 		class			selectorsAndMethodsDo: [ :sel :m | 				(aBlock value: m)					ifTrue: [ aCollection add: (self createMethodNamed: sel realParent: class) ] ] ].^ aCollection]Class SystemNavigation >> allSelect: aBlock[	"Answer a SortedCollection of each method that, when used as 	the block  	argument to aBlock, gives a true result."| aCollection |aCollection := SortedCollection new.self	allBehaviorsDo: [ :class | 		class			selectorsAndMethodsDo: [ :sel :meth | 				(aBlock value: meth)					ifTrue: [ aCollection add: class name , ' ' , sel ] ] ].^ aCollection]Class SystemNavigation >> allClassesAndTraits[	"Answer all the classes and traits present in the image"	"Note that metaclasses are not part of the answer"^ Smalltalk globals allClassesAndTraits]Class SystemNavigation >> allImplementedMessages[	"Answer a Set of all the messages that are implemented in the system."^ self	allImplementedMessagesWithout:		{{}.		{}}]Class SystemNavigation >> allCallsOn: aSymbol localTo: aClass[	"Answer a Set of RGMethodDefinition for all the methods	 that call on aSymbol in, above or below the given class."| aSet special byte enum |aSet := Set new.special := Smalltalk hasSpecialSelector: aSymbol ifTrueSetByte: [ :b | byte := b ].enum := [ :behavior | (behavior whichSelectorsReferTo: aSymbol special: special byte: byte)	do: [ :sel | aSet add: (RGMethodDefinition realClass: behavior selector: sel) ] ].aClass theNonMetaClass withAllSuperAndSubclassesDo: enum.aClass theNonMetaClass class withAllSuperAndSubclassesDo: enum.^ aSet]Class SystemNavigation >> unsentMessagesInClass: aClass[| methReferences |methReferences := Set new.aClass	selectorsDo: [ :selector | 		(self isUnsentMessage: selector)			ifTrue: [ methReferences add: (self createMethodNamed: selector realParent: aClass) ] ].^ methReferences]Class SystemNavigation >> signatories[	"Answer the initials corresponding to the people who have signed the license"	"SystemNavigation new signatories"^ (self signatoriesString subStrings: {(Character cr)}) collect: [ :each | each substrings first ]]Class SystemNavigation >> allSendersOf: selector inPackageNamed: packageName[^ (self categoriesInPackageNamed: packageName)	inject: SortedCollection new	into: [ :sortedSenders :category | sortedSenders , (self allSendersOf: selector inClassCategory: category) ]]Class SystemNavigation >> methodsWithUnboundGlobals[	"This says that for any global, it should match either the class's notion of what bindingOf: the key is, or bindingOf: should be nil and the binding should be in Undeclared. If the class answers a different binding through bindingOf: or answers no binding and the binding is not in Undeclared then the variable in the method is wrong.	For a clean image the result should be empty. If it is not empty, evaluating Compiler recompileAll probably solves the problem. However, we should investigate why the method gets an incorrect state."	"SystemNavigation new methodsWithUnboundGlobals"^ self	allSelect: [ :m | 		m literals			anySatisfy: [ :l | 				l isVariableBinding					and: [ 						l key isSymbol							and: [ 								(m methodClass bindingOf: l key)									ifNil: [ (Undeclared associationAt: l key ifAbsent: [  ]) ~~ l ]									ifNotNil: [ :b | b ~~ l ] ]	"avoid class-side methodClass literals" ] ] ]]Class SystemNavigation >> allSendersOf: selector[| sortedSenders special byte |sortedSenders := SortedCollection new.special := Smalltalk hasSpecialSelector: selector ifTrueSetByte: [ :b | byte := b ].self	allBehaviorsDo: [ :behavior | 		(behavior thoroughWhichSelectorsReferTo: selector special: special byte: byte)			do: [ :sel | sortedSenders add: (self createMethodNamed: sel realParent: behavior) ] ].^ sortedSenders]Class SystemNavigation >> categoriesInPackageNamed: packageName[^ (self environment organization categoriesMatching: packageName)	, (self environment organization categoriesMatching: packageName , '-*')]Class SystemNavigation >> allCallsOn: firstLiteral and: secondLiteral[	"Answer a SortedCollection of all the methods that call on both aLiteral 	and secondLiteral."| aCollection firstSpecial secondSpecial firstByte secondByte |self flag: #ShouldUseAllCallsOn:.	"sd"aCollection := SortedCollection new.firstSpecial := Smalltalk hasSpecialSelector: firstLiteral ifTrueSetByte: [ :b | firstByte := b ].secondSpecial := Smalltalk hasSpecialSelector: secondLiteral ifTrueSetByte: [ :b | secondByte := b ].self	allBehaviorsDo: [ :class | 		| secondArray |		secondArray := class whichSelectorsReferTo: secondLiteral special: secondSpecial byte: secondByte.		((class whichSelectorsReferTo: firstLiteral special: firstSpecial byte: firstByte)			select: [ :aSel | secondArray includes: aSel ])			do: [ :sel | aCollection add: (self createMethodNamed: sel realParent: class) ] ].^ aCollection]Class SystemNavigation >> unimplemented[	"Answer an Array of each message that is sent by an expression in a method but is not implemented by any object in the system."| all unimplemented |all := IdentitySet new: Symbol instanceCount * 2.self allBehaviorsDo: [ :cl | cl selectorsDo: [ :aSelector | all add: aSelector ] ].unimplemented := IdentityDictionary new.self	allBehaviorsDo: [ :cl | 		cl			selectorsAndMethodsDo: [ :sel :meth | 				meth messages					do: [ :m | 						| entry |						(all includes: m)							ifFalse: [ 								entry := unimplemented at: m ifAbsent: [ Array new ].								entry := entry copyWith: cl name , '>' , sel.								unimplemented at: m put: entry ] ] ] ].^ unimplemented]Class SystemNavigation >> allUnsentMessagesIn: selectorSet[	"Answer the subset of selectorSet which are not sent anywhere in the 	system. As allSentMessages does not recurse into nested Arrays, filter	with #allCallsOn, which does"^ (selectorSet copyWithoutAll: self allSentMessages) select: [ :each | (self allCallsOn: each) isEmpty ]]Class SystemNavigation >> allImplementorsOf: aSelector[	"Answer a SortedCollection of all the methods that implement the message 	aSelector."| aCollection |aCollection := SortedCollection new.self	allBehaviorsDo: [ :class | 		(class includesSelector: aSelector)			ifTrue: [ aCollection add: (self createMethodNamed: aSelector realParent: class) ] ].^ aCollection]Class SystemNavigation >> contributorsNotSignatories[	"SystemNavigation new contributorsNotSignatories"| signatories answer |answer := Dictionary new.signatories := self signatories.self	allBehaviorsDo: [ :behavior | 		behavior			methodsDo: [ :compiledMethod | 				| stamp initials |				stamp := compiledMethod timeStamp.				stamp notEmpty					ifTrue: [ 						initials := compiledMethod timeStamp substrings first.						(signatories includes: initials)							ifFalse: [ (answer at: initials ifAbsentPut: [ OrderedCollection new ]) add: compiledMethod selector -> compiledMethod methodClass ] ] ] ].^ answer]Class SystemNavigation >> obsoleteMethodReferences[	"SystemNavigation new obsoleteMethodReferences"	"Open a browser on all referenced behaviors that are obsolete"| obsClasses references |references := Array new writeStream.obsClasses := self obsoleteBehaviors.'Scanning for methods referencing obsolete classes'	displayProgressFrom: 0	to: obsClasses size	during: [ :bar | 		obsClasses			keysAndValuesDo: [ :index :each | 				| obsRefs |				bar current: index.				obsRefs := each pointersToExcept: obsClasses.				obsRefs					do: [ :ref | 						"Figure out if it may be a global"						(ref isVariableBinding and: [ ref key isString	"or Symbol" ])							ifTrue: [ 								ref pointersTo									do: [ :meth | 										(meth isKindOf: CompiledMethod)											ifTrue: [ meth methodReference ifNotNil: [ :mref | references nextPut: mref ] ] ] ] ] ] ].^ references contents]Class SystemNavigation >> unsentMessagesInCategory: category[^ (self environment organization classesInCategory: category)	inject: Set new	into: [ :unsentMessages :class | unsentMessages , (self unsentMessagesInClass: class) ]]Class SystemNavigation >> allGlobalRefsWithout: classesAndMessagesPair[	"Answer a set of symbols that may be refs to Global names. In some  	sense we should only need the associations, but this will also catch, eg,  	HTML tag types. This method computes its result in the absence of  	specified classes and messages."	"may be a problem if namespaces are introduced as for the moment  	only Smalltalk is queried. sd 29/4/03"| globalRefs absentClasses absentSelectors |globalRefs := IdentitySet new: CompiledMethod instanceCount.absentClasses := classesAndMessagesPair first.absentSelectors := classesAndMessagesPair second.self flag: #shouldBeRewrittenUsingSmalltalkAllClassesDo:.	"sd 29/04/03"Smalltalk classNames	do: [ :cName | 		((absentClasses includes: cName)			ifTrue: [ {} ]			ifFalse: [ 				{(Smalltalk globals at: cName).				((Smalltalk globals at: cName) class)} ])			do: [ :cl | 				(absentSelectors isEmpty					ifTrue: [ cl selectors ]					ifFalse: [ cl selectors copyWithoutAll: absentSelectors ])					do: [ :sel | 						"Include all capitalized symbols for good 									measure"						(cl compiledMethodAt: sel)							literalsDo: [ :m | 								(m isSymbol and: [ m size > 0 and: [ m first canBeGlobalVarInitial ] ])									ifTrue: [ globalRefs add: m ].								(m isMemberOf: Array)									ifTrue: [ 										m											do: [ :x | 												(x isSymbol and: [ x size > 0 and: [ x first canBeGlobalVarInitial ] ])													ifTrue: [ globalRefs add: x ] ] ].								m isVariableBinding									ifTrue: [ m key ifNotNil: [ globalRefs add: m key ] ] ] ] ] ].^ globalRefs]Class SystemNavigation >> obsoleteBehaviors[	"SystemNavigation new obsoleteBehaviors inspect"	"Find all obsolete behaviors including meta classes"| obs |obs := OrderedCollection new.Smalltalk garbageCollect.self	allObjectsDo: [ :cl | 		(cl isBehavior and: [ cl isObsolete ])			ifTrue: [ obs add: cl ] ].^ obs asArray]Class SystemNavigation >> allReferencesToPool: aPool from: aClass[	"Answer all the references to variables from aPool"| list |list := OrderedCollection new.aClass	withAllSubclassesDo: [ :cls | 		cls			selectorsAndMethodsDo: [ :sel :meth | 				| ref |				ref := meth literals					detect: [ :lit | lit isVariableBinding and: [ (aPool bindingOf: lit key) notNil ] ]					ifNone: [ nil ].				ref ifNotNil: [ list add: (self createMethodNamed: sel realParent: aClass) ] ] ].^ list]Class SystemNavigation >> unsentMessagesInPackageNamed: packageName[| unsentMessages |unsentMessages := self unsentMessagesInCategory: packageName.(self categoriesInPackageNamed: packageName)	do: [ :category | unsentMessages addAll: (self unsentMessagesInCategory: category) ].^ unsentMessages]Class SystemNavigation >> allMethodsWithSourceString: aString matchCase: caseSensitive[	"Answer a SortedCollection of all the methods that contain, in source code, aString as a substring.  Search the class comments also"| list addMethod addComment |list := Set new.addMethod := [ :mrClass :mrSel | list add: (self createMethodNamed: mrSel realParent: mrClass) ].addComment := [ :mrClass | list add: (RGCommentDefinition realClass: mrClass) ].'Searching all source code...'	displayProgressFrom: 0	to: Smalltalk globals classNames size	during: [ :bar | 		| count |		count := 0.		self			allBehaviorsDo: [ :each | 				bar current: (count := count + 1).				each					selectorsDo: [ :sel | 						((each sourceCodeAt: sel) includesSubstring: aString caseSensitive: caseSensitive)							ifTrue: [ addMethod value: each value: sel ] ].				(each organization classComment asString includesSubstring: aString caseSensitive: caseSensitive)					ifTrue: [ addComment value: each ] ] ].^ list asSortedCollection]Class SystemNavigation >> allCallsOn: aSymbol from: aClass[	"Answer a SortedCollection of all the methods that call on aSymbol."| aSortedCollection special byte |aSortedCollection := SortedCollection new.special := Smalltalk hasSpecialSelector: aSymbol ifTrueSetByte: [ :b | byte := b ].aClass	withAllSubclassesDo: [ :class | 		(class whichSelectorsReferTo: aSymbol special: special byte: byte)			do: [ :sel | aSortedCollection add: (self createMethodNamed: sel realParent: class) ] ].^ aSortedCollection]Class SystemNavigation >> headingAndAutoselectForLiteral: aLiteral do: binaryBlock[	"Evaluate aBlock with either Users of ... or Senders of ... plus the auto-select string	 for the given literal.  aLiteral can be a Symbol, a VariableBinding or an arbitrary object."| autoSelect |^ aLiteral isSymbol	ifTrue: [ binaryBlock value: 'Senders of ' , aLiteral value: aLiteral ]	ifFalse: [ 		autoSelect := aLiteral isVariableBinding			ifTrue: [ aLiteral key ]			ifFalse: [ aLiteral printString ].		binaryBlock value: 'Users of ' , autoSelect value: autoSelect ]]Class SystemNavigation >> allClassesDefiningClassVarNamed: aString[	"Answer an Array of all classes that define the class variables named aString."| aCollection |aCollection := ReadWriteStream on: Array new.self	allClassesDo: [ :class | 		(class hasClassVarNamed: aString)			ifTrue: [ aCollection nextPut: class ] ].^ aCollection contents]Class SystemNavigation >> allLocalCallsOn: aSymbol ofClass: aClass[	"Answer a SortedCollection of all the methods that call on aSymbol, anywhere in my class hierarchy."| aSet special byte cls |aSet := Set new.cls := aClass theNonMetaClass.special := Smalltalk hasSpecialSelector: aSymbol ifTrueSetByte: [ :b | byte := b ].cls	withAllSuperAndSubclassesDo: [ :class | 		(class whichSelectorsReferTo: aSymbol special: special byte: byte)			do: [ :sel | aSet add: (self createMethodNamed: sel realParent: class) ] ].cls class	withAllSuperAndSubclassesDo: [ :class | 		(class whichSelectorsReferTo: aSymbol special: special byte: byte)			do: [ :sel | aSet add: (self createMethodNamed: sel realParent: class) ] ].^ aSet]Class SystemNavigation >> signatoriesString[^ 'AB               Alexandre Bergelack              Alan Kayads              Adam Spitzajh              Anthony Hannanaka              Mark Guzdialal               Adrian Lienhardaoy              Andres Otaduyapb              Andrew P. Blackapl              Alain Plantecar               Andreas Raabasm              Alejandro Magistrelloavi              Avi Bryantbf               Bert FreudenbergBG               Boris Gaertnerbh               Bob HartwigBJP              Bijan Parsiabkv              Brent Vukmerbolot            Bolot Kerimbaevbootstrap        Pavel KrivanekBP               Bijan Parsiabrp              Brent Pinkneybtr              Brian Ricecbc              Chris Cunninghamccn              Chris NortonCdG              Cees de Grootcds              C. David Shaffercmm              Chris Mullercrl              Craig Lattacwp              Colin Putneydaf              Dave Faughtdao              danil osipchukDAS              David A Smithdc               Damien Cassoudd               Dominique Dutoitdew              Doug WayDF               Diego Fernandezdgd              Diego Gomez Deckdhhi             Dan Ingallsdi               Dan IngallsDM               Duane MaxwellDSM              Duane Maxwelldtl              Dave Lewisdvf              Daniel Vainsencheredc              Edgar DeCleeneefc              Eddie Cottongimefo              Emilio Ocaem               Ernest Micklei?emm              Ernest Mickleies               Enrico SpinielliFBS              Frank Sheararfc               Frank Caggianofcs              Frank Sergeantfm               Florin Mateocgh               Goran Krampe (nee Hultgren)gk               Goran Krampe (nee Hultgren)gm               German Moralesgo               Georg Gollmanngsa              German ArduinoHEG              Henrik EkenbergHilaireFernandes Hilaire FernandesHK               Herbert Konighmm              Hans-Martin Mosnerhpt              Hernan Tylimhuma             Lyndon Tremblayich.             Yuji Ichikawaikp              Ian Piumartajaf              Jan Fietzjam              Javier Musajcg              Joshua Gargusjdf              David Farberjdr              Javier Diaz-Reinosoje               Jorn Eyrichje77             Jochen RickJF               Julian Fitzelljhm              John Maloneyjlb              Jim Bensonjmb              Hans BavecoJMM              John McIntoshJMV              Juan Manuel Vuletichjon              Jon Hylandsjrm              John-Reed Maffeojrp              John Piercejsp              Jeff Pierceka               Kazuhiro Abekfr              Karl RambergKLC              Ken CauseyKR               korakuriderKTT              Kurt Thamskwl              Klaus D. Witzelky               Koji Yokokawalaza             Alexander LazarevicLB               Leo BurdLC               Leandro CanigliaLEG              Gerald Leeblen              Luciano Esteban Notarfrancescolr               Lukas Rengglilrs              Lorenzo Schiavinals               Lex Spoonm3r              Maurice Rabbmas              Mark SchwenkMD               Markus Denkermdr              Mike Rutenbergmga              Markus Gallimiki             Mikael Kindborgmikki            Mikael Kindborgmir              Michael Ruegermist             Michal Starkemjg              Mark Guzdialmjr              Mike Robertsmjt              Mike Thomasmk               Matej KosikMPW              Marcel Weihermrm              Martin McClurems               mathMU               Masashi Umezawamw               Martin Wirblatnb               Naala Brewernice             Nicolas Celliernk               Ned KonzNoury            Noury BouraqadiNS               Nathanael SchaerliPHK              Peter Keelerpk               Pavel Krivanekpm               Patrick Mauritzpnm              Paul McDonoughRAA              Bob Arningraok             Richard A. O"Keeferbb              Brian Brownrca              Russell AllenreThink          Paul McDonoughrew              Roger Whitneyrhi              Robert HirschfeldRik              Rik Fischer SmOOdyRJT              Ron Teitelbaumrr               Romain Robbesrw               Roel Wuytsrww              Robert Witherssbw              Stephan B. WesselsSD               Stephane Ducassesge              Steve Elkinsshrink           Pavel Krivanekslg              Steve Gilbertsm               Simon Michaelsma              Stefan Matthias Austsn               Suslov Nikolayspfa             Stephane Rollandinsps              Steven SwerlingSqR              Andres ValloudSqR!!            Andres ValloudSqR!!!!          Andres Valloudsr               Stephan Rudlofssa              Sam S. Adamsst               Samuel Tardieustephaneducasse  Stephane Ducassestp              Stephen Travis Popesumim            Masato Sumisvp              Stephen Vincent Pairsw               Scott WallaceT2               Toshiyuki Takedatak              Takashi Yamamiyatao              Tim Olsontb               Todd BlanchardTBn              Torsten Bergmanntetha            Tetsuya Hayashitfei             The Fourth Estate, Inc.th               Torge Husfeldtti               Tobias IsenbergTJ               TJ Leonetk               Ted Kaehlertk               Thomas Kowarktlk              Tom KoenigTN               korakuriderTPR              Tim RowledgeTRee             Trygve ReenskaugTsutomu          Tsutomu Hiroshimatween            Andy Tweenvb               Vassili Bykovvj               Vladimir Janousekwiz              Jerome Peacewod              Bill Dargelykoubo           Koji Yokokawayo               Yoshiki Ohshimazz               Serge Stinckwichjmvjmjmmmd 			Marcus Denkersd  			Stephane Ducassetpr']Class SystemNavigation >> removeAllButPackages: packagesList[	"Remove all classes and methods that do not belong to some of listed packages. Skip #unload. Do not use this method if you can use Monticello! This method is used by some low-level shrinking process. Do not use it. This is quite hackish"| keep remove oldRemove extensionCategories log |keep := Set new.packagesList do: [ :pkg | keep addAll: (self allClassesInPackageNamed: pkg) ].oldRemove := Set new.[ remove := Smalltalk globals allClassesAndTraits reject: [ :c | keep includes: c ].remove := remove collect: [ :c | c name ].(remove asSortedCollection: [ :a :b | a <= b ])	do: [ :className | 		| class |		class := Smalltalk globals classOrTraitNamed: className.		class allSubclasses			ifEmpty: [ 				SystemAnnouncer uniqueInstance unsubscribe: class.				class isTrait					ifFalse: [ 						(class class includesSelector: #unload)							ifTrue: [ class removeSelector: #unload ] ].				class removeFromSystem ] ].oldRemove	ifNotEmpty: [ 		oldRemove = remove			ifTrue: [ 				self					error:						'Some classes still have subclasses: '							, (remove collect: [ :c | c -> (Smalltalk classOrTraitNamed: c) allSubclasses ]) asString ] ].oldRemove := remove.remove notEmpty ] whileTrue.keep	do: [ :class | 		extensionCategories := (class organization ownCategories select: [ :category | category first = $* ])			asOrderedCollection.		extensionCategories			removeAllSuchThat: [ :category | 				packagesList					anySatisfy: [ :package | 						category asLowercase allButFirst = package asLowercase							or: [ package asLowercase , '-*' match: category asLowercase allButFirst ] ] ].		extensionCategories do: [ :category | class removeCategory: category ].		class isTrait			ifFalse: [ 				extensionCategories := (class class organization ownCategories select: [ :category | category first = $* ])					asOrderedCollection.				extensionCategories					removeAllSuchThat: [ :category | 						packagesList							anySatisfy: [ :package | 								category asLowercase allButFirst = package asLowercase									or: [ package asLowercase , '-*' match: category asLowercase allButFirst ] ] ].				extensionCategories do: [ :category | class class removeCategory: category ] ] ]]Class SystemNavigation >> allCallsOn: aSymbol[	"Answer a Collection of all the methods that call on the provided symbol even deeply embedded in literal array."	"self new allCallsOn: #allCallsOn:"^ self allReferencesTo: aSymbol]Class SystemNavigation >> allSentMessages[	"Answer the set of selectors which are sent somewhere in the system."^ self	allSentMessagesWithout:		{{}.		{}}]Class SystemNavigation >> allSelectorsWithAnyImplementorsIn: selectorList[	"Answer the subset of the given list which represent method selectors 	which have at least one implementor in the system."| good |good := OrderedCollection new.self	allBehaviorsDo: [ :class | 		selectorList			do: [ :aSelector | 				(class includesSelector: aSelector)					ifTrue: [ good add: aSelector ] ] ].^ good asSet asArray sort]Class SystemNavigation >> allClasses[	"currently returns all the classes in the current environment"^ self environment allClasses]Class SystemNavigation >> allReferencesTo: aLiteral[	"Answer a Collection of all the methods that refer to aLiteral even deeply embedded in literal array."	"SystemNavigation new allReferencesTo: #+"	"SystemNavigation new allReferencesTo: Point binding"| result special byte symbol |result := OrderedCollection new.special := Smalltalk hasSpecialSelector: aLiteral ifTrueSetByte: [ :value | byte := value ].symbol := aLiteral isSymbol.self	allBehaviorsDo: [ :class | 		| selectors |		selectors := symbol			ifFalse: [ class whichSelectorsReferTo: aLiteral special: special byte: byte ]			ifTrue: [ class thoroughWhichSelectorsReferTo: aLiteral special: special byte: byte ].		selectors do: [ :selector | result addLast: (self createMethodNamed: selector realParent: class) ] ].^ result]Class SystemNavigation >> contributionsOf: aString[	"SystemNavigation new contributionsOf: 'alain.plantec'"| answer |answer := OrderedCollection new.self	allBehaviorsDo: [ :behavior | 		behavior			methodsDo: [ :compiledMethod | 				| stamp initials |				stamp := compiledMethod timeStamp.				stamp notEmpty					ifTrue: [ 						initials := compiledMethod timeStamp substrings first.						aString = initials							ifTrue: [ answer add: compiledMethod selector -> compiledMethod methodClass ] ] ] ].^ answer]Class SystemNavigation >> allReferencesToPool: aPool[	"Answer all the references to variable aPool"| list |list := OrderedCollection new.self	allClassesDo: [ :cls | 		cls			selectorsAndMethodsDo: [ :sel :meth | 				| ref |				ref := meth literals					detect: [ :lit | (lit isVariableBinding and: [ lit key notNil ]) and: [ (aPool bindingOf: lit key) notNil ] ]					ifNone: [ nil ].				ref ifNotNil: [ list add: (self createMethodNamed: sel realParent: cls) ] ] ].^ list]Class SystemNavigation >> allClassesImplementing: aSelector[	"Answer an Array of all classes that implement the message aSelector."| aCollection |aCollection := ReadWriteStream on: Array new.self	allBehaviorsDo: [ :class | 		(class includesSelector: aSelector)			ifTrue: [ aCollection nextPut: class ] ].^ aCollection contents]Class SystemNavigation >> hierarchyOfClassesSurrounding: aClass[	"Answer a list of classes in the hierarchy both above and below the given class"	"SystemNavigation new hierarchyOfClassesSurrounding: StringHolder"| list aClassNonMeta isMeta |aClass ifNil: [ ^ OrderedCollection new ].aClass ifNil: [ ^ self ].aClassNonMeta := aClass theNonMetaClass.isMeta := aClassNonMeta ~~ aClass.list := OrderedCollection new.aClass allSuperclasses reverseDo: [ :cl | list addLast: cl ].aClassNonMeta	allSubclassesWithLevelDo: [ :cl :level | 		| theClassOrMeta |		theClassOrMeta := isMeta			ifTrue: [ cl class ]			ifFalse: [ cl ].		list addLast: theClassOrMeta ]	startingLevel: 0.^ list]Class SystemNavigation >> environment: aSystemDictionary[^ environment := aSystemDictionary]Class SystemNavigation >> allObjectsSelect: aBlock[	"Evaluate the argument, aBlock, for each object in the system excluding 	SmallIntegers. Return a collection af all objects for whom the value is 	true. "^ Array	streamContents: [ :s | 		self			allObjectsDo: [ :object | 				(aBlock value: object)					ifTrue: [ s nextPut: object ] ] ]]Class SystemNavigation >> addSelectorsReferingTo: aSymbol in: class to: sortedSenders special: special byte: byte[{class.(class class)}	do: [ :behavior | 		(behavior thoroughWhichSelectorsReferTo: aSymbol special: special byte: byte)			do: [ :sel | sortedSenders add: (self createMethodNamed: sel realParent: behavior) ] ]]Class SystemNavigation >> allImplementorsOf: aSelector localTo: aClass[	"Answer a SortedCollection of all the methods that implement the message  	aSelector in, above, or below the given class."| cls aCollection |aCollection := SortedCollection new.cls := aClass theNonMetaClass.cls	withAllSuperAndSubclassesDo: [ :class | 		(class includesSelector: aSelector)			ifTrue: [ aCollection add: (self createMethodNamed: aSelector realParent: class) ] ].cls class	withAllSuperAndSubclassesDo: [ :class | 		(class includesSelector: aSelector)			ifTrue: [ aCollection add: (self createMethodNamed: aSelector realParent: class) ] ].^ aCollection]Class SystemNavigation >> isUnsentMessage: selector[| special byte |special := Smalltalk hasSpecialSelector: selector ifTrueSetByte: [ :b | byte := b ].self	allBehaviorsDo: [ :behavior | 		(behavior thoroughHasSelectorReferringTo: selector special: special byte: byte)			ifTrue: [ ^ false ] ].^ true]Class SystemNavigation >> createMethodNamed: aSelector realParent: class[^ RGMethodDefinition realClass: class selector: aSelector]Class SystemNavigation >> allMethodsSelect: aBlock[	"Answer a SortedCollection of each method that, when used as the block  	argument to aBlock, gives a true result."| aCollection |aCollection := SortedCollection new.self	allBehaviorsDo: [ :class | 		class			selectorsAndMethodsDo: [ :sel :m | 				(aBlock value: m)					ifTrue: [ aCollection add: (self createMethodNamed: sel realParent: class) ] ] ].^ aCollection]Class SystemNavigation >> allObjectsDo: aBlock[	"Evaluate the argument, aBlock, for each object in the system 	excluding SmallIntegers."| object endMarker |object := self someObject.endMarker := Object new.[ endMarker == object ]	whileFalse: [ 		aBlock value: object.		object := object nextObject ]]Class SystemNavigation >> allPrimitiveMethodsInCategories: aList[	"Answer an OrderedCollection of all the methods that are implemented by 	primitives in the given categories. 1/26/96 sw"	"SystemNavigation new allPrimitiveMethodsInCategories:  		#('Collections-Streams' 'Files-Streams' 'Files-Abstract' 'Files-Macintosh')"| aColl |aColl := OrderedCollection new: 200.self	allBehaviorsDo: [ :aClass | 		(aList includes: (SystemOrganization categoryOfElement: aClass theNonMetaClass name asString) asString)			ifTrue: [ 				aClass					selectorsAndMethodsDo: [ :sel :method | 						method isPrimitive							ifTrue: [ aColl addLast: aClass name , ' ' , sel , ' ' , method primitive printString ] ] ] ].^ aColl]Class SystemNavigation >> allPrimitiveMethods[	"Answer an OrderedCollection of all the methods that are implemented by primitives."| aColl |aColl := OrderedCollection new: 200.self	allBehaviorsDo: [ :class | 		class			selectorsAndMethodsDo: [ :sel :method | 				method isPrimitive					ifTrue: [ aColl addLast: class name , ' ' , sel , ' ' , method primitive printString ] ] ].^ aColl]Class SystemNavigation >> allClassesDo: aBlock[^ self environment allClassesDo: aBlock]Class SystemNavigation >> allUnSentMessagesWithout: classesAndMessagesPair[	"Answer the set of selectors that are implemented but not sent, computed  	in the absence of the supplied classes and messages."^ (self allImplementedMessagesWithout: classesAndMessagesPair)	copyWithoutAll: (self allSentMessagesWithout: classesAndMessagesPair)]Class SystemNavigation >> allUnimplementedNonPrimitiveCalls[	"Answer an Array of each message that is sent by an expression in a  	method but is not implemented by any object in the system."| aStream all |all := self systemNavigation allImplementedMessages.aStream := (Array new: 50) writeStream.self systemNavigation	allBehaviorsDo: [ :cl | 		cl			selectorsAndMethodsDo: [ :sel :meth | 				| secondStream |				secondStream := (String new: 5) writeStream.				meth isPrimitive					isFalse: [ 						meth messages							do: [ :m | 								(all includes: m)									ifFalse: [ 										secondStream											nextPutAll: m;											space ] ].						secondStream position = 0							ifFalse: [ aStream nextPut: cl name , ' ' , sel , ' calls: ' , secondStream contents ] ] ] ].^ aStream contents]Metaclass	name: #SystemNavigation;	instanceVariables: #().Metaclass SystemNavigation >> default[^ self new]
+Class
+	name: #SystemNavigation;
+	superclass: #ClassObject;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#browserClass #environment );
+	classVariables: #();
+	package: #'System-Support'.
+
+Class SystemNavigation >> numberOfImplementorsOf: aSelector
+[
+	"Answer a count of the implementors of the given selector found in the  	system"
+	"self new numberOfImplementorsOf: #contents.  	self new numberOfImplementorsOf: #nobodyImplementsThis.  	self new numberOfimplementorsOf: #numberOfImplementorsOf:."
+| aCount |aCount := 0.self	allBehaviorsDo: [ :class | 		(class includesSelector: aSelector)			ifTrue: [ aCount := aCount + 1 ] ].^ aCount
+]
+
+Class SystemNavigation >> allUnreferencedClassVariablesOf: aClass
+[
+	"Answer a list of the names of all the receiver's unreferenced class  	vars, including those defined in superclasses"
+| aList |aList := OrderedCollection new.aClass withAllSuperclasses	reverseDo: [ :aSuperClass | 		aSuperClass classVarNames			do: [ :var | 				(self allReferencesTo: (aSuperClass classPool associationAt: var)) isEmpty					ifTrue: [ aList add: var ] ] ].^ aList
+]
+
+Class SystemNavigation >> isMessage: selector sentInPackageNamed: packageName
+[
+^ (self allSendersOf: selector inPackageNamed: packageName) notEmpty
+]
+
+Class SystemNavigation >> allUnusedClassesWithout: classesAndMessagesPair
+[
+	"Enumerates all classes in the system and returns a list of those that are 	apparently unused. A class is considered in use if it (a) has subclasses  	or (b) is referred to by some method or (c) has its name in use as a  	literal."
+	"SystemNavigation new unusedClasses"
+| unused |self flag: #rewriteMePlease.unused := Smalltalk globals classNames asIdentitySet copyWithoutAll: (self allGlobalRefsWithout: classesAndMessagesPair).^ unused	reject: [ :cName | 		| cl |		cl := Smalltalk globals at: cName.		cl subclasses isEmpty not ]
+]
+
+Class SystemNavigation >> allUnsentMessages
+[
+	"SystemNavigation new allUnSentMessages"
+	"Answer the set of selectors that are implemented by some object in the  	system but not sent by any."
+^ self	allUnSentMessagesWithout:		{{}.		{}}
+]
+
+Class SystemNavigation >> allSendersOf: selector inClass: aClass
+[
+| sortedSenders special byte |sortedSenders := SortedCollection new.special := Smalltalk hasSpecialSelector: selector ifTrueSetByte: [ :b | byte := b ].self	addSelectorsReferingTo: selector	in: aClass	to: sortedSenders	special: special	byte: byte.^ sortedSenders
+]
+
+Class SystemNavigation >> allUnimplementedCalls
+[
+	"Answer an Array of each message that is sent by an expression in a  	method but is not implemented by any object in the system."
+| aStream all |all := self allImplementedMessages.aStream := (Array new: 50) writeStream.self	allBehaviorsDo: [ :cl | 		cl			selectorsAndMethodsDo: [ :sel :meth | 				| secondStream |				secondStream := (String new: 5) writeStream.				meth messages					do: [ :m | 						(all includes: m)							ifFalse: [ 								secondStream									nextPutAll: m;									space ] ].				secondStream position = 0					ifFalse: [ aStream nextPut: cl name , ' ' , sel , ' calls: ' , secondStream contents ] ] ].^ aStream contents
+]
+
+Class SystemNavigation >> allBehaviorsDo: aBlock
+[
+	"Execute a block on each class, metaclass, trait and trait class"
+self environment	allClassesDo: [ :aClass | 		aBlock			value: aClass;			value: aClass class ].self environment	allTraitsDo: [ :aTrait | 		aBlock			value: aTrait;			value: aTrait classTrait ]
+]
+
+Class SystemNavigation >> allClassesInPackageNamed: packageName
+[
+	"Returns the list of classes that belongs to a Monticello package."
+	"It would be probably better to delegate that query to the package itself"
+| classes organization |organization := Smalltalk globals organization.classes := (organization classesInCategory: packageName) asSet.(organization categoriesMatching: packageName , '-*')	do: [ :category | classes addAll: (organization classesInCategory: category) ].^ classes asArray
+]
+
+Class SystemNavigation >> isThereAnImplementorOf: aSelector
+[
+	"Answer true if there is at least one implementor of the selector found  	in the system, false if there are no implementors"
+	"self new isThereAnImplementorOf: #contents.  	self new isThereAnImplementorOf: #nobodyImplementsThis."
+self	allBehaviorsDo: [ :class | 		(class includesSelector: aSelector)			ifTrue: [ ^ true ] ].^ false
+]
+
+Class SystemNavigation >> obsoleteClasses
+[
+	"SystemNavigation new obsoleteClasses inspect"
+	"NOTE:  Also try inspecting comments below"
+| obs |obs := OrderedCollection new.Smalltalk garbageCollect.Metaclass	allInstancesDo: [ :m | 		| c |		c := m soleInstance.		(c ~~ nil and: [ 'AnOb*' match: c name asString ])			ifTrue: [ obs add: c ] ].^ obs asArray	"Likely in a ClassDict or Pool...(Association allInstances select: [:a | (a value isKindOf: Class) and: ['AnOb*' match: a value name]]) asArray"	"Obsolete class refs or super pointer in last lit of a method...| n l found |Smalltalk browseAllSelect:	[:m | found := false.	1 to: m numLiterals do:		[:i | (((l := m literalAt: i) isMemberOf: Association)				and: [(l value isKindOf: Behavior)				and: ['AnOb*' match: l value name]])			ifTrue: [found := true]].	found]"
+]
+
+Class SystemNavigation >> environment
+[
+^ environment
+]
+
+Class SystemNavigation >> allImplementedMessagesWithout: classesAndMessagesPair
+[
+	"Answer a Set of all the messages that are implemented in the system,  	computed in the absence of the supplied classes and messages. Note this  	reports messages that are in the absent selectors set."
+| messages absentClasses |messages := IdentitySet new: CompiledMethod instanceCount.absentClasses := classesAndMessagesPair first.self flag: #shouldBeRewrittenUsingSmalltalkAllClassesDo:.	"sd 29/04/03"Smalltalk classNames , Smalltalk traitNames	do: [ :name | 		((absentClasses includes: name)			ifTrue: [ {} ]			ifFalse: [ 				{(Smalltalk globals at: name).				((Smalltalk globals at: name) classSide)} ]) do: [ :each | messages addAll: each selectors ] ].^ messages
+]
+
+Class SystemNavigation >> allClassesWithUnimplementedCalls
+[
+	"Answer an Array of classes that have messages with calls to methods that aren't implemented	anywhere in the system"
+| all dict |dict := Dictionary new.all := self systemNavigation allImplementedMessages.self systemNavigation	allBehaviorsDo: [ :cl | 		cl			selectorsAndMethodsDo: [ :sel :meth | 				meth isPrimitive					ifFalse: [ 						meth messages							do: [ :m | 								(all includes: m)									ifFalse: [ ((dict at: cl ifAbsentPut: [ Dictionary new ]) at: sel ifAbsentPut: [ OrderedCollection new ]) add: m ] ] ] ] ].^ dict
+]
+
+Class SystemNavigation >> allMethodsInCategory: category
+[
+	"Answer the collection of methods that are contained in a particular method category"
+	"SystemNavigation new allMethodsInCategory: 'printing'"
+| aCollection |aCollection := Set new.self	allBehaviorsDo: [ :behavior | 		(category = ClassOrganizer allCategory			ifTrue: [ behavior organization allMethodSelectors ]			ifFalse: [ behavior organization listAtCategoryNamed: category ])			do: [ :sel | aCollection add: (self createMethodNamed: sel realParent: behavior) ] ].^ aCollection
+]
+
+Class SystemNavigation >> isMessage: selector sentInClassCategory: category
+[
+^ (self allSendersOf: selector inClassCategory: category) notEmpty
+]
+
+Class SystemNavigation >> initialize
+[
+super initialize.self environment: Smalltalk globals
+]
+
+Class SystemNavigation >> methodsWithInitials: targetInitials
+[
+	"Based on a do-it contributed to the Squeak mailing list by Goran Hultgen: Browse methods whose initials (in the time-stamp, as logged to disk) match the given initials. Print out the complete time-stamp table to the Transcript. Answer a list of (initials -> count) associations.CAUTION: It may take several minutes for this to complete."
+	"Time millisecondsToRun: [SystemNavigation new methodsWithInitials: 'bf'] "
+| initials timeStamp allSubmitters |initials := ''.timeStamp := ''.allSubmitters := Bag new.self	browseAllSelect: [ :cm | 		timeStamp := cm timeStamp.		initials := timeStamp isEmpty			ifTrue: [ '' ]			ifFalse: [ timeStamp substrings first ].		initials := initials isEmpty			ifTrue: [ '<no time stamp>' ]			ifFalse: [ 				initials first isDigit					ifTrue: [ '<date>' ]					ifFalse: [ initials ] ].		allSubmitters add: initials.		initials = targetInitials ]	name: 'Methods with initials ' , targetInitials	autoSelect: nil.allSubmitters sortedCounts	do: [ :elem | 		Transcript			cr;			show: elem asString ].^ allSubmitters
+]
+
+Class SystemNavigation >> allContributors
+[
+	"Return the list of initials and names of method authors."
+	"I am wondering why a bag is used instead of a set. AlexandreBergel 12/29/2010 11:37"
+	"SystemNavigation new allContributors"
+| contributorsNames |contributorsNames := Bag new.self	allBehaviorsDo: [ :behavior | 		behavior			methodsDo: [ :compiledMethod | 				| stamp |				stamp := compiledMethod timeStamp.				stamp notEmpty					ifTrue: [ contributorsNames add: compiledMethod timeStamp substrings first ] ] ].^ contributorsNames
+]
+
+Class SystemNavigation >> allGlobalRefs
+[
+	"Answer a set of symbols that may be refs to Global names.  In some sense we should only need the associations, but this will also catch, eg, HTML tag types."
+^ self	allGlobalRefsWithout:		{{}.		{}}
+]
+
+Class SystemNavigation >> allClassesUsingSharedPool: aString
+[
+	"Answer an Array of all classes that uses the shared pool named aString."
+| aCollection |aCollection := ReadWriteStream on: Array new.self	allClassesDo: [ :class | 		(class includesSharedPoolNamed: aString)			ifTrue: [ aCollection nextPut: class ] ].^ aCollection contents
+]
+
+Class SystemNavigation >> allSendersOf: selector inClassCategory: category
+[
+| classes sortedSenders special byte |classes := self environment organization classesInCategory: category.sortedSenders := SortedCollection new.classes ifEmpty: [ ^ sortedSenders ].special := Smalltalk hasSpecialSelector: selector ifTrueSetByte: [ :b | byte := b ].classes	do: [ :class | 		self			addSelectorsReferingTo: selector			in: class			to: sortedSenders			special: special			byte: byte ].^ sortedSenders
+]
+
+Class SystemNavigation >> hierarchyOfImplementorsOf: aSelector forClass: aClass
+[
+	"Answer a list of classes in the hierarchy both above and below the given class which implement the given selector."
+	"SystemNavigation new hierarchyOfImplementorsOf: #contents forClass: StringHolder"
+^ (self hierarchyOfClassesSurrounding: aClass) select: [ :cl | cl includesSelector: aSelector ]
+]
+
+Class SystemNavigation >> isMessage: selector sentInClass: aClass
+[
+^ (self allSendersOf: selector inClass: aClass) notEmpty
+]
+
+Class SystemNavigation >> allSentMessagesWithout: classesAndMessagesPair
+[
+	"Answer the set of selectors which are sent somewhere in the system,  	computed in the absence of the supplied classes and messages."
+| sent absentClasses absentSelectors |sent := IdentitySet new: CompiledMethod instanceCount.absentClasses := classesAndMessagesPair first.absentSelectors := classesAndMessagesPair second.self	allBehaviorsDo: [ :class | 		((absentClasses includes: class)			ifTrue: [ {} ]			ifFalse: [ 				{class.				(class classSide)} ])			do: [ :each | 				(absentSelectors isEmpty					ifTrue: [ each selectors ]					ifFalse: [ each selectors copyWithoutAll: absentSelectors ])					do: [ :sel | 						"Include all sels, but not if sent by self"						(each compiledMethodAt: sel)							literalsDo: [ :m | 								m isSymbol									ifTrue: [ 										"might be sent"										m == sel											ifFalse: [ sent add: m ] ].								(m isMemberOf: Array)									ifTrue: [ 										"might be performed"										m											do: [ :x | 												x isSymbol													ifTrue: [ 														x == sel															ifFalse: [ sent add: x ] ] ] ] ] ] ] ].	"The following may be sent without being in any literal frame"1 to: Smalltalk specialSelectorSize do: [ :index | sent add: (Smalltalk specialSelectorAt: index) ].^ sent
+]
+
+Class SystemNavigation >> selectAllMethods: aBlock
+[
+	"Answer a SortedCollection of each method that, when used as the block  	argument to aBlock, gives a true result."
+| aCollection |aCollection := SortedCollection new.self	allBehaviorsDo: [ :class | 		class			selectorsAndMethodsDo: [ :sel :m | 				(aBlock value: m)					ifTrue: [ aCollection add: (self createMethodNamed: sel realParent: class) ] ] ].^ aCollection
+]
+
+Class SystemNavigation >> allSelect: aBlock
+[
+	"Answer a SortedCollection of each method that, when used as 	the block  	argument to aBlock, gives a true result."
+| aCollection |aCollection := SortedCollection new.self	allBehaviorsDo: [ :class | 		class			selectorsAndMethodsDo: [ :sel :meth | 				(aBlock value: meth)					ifTrue: [ aCollection add: class name , ' ' , sel ] ] ].^ aCollection
+]
+
+Class SystemNavigation >> allClassesAndTraits
+[
+	"Answer all the classes and traits present in the image"
+	"Note that metaclasses are not part of the answer"
+^ Smalltalk globals allClassesAndTraits
+]
+
+Class SystemNavigation >> allImplementedMessages
+[
+	"Answer a Set of all the messages that are implemented in the system."
+^ self	allImplementedMessagesWithout:		{{}.		{}}
+]
+
+Class SystemNavigation >> allCallsOn: aSymbol localTo: aClass
+[
+	"Answer a Set of RGMethodDefinition for all the methods	 that call on aSymbol in, above or below the given class."
+| aSet special byte enum |aSet := Set new.special := Smalltalk hasSpecialSelector: aSymbol ifTrueSetByte: [ :b | byte := b ].enum := [ :behavior | (behavior whichSelectorsReferTo: aSymbol special: special byte: byte)	do: [ :sel | aSet add: (RGMethodDefinition realClass: behavior selector: sel) ] ].aClass theNonMetaClass withAllSuperAndSubclassesDo: enum.aClass theNonMetaClass class withAllSuperAndSubclassesDo: enum.^ aSet
+]
+
+Class SystemNavigation >> unsentMessagesInClass: aClass
+[
+| methReferences |methReferences := Set new.aClass	selectorsDo: [ :selector | 		(self isUnsentMessage: selector)			ifTrue: [ methReferences add: (self createMethodNamed: selector realParent: aClass) ] ].^ methReferences
+]
+
+Class SystemNavigation >> signatories
+[
+	"Answer the initials corresponding to the people who have signed the license"
+	"SystemNavigation new signatories"
+^ (self signatoriesString subStrings: {(Character cr)}) collect: [ :each | each substrings first ]
+]
+
+Class SystemNavigation >> allSendersOf: selector inPackageNamed: packageName
+[
+^ (self categoriesInPackageNamed: packageName)	inject: SortedCollection new	into: [ :sortedSenders :category | sortedSenders , (self allSendersOf: selector inClassCategory: category) ]
+]
+
+Class SystemNavigation >> methodsWithUnboundGlobals
+[
+	"This says that for any global, it should match either the class's notion of what bindingOf: the key is, or bindingOf: should be nil and the binding should be in Undeclared. If the class answers a different binding through bindingOf: or answers no binding and the binding is not in Undeclared then the variable in the method is wrong.	For a clean image the result should be empty. If it is not empty, evaluating Compiler recompileAll probably solves the problem. However, we should investigate why the method gets an incorrect state."
+	"SystemNavigation new methodsWithUnboundGlobals"
+^ self	allSelect: [ :m | 		m literals			anySatisfy: [ :l | 				l isVariableBinding					and: [ 						l key isSymbol							and: [ 								(m methodClass bindingOf: l key)									ifNil: [ (Undeclared associationAt: l key ifAbsent: [  ]) ~~ l ]									ifNotNil: [ :b | b ~~ l ] ]	"avoid class-side methodClass literals" ] ] ]
+]
+
+Class SystemNavigation >> allSendersOf: selector
+[
+| sortedSenders special byte |sortedSenders := SortedCollection new.special := Smalltalk hasSpecialSelector: selector ifTrueSetByte: [ :b | byte := b ].self	allBehaviorsDo: [ :behavior | 		(behavior thoroughWhichSelectorsReferTo: selector special: special byte: byte)			do: [ :sel | sortedSenders add: (self createMethodNamed: sel realParent: behavior) ] ].^ sortedSenders
+]
+
+Class SystemNavigation >> categoriesInPackageNamed: packageName
+[
+^ (self environment organization categoriesMatching: packageName)	, (self environment organization categoriesMatching: packageName , '-*')
+]
+
+Class SystemNavigation >> allCallsOn: firstLiteral and: secondLiteral
+[
+	"Answer a SortedCollection of all the methods that call on both aLiteral 	and secondLiteral."
+| aCollection firstSpecial secondSpecial firstByte secondByte |self flag: #ShouldUseAllCallsOn:.	"sd"aCollection := SortedCollection new.firstSpecial := Smalltalk hasSpecialSelector: firstLiteral ifTrueSetByte: [ :b | firstByte := b ].secondSpecial := Smalltalk hasSpecialSelector: secondLiteral ifTrueSetByte: [ :b | secondByte := b ].self	allBehaviorsDo: [ :class | 		| secondArray |		secondArray := class whichSelectorsReferTo: secondLiteral special: secondSpecial byte: secondByte.		((class whichSelectorsReferTo: firstLiteral special: firstSpecial byte: firstByte)			select: [ :aSel | secondArray includes: aSel ])			do: [ :sel | aCollection add: (self createMethodNamed: sel realParent: class) ] ].^ aCollection
+]
+
+Class SystemNavigation >> unimplemented
+[
+	"Answer an Array of each message that is sent by an expression in a method but is not implemented by any object in the system."
+| all unimplemented |all := IdentitySet new: Symbol instanceCount * 2.self allBehaviorsDo: [ :cl | cl selectorsDo: [ :aSelector | all add: aSelector ] ].unimplemented := IdentityDictionary new.self	allBehaviorsDo: [ :cl | 		cl			selectorsAndMethodsDo: [ :sel :meth | 				meth messages					do: [ :m | 						| entry |						(all includes: m)							ifFalse: [ 								entry := unimplemented at: m ifAbsent: [ Array new ].								entry := entry copyWith: cl name , '>' , sel.								unimplemented at: m put: entry ] ] ] ].^ unimplemented
+]
+
+Class SystemNavigation >> allUnsentMessagesIn: selectorSet
+[
+	"Answer the subset of selectorSet which are not sent anywhere in the 	system. As allSentMessages does not recurse into nested Arrays, filter	with #allCallsOn, which does"
+^ (selectorSet copyWithoutAll: self allSentMessages) select: [ :each | (self allCallsOn: each) isEmpty ]
+]
+
+Class SystemNavigation >> allImplementorsOf: aSelector
+[
+	"Answer a SortedCollection of all the methods that implement the message 	aSelector."
+| aCollection |aCollection := SortedCollection new.self	allBehaviorsDo: [ :class | 		(class includesSelector: aSelector)			ifTrue: [ aCollection add: (self createMethodNamed: aSelector realParent: class) ] ].^ aCollection
+]
+
+Class SystemNavigation >> contributorsNotSignatories
+[
+	"SystemNavigation new contributorsNotSignatories"
+| signatories answer |answer := Dictionary new.signatories := self signatories.self	allBehaviorsDo: [ :behavior | 		behavior			methodsDo: [ :compiledMethod | 				| stamp initials |				stamp := compiledMethod timeStamp.				stamp notEmpty					ifTrue: [ 						initials := compiledMethod timeStamp substrings first.						(signatories includes: initials)							ifFalse: [ (answer at: initials ifAbsentPut: [ OrderedCollection new ]) add: compiledMethod selector -> compiledMethod methodClass ] ] ] ].^ answer
+]
+
+Class SystemNavigation >> obsoleteMethodReferences
+[
+	"SystemNavigation new obsoleteMethodReferences"
+	"Open a browser on all referenced behaviors that are obsolete"
+| obsClasses references |references := Array new writeStream.obsClasses := self obsoleteBehaviors.'Scanning for methods referencing obsolete classes'	displayProgressFrom: 0	to: obsClasses size	during: [ :bar | 		obsClasses			keysAndValuesDo: [ :index :each | 				| obsRefs |				bar current: index.				obsRefs := each pointersToExcept: obsClasses.				obsRefs					do: [ :ref | 						"Figure out if it may be a global"						(ref isVariableBinding and: [ ref key isString	"or Symbol" ])							ifTrue: [ 								ref pointersTo									do: [ :meth | 										(meth isKindOf: CompiledMethod)											ifTrue: [ meth methodReference ifNotNil: [ :mref | references nextPut: mref ] ] ] ] ] ] ].^ references contents
+]
+
+Class SystemNavigation >> unsentMessagesInCategory: category
+[
+^ (self environment organization classesInCategory: category)	inject: Set new	into: [ :unsentMessages :class | unsentMessages , (self unsentMessagesInClass: class) ]
+]
+
+Class SystemNavigation >> allGlobalRefsWithout: classesAndMessagesPair
+[
+	"Answer a set of symbols that may be refs to Global names. In some  	sense we should only need the associations, but this will also catch, eg,  	HTML tag types. This method computes its result in the absence of  	specified classes and messages."
+	"may be a problem if namespaces are introduced as for the moment  	only Smalltalk is queried. sd 29/4/03"
+| globalRefs absentClasses absentSelectors |globalRefs := IdentitySet new: CompiledMethod instanceCount.absentClasses := classesAndMessagesPair first.absentSelectors := classesAndMessagesPair second.self flag: #shouldBeRewrittenUsingSmalltalkAllClassesDo:.	"sd 29/04/03"Smalltalk classNames	do: [ :cName | 		((absentClasses includes: cName)			ifTrue: [ {} ]			ifFalse: [ 				{(Smalltalk globals at: cName).				((Smalltalk globals at: cName) class)} ])			do: [ :cl | 				(absentSelectors isEmpty					ifTrue: [ cl selectors ]					ifFalse: [ cl selectors copyWithoutAll: absentSelectors ])					do: [ :sel | 						"Include all capitalized symbols for good 									measure"						(cl compiledMethodAt: sel)							literalsDo: [ :m | 								(m isSymbol and: [ m size > 0 and: [ m first canBeGlobalVarInitial ] ])									ifTrue: [ globalRefs add: m ].								(m isMemberOf: Array)									ifTrue: [ 										m											do: [ :x | 												(x isSymbol and: [ x size > 0 and: [ x first canBeGlobalVarInitial ] ])													ifTrue: [ globalRefs add: x ] ] ].								m isVariableBinding									ifTrue: [ m key ifNotNil: [ globalRefs add: m key ] ] ] ] ] ].^ globalRefs
+]
+
+Class SystemNavigation >> obsoleteBehaviors
+[
+	"SystemNavigation new obsoleteBehaviors inspect"
+	"Find all obsolete behaviors including meta classes"
+| obs |obs := OrderedCollection new.Smalltalk garbageCollect.self	allObjectsDo: [ :cl | 		(cl isBehavior and: [ cl isObsolete ])			ifTrue: [ obs add: cl ] ].^ obs asArray
+]
+
+Class SystemNavigation >> allReferencesToPool: aPool from: aClass
+[
+	"Answer all the references to variables from aPool"
+| list |list := OrderedCollection new.aClass	withAllSubclassesDo: [ :cls | 		cls			selectorsAndMethodsDo: [ :sel :meth | 				| ref |				ref := meth literals					detect: [ :lit | lit isVariableBinding and: [ (aPool bindingOf: lit key) notNil ] ]					ifNone: [ nil ].				ref ifNotNil: [ list add: (self createMethodNamed: sel realParent: aClass) ] ] ].^ list
+]
+
+Class SystemNavigation >> unsentMessagesInPackageNamed: packageName
+[
+| unsentMessages |unsentMessages := self unsentMessagesInCategory: packageName.(self categoriesInPackageNamed: packageName)	do: [ :category | unsentMessages addAll: (self unsentMessagesInCategory: category) ].^ unsentMessages
+]
+
+Class SystemNavigation >> allMethodsWithSourceString: aString matchCase: caseSensitive
+[
+	"Answer a SortedCollection of all the methods that contain, in source code, aString as a substring.  Search the class comments also"
+| list addMethod addComment |list := Set new.addMethod := [ :mrClass :mrSel | list add: (self createMethodNamed: mrSel realParent: mrClass) ].addComment := [ :mrClass | list add: (RGCommentDefinition realClass: mrClass) ].'Searching all source code...'	displayProgressFrom: 0	to: Smalltalk globals classNames size	during: [ :bar | 		| count |		count := 0.		self			allBehaviorsDo: [ :each | 				bar current: (count := count + 1).				each					selectorsDo: [ :sel | 						((each sourceCodeAt: sel) includesSubstring: aString caseSensitive: caseSensitive)							ifTrue: [ addMethod value: each value: sel ] ].				(each organization classComment asString includesSubstring: aString caseSensitive: caseSensitive)					ifTrue: [ addComment value: each ] ] ].^ list asSortedCollection
+]
+
+Class SystemNavigation >> allCallsOn: aSymbol from: aClass
+[
+	"Answer a SortedCollection of all the methods that call on aSymbol."
+| aSortedCollection special byte |aSortedCollection := SortedCollection new.special := Smalltalk hasSpecialSelector: aSymbol ifTrueSetByte: [ :b | byte := b ].aClass	withAllSubclassesDo: [ :class | 		(class whichSelectorsReferTo: aSymbol special: special byte: byte)			do: [ :sel | aSortedCollection add: (self createMethodNamed: sel realParent: class) ] ].^ aSortedCollection
+]
+
+Class SystemNavigation >> headingAndAutoselectForLiteral: aLiteral do: binaryBlock
+[
+	"Evaluate aBlock with either Users of ... or Senders of ... plus the auto-select string	 for the given literal.  aLiteral can be a Symbol, a VariableBinding or an arbitrary object."
+| autoSelect |^ aLiteral isSymbol	ifTrue: [ binaryBlock value: 'Senders of ' , aLiteral value: aLiteral ]	ifFalse: [ 		autoSelect := aLiteral isVariableBinding			ifTrue: [ aLiteral key ]			ifFalse: [ aLiteral printString ].		binaryBlock value: 'Users of ' , autoSelect value: autoSelect ]
+]
+
+Class SystemNavigation >> allClassesDefiningClassVarNamed: aString
+[
+	"Answer an Array of all classes that define the class variables named aString."
+| aCollection |aCollection := ReadWriteStream on: Array new.self	allClassesDo: [ :class | 		(class hasClassVarNamed: aString)			ifTrue: [ aCollection nextPut: class ] ].^ aCollection contents
+]
+
+Class SystemNavigation >> allLocalCallsOn: aSymbol ofClass: aClass
+[
+	"Answer a SortedCollection of all the methods that call on aSymbol, anywhere in my class hierarchy."
+| aSet special byte cls |aSet := Set new.cls := aClass theNonMetaClass.special := Smalltalk hasSpecialSelector: aSymbol ifTrueSetByte: [ :b | byte := b ].cls	withAllSuperAndSubclassesDo: [ :class | 		(class whichSelectorsReferTo: aSymbol special: special byte: byte)			do: [ :sel | aSet add: (self createMethodNamed: sel realParent: class) ] ].cls class	withAllSuperAndSubclassesDo: [ :class | 		(class whichSelectorsReferTo: aSymbol special: special byte: byte)			do: [ :sel | aSet add: (self createMethodNamed: sel realParent: class) ] ].^ aSet
+]
+
+Class SystemNavigation >> signatoriesString
+[
+^ 'AB               Alexandre Bergelack              Alan Kayads              Adam Spitzajh              Anthony Hannanaka              Mark Guzdialal               Adrian Lienhardaoy              Andres Otaduyapb              Andrew P. Blackapl              Alain Plantecar               Andreas Raabasm              Alejandro Magistrelloavi              Avi Bryantbf               Bert FreudenbergBG               Boris Gaertnerbh               Bob HartwigBJP              Bijan Parsiabkv              Brent Vukmerbolot            Bolot Kerimbaevbootstrap        Pavel KrivanekBP               Bijan Parsiabrp              Brent Pinkneybtr              Brian Ricecbc              Chris Cunninghamccn              Chris NortonCdG              Cees de Grootcds              C. David Shaffercmm              Chris Mullercrl              Craig Lattacwp              Colin Putneydaf              Dave Faughtdao              danil osipchukDAS              David A Smithdc               Damien Cassoudd               Dominique Dutoitdew              Doug WayDF               Diego Fernandezdgd              Diego Gomez Deckdhhi             Dan Ingallsdi               Dan IngallsDM               Duane MaxwellDSM              Duane Maxwelldtl              Dave Lewisdvf              Daniel Vainsencheredc              Edgar DeCleeneefc              Eddie Cottongimefo              Emilio Ocaem               Ernest Micklei?emm              Ernest Mickleies               Enrico SpinielliFBS              Frank Sheararfc               Frank Caggianofcs              Frank Sergeantfm               Florin Mateocgh               Goran Krampe (nee Hultgren)gk               Goran Krampe (nee Hultgren)gm               German Moralesgo               Georg Gollmanngsa              German ArduinoHEG              Henrik EkenbergHilaireFernandes Hilaire FernandesHK               Herbert Konighmm              Hans-Martin Mosnerhpt              Hernan Tylimhuma             Lyndon Tremblayich.             Yuji Ichikawaikp              Ian Piumartajaf              Jan Fietzjam              Javier Musajcg              Joshua Gargusjdf              David Farberjdr              Javier Diaz-Reinosoje               Jorn Eyrichje77             Jochen RickJF               Julian Fitzelljhm              John Maloneyjlb              Jim Bensonjmb              Hans BavecoJMM              John McIntoshJMV              Juan Manuel Vuletichjon              Jon Hylandsjrm              John-Reed Maffeojrp              John Piercejsp              Jeff Pierceka               Kazuhiro Abekfr              Karl RambergKLC              Ken CauseyKR               korakuriderKTT              Kurt Thamskwl              Klaus D. Witzelky               Koji Yokokawalaza             Alexander LazarevicLB               Leo BurdLC               Leandro CanigliaLEG              Gerald Leeblen              Luciano Esteban Notarfrancescolr               Lukas Rengglilrs              Lorenzo Schiavinals               Lex Spoonm3r              Maurice Rabbmas              Mark SchwenkMD               Markus Denkermdr              Mike Rutenbergmga              Markus Gallimiki             Mikael Kindborgmikki            Mikael Kindborgmir              Michael Ruegermist             Michal Starkemjg              Mark Guzdialmjr              Mike Robertsmjt              Mike Thomasmk               Matej KosikMPW              Marcel Weihermrm              Martin McClurems               mathMU               Masashi Umezawamw               Martin Wirblatnb               Naala Brewernice             Nicolas Celliernk               Ned KonzNoury            Noury BouraqadiNS               Nathanael SchaerliPHK              Peter Keelerpk               Pavel Krivanekpm               Patrick Mauritzpnm              Paul McDonoughRAA              Bob Arningraok             Richard A. O"Keeferbb              Brian Brownrca              Russell AllenreThink          Paul McDonoughrew              Roger Whitneyrhi              Robert HirschfeldRik              Rik Fischer SmOOdyRJT              Ron Teitelbaumrr               Romain Robbesrw               Roel Wuytsrww              Robert Witherssbw              Stephan B. WesselsSD               Stephane Ducassesge              Steve Elkinsshrink           Pavel Krivanekslg              Steve Gilbertsm               Simon Michaelsma              Stefan Matthias Austsn               Suslov Nikolayspfa             Stephane Rollandinsps              Steven SwerlingSqR              Andres ValloudSqR!!            Andres ValloudSqR!!!!          Andres Valloudsr               Stephan Rudlofssa              Sam S. Adamsst               Samuel Tardieustephaneducasse  Stephane Ducassestp              Stephen Travis Popesumim            Masato Sumisvp              Stephen Vincent Pairsw               Scott WallaceT2               Toshiyuki Takedatak              Takashi Yamamiyatao              Tim Olsontb               Todd BlanchardTBn              Torsten Bergmanntetha            Tetsuya Hayashitfei             The Fourth Estate, Inc.th               Torge Husfeldtti               Tobias IsenbergTJ               TJ Leonetk               Ted Kaehlertk               Thomas Kowarktlk              Tom KoenigTN               korakuriderTPR              Tim RowledgeTRee             Trygve ReenskaugTsutomu          Tsutomu Hiroshimatween            Andy Tweenvb               Vassili Bykovvj               Vladimir Janousekwiz              Jerome Peacewod              Bill Dargelykoubo           Koji Yokokawayo               Yoshiki Ohshimazz               Serge Stinckwichjmvjmjmmmd 			Marcus Denkersd  			Stephane Ducassetpr'
+]
+
+Class SystemNavigation >> removeAllButPackages: packagesList
+[
+	"Remove all classes and methods that do not belong to some of listed packages. Skip #unload. Do not use this method if you can use Monticello! This method is used by some low-level shrinking process. Do not use it. This is quite hackish"
+| keep remove oldRemove extensionCategories log |keep := Set new.packagesList do: [ :pkg | keep addAll: (self allClassesInPackageNamed: pkg) ].oldRemove := Set new.[ remove := Smalltalk globals allClassesAndTraits reject: [ :c | keep includes: c ].remove := remove collect: [ :c | c name ].(remove asSortedCollection: [ :a :b | a <= b ])	do: [ :className | 		| class |		class := Smalltalk globals classOrTraitNamed: className.		class allSubclasses			ifEmpty: [ 				SystemAnnouncer uniqueInstance unsubscribe: class.				class isTrait					ifFalse: [ 						(class class includesSelector: #unload)							ifTrue: [ class removeSelector: #unload ] ].				class removeFromSystem ] ].oldRemove	ifNotEmpty: [ 		oldRemove = remove			ifTrue: [ 				self					error:						'Some classes still have subclasses: '							, (remove collect: [ :c | c -> (Smalltalk classOrTraitNamed: c) allSubclasses ]) asString ] ].oldRemove := remove.remove notEmpty ] whileTrue.keep	do: [ :class | 		extensionCategories := (class organization ownCategories select: [ :category | category first = $* ])			asOrderedCollection.		extensionCategories			removeAllSuchThat: [ :category | 				packagesList					anySatisfy: [ :package | 						category asLowercase allButFirst = package asLowercase							or: [ package asLowercase , '-*' match: category asLowercase allButFirst ] ] ].		extensionCategories do: [ :category | class removeCategory: category ].		class isTrait			ifFalse: [ 				extensionCategories := (class class organization ownCategories select: [ :category | category first = $* ])					asOrderedCollection.				extensionCategories					removeAllSuchThat: [ :category | 						packagesList							anySatisfy: [ :package | 								category asLowercase allButFirst = package asLowercase									or: [ package asLowercase , '-*' match: category asLowercase allButFirst ] ] ].				extensionCategories do: [ :category | class class removeCategory: category ] ] ]
+]
+
+Class SystemNavigation >> allCallsOn: aSymbol
+[
+	"Answer a Collection of all the methods that call on the provided symbol even deeply embedded in literal array."
+	"self new allCallsOn: #allCallsOn:"
+^ self allReferencesTo: aSymbol
+]
+
+Class SystemNavigation >> allSentMessages
+[
+	"Answer the set of selectors which are sent somewhere in the system."
+^ self	allSentMessagesWithout:		{{}.		{}}
+]
+
+Class SystemNavigation >> allSelectorsWithAnyImplementorsIn: selectorList
+[
+	"Answer the subset of the given list which represent method selectors 	which have at least one implementor in the system."
+| good |good := OrderedCollection new.self	allBehaviorsDo: [ :class | 		selectorList			do: [ :aSelector | 				(class includesSelector: aSelector)					ifTrue: [ good add: aSelector ] ] ].^ good asSet asArray sort
+]
+
+Class SystemNavigation >> allClasses
+[
+	"currently returns all the classes in the current environment"
+^ self environment allClasses
+]
+
+Class SystemNavigation >> allReferencesTo: aLiteral
+[
+	"Answer a Collection of all the methods that refer to aLiteral even deeply embedded in literal array."
+	"SystemNavigation new allReferencesTo: #+"
+	"SystemNavigation new allReferencesTo: Point binding"
+| result special byte symbol |result := OrderedCollection new.special := Smalltalk hasSpecialSelector: aLiteral ifTrueSetByte: [ :value | byte := value ].symbol := aLiteral isSymbol.self	allBehaviorsDo: [ :class | 		| selectors |		selectors := symbol			ifFalse: [ class whichSelectorsReferTo: aLiteral special: special byte: byte ]			ifTrue: [ class thoroughWhichSelectorsReferTo: aLiteral special: special byte: byte ].		selectors do: [ :selector | result addLast: (self createMethodNamed: selector realParent: class) ] ].^ result
+]
+
+Class SystemNavigation >> contributionsOf: aString
+[
+	"SystemNavigation new contributionsOf: 'alain.plantec'"
+| answer |answer := OrderedCollection new.self	allBehaviorsDo: [ :behavior | 		behavior			methodsDo: [ :compiledMethod | 				| stamp initials |				stamp := compiledMethod timeStamp.				stamp notEmpty					ifTrue: [ 						initials := compiledMethod timeStamp substrings first.						aString = initials							ifTrue: [ answer add: compiledMethod selector -> compiledMethod methodClass ] ] ] ].^ answer
+]
+
+Class SystemNavigation >> allReferencesToPool: aPool
+[
+	"Answer all the references to variable aPool"
+| list |list := OrderedCollection new.self	allClassesDo: [ :cls | 		cls			selectorsAndMethodsDo: [ :sel :meth | 				| ref |				ref := meth literals					detect: [ :lit | (lit isVariableBinding and: [ lit key notNil ]) and: [ (aPool bindingOf: lit key) notNil ] ]					ifNone: [ nil ].				ref ifNotNil: [ list add: (self createMethodNamed: sel realParent: cls) ] ] ].^ list
+]
+
+Class SystemNavigation >> allClassesImplementing: aSelector
+[
+	"Answer an Array of all classes that implement the message aSelector."
+| aCollection |aCollection := ReadWriteStream on: Array new.self	allBehaviorsDo: [ :class | 		(class includesSelector: aSelector)			ifTrue: [ aCollection nextPut: class ] ].^ aCollection contents
+]
+
+Class SystemNavigation >> hierarchyOfClassesSurrounding: aClass
+[
+	"Answer a list of classes in the hierarchy both above and below the given class"
+	"SystemNavigation new hierarchyOfClassesSurrounding: StringHolder"
+| list aClassNonMeta isMeta |aClass ifNil: [ ^ OrderedCollection new ].aClass ifNil: [ ^ self ].aClassNonMeta := aClass theNonMetaClass.isMeta := aClassNonMeta ~~ aClass.list := OrderedCollection new.aClass allSuperclasses reverseDo: [ :cl | list addLast: cl ].aClassNonMeta	allSubclassesWithLevelDo: [ :cl :level | 		| theClassOrMeta |		theClassOrMeta := isMeta			ifTrue: [ cl class ]			ifFalse: [ cl ].		list addLast: theClassOrMeta ]	startingLevel: 0.^ list
+]
+
+Class SystemNavigation >> environment: aSystemDictionary
+[
+^ environment := aSystemDictionary
+]
+
+Class SystemNavigation >> allObjectsSelect: aBlock
+[
+	"Evaluate the argument, aBlock, for each object in the system excluding 	SmallIntegers. Return a collection af all objects for whom the value is 	true. "
+^ Array	streamContents: [ :s | 		self			allObjectsDo: [ :object | 				(aBlock value: object)					ifTrue: [ s nextPut: object ] ] ]
+]
+
+Class SystemNavigation >> addSelectorsReferingTo: aSymbol in: class to: sortedSenders special: special byte: byte
+[
+{class.(class class)}	do: [ :behavior | 		(behavior thoroughWhichSelectorsReferTo: aSymbol special: special byte: byte)			do: [ :sel | sortedSenders add: (self createMethodNamed: sel realParent: behavior) ] ]
+]
+
+Class SystemNavigation >> allImplementorsOf: aSelector localTo: aClass
+[
+	"Answer a SortedCollection of all the methods that implement the message  	aSelector in, above, or below the given class."
+| cls aCollection |aCollection := SortedCollection new.cls := aClass theNonMetaClass.cls	withAllSuperAndSubclassesDo: [ :class | 		(class includesSelector: aSelector)			ifTrue: [ aCollection add: (self createMethodNamed: aSelector realParent: class) ] ].cls class	withAllSuperAndSubclassesDo: [ :class | 		(class includesSelector: aSelector)			ifTrue: [ aCollection add: (self createMethodNamed: aSelector realParent: class) ] ].^ aCollection
+]
+
+Class SystemNavigation >> isUnsentMessage: selector
+[
+| special byte |special := Smalltalk hasSpecialSelector: selector ifTrueSetByte: [ :b | byte := b ].self	allBehaviorsDo: [ :behavior | 		(behavior thoroughHasSelectorReferringTo: selector special: special byte: byte)			ifTrue: [ ^ false ] ].^ true
+]
+
+Class SystemNavigation >> createMethodNamed: aSelector realParent: class
+[
+^ RGMethodDefinition realClass: class selector: aSelector
+]
+
+Class SystemNavigation >> allMethodsSelect: aBlock
+[
+	"Answer a SortedCollection of each method that, when used as the block  	argument to aBlock, gives a true result."
+| aCollection |aCollection := SortedCollection new.self	allBehaviorsDo: [ :class | 		class			selectorsAndMethodsDo: [ :sel :m | 				(aBlock value: m)					ifTrue: [ aCollection add: (self createMethodNamed: sel realParent: class) ] ] ].^ aCollection
+]
+
+Class SystemNavigation >> allObjectsDo: aBlock
+[
+	"Evaluate the argument, aBlock, for each object in the system 	excluding SmallIntegers."
+| object endMarker |object := self someObject.endMarker := Object new.[ endMarker == object ]	whileFalse: [ 		aBlock value: object.		object := object nextObject ]
+]
+
+Class SystemNavigation >> allPrimitiveMethodsInCategories: aList
+[
+	"Answer an OrderedCollection of all the methods that are implemented by 	primitives in the given categories. 1/26/96 sw"
+	"SystemNavigation new allPrimitiveMethodsInCategories:  		#('Collections-Streams' 'Files-Streams' 'Files-Abstract' 'Files-Macintosh')"
+| aColl |aColl := OrderedCollection new: 200.self	allBehaviorsDo: [ :aClass | 		(aList includes: (SystemOrganization categoryOfElement: aClass theNonMetaClass name asString) asString)			ifTrue: [ 				aClass					selectorsAndMethodsDo: [ :sel :method | 						method isPrimitive							ifTrue: [ aColl addLast: aClass name , ' ' , sel , ' ' , method primitive printString ] ] ] ].^ aColl
+]
+
+Class SystemNavigation >> allPrimitiveMethods
+[
+	"Answer an OrderedCollection of all the methods that are implemented by primitives."
+| aColl |aColl := OrderedCollection new: 200.self	allBehaviorsDo: [ :class | 		class			selectorsAndMethodsDo: [ :sel :method | 				method isPrimitive					ifTrue: [ aColl addLast: class name , ' ' , sel , ' ' , method primitive printString ] ] ].^ aColl
+]
+
+Class SystemNavigation >> allClassesDo: aBlock
+[
+^ self environment allClassesDo: aBlock
+]
+
+Class SystemNavigation >> allUnSentMessagesWithout: classesAndMessagesPair
+[
+	"Answer the set of selectors that are implemented but not sent, computed  	in the absence of the supplied classes and messages."
+^ (self allImplementedMessagesWithout: classesAndMessagesPair)	copyWithoutAll: (self allSentMessagesWithout: classesAndMessagesPair)
+]
+
+Class SystemNavigation >> allUnimplementedNonPrimitiveCalls
+[
+	"Answer an Array of each message that is sent by an expression in a  	method but is not implemented by any object in the system."
+| aStream all |all := self systemNavigation allImplementedMessages.aStream := (Array new: 50) writeStream.self systemNavigation	allBehaviorsDo: [ :cl | 		cl			selectorsAndMethodsDo: [ :sel :meth | 				| secondStream |				secondStream := (String new: 5) writeStream.				meth isPrimitive					isFalse: [ 						meth messages							do: [ :m | 								(all includes: m)									ifFalse: [ 										secondStream											nextPutAll: m;											space ] ].						secondStream position = 0							ifFalse: [ aStream nextPut: cl name , ' ' , sel , ' calls: ' , secondStream contents ] ] ] ].^ aStream contents
+]
+
+Metaclass
+	name: #SystemNavigation;
+	instanceVariables: #().
+
+Metaclass SystemNavigation >> default
+[
+^ self new
+]
+
