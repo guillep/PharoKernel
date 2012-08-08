@@ -6,9 +6,9 @@ Class
 	classVariables: #();
 	package: #'Traits-Kernel'.
 
-Class ClassTrait >> initializeWithBaseTrait: aTrait
+Class ClassTrait >> uses: aTraitCompositionOrArray
 [
-self baseTrait: aTrait.self noteNewBaseTraitCompositionApplied: aTrait traitComposition.aTrait users do: [ :each | self addUser: each classSide ]
+| copyOfOldTrait newComposition |copyOfOldTrait := self copy.newComposition := aTraitCompositionOrArray asTraitComposition.self assertConsistantCompositionsForNew: newComposition.self setTraitComposition: newComposition.SystemAnnouncer uniqueInstance traitDefinitionChangedFrom: copyOfOldTrait to: self
 ]
 
 Class ClassTrait >> classTrait
@@ -27,14 +27,9 @@ Class ClassTrait >> copy
 ^ self class new	baseTrait: self baseTrait;	initializeFrom: self;	yourself
 ]
 
-Class ClassTrait >> isClassTrait
+Class ClassTrait >> compile: text classified: category withStamp: changeStamp notifying: requestor logSource: logSource
 [
-^ true
-]
-
-Class ClassTrait >> initializeFrom: anotherClassTrait
-[
-traitComposition := self traitComposition copyTraitExpression.methodDict := self methodDict copy.localSelectors := self localSelectors copy.organization := self organization copy
+| classSideUsersOfBaseTrait message |classSideUsersOfBaseTrait := self baseTrait users select: [ :each | each isClassSide ].classSideUsersOfBaseTrait isEmpty	ifFalse: [ 		message := String			streamContents: [ :stream | 				stream					nextPutAll: 'The instance side of this trait is used on ';					cr.				classSideUsersOfBaseTrait do: [ :each | stream nextPutAll: each name ] separatedBy: [ stream nextPutAll: ', ' ].				stream					cr;					nextPutAll: ' You can not add methods to the class side of this trait!' ].		^ TraitException signal: message ].^ super	compile: text	classified: category	withStamp: changeStamp	notifying: requestor	logSource: logSource
 ]
 
 Class ClassTrait >> baseTrait
@@ -42,19 +37,9 @@ Class ClassTrait >> baseTrait
 ^ baseTrait
 ]
 
-Class ClassTrait >> name
+Class ClassTrait >> isClassTrait
 [
-^ self baseTrait name , ' classTrait'
-]
-
-Class ClassTrait >> compile: text classified: category withStamp: changeStamp notifying: requestor logSource: logSource
-[
-| classSideUsersOfBaseTrait message |classSideUsersOfBaseTrait := self baseTrait users select: [ :each | each isClassSide ].classSideUsersOfBaseTrait isEmpty	ifFalse: [ 		message := String			streamContents: [ :stream | 				stream					nextPutAll: 'The instance side of this trait is used on ';					cr.				classSideUsersOfBaseTrait do: [ :each | stream nextPutAll: each name ] separatedBy: [ stream nextPutAll: ', ' ].				stream					cr;					nextPutAll: ' You can not add methods to the class side of this trait!' ].		^ TraitException signal: message ].^ super	compile: text	classified: category	withStamp: changeStamp	notifying: requestor	logSource: logSource
-]
-
-Class ClassTrait >> category
-[
-^ self baseTrait category
+^ true
 ]
 
 Class ClassTrait >> baseTrait: aTrait
@@ -62,9 +47,29 @@ Class ClassTrait >> baseTrait: aTrait
 [ aTrait isBaseTrait ] assert.baseTrait := aTrait
 ]
 
+Class ClassTrait >> initializeFrom: anotherClassTrait
+[
+traitComposition := self traitComposition copyTraitExpression.methodDict := self methodDict copy.localSelectors := self localSelectors copy.organization := self organization copy
+]
+
+Class ClassTrait >> category
+[
+^ self baseTrait category
+]
+
+Class ClassTrait >> name
+[
+^ self baseTrait name , ' classTrait'
+]
+
 Class ClassTrait >> definition
 [
 ^ String	streamContents: [ :stream | 		stream			nextPutAll: self name;			crtab;			nextPutAll: 'uses: ';			nextPutAll: self traitCompositionString ]
+]
+
+Class ClassTrait >> classTrait: aClassTrait
+[
+self error: 'Trait is already a class trait!'
 ]
 
 Class ClassTrait >> traitComposition: aComposition methodDict: aMethodDict localSelectors: aSet organization: aClassOrganization
@@ -73,9 +78,9 @@ Class ClassTrait >> traitComposition: aComposition methodDict: aMethodDict local
 localSelectors := aSet.methodDict := aMethodDict.traitComposition := aComposition.self organization: aClassOrganization
 ]
 
-Class ClassTrait >> classTrait: aClassTrait
+Class ClassTrait >> initializeWithBaseTrait: aTrait
 [
-self error: 'Trait is already a class trait!'
+self baseTrait: aTrait.self noteNewBaseTraitCompositionApplied: aTrait traitComposition.aTrait users do: [ :each | self addUser: each classSide ]
 ]
 
 Class ClassTrait >> isSelfEvaluating
@@ -84,19 +89,14 @@ Class ClassTrait >> isSelfEvaluating
 ^ baseTrait isObsolete not
 ]
 
-Class ClassTrait >> uses: aTraitCompositionOrArray
+Class ClassTrait >> baseClass: aTrait traitComposition: aComposition methodDict: aMethodDict localSelectors: aSet organization: aClassOrganization
 [
-| copyOfOldTrait newComposition |copyOfOldTrait := self copy.newComposition := aTraitCompositionOrArray asTraitComposition.self assertConsistantCompositionsForNew: newComposition.self setTraitComposition: newComposition.SystemAnnouncer uniqueInstance traitDefinitionChangedFrom: copyOfOldTrait to: self
+self baseTrait: aTrait.self	traitComposition: aComposition	methodDict: aMethodDict	localSelectors: aSet	organization: aClassOrganization
 ]
 
 Class ClassTrait >> isBaseTrait
 [
 ^ false
-]
-
-Class ClassTrait >> baseClass: aTrait traitComposition: aComposition methodDict: aMethodDict localSelectors: aSet organization: aClassOrganization
-[
-self baseTrait: aTrait.self	traitComposition: aComposition	methodDict: aMethodDict	localSelectors: aSet	organization: aClassOrganization
 ]
 
 Metaclass

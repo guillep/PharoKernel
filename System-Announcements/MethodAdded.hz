@@ -26,26 +26,6 @@ Class MethodAdded >> selector
 ^ selector
 ]
 
-Class MethodAdded >> itemMethod
-[
-^ self method
-]
-
-Class MethodAdded >> itemRequestor
-[
-self flag: #'we should probably remove this method'.self error: 'You should not use the requestor.  It will be removes'
-]
-
-Class MethodAdded >> itemSelector
-[
-^ self selector
-]
-
-Class MethodAdded >> itemProtocol
-[
-^ self protocol
-]
-
 Class MethodAdded >> method: aCompiledMethod
 [
 method := aCompiledMethod
@@ -71,16 +51,6 @@ Class MethodAdded >> methodAffected
 ^ self method
 ]
 
-Class MethodAdded >> item
-[
-^ self method
-]
-
-Class MethodAdded >> itemClass
-[
-^ self methodClass
-]
-
 Metaclass
 	name: #MethodAdded;
 	instanceVariables: #().
@@ -91,6 +61,16 @@ self flag: #look.	"Is it ok to send an event with no requestor?"^ self	method:
 ]
 
 Metaclass MethodAdded >> method: aCompiledMethod selector: aSelector protocol: aProtocolName class: aClass requestor: aRequestor
+[
+^ self new	method: aCompiledMethod;	selector: aSelector;	protocol: aProtocolName;	methodClass: aClass;	yourself
+]
+
+Metaclass MethodAdded >> method: aCompiledMethod selector: aSelector class: aClass
+[
+self flag: #look.	"Is it ok to send an event with no protocol?"^ self	method: aCompiledMethod	selector: aSelector	protocol: nil	class: aClass	requestor: nil
+]
+
+Selector protocol: aProtocolName class: aClass requestor: aRequestor
 [
 ^ self new	method: aCompiledMethod;	selector: aSelector;	protocol: aProtocolName;	methodClass: aClass;	yourself
 ]

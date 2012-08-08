@@ -23,16 +23,16 @@ Class UndefinedObject >> environment
 ^ self class environment
 ]
 
-Class UndefinedObject >> ifNotNil: aBlock
-[
-	"A convenient test, in conjunction with Object ifNotNil:"
-^ self
-]
-
 Class UndefinedObject >> ifNil: nilBlock ifNotNilDo: ifNotNilBlock
 [
 	"Evaluate the block for nil because I'm == nil"
 ^ nilBlock value
+]
+
+Class UndefinedObject >> ifNotNil: aBlock
+[
+	"A convenient test, in conjunction with Object ifNotNil:"
+^ self
 ]
 
 Class UndefinedObject >> deepCopy
@@ -41,22 +41,22 @@ Class UndefinedObject >> deepCopy
 
 ]
 
-Class UndefinedObject >> canHandleSignal: exception
-[
-	"When no more handler (on:do:) context left in sender chain this gets called"
-^ false
-]
-
 Class UndefinedObject >> storeOn: aStream
 [
 	"Refer to the comment in Object|storeOn:."
 aStream nextPutAll: 'nil'
 ]
 
-Class UndefinedObject >> release
+Class UndefinedObject >> isEmptyOrNil
 [
-	"Nil release is a no-op"
+	"Answer whether the receiver contains any elements, or is nil.  Useful in numerous situations where one wishes the same reaction to an empty collection or to nil"
+^ true
+]
 
+Class UndefinedObject >> canHandleSignal: exception
+[
+	"When no more handler (on:do:) context left in sender chain this gets called"
+^ false
 ]
 
 Class UndefinedObject >> ifNil: nilBlock ifNotNil: ifNotNilBlock
@@ -65,10 +65,16 @@ Class UndefinedObject >> ifNil: nilBlock ifNotNil: ifNotNilBlock
 ^ nilBlock value
 ]
 
-Class UndefinedObject >> isEmptyOrNil
+Class UndefinedObject >> release
 [
-	"Answer whether the receiver contains any elements, or is nil.  Useful in numerous situations where one wishes the same reaction to an empty collection or to nil"
-^ true
+	"Nil release is a no-op"
+
+]
+
+Class UndefinedObject >> ifNotNilDo: ifNotNilBlock ifNil: nilBlock
+[
+	"If I got here, I am nil, so evaluate the block nilBlock"
+^ nilBlock value
 ]
 
 Class UndefinedObject >> subclasses
@@ -81,12 +87,6 @@ Class UndefinedObject >> ifNotNilDo: aBlock
 [
 	"Override to do nothing."
 ^ self
-]
-
-Class UndefinedObject >> ifNotNilDo: ifNotNilBlock ifNil: nilBlock
-[
-	"If I got here, I am nil, so evaluate the block nilBlock"
-^ nilBlock value
 ]
 
 Class UndefinedObject >> veryDeepCopyWith: deepCopier
@@ -107,12 +107,6 @@ Class UndefinedObject >> subclassDefinerClass
 ^ self class evaluatorClass
 ]
 
-Class UndefinedObject >> asSetElement
-[
-	"Since nil is a singleton, we need only a single wrapper instance to represent it in set,	created in advance"
-^ SetElement withNil
-]
-
 Class UndefinedObject >> allSuperclassesDo: aBlockContext
 [
 self shouldBeImplemented
@@ -122,6 +116,12 @@ Class UndefinedObject >> ifNil: aBlock
 [
 	"A convenient test, in conjunction with Object ifNil:"
 ^ aBlock value
+]
+
+Class UndefinedObject >> asSetElement
+[
+	"Since nil is a singleton, we need only a single wrapper instance to represent it in set,	created in advance"
+^ SetElement withNil
 ]
 
 Class UndefinedObject >> removeSubclass: aClass
@@ -176,12 +176,10 @@ Class UndefinedObject >> isNil
 ^ true
 ]
 
-Class UndefinedObject >> suspend
+Class UndefinedObject >> shallowCopy
 [
-	"Kills off processes that didn't terminate properly"
-	"Display reverse; reverse."
-	"<-- So we can catch the suspend bug"
-Processor terminateActive
+	"Only one instance of UndefinedObject should ever be made, so answer 	with self."
+
 ]
 
 Class UndefinedObject >> typeOfClass
@@ -190,10 +188,12 @@ Class UndefinedObject >> typeOfClass
 ^ #normal
 ]
 
-Class UndefinedObject >> ifNotNil: ifNotNilBlock ifNil: nilBlock
+Class UndefinedObject >> suspend
 [
-	"If I got here, I am nil, so evaluate the block nilBlock"
-^ nilBlock value
+	"Kills off processes that didn't terminate properly"
+	"Display reverse; reverse."
+	"<-- So we can catch the suspend bug"
+Processor terminateActive
 ]
 
 Class UndefinedObject >> handleSignal: exception
@@ -202,10 +202,10 @@ Class UndefinedObject >> handleSignal: exception
 ^ exception resumeUnchecked: exception defaultAction
 ]
 
-Class UndefinedObject >> shallowCopy
+Class UndefinedObject >> ifNotNil: ifNotNilBlock ifNil: nilBlock
 [
-	"Only one instance of UndefinedObject should ever be made, so answer 	with self."
-
+	"If I got here, I am nil, so evaluate the block nilBlock"
+^ nilBlock value
 ]
 
 Metaclass

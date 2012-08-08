@@ -16,27 +16,27 @@ Class ClassDescription >> compile: text classified: category withStamp: changeSt
 | methodAndNode |methodAndNode := self	compile: text asString	classified: category	notifying: requestor	trailer: self defaultMethodTrailer	ifFail: [ ^ nil ].logSource	ifTrue: [ 		" replace 'text' with 'methodAndNode node sourceText' "		self			logMethodSource: methodAndNode node sourceText			forMethodWithNode: methodAndNode			inCategory: category			withStamp: changeStamp			notifying: requestor ].self	addAndClassifySelector: methodAndNode selector	withMethod: methodAndNode method	inProtocol: category	notifying: requestor.self instanceSide noteCompilationOf: methodAndNode selector meta: self isClassSide.^ methodAndNode selector
 ]
 
-Class ClassDescription >> numberOfMethods
-[
-	"count all methods that are local (not comming from a trait)"
-| num |num := self localMethods size.^ self isMeta	ifTrue: [ num ]	ifFalse: [ num + self class numberOfMethods ]
-]
-
 Class ClassDescription >> fileOutChangedMessagesHistorically: aSet on: aFileStream moveSource: moveSource toFile: fileIndex
 [
 	"File all historical description of the messages of this class that have been 	changed (i.e., are entered into the argument, aSet) onto aFileStream.  If 	moveSource, is true, then set the method source pointer to the new file position.	Note when this method is called with moveSource=true, it is condensing the	.changes file, and should only write a preamble for every method."
 | org |(org := self organization) categories	do: [ :cat | 		| sels |		sels := (org listAtCategoryNamed: cat) select: [ :sel | aSet includes: sel ].		sels			do: [ :sel | 				self					printMethodChunkHistorically: sel					on: aFileStream					moveSource: moveSource					toFile: fileIndex ] ]
 ]
 
-Class ClassDescription >> fileOutCategory: catName
+Class ClassDescription >> numberOfMethods
 [
-| internalStream |internalStream := (String new: 1000) writeStream.internalStream	header;	timeStamp.self	fileOutCategory: catName	on: internalStream	moveSource: false	toFile: 0.internalStream trailer.^ FileStream writeSourceCodeFrom: internalStream baseName: self name , '-' , catName isSt: true
+	"count all methods that are local (not comming from a trait)"
+| num |num := self localMethods size.^ self isMeta	ifTrue: [ num ]	ifFalse: [ num + self class numberOfMethods ]
 ]
 
 Class ClassDescription >> printSubclassesOn: aStream level: level
 [
 	"As part of the algorithm for printing a description of the receiver, print the	subclass on the file stream, aStream, indenting level times."
 | subclassNames |aStream crtab: level.aStream nextPutAll: self name.aStream	space;	print: self instVarNames.self == Class	ifTrue: [ 		aStream			crtab: level + 1;			nextPutAll: '[ ... all the Metaclasses ... ]'.		^ self ].subclassNames := self subclasses asSortedCollection: [ :c1 :c2 | c1 name <= c2 name ].	"Print subclasses in alphabetical order"subclassNames do: [ :subclass | subclass printSubclassesOn: aStream level: level + 1 ]
+]
+
+Class ClassDescription >> fileOutCategory: catName
+[
+| internalStream |internalStream := (String new: 1000) writeStream.internalStream	header;	timeStamp.self	fileOutCategory: catName	on: internalStream	moveSource: false	toFile: 0.internalStream trailer.^ FileStream writeSourceCodeFrom: internalStream baseName: self name , '-' , catName isSt: true
 ]
 
 Class ClassDescription >> linesOfCode
@@ -273,18 +273,18 @@ Class ClassDescription >> isAbstractClass
 self subclassResponsibility
 ]
 
-Class ClassDescription >> classVersion
-[
-	"Default.  Any class may return a later version to inform readers that use ReferenceStream.  8/17/96 tk"
-	"This method allows you to distinguish between class versions when the shape of the class 	hasn't changed (when there's no change in the instVar names).	In the conversion methods you usually can tell by the inst var names 	what old version you have. In a few cases, though, the same inst var 	names were kept but their interpretation changed (like in the layoutFrame).	By changing the class version when you keep the same instVars you can 	warn older and newer images that they have to convert."
-^ 0
-]
-
 Class ClassDescription >> updateInstancesFrom: oldClass
 [
 	"Recreate any existing instances of the argument, oldClass, as instances of 	the receiver, which is a newly changed class. Permute variables as 	necessary. Return the array of old instances (none of which should be	pointed to legally by anyone but the array)."
 	"ar 7/15/1999: The updating below is possibly dangerous. If there are any	contexts having an old instance as receiver it might crash the system if	the new receiver in which the context is executed has a different layout.	See bottom below for a simple example:"
 | oldInstances |oldInstances := oldClass allInstances asArray.oldInstances := self updateInstances: oldInstances from: oldClass isMeta: self isMeta.^ oldInstances	"	| crashingBlock class |	class := Object subclass: #CrashTestDummy		instanceVariableNames: 'instVar'		classVariableNames: ''		poolDictionaries: ''		category: 'Crash-Test'.	class compile:'instVar: value instVar := value'.	class compile:'crashingBlock ^[instVar]'.	crashingBlock := (class new) instVar: 42; crashingBlock.	Object subclass: #CrashTestDummy		instanceVariableNames: ''		classVariableNames: ''		poolDictionaries: ''		category: 'Crash-Test'.	crashingBlock.	crashingBlock value.	"
+]
+
+Class ClassDescription >> classVersion
+[
+	"Default.  Any class may return a later version to inform readers that use ReferenceStream.  8/17/96 tk"
+	"This method allows you to distinguish between class versions when the shape of the class 	hasn't changed (when there's no change in the instVar names).	In the conversion methods you usually can tell by the inst var names 	what old version you have. In a few cases, though, the same inst var 	names were kept but their interpretation changed (like in the layoutFrame).	By changing the class version when you keep the same instVars you can 	warn older and newer images that they have to convert."
+^ 0
 ]
 
 Class ClassDescription >> setInstVarNames: instVarArray

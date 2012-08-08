@@ -75,11 +75,15 @@ Class Symbol >> separateKeywords
 ^ self isKeyword	ifFalse: [ self ]	ifTrue: [ 		String			streamContents: [ :stream | 				(self findTokens: $:)					do: [ :each | 						stream							nextPutAll: each;							nextPut: $: ]					separatedBy: [ stream nextPutAll: '  ' ] ] ]
 ]
 
-Class Symbol >> flushCache
+Class Symbol >> asString
 [
-	"Tell the interpreter to remove all entries with this symbol as a selector from its method lookup cache, if it has one.  This primitive must be called whenever a method is redefined or removed.	NOTE:  Only one of the two selective flush methods (Symbol or CompiledMethod) needs to be used."
-	<primitive: 119>
+	"Refer to the comment in String|asString."
+| newString |newString := self species new: self size.newString	replaceFrom: 1	to: newString size	with: self	startingAt: 1.^ newString
+]
 
+Class Symbol >> isDoIt
+[
+^ self == #DoIt or: [ self == #DoItIn: ]
 ]
 
 Class Symbol >> isBinary
@@ -88,33 +92,29 @@ Class Symbol >> isBinary
 ^ self precedence = 2
 ]
 
-Class Symbol >> veryDeepCopyWith: deepCopier
-[
-	"Return self.  I am immutable in the Morphic world.  Do not record me."
-
-]
-
 Class Symbol >> numArgs: n
 [
 	"Answer a string that can be used as a selector with n arguments.	 TODO: need to be extended to support shrinking and for selectors like #+ "
 | selector numArgs aStream offs |selector := self.(numArgs := selector numArgs) >= n	ifTrue: [ ^ self ].aStream := (String new: 16) writeStream.aStream nextPutAll: self.numArgs = 0	ifTrue: [ 		aStream nextPutAll: ':'.		offs := 0 ]	ifFalse: [ offs := 1 ].2 to: n - numArgs + offs do: [ :i | aStream nextPutAll: 'with:' ].^ aStream contents asSymbol
 ]
 
-Class Symbol >> asString
+Class Symbol >> veryDeepCopyWith: deepCopier
 [
-	"Refer to the comment in String|asString."
-| newString |newString := self species new: self size.newString	replaceFrom: 1	to: newString size	with: self	startingAt: 1.^ newString
+	"Return self.  I am immutable in the Morphic world.  Do not record me."
+
 ]
 
-Class Symbol >> = aSymbol
+Class Symbol >> isUnary
 [
-	"Compare the receiver and aSymbol."
-self == aSymbol	ifTrue: [ ^ true ].self class == aSymbol class	ifTrue: [ ^ false ].	"Use String comparison otherwise"^ super = aSymbol
+	"Answer whether the receiver is an unary message selector."
+^ self precedence = 1
 ]
 
-Class Symbol >> isDoIt
+Class Symbol >> flushCache
 [
-^ self == #DoIt or: [ self == #DoItIn: ]
+	"Tell the interpreter to remove all entries with this symbol as a selector from its method lookup cache, if it has one.  This primitive must be called whenever a method is redefined or removed.	NOTE:  Only one of the two selective flush methods (Symbol or CompiledMethod) needs to be used."
+	<primitive: 119>
+
 ]
 
 Class Symbol >> includesKey: sym
@@ -122,10 +122,10 @@ Class Symbol >> includesKey: sym
 ^ self == sym
 ]
 
-Class Symbol >> isUnary
+Class Symbol >> = aSymbol
 [
-	"Answer whether the receiver is an unary message selector."
-^ self precedence = 1
+	"Compare the receiver and aSymbol."
+self == aSymbol	ifTrue: [ ^ true ].self class == aSymbol class	ifTrue: [ ^ false ].	"Use String comparison otherwise"^ super = aSymbol
 ]
 
 Class Symbol >> isKeyword

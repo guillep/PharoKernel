@@ -16,15 +16,15 @@ Class Behavior >> allUnsentMessages
 ^ SystemNavigation new allUnsentMessagesIn: self selectors
 ]
 
-Class Behavior >> allCallsOn
-[
-	"Answer a SortedCollection of all the methods that refer to me by name or as part of an association in a global dict."
-^ self allCallsOnIn: self systemNavigation
-]
-
 Class Behavior >> referencedClasses
 [
 	"Return the set of classes that are directly referenced by my methods"
 | answer |answer := Set new.self methods do: [ :cm | answer addAll: (cm literals select: [ :l | l isKindOf: Association ] thenCollect: #value) ].^ answer
+]
+
+Class Behavior >> allCallsOn
+[
+	"Answer a SortedCollection of all the methods that refer to me by name or as part of an association in a global dict."
+^ self allCallsOnIn: self systemNavigation
 ]
 

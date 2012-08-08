@@ -11,34 +11,14 @@ Class MethodRecategorized >> methodClass: anObject
 methodClass := anObject
 ]
 
-Class MethodRecategorized >> methodRecategorized: anObject
-[
-methodRecategorized := anObject
-]
-
 Class MethodRecategorized >> selector: anObject
 [
 selector := anObject
 ]
 
-Class MethodRecategorized >> itemOldProtocol
-[
-^ self oldProtocol
-]
-
 Class MethodRecategorized >> selector
 [
 ^ selector
-]
-
-Class MethodRecategorized >> itemSelector
-[
-^ self selector
-]
-
-Class MethodRecategorized >> itemNewProtocol
-[
-^ self newProtocol
 ]
 
 Class MethodRecategorized >> oldProtocol
@@ -76,18 +56,21 @@ Class MethodRecategorized >> newProtocol
 ^ newProtocol
 ]
 
-Class MethodRecategorized >> item
+Class MethodRecategorized >> methodRecategorized: anObject
 [
-^ self methodRecategorized
-]
-
-Class MethodRecategorized >> itemClass
-[
-^ self methodClass
+methodRecategorized := anObject
 ]
 
 Metaclass
 	name: #MethodRecategorized;
+	instanceVariables: #().
+
+Metaclass MethodRecategorized >> method: aCompiledMethod selector: aSelector class: aClass newProtocol: aNewProtocol oldProtocol: anOldProtocol
+[
+^ self new	methodRecategorized: aCompiledMethod;	selector: aSelector;	methodClass: aClass;	newProtocol: aNewProtocol;	oldProtocol: anOldProtocol;	yourself
+]
+
+tegorized;
 	instanceVariables: #().
 
 Metaclass MethodRecategorized >> method: aCompiledMethod selector: aSelector class: aClass newProtocol: aNewProtocol oldProtocol: anOldProtocol

@@ -6,11 +6,6 @@ Class
 	classVariables: #();
 	package: #'System-Announcements'.
 
-Class ClassRenamed >> newName: anObject
-[
-newName := anObject
-]
-
 Class ClassRenamed >> classRenamed: anObject
 [
 classRenamed := anObject
@@ -51,19 +46,9 @@ Class ClassRenamed >> oldName
 ^ oldName
 ]
 
-Class ClassRenamed >> itemPackageName
+Class ClassRenamed >> newName: anObject
 [
-^ self category
-]
-
-Class ClassRenamed >> item
-[
-^ self classRenamed
-]
-
-Class ClassRenamed >> itemClass
-[
-^ self item
+newName := anObject
 ]
 
 Metaclass
@@ -71,6 +56,11 @@ Metaclass
 	instanceVariables: #().
 
 Metaclass ClassRenamed >> class: aClass category: aCategoryName oldName: anOldClassName newName: aNewClassName
+[
+^ self new	classRenamed: aClass;	category: aCategoryName;	oldName: anOldClassName;	newName: aNewClassName;	yourself
+]
+
+Name: anOldClassName newName: aNewClassName
 [
 ^ self new	classRenamed: aClass;	category: aCategoryName;	oldName: anOldClassName;	newName: aNewClassName;	yourself
 ]

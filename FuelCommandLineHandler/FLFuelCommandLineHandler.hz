@@ -1,0 +1,54 @@
+Class
+	name: #FLFuelCommandLineHandler;
+	superclass: #ClassCommandLineHandler;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #(#files );
+	classVariables: #();
+	package: #FuelCommandLineHandler.
+
+Class FLFuelCommandLineHandler >> activate
+[
+self manageFiles.(self commandLine hasOption: 'save')	ifTrue: [ 		ThreadSafeTranscript install.		Smalltalk			addDeferredStartupAction: [ 				Smalltalk snapshot: true andQuit: true.				NonInteractiveTranscript new install ] ].(self commandLine hasOption: 'quit')	ifTrue: [ self exitSucess ]
+]
+
+Class FLFuelCommandLineHandler >> manageFile: aFileReference
+[
+aFileReference	readStreamDo: [ :stream | 		stream binary.		FileStream stdout			nextPutAll: 'Materializing from file: ' , aFileReference fullName;			lf.		FLMaterializer new materializeFrom: stream.		FileStream stdout			nextPutAll: 'Materialization finished';			lf ]
+]
+
+Class FLFuelCommandLineHandler >> manageFiles
+[
+	"Load all the source files in the given array."
+files := (self commandLine allFilesWithExtension: self fileExtension)	collect: [ :each | (FileSystem disk resolve: each) asFileReference ].files ifNil: [ ^ self ].files do: [ :reference | self manageFile: reference ]
+]
+
+Class FLFuelCommandLineHandler >> fileExtension
+[
+^ self class fileExtension
+]
+
+Metaclass
+	name: #FLFuelCommandLineHandler;
+	instanceVariables: #().
+
+Metaclass FLFuelCommandLineHandler >> fileExtension
+[
+^ '.fuel'
+]
+
+Metaclass FLFuelCommandLineHandler >> isResponsibleFor: aCommandLine
+[
+	"This handler is reponsible only for .fuel files"
+(aCommandLine hasFileWithExtension: self fileExtension)	ifTrue: [ ^ true ].^ super isResponsibleFor: aCommandLine
+]
+
+Metaclass FLFuelCommandLineHandler >> description
+[
+^ 'Handles fuel files'
+]
+
+Metaclass FLFuelCommandLineHandler >> commandName
+[
+^ 'Fuel'
+]
+

@@ -1,31 +1,6 @@
-Class FLAnalyzer >> useFullMappers
-[
-globalMappersFactory := [ self fullGlobalMappers ].generalMapperFactory := [ FLFullGeneralMapper new ]
-]
-
-Class FLAnalyzer >> useReusableFullMappers
-[
-globalMappersFactory := [ self reusableFullGlobalMappers ].generalMapperFactory := [ FLFullGeneralMapper new ]
-]
-
 Class FLAnalyzer >> reuseFullGlobalMappers: aFullGlobalMappers withInternalBehaviors: internals internalMethods: methods
 [
 aFullGlobalMappers do: [ :each | each resetForInternalBehaviors: internals internalMethods: methods ].internalClasses := internals.internalMethods := methods.globalMappers := aFullGlobalMappers
-]
-
-Class FLAnalyzer >> fullGlobalMappers
-[
-^ Array	with:		(FLFullGlobalMapper			newWithInternalBehaviors: internalClasses			internalMethods: internalMethods			globalSymbols: globalSymbols)
-]
-
-Class FLAnalyzer >> useLightMappersWithMethodSupport
-[
-globalMappersFactory := [ self lightGlobalMappers ].generalMapperFactory := [ FLLightGeneralMapperWithMethodSupportOnly new ]
-]
-
-Class FLAnalyzer >> considerInternalBehavior: class
-[
-internalClasses add: class.self useFullMappers
 ]
 
 Class FLAnalyzer >> considerInternalAllMethods: methods
@@ -33,18 +8,43 @@ Class FLAnalyzer >> considerInternalAllMethods: methods
 internalMethods addAll: methods.self useFullMappers
 ]
 
-Class FLAnalyzer >> reusableFullGlobalMappers
-[
-globalMappers isNil	ifTrue: [ 		globalMappers := Array			with:				(FLFullGlobalMapper					newWithInternalBehaviors: internalClasses					internalMethods: internalMethods					globalSymbols: globalSymbols) ].^ globalMappers
-]
-
 Class FLAnalyzer >> considerInternalAllBehaviors: classes
 [
 internalClasses addAll: classes.self useFullMappers
 ]
 
+Class FLAnalyzer >> considerInternalBehavior: class
+[
+internalClasses add: class.self useFullMappers
+]
+
+Class FLAnalyzer >> useReusableFullMappers
+[
+globalMappersFactory := [ self reusableFullGlobalMappers ].generalMapperFactory := [ FLFullGeneralMapper new ]
+]
+
+Class FLAnalyzer >> reusableFullGlobalMappers
+[
+globalMappers isNil	ifTrue: [ 		globalMappers := Array			with:				(FLFullGlobalMapper					newWithInternalBehaviors: internalClasses					internalMethods: internalMethods					globalSymbols: globalSymbols) ].^ globalMappers
+]
+
+Class FLAnalyzer >> useFullMappers
+[
+globalMappersFactory := [ self fullGlobalMappers ].generalMapperFactory := [ FLFullGeneralMapper new ]
+]
+
 Class FLAnalyzer >> considerInternalMethod: aMethod
 [
 internalMethods add: aMethod.self useFullMappers
+]
+
+Class FLAnalyzer >> useLightMappersWithMethodSupport
+[
+globalMappersFactory := [ self lightGlobalMappers ].generalMapperFactory := [ FLLightGeneralMapperWithMethodSupportOnly new ]
+]
+
+Class FLAnalyzer >> fullGlobalMappers
+[
+^ Array	with:		(FLFullGlobalMapper			newWithInternalBehaviors: internalClasses			internalMethods: internalMethods			globalSymbols: globalSymbols)
 ]
 

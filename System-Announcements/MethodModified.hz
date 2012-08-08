@@ -16,12 +16,6 @@ Class MethodModified >> selector: anObject
 selector := anObject
 ]
 
-Class MethodModified >> oldItem
-[
-	"that is stupid..."
-^ self oldMethod
-]
-
 Class MethodModified >> selector
 [
 ^ selector
@@ -40,16 +34,6 @@ Class MethodModified >> newMethod
 Class MethodModified >> newMethod: aCompiledMethod
 [
 newMethod := aCompiledMethod
-]
-
-Class MethodModified >> itemSelector
-[
-^ self selector
-]
-
-Class MethodModified >> itemProtocol
-[
-^ self newProtocol
 ]
 
 Class MethodModified >> oldProtocol
@@ -87,21 +71,16 @@ Class MethodModified >> newProtocol
 ^ newProtocol
 ]
 
-Class MethodModified >> item
-[
-^ self newMethod
-]
-
-Class MethodModified >> itemClass
-[
-^ self methodClass
-]
-
 Metaclass
 	name: #MethodModified;
 	instanceVariables: #().
 
-Metaclass MethodModified >> oldMethod: oldMethod newMethod: newMethod
+Metaclass MethodModified >> methodChangedFrom: oldMethod to: newMethod selector: selector inClass: aClass oldProtocol: oldProtocol newProtocol: newProtocol requestor: aRequestor
+[
+^ self new	oldMethod: oldMethod;	newMethod: newMethod;	selector: selector;	methodClass: aClass;	oldProtocol: oldProtocol;	newProtocol: newProtocol;	yourself
+]
+
+d >> oldMethod: oldMethod newMethod: newMethod
 [
 oldMethod class == newMethod class	ifFalse: [ self error: 'The two methods don''t belong to the same class' ].oldMethod selector == newMethod selector	ifFalse: [ self error: 'The two methods haven''t the same selector' ].^ self new	oldMethod: oldMethod;	newMethod: newMethod;	yourself
 ]

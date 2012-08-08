@@ -13,7 +13,7 @@ Class FLClassCluster >> materializePostInstance: aClass with: aDecoder
 
 Class FLClassCluster >> serializePostInstance: aClass with: anEncoder
 [
-anEncoder encodeReferenceTo: aClass superclass.anEncoder encodeReferenceTo: aClass basicCategory.anEncoder encodeReferenceTo: aClass name.anEncoder encodeReferenceTo: aClass format.anEncoder encodeString: aClass instanceVariablesString.self flag: #todo	"The array of variable names represents a circularity problem between clusters: if we encode the reference to such array, then the cluster for arrays should be before of Class cluster. But this would disable us to serialize an array of internal classes."
+anEncoder encodeReferenceTo: aClass superclass.	"Do not use #basicCategory because since it may be lazily computed it may happen that it is still in nil. "anEncoder encodeReferenceTo: aClass category.anEncoder encodeReferenceTo: aClass name.anEncoder encodeReferenceTo: aClass format.anEncoder encodeString: aClass instanceVariablesString.self flag: #todo	"The array of variable names represents a circularity problem between clusters: if we encode the reference to such array, then the cluster for arrays should be before of Class cluster. But this would disable us to serialize an array of internal classes."
 ]
 
 Class FLClassCluster >> serializeInstance: aClass with: anEncoder
@@ -38,7 +38,7 @@ super serializeReferencesOf: aClass with: anEncoder.anEncoder encodeReferenceTo
 
 Class FLClassCluster >> referencesOf: aClass do: aBlock
 [
-super referencesOf: aClass do: aBlock.aBlock value: aClass classSide.aBlock value: aClass superclass.aBlock value: aClass basicClassPool.aBlock value: aClass basicSharedPools.aBlock value: aClass basicCategory.aBlock value: aClass name.aBlock value: aClass format.aBlock value: aClass basicEnvironment.aBlock value: aClass basicSubclasses.Class class instSize + 1 to: aClass class instSize do: [ :index | aBlock value: (aClass instVarAt: index) ]
+super referencesOf: aClass do: aBlock.aBlock value: aClass classSide.aBlock value: aClass superclass.aBlock value: aClass basicClassPool.aBlock value: aClass basicSharedPools.aBlock value: aClass category.aBlock value: aClass name.aBlock value: aClass format.aBlock value: aClass basicEnvironment.aBlock value: aClass basicSubclasses.Class class instSize + 1 to: aClass class instSize do: [ :index | aBlock value: (aClass instVarAt: index) ]
 ]
 
 Metaclass

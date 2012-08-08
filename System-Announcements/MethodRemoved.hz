@@ -26,24 +26,9 @@ Class MethodRemoved >> selector
 ^ selector
 ]
 
-Class MethodRemoved >> itemMethod
-[
-^ self methodRemoved
-]
-
-Class MethodRemoved >> itemSelector
-[
-^ self selector
-]
-
 Class MethodRemoved >> methodRemoved
 [
 ^ methodRemoved
-]
-
-Class MethodRemoved >> itemProtocol
-[
-^ self protocol
 ]
 
 Class MethodRemoved >> protocol: anObject
@@ -66,14 +51,15 @@ Class MethodRemoved >> methodRemoved: anObject
 methodRemoved := anObject
 ]
 
-Class MethodRemoved >> item
+Metaclass
+	name: #MethodRemoved;
+	instanceVariables: #().
+
+Metaclass MethodRemoved >> methodRemoved: aCompiledMethod selector: aSelector protocol: aProtocol class: aClass
 [
-^ self methodRemoved
+^ self new	methodRemoved: aCompiledMethod;	selector: aSelector;	protocol: aProtocol;	methodClass: aClass;	yourself
 ]
 
-Class MethodRemoved >> itemClass
-[
-^ self methodClass
 ]
 
 Metaclass

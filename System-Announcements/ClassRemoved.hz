@@ -6,35 +6,14 @@ Class
 	classVariables: #();
 	package: #'System-Announcements'.
 
-Class ClassRemoved >> removedClassCategory
-[
-^ self categoryName
-]
-
 Class ClassRemoved >> classAffected
 [
 ^ self classRemoved
 ]
 
-Class ClassRemoved >> item
-[
-^ self removedClass
-]
-
 Class ClassRemoved >> classRemoved
 [
 ^ classRemoved
-]
-
-Class ClassRemoved >> itemClass
-[
-	"to make polymorphic the events"
-^ self removedClass
-]
-
-Class ClassRemoved >> removedClass
-[
-^ self classRemoved
 ]
 
 Class ClassRemoved >> categoryName
@@ -46,6 +25,21 @@ Class ClassRemoved >> classRemoved: anObject
 [
 classRemoved := anObject
 ]
+
+Class ClassRemoved >> categoryName: anObject
+[
+categoryName := anObject
+]
+
+Metaclass
+	name: #ClassRemoved;
+	instanceVariables: #().
+
+Metaclass ClassRemoved >> class: aClass category: aCategoryName
+[
+^ self new	classRemoved: aClass;	categoryName: aCategoryName;	yourself
+]
+
 
 Class ClassRemoved >> categoryName: anObject
 [

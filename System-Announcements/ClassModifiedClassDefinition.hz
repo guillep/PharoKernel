@@ -16,9 +16,9 @@ Class ClassModifiedClassDefinition >> newClassDefinition
 ^ newClassDefinition
 ]
 
-Class ClassModifiedClassDefinition >> oldItem
+Class ClassModifiedClassDefinition >> newClassDefinition: aClass
 [
-^ self oldClassDefinition
+newClassDefinition := aClass
 ]
 
 Class ClassModifiedClassDefinition >> oldClassDefinition: aClass
@@ -26,9 +26,21 @@ Class ClassModifiedClassDefinition >> oldClassDefinition: aClass
 oldClassDefinition := aClass
 ]
 
-Class ClassModifiedClassDefinition >> anyChanges
+Class ClassModifiedClassDefinition >> classAffected
 [
-self	flag:		'We should get rid of this please. normally if you send a changed event, is because something changed, so this is nonsense'.	"	^ self event isSuperclassModified		| self event areInstVarsModified			| self event areClassVarsModified				| self event areSharedPoolsModified					| self event isTraitCompositionModified."^ true
+^ self newClassDefinition
+]
+
+Metaclass
+	name: #ClassModifiedClassDefinition;
+	instanceVariables: #().
+
+Metaclass ClassModifiedClassDefinition >> classDefinitionChangedFrom: oldClass to: newClass
+[
+^ self new	oldClassDefinition: oldClass;	newClassDefinition: newClass;	yourself
+]
+
+ionModified."^ true
 ]
 
 Class ClassModifiedClassDefinition >> item

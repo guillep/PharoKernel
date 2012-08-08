@@ -45,18 +45,18 @@ Class BlockClosure >> bench
 | startTime endTime count roundTo3Digits |roundTo3Digits := [ :num | | rounded lowDigit |rounded := (num * 1000) rounded.	"round to 1/1000"lowDigit := (rounded numberOfDigitsInBase: 10) - 3.	"keep only first 3 digits"rounded := rounded roundTo: (10 raisedTo: lowDigit).(lowDigit >= 3 or: [ rounded \\ 1000 = 0 ])	ifTrue: [ (rounded // 1000) asStringWithCommas ]	ifFalse: [ (rounded / 1000.0) printString ]	"display fractional part only when needed" ].count := 0.endTime := Time millisecondClockValue + 5000.startTime := Time millisecondClockValue.[ Time millisecondClockValue > endTime ]	whileFalse: [ 		self value.		count := count + 1 ].endTime := Time millisecondClockValue.^ count = 1	ifTrue: [ (roundTo3Digits value: (endTime - startTime) / 1000) , ' seconds.' ]	ifFalse: [ (roundTo3Digits value: count * 1000 / (endTime - startTime)) , ' per second.' ]
 ]
 
-Class BlockClosure >> valueUninterruptably
-[
-	"Prevent remote returns from escaping the sender.  Even attempts to terminate (unwind) this process will be halted and the process will resume here.  A terminate message is needed for every one of these in the sender chain to get the entire process unwound."
-^ self	ifCurtailed: [ ^ self ]
-]
-
 Class BlockClosure >> newProcessWith: anArray
 [
 	"Answer a Process running the code in the receiver. The receiver's block 	arguments are bound to the contents of the argument, anArray. The 	process is not scheduled."
 	"Simulation guard"
 	<primitive: 19>
 ^ Process	forContext:		[ 		self valueWithArguments: anArray.		Processor terminateActive ] asContext	priority: Processor activePriority
+]
+
+Class BlockClosure >> valueUninterruptably
+[
+	"Prevent remote returns from escaping the sender.  Even attempts to terminate (unwind) this process will be halted and the process will resume here.  A terminate message is needed for every one of these in the sender chain to get the entire process unwound."
+^ self	ifCurtailed: [ ^ self ]
 ]
 
 Class BlockClosure >> split: aSequenceableCollection
@@ -83,14 +83,20 @@ Class BlockClosure >> value: firstArg value: secondArg
 | newContext ncv |numArgs ~= 2	ifTrue: [ self numArgsError: 2 ].^ self primitiveFailed
 ]
 
-Class BlockClosure >> assert
+Class BlockClosure >> numTemps
 [
-self value	ifFalse: [ AssertionFailure signal: 'Assertion failed' ]
+	"Answer the number of temporaries for the receiver; this includes	 the number of arguments and the number of copied values."
+| blockCreationBytecodeSize |^ self numCopiedValues + self numArgs	+ (BlockLocalTempCounter tempCountForBlockAt: startpc - (blockCreationBytecodeSize := 4) in: self method)
 ]
 
 Class BlockClosure >> outerContext
 [
 ^ outerContext
+]
+
+Class BlockClosure >> assert
+[
+self value	ifFalse: [ AssertionFailure signal: 'Assertion failed' ]
 ]
 
 Class BlockClosure >> valueUnpreemptively
@@ -100,21 +106,10 @@ Class BlockClosure >> valueUnpreemptively
 | activeProcess oldPriority result semaphore |activeProcess := Processor activeProcess.oldPriority := activeProcess priority.activeProcess priority: Processor highestPriority.result := self	ensure: [ activeProcess priority: oldPriority ].	"Yield after restoring priority to give the preempted processes a chance to run.	We inline the code of Processor yield here, but without the primitive.	The reason: the yield primitive does not take into account a change of priority as done above"semaphore := Semaphore new.[ semaphore signal ] fork.semaphore wait.^ result
 ]
 
-Class BlockClosure >> numTemps
-[
-	"Answer the number of temporaries for the receiver; this includes	 the number of arguments and the number of copied values."
-| blockCreationBytecodeSize |^ self numCopiedValues + self numArgs	+ (BlockLocalTempCounter tempCountForBlockAt: startpc - (blockCreationBytecodeSize := 4) in: self method)
-]
-
 Class BlockClosure >> repeat
 [
 	"Evaluate the receiver repeatedly, ending only if the block explicitly returns."
 [ self value.true ] whileTrue
-]
-
-Class BlockClosure >> valueSuppressingMessages: aListOfStrings supplyingAnswers: aListOfPairs
-[
-^ self	valueSupplyingAnswers:		aListOfPairs			,				(aListOfStrings					collect: [ :each | 						{each.						true} ])
 ]
 
 Class BlockClosure >> on: exception do: handlerAction
@@ -122,6 +117,11 @@ Class BlockClosure >> on: exception do: handlerAction
 	"Evaluate the receiver in the scope of an exception handler."
 	<primitive: 199>
 | handlerActive |handlerActive := true.	"just a marker, fail and execute the following"^ self value
+]
+
+Class BlockClosure >> valueSuppressingMessages: aListOfStrings supplyingAnswers: aListOfPairs
+[
+^ self	valueSupplyingAnswers:		aListOfPairs			,				(aListOfStrings					collect: [ :each | 						{each.						true} ])
 ]
 
 Class BlockClosure >> value
@@ -289,16 +289,16 @@ Class BlockClosure >> becomeUncached
 ^ self
 ]
 
-Class BlockClosure >> durationToRun
-[
-	"Answer the duration taken to execute this block."
-^ Duration milliSeconds: self timeToRun
-]
-
 Class BlockClosure >> isDead
 [
 	"Has self finished"
 ^ false
+]
+
+Class BlockClosure >> durationToRun
+[
+	"Answer the duration taken to execute this block."
+^ Duration milliSeconds: self timeToRun
 ]
 
 Class BlockClosure >> numArgs
@@ -354,15 +354,26 @@ Class BlockClosure >> repeatWithGCIf: testBlock
 | ans |"run the receiver, and if testBlock returns true, garbage collect and run the receiver again"ans := self value.(testBlock value: ans)	ifTrue: [ 		Smalltalk garbageCollect.		ans := self value ].^ ans
 ]
 
+Class BlockClosure >> abstractBytecodeMessagesDo: aBlock
+[
+	"Evaluate aBlock with the sequence of abstract bytecodes in the receiver."
+self method abstractBytecodeMessagesFrom: startpc to: self endPC do: aBlock	"| msgs |	 msgs := OrderedCollection new.	 (SortedCollection sortBlock: [:a :b| a compare: b caseSensitive: false]) sortBlock		abstractBytecodeMessagesDo: [:msg| msgs add: msg selector].	 msgs"
+]
+
+Class BlockClosure >> valueWithExit
+[
+self value: [ ^ nil ]
+]
+
 Class BlockClosure >> valueSupplyingAnswers: aListOfPairs
 [
 	"evaluate the block using a list of questions / answers that might be called upon to	automatically respond to Object>>confirm: or FillInTheBlank requests"
 ^ [ self value ]	on: ProvideAnswerNotification	do: [ :notify | 		| answer caption |		caption := notify messageText withSeparatorsCompacted.	"to remove new lines"		answer := aListOfPairs			detect: [ :each | 				caption = each first					or: [ 						(caption includesSubstring: each first caseSensitive: false)							or: [ 								(each first match: caption)									or: [ 										(String includesSelector: #matchesRegex:)											and: [ 												[ caption matchesRegex: each first ]													on: Error													do: [ :ignored | false ] ] ] ] ] ]			ifNone: [ nil ].		answer			ifNotNil: [ notify resume: answer second ]			ifNil: [ 				| outerAnswer |				outerAnswer := ProvideAnswerNotification signal: notify messageText.				outerAnswer ifNil: [ notify resume ] ifNotNil: [ notify resume: outerAnswer ] ] ]
 ]
 
-Class BlockClosure >> valueWithExit
+Class BlockClosure >> home
 [
-self value: [ ^ nil ]
+^ outerContext home
 ]
 
 Class BlockClosure >> value: anArg
@@ -372,31 +383,20 @@ Class BlockClosure >> value: anArg
 | newContext ncv |numArgs ~= 1	ifTrue: [ self numArgsError: 1 ].self primitiveFailed
 ]
 
-Class BlockClosure >> home
-[
-^ outerContext home
-]
-
-Class BlockClosure >> abstractBytecodeMessagesDo: aBlock
-[
-	"Evaluate aBlock with the sequence of abstract bytecodes in the receiver."
-self method abstractBytecodeMessagesFrom: startpc to: self endPC do: aBlock	"| msgs |	 msgs := OrderedCollection new.	 (SortedCollection sortBlock: [:a :b| a compare: b caseSensitive: false]) sortBlock		abstractBytecodeMessagesDo: [:msg| msgs add: msg selector].	 msgs"
-]
-
 Class BlockClosure >> whileFalse
 [
 	"Ordinarily compiled in-line, and therefore not overridable.	This is in case the message is sent to other than a literal block.	Evaluate the receiver, as long as its value is false."
 ^ [ self value ] whileFalse: [  ]
 ]
 
-Class BlockClosure >> valueSuppressingAllMessages
-[
-^ self valueSuppressingMessages: #('*')
-]
-
 Class BlockClosure >> endPC
 [
 ^ self blockCreationBytecodeMessage arguments last + startpc - 1
+]
+
+Class BlockClosure >> valueSuppressingAllMessages
+[
+^ self valueSuppressingMessages: #('*')
 ]
 
 Class BlockClosure >> isBlock
@@ -445,16 +445,16 @@ Class BlockClosure >> sender
 ^ outerContext sender
 ]
 
-Class BlockClosure >> forkAt: priority
-[
-	"Create and schedule a Process running the code in the receiver at the given priority. Answer the newly created process."
-^ self newProcess	priority: priority;	resume
-]
-
 Class BlockClosure >> once
 [
 	"Answer and remember the receiver value, answering exactly the same object in any further sends	 of once or value until the receiver become uncached.  This allows one to intern values with the idiom		myResourceMethod			^[expression] once.	 The expression will be evaluated once and its result returned for any subsequent evaluations.	 Originally by Travis Griggs, from whom we copy this idea with thanks."
 numArgs ~= 0	ifTrue: [ self error: 'once should only be used with niladic blocks' ].self becomeCached.^ self once
+]
+
+Class BlockClosure >> forkAt: priority
+[
+	"Create and schedule a Process running the code in the receiver at the given priority. Answer the newly created process."
+^ self newProcess	priority: priority;	resume
 ]
 
 Class BlockClosure >> asContext

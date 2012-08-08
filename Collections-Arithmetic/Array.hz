@@ -4,15 +4,15 @@ Class Array >> +* aCollection
 ^ aCollection preMultiplyByArray: self
 ]
 
-Class Array >> preMultiplyByArray: a
-[
-	"Answer a+*self where a is an Array.  Arrays are always understood as column vectors,	 so an n element Array is an n*1 Array.  This multiplication is legal iff self size = 1."
-self size = 1	ifFalse: [ self error: 'dimensions do not conform' ].^ a * self first
-]
-
 Class Array >> preMultiplyByMatrix: m
 [
 	"Answer m+*self where m is a Matrix."
 m columnCount = self size	ifFalse: [ self error: 'dimensions do not conform' ].^ (1 to: m rowCount)	collect: [ :row | 		| s |		s := 0.		1 to: self size do: [ :k | s := (m at: row at: k) * (self at: k) + s ].		s ]
+]
+
+Class Array >> preMultiplyByArray: a
+[
+	"Answer a+*self where a is an Array.  Arrays are always understood as column vectors,	 so an n element Array is an n*1 Array.  This multiplication is legal iff self size = 1."
+self size = 1	ifFalse: [ self error: 'dimensions do not conform' ].^ a * self first
 ]
 

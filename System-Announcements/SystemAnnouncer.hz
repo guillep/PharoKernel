@@ -106,11 +106,6 @@ Class SystemAnnouncer >> classCategoryRenamedFrom: anOldClassCategoryName to: aN
 self announce: (CategoryRenamed classCategoryRenamedFrom: anOldClassCategoryName to: aNewClassCategoryName)
 ]
 
-Class SystemAnnouncer >> basicAnnounce: anAnnouncement
-[
-self flag: #todo.	"Remove Me in cleaning step"super announce: anAnnouncement
-]
-
 Class SystemAnnouncer >> selector: selector recategorizedFrom: oldCategory to: newCategory inClass: aClass
 [
 self	announce:		(MethodRecategorized			method: (aClass compiledMethodAt: selector ifAbsent: [ nil ])			selector: selector			class: aClass			newProtocol: newCategory			oldProtocol: oldCategory)
@@ -143,19 +138,14 @@ Class SystemAnnouncer >> methodChangedFrom: oldMethod to: newMethod
 self	methodChangedFrom: oldMethod	to: newMethod	selector: newMethod selector	inClass: newMethod methodClass	oldProtocol: nil	newProtocol: nil	requestor: nil
 ]
 
-Class SystemAnnouncer >> doSilently: aBlock
+Class SystemAnnouncer >> private
 [
-self flag: #todo.	"Remove Me"self suspendAllWhile: aBlock
+^ private ifNil: [ private := Announcer new ]
 ]
 
 Class SystemAnnouncer >> classRenamed: aClass from: oldClassName to: newClassName inCategory: aCategoryName
 [
 self	announce:		(ClassRenamed			class: aClass			category: aCategoryName			oldName: oldClassName			newName: newClassName)
-]
-
-Class SystemAnnouncer >> private
-[
-^ private ifNil: [ private := Announcer new ]
 ]
 
 Class SystemAnnouncer >> methodChangedFrom: oldMethod to: newMethod selector: aSymbol inClass: aClass oldProtocol: oldProtocol newProtocol: newProtocol requestor: requestor
@@ -212,6 +202,10 @@ announcer := anAnnouncer
 Metaclass SystemAnnouncer >> restoreAllNotifications
 [
 	"self restoreAllNotifications"
+| collector |self reset.collector := PragmaCollector filter: [ :pragma | pragma keyword = #systemEventRegistration ].collector reset.collector do: [ :pragma | pragma methodClass theNonMetaClass perform: pragma selector ]
+]
+
+estoreAllNotifications"
 | collector |self reset.collector := PragmaCollector filter: [ :pragma | pragma keyword = #systemEventRegistration ].collector reset.collector do: [ :pragma | pragma methodClass theNonMetaClass perform: pragma selector ]
 ]
 
