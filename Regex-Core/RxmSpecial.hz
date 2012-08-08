@@ -6,10 +6,19 @@ Class
 	classVariables: #();
 	package: #'Regex-Core'.
 
-Class RxmSpecial >> matchAgainst: aMatcher
+Class RxmSpecial >> beBeginningOfLine
 [
-	"Match without consuming any input, if the matcher is	in appropriate state."
-^ (aMatcher perform: matchSelector) and: [ next matchAgainst: aMatcher ]
+matchSelector := #atBeginningOfLine
+]
+
+Class RxmSpecial >> beBeginningOfWord
+[
+matchSelector := #atBeginningOfWord
+]
+
+Class RxmSpecial >> beEndOfLine
+[
+matchSelector := #atEndOfLine
 ]
 
 Class RxmSpecial >> beEndOfWord
@@ -22,24 +31,15 @@ Class RxmSpecial >> beNotWordBoundary
 matchSelector := #notAtWordBoundary
 ]
 
-Class RxmSpecial >> beBeginningOfLine
-[
-matchSelector := #atBeginningOfLine
-]
-
-Class RxmSpecial >> beEndOfLine
-[
-matchSelector := #atEndOfLine
-]
-
-Class RxmSpecial >> beBeginningOfWord
-[
-matchSelector := #atBeginningOfWord
-]
-
 Class RxmSpecial >> beWordBoundary
 [
 matchSelector := #atWordBoundary
+]
+
+Class RxmSpecial >> matchAgainst: aMatcher
+[
+	"Match without consuming any input, if the matcher is	in appropriate state."
+^ (aMatcher perform: matchSelector) and: [ next matchAgainst: aMatcher ]
 ]
 
 Metaclass

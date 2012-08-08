@@ -6,25 +6,10 @@ Class
 	classVariables: #();
 	package: #'Fuel-Core'.
 
-Class FLEncoder >> encodeBytes: aBytesObject
-[
-stream nextBytesPutAll: aBytesObject
-]
-
-Class FLEncoder >> encodeUint16: aSmallInteger
+Class FLEncoder >> encodeBitmap: aBitmap
 [
 	"Append to the receiver an Integer as the next two bytes."
-stream nextPut: (aSmallInteger bitShift: -8).stream nextPut: (aSmallInteger bitAnd: 255)
-]
-
-Class FLEncoder >> objectCount
-[
-^ objectCount
-]
-
-Class FLEncoder >> objectCount: aNumber
-[
-objectCount := aNumber.objectsIndexes := FLLargeIdentityDictionary new.indexStream := FLIndexStream on: stream digits: aNumber digitLength
+aBitmap writeOn: stream
 ]
 
 Class FLEncoder >> encodeByte: aSmallInteger
@@ -32,42 +17,9 @@ Class FLEncoder >> encodeByte: aSmallInteger
 stream nextPut: aSmallInteger
 ]
 
-Class FLEncoder >> encodeWeakReferenceTo: anObject
+Class FLEncoder >> encodeBytes: aBytesObject
 [
-indexStream nextIndexPut: (objectsIndexes at: anObject ifAbsent: [ objectsIndexes at: nil ])
-]
-
-Class FLEncoder >> flush
-[
-^ stream flush
-]
-
-Class FLEncoder >> encodeUint8: aSmallInteger
-[
-	"Append to the receiver an Integer as the next two bytes."
-stream nextPut: aSmallInteger
-]
-
-Class FLEncoder >> initializeOn: aStream
-[
-self initialize.stream := FLBufferedWriteStream on: aStream
-]
-
-Class FLEncoder >> encodeYourself
-[
-self encodePositiveInteger: objectCount.self encodePositiveInteger: Smalltalk isBigEndian asBit
-]
-
-Class FLEncoder >> encodePositiveInteger: anInteger
-[
-	"Append to the receiver an Integer as the next 4 bytes."
-1 to: 4 do: [ :i | stream nextPut: (anInteger digitAt: 4 + 1 - i) ]
-]
-
-Class FLEncoder >> encodeUint24: aSmallInteger
-[
-	"Append to the receiver an Integer as the next 3 bytes."
-stream	nextPut: ((aSmallInteger bitShift: -16) bitAnd: 255);	nextPut: ((aSmallInteger bitShift: -8) bitAnd: 255);	nextPut: (aSmallInteger bitAnd: 255)
+stream nextBytesPutAll: aBytesObject
 ]
 
 Class FLEncoder >> encodeClusterClass: aClusterClass
@@ -81,15 +33,38 @@ Class FLEncoder >> encodeInt24: aSmallInteger
 | pos |pos := aSmallInteger < 0	ifTrue: [ (0 - aSmallInteger bitXor: 16rFFFFFF) + 1 ]	ifFalse: [ aSmallInteger ].1 to: 3 do: [ :i | stream nextPut: (pos digitAt: 4 - i) ]
 ]
 
-Class FLEncoder >> encodeBitmap: aBitmap
+Class FLEncoder >> encodeInt32: aSmallInteger
 [
-	"Append to the receiver an Integer as the next two bytes."
-aBitmap writeOn: stream
+	"Write a signed integer to the next 4 bytes"
+| pos |pos := aSmallInteger < 0	ifTrue: [ (0 - aSmallInteger) bitInvert32 + 1 ]	ifFalse: [ aSmallInteger ].1 to: 4 do: [ :i | stream nextPut: (pos digitAt: 5 - i) ]
 ]
 
-Class FLEncoder >> fuelAccept: aGeneralMapper
+Class FLEncoder >> encodePositiveInteger: anInteger
 [
-^ aGeneralMapper visitSubstitution: self by: nil
+	"Append to the receiver an Integer as the next 4 bytes."
+1 to: 4 do: [ :i | stream nextPut: (anInteger digitAt: 4 + 1 - i) ]
+]
+
+Class FLEncoder >> encodeReferenceTo: anObject
+[
+indexStream nextIndexPut: (objectsIndexes at: anObject ifAbsent: [ FLObjectNotFound signalWith: anObject ])
+]
+
+Class FLEncoder >> encodeString: aString
+[
+| length |(length := aString size) < 192	ifTrue: [ stream nextPut: length ]	ifFalse: [ 		stream nextPut: (length digitAt: 4) + 192.		stream nextPut: (length digitAt: 3).		stream nextPut: (length digitAt: 2).		stream nextPut: (length digitAt: 1) ].stream nextBytesPutAll: aString
+]
+
+Class FLEncoder >> encodeUint16: aSmallInteger
+[
+	"Append to the receiver an Integer as the next two bytes."
+stream nextPut: (aSmallInteger bitShift: -8).stream nextPut: (aSmallInteger bitAnd: 255)
+]
+
+Class FLEncoder >> encodeUint24: aSmallInteger
+[
+	"Append to the receiver an Integer as the next 3 bytes."
+stream	nextPut: ((aSmallInteger bitShift: -16) bitAnd: 255);	nextPut: ((aSmallInteger bitShift: -8) bitAnd: 255);	nextPut: (aSmallInteger bitAnd: 255)
 ]
 
 Class FLEncoder >> encodeUint32: aSmallInteger
@@ -98,20 +73,15 @@ Class FLEncoder >> encodeUint32: aSmallInteger
 stream	nextPut: (aSmallInteger bitShift: -24);	nextPut: ((aSmallInteger bitShift: -16) bitAnd: 255);	nextPut: ((aSmallInteger bitShift: -8) bitAnd: 255);	nextPut: (aSmallInteger bitAnd: 255)
 ]
 
-Class FLEncoder >> encodeString: aString
+Class FLEncoder >> encodeUint8: aSmallInteger
 [
-| length |(length := aString size) < 192	ifTrue: [ stream nextPut: length ]	ifFalse: [ 		stream nextPut: (length digitAt: 4) + 192.		stream nextPut: (length digitAt: 3).		stream nextPut: (length digitAt: 2).		stream nextPut: (length digitAt: 1) ].stream nextBytesPutAll: aString
+	"Append to the receiver an Integer as the next two bytes."
+stream nextPut: aSmallInteger
 ]
 
-Class FLEncoder >> objectsIndexes
+Class FLEncoder >> encodeWeakReferenceTo: anObject
 [
-^ objectsIndexes
-]
-
-Class FLEncoder >> encodeInt32: aSmallInteger
-[
-	"Write a signed integer to the next 4 bytes"
-| pos |pos := aSmallInteger < 0	ifTrue: [ (0 - aSmallInteger) bitInvert32 + 1 ]	ifFalse: [ aSmallInteger ].1 to: 4 do: [ :i | stream nextPut: (pos digitAt: 5 - i) ]
+indexStream nextIndexPut: (objectsIndexes at: anObject ifAbsent: [ objectsIndexes at: nil ])
 ]
 
 Class FLEncoder >> encodeWords: aWordsObject
@@ -119,9 +89,39 @@ Class FLEncoder >> encodeWords: aWordsObject
 stream nextWordsPut: aWordsObject
 ]
 
-Class FLEncoder >> encodeReferenceTo: anObject
+Class FLEncoder >> encodeYourself
 [
-indexStream nextIndexPut: (objectsIndexes at: anObject ifAbsent: [ FLObjectNotFound signalWith: anObject ])
+self encodePositiveInteger: objectCount.self encodePositiveInteger: Smalltalk isBigEndian asBit
+]
+
+Class FLEncoder >> flush
+[
+^ stream flush
+]
+
+Class FLEncoder >> fuelAccept: aGeneralMapper
+[
+^ aGeneralMapper visitSubstitution: self by: nil
+]
+
+Class FLEncoder >> initializeOn: aStream
+[
+self initialize.stream := FLBufferedWriteStream on: aStream
+]
+
+Class FLEncoder >> objectCount
+[
+^ objectCount
+]
+
+Class FLEncoder >> objectCount: aNumber
+[
+objectCount := aNumber.objectsIndexes := FLLargeIdentityDictionary new.indexStream := FLIndexStream on: stream digits: aNumber digitLength
+]
+
+Class FLEncoder >> objectsIndexes
+[
+^ objectsIndexes
 ]
 
 Metaclass

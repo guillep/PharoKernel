@@ -11,14 +11,9 @@ Class CombinedChar >> add: char
 | dict elem |codes	ifNil: [ 		codes := Array with: char.		combined := char.		^ true ].dict := Compositions at: combined charCode ifAbsent: [ ^ false ].elem := dict at: char charCode ifAbsent: [ ^ false ].codes := codes copyWith: char.combined := Character leadingChar: self base leadingChar code: elem.^ true
 ]
 
-Class CombinedChar >> simpleAdd: char
+Class CombinedChar >> base
 [
-| dict elem |codes	ifNil: [ 		codes := Array with: char.		combined := char.		^ true ].dict := Compositions at: combined charCode ifAbsent: [ ^ false ].elem := dict at: char charCode ifAbsent: [ ^ false ].combined := Character leadingChar: self base leadingChar code: elem.codes at: 1 put: combined.^ true
-]
-
-Class CombinedChar >> combinesWith: char
-[
-| dict |codes ifNil: [ ^ false ].dict := Compositions at: combined charCode ifAbsent: [ ^ false ].dict at: char charCode ifAbsent: [ ^ false ].^ true
+^ codes first
 ]
 
 Class CombinedChar >> combined
@@ -26,9 +21,14 @@ Class CombinedChar >> combined
 ^ combined
 ]
 
-Class CombinedChar >> base
+Class CombinedChar >> combinesWith: char
 [
-^ codes first
+| dict |codes ifNil: [ ^ false ].dict := Compositions at: combined charCode ifAbsent: [ ^ false ].dict at: char charCode ifAbsent: [ ^ false ].^ true
+]
+
+Class CombinedChar >> simpleAdd: char
+[
+| dict elem |codes	ifNil: [ 		codes := Array with: char.		combined := char.		^ true ].dict := Compositions at: combined charCode ifAbsent: [ ^ false ].elem := dict at: char charCode ifAbsent: [ ^ false ].combined := Character leadingChar: self base leadingChar code: elem.codes at: 1 put: combined.^ true
 ]
 
 Metaclass

@@ -11,10 +11,11 @@ Class BasicCodeLoader >> activate
 self loadSourceFiles: (self commandLine allFilesWithExtension: 'st').self installSourceFiles.(self commandLine hasOption: 'quit')	ifTrue: [ self exitSucess ]
 ]
 
-Class BasicCodeLoader >> loadSourceFiles: anArray
+Class BasicCodeLoader >> handleError: error
 [
-	"Load all the source files in the given array."
-sourceFiles := anArray collect: [ :each | (FileSystem disk resolve: each) asFileReference ]
+	"for syntax errors we can used the default action"
+	"otherwise resignal it"
+(error isKindOf: SyntaxErrorNotification)	ifTrue: [ error defaultAction ]	ifFalse: [ error pass ]
 ]
 
 Class BasicCodeLoader >> handleError: error reference: aReference
@@ -23,17 +24,15 @@ Class BasicCodeLoader >> handleError: error reference: aReference
 | stderr |"spit out a warning if in headless mode, otherwise a debugger will popup"Smalltalk isHeadless	ifTrue: [ self inform: 'Errors in script loaded from ' , aReference fullName ].(error isKindOf: SyntaxErrorNotification)	ifTrue: [ error defaultAction ]	ifFalse: [ error pass ]	"for syntax errors we can used the default action"	"otherwise resignal it"
 ]
 
+Class BasicCodeLoader >> handleErrorsDuring: aBlock reference: aReference
+[
+aBlock	on: Error , ParserNotification	do: [ :e | self handleError: e reference: aReference ]
+]
+
 Class BasicCodeLoader >> installSourceFile: aReference
 [
 	"Install the the source file given by aFileReference"
 | codeImporter |" parse the code given in the source file"aReference	readStreamDo: [ :stream | 		self			handleErrorsDuring: [ 				codeImporter := CodeImporter fileStream: stream.				codeImporter parseDeclarations ]			reference: aReference ].	"evaluate the declarations in a second step to allow for properly closing the source file stream"self handleErrorsDuring: [ codeImporter evaluate ] reference: aReference
-]
-
-Class BasicCodeLoader >> handleError: error
-[
-	"for syntax errors we can used the default action"
-	"otherwise resignal it"
-(error isKindOf: SyntaxErrorNotification)	ifTrue: [ error defaultAction ]	ifFalse: [ error pass ]
 ]
 
 Class BasicCodeLoader >> installSourceFiles
@@ -42,19 +41,19 @@ Class BasicCodeLoader >> installSourceFiles
 sourceFiles ifNil: [ ^ self ].[ sourceFiles do: [ :reference | self installSourceFile: reference ] ]	ensure: [ sourceFiles := nil ]
 ]
 
-Class BasicCodeLoader >> handleErrorsDuring: aBlock reference: aReference
+Class BasicCodeLoader >> loadSourceFiles: anArray
 [
-aBlock	on: Error , ParserNotification	do: [ :e | self handleError: e reference: aReference ]
+	"Load all the source files in the given array."
+sourceFiles := anArray collect: [ :each | (FileSystem disk resolve: each) asFileReference ]
 ]
 
 Metaclass
 	name: #BasicCodeLoader;
 	instanceVariables: #().
 
-Metaclass BasicCodeLoader >> isResponsibleFor: aCommandLine
+Metaclass BasicCodeLoader >> commandName
 [
-	"This handler is reponsible only for .st files"
-(aCommandLine hasFileWithExtension: '.st')	ifTrue: [ ^ true ].^ super isResponsibleFor: aCommandLine
+^ 'st'
 ]
 
 Metaclass BasicCodeLoader >> description
@@ -62,8 +61,9 @@ Metaclass BasicCodeLoader >> description
 ^ 'handles .st source files'
 ]
 
-Metaclass BasicCodeLoader >> commandName
+Metaclass BasicCodeLoader >> isResponsibleFor: aCommandLine
 [
-^ 'st'
+	"This handler is reponsible only for .st files"
+(aCommandLine hasFileWithExtension: '.st')	ifTrue: [ ^ true ].^ super isResponsibleFor: aCommandLine
 ]
 

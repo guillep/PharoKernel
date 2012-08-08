@@ -1,31 +1,11 @@
-Class FloatArray >> \\= other
+Class FloatArray >> * anObject
 [
-other isNumber	ifTrue: [ 		1 to: self size do: [ :i | self at: i put: (self at: i) \\ other ].		^ self ].1 to: (self size min: other size) do: [ :i | self at: i put: (self at: i) \\ (other at: i) ]
+^ self copy *= anObject
 ]
 
-Class FloatArray >> / anObject
+Class FloatArray >> *= anObject
 [
-^ self copy /= anObject
-]
-
-Class FloatArray >> -= anObject
-[
-^ anObject isNumber	ifTrue: [ self primSubScalar: anObject asFloat ]	ifFalse: [ self primSubArray: anObject ]
-]
-
-Class FloatArray >> += anObject
-[
-^ anObject isNumber	ifTrue: [ self primAddScalar: anObject asFloat ]	ifFalse: [ self primAddArray: anObject ]
-]
-
-Class FloatArray >> /= anObject
-[
-^ anObject isNumber	ifTrue: [ self primDivScalar: anObject asFloat ]	ifFalse: [ self primDivArray: anObject ]
-]
-
-Class FloatArray >> negated
-[
-^ self copy *= -1
+^ anObject isNumber	ifTrue: [ self primMulScalar: anObject asFloat ]	ifFalse: [ self primMulArray: anObject ]
 ]
 
 Class FloatArray >> + anObject
@@ -33,14 +13,40 @@ Class FloatArray >> + anObject
 ^ self copy += anObject
 ]
 
-Class FloatArray >> * anObject
+Class FloatArray >> += anObject
 [
-^ self copy *= anObject
+^ anObject isNumber	ifTrue: [ self primAddScalar: anObject asFloat ]	ifFalse: [ self primAddArray: anObject ]
 ]
 
 Class FloatArray >> - anObject
 [
 ^ self shallowCopy -= anObject
+]
+
+Class FloatArray >> -= anObject
+[
+^ anObject isNumber	ifTrue: [ self primSubScalar: anObject asFloat ]	ifFalse: [ self primSubArray: anObject ]
+]
+
+Class FloatArray >> / anObject
+[
+^ self copy /= anObject
+]
+
+Class FloatArray >> /= anObject
+[
+^ anObject isNumber	ifTrue: [ self primDivScalar: anObject asFloat ]	ifFalse: [ self primDivArray: anObject ]
+]
+
+Class FloatArray >> \\= other
+[
+other isNumber	ifTrue: [ 		1 to: self size do: [ :i | self at: i put: (self at: i) \\ other ].		^ self ].1 to: (self size min: other size) do: [ :i | self at: i put: (self at: i) \\ (other at: i) ]
+]
+
+Class FloatArray >> adaptToNumber: rcvr andSend: selector
+[
+	"If I am involved in arithmetic with a Number. If possible,	convert it to a float and perform the (more efficient) primitive operation."
+selector == #+	ifTrue: [ ^ self + rcvr ].selector == #*	ifTrue: [ ^ self * rcvr ].selector == #-	ifTrue: [ ^ self negated += rcvr ].selector == #/	ifTrue: [ 		"DO NOT USE TRIVIAL CODE			^self reciprocal * rcvr		BECAUSE OF GRADUAL UNDERFLOW		self should: (1.0e-39 / (FloatArray with: 1.0e-39)) first < 2."		^ (self class new: self size withAll: rcvr) / self ].^ super adaptToNumber: rcvr andSend: selector
 ]
 
 Class FloatArray >> dot: aFloatVector
@@ -49,14 +55,8 @@ Class FloatArray >> dot: aFloatVector
 | result |"<primitive:'primitiveFloatArrayDotProduct'>"self size = aFloatVector size	ifFalse: [ ^ self error: 'Must be equal size' ].result := 0.0.1 to: self size do: [ :i | result := result + ((self at: i) * (aFloatVector at: i)) ].^ result
 ]
 
-Class FloatArray >> *= anObject
+Class FloatArray >> negated
 [
-^ anObject isNumber	ifTrue: [ self primMulScalar: anObject asFloat ]	ifFalse: [ self primMulArray: anObject ]
-]
-
-Class FloatArray >> adaptToNumber: rcvr andSend: selector
-[
-	"If I am involved in arithmetic with a Number. If possible,	convert it to a float and perform the (more efficient) primitive operation."
-selector == #+	ifTrue: [ ^ self + rcvr ].selector == #*	ifTrue: [ ^ self * rcvr ].selector == #-	ifTrue: [ ^ self negated += rcvr ].selector == #/	ifTrue: [ 		"DO NOT USE TRIVIAL CODE			^self reciprocal * rcvr		BECAUSE OF GRADUAL UNDERFLOW		self should: (1.0e-39 / (FloatArray with: 1.0e-39)) first < 2."		^ (self class new: self size withAll: rcvr) / self ].^ super adaptToNumber: rcvr andSend: selector
+^ self copy *= -1
 ]
 

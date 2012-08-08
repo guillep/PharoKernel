@@ -6,9 +6,73 @@ Class
 	classVariables: #();
 	package: #'FileSystem-Core-Kernel'.
 
-Class Path >> parent
+Class Path >> , extension
 [
-| size parent |self isRoot	ifTrue: [ ^ self ].self isAllParents	ifTrue: [ ^ self / '..' ].size := self size - 1.parent := self class new: size.1 to: size do: [ :i | parent at: i put: (self at: i) ].^ parent
+^ self withName: self basename extension: extension
+]
+
+Class Path >> / aString
+[
+| path |aString isEmptyOrNil	ifTrue: [ Error signal: 'Path element cannot be empty or nil' ].path := self class new: self size + 1.path copyFrom: self.path at: path size put: aString.^ path
+]
+
+Class Path >> = other
+[
+^ self species = other species	and: [ self size = other size and: [ (1 to: self size) allSatisfy: [ :i | (self at: i) = (other at: i) ] ] ]
+]
+
+Class Path >> asFileReference
+[
+^ FileSystem disk referenceTo: self
+]
+
+Class Path >> asPathWith: anObject
+[
+^ self
+]
+
+Class Path >> asReference
+[
+self deprecated: 'Use #asFileReference instead' on: '12 April 2012' in: 'Pharo 1.4'.^ self asFileReference
+]
+
+Class Path >> asResolvedBy: anObject
+[
+^ anObject resolvePath: self
+]
+
+Class Path >> asUrl
+[
+^ FileUrl pathParts: self segments asOrderedCollection isAbsolute: self isAbsolute
+]
+
+Class Path >> base
+[
+	"Returns the base of the basename, i.e. /foo/gloops.taz basename is 'gloops'"
+^ self basename copyUpTo: self extensionDelimiter
+]
+
+Class Path >> basename
+[
+	"Returns the base of the basename, 		i.e. 		/foo/gloops.taz basename is 'gloops.taz'		/ basename is '/'"
+self size == 0	ifTrue: [ ^ '/' ].	"the root node"^ self at: self size
+]
+
+Class Path >> basename: newBasename
+[
+	"change the basename"
+self size == 0	ifTrue: [ ^ Error signal: '0 length Path, cannot change basename' ].	"the root node"self at: self size put: newBasename
+]
+
+Class Path >> basenameWithoutExtension
+[
+	"Returns the base of the basename but without its extension, 		i.e. 		/foo/gloops.taz basenameWithoutExtension is 'gloops'		/ basenameWithoutExtension is '/'"
+^ self basename copyUpToLast: self extensionDelimiter
+]
+
+Class Path >> contains: anObject
+[
+^ anObject isContainedBy: self
 ]
 
 Class Path >> containsPath: aPath
@@ -16,9 +80,35 @@ Class Path >> containsPath: aPath
 self size < aPath size	ifFalse: [ ^ false ].1 to: self size do: [ :i | 	(self at: i) = (aPath at: i)		ifFalse: [ ^ false ] ].^ true
 ]
 
-Class Path >> isEmpty
+Class Path >> containsReference: aReference
 [
-^ self size = 0
+^ false
+]
+
+Class Path >> copyFrom: aPath
+[
+| size |size := aPath size min: self size.1 to: size do: [ :i | self at: i put: (aPath at: i) ]
+]
+
+Class Path >> delimiter
+[
+^ $/
+]
+
+Class Path >> do: aBlock
+[
+1 to: self size do: [ :index | 	| segment |	segment := self at: index.	segment isEmpty		ifFalse: [ aBlock value: segment ] ]
+]
+
+Class Path >> extension
+[
+	"Return the extension of path basename i.e., /foo/gloops.taz extension is 'taz'"
+^ self basename copyAfterLast: self extensionDelimiter
+]
+
+Class Path >> extensionDelimiter
+[
+^ self class extensionDelimiter
 ]
 
 Class Path >> extensions
@@ -28,35 +118,107 @@ Class Path >> extensions
 ^ (self extensionDelimiter split: self basename) allButFirst
 ]
 
-Class Path >> asUrl
+Class Path >> fullName
 [
-^ FileUrl pathParts: self segments asOrderedCollection isAbsolute: self isAbsolute
+	"Return the fullName of the receiver."
+^ self printString
 ]
 
-Class Path >> extensionDelimiter
+Class Path >> hash
 [
-^ self class extensionDelimiter
+| hash |hash := self class identityHash.1 to: self size do: [ :i | hash := String stringHash: (self at: i) initialHash: hash ].^ hash
 ]
 
-Class Path >> contains: anObject
+Class Path >> isAbsolute
 [
-^ anObject isContainedBy: self
+self subclassResponsibility
 ]
 
-Class Path >> asResolvedBy: anObject
+Class Path >> isAllParents
 [
-^ anObject resolvePath: self
+1 to: self size do: [ :i | 	(self at: i) = '..'		ifFalse: [ ^ false ] ].^ true
 ]
 
-Class Path >> do: aBlock
+Class Path >> isChildOf: anObject
 [
-1 to: self size do: [ :index | 	| segment |	segment := self at: index.	segment isEmpty		ifFalse: [ aBlock value: segment ] ]
+^ self parent = anObject
 ]
 
-Class Path >> base
+Class Path >> isContainedBy: anObject
 [
-	"Returns the base of the basename, i.e. /foo/gloops.taz basename is 'gloops'"
-^ self basename copyUpTo: self extensionDelimiter
+^ anObject containsPath: self
+]
+
+Class Path >> isEmpty
+[
+^ self size = 0
+]
+
+Class Path >> isRelative
+[
+^ self isAbsolute not
+]
+
+Class Path >> isRoot
+[
+self subclassResponsibility
+]
+
+Class Path >> isWorkingDirectory
+[
+^ self size = 0
+]
+
+Class Path >> lengthOfStemWith: aPath
+[
+| limit index |limit := self size min: aPath size.index := 1.[ index <= limit and: [ (self at: index) = (aPath at: index) ] ] whileTrue: [ index := index + 1 ].^ index - 1
+]
+
+Class Path >> makeRelative: anObject
+[
+^ anObject relativeToPath: self
+]
+
+Class Path >> parent
+[
+| size parent |self isRoot	ifTrue: [ ^ self ].self isAllParents	ifTrue: [ ^ self / '..' ].size := self size - 1.parent := self class new: size.1 to: size do: [ :i | parent at: i put: (self at: i) ].^ parent
+]
+
+Class Path >> printOn: aStream
+[
+self printOn: aStream delimiter: self delimiter
+]
+
+Class Path >> printOn: aStream delimiter: aCharacter
+[
+(1 to: self size) do: [ :index | aStream nextPutAll: (self at: index) ] separatedBy: [ aStream nextPut: aCharacter ]
+]
+
+Class Path >> printWithDelimiter: aCharacter
+[
+^ String streamContents: [ :out | self printOn: out delimiter: aCharacter ]
+]
+
+Class Path >> relativeTo: anObject
+[
+^ anObject makeRelative: self
+]
+
+Class Path >> relativeToPath: aPath
+[
+	"Return the receiver as relative to the argument aPath"
+	"(FSPath / 'griffle' / 'plonk' / 'nurp') 		relativeToPath: (FSPath / 'griffle') 			returns  plonk/nurp"
+| prefix relative |aPath isRelative	ifTrue: [ ^ aPath ].prefix := self lengthOfStemWith: aPath.relative := RelativePath parents: aPath size - prefix.prefix + 1 to: self size do: [ :i | relative := relative / (self at: i) ].^ relative
+]
+
+Class Path >> relativeToReference: aReference
+[
+^ self relativeToPath: aReference path
+]
+
+Class Path >> resolve
+[
+^ self
 ]
 
 Class Path >> resolve: anObject
@@ -65,70 +227,32 @@ Class Path >> resolve: anObject
 ^ anObject asResolvedBy: self
 ]
 
-Class Path >> relativeToReference: aReference
-[
-^ self relativeToPath: aReference path
-]
-
-Class Path >> isChildOf: anObject
-[
-^ self parent = anObject
-]
-
 Class Path >> resolvePath: aPath
 [
 	"Answers an absolute path created by resolving the argument against the receiver.	If the argument is abolute answer the argument itself. Otherwise, concatenate the	two paths, then process all parent references '..', and create a path with the remaining	elements."
 | elements |aPath isAbsolute	ifTrue: [ ^ aPath ].elements := Array new: self size + aPath size.1 to: self size do: [ :i | elements at: i put: (self at: i) ].1 to: aPath size do: [ :i | elements at: self size + i put: (aPath at: i) ].^ self class withAll: (self class canonicalizeElements: elements)
 ]
 
-Class Path >> printWithDelimiter: aCharacter
+Class Path >> resolveReference: aReference
 [
-^ String streamContents: [ :out | self printOn: out delimiter: aCharacter ]
+^ aReference
 ]
 
-Class Path >> isContainedBy: anObject
+Class Path >> resolveString: aString
 [
-^ anObject containsPath: self
+	"Treat strings as relative paths with a single element."
+^ self / aString
 ]
 
-Class Path >> relativeTo: anObject
+Class Path >> segments
 [
-^ anObject makeRelative: self
+	"return an array with all the path segements separated"
+| segments index |segments := Array new: self size.index := 1.self	do: [ :part | 		segments at: index put: part.		index := index + 1 ].^ segments
 ]
 
 Class Path >> withExtension: extension
 [
 | basename name |basename := self basename.^ (basename endsWith: extension)	ifTrue: [ self ]	ifFalse: [ 		name := basename copyUpToLast: self extensionDelimiter.		self withName: name extension: extension ]
-]
-
-Class Path >> printOn: aStream delimiter: aCharacter
-[
-(1 to: self size) do: [ :index | aStream nextPutAll: (self at: index) ] separatedBy: [ aStream nextPut: aCharacter ]
-]
-
-Class Path >> printOn: aStream
-[
-self printOn: aStream delimiter: self delimiter
-]
-
-Class Path >> = other
-[
-^ self species = other species	and: [ self size = other size and: [ (1 to: self size) allSatisfy: [ :i | (self at: i) = (other at: i) ] ] ]
-]
-
-Class Path >> delimiter
-[
-^ $/
-]
-
-Class Path >> asPathWith: anObject
-[
-^ self
-]
-
-Class Path >> isRoot
-[
-self subclassResponsibility
 ]
 
 Class Path >> withName: name extension: extension
@@ -141,142 +265,36 @@ Class Path >> withParents
 | paths |paths := OrderedCollection new.1 to: self size - 1 do: [ :index | paths add: ((self class new: index) copyFrom: self) ].paths add: self.^ paths
 ]
 
-Class Path >> containsReference: aReference
-[
-^ false
-]
-
-Class Path >> isRelative
-[
-^ self isAbsolute not
-]
-
-Class Path >> , extension
-[
-^ self withName: self basename extension: extension
-]
-
-Class Path >> fullName
-[
-	"Return the fullName of the receiver."
-^ self printString
-]
-
-Class Path >> asReference
-[
-self deprecated: 'Use #asFileReference instead' on: '12 April 2012' in: 'Pharo 1.4'.^ self asFileReference
-]
-
-Class Path >> resolve
-[
-^ self
-]
-
-Class Path >> copyFrom: aPath
-[
-| size |size := aPath size min: self size.1 to: size do: [ :i | self at: i put: (aPath at: i) ]
-]
-
-Class Path >> isAllParents
-[
-1 to: self size do: [ :i | 	(self at: i) = '..'		ifFalse: [ ^ false ] ].^ true
-]
-
-Class Path >> isAbsolute
-[
-self subclassResponsibility
-]
-
-Class Path >> / aString
-[
-| path |aString isEmptyOrNil	ifTrue: [ Error signal: 'Path element cannot be empty or nil' ].path := self class new: self size + 1.path copyFrom: self.path at: path size put: aString.^ path
-]
-
-Class Path >> segments
-[
-	"return an array with all the path segements separated"
-| segments index |segments := Array new: self size.index := 1.self	do: [ :part | 		segments at: index put: part.		index := index + 1 ].^ segments
-]
-
-Class Path >> hash
-[
-| hash |hash := self class identityHash.1 to: self size do: [ :i | hash := String stringHash: (self at: i) initialHash: hash ].^ hash
-]
-
-Class Path >> basename
-[
-	"Returns the base of the basename, 		i.e. 		/foo/gloops.taz basename is 'gloops.taz'		/ basename is '/'"
-self size == 0	ifTrue: [ ^ '/' ].	"the root node"^ self at: self size
-]
-
-Class Path >> resolveReference: aReference
-[
-^ aReference
-]
-
-Class Path >> relativeToPath: aPath
-[
-	"Return the receiver as relative to the argument aPath"
-	"(FSPath / 'griffle' / 'plonk' / 'nurp') 		relativeToPath: (FSPath / 'griffle') 			returns  plonk/nurp"
-| prefix relative |aPath isRelative	ifTrue: [ ^ aPath ].prefix := self lengthOfStemWith: aPath.relative := RelativePath parents: aPath size - prefix.prefix + 1 to: self size do: [ :i | relative := relative / (self at: i) ].^ relative
-]
-
-Class Path >> extension
-[
-	"Return the extension of path basename i.e., /foo/gloops.taz extension is 'taz'"
-^ self basename copyAfterLast: self extensionDelimiter
-]
-
-Class Path >> resolveString: aString
-[
-	"Treat strings as relative paths with a single element."
-^ self / aString
-]
-
-Class Path >> basenameWithoutExtension
-[
-	"Returns the base of the basename but without its extension, 		i.e. 		/foo/gloops.taz basenameWithoutExtension is 'gloops'		/ basenameWithoutExtension is '/'"
-^ self basename copyUpToLast: self extensionDelimiter
-]
-
-Class Path >> makeRelative: anObject
-[
-^ anObject relativeToPath: self
-]
-
-Class Path >> basename: newBasename
-[
-	"change the basename"
-self size == 0	ifTrue: [ ^ Error signal: '0 length Path, cannot change basename' ].	"the root node"self at: self size put: newBasename
-]
-
-Class Path >> asFileReference
-[
-^ FileSystem disk referenceTo: self
-]
-
-Class Path >> lengthOfStemWith: aPath
-[
-| limit index |limit := self size min: aPath size.index := 1.[ index <= limit and: [ (self at: index) = (aPath at: index) ] ] whileTrue: [ index := index + 1 ].^ index - 1
-]
-
-Class Path >> isWorkingDirectory
-[
-^ self size = 0
-]
-
 Metaclass
 	name: #Path;
 	instanceVariables: #().
 
-Metaclass Path >> from: aString
+Metaclass Path >> * aString
 [
-^ self from: aString delimiter: $/
+	"Answer a relative path with aString as its sole segment. For example,	FSPath * 'griffle' will produce the same result as ./griffle in a unix shell.	The selector #* was chosen for it's visual similarity to $."
+	"Note: aString is not parsed, so supplying a string like '/griffle/plonk'	will not create an absolute path."
+^ RelativePath with: aString
 ]
 
-Metaclass Path >> isAbsoluteWindowsPath: aString
+Metaclass Path >> / aString
 [
-^ aString matchesRegex: '[a-zA-Z]\:\\.*'
+	"Answer an absolute path with aString as it's sole segment. The selector	was chosen to allow path construction with Smalltalk syntax, which 	neverthelesss resembles paths as they appear in a unix shell. Eg.	FSPath / 'griffle' / 'plonk'."
+aString isEmptyOrNil	ifTrue: [ Error signal: 'Path element cannot be empty or nil' ].^ AbsolutePath with: aString
+]
+
+Metaclass Path >> addElement: element to: result
+[
+element = '..'	ifTrue: [ ^ self addParentElementTo: result ].element = ''	ifTrue: [ ^ self addEmptyElementTo: result ].element = '.'	ifFalse: [ result add: element ]
+]
+
+Metaclass Path >> addEmptyElementTo: result
+[
+result isEmpty	ifTrue: [ result add: '' ]
+]
+
+Metaclass Path >> addParentElementTo: result
+[
+result isEmpty	ifTrue: [ result add: '..' ]	ifFalse: [ result removeLast ]
 ]
 
 Metaclass Path >> canonicalizeElements: aCollection
@@ -284,11 +302,48 @@ Metaclass Path >> canonicalizeElements: aCollection
 | result |result := OrderedCollection new.aCollection do: [ :element | self addElement: element to: result ].^ result
 ]
 
-Metaclass Path >> * aString
+Metaclass Path >> extensionDelimiter
 [
-	"Answer a relative path with aString as its sole segment. For example,	FSPath * 'griffle' will produce the same result as ./griffle in a unix shell.	The selector #* was chosen for it's visual similarity to $."
-	"Note: aString is not parsed, so supplying a string like '/griffle/plonk'	will not create an absolute path."
-^ RelativePath with: aString
+	"Return the extension delimiter character."
+^ $.
+]
+
+Metaclass Path >> from: aString
+[
+^ self from: aString delimiter: $/
+]
+
+Metaclass Path >> from: aString delimiter: aDelimiterCharacter
+[
+	"Answer a path composed of several elements delimited by aCharacter"
+| pathCls |aString isEmpty	ifTrue: [ ^ self root ].pathCls := ((self isAbsoluteUnixPath: aString) or: [ self isAbsoluteWindowsPath: aString ])	ifTrue: [ AbsolutePath ]	ifFalse: [ RelativePath ].^ pathCls withAll: (pathCls canonicalizeElements: (aDelimiterCharacter split: aString))
+]
+
+Metaclass Path >> isAbsoluteUnixPath: aString
+[
+^ aString first = $/
+]
+
+Metaclass Path >> isAbsoluteWindowsPath: aString
+[
+^ aString matchesRegex: '[a-zA-Z]\:\\.*'
+]
+
+Metaclass Path >> parent
+[
+	"Answer a path that resolves to the parent of the current	working directory. This is similar to .. in unix, but doesn't	rely on actual hardlinks being present in the filesystem."
+^ RelativePath with: '..'
+]
+
+Metaclass Path >> parents: anInteger
+[
+| path |path := self new: anInteger.1 to: anInteger do: [ :i | path at: i put: '..' ].^ path
+]
+
+Metaclass Path >> root
+[
+	"Answer the root path - ie, / on unix"
+^ AbsolutePath new
 ]
 
 Metaclass Path >> with: aString
@@ -298,69 +353,14 @@ Metaclass Path >> with: aString
 | inst |inst := self new: 1.inst at: 1 put: aString.^ inst
 ]
 
-Metaclass Path >> from: aString delimiter: aDelimiterCharacter
+Metaclass Path >> withAll: aCollection
 [
-	"Answer a path composed of several elements delimited by aCharacter"
-| pathCls |aString isEmpty	ifTrue: [ ^ self root ].pathCls := ((self isAbsoluteUnixPath: aString) or: [ self isAbsoluteWindowsPath: aString ])	ifTrue: [ AbsolutePath ]	ifFalse: [ RelativePath ].^ pathCls withAll: (pathCls canonicalizeElements: (aDelimiterCharacter split: aString))
+| inst |inst := self new: aCollection size.aCollection withIndexDo: [ :segment :index | inst at: index put: segment ].^ inst
 ]
 
 Metaclass Path >> workingDirectory
 [
 	"Answer a path that will always resolve to the current working directory."
 ^ RelativePath new
-]
-
-Metaclass Path >> parent
-[
-	"Answer a path that resolves to the parent of the current	working directory. This is similar to .. in unix, but doesn't	rely on actual hardlinks being present in the filesystem."
-^ RelativePath with: '..'
-]
-
-Metaclass Path >> addParentElementTo: result
-[
-result isEmpty	ifTrue: [ result add: '..' ]	ifFalse: [ result removeLast ]
-]
-
-Metaclass Path >> addElement: element to: result
-[
-element = '..'	ifTrue: [ ^ self addParentElementTo: result ].element = ''	ifTrue: [ ^ self addEmptyElementTo: result ].element = '.'	ifFalse: [ result add: element ]
-]
-
-Metaclass Path >> / aString
-[
-	"Answer an absolute path with aString as it's sole segment. The selector	was chosen to allow path construction with Smalltalk syntax, which 	neverthelesss resembles paths as they appear in a unix shell. Eg.	FSPath / 'griffle' / 'plonk'."
-aString isEmptyOrNil	ifTrue: [ Error signal: 'Path element cannot be empty or nil' ].^ AbsolutePath with: aString
-]
-
-Metaclass Path >> extensionDelimiter
-[
-	"Return the extension delimiter character."
-^ $.
-]
-
-Metaclass Path >> root
-[
-	"Answer the root path - ie, / on unix"
-^ AbsolutePath new
-]
-
-Metaclass Path >> isAbsoluteUnixPath: aString
-[
-^ aString first = $/
-]
-
-Metaclass Path >> withAll: aCollection
-[
-| inst |inst := self new: aCollection size.aCollection withIndexDo: [ :segment :index | inst at: index put: segment ].^ inst
-]
-
-Metaclass Path >> addEmptyElementTo: result
-[
-result isEmpty	ifTrue: [ result add: '' ]
-]
-
-Metaclass Path >> parents: anInteger
-[
-| path |path := self new: anInteger.1 to: anInteger do: [ :i | path at: i put: '..' ].^ path
 ]
 

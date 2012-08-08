@@ -6,9 +6,14 @@ Class
 	classVariables: #();
 	package: #'FileSystem-Core-Implementation'.
 
-Class PostorderGuide >> traverse: anEntry
+Class PostorderGuide >> pushTraverse: aReference
 [
-self pushVisit: anEntry.anEntry isDirectory	ifTrue: [ anEntry reference entries reverseDo: [ :ea | self pushTraverse: ea ] ]
+self push: (Message selector: #traverse: argument: aReference)
+]
+
+Class PostorderGuide >> pushVisit: aReference
+[
+self push: (Message selector: #visit: argument: aReference)
 ]
 
 Class PostorderGuide >> show: aReference
@@ -16,19 +21,14 @@ Class PostorderGuide >> show: aReference
 self pushTraverse: aReference entry.self whileNotDoneDo: [ self pop sendTo: self ]
 ]
 
-Class PostorderGuide >> pushTraverse: aReference
+Class PostorderGuide >> traverse: anEntry
 [
-self push: (Message selector: #traverse: argument: aReference)
+self pushVisit: anEntry.anEntry isDirectory	ifTrue: [ anEntry reference entries reverseDo: [ :ea | self pushTraverse: ea ] ]
 ]
 
 Class PostorderGuide >> visit: anEntry
 [
 anEntry isDirectory	ifTrue: [ visitor visitDirectory: anEntry ]	ifFalse: [ visitor visitFile: anEntry ]
-]
-
-Class PostorderGuide >> pushVisit: aReference
-[
-self push: (Message selector: #visit: argument: aReference)
 ]
 
 Metaclass

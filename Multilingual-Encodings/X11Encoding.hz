@@ -10,33 +10,26 @@ Metaclass
 	name: #X11Encoding;
 	instanceVariables: #().
 
-Metaclass X11Encoding >> setXWinEncToLocale
+Metaclass X11Encoding >> encoding
 [
-	<primitive: 'primSetXWinEncToLocale' module: 'ImmX11Plugin'>
+| enc |enc := self getEncoding.enc ifNil: [ ^ nil ].^ enc asLowercase
+]
+
+Metaclass X11Encoding >> getEncoding
+[
+	<primitive: 'primGetEncoding' module: 'ImmX11Plugin'>
 ^ nil
 ]
 
-Metaclass X11Encoding >> setEncodingToLocale
+Metaclass X11Encoding >> getLocaleEncoding
 [
-	<primitive: 'primSetEncodingToLocale' module: 'ImmX11Plugin'>
+	<primitive: 'primGetLocaleEncoding' module: 'ImmX11Plugin'>
 ^ nil
 ]
 
-Metaclass X11Encoding >> requestUTF8: bool
+Metaclass X11Encoding >> getPathEnc
 [
-	<primitive: 'primSetTextEncUTF8' module: 'ImmX11Plugin'>
-^ nil
-]
-
-Metaclass X11Encoding >> setTextEnc: encoding
-[
-	<primitive: 'primSetTextEnc' module: 'ImmX11Plugin'>
-^ nil
-]
-
-Metaclass X11Encoding >> setXWinEnc: encoding
-[
-	<primitive: 'primSetXWinEnc' module: 'ImmX11Plugin'>
+	<primitive: 'primGetPathEnc' module: 'ImmX11Plugin'>
 ^ nil
 ]
 
@@ -46,15 +39,33 @@ Metaclass X11Encoding >> getTextEnc
 ^ nil
 ]
 
-Metaclass X11Encoding >> setTextEncToLocale
+Metaclass X11Encoding >> getXWinEnc
 [
-	<primitive: 'primSetTextEncToLocale' module: 'ImmX11Plugin'>
+	<primitive: 'primGetXWinEnc' module: 'ImmX11Plugin'>
 ^ nil
 ]
 
-Metaclass X11Encoding >> getEncoding
+Metaclass X11Encoding >> requestUTF8
 [
-	<primitive: 'primGetEncoding' module: 'ImmX11Plugin'>
+	<primitive: 'primIsTextEncUTF8' module: 'ImmX11Plugin'>
+^ nil
+]
+
+Metaclass X11Encoding >> requestUTF8: bool
+[
+	<primitive: 'primSetTextEncUTF8' module: 'ImmX11Plugin'>
+^ nil
+]
+
+Metaclass X11Encoding >> setEncoding: encoding
+[
+	<primitive: 'primSetEncoding' module: 'ImmX11Plugin'>
+^ nil
+]
+
+Metaclass X11Encoding >> setEncodingToLocale
+[
+	<primitive: 'primSetEncodingToLocale' module: 'ImmX11Plugin'>
 ^ nil
 ]
 
@@ -70,21 +81,27 @@ Metaclass X11Encoding >> setPathEncToLocale
 ^ nil
 ]
 
-Metaclass X11Encoding >> getLocaleEncoding
+Metaclass X11Encoding >> setTextEnc: encoding
 [
-	<primitive: 'primGetLocaleEncoding' module: 'ImmX11Plugin'>
+	<primitive: 'primSetTextEnc' module: 'ImmX11Plugin'>
 ^ nil
 ]
 
-Metaclass X11Encoding >> setEncoding: encoding
+Metaclass X11Encoding >> setTextEncToLocale
 [
-	<primitive: 'primSetEncoding' module: 'ImmX11Plugin'>
+	<primitive: 'primSetTextEncToLocale' module: 'ImmX11Plugin'>
 ^ nil
 ]
 
-Metaclass X11Encoding >> requestUTF8
+Metaclass X11Encoding >> setXWinEnc: encoding
 [
-	<primitive: 'primIsTextEncUTF8' module: 'ImmX11Plugin'>
+	<primitive: 'primSetXWinEnc' module: 'ImmX11Plugin'>
+^ nil
+]
+
+Metaclass X11Encoding >> setXWinEncToLocale
+[
+	<primitive: 'primSetXWinEncToLocale' module: 'ImmX11Plugin'>
 ^ nil
 ]
 
@@ -93,25 +110,8 @@ Metaclass X11Encoding >> useEncoding: encoding
 self setEncoding: encoding.LanguageEnvironment startUp.^ self encoding
 ]
 
-Metaclass X11Encoding >> getXWinEnc
-[
-	<primitive: 'primGetXWinEnc' module: 'ImmX11Plugin'>
-^ nil
-]
-
 Metaclass X11Encoding >> useLocaleEncoding
 [
 self setEncodingToLocale.LanguageEnvironment startUp.^ self encoding
-]
-
-Metaclass X11Encoding >> encoding
-[
-| enc |enc := self getEncoding.enc ifNil: [ ^ nil ].^ enc asLowercase
-]
-
-Metaclass X11Encoding >> getPathEnc
-[
-	<primitive: 'primGetPathEnc' module: 'ImmX11Plugin'>
-^ nil
 ]
 

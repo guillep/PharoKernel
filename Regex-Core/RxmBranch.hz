@@ -6,24 +6,6 @@ Class
 	classVariables: #();
 	package: #'Regex-Core'.
 
-Class RxmBranch >> matchAgainst: aMatcher
-[
-	"Match either `next' or `alternative'. Fail if the alternative is nil."
-^ (next matchAgainst: aMatcher) or: [ alternative notNil and: [ alternative matchAgainst: aMatcher ] ]
-]
-
-Class RxmBranch >> pointTailTo: aNode
-[
-	"See superclass for explanations."
-loopback	ifTrue: [ 		alternative == nil			ifTrue: [ alternative := aNode ]			ifFalse: [ alternative pointTailTo: aNode ] ]	ifFalse: [ super pointTailTo: aNode ]
-]
-
-Class RxmBranch >> terminateWith: aNode
-[
-	"See superclass for explanations."
-loopback	ifTrue: [ 		alternative == nil			ifTrue: [ alternative := aNode ]			ifFalse: [ alternative terminateWith: aNode ] ]	ifFalse: [ super terminateWith: aNode ]
-]
-
 Class RxmBranch >> alternative: aBranch
 [
 	"See class comment for instance variable description."
@@ -40,6 +22,24 @@ Class RxmBranch >> initialize
 [
 	"See class comment for instance variable description."
 super initialize.loopback := false
+]
+
+Class RxmBranch >> matchAgainst: aMatcher
+[
+	"Match either `next' or `alternative'. Fail if the alternative is nil."
+^ (next matchAgainst: aMatcher) or: [ alternative notNil and: [ alternative matchAgainst: aMatcher ] ]
+]
+
+Class RxmBranch >> pointTailTo: aNode
+[
+	"See superclass for explanations."
+loopback	ifTrue: [ 		alternative == nil			ifTrue: [ alternative := aNode ]			ifFalse: [ alternative pointTailTo: aNode ] ]	ifFalse: [ super pointTailTo: aNode ]
+]
+
+Class RxmBranch >> terminateWith: aNode
+[
+	"See superclass for explanations."
+loopback	ifTrue: [ 		alternative == nil			ifTrue: [ alternative := aNode ]			ifFalse: [ alternative terminateWith: aNode ] ]	ifFalse: [ super terminateWith: aNode ]
 ]
 
 Metaclass

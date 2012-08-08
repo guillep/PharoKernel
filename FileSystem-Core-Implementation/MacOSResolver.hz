@@ -6,9 +6,9 @@ Class
 	classVariables: #();
 	package: #'FileSystem-Core-Implementation'.
 
-Class MacOSResolver >> supportedOrigins
+Class MacOSResolver >> desktop
 [
-^ super supportedOrigins , #(#library)
+^ self home / 'Desktop'
 ]
 
 Class MacOSResolver >> documents
@@ -16,24 +16,24 @@ Class MacOSResolver >> documents
 ^ self home / 'Documents'
 ]
 
-Class MacOSResolver >> library
-[
-^ self home / 'Library'
-]
-
 Class MacOSResolver >> home
 [
 ^ (self resolveString: self class primitiveGetUntrustedUserDirectory) parent parent parent parent parent
 ]
 
-Class MacOSResolver >> desktop
+Class MacOSResolver >> library
 [
-^ self home / 'Desktop'
+^ self home / 'Library'
 ]
 
 Class MacOSResolver >> preferences
 [
 ^ self library / 'Preferences'
+]
+
+Class MacOSResolver >> supportedOrigins
+[
+^ super supportedOrigins , #(#library)
 ]
 
 Metaclass

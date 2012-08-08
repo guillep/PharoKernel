@@ -6,26 +6,6 @@ Class
 	classVariables: #();
 	package: #'Fuel-Core'.
 
-Class FLClusterization >> metalevelClassSideBucket
-[
-^ metalevelClassSideBucket
-]
-
-Class FLClusterization >> postBaselevelBucket
-[
-^ postBaselevelBucket
-]
-
-Class FLClusterization >> fuelAccept: aGeneralMapper
-[
-^ aGeneralMapper visitSubstitution: self by: nil
-]
-
-Class FLClusterization >> clusters
-[
-^ self clusterBuckets gather: [ :c | c ]
-]
-
 Class FLClusterization >> baselevelBucket
 [
 ^ baselevelBucket
@@ -37,14 +17,19 @@ Class FLClusterization >> clusterBuckets
 ^ OrderedCollection new	add: globalsBucket;	add: primitivesBucket;	add: metalevelClassSideBucket;	add: metalevelInstanceSideBucket;	add: baselevelBucket;	add: postBaselevelBucket;	add: substitutionsBucket;	yourself
 ]
 
-Class FLClusterization >> objectCount
+Class FLClusterization >> clusters
 [
-^ self clusterBuckets	sum: [ :aClusterBucket | aClusterBucket inject: 0 into: [ :sum :aCluster | sum + aCluster objects size ] ]
+^ self clusterBuckets gather: [ :c | c ]
 ]
 
-Class FLClusterization >> primitivesBucket
+Class FLClusterization >> fuelAccept: aGeneralMapper
 [
-^ primitivesBucket
+^ aGeneralMapper visitSubstitution: self by: nil
+]
+
+Class FLClusterization >> globalsBucket
+[
+^ globalsBucket
 ]
 
 Class FLClusterization >> initialize
@@ -52,19 +37,34 @@ Class FLClusterization >> initialize
 super initialize.primitivesBucket := IdentityDictionary new.baselevelBucket := IdentityDictionary new.globalsBucket := IdentityDictionary new.metalevelInstanceSideBucket := IdentityDictionary new.metalevelClassSideBucket := IdentityDictionary new.substitutionsBucket := IdentityDictionary new.postBaselevelBucket := IdentityDictionary new
 ]
 
+Class FLClusterization >> metalevelClassSideBucket
+[
+^ metalevelClassSideBucket
+]
+
 Class FLClusterization >> metalevelInstanceSideBucket
 [
 ^ metalevelInstanceSideBucket
 ]
 
+Class FLClusterization >> objectCount
+[
+^ self clusterBuckets	sum: [ :aClusterBucket | aClusterBucket inject: 0 into: [ :sum :aCluster | sum + aCluster objects size ] ]
+]
+
+Class FLClusterization >> postBaselevelBucket
+[
+^ postBaselevelBucket
+]
+
+Class FLClusterization >> primitivesBucket
+[
+^ primitivesBucket
+]
+
 Class FLClusterization >> substitutionsBucket
 [
 ^ substitutionsBucket
-]
-
-Class FLClusterization >> globalsBucket
-[
-^ globalsBucket
 ]
 
 Metaclass

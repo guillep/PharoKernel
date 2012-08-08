@@ -11,9 +11,24 @@ Class FLHookPrimitiveCluster >> clusterMaterializeStepWith: aDecoder
 super clusterMaterializeStepWith: aDecoder.theClass := aDecoder nextEncodedReference
 ]
 
+Class FLHookPrimitiveCluster >> clusterReferencesDo: aBlock
+[
+aBlock value: theClass
+]
+
 Class FLHookPrimitiveCluster >> clusterSerializeStepWith: anEncoder
 [
 super clusterSerializeStepWith: anEncoder.anEncoder encodeReferenceTo: theClass
+]
+
+Class FLHookPrimitiveCluster >> initializeAnalyzing: aClass
+[
+super initializeAnalyzing.theClass := aClass
+]
+
+Class FLHookPrimitiveCluster >> materializeInstanceWith: aDecoder
+[
+^ theClass materializeFrom: aDecoder
 ]
 
 Class FLHookPrimitiveCluster >> printNameOn: aStream
@@ -22,24 +37,9 @@ Class FLHookPrimitiveCluster >> printNameOn: aStream
 super printNameOn: aStream.aStream nextPut: $[.theClass printOn: aStream.aStream nextPut: $]
 ]
 
-Class FLHookPrimitiveCluster >> clusterReferencesDo: aBlock
-[
-aBlock value: theClass
-]
-
 Class FLHookPrimitiveCluster >> serializeInstance: anObject with: anEncoder
 [
 anObject serializeOn: anEncoder
-]
-
-Class FLHookPrimitiveCluster >> materializeInstanceWith: aDecoder
-[
-^ theClass materializeFrom: aDecoder
-]
-
-Class FLHookPrimitiveCluster >> initializeAnalyzing: aClass
-[
-super initializeAnalyzing.theClass := aClass
 ]
 
 Metaclass

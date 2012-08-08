@@ -6,6 +6,12 @@ Class
 	classVariables: #();
 	package: #'Collections-Support'.
 
+Class WeakValueAssociation >> key: aKey value: anObject
+[
+	"Store the arguments as the variables of the receiver."
+key := aKey.self value: anObject
+]
+
 Class WeakValueAssociation >> value
 [
 ^ self at: 1
@@ -17,23 +23,17 @@ Class WeakValueAssociation >> value: anObject
 self at: 1 put: anObject
 ]
 
-Class WeakValueAssociation >> key: aKey value: anObject
-[
-	"Store the arguments as the variables of the receiver."
-key := aKey.self value: anObject
-]
-
 Metaclass
 	name: #WeakValueAssociation;
 	instanceVariables: #().
 
-Metaclass WeakValueAssociation >> new
-[
-^ self new: 1
-]
-
 Metaclass WeakValueAssociation >> key: anObject value: bObject
 [
 ^ self new key: anObject value: bObject
+]
+
+Metaclass WeakValueAssociation >> new
+[
+^ self new: 1
 ]
 

@@ -11,16 +11,6 @@ Class LanguageEnvironment >> isoCountry
 ^ self localeID isoCountry
 ]
 
-Class LanguageEnvironment >> localeID: anID
-[
-id := anID
-]
-
-Class LanguageEnvironment >> localeID
-[
-^ id
-]
-
 Class LanguageEnvironment >> isoLanguage
 [
 ^ self localeID isoLanguage
@@ -31,24 +21,28 @@ Class LanguageEnvironment >> leadingChar
 ^ self class leadingChar
 ]
 
+Class LanguageEnvironment >> localeID
+[
+^ id
+]
+
+Class LanguageEnvironment >> localeID: anID
+[
+id := anID
+]
+
 Metaclass
 	name: #LanguageEnvironment;
 	instanceVariables: #().
 
+Metaclass LanguageEnvironment >> canBeGlobalVarInitial: char
+[
+^ Unicode canBeGlobalVarInitial: char
+]
+
 Metaclass LanguageEnvironment >> canBeNonGlobalVarInitial: char
 [
 ^ Unicode canBeNonGlobalVarInitial: char
-]
-
-Metaclass LanguageEnvironment >> resetKnownEnvironments
-[
-	"LanguageEnvironment resetKnownEnvironments"
-KnownEnvironments := nil
-]
-
-Metaclass LanguageEnvironment >> isUppercase: char
-[
-^ Unicode isUppercase: char
 ]
 
 Metaclass LanguageEnvironment >> clearDefault
@@ -56,35 +50,19 @@ Metaclass LanguageEnvironment >> clearDefault
 ClipboardInterpreterClass := nil.InputInterpreterClass := nil.SystemConverterClass := nil.FileNameConverterClass := nil
 ]
 
-Metaclass LanguageEnvironment >> isDigit: char
+Metaclass LanguageEnvironment >> currentPlatform
 [
-^ Unicode isDigit: char
+^ Locale currentPlatform languageEnvironment
 ]
 
-Metaclass LanguageEnvironment >> localeID: localeID
+Metaclass LanguageEnvironment >> defaultFileNameConverter
 [
-self knownEnvironments at: localeID ifPresent: [ :value | ^ value ].^ self knownEnvironments	at: (LocaleID isoLanguage: localeID isoLanguage)	ifAbsent: [ self localeID: (LocaleID isoLanguage: 'en') ]
+FileNameConverterClass ifNil: [ FileNameConverterClass := self currentPlatform class fileNameConverterClass ].^ FileNameConverterClass new
 ]
 
 Metaclass LanguageEnvironment >> defaultSystemConverter
 [
 SystemConverterClass ifNil: [ SystemConverterClass := self currentPlatform class systemConverterClass ].^ SystemConverterClass new
-]
-
-Metaclass LanguageEnvironment >> initKnownEnvironments
-[
-	"LanguageEnvironment initKnownEnvironments"
-| known |known := Dictionary new.self	allSubclassesDo: [ :subClass | 		subClass supportedLanguages			do: [ :language | 				| env id |				env := subClass new.				id := LocaleID isoString: language.				env localeID: id.				known at: id put: env ] ].^ known
-]
-
-Metaclass LanguageEnvironment >> isCharset
-[
-^ false
-]
-
-Metaclass LanguageEnvironment >> isLetter: char
-[
-^ Unicode isLetter: char
 ]
 
 Metaclass LanguageEnvironment >> digitValueOf: char
@@ -93,30 +71,51 @@ Metaclass LanguageEnvironment >> digitValueOf: char
 ^ Unicode digitValueOf: char
 ]
 
+Metaclass LanguageEnvironment >> fileNameConverterClass
+[
+^ UTF8TextConverter
+]
+
+Metaclass LanguageEnvironment >> initKnownEnvironments
+[
+	"LanguageEnvironment initKnownEnvironments"
+| known |known := Dictionary new.self	allSubclassesDo: [ :subClass | 		subClass supportedLanguages			do: [ :language | 				| env id |				env := subClass new.				id := LocaleID isoString: language.				env localeID: id.				known at: id put: env ] ].^ known
+]
+
 Metaclass LanguageEnvironment >> initialize
 [
 	"LanguageEnvironment initialize"
 Smalltalk addToStartUpList: LanguageEnvironment
 ]
 
-Metaclass LanguageEnvironment >> localeChanged
+Metaclass LanguageEnvironment >> isBreakableAt: index in: text
 [
-self startUp
+| char |char := text at: index.char = Character space	ifTrue: [ ^ true ].char = Character cr	ifTrue: [ ^ true ].^ false
 ]
 
-Metaclass LanguageEnvironment >> canBeGlobalVarInitial: char
+Metaclass LanguageEnvironment >> isCharset
 [
-^ Unicode canBeGlobalVarInitial: char
+^ false
 ]
 
-Metaclass LanguageEnvironment >> systemConverterClass
+Metaclass LanguageEnvironment >> isDigit: char
 [
-self subclassResponsibility.^ Latin1TextConverter
+^ Unicode isDigit: char
 ]
 
-Metaclass LanguageEnvironment >> leadingChar
+Metaclass LanguageEnvironment >> isLetter: char
 [
-self subclassResponsibility.^ 0
+^ Unicode isLetter: char
+]
+
+Metaclass LanguageEnvironment >> isLowercase: char
+[
+^ Unicode isLowercase: char
+]
+
+Metaclass LanguageEnvironment >> isUppercase: char
+[
+^ Unicode isUppercase: char
 ]
 
 Metaclass LanguageEnvironment >> knownEnvironments
@@ -126,29 +125,35 @@ Metaclass LanguageEnvironment >> knownEnvironments
 ^ KnownEnvironments ifNil: [ KnownEnvironments := self initKnownEnvironments ]
 ]
 
+Metaclass LanguageEnvironment >> leadingChar
+[
+self subclassResponsibility.^ 0
+]
+
+Metaclass LanguageEnvironment >> localeChanged
+[
+self startUp
+]
+
+Metaclass LanguageEnvironment >> localeID: localeID
+[
+self knownEnvironments at: localeID ifPresent: [ :value | ^ value ].^ self knownEnvironments	at: (LocaleID isoLanguage: localeID isoLanguage)	ifAbsent: [ self localeID: (LocaleID isoLanguage: 'en') ]
+]
+
+Metaclass LanguageEnvironment >> resetKnownEnvironments
+[
+	"LanguageEnvironment resetKnownEnvironments"
+KnownEnvironments := nil
+]
+
+Metaclass LanguageEnvironment >> scanSelector
+[
+^ #scanMultiCharactersFrom:to:in:rightX:stopConditions:kern:
+]
+
 Metaclass LanguageEnvironment >> startUp
 [
 self clearDefault
-]
-
-Metaclass LanguageEnvironment >> defaultFileNameConverter
-[
-FileNameConverterClass ifNil: [ FileNameConverterClass := self currentPlatform class fileNameConverterClass ].^ FileNameConverterClass new
-]
-
-Metaclass LanguageEnvironment >> isBreakableAt: index in: text
-[
-| char |char := text at: index.char = Character space	ifTrue: [ ^ true ].char = Character cr	ifTrue: [ ^ true ].^ false
-]
-
-Metaclass LanguageEnvironment >> isLowercase: char
-[
-^ Unicode isLowercase: char
-]
-
-Metaclass LanguageEnvironment >> fileNameConverterClass
-[
-^ UTF8TextConverter
 ]
 
 Metaclass LanguageEnvironment >> supportedLanguages
@@ -157,13 +162,8 @@ Metaclass LanguageEnvironment >> supportedLanguages
 self subclassResponsibility
 ]
 
-Metaclass LanguageEnvironment >> scanSelector
+Metaclass LanguageEnvironment >> systemConverterClass
 [
-^ #scanMultiCharactersFrom:to:in:rightX:stopConditions:kern:
-]
-
-Metaclass LanguageEnvironment >> currentPlatform
-[
-^ Locale currentPlatform languageEnvironment
+self subclassResponsibility.^ Latin1TextConverter
 ]
 

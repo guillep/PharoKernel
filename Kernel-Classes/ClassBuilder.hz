@@ -6,28 +6,28 @@ Class
 	classVariables: #(#QuietMode );
 	package: #'Kernel-Classes'.
 
-Class ClassBuilder >> validateClassvars: classVarArray from: oldClass forSuper: newSuper
+Class ClassBuilder >> class: oldClass instanceVariableNames: instVarString
 [
-	"Check if any of the classVars of oldClass conflict with the new superclass"
-| usedNames classVars temp |classVarArray isEmpty	ifTrue: [ ^ true ].	"Okay"	"Validate the class var names"usedNames := classVarArray asSet.usedNames size = classVarArray size	ifFalse: [ 		classVarArray do: [ :var | usedNames remove: var ifAbsent: [ temp := var ] ].		self error: temp , ' is multiply defined' ].(usedNames includesAnyOf: self reservedNames)	ifTrue: [ 		self reservedNames			do: [ :var | 				(usedNames includes: var)					ifTrue: [ temp := var ] ].		self error: temp , ' is a reserved name' ].usedNames	do: [ :name | 		name isLegalInstVarName			ifFalse: [ self error: name , ' is not a legal inst var name' ] ].newSuper == nil	ifFalse: [ 		usedNames := newSuper allClassVarNames asSet.		classVarArray			do: [ :iv | 				(usedNames includes: iv)					ifTrue: [ 						newSuper							withAllSuperclassesDo: [ :cl | 								(cl classVarNames includes: iv)									ifTrue: [ temp := cl ] ].						DuplicatedVariableError new							superclass: temp;							variable: iv;							signal: iv , ' is already defined in ' , temp name.						^ false ] ] ].classVars := classVarArray.oldClass == nil	ifFalse: [ 		usedNames := Set new: 20.		(oldClass allSubclasses reject: #isMeta) do: [ :cl | usedNames addAll: cl classVarNames ].		newSuper == nil			ifFalse: [ classVars := classVars , newSuper allClassVarNames asArray ].		classVars			do: [ :iv | 				(usedNames includes: iv)					ifTrue: [ 						DuplicatedVariableError new							superclass: oldClass;							variable: iv;							signal: iv , ' is already defined in a subclass of ' , oldClass name.						^ false ] ] ].^ true
+	"This is the basic initialization message to change the definition of	an existing Metaclass"
+oldClass isMeta	ifFalse: [ ^ self error: oldClass name , 'is not a Metaclass' ].^ self class: oldClass instanceVariableNames: instVarString unsafe: false
 ]
 
-Class ClassBuilder >> name: className inEnvironment: env subclassOf: newSuper type: type instanceVariableNames: instVarString classVariableNames: classVarString poolDictionaries: poolString category: category unsafe: unsafe
+Class ClassBuilder >> class: oldClass instanceVariableNames: instVarString unsafe: unsafe
 [
-	"Define a new class in the given environment.	If unsafe is true do not run any validation checks.	This facility is provided to implement important system changes."
-| oldClass instVars classVars copyOfOldClass copyOfOldTraitComposition copyOfOldClassTraitComposition newClass |environ := env.instVars := instVarString subStrings: ' '.classVars := (classVarString subStrings: ' ') collect: [ :x | x asSymbol ].	"Validate the proposed name"unsafe	ifFalse: [ 		(self validateClassName: className)			ifFalse: [ ^ nil ] ].oldClass := env at: className ifAbsent: [ nil ].oldClass isBehavior	ifFalse: [ oldClass := nil ]	ifTrue: [ 		copyOfOldClass := oldClass copy.		copyOfOldClass superclass addSubclass: copyOfOldClass.		copyOfOldClass			ifNotNil: [ 				oldClass hasTraitComposition					ifTrue: [ copyOfOldTraitComposition := oldClass traitComposition copyTraitExpression ].				oldClass class hasTraitComposition					ifTrue: [ copyOfOldClassTraitComposition := oldClass class traitComposition copyTraitExpression ] ] ].	"Already checked in #validateClassName:"[ | newCategory oldCategory needNew force organization |unsafe	ifFalse: [ 		"Run validation checks so we know that we have a good chance for recompilation"		(self validateSuperclass: newSuper forSubclass: oldClass)			ifFalse: [ ^ nil ].		(self validateInstvars: instVars from: oldClass forSuper: newSuper)			ifFalse: [ ^ nil ].		(self validateClassvars: classVars from: oldClass forSuper: newSuper)			ifFalse: [ ^ nil ].		(self			validateSubclassFormat: type			from: oldClass			forSuper: newSuper			extra: instVars size)			ifFalse: [ ^ nil ] ].	"See if we need a new subclass"needNew := self	needsSubclassOf: newSuper	type: type	instanceVariables: instVars	from: oldClass.needNew == nil	ifTrue: [ ^ nil ].	"some error"(needNew and: [ unsafe not ])	ifTrue: [ 		"Make sure we don't redefine any dangerous classes"		(self tooDangerousClasses includes: oldClass name)			ifTrue: [ self error: oldClass name , ' cannot be changed' ].	"Check if the receiver should not be redefined"		(oldClass ~~ nil and: [ oldClass shouldNotBeRedefined ])			ifTrue: [ self notify: oldClass name asText allBold , ' should not be redefined. \Proceed to store over it.' withCRs ] ].needNew	ifTrue: [ 		"Create the new class"		newClass := self			newSubclassOf: newSuper			type: type			instanceVariables: instVars			from: oldClass.		newClass == nil			ifTrue: [ ^ nil ].	"Some error"		newClass setName: className ]	ifFalse: [ 		"Reuse the old class"		newClass := oldClass ].	"Install the class variables and pool dictionaries... "force := (newClass declare: classVarString) | (newClass sharing: poolString).	"... classify ..."newCategory := category asSymbol.organization := environ ifNotNil: [ environ organization ].oldClass isNil	ifFalse: [ oldCategory := (organization categoryOfElement: oldClass name) asSymbol ].organization classify: newClass name under: newCategory.newClass environment: environ.	"... recompile ..."newClass := self	recompile: force	from: oldClass	to: newClass	mutate: false.	"... export if not yet done ..."(environ at: newClass name ifAbsent: [ nil ]) == newClass	ifFalse: [ 		environ at: newClass name put: newClass.		Smalltalk globals flushClassNameCache ].	"... set trait composition..."copyOfOldTraitComposition ifNotNil: [ newClass setTraitComposition: copyOfOldTraitComposition ].copyOfOldClassTraitComposition ifNotNil: [ newClass class setTraitComposition: copyOfOldClassTraitComposition ].newClass doneCompiling.	"... notify interested clients ..."oldClass isNil	ifTrue: [ 		SystemAnnouncer uniqueInstance classAdded: newClass inCategory: newCategory.		^ newClass ].newCategory ~= oldCategory	ifTrue: [ SystemAnnouncer uniqueInstance class: newClass recategorizedFrom: oldCategory to: category ]	ifFalse: [ SystemAnnouncer uniqueInstance classDefinitionChangedFrom: copyOfOldClass to: newClass ] ]	ensure: [ 		copyOfOldClass ifNotNil: [ copyOfOldClass superclass removeSubclass: copyOfOldClass ].		Behavior flushObsoleteSubclasses ].^ newClass
+	"This is the basic initialization message to change the definition of	an existing Metaclass"
+| instVars newClass needNew copyOfOldClass copyOfOldTraitComposition copyOfOldClassTraitComposition |environ := oldClass environment.instVars := instVarString subStrings: ' '.unsafe	ifFalse: [ 		"Run validation checks so we know that we have a good chance for recompilation"		(self validateInstvars: instVars from: oldClass forSuper: oldClass superclass)			ifFalse: [ ^ nil ].		(self			validateSubclassFormat: oldClass typeOfClass			from: oldClass			forSuper: oldClass superclass			extra: instVars size)			ifFalse: [ ^ nil ] ].	"See if we need a new subclass or not"needNew := self	needsSubclassOf: oldClass superclass	type: oldClass typeOfClass	instanceVariables: instVars	from: oldClass.needNew ifNil: [ ^ nil ].	"some error"needNew	ifFalse: [ ^ oldClass ].	"no new class needed"	"Create the new class"copyOfOldClass := oldClass copy.oldClass hasTraitComposition	ifTrue: [ copyOfOldTraitComposition := oldClass traitComposition copyTraitExpression ].oldClass class hasTraitComposition	ifTrue: [ copyOfOldClassTraitComposition := oldClass class traitComposition copyTraitExpression ].newClass := self	newSubclassOf: oldClass superclass	type: oldClass typeOfClass	instanceVariables: instVars	from: oldClass.newClass := self	recompile: false	from: oldClass	to: newClass	mutate: false.	"... set trait composition..."copyOfOldTraitComposition ifNotNil: [ newClass setTraitComposition: copyOfOldTraitComposition ].copyOfOldClassTraitComposition ifNotNil: [ newClass class setTraitComposition: copyOfOldClassTraitComposition ].self doneCompiling: newClass.SystemAnnouncer uniqueInstance classDefinitionChangedFrom: copyOfOldClass to: newClass.^ newClass
 ]
 
-Class ClassBuilder >> validateSuperclass: aSuperClass forSubclass: aClass
+Class ClassBuilder >> computeFormat: type instSize: newInstSize forSuper: newSuper ccIndex: ccIndex
 [
-	"Check if it is okay to use aSuperClass as the superclass of aClass"
-aClass == nil	ifTrue: [ 		"New class"		(aSuperClass == nil or: [ aSuperClass isBehavior and: [ aSuperClass isMeta not ] ])			ifFalse: [ 				self error: aSuperClass name , ' is not a valid superclass'.				^ false ].		^ true ].aSuperClass == aClass superclass	ifTrue: [ ^ true ].	"No change"aClass isMeta	ifTrue: [ ^ self error: aClass name , ' must inherit from ' , aClass superclass name ].	"Not permitted - meta class hierarchy is derived from class hierarchy"	"Check for circular references"(aSuperClass ~~ nil and: [ aSuperClass == aClass or: [ aSuperClass inheritsFrom: aClass ] ])	ifTrue: [ 		self error: aSuperClass name , ' inherits from ' , aClass name.		^ false ].^ true
+	"Compute the new format for making oldClass a subclass of newSuper.	Return the format or nil if there is any problem."
+| instSize isVar isWords isPointers isWeak |type == #compiledMethod	ifTrue: [ 		"we ensure that compiled method subclasses have as compat class index the one we receive as a argument"		^ (CompiledMethod format bitClear: (16r1F bitShift: 11)) bitOr: (ccIndex bitShift: 11) ].instSize := newInstSize + (newSuper ifNil: [ 0 ] ifNotNil: [ newSuper instSize ]).instSize > 254	ifTrue: [ 		self error: 'Class has too many instance variables (' , instSize printString , ')'.		^ nil ].type == #normal	ifTrue: [ 		isVar := isWeak := false.		isWords := isPointers := true ].type == #bytes	ifTrue: [ 		isVar := true.		isWords := isPointers := isWeak := false ].type == #words	ifTrue: [ 		isVar := isWords := true.		isPointers := isWeak := false ].type == #variable	ifTrue: [ 		isVar := isPointers := isWords := true.		isWeak := false ].type == #weak	ifTrue: [ isVar := isWeak := isWords := isPointers := true ].(isPointers not and: [ instSize > 0 ])	ifTrue: [ 		self error: 'A non-pointer class cannot have instance variables'.		^ nil ].^ (self	format: instSize	variable: isVar	words: isWords	pointers: isPointers	weak: isWeak) + (ccIndex bitShift: 11)
 ]
 
-Class ClassBuilder >> showProgressFor: aClass
+Class ClassBuilder >> doneCompiling: aClass
 [
-	"Announce that we're processing aClass"
-progress == nil	ifTrue: [ ^ self ].aClass isObsolete	ifTrue: [ ^ self ].currentClassIndex := currentClassIndex + 1.(aClass hasMethods and: [ aClass wantsRecompilationProgressReported ])	ifTrue: [ 		progress			label: 'Recompiling ' , aClass name , ' (' , currentClassIndex printString , '/' , maxClassIndex printString , ')' ]
+	"The receiver has finished modifying the class hierarchy.	Do any necessary cleanup."
+aClass doneCompiling.Behavior flushObsoleteSubclasses
 ]
 
 Class ClassBuilder >> format: nInstVars variable: isVar words: isWords pointers: isPointers weak: isWeak
@@ -36,16 +36,52 @@ Class ClassBuilder >> format: nInstVars variable: isVar words: isWords pointers:
 | cClass instSpec sizeHiBits fmt |self flag: #instSizeChange.	"Smalltalk browseAllCallsOn: #instSizeChange.Smalltalk browseAllImplementorsOf: #fixedFieldsOf:.Smalltalk browseAllImplementorsOf: #instantiateClass:indexableSize:."	"	NOTE: This code supports the backward-compatible extension to 8 bits of instSize.	For now the format word is...		<2 bits=instSize//64><5 bits=cClass><4 bits=instSpec><6 bits=instSize\\64><1 bit=0>	But when we revise the image format, it should become...		<5 bits=cClass><4 bits=instSpec><8 bits=instSize><1 bit=0>"sizeHiBits := (nInstVars + 1) // 64.cClass := 0.	"for now"instSpec := isWeak	ifTrue: [ 4 ]	ifFalse: [ 		isPointers			ifTrue: [ 				isVar					ifTrue: [ 						nInstVars > 0							ifTrue: [ 3 ]							ifFalse: [ 2 ] ]					ifFalse: [ 						nInstVars > 0							ifTrue: [ 1 ]							ifFalse: [ 0 ] ] ]			ifFalse: [ 				isWords					ifTrue: [ 6 ]					ifFalse: [ 8 ] ] ].fmt := sizeHiBits.fmt := (fmt bitShift: 5) + cClass.fmt := (fmt bitShift: 4) + instSpec.fmt := (fmt bitShift: 6) + ((nInstVars + 1) \\ 64).	"+1 since prim size field includes header"fmt := fmt bitShift: 1.	"This shift plus integer bit lets wordSize work like byteSize"^ fmt
 ]
 
-Class ClassBuilder >> superclass: aClass weakSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+Class ClassBuilder >> initialize
 [
-	"This is the standard initialization message for creating a new class as a 	subclass of an existing class (the receiver) in which the subclass is to 	have weak indexable pointer variables."
-aClass isBits	ifTrue: [ ^ self error: 'cannot make a pointer subclass of a class with non-pointer fields' ].^ self	name: t	inEnvironment: aClass environment	subclassOf: aClass	type: #weak	instanceVariableNames: f	classVariableNames: d	poolDictionaries: s	category: cat
+super initialize.environ := Smalltalk.instVarMap := IdentityDictionary new
+]
+
+Class ClassBuilder >> moveInstVarNamed: instVarName from: srcClass to: dstClass after: prevInstVarName
+[
+	"Move the given instVar from srcClass to dstClass"
+(srcClass instVarNames includes: instVarName)	ifFalse: [ ^ self error: instVarName , ' is not an instance variable of ' , srcClass name ].(prevInstVarName isNil or: [ dstClass instVarNames includes: prevInstVarName ])	ifFalse: [ ^ self error: prevInstVarName , 'is not an instance variable of' , dstClass name ].(srcClass inheritsFrom: dstClass)	ifTrue: [ 		"Move the instvar up the hierarchy."		(self validateClass: srcClass forMoving: instVarName upTo: dstClass)			ifFalse: [ ^ false ] ].(dstClass inheritsFrom: srcClass)	ifTrue: [ 		"Move the instvar down the hierarchy"		(self validateClass: srcClass forMoving: instVarName downTo: dstClass)			ifFalse: [ ^ false ] ].^ self	silentlyMoveInstVarNamed: instVarName	from: srcClass	to: dstClass	after: prevInstVarName
+]
+
+Class ClassBuilder >> mutate: oldClass to: newClass
+[
+	"Mutate the old class and subclasses into newClass and subclasses.	Note: This method is slightly different from: #mutate:toSuper: since	here we are at the root of reshaping and have two distinct roots."
+| copyOfOldTraitComposition copyOfOldClassTraitComposition |self showProgressFor: oldClass.	"Convert the subclasses"oldClass subclasses	do: [ :oldSubclass | 		| newSubclass |		copyOfOldTraitComposition := copyOfOldClassTraitComposition := nil.		oldSubclass hasTraitComposition			ifTrue: [ copyOfOldTraitComposition := oldSubclass traitComposition copyTraitExpression ].		oldSubclass class hasTraitComposition			ifTrue: [ copyOfOldClassTraitComposition := oldSubclass class traitComposition copyTraitExpression ].		newSubclass := self reshapeClass: oldSubclass toSuper: newClass.		self mutate: oldSubclass to: newSubclass.		copyOfOldTraitComposition ifNotNil: [ newSubclass setTraitComposition: copyOfOldTraitComposition ].		copyOfOldClassTraitComposition ifNotNil: [ newSubclass class setTraitComposition: copyOfOldClassTraitComposition ] ].	"And any obsolete ones"oldClass obsoleteSubclasses	do: [ :oldSubclass | 		| newSubclass |		oldSubclass			ifNotNil: [ 				copyOfOldTraitComposition := copyOfOldClassTraitComposition := nil.				oldSubclass hasTraitComposition					ifTrue: [ copyOfOldTraitComposition := oldSubclass traitComposition copyTraitExpression ].				oldSubclass class hasTraitComposition					ifTrue: [ copyOfOldClassTraitComposition := oldSubclass class traitComposition copyTraitExpression ].				newSubclass := self reshapeClass: oldSubclass toSuper: newClass.				self mutate: oldSubclass to: newSubclass.				copyOfOldTraitComposition ifNotNil: [ newSubclass setTraitComposition: copyOfOldTraitComposition ].				copyOfOldClassTraitComposition ifNotNil: [ newSubclass class setTraitComposition: copyOfOldClassTraitComposition ] ] ].self update: oldClass to: newClass.^ newClass
+]
+
+Class ClassBuilder >> name: className inEnvironment: env subclassOf: newSuper type: type instanceVariableNames: instVarString classVariableNames: classVarString poolDictionaries: poolString category: category
+[
+	"Define a new class in the given environment"
+^ self	name: className	inEnvironment: env	subclassOf: newSuper	type: type	instanceVariableNames: instVarString	classVariableNames: classVarString	poolDictionaries: poolString	category: category	unsafe: false
+]
+
+Class ClassBuilder >> name: className inEnvironment: env subclassOf: newSuper type: type instanceVariableNames: instVarString classVariableNames: classVarString poolDictionaries: poolString category: category unsafe: unsafe
+[
+	"Define a new class in the given environment.	If unsafe is true do not run any validation checks.	This facility is provided to implement important system changes."
+| oldClass instVars classVars copyOfOldClass copyOfOldTraitComposition copyOfOldClassTraitComposition newClass |environ := env.instVars := instVarString subStrings: ' '.classVars := (classVarString subStrings: ' ') collect: [ :x | x asSymbol ].	"Validate the proposed name"unsafe	ifFalse: [ 		(self validateClassName: className)			ifFalse: [ ^ nil ] ].oldClass := env at: className ifAbsent: [ nil ].oldClass isBehavior	ifFalse: [ oldClass := nil ]	ifTrue: [ 		copyOfOldClass := oldClass copy.		copyOfOldClass superclass addSubclass: copyOfOldClass.		copyOfOldClass			ifNotNil: [ 				oldClass hasTraitComposition					ifTrue: [ copyOfOldTraitComposition := oldClass traitComposition copyTraitExpression ].				oldClass class hasTraitComposition					ifTrue: [ copyOfOldClassTraitComposition := oldClass class traitComposition copyTraitExpression ] ] ].	"Already checked in #validateClassName:"[ | newCategory oldCategory needNew force organization |unsafe	ifFalse: [ 		"Run validation checks so we know that we have a good chance for recompilation"		(self validateSuperclass: newSuper forSubclass: oldClass)			ifFalse: [ ^ nil ].		(self validateInstvars: instVars from: oldClass forSuper: newSuper)			ifFalse: [ ^ nil ].		(self validateClassvars: classVars from: oldClass forSuper: newSuper)			ifFalse: [ ^ nil ].		(self			validateSubclassFormat: type			from: oldClass			forSuper: newSuper			extra: instVars size)			ifFalse: [ ^ nil ] ].	"See if we need a new subclass"needNew := self	needsSubclassOf: newSuper	type: type	instanceVariables: instVars	from: oldClass.needNew == nil	ifTrue: [ ^ nil ].	"some error"(needNew and: [ unsafe not ])	ifTrue: [ 		"Make sure we don't redefine any dangerous classes"		(self tooDangerousClasses includes: oldClass name)			ifTrue: [ self error: oldClass name , ' cannot be changed' ].	"Check if the receiver should not be redefined"		(oldClass ~~ nil and: [ oldClass shouldNotBeRedefined ])			ifTrue: [ self notify: oldClass name asText allBold , ' should not be redefined. \Proceed to store over it.' withCRs ] ].needNew	ifTrue: [ 		"Create the new class"		newClass := self			newSubclassOf: newSuper			type: type			instanceVariables: instVars			from: oldClass.		newClass == nil			ifTrue: [ ^ nil ].	"Some error"		newClass setName: className ]	ifFalse: [ 		"Reuse the old class"		newClass := oldClass ].	"Install the class variables and pool dictionaries... "force := (newClass declare: classVarString) | (newClass sharing: poolString).	"... classify ..."newCategory := category asSymbol.organization := environ ifNotNil: [ environ organization ].oldClass isNil	ifFalse: [ oldCategory := (organization categoryOfElement: oldClass name) asSymbol ].organization classify: newClass name under: newCategory.newClass environment: environ.	"... recompile ..."newClass := self	recompile: force	from: oldClass	to: newClass	mutate: false.	"... export if not yet done ..."(environ at: newClass name ifAbsent: [ nil ]) == newClass	ifFalse: [ 		environ at: newClass name put: newClass.		Smalltalk globals flushClassNameCache ].	"... set trait composition..."copyOfOldTraitComposition ifNotNil: [ newClass setTraitComposition: copyOfOldTraitComposition ].copyOfOldClassTraitComposition ifNotNil: [ newClass class setTraitComposition: copyOfOldClassTraitComposition ].newClass doneCompiling.	"... notify interested clients ..."oldClass isNil	ifTrue: [ 		SystemAnnouncer uniqueInstance classAdded: newClass inCategory: newCategory.		^ newClass ].newCategory ~= oldCategory	ifTrue: [ SystemAnnouncer uniqueInstance class: newClass recategorizedFrom: oldCategory to: category ]	ifFalse: [ SystemAnnouncer uniqueInstance classDefinitionChangedFrom: copyOfOldClass to: newClass ] ]	ensure: [ 		copyOfOldClass ifNotNil: [ copyOfOldClass superclass removeSubclass: copyOfOldClass ].		Behavior flushObsoleteSubclasses ].^ newClass
 ]
 
 Class ClassBuilder >> needsSubclassOf: newSuper type: type instanceVariables: instVars from: oldClass
 [
 	"Answer whether we need a new subclass to conform to the requested changes"
 | newFormat |"Compute the format of the new class"newFormat := self	computeFormat: type	instSize: instVars size	forSuper: newSuper	ccIndex: (oldClass ifNil: [ 0 ] ifNotNil: [ oldClass indexIfCompact ]).newFormat == nil	ifTrue: [ ^ nil ].	"Check if we really need a new subclass"oldClass ifNil: [ ^ true ].	"yes, it's a new class"newSuper == oldClass superclass	ifFalse: [ ^ true ].	"yes, it's a superclass change"newFormat = oldClass format	ifFalse: [ ^ true ].	"yes, it's a format change"instVars = oldClass instVarNames	ifFalse: [ ^ true ].	"yes, it's an iVar change"^ false
+]
+
+Class ClassBuilder >> newSubclassOf: newSuper type: type instanceVariables: instVars from: oldClass
+[
+	"Create a new subclass of the given superclass with the given specification."
+| newFormat newClass |"Compute the format of the new class"newFormat := self	computeFormat: type	instSize: instVars size	forSuper: newSuper	ccIndex: (oldClass ifNil: [ 0 ] ifNotNil: [ oldClass indexIfCompact ]).newFormat == nil	ifTrue: [ ^ nil ].(oldClass == nil or: [ oldClass isMeta not ])	ifTrue: [ newClass := self privateNewSubclassOf: newSuper from: oldClass ]	ifFalse: [ newClass := oldClass shallowCopy ].newClass	superclass: newSuper methodDictionary: MethodDictionary new format: newFormat;	setInstVarNames: instVars.oldClass	ifNotNil: [ 		newClass organization: oldClass organization.	"Recompile the new class"		oldClass hasMethods			ifTrue: [ newClass compileAllFrom: oldClass ].		self recordClass: oldClass replacedBy: newClass ].(oldClass == nil or: [ oldClass isObsolete not ])	ifTrue: [ newSuper addSubclass: newClass ]	ifFalse: [ newSuper addObsoleteSubclass: newClass ].^ newClass
+]
+
+Class ClassBuilder >> privateNewSubclassOf: newSuper
+[
+	"Create a new meta and non-meta subclass of newSuper"
+	"WARNING: This method does not preserve the superclass/subclass invariant!"
+| newSuperMeta newMeta |newSuperMeta := newSuper ifNil: [ Class ] ifNotNil: [ newSuper class ].newMeta := Metaclass new.newMeta superclass: newSuperMeta methodDictionary: MethodDictionary new format: newSuperMeta format.^ newMeta new
 ]
 
 Class ClassBuilder >> privateNewSubclassOf: newSuper from: oldClass
@@ -55,34 +91,16 @@ Class ClassBuilder >> privateNewSubclassOf: newSuper from: oldClass
 | newSuperMeta oldMeta newMeta |oldClass ifNil: [ ^ self privateNewSubclassOf: newSuper ].newSuperMeta := newSuper ifNil: [ Class ] ifNotNil: [ newSuper class ].oldMeta := oldClass class.newMeta := oldMeta shallowCopy.newMeta	superclass: newSuperMeta		methodDictionary: MethodDictionary new		format:			(self					computeFormat: oldMeta typeOfClass					instSize: oldMeta instVarNames size					forSuper: newSuperMeta					ccIndex: 0);	setInstVarNames: oldMeta instVarNames;	organization: oldMeta organization.	"Recompile the meta class"oldMeta hasMethods	ifTrue: [ newMeta compileAllFrom: oldMeta ].	"Record the meta class change"self recordClass: oldMeta replacedBy: newMeta.	"And create a new instance"^ newMeta adoptInstance: oldClass from: oldMeta
 ]
 
-Class ClassBuilder >> superclass: aClass variableSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+Class ClassBuilder >> recompile: force from: oldClass to: newClass mutate: forceMutation
 [
-	"This is the standard initialization message for creating a new class as a 	subclass of an existing class in which the subclass is to 	have indexable pointer variables."
-aClass isBits	ifTrue: [ ^ self error: 'cannot make a pointer subclass of a class with non-pointer fields' ].^ self	name: t	inEnvironment: aClass environment	subclassOf: aClass	type: #variable	instanceVariableNames: f	classVariableNames: d	poolDictionaries: s	category: cat
+	"Do the necessary recompilation after changine oldClass to newClass.	If required (e.g., when oldClass ~~ newClass) mutate oldClass to newClass	and all its subclasses. If forceMutation is true force a mutation even	if oldClass and newClass are the same."
+oldClass == nil	ifTrue: [ ^ newClass ].(newClass == oldClass and: [ force not and: [ forceMutation not ] ])	ifTrue: [ ^ newClass ].currentClassIndex := 0.maxClassIndex := oldClass withAllSubclasses size.(oldClass == newClass and: [ forceMutation not ])	ifTrue: [ 		"Recompile from newClass without mutating"		self			informUserDuring: [ 				newClass					withAllSubclassesDo: [ :cl | 						self showProgressFor: cl.						cl compileAll ] ].		^ newClass ].	"Recompile and mutate oldClass to newClass"self informUserDuring: [ self mutate: oldClass to: newClass ].^ oldClass	"now mutated to newClass"
 ]
 
-Class ClassBuilder >> silentlyMoveInstVarNamed: instVarName from: srcClass to: dstClass after: prevInstVarName
+Class ClassBuilder >> recordClass: oldClass replacedBy: newClass
 [
-	"Move the instvar from srcClass to dstClass.	Do not perform any checks."
-| srcVars dstVars dstIndex newClass copyOfSrcClass copyOfDstClass copyOfOldTraitComposition copyOfOldClassTraitComposition |copyOfSrcClass := srcClass copy.copyOfDstClass := dstClass copy.srcVars := srcClass instVarNames copyWithout: instVarName.srcClass == dstClass	ifTrue: [ dstVars := srcVars ]	ifFalse: [ dstVars := dstClass instVarNames ].dstIndex := dstVars indexOf: prevInstVarName.dstVars := (dstVars copyFrom: 1 to: dstIndex) , (Array with: instVarName)	, (dstVars copyFrom: dstIndex + 1 to: dstVars size).instVarMap at: srcClass name put: srcVars.instVarMap at: dstClass name put: dstVars.(srcClass inheritsFrom: dstClass)	ifTrue: [ 		copyOfOldTraitComposition := copyOfOldClassTraitComposition := nil.		dstClass hasTraitComposition			ifTrue: [ copyOfOldTraitComposition := dstClass traitComposition copyTraitExpression ].		dstClass class hasTraitComposition			ifTrue: [ copyOfOldClassTraitComposition := dstClass class traitComposition copyTraitExpression ].		newClass := self reshapeClass: dstClass toSuper: dstClass superclass.		self			recompile: false			from: dstClass			to: newClass			mutate: true.		copyOfOldTraitComposition ifNotNil: [ newClass setTraitComposition: copyOfOldTraitComposition ].		copyOfOldClassTraitComposition ifNotNil: [ newClass class setTraitComposition: copyOfOldClassTraitComposition ] ]	ifFalse: [ 		(dstClass inheritsFrom: srcClass)			ifTrue: [ 				newClass := self reshapeClass: srcClass toSuper: srcClass superclass.				self					recompile: false					from: srcClass					to: newClass					mutate: true ]			ifFalse: [ 				"Disjunct hierarchies"				srcClass == dstClass					ifFalse: [ 						newClass := self reshapeClass: dstClass toSuper: dstClass superclass.						self							recompile: false							from: dstClass							to: newClass							mutate: true ].				newClass := self reshapeClass: srcClass toSuper: srcClass superclass.				self					recompile: false					from: srcClass					to: newClass					mutate: true ] ].self doneCompiling: srcClass.self doneCompiling: dstClass.SystemAnnouncer uniqueInstance classDefinitionChangedFrom: copyOfSrcClass to: srcClass.SystemAnnouncer uniqueInstance classDefinitionChangedFrom: copyOfDstClass to: dstClass
-]
-
-Class ClassBuilder >> tooDangerousClasses
-[
-	"Return a list of class names which will not be modified in the public interface"
-^ #(#ProtoObject #Object #InstructionStream #ContextPart #MethodContext #BlockClosure #Collection #SequenceableCollection #ArrayedCollection #Array #Bitmap #String #Symbol #ByteArray #CompiledMethod #Magnitude #Number #SmallInteger #Float #LookupKey #Association #Link #Point #Rectangle #Behavior #PositionableStream #UndefinedObject)	"Object will break immediately"
-]
-
-Class ClassBuilder >> validateInstvars: instVarArray from: oldClass forSuper: newSuper
-[
-	"Check if any of the instVars of oldClass conflict with the new superclass"
-| instVars usedNames temp |instVarArray isEmpty	ifTrue: [ ^ true ].	"Okay"newSuper allowsSubInstVars	ifFalse: [ self error: newSuper printString , ' does not allow subclass inst vars. See allowsSubInstVars.' ].	"Validate the inst var names"usedNames := instVarArray asSet.usedNames size = instVarArray size	ifFalse: [ 		instVarArray do: [ :var | usedNames remove: var ifAbsent: [ temp := var ] ].		self error: temp , ' is multiply defined' ].(usedNames includesAnyOf: self reservedNames)	ifTrue: [ 		self reservedNames			do: [ :var | 				(usedNames includes: var)					ifTrue: [ temp := var ] ].		self error: temp , ' is a reserved name' ].usedNames	do: [ :name | 		name isLegalInstVarName			ifFalse: [ self error: name , ' is not a legal inst var name' ] ].^ true
-]
-
-Class ClassBuilder >> validateSubclassFormat: newType from: oldClass forSuper: newSuper extra: newInstSize
-[
-	"Validate the # of instVars and the format of the subclasses"
-| deltaSize |oldClass == nil	ifTrue: [ ^ true ].	"No subclasses"	"Compute the # of instvars needed for all subclasses"deltaSize := newInstSize.oldClass notNil	ifTrue: [ deltaSize := deltaSize - oldClass instVarNames size ].newSuper notNil	ifTrue: [ deltaSize := deltaSize + newSuper instSize ].(oldClass notNil and: [ oldClass superclass notNil ])	ifTrue: [ deltaSize := deltaSize - oldClass superclass instSize ].oldClass == nil	ifTrue: [ 		deltaSize > 254			ifTrue: [ 				self error: 'More than 254 instance variables'.				^ false ].		^ true ].oldClass	withAllSubclassesDo: [ :sub | 		sub instSize + deltaSize > 254			ifTrue: [ 				self error: sub name , ' has more than 254 instance variables'.				^ false ].	"If we get this far, check whether the immediate subclasses of oldClass can keep its layout."		newType ~~ #normal			ifTrue: [ self validateSubclass: sub canKeepLayoutFrom: oldClass forSubclassFormat: newType ] ].^ true
+	"Keep the changes up to date when we're moving instVars around"
+(instVarMap includesKey: oldClass name)	ifTrue: [ SystemAnnouncer uniqueInstance classDefinitionChangedFrom: oldClass to: newClass ]
 ]
 
 Class ClassBuilder >> reservedNames
@@ -91,33 +109,58 @@ Class ClassBuilder >> reservedNames
 ^ #('self' 'super' 'thisContext' 'true' 'false' 'nil' #self #super #thisContext #true #false #nil)
 ]
 
-Class ClassBuilder >> class: oldClass instanceVariableNames: instVarString unsafe: unsafe
+Class ClassBuilder >> reshapeClass: oldClass toSuper: newSuper
 [
-	"This is the basic initialization message to change the definition of	an existing Metaclass"
-| instVars newClass needNew copyOfOldClass copyOfOldTraitComposition copyOfOldClassTraitComposition |environ := oldClass environment.instVars := instVarString subStrings: ' '.unsafe	ifFalse: [ 		"Run validation checks so we know that we have a good chance for recompilation"		(self validateInstvars: instVars from: oldClass forSuper: oldClass superclass)			ifFalse: [ ^ nil ].		(self			validateSubclassFormat: oldClass typeOfClass			from: oldClass			forSuper: oldClass superclass			extra: instVars size)			ifFalse: [ ^ nil ] ].	"See if we need a new subclass or not"needNew := self	needsSubclassOf: oldClass superclass	type: oldClass typeOfClass	instanceVariables: instVars	from: oldClass.needNew ifNil: [ ^ nil ].	"some error"needNew	ifFalse: [ ^ oldClass ].	"no new class needed"	"Create the new class"copyOfOldClass := oldClass copy.oldClass hasTraitComposition	ifTrue: [ copyOfOldTraitComposition := oldClass traitComposition copyTraitExpression ].oldClass class hasTraitComposition	ifTrue: [ copyOfOldClassTraitComposition := oldClass class traitComposition copyTraitExpression ].newClass := self	newSubclassOf: oldClass superclass	type: oldClass typeOfClass	instanceVariables: instVars	from: oldClass.newClass := self	recompile: false	from: oldClass	to: newClass	mutate: false.	"... set trait composition..."copyOfOldTraitComposition ifNotNil: [ newClass setTraitComposition: copyOfOldTraitComposition ].copyOfOldClassTraitComposition ifNotNil: [ newClass class setTraitComposition: copyOfOldClassTraitComposition ].self doneCompiling: newClass.SystemAnnouncer uniqueInstance classDefinitionChangedFrom: copyOfOldClass to: newClass.^ newClass
+	"Reshape the given class to the new super class. Recompile all the methods in the newly created class. Answer the new class."
+| instVars |"ar 9/22/2002: The following is a left-over from some older code. 	I do *not* know why we uncompact oldClass here. If you do, then 	please let me know so I can put a comment here..."oldClass becomeUncompact.instVars := instVarMap at: oldClass name ifAbsent: [ oldClass instVarNames ].^ self	newSubclassOf: newSuper	type: oldClass typeOfClass	instanceVariables: instVars	from: oldClass
 ]
 
-Class ClassBuilder >> initialize
+Class ClassBuilder >> showProgressFor: aClass
 [
-super initialize.environ := Smalltalk.instVarMap := IdentityDictionary new
+	"Announce that we're processing aClass"
+progress == nil	ifTrue: [ ^ self ].aClass isObsolete	ifTrue: [ ^ self ].currentClassIndex := currentClassIndex + 1.(aClass hasMethods and: [ aClass wantsRecompilationProgressReported ])	ifTrue: [ 		progress			label: 'Recompiling ' , aClass name , ' (' , currentClassIndex printString , '/' , maxClassIndex printString , ')' ]
 ]
 
-Class ClassBuilder >> mutate: oldClass to: newClass
+Class ClassBuilder >> silentlyMoveInstVarNamed: instVarName from: srcClass to: dstClass after: prevInstVarName
 [
-	"Mutate the old class and subclasses into newClass and subclasses.	Note: This method is slightly different from: #mutate:toSuper: since	here we are at the root of reshaping and have two distinct roots."
-| copyOfOldTraitComposition copyOfOldClassTraitComposition |self showProgressFor: oldClass.	"Convert the subclasses"oldClass subclasses	do: [ :oldSubclass | 		| newSubclass |		copyOfOldTraitComposition := copyOfOldClassTraitComposition := nil.		oldSubclass hasTraitComposition			ifTrue: [ copyOfOldTraitComposition := oldSubclass traitComposition copyTraitExpression ].		oldSubclass class hasTraitComposition			ifTrue: [ copyOfOldClassTraitComposition := oldSubclass class traitComposition copyTraitExpression ].		newSubclass := self reshapeClass: oldSubclass toSuper: newClass.		self mutate: oldSubclass to: newSubclass.		copyOfOldTraitComposition ifNotNil: [ newSubclass setTraitComposition: copyOfOldTraitComposition ].		copyOfOldClassTraitComposition ifNotNil: [ newSubclass class setTraitComposition: copyOfOldClassTraitComposition ] ].	"And any obsolete ones"oldClass obsoleteSubclasses	do: [ :oldSubclass | 		| newSubclass |		oldSubclass			ifNotNil: [ 				copyOfOldTraitComposition := copyOfOldClassTraitComposition := nil.				oldSubclass hasTraitComposition					ifTrue: [ copyOfOldTraitComposition := oldSubclass traitComposition copyTraitExpression ].				oldSubclass class hasTraitComposition					ifTrue: [ copyOfOldClassTraitComposition := oldSubclass class traitComposition copyTraitExpression ].				newSubclass := self reshapeClass: oldSubclass toSuper: newClass.				self mutate: oldSubclass to: newSubclass.				copyOfOldTraitComposition ifNotNil: [ newSubclass setTraitComposition: copyOfOldTraitComposition ].				copyOfOldClassTraitComposition ifNotNil: [ newSubclass class setTraitComposition: copyOfOldClassTraitComposition ] ] ].self update: oldClass to: newClass.^ newClass
+	"Move the instvar from srcClass to dstClass.	Do not perform any checks."
+| srcVars dstVars dstIndex newClass copyOfSrcClass copyOfDstClass copyOfOldTraitComposition copyOfOldClassTraitComposition |copyOfSrcClass := srcClass copy.copyOfDstClass := dstClass copy.srcVars := srcClass instVarNames copyWithout: instVarName.srcClass == dstClass	ifTrue: [ dstVars := srcVars ]	ifFalse: [ dstVars := dstClass instVarNames ].dstIndex := dstVars indexOf: prevInstVarName.dstVars := (dstVars copyFrom: 1 to: dstIndex) , (Array with: instVarName)	, (dstVars copyFrom: dstIndex + 1 to: dstVars size).instVarMap at: srcClass name put: srcVars.instVarMap at: dstClass name put: dstVars.(srcClass inheritsFrom: dstClass)	ifTrue: [ 		copyOfOldTraitComposition := copyOfOldClassTraitComposition := nil.		dstClass hasTraitComposition			ifTrue: [ copyOfOldTraitComposition := dstClass traitComposition copyTraitExpression ].		dstClass class hasTraitComposition			ifTrue: [ copyOfOldClassTraitComposition := dstClass class traitComposition copyTraitExpression ].		newClass := self reshapeClass: dstClass toSuper: dstClass superclass.		self			recompile: false			from: dstClass			to: newClass			mutate: true.		copyOfOldTraitComposition ifNotNil: [ newClass setTraitComposition: copyOfOldTraitComposition ].		copyOfOldClassTraitComposition ifNotNil: [ newClass class setTraitComposition: copyOfOldClassTraitComposition ] ]	ifFalse: [ 		(dstClass inheritsFrom: srcClass)			ifTrue: [ 				newClass := self reshapeClass: srcClass toSuper: srcClass superclass.				self					recompile: false					from: srcClass					to: newClass					mutate: true ]			ifFalse: [ 				"Disjunct hierarchies"				srcClass == dstClass					ifFalse: [ 						newClass := self reshapeClass: dstClass toSuper: dstClass superclass.						self							recompile: false							from: dstClass							to: newClass							mutate: true ].				newClass := self reshapeClass: srcClass toSuper: srcClass superclass.				self					recompile: false					from: srcClass					to: newClass					mutate: true ] ].self doneCompiling: srcClass.self doneCompiling: dstClass.SystemAnnouncer uniqueInstance classDefinitionChangedFrom: copyOfSrcClass to: srcClass.SystemAnnouncer uniqueInstance classDefinitionChangedFrom: copyOfDstClass to: dstClass
 ]
 
-Class ClassBuilder >> recompile: force from: oldClass to: newClass mutate: forceMutation
+Class ClassBuilder >> superclass: newSuper subclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
 [
-	"Do the necessary recompilation after changine oldClass to newClass.	If required (e.g., when oldClass ~~ newClass) mutate oldClass to newClass	and all its subclasses. If forceMutation is true force a mutation even	if oldClass and newClass are the same."
-oldClass == nil	ifTrue: [ ^ newClass ].(newClass == oldClass and: [ force not and: [ forceMutation not ] ])	ifTrue: [ ^ newClass ].currentClassIndex := 0.maxClassIndex := oldClass withAllSubclasses size.(oldClass == newClass and: [ forceMutation not ])	ifTrue: [ 		"Recompile from newClass without mutating"		self			informUserDuring: [ 				newClass					withAllSubclassesDo: [ :cl | 						self showProgressFor: cl.						cl compileAll ] ].		^ newClass ].	"Recompile and mutate oldClass to newClass"self informUserDuring: [ self mutate: oldClass to: newClass ].^ oldClass	"now mutated to newClass"
+	"This is the standard initialization message for creating a new class as a 	subclass of an existing class."
+^ self	name: t	inEnvironment: newSuper environment	subclassOf: newSuper	type: newSuper typeOfClass	instanceVariableNames: f	classVariableNames: d	poolDictionaries: s	category: cat
 ]
 
-Class ClassBuilder >> validateClass: srcClass forMoving: iv upTo: dstClass
+Class ClassBuilder >> superclass: aClass variableByteSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
 [
-	"Make sure we don't have this instvar already"
-dstClass	withAllSubclassesDo: [ :cls | 		(cls == srcClass or: [ cls inheritsFrom: srcClass ])			ifFalse: [ 				cls isPointers					ifFalse: [ 						self error: dstClass name , ' cannot have instance variables'.						^ false ].				cls instSize >= 254					ifTrue: [ 						self error: cls name , ' has more than 254 instance variables'.						^ false ].				(cls instVarNames includes: iv)					ifTrue: [ 						self							notify:								iv printString asText allBold , ' is defined in ' , cls name asText allBold									,										'Proceed to move it up to ' , dstClass name asText allBold , ' as well'.						instVarMap at: cls name put: (cls instVarNames copyWithout: iv) ] ] ].^ true
+	"This is the standard initialization message for creating a new class as a 	subclass of an existing class in which the subclass is to 	have indexable byte-sized nonpointer variables."
+| oldClassOrNil actualType |aClass instSize > 0	ifTrue: [ ^ self error: 'cannot make a byte subclass of a class with named fields' ].(aClass isVariable and: [ aClass isWords ])	ifTrue: [ ^ self error: 'cannot make a byte subclass of a class with word fields' ].(aClass isVariable and: [ aClass isPointers ])	ifTrue: [ ^ self error: 'cannot make a byte subclass of a class with pointer fields' ].oldClassOrNil := aClass environment at: t ifAbsent: [ nil ].actualType := (oldClassOrNil notNil and: [ oldClassOrNil typeOfClass == #compiledMethod ])	ifTrue: [ #compiledMethod ]	ifFalse: [ #bytes ].^ self	name: t	inEnvironment: aClass environment	subclassOf: aClass	type: actualType	instanceVariableNames: f	classVariableNames: d	poolDictionaries: s	category: cat
+]
+
+Class ClassBuilder >> superclass: aClass variableSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+[
+	"This is the standard initialization message for creating a new class as a 	subclass of an existing class in which the subclass is to 	have indexable pointer variables."
+aClass isBits	ifTrue: [ ^ self error: 'cannot make a pointer subclass of a class with non-pointer fields' ].^ self	name: t	inEnvironment: aClass environment	subclassOf: aClass	type: #variable	instanceVariableNames: f	classVariableNames: d	poolDictionaries: s	category: cat
+]
+
+Class ClassBuilder >> superclass: aClass variableWordSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+[
+	"This is the standard initialization message for creating a new class as a 	subclass of an existing class in which the subclass is to 	have indexable word-sized nonpointer variables."
+aClass instSize > 0	ifTrue: [ ^ self error: 'cannot make a word subclass of a class with named fields' ].(aClass isVariable and: [ aClass isBytes ])	ifTrue: [ ^ self error: 'cannot make a word subclass of a class with byte fields' ].(aClass isVariable and: [ aClass isPointers ])	ifTrue: [ ^ self error: 'cannot make a word subclass of a class with pointer fields' ].^ self	name: t	inEnvironment: aClass environment	subclassOf: aClass	type: #words	instanceVariableNames: f	classVariableNames: d	poolDictionaries: s	category: cat
+]
+
+Class ClassBuilder >> superclass: aClass weakSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+[
+	"This is the standard initialization message for creating a new class as a 	subclass of an existing class (the receiver) in which the subclass is to 	have weak indexable pointer variables."
+aClass isBits	ifTrue: [ ^ self error: 'cannot make a pointer subclass of a class with non-pointer fields' ].^ self	name: t	inEnvironment: aClass environment	subclassOf: aClass	type: #weak	instanceVariableNames: f	classVariableNames: d	poolDictionaries: s	category: cat
+]
+
+Class ClassBuilder >> tooDangerousClasses
+[
+	"Return a list of class names which will not be modified in the public interface"
+^ #(#ProtoObject #Object #InstructionStream #ContextPart #MethodContext #BlockClosure #Collection #SequenceableCollection #ArrayedCollection #Array #Bitmap #String #Symbol #ByteArray #CompiledMethod #Magnitude #Number #SmallInteger #Float #LookupKey #Association #Link #Point #Rectangle #Behavior #PositionableStream #UndefinedObject)	"Object will break immediately"
 ]
 
 Class ClassBuilder >> update: oldClass to: newClass
@@ -126,16 +169,34 @@ Class ClassBuilder >> update: oldClass to: newClass
 | meta |meta := oldClass isMeta.	"Note: Everything from here on will run without the ability to get interrupted	to prevent any other process to create new instances of the old class."[ "Note: The following removal may look somewhat obscure and needs an explanation. When we mutate the class hierarchy we create new classes for any existing subclass. So it may look as if we don't have to remove the old class from its superclass. However, at the top of the hierarchy (the first class we reshape) that superclass itself is not newly created so therefore it will hold both the oldClass and newClass in its (obsolete or not) subclasses. Since the #become: below will transparently replace the pointers to oldClass with newClass the superclass would have newClass in its subclasses TWICE. With rather unclear effects if we consider that we may convert the meta-class hierarchy itself (which is derived from the non-meta class hierarchy).		Due to this problem ALL classes are removed from their superclass just prior to converting them. Here, breaking the superclass/subclass invariant really doesn't matter since we will effectively remove the oldClass (become+GC) just a few lines below."oldClass superclass removeSubclass: oldClass.oldClass superclass removeObsoleteSubclass: oldClass.	"Convert the instances of oldClass into instances of newClass"newClass updateInstancesFrom: oldClass.meta	ifTrue: [ oldClass becomeForward: newClass ]	ifFalse: [ (Array with: oldClass with: oldClass class) elementsForwardIdentityTo: (Array with: newClass with: newClass class) ].Smalltalk garbageCollect	"Warning: Read this before you even think about removing the GC. Yes, it slows us down. Quite heavily if you have a large image. However, there's no good and simple alternative here, since unfortunately, #become: does change class pointers. What happens is that after the above become all of the instances of the old class will have a class pointer identifying them as instances of newClass. If we get our hands on any of these instances we will break immediately since their expected instance layout (that of its class, e.g., newClass) will not match their actual instance layout (that of oldClass). And getting your hands on any of those instances is really simple - just reshaping one class two times in rapid succession will do it. Reflection techniques, interrupts, etc. will only add to this problem. In the case of Metaclass things get even worse since when we recompile the entire class hierarchy we will recompile both, Metaclass and its instances (and some of its instances will have the old and some the new layout).		The only easy solution to this problem would be to 'fix up' the class pointers of the old instances to point to the old class (using primitiveChangeClassTo:). But this won't work either - as we do a one-way become we would have to search the entire object memory for the oldClass and couldn't even clearly identify it unless we give it some 'special token' which sounds quite error-prone. If you really need to get rid of the GC here are some alternatives:		On the image level, one could create a copy of the oldClass before becoming it into the new class and, after becoming it, 'fix up' the old instances. That would certainly work but it sounds quite complex, as we need to make sure we're not breaking any of the superclass/subclass meta/non-meta class variants.		Alternatively, fix up #becomeForward on the VM-level to 'dump the source objects' of #become. This would be quite doable (just 'convert' them into a well known special class such as bitmap) yet it has problems if (accidentally or not) one of the objects in #become: appears on 'both sides of the fence' (right now, this will work ... in a way ... even though the consequences are unclear).		Another alternative is to provide a dedicated primitive for this (instead of using it implicitly in become) which would allow us to dump all the existing instances right here. This is equivalent to a more general primitiveChangeClassTo: and might be worthwhile but it would likely have to keep in mind the differences between bits and pointer thingies etc.		Since all of the alternatives seem rather complex and magical compared to a straight-forward GC it seems best to stick with the GC solution for now. If someone has a real need to fix this problem, that person will likely be motivated enough to check out the alternatives. Personally I'd probably go for #1 (copy the old class and remap the instances to it) since it's a solution that could be easily reverted from within the image if there's any problem with it." ]	valueUnpreemptively
 ]
 
-Class ClassBuilder >> computeFormat: type instSize: newInstSize forSuper: newSuper ccIndex: ccIndex
+Class ClassBuilder >> validateClass: srcClass forMoving: iv downTo: dstClass
 [
-	"Compute the new format for making oldClass a subclass of newSuper.	Return the format or nil if there is any problem."
-| instSize isVar isWords isPointers isWeak |type == #compiledMethod	ifTrue: [ 		"we ensure that compiled method subclasses have as compat class index the one we receive as a argument"		^ (CompiledMethod format bitClear: (16r1F bitShift: 11)) bitOr: (ccIndex bitShift: 11) ].instSize := newInstSize + (newSuper ifNil: [ 0 ] ifNotNil: [ newSuper instSize ]).instSize > 254	ifTrue: [ 		self error: 'Class has too many instance variables (' , instSize printString , ')'.		^ nil ].type == #normal	ifTrue: [ 		isVar := isWeak := false.		isWords := isPointers := true ].type == #bytes	ifTrue: [ 		isVar := true.		isWords := isPointers := isWeak := false ].type == #words	ifTrue: [ 		isVar := isWords := true.		isPointers := isWeak := false ].type == #variable	ifTrue: [ 		isVar := isPointers := isWords := true.		isWeak := false ].type == #weak	ifTrue: [ isVar := isWeak := isWords := isPointers := true ].(isPointers not and: [ instSize > 0 ])	ifTrue: [ 		self error: 'A non-pointer class cannot have instance variables'.		^ nil ].^ (self	format: instSize	variable: isVar	words: isWords	pointers: isPointers	weak: isWeak) + (ccIndex bitShift: 11)
+	"Make sure that we don't have any accesses to the instVar left"
+srcClass	withAllSubclassesDo: [ :cls | 		(cls == dstClass or: [ cls inheritsFrom: dstClass ])			ifFalse: [ 				(cls whichSelectorsAccess: iv) isEmpty					ifFalse: [ 						self							notify:								iv printString asText allBold , ' is still used in ' , cls name asText allBold									,										'.Proceed to move it to Undeclared' ] ] ].^ true
 ]
 
-Class ClassBuilder >> newSubclassOf: newSuper type: type instanceVariables: instVars from: oldClass
+Class ClassBuilder >> validateClass: srcClass forMoving: iv upTo: dstClass
 [
-	"Create a new subclass of the given superclass with the given specification."
-| newFormat newClass |"Compute the format of the new class"newFormat := self	computeFormat: type	instSize: instVars size	forSuper: newSuper	ccIndex: (oldClass ifNil: [ 0 ] ifNotNil: [ oldClass indexIfCompact ]).newFormat == nil	ifTrue: [ ^ nil ].(oldClass == nil or: [ oldClass isMeta not ])	ifTrue: [ newClass := self privateNewSubclassOf: newSuper from: oldClass ]	ifFalse: [ newClass := oldClass shallowCopy ].newClass	superclass: newSuper methodDictionary: MethodDictionary new format: newFormat;	setInstVarNames: instVars.oldClass	ifNotNil: [ 		newClass organization: oldClass organization.	"Recompile the new class"		oldClass hasMethods			ifTrue: [ newClass compileAllFrom: oldClass ].		self recordClass: oldClass replacedBy: newClass ].(oldClass == nil or: [ oldClass isObsolete not ])	ifTrue: [ newSuper addSubclass: newClass ]	ifFalse: [ newSuper addObsoleteSubclass: newClass ].^ newClass
+	"Make sure we don't have this instvar already"
+dstClass	withAllSubclassesDo: [ :cls | 		(cls == srcClass or: [ cls inheritsFrom: srcClass ])			ifFalse: [ 				cls isPointers					ifFalse: [ 						self error: dstClass name , ' cannot have instance variables'.						^ false ].				cls instSize >= 254					ifTrue: [ 						self error: cls name , ' has more than 254 instance variables'.						^ false ].				(cls instVarNames includes: iv)					ifTrue: [ 						self							notify:								iv printString asText allBold , ' is defined in ' , cls name asText allBold									,										'Proceed to move it up to ' , dstClass name asText allBold , ' as well'.						instVarMap at: cls name put: (cls instVarNames copyWithout: iv) ] ] ].^ true
+]
+
+Class ClassBuilder >> validateClassName: aString
+[
+	"Validate the new class name"
+| allowed |aString isSymbol	ifFalse: [ ^ false ].allowed := ($0 to: $9) , {$_} , ($A to: $Z) , ($a to: $z).(aString detect: [ :c | (allowed includes: c) not ] ifNone: [  ])	ifNotNil: [ :c | 		self error: 'Invalid character: ''' , c printString , ''''.		^ false ].aString first canBeGlobalVarInitial	ifFalse: [ 		self error: 'Class names must be capitalized'.		^ false ].environ	at: aString	ifPresent: [ :old | 		(old isKindOf: Behavior)			ifFalse: [ self notify: aString , ' already exists!\Proceed will store over it.' withCRs ] ].^ true
+]
+
+Class ClassBuilder >> validateClassvars: classVarArray from: oldClass forSuper: newSuper
+[
+	"Check if any of the classVars of oldClass conflict with the new superclass"
+| usedNames classVars temp |classVarArray isEmpty	ifTrue: [ ^ true ].	"Okay"	"Validate the class var names"usedNames := classVarArray asSet.usedNames size = classVarArray size	ifFalse: [ 		classVarArray do: [ :var | usedNames remove: var ifAbsent: [ temp := var ] ].		self error: temp , ' is multiply defined' ].(usedNames includesAnyOf: self reservedNames)	ifTrue: [ 		self reservedNames			do: [ :var | 				(usedNames includes: var)					ifTrue: [ temp := var ] ].		self error: temp , ' is a reserved name' ].usedNames	do: [ :name | 		name isLegalInstVarName			ifFalse: [ self error: name , ' is not a legal inst var name' ] ].newSuper == nil	ifFalse: [ 		usedNames := newSuper allClassVarNames asSet.		classVarArray			do: [ :iv | 				(usedNames includes: iv)					ifTrue: [ 						newSuper							withAllSuperclassesDo: [ :cl | 								(cl classVarNames includes: iv)									ifTrue: [ temp := cl ] ].						DuplicatedVariableError new							superclass: temp;							variable: iv;							signal: iv , ' is already defined in ' , temp name.						^ false ] ] ].classVars := classVarArray.oldClass == nil	ifFalse: [ 		usedNames := Set new: 20.		(oldClass allSubclasses reject: #isMeta) do: [ :cl | usedNames addAll: cl classVarNames ].		newSuper == nil			ifFalse: [ classVars := classVars , newSuper allClassVarNames asArray ].		classVars			do: [ :iv | 				(usedNames includes: iv)					ifTrue: [ 						DuplicatedVariableError new							superclass: oldClass;							variable: iv;							signal: iv , ' is already defined in a subclass of ' , oldClass name.						^ false ] ] ].^ true
+]
+
+Class ClassBuilder >> validateInstvars: instVarArray from: oldClass forSuper: newSuper
+[
+	"Check if any of the instVars of oldClass conflict with the new superclass"
+| instVars usedNames temp |instVarArray isEmpty	ifTrue: [ ^ true ].	"Okay"newSuper allowsSubInstVars	ifFalse: [ self error: newSuper printString , ' does not allow subclass inst vars. See allowsSubInstVars.' ].	"Validate the inst var names"usedNames := instVarArray asSet.usedNames size = instVarArray size	ifFalse: [ 		instVarArray do: [ :var | usedNames remove: var ifAbsent: [ temp := var ] ].		self error: temp , ' is multiply defined' ].(usedNames includesAnyOf: self reservedNames)	ifTrue: [ 		self reservedNames			do: [ :var | 				(usedNames includes: var)					ifTrue: [ temp := var ] ].		self error: temp , ' is a reserved name' ].usedNames	do: [ :name | 		name isLegalInstVarName			ifFalse: [ self error: name , ' is not a legal inst var name' ] ].^ true
 ]
 
 Class ClassBuilder >> validateSubclass: subclass canKeepLayoutFrom: oldClass forSubclassFormat: newType
@@ -146,82 +207,85 @@ Class ClassBuilder >> validateSubclass: subclass canKeepLayoutFrom: oldClass for
 subclass = oldClass	ifTrue: [ ^ true ].	"isWeak implies isVariant"(oldClass isVariable and: [ subclass isWeak ])	ifFalse: [ 		"In general we discourage format mis-matches"		subclass typeOfClass == newType			ifFalse: [ 				self error: subclass name , ' cannot be recompiled'.				^ false ] ].^ true
 ]
 
-Class ClassBuilder >> name: className inEnvironment: env subclassOf: newSuper type: type instanceVariableNames: instVarString classVariableNames: classVarString poolDictionaries: poolString category: category
+Class ClassBuilder >> validateSubclassFormat: newType from: oldClass forSuper: newSuper extra: newInstSize
 [
-	"Define a new class in the given environment"
-^ self	name: className	inEnvironment: env	subclassOf: newSuper	type: type	instanceVariableNames: instVarString	classVariableNames: classVarString	poolDictionaries: poolString	category: category	unsafe: false
+	"Validate the # of instVars and the format of the subclasses"
+| deltaSize |oldClass == nil	ifTrue: [ ^ true ].	"No subclasses"	"Compute the # of instvars needed for all subclasses"deltaSize := newInstSize.oldClass notNil	ifTrue: [ deltaSize := deltaSize - oldClass instVarNames size ].newSuper notNil	ifTrue: [ deltaSize := deltaSize + newSuper instSize ].(oldClass notNil and: [ oldClass superclass notNil ])	ifTrue: [ deltaSize := deltaSize - oldClass superclass instSize ].oldClass == nil	ifTrue: [ 		deltaSize > 254			ifTrue: [ 				self error: 'More than 254 instance variables'.				^ false ].		^ true ].oldClass	withAllSubclassesDo: [ :sub | 		sub instSize + deltaSize > 254			ifTrue: [ 				self error: sub name , ' has more than 254 instance variables'.				^ false ].	"If we get this far, check whether the immediate subclasses of oldClass can keep its layout."		newType ~~ #normal			ifTrue: [ self validateSubclass: sub canKeepLayoutFrom: oldClass forSubclassFormat: newType ] ].^ true
 ]
 
-Class ClassBuilder >> moveInstVarNamed: instVarName from: srcClass to: dstClass after: prevInstVarName
+Class ClassBuilder >> validateSuperclass: aSuperClass forSubclass: aClass
 [
-	"Move the given instVar from srcClass to dstClass"
-(srcClass instVarNames includes: instVarName)	ifFalse: [ ^ self error: instVarName , ' is not an instance variable of ' , srcClass name ].(prevInstVarName isNil or: [ dstClass instVarNames includes: prevInstVarName ])	ifFalse: [ ^ self error: prevInstVarName , 'is not an instance variable of' , dstClass name ].(srcClass inheritsFrom: dstClass)	ifTrue: [ 		"Move the instvar up the hierarchy."		(self validateClass: srcClass forMoving: instVarName upTo: dstClass)			ifFalse: [ ^ false ] ].(dstClass inheritsFrom: srcClass)	ifTrue: [ 		"Move the instvar down the hierarchy"		(self validateClass: srcClass forMoving: instVarName downTo: dstClass)			ifFalse: [ ^ false ] ].^ self	silentlyMoveInstVarNamed: instVarName	from: srcClass	to: dstClass	after: prevInstVarName
-]
-
-Class ClassBuilder >> doneCompiling: aClass
-[
-	"The receiver has finished modifying the class hierarchy.	Do any necessary cleanup."
-aClass doneCompiling.Behavior flushObsoleteSubclasses
-]
-
-Class ClassBuilder >> superclass: aClass variableByteSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
-[
-	"This is the standard initialization message for creating a new class as a 	subclass of an existing class in which the subclass is to 	have indexable byte-sized nonpointer variables."
-| oldClassOrNil actualType |aClass instSize > 0	ifTrue: [ ^ self error: 'cannot make a byte subclass of a class with named fields' ].(aClass isVariable and: [ aClass isWords ])	ifTrue: [ ^ self error: 'cannot make a byte subclass of a class with word fields' ].(aClass isVariable and: [ aClass isPointers ])	ifTrue: [ ^ self error: 'cannot make a byte subclass of a class with pointer fields' ].oldClassOrNil := aClass environment at: t ifAbsent: [ nil ].actualType := (oldClassOrNil notNil and: [ oldClassOrNil typeOfClass == #compiledMethod ])	ifTrue: [ #compiledMethod ]	ifFalse: [ #bytes ].^ self	name: t	inEnvironment: aClass environment	subclassOf: aClass	type: actualType	instanceVariableNames: f	classVariableNames: d	poolDictionaries: s	category: cat
-]
-
-Class ClassBuilder >> privateNewSubclassOf: newSuper
-[
-	"Create a new meta and non-meta subclass of newSuper"
-	"WARNING: This method does not preserve the superclass/subclass invariant!"
-| newSuperMeta newMeta |newSuperMeta := newSuper ifNil: [ Class ] ifNotNil: [ newSuper class ].newMeta := Metaclass new.newMeta superclass: newSuperMeta methodDictionary: MethodDictionary new format: newSuperMeta format.^ newMeta new
-]
-
-Class ClassBuilder >> superclass: aClass variableWordSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
-[
-	"This is the standard initialization message for creating a new class as a 	subclass of an existing class in which the subclass is to 	have indexable word-sized nonpointer variables."
-aClass instSize > 0	ifTrue: [ ^ self error: 'cannot make a word subclass of a class with named fields' ].(aClass isVariable and: [ aClass isBytes ])	ifTrue: [ ^ self error: 'cannot make a word subclass of a class with byte fields' ].(aClass isVariable and: [ aClass isPointers ])	ifTrue: [ ^ self error: 'cannot make a word subclass of a class with pointer fields' ].^ self	name: t	inEnvironment: aClass environment	subclassOf: aClass	type: #words	instanceVariableNames: f	classVariableNames: d	poolDictionaries: s	category: cat
-]
-
-Class ClassBuilder >> validateClass: srcClass forMoving: iv downTo: dstClass
-[
-	"Make sure that we don't have any accesses to the instVar left"
-srcClass	withAllSubclassesDo: [ :cls | 		(cls == dstClass or: [ cls inheritsFrom: dstClass ])			ifFalse: [ 				(cls whichSelectorsAccess: iv) isEmpty					ifFalse: [ 						self							notify:								iv printString asText allBold , ' is still used in ' , cls name asText allBold									,										'.Proceed to move it to Undeclared' ] ] ].^ true
-]
-
-Class ClassBuilder >> superclass: newSuper subclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
-[
-	"This is the standard initialization message for creating a new class as a 	subclass of an existing class."
-^ self	name: t	inEnvironment: newSuper environment	subclassOf: newSuper	type: newSuper typeOfClass	instanceVariableNames: f	classVariableNames: d	poolDictionaries: s	category: cat
-]
-
-Class ClassBuilder >> reshapeClass: oldClass toSuper: newSuper
-[
-	"Reshape the given class to the new super class. Recompile all the methods in the newly created class. Answer the new class."
-| instVars |"ar 9/22/2002: The following is a left-over from some older code. 	I do *not* know why we uncompact oldClass here. If you do, then 	please let me know so I can put a comment here..."oldClass becomeUncompact.instVars := instVarMap at: oldClass name ifAbsent: [ oldClass instVarNames ].^ self	newSubclassOf: newSuper	type: oldClass typeOfClass	instanceVariables: instVars	from: oldClass
-]
-
-Class ClassBuilder >> validateClassName: aString
-[
-	"Validate the new class name"
-| allowed |aString isSymbol	ifFalse: [ ^ false ].allowed := ($0 to: $9) , {$_} , ($A to: $Z) , ($a to: $z).(aString detect: [ :c | (allowed includes: c) not ] ifNone: [  ])	ifNotNil: [ :c | 		self error: 'Invalid character: ''' , c printString , ''''.		^ false ].aString first canBeGlobalVarInitial	ifFalse: [ 		self error: 'Class names must be capitalized'.		^ false ].environ	at: aString	ifPresent: [ :old | 		(old isKindOf: Behavior)			ifFalse: [ self notify: aString , ' already exists!\Proceed will store over it.' withCRs ] ].^ true
-]
-
-Class ClassBuilder >> class: oldClass instanceVariableNames: instVarString
-[
-	"This is the basic initialization message to change the definition of	an existing Metaclass"
-oldClass isMeta	ifFalse: [ ^ self error: oldClass name , 'is not a Metaclass' ].^ self class: oldClass instanceVariableNames: instVarString unsafe: false
-]
-
-Class ClassBuilder >> recordClass: oldClass replacedBy: newClass
-[
-	"Keep the changes up to date when we're moving instVars around"
-(instVarMap includesKey: oldClass name)	ifTrue: [ SystemAnnouncer uniqueInstance classDefinitionChangedFrom: oldClass to: newClass ]
+	"Check if it is okay to use aSuperClass as the superclass of aClass"
+aClass == nil	ifTrue: [ 		"New class"		(aSuperClass == nil or: [ aSuperClass isBehavior and: [ aSuperClass isMeta not ] ])			ifFalse: [ 				self error: aSuperClass name , ' is not a valid superclass'.				^ false ].		^ true ].aSuperClass == aClass superclass	ifTrue: [ ^ true ].	"No change"aClass isMeta	ifTrue: [ ^ self error: aClass name , ' must inherit from ' , aClass superclass name ].	"Not permitted - meta class hierarchy is derived from class hierarchy"	"Check for circular references"(aSuperClass ~~ nil and: [ aSuperClass == aClass or: [ aSuperClass inheritsFrom: aClass ] ])	ifTrue: [ 		self error: aSuperClass name , ' inherits from ' , aClass name.		^ false ].^ true
 ]
 
 Metaclass
 	name: #ClassBuilder;
 	instanceVariables: #().
+
+Metaclass ClassBuilder >> beSilent: aBool
+[
+	"ClassDefiner beSilent: true"
+	"ClassDefiner beSilent: false"
+QuietMode := aBool
+]
+
+Metaclass ClassBuilder >> beSilentDuring: aBlock
+[
+	"Temporarily suppress information about what is going on"
+| wasSilent result |wasSilent := self isSilent.self beSilent: true.result := aBlock value.self beSilent: wasSilent.^ result
+]
+
+Metaclass ClassBuilder >> checkClassHierarchyConsistency: informer
+[
+	"Check the consistency of the class hierarchy. The class hierarchy is consistent if the following	two logical equivalences hold for classes A and B:	- B is obsolete and 'B superclass' yields A  <-->  'A obsoleteSubclasses' contains B	- B is not obsolete and 'B superclass' yields A  <-->  'A subclasses' contains B"
+| classes |self crTrace: 'Start checking the class hierarchy...'.Smalltalk garbageCollect.classes := Metaclass allInstances.classes	keysAndValuesDo: [ :index :meta | 		informer label: 'Validating class hierarchy ' , (index * 100 // classes size) printString , '%'.		meta allInstances do: [ :each | self checkClassHierarchyConsistencyFor: each ].		self checkClassHierarchyConsistencyFor: meta ].self trace: 'OK'
+]
+
+Metaclass ClassBuilder >> checkClassHierarchyConsistencyFor: aClassDescription
+[
+	"Check whether aClassDescription has a consistent superclass and consistent regular and obsolete	subclasses"
+| mySuperclass |mySuperclass := aClassDescription superclass.(mySuperclass subclasses includes: aClassDescription) = aClassDescription isObsolete	ifTrue: [ self error: 'Something wrong!' ].mySuperclass ifNil: [ ^ self ].	"Obsolete subclasses of nil cannot be stored"(mySuperclass obsoleteSubclasses includes: aClassDescription) = aClassDescription isObsolete	ifFalse: [ self error: 'Something wrong!' ].aClassDescription subclasses	do: [ :each | 		each isObsolete			ifTrue: [ self error: 'Something wrong!' ].		each superclass == aClassDescription			ifFalse: [ self error: 'Something wrong!' ] ].aClassDescription obsoleteSubclasses	do: [ :each | 		each isObsolete			ifFalse: [ self error: 'Something wrong!' ].		each superclass == aClassDescription			ifFalse: [ self error: 'Something wrong!' ] ]
+]
+
+Metaclass ClassBuilder >> cleanupAndCheckClassHierarchy: informer
+[
+	"Makes the class hierarchy consistent and removes obsolete classes from the SystemDictionary.	Afterwards it checks whether the hierarchy is really consistent."
+self crTrace: '*** Before cleaning up ***'.self countReallyObsoleteClassesAndMetaclasses.self cleanupClassHierarchy: informer.self checkClassHierarchyConsistency: informer.self	crTrace: '';	crTrace: '*** After cleaning up ***'.self countReallyObsoleteClassesAndMetaclasses
+]
+
+Metaclass ClassBuilder >> cleanupClassHierarchy: informer
+[
+	"Makes the class hierarchy consistent and removes obsolete classes from the SystemDictionary."
+| classes |self crTrace: 'Start fixing the class hierarchy and cleaning up...'.Smalltalk garbageCollect.classes := Metaclass allInstances.classes	keysAndValuesDo: [ :index :meta | 		informer label: 'Fixing  class hierarchy ' , (index * 100 // classes size) printString , '%'.	"Check classes before metaclasses (because Metaclass>>isObsolete		checks whether the related class is obsolete)"		meta allInstances do: [ :each | self cleanupClassHierarchyFor: each ].		self cleanupClassHierarchyFor: meta ].self traceCr: 'DONE'
+]
+
+Metaclass ClassBuilder >> cleanupClassHierarchyFor: aClassDescription
+[
+| myName mySuperclass |mySuperclass := aClassDescription superclass.(self isReallyObsolete: aClassDescription)	ifTrue: [ 		"Remove class >>>from SystemDictionary if it is obsolete"		myName := aClassDescription name asString.		Smalltalk keys asArray			do: [ :each | 				(each asString = myName and: [ (Smalltalk globals at: each) == aClassDescription ])					ifTrue: [ Smalltalk removeKey: each ] ].	"Make class officially obsolete if it is not"		(aClassDescription name asString beginsWith: 'AnObsolete')			ifFalse: [ aClassDescription obsolete ].		aClassDescription isObsolete			ifFalse: [ self error: 'Something wrong!' ].	"Add class to obsoleteSubclasses of its superclass"		mySuperclass ifNil: [ self error: 'Obsolete subclasses of nil cannot be stored' ].		(mySuperclass obsoleteSubclasses includes: aClassDescription)			ifFalse: [ mySuperclass addObsoleteSubclass: aClassDescription ] ]	ifFalse: [ 		"check if superclass has aClassDescription in its obsolete subclasses"		mySuperclass ifNil: [ mySuperclass := Class ].	"nil subclasses"		mySuperclass removeObsoleteSubclass: aClassDescription ].	"And remove its obsolete subclasses if not actual superclass"aClassDescription obsoleteSubclasses	do: [ :obs | 		obs superclass == aClassDescription			ifFalse: [ aClassDescription removeObsoleteSubclass: obs ] ]
+]
+
+Metaclass ClassBuilder >> countReallyObsoleteClassesAndMetaclasses
+[
+	"Counting really obsolete classes and metaclasses"
+| metaSize classSize |Smalltalk garbageCollect.metaSize := self reallyObsoleteMetaclasses size.self crTrace: 'Really obsolete metaclasses: ' , metaSize printString.classSize := self reallyObsoleteClasses size.Transcript	crTrace: 'Really obsolete classes: ' , classSize printString;	cr.	"Metaclasses must correspond to classes!"metaSize ~= classSize	ifTrue: [ self error: 'Serious metalevel inconsistency!!' ]
+]
+
+Metaclass ClassBuilder >> initialize
+[
+QuietMode := false
+]
+
+Metaclass ClassBuilder >> isReallyObsolete: aClassDescription
+[
+	"Returns whether the argument class is *really* obsolete. (Due to a bug, the method isObsolete	isObsolete does not always return the right answer"
+^ aClassDescription isObsolete or: [ (aClassDescription superclass subclasses includes: aClassDescription) not ]
+]
+
+Metaclass ClassBuilder >> isSilent
+[
+^ QuietMode == true
+]
 
 Metaclass ClassBuilder >> reallyObsoleteClasses
 [
@@ -231,69 +295,5 @@ Metaclass ClassBuilder >> reallyObsoleteClasses
 Metaclass ClassBuilder >> reallyObsoleteMetaclasses
 [
 ^ Metaclass allInstances select: [ :each | self isReallyObsolete: each ]
-]
-
-Metaclass ClassBuilder >> cleanupAndCheckClassHierarchy: informer
-[
-	"Makes the class hierarchy consistent and removes obsolete classes from the SystemDictionary.	Afterwards it checks whether the hierarchy is really consistent."
-self crTrace: '*** Before cleaning up ***'.self countReallyObsoleteClassesAndMetaclasses.self cleanupClassHierarchy: informer.self checkClassHierarchyConsistency: informer.self	crTrace: '';	crTrace: '*** After cleaning up ***'.self countReallyObsoleteClassesAndMetaclasses
-]
-
-Metaclass ClassBuilder >> beSilent: aBool
-[
-	"ClassDefiner beSilent: true"
-	"ClassDefiner beSilent: false"
-QuietMode := aBool
-]
-
-Metaclass ClassBuilder >> cleanupClassHierarchyFor: aClassDescription
-[
-| myName mySuperclass |mySuperclass := aClassDescription superclass.(self isReallyObsolete: aClassDescription)	ifTrue: [ 		"Remove class >>>from SystemDictionary if it is obsolete"		myName := aClassDescription name asString.		Smalltalk keys asArray			do: [ :each | 				(each asString = myName and: [ (Smalltalk globals at: each) == aClassDescription ])					ifTrue: [ Smalltalk removeKey: each ] ].	"Make class officially obsolete if it is not"		(aClassDescription name asString beginsWith: 'AnObsolete')			ifFalse: [ aClassDescription obsolete ].		aClassDescription isObsolete			ifFalse: [ self error: 'Something wrong!' ].	"Add class to obsoleteSubclasses of its superclass"		mySuperclass ifNil: [ self error: 'Obsolete subclasses of nil cannot be stored' ].		(mySuperclass obsoleteSubclasses includes: aClassDescription)			ifFalse: [ mySuperclass addObsoleteSubclass: aClassDescription ] ]	ifFalse: [ 		"check if superclass has aClassDescription in its obsolete subclasses"		mySuperclass ifNil: [ mySuperclass := Class ].	"nil subclasses"		mySuperclass removeObsoleteSubclass: aClassDescription ].	"And remove its obsolete subclasses if not actual superclass"aClassDescription obsoleteSubclasses	do: [ :obs | 		obs superclass == aClassDescription			ifFalse: [ aClassDescription removeObsoleteSubclass: obs ] ]
-]
-
-Metaclass ClassBuilder >> beSilentDuring: aBlock
-[
-	"Temporarily suppress information about what is going on"
-| wasSilent result |wasSilent := self isSilent.self beSilent: true.result := aBlock value.self beSilent: wasSilent.^ result
-]
-
-Metaclass ClassBuilder >> countReallyObsoleteClassesAndMetaclasses
-[
-	"Counting really obsolete classes and metaclasses"
-| metaSize classSize |Smalltalk garbageCollect.metaSize := self reallyObsoleteMetaclasses size.self crTrace: 'Really obsolete metaclasses: ' , metaSize printString.classSize := self reallyObsoleteClasses size.Transcript	crTrace: 'Really obsolete classes: ' , classSize printString;	cr.	"Metaclasses must correspond to classes!"metaSize ~= classSize	ifTrue: [ self error: 'Serious metalevel inconsistency!!' ]
-]
-
-Metaclass ClassBuilder >> isReallyObsolete: aClassDescription
-[
-	"Returns whether the argument class is *really* obsolete. (Due to a bug, the method isObsolete	isObsolete does not always return the right answer"
-^ aClassDescription isObsolete or: [ (aClassDescription superclass subclasses includes: aClassDescription) not ]
-]
-
-Metaclass ClassBuilder >> initialize
-[
-QuietMode := false
-]
-
-Metaclass ClassBuilder >> cleanupClassHierarchy: informer
-[
-	"Makes the class hierarchy consistent and removes obsolete classes from the SystemDictionary."
-| classes |self crTrace: 'Start fixing the class hierarchy and cleaning up...'.Smalltalk garbageCollect.classes := Metaclass allInstances.classes	keysAndValuesDo: [ :index :meta | 		informer label: 'Fixing  class hierarchy ' , (index * 100 // classes size) printString , '%'.	"Check classes before metaclasses (because Metaclass>>isObsolete		checks whether the related class is obsolete)"		meta allInstances do: [ :each | self cleanupClassHierarchyFor: each ].		self cleanupClassHierarchyFor: meta ].self traceCr: 'DONE'
-]
-
-Metaclass ClassBuilder >> checkClassHierarchyConsistency: informer
-[
-	"Check the consistency of the class hierarchy. The class hierarchy is consistent if the following	two logical equivalences hold for classes A and B:	- B is obsolete and 'B superclass' yields A  <-->  'A obsoleteSubclasses' contains B	- B is not obsolete and 'B superclass' yields A  <-->  'A subclasses' contains B"
-| classes |self crTrace: 'Start checking the class hierarchy...'.Smalltalk garbageCollect.classes := Metaclass allInstances.classes	keysAndValuesDo: [ :index :meta | 		informer label: 'Validating class hierarchy ' , (index * 100 // classes size) printString , '%'.		meta allInstances do: [ :each | self checkClassHierarchyConsistencyFor: each ].		self checkClassHierarchyConsistencyFor: meta ].self trace: 'OK'
-]
-
-Metaclass ClassBuilder >> isSilent
-[
-^ QuietMode == true
-]
-
-Metaclass ClassBuilder >> checkClassHierarchyConsistencyFor: aClassDescription
-[
-	"Check whether aClassDescription has a consistent superclass and consistent regular and obsolete	subclasses"
-| mySuperclass |mySuperclass := aClassDescription superclass.(mySuperclass subclasses includes: aClassDescription) = aClassDescription isObsolete	ifTrue: [ self error: 'Something wrong!' ].mySuperclass ifNil: [ ^ self ].	"Obsolete subclasses of nil cannot be stored"(mySuperclass obsoleteSubclasses includes: aClassDescription) = aClassDescription isObsolete	ifFalse: [ self error: 'Something wrong!' ].aClassDescription subclasses	do: [ :each | 		each isObsolete			ifTrue: [ self error: 'Something wrong!' ].		each superclass == aClassDescription			ifFalse: [ self error: 'Something wrong!' ] ].aClassDescription obsoleteSubclasses	do: [ :each | 		each isObsolete			ifFalse: [ self error: 'Something wrong!' ].		each superclass == aClassDescription			ifFalse: [ self error: 'Something wrong!' ] ]
 ]
 

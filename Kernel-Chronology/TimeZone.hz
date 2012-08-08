@@ -6,6 +6,11 @@ Class
 	classVariables: #();
 	sharedPools: #(#ChronologyConstants );	package: #'Kernel-Chronology'.
 
+Class TimeZone >> abbreviation
+[
+^ abbreviation
+]
+
 Class TimeZone >> abbreviation: aString
 [
 abbreviation := aString
@@ -14,6 +19,16 @@ abbreviation := aString
 Class TimeZone >> name
 [
 ^ name
+]
+
+Class TimeZone >> name: aString
+[
+name := aString
+]
+
+Class TimeZone >> offset
+[
+^ offset
 ]
 
 Class TimeZone >> offset: aDuration
@@ -26,30 +41,9 @@ Class TimeZone >> printOn: aStream
 super printOn: aStream.aStream	nextPut: $(;	nextPutAll: self abbreviation;	nextPut: $)
 ]
 
-Class TimeZone >> offset
-[
-^ offset
-]
-
-Class TimeZone >> name: aString
-[
-name := aString
-]
-
-Class TimeZone >> abbreviation
-[
-^ abbreviation
-]
-
 Metaclass
 	name: #TimeZone;
 	instanceVariables: #().
-
-Metaclass TimeZone >> default
-[
-	"Answer the default time zone - GMT"
-^ self timeZones detect: [ :tz | tz offset = Duration zero ]
-]
 
 Metaclass TimeZone >> abbreviated: aString
 [
@@ -57,9 +51,15 @@ Metaclass TimeZone >> abbreviated: aString
 ^ self timeZones detect: [ :tz | tz abbreviation = aString ]
 ]
 
-Metaclass TimeZone >> offset: aDuration name: aName abbreviation: anAbbreviation
+Metaclass TimeZone >> default
 [
-^ self new	offset: aDuration;	name: aName;	abbreviation: anAbbreviation;	yourself
+	"Answer the default time zone - GMT"
+^ self timeZones detect: [ :tz | tz offset = Duration zero ]
+]
+
+Metaclass TimeZone >> local
+[
+^ Locale localTimeZone
 ]
 
 Metaclass TimeZone >> offset: anOffset
@@ -68,9 +68,9 @@ Metaclass TimeZone >> offset: anOffset
 ^ self timeZones detect: [ :tz | tz offset = anOffset ] ifNone: [ self new offset: anOffset ]
 ]
 
-Metaclass TimeZone >> local
+Metaclass TimeZone >> offset: aDuration name: aName abbreviation: anAbbreviation
 [
-^ Locale localTimeZone
+^ self new	offset: aDuration;	name: aName;	abbreviation: anAbbreviation;	yourself
 ]
 
 Metaclass TimeZone >> timeZones

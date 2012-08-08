@@ -6,14 +6,9 @@ Class
 	classVariables: #();
 	package: #'FileSystem-Core-Implementation'.
 
-Class FileSystemResolver >> next
+Class FileSystemResolver >> addResolver: aResolver
 [
-^ next
-]
-
-Class FileSystemResolver >> unknownOrigin: aSymbol
-[
-^ next ifNotNil: [ next resolve: aSymbol ]
+next ifNil: [ next := aResolver ] ifNotNil: [ next addResolver: aResolver ]
 ]
 
 Class FileSystemResolver >> canResolve: aSymbol
@@ -21,14 +16,9 @@ Class FileSystemResolver >> canResolve: aSymbol
 ^ self supportedOrigins includes: aSymbol
 ]
 
-Class FileSystemResolver >> supportedOrigins
+Class FileSystemResolver >> flushCaches
 [
-^ #()
-]
-
-Class FileSystemResolver >> resolveString: aString
-[
-| decoded fs |decoded := (FilePath pathName: aString isEncoded: true) asSqueakPathName.fs := FileSystem disk.^ FileReference fileSystem: fs path: (fs pathFromString: decoded)
+self flushLocalCache.next ifNotNil: [ next flushCaches ]
 ]
 
 Class FileSystemResolver >> flushLocalCache
@@ -36,19 +26,29 @@ Class FileSystemResolver >> flushLocalCache
 
 ]
 
-Class FileSystemResolver >> addResolver: aResolver
+Class FileSystemResolver >> next
 [
-next ifNil: [ next := aResolver ] ifNotNil: [ next addResolver: aResolver ]
-]
-
-Class FileSystemResolver >> flushCaches
-[
-self flushLocalCache.next ifNotNil: [ next flushCaches ]
+^ next
 ]
 
 Class FileSystemResolver >> resolve: aSymbol
 [
 ^ (self canResolve: aSymbol)	ifTrue: [ self perform: aSymbol ]	ifFalse: [ self unknownOrigin: aSymbol ]
+]
+
+Class FileSystemResolver >> resolveString: aString
+[
+| decoded fs |decoded := (FilePath pathName: aString isEncoded: true) asSqueakPathName.fs := FileSystem disk.^ FileReference fileSystem: fs path: (fs pathFromString: decoded)
+]
+
+Class FileSystemResolver >> supportedOrigins
+[
+^ #()
+]
+
+Class FileSystemResolver >> unknownOrigin: aSymbol
+[
+^ next ifNotNil: [ next resolve: aSymbol ]
 ]
 
 Metaclass

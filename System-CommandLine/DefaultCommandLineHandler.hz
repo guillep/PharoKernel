@@ -6,14 +6,9 @@ Class
 	classVariables: #();
 	package: #'System-CommandLine'.
 
-Class DefaultCommandLineHandler >> list
+Class DefaultCommandLineHandler >> activate
 [
-| handlers shortNames maxShortNameSize |self stdout	nextPutAll: 'Currently installed Command Line Handlers:';	cr.handlers := self allHandlers reject: [ :cls | cls = DefaultCommandLineHandler ].shortNames := handlers collect: #commandName.maxShortNameSize := (shortNames detectMax: [ :name | name size ]) size.handlers	do: [ :handler | 		self stdout			nextPutAll: '    ';			nextPutAll: (handler commandName padRightTo: maxShortNameSize);			nextPutAll: '    ';			nextPutAll: (handler description ifNil: [ '--' ]);			cr ].self quit
-]
-
-Class DefaultCommandLineHandler >> error
-[
-self arguments size = 1	ifTrue: [ 		(self arguments first beginsWith: '-')			ifTrue: [ self << 'Invalid option: ' ]			ifFalse: [ self << 'Invalid sub command: ' ] ]	ifFalse: [ self << 'Invalid arguments: "' ].(self << (' ' join: self arguments))	nextPutAll: '"';	cr.self printHelp.Smalltalk isInteractive	ifFalse: [ ^ self exitFailure ].Error signal: 'Invalid arguments'
+self arguments ifEmpty: [ ^ self ].^ self handleArgument: self arguments first
 ]
 
 Class DefaultCommandLineHandler >> copyright
@@ -21,35 +16,15 @@ Class DefaultCommandLineHandler >> copyright
 self stdout	nextPutAll: Smalltalk licenseString;	cr.self quit
 ]
 
-Class DefaultCommandLineHandler >> selectHandlers
+Class DefaultCommandLineHandler >> error
 [
-| handlers |handlers := CommandLineHandler selectHandlersFor: commandLine.handlers := handlers sort: [ :a :b | a priority >= b priority ].^ handlers
-]
-
-Class DefaultCommandLineHandler >> activate
-[
-self arguments ifEmpty: [ ^ self ].^ self handleArgument: self arguments first
-]
-
-Class DefaultCommandLineHandler >> printHelp
-[
-self stdout	nextPutAll: 'Usage:';	cr;	nextPutAll: '    --help       print this help message';	cr;	nextPutAll: '    --copyright  print the copyrights';	cr;	nextPutAll: '    --version    print the version for the image and the vm';	cr;	nextPutAll: '    --list       list a description of all active command line handlers';	cr
-]
-
-Class DefaultCommandLineHandler >> version
-[
-self stdout	nextPutAll: 'Image: ';	print: SystemVersion current;	cr;	nextPutAll: 'VM:    ';	nextPutAll: Smalltalk vm version;	cr.self quit
+self arguments size = 1	ifTrue: [ 		(self arguments first beginsWith: '-')			ifTrue: [ self << 'Invalid option: ' ]			ifFalse: [ self << 'Invalid sub command: ' ] ]	ifFalse: [ self << 'Invalid arguments: "' ].(self << (' ' join: self arguments))	nextPutAll: '"';	cr.self printHelp.Smalltalk isInteractive	ifFalse: [ ^ self exitFailure ].Error signal: 'Invalid arguments'
 ]
 
 Class DefaultCommandLineHandler >> handleArgument: aString
 [
 	"give priority to subcommands"
 self handleSubcommand == self	ifFalse: [ ^ self ].	"check for default options"aString = '--version'	ifTrue: [ ^ self version ].aString = '--help'	ifTrue: [ ^ self help ].aString = '--list'	ifTrue: [ ^ self list ].aString = '--copyright'	ifTrue: [ ^ self copyright ].	"none of the previous options matched hence we output an error message"self error
-]
-
-Class DefaultCommandLineHandler >> initialize
-[
-super initialize.commandLine := CommandLineArguments new
 ]
 
 Class DefaultCommandLineHandler >> handleSubcommand
@@ -63,14 +38,38 @@ Class DefaultCommandLineHandler >> help
 self printHelp.self quit
 ]
 
+Class DefaultCommandLineHandler >> initialize
+[
+super initialize.commandLine := CommandLineArguments new
+]
+
+Class DefaultCommandLineHandler >> list
+[
+| handlers shortNames maxShortNameSize |self stdout	nextPutAll: 'Currently installed Command Line Handlers:';	cr.handlers := self allHandlers reject: [ :cls | cls = DefaultCommandLineHandler ].shortNames := handlers collect: #commandName.maxShortNameSize := (shortNames detectMax: [ :name | name size ]) size.handlers	do: [ :handler | 		self stdout			nextPutAll: '    ';			nextPutAll: (handler commandName padRightTo: maxShortNameSize);			nextPutAll: '    ';			nextPutAll: (handler description ifNil: [ '--' ]);			cr ].self quit
+]
+
+Class DefaultCommandLineHandler >> printHelp
+[
+self stdout	nextPutAll: 'Usage:';	cr;	nextPutAll: '    --help       print this help message';	cr;	nextPutAll: '    --copyright  print the copyrights';	cr;	nextPutAll: '    --version    print the version for the image and the vm';	cr;	nextPutAll: '    --list       list a description of all active command line handlers';	cr
+]
+
+Class DefaultCommandLineHandler >> selectHandlers
+[
+| handlers |handlers := CommandLineHandler selectHandlersFor: commandLine.handlers := handlers sort: [ :a :b | a priority >= b priority ].^ handlers
+]
+
+Class DefaultCommandLineHandler >> version
+[
+self stdout	nextPutAll: 'Image: ';	print: SystemVersion current;	cr;	nextPutAll: 'VM:    ';	nextPutAll: Smalltalk vm version;	cr.self quit
+]
+
 Metaclass
 	name: #DefaultCommandLineHandler;
 	instanceVariables: #().
 
-Metaclass DefaultCommandLineHandler >> startUp: resuming
+Metaclass DefaultCommandLineHandler >> description
 [
-	"only handle when lauching a new image"
-resuming	ifFalse: [ ^ self ].Smalltalk addDeferredStartupAction: [ self new activate ]
+^ 'responsible for the default options and activating other commands'
 ]
 
 Metaclass DefaultCommandLineHandler >> initialize
@@ -79,9 +78,9 @@ Metaclass DefaultCommandLineHandler >> initialize
 Smalltalk addToStartUpList: self
 ]
 
-Metaclass DefaultCommandLineHandler >> description
+Metaclass DefaultCommandLineHandler >> isResponsibleFor: aCommandLine
 [
-^ 'responsible for the default options and activating other commands'
+^ true
 ]
 
 Metaclass DefaultCommandLineHandler >> priority
@@ -90,8 +89,9 @@ Metaclass DefaultCommandLineHandler >> priority
 ^ Float infinity negated
 ]
 
-Metaclass DefaultCommandLineHandler >> isResponsibleFor: aCommandLine
+Metaclass DefaultCommandLineHandler >> startUp: resuming
 [
-^ true
+	"only handle when lauching a new image"
+resuming	ifFalse: [ ^ self ].Smalltalk addDeferredStartupAction: [ self new activate ]
 ]
 

@@ -6,26 +6,16 @@ Class
 	classVariables: #();
 	package: #'Kernel-Numbers'.
 
-Class Random >> next
-[
-	"Answer a random Float in the interval [0 to 1)."
-^ (seed := self nextValue) / m
-]
-
-Class Random >> seed
-[
-^ seed
-]
-
 Class Random >> initialize
 [
 	" Set a reasonable Park-Miller starting seed "
 super initialize.[ seed := (Time millisecondClockValue bitAnd: 16r3FFFFFFF) bitXor: self hash.seed = 0 ]	whileTrue: [ 		"Try again if ever get a seed = 0"		 ].a := 16r000041A7 asFloat.	" magic constant =      16807 "m := 16r7FFFFFFF asFloat.	" magic constant = 2147483647 "q := (m quo: a) asFloat.r := (m \\ a) asFloat
 ]
 
-Class Random >> seed: anInteger
+Class Random >> next
 [
-seed := anInteger
+	"Answer a random Float in the interval [0 to 1)."
+^ (seed := self nextValue) / m
 ]
 
 Class Random >> next: anInteger
@@ -50,6 +40,16 @@ Class Random >> nextValue
 | lo hi aLoRHi answer |hi := (seed quo: q) asFloat.lo := seed - (hi * q).	" = seed rem: q"aLoRHi := a * lo - (r * hi).answer := aLoRHi > 0.0	ifTrue: [ aLoRHi ]	ifFalse: [ aLoRHi + m ].^ answer
 ]
 
+Class Random >> seed
+[
+^ seed
+]
+
+Class Random >> seed: anInteger
+[
+seed := anInteger
+]
+
 Metaclass
 	name: #Random;
 	instanceVariables: #().
@@ -61,15 +61,15 @@ Metaclass Random >> bucketTest: randy
 | nbuckets buckets ntrys |nbuckets := 20.buckets := Array new: nbuckets.buckets atAllPut: 0.ntrys := 100.ntrys * nbuckets	timesRepeat: [ 		| slot |		slot := (randy next * nbuckets) floor + 1.		buckets at: slot put: (buckets at: slot) + 1 ].Transcript cr.1 to: nbuckets do: [ :nb | Transcript show: (buckets at: nb) printString , ' ' ]
 ]
 
+Metaclass Random >> seed: anInteger
+[
+^ self new seed: anInteger
+]
+
 Metaclass Random >> theItsCompletelyBrokenTest
 [
 	"Random theItsCompletelyBrokenTest"
 	"The above should print as...	(0.149243269650845 0.331633021743797 0.75619644800024 0.393701540023881 0.941783181364547 0.549929193942775 0.659962596213428 0.991354559078512 0.696074432551896 0.922987899707159 )	If they are not these values (accounting for precision of printing) then something is horribly wrong: DO NOT USE THIS CODE FOR ANYTHING. "
 | rng |rng := Random new.rng seed: 2345678901.^ (1 to: 10) collect: [ :i | rng next ]
-]
-
-Metaclass Random >> seed: anInteger
-[
-^ self new seed: anInteger
 ]
 

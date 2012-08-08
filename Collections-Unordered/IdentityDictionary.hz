@@ -6,10 +6,10 @@ Class
 	classVariables: #();
 	package: #'Collections-Unordered'.
 
-Class IdentityDictionary >> scanForEmptySlotFor: aKey
+Class IdentityDictionary >> keyAtValue: value ifAbsent: exceptionBlock
 [
-	"Scan the key array for the first slot containing an empty slot (indicated by a nil). Answer the index of that slot. This method will be overridden in various subclasses that have different interpretations for matching elements."
-| index start |index := start := aKey identityHash \\ array size + 1.[ (array at: index) ifNil: [ ^ index ].(index := index \\ array size + 1) = start ] whileFalse.self errorNoFreeSpace
+	"Answer the key that is the external name for the argument, value. If 	there is none, answer the result of evaluating exceptionBlock."
+self	associationsDo: [ :association | 		value == association value			ifTrue: [ ^ association key ] ].^ exceptionBlock value
 ]
 
 Class IdentityDictionary >> scanFor: anObject
@@ -18,10 +18,10 @@ Class IdentityDictionary >> scanFor: anObject
 | finish start element |finish := array size.start := anObject identityHash \\ finish + 1.	"Search from (hash mod size) to the end."start to: finish do: [ :index | 	((element := array at: index) == nil or: [ element key == anObject ])		ifTrue: [ ^ index ] ].	"Search from 1 to where we started."1 to: start - 1 do: [ :index | 	((element := array at: index) == nil or: [ element key == anObject ])		ifTrue: [ ^ index ] ].^ 0	"No match AND no empty slot"
 ]
 
-Class IdentityDictionary >> keyAtValue: value ifAbsent: exceptionBlock
+Class IdentityDictionary >> scanForEmptySlotFor: aKey
 [
-	"Answer the key that is the external name for the argument, value. If 	there is none, answer the result of evaluating exceptionBlock."
-self	associationsDo: [ :association | 		value == association value			ifTrue: [ ^ association key ] ].^ exceptionBlock value
+	"Scan the key array for the first slot containing an empty slot (indicated by a nil). Answer the index of that slot. This method will be overridden in various subclasses that have different interpretations for matching elements."
+| index start |index := start := aKey identityHash \\ array size + 1.[ (array at: index) ifNil: [ ^ index ].(index := index \\ array size + 1) = start ] whileFalse.self errorNoFreeSpace
 ]
 
 Metaclass

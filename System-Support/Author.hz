@@ -6,9 +6,26 @@ Class
 	classVariables: #();
 	package: #'System-Support'.
 
-Class Author >> reset
+Class Author >> checkAndSetFullNameWith: aString
 [
-fullName := ''
+| s allowed |aString ifNil: [ ^ self ].s := ''.allowed := ($A to: $Z) , ($a to: $z) , ($0 to: $9).aString	do: [ :c | 		(allowed includes: c)			ifTrue: [ s := s , c asString ] ].self fullName: s
+]
+
+Class Author >> fullName
+[
+	"Answer the full name to be used to identify the current code author."
+[ fullName isEmptyOrNil ]	whileTrue: [ 		self requestFullName.		(fullName isNil or: [ fullName = 'FirstnameLastname' translated ])			ifTrue: [ 				fullName := nil.				^ 'Anonymous' ] ].^ fullName
+]
+
+Class Author >> fullName: aString
+[
+fullName := aString
+]
+
+Class Author >> fullNamePerSe
+[
+	"Answer the currently-prevailing author full name, such as it is, empty or not"
+^ fullName
 ]
 
 Class Author >> ifUnknownAuthorUse: aString during: aBlock
@@ -18,21 +35,9 @@ Class Author >> ifUnknownAuthorUse: aString during: aBlock
 | previous |fullName isEmptyOrNil	ifFalse: [ ^ aBlock value ].fullName := aString.^ aBlock	ensure: [ self reset ]
 ]
 
-Class Author >> fullNamePerSe
+Class Author >> initialize
 [
-	"Answer the currently-prevailing author full name, such as it is, empty or not"
-^ fullName
-]
-
-Class Author >> fullName
-[
-	"Answer the full name to be used to identify the current code author."
-[ fullName isEmptyOrNil ]	whileTrue: [ 		self requestFullName.		(fullName isNil or: [ fullName = 'FirstnameLastname' translated ])			ifTrue: [ 				fullName := nil.				^ 'Anonymous' ] ].^ fullName
-]
-
-Class Author >> checkAndSetFullNameWith: aString
-[
-| s allowed |aString ifNil: [ ^ self ].s := ''.allowed := ($A to: $Z) , ($a to: $z) , ($0 to: $9).aString	do: [ :c | 		(allowed includes: c)			ifTrue: [ s := s , c asString ] ].self fullName: s
+super initialize.fullName := ''
 ]
 
 Class Author >> messagePrompt
@@ -40,14 +45,14 @@ Class Author >> messagePrompt
 ^ 'Please type your full name. It will be used to sign the changes you make to the image.Spaces, accents, dashes, underscore and similar characters are not allowed'
 ]
 
-Class Author >> initialize
-[
-super initialize.fullName := ''
-]
-
 Class Author >> requestFullName
 [
 | initialAnswer |initialAnswer := fullName isEmptyOrNil	ifTrue: [ 'FirstnameLastname' translated ]	ifFalse: [ fullName ].self	checkAndSetFullNameWith:		(UIManager default request: self messagePrompt initialAnswer: initialAnswer title: 'Author identification' translated)
+]
+
+Class Author >> reset
+[
+fullName := ''
 ]
 
 Class Author >> useAuthor: aString during: aBlock
@@ -55,45 +60,14 @@ Class Author >> useAuthor: aString during: aBlock
 | previous |previous := fullName.fullName := aString.^ aBlock	ensure: [ fullName := previous ]
 ]
 
-Class Author >> fullName: aString
-[
-fullName := aString
-]
-
 Metaclass
 	name: #Author;
 	instanceVariables: #(#uniqueInstance ).
-
-Metaclass Author >> reset
-[
-^ uniqueInstance := nil
-]
-
-Metaclass Author >> fullNamePerSe
-[
-^ Author uniqueInstance fullNamePerSe
-]
 
 Metaclass Author >> changeStamp
 [
 	"Answer a string to be pasted into source code to mark who changed it and when."
 ^ Author fullName , ' ' , Date today mmddyyyy , ' '	, ((String streamContents: [ :s | Time now print24: true on: s ]) copyFrom: 1 to: 5)
-]
-
-Metaclass Author >> uniqueInstance: anInstance
-[
-	"Needed by AuthorTest to restore saved instance"
-^ uniqueInstance := anInstance
-]
-
-Metaclass Author >> fullName
-[
-^ Author uniqueInstance fullName
-]
-
-Metaclass Author >> fixStamp: changeStamp
-[
-| parts |parts := changeStamp findTokens: ' '.(parts size > 0 and: [ parts last first isLetter ])	ifTrue: [ 		"Put initials first in all time stamps..."		^ String			streamContents: [ :s | 				s nextPutAll: parts last.				parts allButLast					do: [ :p | 						s							space;							nextPutAll: p ] ] ].^ changeStamp
 ]
 
 Metaclass Author >> changeStampPerSe
@@ -102,19 +76,24 @@ Metaclass Author >> changeStampPerSe
 ^ (Author fullNamePerSe ifNil: [ '.' ]) , ' ' , Date today mmddyyyy , ' '	, ((String streamContents: [ :s | Time now print24: true on: s ]) copyFrom: 1 to: 5)
 ]
 
-Metaclass Author >> requestFullName
+Metaclass Author >> fixStamp: changeStamp
 [
-^ Author uniqueInstance requestFullName
+| parts |parts := changeStamp findTokens: ' '.(parts size > 0 and: [ parts last first isLetter ])	ifTrue: [ 		"Put initials first in all time stamps..."		^ String			streamContents: [ :s | 				s nextPutAll: parts last.				parts allButLast					do: [ :p | 						s							space;							nextPutAll: p ] ] ].^ changeStamp
 ]
 
-Metaclass Author >> uniqueInstance
+Metaclass Author >> fullName
 [
-^ uniqueInstance ifNil: [ uniqueInstance := super new ]
+^ Author uniqueInstance fullName
 ]
 
-Metaclass Author >> useAuthor: aString during: aBlock
+Metaclass Author >> fullName: aString
 [
-^ self uniqueInstance useAuthor: aString during: aBlock
+^ Author uniqueInstance checkAndSetFullNameWith: aString
+]
+
+Metaclass Author >> fullNamePerSe
+[
+^ Author uniqueInstance fullNamePerSe
 ]
 
 Metaclass Author >> new
@@ -122,8 +101,29 @@ Metaclass Author >> new
 self error: 'Author is a singleton -- send uniqueInstance instead'
 ]
 
-Metaclass Author >> fullName: aString
+Metaclass Author >> requestFullName
 [
-^ Author uniqueInstance checkAndSetFullNameWith: aString
+^ Author uniqueInstance requestFullName
+]
+
+Metaclass Author >> reset
+[
+^ uniqueInstance := nil
+]
+
+Metaclass Author >> uniqueInstance
+[
+^ uniqueInstance ifNil: [ uniqueInstance := super new ]
+]
+
+Metaclass Author >> uniqueInstance: anInstance
+[
+	"Needed by AuthorTest to restore saved instance"
+^ uniqueInstance := anInstance
+]
+
+Metaclass Author >> useAuthor: aString during: aBlock
+[
+^ self uniqueInstance useAuthor: aString during: aBlock
 ]
 

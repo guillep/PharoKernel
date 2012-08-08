@@ -6,32 +6,6 @@ Class
 	classVariables: #();
 	package: #'FileSystem-Memory'.
 
-Class MemoryHandle >> readStream
-[
-	"Return a readstream on my contents.	Using myself as target collection allows to share the internal bytearray between multiple streams."
-^ ReadStream on: self from: 1 to: entry fileSize
-]
-
-Class MemoryHandle >> copyFrom: from to: position
-[
-^ entry copyFrom: from to: position
-]
-
-Class MemoryHandle >> close
-[
-self isOpen	ifFalse: [ ^ self ].self truncate.entry := nil
-]
-
-Class MemoryHandle >> isOpen
-[
-^ entry notNil
-]
-
-Class MemoryHandle >> at: first write: aCollection startingAt: start count: count
-[
-writable	ifFalse: [ self primitiveFailed ].entry	at: first	write: aCollection	startingAt: start	count: count
-]
-
 Class MemoryHandle >> at: index
 [
 ^ entry at: index
@@ -42,16 +16,24 @@ Class MemoryHandle >> at: index put: anObject
 ^ entry at: index put: anObject
 ]
 
-Class MemoryHandle >> size
+Class MemoryHandle >> at: index read: aCollection startingAt: start count: count
 [
-	"return the size for the interna"
-^ entry internalSize
+^ entry	at: index	read: aCollection	startingAt: start	count: count
 ]
 
-Class MemoryHandle >> writeStream
+Class MemoryHandle >> at: first write: aCollection startingAt: start count: count
 [
-	"Return a writestream on my contents.	Using myself as target collection allows to share the internal bytearray between multiple streams."
-^ WriteStream on: self from: 1 to: entry fileSize
+writable	ifFalse: [ self primitiveFailed ].entry	at: first	write: aCollection	startingAt: start	count: count
+]
+
+Class MemoryHandle >> close
+[
+self isOpen	ifFalse: [ ^ self ].self truncate.entry := nil
+]
+
+Class MemoryHandle >> copyFrom: from to: position
+[
+^ entry copyFrom: from to: position
 ]
 
 Class MemoryHandle >> flush
@@ -59,9 +41,9 @@ Class MemoryHandle >> flush
 self truncate
 ]
 
-Class MemoryHandle >> open
+Class MemoryHandle >> grow
 [
-entry := self basicOpen
+entry grow
 ]
 
 Class MemoryHandle >> grownBy: length
@@ -69,24 +51,42 @@ Class MemoryHandle >> grownBy: length
 entry grownBy: length
 ]
 
-Class MemoryHandle >> truncateTo: anInteger
+Class MemoryHandle >> isOpen
 [
-entry truncateTo: anInteger
+^ entry notNil
 ]
 
-Class MemoryHandle >> grow
+Class MemoryHandle >> open
 [
-entry grow
+entry := self basicOpen
 ]
 
-Class MemoryHandle >> at: index read: aCollection startingAt: start count: count
+Class MemoryHandle >> readStream
 [
-^ entry	at: index	read: aCollection	startingAt: start	count: count
+	"Return a readstream on my contents.	Using myself as target collection allows to share the internal bytearray between multiple streams."
+^ ReadStream on: self from: 1 to: entry fileSize
+]
+
+Class MemoryHandle >> size
+[
+	"return the size for the interna"
+^ entry internalSize
 ]
 
 Class MemoryHandle >> truncate
 [
 entry truncate
+]
+
+Class MemoryHandle >> truncateTo: anInteger
+[
+entry truncateTo: anInteger
+]
+
+Class MemoryHandle >> writeStream
+[
+	"Return a writestream on my contents.	Using myself as target collection allows to share the internal bytearray between multiple streams."
+^ WriteStream on: self from: 1 to: entry fileSize
 ]
 
 Metaclass

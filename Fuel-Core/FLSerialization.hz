@@ -6,6 +6,41 @@ Class
 	classVariables: #();
 	package: #'Fuel-Core'.
 
+Class FLSerialization >> analysisStep
+[
+| anAnalysis |anAnalysis := analyzer analysisFor: root.clusters := anAnalysis clusterization clusters.encoder objectCount: anAnalysis clusterization objectCount
+]
+
+Class FLSerialization >> clusterInstancesStepOf: aCluster
+[
+encoder encodeClusterClass: aCluster class.aCluster clusterSerializeStepWith: encoder.aCluster serializeInstancesStepWith: encoder.aCluster serializePostInstancesStepWith: encoder
+]
+
+Class FLSerialization >> clusters
+[
+^ clusters
+]
+
+Class FLSerialization >> encoder
+[
+^ encoder
+]
+
+Class FLSerialization >> fuelAccept: aGeneralMapper
+[
+^ aGeneralMapper visitSubstitution: self by: nil
+]
+
+Class FLSerialization >> headerStep
+[
+encoder encodeYourself.encoder encodePositiveInteger: clusters size
+]
+
+Class FLSerialization >> initializeWith: anEncoder root: anObject analyzer: anAnalyzer
+[
+self initialize.encoder := anEncoder.root := anObject.analyzer := anAnalyzer
+]
+
 Class FLSerialization >> instancesStep
 [
 clusters do: [ :aCluster | aCluster registerIndexesOn: encoder objectsIndexes ].clusters do: [ :aCluster | self clusterInstancesStepOf: aCluster ]
@@ -17,39 +52,14 @@ Class FLSerialization >> objects
 ^ encoder objectsIndexes keys
 ]
 
-Class FLSerialization >> fuelAccept: aGeneralMapper
-[
-^ aGeneralMapper visitSubstitution: self by: nil
-]
-
-Class FLSerialization >> clusters
-[
-^ clusters
-]
-
-Class FLSerialization >> trailerStep
-[
-encoder encodeReferenceTo: root
-]
-
-Class FLSerialization >> headerStep
-[
-encoder encodeYourself.encoder encodePositiveInteger: clusters size
-]
-
-Class FLSerialization >> root
-[
-^ root
-]
-
 Class FLSerialization >> referencesStep
 [
 clusters do: [ :aCluster | aCluster serializeReferencesStepWith: encoder ]
 ]
 
-Class FLSerialization >> clusterInstancesStepOf: aCluster
+Class FLSerialization >> root
 [
-encoder encodeClusterClass: aCluster class.aCluster clusterSerializeStepWith: encoder.aCluster serializeInstancesStepWith: encoder.aCluster serializePostInstancesStepWith: encoder
+^ root
 ]
 
 Class FLSerialization >> run
@@ -58,19 +68,9 @@ Class FLSerialization >> run
 self analysisStep.self headerStep.self instancesStep.self referencesStep.self trailerStep
 ]
 
-Class FLSerialization >> initializeWith: anEncoder root: anObject analyzer: anAnalyzer
+Class FLSerialization >> trailerStep
 [
-self initialize.encoder := anEncoder.root := anObject.analyzer := anAnalyzer
-]
-
-Class FLSerialization >> encoder
-[
-^ encoder
-]
-
-Class FLSerialization >> analysisStep
-[
-| anAnalysis |anAnalysis := analyzer analysisFor: root.clusters := anAnalysis clusterization clusters.encoder objectCount: anAnalysis clusterization objectCount
+encoder encodeReferenceTo: root
 ]
 
 Metaclass

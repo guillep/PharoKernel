@@ -6,19 +6,14 @@ Class
 	classVariables: #();
 	package: #'Traits-Composition'.
 
-Class TraitAlias >> removeAlias: aSymbol
+Class TraitAlias >> - anArrayOfSelectors
 [
-self aliases: (self aliases reject: [ :each | each key = aSymbol ])
+^ TraitExclusion with: self exclusions: anArrayOfSelectors
 ]
 
-Class TraitAlias >> allAliasesDict
+Class TraitAlias >> aliasNamed: aSymbol ifAbsent: aBlock
 [
-| dict |dict := super allAliasesDict.self aliases do: [ :assoc | dict at: assoc key put: assoc value ].^ dict
-]
-
-Class TraitAlias >> postCopy
-[
-super postCopy.aliases := self aliases copy
+^ self aliases detect: [ :association | association key = aSymbol ] ifNone: aBlock
 ]
 
 Class TraitAlias >> aliases
@@ -27,9 +22,9 @@ Class TraitAlias >> aliases
 ^ aliases
 ]
 
-Class TraitAlias >> - anArrayOfSelectors
+Class TraitAlias >> aliases: anArrayOfAssociations
 [
-^ TraitExclusion with: self exclusions: anArrayOfSelectors
+| newNames |newNames := (anArrayOfAssociations collect: [ :each | each key ]) asIdentitySet.newNames size < anArrayOfAssociations size	ifTrue: [ TraitCompositionException signal: 'Cannot use the same alias name twice' ].anArrayOfAssociations	do: [ :each | 		(newNames includes: each value)			ifTrue: [ TraitCompositionException signal: 'Cannot define an alias for an alias' ] ].aliases := anArrayOfAssociations
 ]
 
 Class TraitAlias >> aliasesForSelector: aSymbol
@@ -37,14 +32,9 @@ Class TraitAlias >> aliasesForSelector: aSymbol
 | selectors |selectors := self aliases	select: [ :association | association value = aSymbol ]	thenCollect: [ :association | association key ].^ (super aliasesForSelector: aSymbol)	addAll: selectors;	yourself
 ]
 
-Class TraitAlias >> printOn: aStream
+Class TraitAlias >> allAliasesDict
 [
-super printOn: aStream.aStream	space;	nextPut: $@;	space;	nextPut: ${.self aliases do: [ :each | aStream print: each ] separatedBy: [ aStream nextPutAll: '. ' ].aStream nextPut: $}
-]
-
-Class TraitAlias >> copyTraitExpression
-[
-^ super copyTraitExpression	aliases: self aliases deepCopy;	yourself
+| dict |dict := super allAliasesDict.self aliases do: [ :assoc | dict at: assoc key put: assoc value ].^ dict
 ]
 
 Class TraitAlias >> allSelectors
@@ -57,19 +47,29 @@ Class TraitAlias >> collectMethodsFor: aSelector into: methodDescription
 | originalSelector association |self subject collectMethodsFor: aSelector into: methodDescription.association := self aliasNamed: aSelector ifAbsent: [ nil ].association notNil	ifTrue: [ 		originalSelector := association value.		self subject collectMethodsFor: originalSelector into: methodDescription ]
 ]
 
+Class TraitAlias >> copyTraitExpression
+[
+^ super copyTraitExpression	aliases: self aliases deepCopy;	yourself
+]
+
 Class TraitAlias >> isEmpty
 [
 ^ self aliases isEmpty
 ]
 
-Class TraitAlias >> aliases: anArrayOfAssociations
+Class TraitAlias >> postCopy
 [
-| newNames |newNames := (anArrayOfAssociations collect: [ :each | each key ]) asIdentitySet.newNames size < anArrayOfAssociations size	ifTrue: [ TraitCompositionException signal: 'Cannot use the same alias name twice' ].anArrayOfAssociations	do: [ :each | 		(newNames includes: each value)			ifTrue: [ TraitCompositionException signal: 'Cannot define an alias for an alias' ] ].aliases := anArrayOfAssociations
+super postCopy.aliases := self aliases copy
 ]
 
-Class TraitAlias >> aliasNamed: aSymbol ifAbsent: aBlock
+Class TraitAlias >> printOn: aStream
 [
-^ self aliases detect: [ :association | association key = aSymbol ] ifNone: aBlock
+super printOn: aStream.aStream	space;	nextPut: $@;	space;	nextPut: ${.self aliases do: [ :each | aStream print: each ] separatedBy: [ aStream nextPutAll: '. ' ].aStream nextPut: $}
+]
+
+Class TraitAlias >> removeAlias: aSymbol
+[
+self aliases: (self aliases reject: [ :each | each key = aSymbol ])
 ]
 
 Metaclass

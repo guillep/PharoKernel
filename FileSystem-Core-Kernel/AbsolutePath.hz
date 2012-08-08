@@ -6,9 +6,9 @@ Class
 	classVariables: #();
 	package: #'FileSystem-Core-Kernel'.
 
-Class AbsolutePath >> withParents
+Class AbsolutePath >> isAbsolute
 [
-^ super withParents	addFirst: Path root;	yourself
+^ true
 ]
 
 Class AbsolutePath >> isRoot
@@ -16,14 +16,14 @@ Class AbsolutePath >> isRoot
 ^ self size = 0
 ]
 
-Class AbsolutePath >> isAbsolute
-[
-^ true
-]
-
 Class AbsolutePath >> printOn: aStream
 [
 aStream nextPutAll: 'Path'.self isRoot	ifTrue: [ aStream nextPutAll: ' root' ]	ifFalse: [ 		1 to: self size do: [ :i | 			aStream				nextPutAll: ' / ''';				nextPutAll: (self at: i);				nextPut: $' ] ]
+]
+
+Class AbsolutePath >> withParents
+[
+^ super withParents	addFirst: Path root;	yourself
 ]
 
 Metaclass

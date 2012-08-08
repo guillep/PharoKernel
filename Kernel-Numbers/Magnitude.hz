@@ -6,6 +6,42 @@ Class
 	classVariables: #();
 	package: #'Kernel-Numbers'.
 
+Class Magnitude >> < aMagnitude
+[
+	"Answer whether the receiver is less than the argument."
+^ self subclassResponsibility
+]
+
+Class Magnitude >> <= aMagnitude
+[
+	"Answer whether the receiver is less than or equal to the argument."
+^ (self > aMagnitude) not
+]
+
+Class Magnitude >> = aMagnitude
+[
+	"Compare the receiver with the argument and answer with true if the 	receiver is equal to the argument. Otherwise answer false."
+^ self subclassResponsibility
+]
+
+Class Magnitude >> > aMagnitude
+[
+	"Answer whether the receiver is greater than the argument."
+^ aMagnitude < self
+]
+
+Class Magnitude >> >= aMagnitude
+[
+	"Answer whether the receiver is greater than or equal to the argument."
+^ aMagnitude <= self
+]
+
+Class Magnitude >> between: min and: max
+[
+	"Answer whether the receiver is less than or equal to the argument, max, 	and greater than or equal to the argument, min."
+^ self >= min and: [ self <= max ]
+]
+
 Class Magnitude >> hash
 [
 	"Hash must be redefined whenever = is redefined."
@@ -18,51 +54,15 @@ Class Magnitude >> max: aMagnitude
 self > aMagnitude	ifTrue: [ ^ self ]	ifFalse: [ ^ aMagnitude ]
 ]
 
-Class Magnitude >> > aMagnitude
-[
-	"Answer whether the receiver is greater than the argument."
-^ aMagnitude < self
-]
-
-Class Magnitude >> <= aMagnitude
-[
-	"Answer whether the receiver is less than or equal to the argument."
-^ (self > aMagnitude) not
-]
-
-Class Magnitude >> min: aMin max: aMax
-[
-^ (self min: aMin) max: aMax
-]
-
-Class Magnitude >> between: min and: max
-[
-	"Answer whether the receiver is less than or equal to the argument, max, 	and greater than or equal to the argument, min."
-^ self >= min and: [ self <= max ]
-]
-
-Class Magnitude >> = aMagnitude
-[
-	"Compare the receiver with the argument and answer with true if the 	receiver is equal to the argument. Otherwise answer false."
-^ self subclassResponsibility
-]
-
-Class Magnitude >> >= aMagnitude
-[
-	"Answer whether the receiver is greater than or equal to the argument."
-^ aMagnitude <= self
-]
-
 Class Magnitude >> min: aMagnitude
 [
 	"Answer the receiver or the argument, whichever has the lesser 	magnitude."
 self < aMagnitude	ifTrue: [ ^ self ]	ifFalse: [ ^ aMagnitude ]
 ]
 
-Class Magnitude >> < aMagnitude
+Class Magnitude >> min: aMin max: aMax
 [
-	"Answer whether the receiver is less than the argument."
-^ self subclassResponsibility
+^ (self min: aMin) max: aMax
 ]
 
 Metaclass

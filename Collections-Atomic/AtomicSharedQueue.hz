@@ -6,15 +6,9 @@ Class
 	classVariables: #();
 	package: #'Collections-Atomic'.
 
-Class AtomicSharedQueue >> signalNoMoreItems
+Class AtomicSharedQueue >> initialize
 [
-	"queue is empty, reset sema signals"
-availSema initSignals
-]
-
-Class AtomicSharedQueue >> signalAddedNewItem
-[
-availSema signal
+super initialize.availSema := Semaphore new
 ]
 
 Class AtomicSharedQueue >> next
@@ -23,14 +17,20 @@ Class AtomicSharedQueue >> next
 | result |[ | keepWaiting |keepWaiting := false.result := self nextIfNone: [ keepWaiting := true ].keepWaiting ] whileTrue: [ self waitForNewItems ].^ result
 ]
 
+Class AtomicSharedQueue >> signalAddedNewItem
+[
+availSema signal
+]
+
+Class AtomicSharedQueue >> signalNoMoreItems
+[
+	"queue is empty, reset sema signals"
+availSema initSignals
+]
+
 Class AtomicSharedQueue >> waitForNewItems
 [
 availSema wait
-]
-
-Class AtomicSharedQueue >> initialize
-[
-super initialize.availSema := Semaphore new
 ]
 
 Metaclass

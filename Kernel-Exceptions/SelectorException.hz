@@ -12,6 +12,11 @@ Class SelectorException >> messageText
 ^ messageText ifNil: [ messageText := self standardMessageText ]
 ]
 
+Class SelectorException >> selector
+[
+^ selector
+]
+
 Class SelectorException >> selector: aSelector
 [
 selector := aSelector
@@ -21,11 +26,6 @@ Class SelectorException >> standardMessageText
 [
 	"Generate a standard textual description"
 ^ String	streamContents: [ :stream | 		stream << 'for '.		stream print: self selector.		stream << ' in '.		stream print: self signaler class ]
-]
-
-Class SelectorException >> selector
-[
-^ selector
 ]
 
 Metaclass

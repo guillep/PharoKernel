@@ -6,6 +6,11 @@ Class
 	classVariables: #();
 	package: #'Announcements-Core'.
 
+Class LegacyWeakSubscription >> makeStrong
+[
+| sub |sub := self subscriber.sub ifNil: [ ^ self error: 'Subscriber is nil, cannot make strong subscription' ].self unregister.^ self	becomeForward:		(AnnouncementSubscription new			announcer: announcer;			action: action asMessageSend;			subscriber: sub;			announcementClass: announcementClass)
+]
+
 Class LegacyWeakSubscription >> register
 [
 self weakRegistry add: self subscriber executor: self
@@ -16,19 +21,14 @@ Class LegacyWeakSubscription >> subscriber: anObject
 self subscriber ifNotNil: [ self error: 'subscriber already set' ].self basicAt: 1 put: anObject.self register
 ]
 
-Class LegacyWeakSubscription >> weakRegistry
-[
-^ WeakRegistry default
-]
-
 Class LegacyWeakSubscription >> unregister
 [
 | sub |sub := self subscriber.sub ifNotNil: [ self weakRegistry remove: sub ]
 ]
 
-Class LegacyWeakSubscription >> makeStrong
+Class LegacyWeakSubscription >> weakRegistry
 [
-| sub |sub := self subscriber.sub ifNil: [ ^ self error: 'Subscriber is nil, cannot make strong subscription' ].self unregister.^ self	becomeForward:		(AnnouncementSubscription new			announcer: announcer;			action: action asMessageSend;			subscriber: sub;			announcementClass: announcementClass)
+^ WeakRegistry default
 ]
 
 Metaclass

@@ -11,14 +11,14 @@ Class FLIndexStream >> initializeOn: aStream digits: aNumberOfDigits
 self initialize.stream := aStream.digits := aNumberOfDigits
 ]
 
-Class FLIndexStream >> nextIndexPut: v
-[
-1 to: digits do: [ :i | stream nextPut: (v digitAt: digits + 1 - i) ]
-]
-
 Class FLIndexStream >> nextIndex
 [
 | s |s := 0.1 to: digits do: [ :i | s := (s bitShift: 8) bitOr: stream next ].^ s
+]
+
+Class FLIndexStream >> nextIndexPut: v
+[
+1 to: digits do: [ :i | stream nextPut: (v digitAt: digits + 1 - i) ]
 ]
 
 Metaclass

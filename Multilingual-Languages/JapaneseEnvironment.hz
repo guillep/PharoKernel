@@ -10,27 +10,6 @@ Metaclass
 	name: #JapaneseEnvironment;
 	instanceVariables: #().
 
-Metaclass JapaneseEnvironment >> scanSelector
-[
-^ #scanJapaneseCharactersFrom:to:in:rightX:stopConditions:kern:
-]
-
-Metaclass JapaneseEnvironment >> systemConverterClass
-[
-| encoding |OSPlatform isWin32	ifTrue: [ ^ ShiftJISTextConverter ].OSPlatform isMacOS	ifTrue: [ ^ UTF8TextConverter ].OSPlatform isUnix	ifTrue: [ 		encoding := X11Encoding encoding.		encoding ifNil: [ ^ EUCJPTextConverter ].		encoding = 'utf-8'			ifTrue: [ ^ UTF8TextConverter ].		(encoding = 'shiftjis' or: [ encoding = 'sjis' ])			ifTrue: [ ^ ShiftJISTextConverter ].		^ EUCJPTextConverter ].^ UTF8TextConverter
-]
-
-Metaclass JapaneseEnvironment >> supportedLanguages
-[
-	"Return the languages that this class supports. 	Any translations for those languages will use this class as their environment."
-^ #('ja' 'ja-etoys')
-]
-
-Metaclass JapaneseEnvironment >> traditionalCharsetClass
-[
-^ JISX0208
-]
-
 Metaclass JapaneseEnvironment >> fromJISX0208String: aString
 [
 ^ aString collect: [ :each | Character leadingChar: JapaneseEnvironment leadingChar code: each asUnicode ]
@@ -44,5 +23,26 @@ Metaclass JapaneseEnvironment >> isBreakableAt: index in: text
 Metaclass JapaneseEnvironment >> leadingChar
 [
 ^ 5
+]
+
+Metaclass JapaneseEnvironment >> scanSelector
+[
+^ #scanJapaneseCharactersFrom:to:in:rightX:stopConditions:kern:
+]
+
+Metaclass JapaneseEnvironment >> supportedLanguages
+[
+	"Return the languages that this class supports. 	Any translations for those languages will use this class as their environment."
+^ #('ja' 'ja-etoys')
+]
+
+Metaclass JapaneseEnvironment >> systemConverterClass
+[
+| encoding |OSPlatform isWin32	ifTrue: [ ^ ShiftJISTextConverter ].OSPlatform isMacOS	ifTrue: [ ^ UTF8TextConverter ].OSPlatform isUnix	ifTrue: [ 		encoding := X11Encoding encoding.		encoding ifNil: [ ^ EUCJPTextConverter ].		encoding = 'utf-8'			ifTrue: [ ^ UTF8TextConverter ].		(encoding = 'shiftjis' or: [ encoding = 'sjis' ])			ifTrue: [ ^ ShiftJISTextConverter ].		^ EUCJPTextConverter ].^ UTF8TextConverter
+]
+
+Metaclass JapaneseEnvironment >> traditionalCharsetClass
+[
+^ JISX0208
 ]
 

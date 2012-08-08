@@ -6,59 +6,10 @@ Class
 	classVariables: #();
 	package: #'Traits-Composition'.
 
-Class TraitTransformation >> theNonMetaClass
+Class TraitTransformation >> + aTraitOrTraitComposition
 [
-^ self subject theNonMetaClass
-]
-
-Class TraitTransformation >> addExclusionOf: aSymbol
-[
-^ self - {aSymbol}
-]
-
-Class TraitTransformation >> subject
-[
-^ subject
-]
-
-Class TraitTransformation >> copyTraitExpression
-[
-^ self shallowCopy	subject: self subject copyTraitExpression;	yourself
-]
-
-Class TraitTransformation >> isMeta
-[
-^ self subject isMeta
-]
-
-Class TraitTransformation >> traitTransformations
-[
-^ {subject}
-]
-
-Class TraitTransformation >> changedSelectorsComparedTo: aTraitTransformation
-[
-| selectors otherSelectors changedSelectors aliases otherAliases |selectors := self allSelectors asIdentitySet.otherSelectors := aTraitTransformation allSelectors asIdentitySet.changedSelectors := IdentitySet	withAll: ((selectors difference: otherSelectors) union: (otherSelectors difference: selectors)).aliases := self allAliasesDict.otherAliases := aTraitTransformation allAliasesDict.aliases	keysAndValuesDo: [ :key :value | 		value ~~ (otherAliases at: key ifAbsent: [ nil ])			ifTrue: [ changedSelectors add: key ] ].otherAliases	keysAndValuesDo: [ :key :value | 		value ~~ (aliases at: key ifAbsent: [ nil ])			ifTrue: [ changedSelectors add: key ] ].^ changedSelectors
-]
-
-Class TraitTransformation >> postCopy
-[
-super postCopy.subject := subject copy
-]
-
-Class TraitTransformation >> copy
-[
-self error: 'should not be called'.^ super copy
-]
-
-Class TraitTransformation >> subject: aTraitTransformation
-[
-subject := aTraitTransformation
-]
-
-Class TraitTransformation >> isEmpty
-[
-self subclassResponsibility
+	"Use double dispatch to avoid having nested composition in cases where	parenthesis are used, such as T1 + (T2 + T3)"
+^ aTraitOrTraitComposition addOnTheLeft: self
 ]
 
 Class TraitTransformation >> - anArray
@@ -71,26 +22,19 @@ Class TraitTransformation >> @ anArrayOfAssociations
 TraitCompositionException signal: 'Invalid trait exclusion. Aliases have to be specified before exclusions.'
 ]
 
-Class TraitTransformation >> allAliasesDict
+Class TraitTransformation >> addCompositionOnLeft: aTraitComposition
 [
-	"Return a dictionary with all alias associations that are defined in this transformation."
-^ self subject allAliasesDict
+^ aTraitComposition add: self
 ]
 
-Class TraitTransformation >> collectMethodsFor: aSelector into: methodDescription
+Class TraitTransformation >> addExclusionOf: aSymbol
 [
-	"Collect instances of LocatedMethod into methodDescription	for each method that has the selector aSelector and is not excluded	or for which aSelector is an alias."
-self subclassResponsibility
+^ self - {aSymbol}
 ]
 
-Class TraitTransformation >> allSelectors
+Class TraitTransformation >> addOnTheLeft: aTraitExpression
 [
-^ self subclassResponsibility
-]
-
-Class TraitTransformation >> printOn: aStream
-[
-aStream print: self subject
+^ TraitComposition with: aTraitExpression with: self
 ]
 
 Class TraitTransformation >> aliasesForSelector: aSymbol
@@ -99,9 +43,71 @@ Class TraitTransformation >> aliasesForSelector: aSymbol
 ^ self subject aliasesForSelector: aSymbol
 ]
 
+Class TraitTransformation >> allAliasesDict
+[
+	"Return a dictionary with all alias associations that are defined in this transformation."
+^ self subject allAliasesDict
+]
+
+Class TraitTransformation >> allSelectors
+[
+^ self subclassResponsibility
+]
+
+Class TraitTransformation >> asTraitComposition
+[
+^ TraitComposition with: self
+]
+
+Class TraitTransformation >> changedSelectorsComparedTo: aTraitTransformation
+[
+| selectors otherSelectors changedSelectors aliases otherAliases |selectors := self allSelectors asIdentitySet.otherSelectors := aTraitTransformation allSelectors asIdentitySet.changedSelectors := IdentitySet	withAll: ((selectors difference: otherSelectors) union: (otherSelectors difference: selectors)).aliases := self allAliasesDict.otherAliases := aTraitTransformation allAliasesDict.aliases	keysAndValuesDo: [ :key :value | 		value ~~ (otherAliases at: key ifAbsent: [ nil ])			ifTrue: [ changedSelectors add: key ] ].otherAliases	keysAndValuesDo: [ :key :value | 		value ~~ (aliases at: key ifAbsent: [ nil ])			ifTrue: [ changedSelectors add: key ] ].^ changedSelectors
+]
+
+Class TraitTransformation >> collectMethodsFor: aSelector into: methodDescription
+[
+	"Collect instances of LocatedMethod into methodDescription	for each method that has the selector aSelector and is not excluded	or for which aSelector is an alias."
+self subclassResponsibility
+]
+
+Class TraitTransformation >> copy
+[
+self error: 'should not be called'.^ super copy
+]
+
+Class TraitTransformation >> copyTraitExpression
+[
+^ self shallowCopy	subject: self subject copyTraitExpression;	yourself
+]
+
+Class TraitTransformation >> isEmpty
+[
+self subclassResponsibility
+]
+
+Class TraitTransformation >> isMeta
+[
+^ self subject isMeta
+]
+
 Class TraitTransformation >> normalized
 [
 ^ self isEmpty	ifFalse: [ 		self subject: self subject normalized.		self ]	ifTrue: [ self subject normalized ]
+]
+
+Class TraitTransformation >> postCopy
+[
+super postCopy.subject := subject copy
+]
+
+Class TraitTransformation >> printOn: aStream
+[
+aStream print: self subject
+]
+
+Class TraitTransformation >> removeAlias: aSymbol
+[
+self subject removeAlias: aSymbol
 ]
 
 Class TraitTransformation >> selectors
@@ -114,14 +120,29 @@ Class TraitTransformation >> sourceCodeTemplate
 ^ self subject sourceCodeTemplate
 ]
 
-Class TraitTransformation >> removeAlias: aSymbol
+Class TraitTransformation >> subject
 [
-self subject removeAlias: aSymbol
+^ subject
+]
+
+Class TraitTransformation >> subject: aTraitTransformation
+[
+subject := aTraitTransformation
+]
+
+Class TraitTransformation >> theNonMetaClass
+[
+^ self subject theNonMetaClass
 ]
 
 Class TraitTransformation >> trait
 [
 ^ self subject trait
+]
+
+Class TraitTransformation >> traitTransformations
+[
+^ {subject}
 ]
 
 Metaclass

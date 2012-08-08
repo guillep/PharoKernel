@@ -6,9 +6,14 @@ Class
 	classVariables: #();
 	package: #'Fuel-Collections'.
 
-Class FLLargeIdentitySet >> initialize
+Class FLLargeIdentitySet >> add: anObject
 [
-super initialize.array := Array new: 4096.includesNil := false
+| hash |anObject	ifNil: [ 		includesNil			ifFalse: [ 				includesNil := true.				tally := tally + 1 ].		^ anObject ].(array at: (hash := anObject largeIdentityHash + 1))	ifNil: [ 		array at: hash put: (Array with: anObject).		tallies at: hash put: 1.		tally := tally + 1 ]	ifNotNil: [ :list | 		(list fuelPointsTo: anObject)			ifFalse: [ 				| newIndex |				tally := tally + 1.				list size < (newIndex := (tallies at: hash) + 1)					ifFalse: [ list at: newIndex put: anObject ]					ifTrue: [ 						| newList |						newList := Array new: list size * 2.						newList							replaceFrom: 1								to: list size								with: list								startingAt: 1;							at: newIndex put: anObject.						array at: hash put: newList ].				tallies at: hash put: newIndex ] ].^ anObject
+]
+
+Class FLLargeIdentitySet >> addIfNotPresent: anObject ifPresentDo: aBlock
+[
+| hash |anObject	ifNil: [ 		includesNil			ifFalse: [ 				includesNil := true.				tally := tally + 1 ].		^ anObject ].(array at: (hash := anObject largeIdentityHash + 1))	ifNil: [ 		array at: hash put: (Array with: anObject).		tallies at: hash put: 1.		tally := tally + 1 ]	ifNotNil: [ :list | 		(list fuelPointsTo: anObject)			ifTrue: [ aBlock value ]			ifFalse: [ 				| newIndex |				tally := tally + 1.				list size < (newIndex := (tallies at: hash) + 1)					ifFalse: [ list at: newIndex put: anObject ]					ifTrue: [ 						| newList |						newList := Array new: list size * 2.						newList							replaceFrom: 1								to: list size								with: list								startingAt: 1;							at: newIndex put: anObject.						array at: hash put: newList ].				tallies at: hash put: newIndex ] ].^ anObject
 ]
 
 Class FLLargeIdentitySet >> do: aBlock
@@ -16,14 +21,14 @@ Class FLLargeIdentitySet >> do: aBlock
 tally = 0	ifTrue: [ ^ self ].includesNil	ifTrue: [ aBlock value: nil ].1 to: 4096 do: [ :arrayIndex | 	| subArray |	subArray := array at: arrayIndex.	1 to: (tallies at: arrayIndex) do: [ :index | aBlock value: (subArray at: index) ] ]
 ]
 
-Class FLLargeIdentitySet >> add: anObject
+Class FLLargeIdentitySet >> includes: anObject
 [
-| hash |anObject	ifNil: [ 		includesNil			ifFalse: [ 				includesNil := true.				tally := tally + 1 ].		^ anObject ].(array at: (hash := anObject largeIdentityHash + 1))	ifNil: [ 		array at: hash put: (Array with: anObject).		tallies at: hash put: 1.		tally := tally + 1 ]	ifNotNil: [ :list | 		(list fuelPointsTo: anObject)			ifFalse: [ 				| newIndex |				tally := tally + 1.				list size < (newIndex := (tallies at: hash) + 1)					ifFalse: [ list at: newIndex put: anObject ]					ifTrue: [ 						| newList |						newList := Array new: list size * 2.						newList							replaceFrom: 1								to: list size								with: list								startingAt: 1;							at: newIndex put: anObject.						array at: hash put: newList ].				tallies at: hash put: newIndex ] ].^ anObject
+anObject ifNil: [ ^ includesNil ].^ (array at: anObject largeIdentityHash + 1) ifNil: [ false ] ifNotNil: [ :list | list fuelPointsTo: anObject ]
 ]
 
-Class FLLargeIdentitySet >> remove: anObject ifAbsent: aBlock
+Class FLLargeIdentitySet >> initialize
 [
-| list hash size |anObject	ifNil: [ 		includesNil			ifTrue: [ 				includesNil := false.				tally := tally - 1.				^ anObject ].		^ aBlock value ].list := (array at: (hash := anObject largeIdentityHash + 1)) ifNil: [ ^ aBlock value ].(list fuelPointsTo: anObject)	ifFalse: [ ^ aBlock value ].1 to: (size := tallies at: hash) do: [ :index | 	(list at: index) == anObject		ifTrue: [ 			list				at: index put: (list at: size);				at: size put: nil.			(size := size - 1) < (list size // 4)				ifTrue: [ 					| newList |					newList := Array new: size * 2.					newList						replaceFrom: 1						to: size						with: list						startingAt: 1.					array at: hash put: newList ].			tallies at: hash put: size.			tally := tally - 1.			^ anObject ] ].^ aBlock value
+super initialize.array := Array new: 4096.includesNil := false
 ]
 
 Class FLLargeIdentitySet >> postCopy
@@ -31,14 +36,9 @@ Class FLLargeIdentitySet >> postCopy
 super postCopy.array := array copy.1 to: 4096 do: [ :index | (array at: index) ifNotNil: [ :list | array at: index put: list copy ] ]
 ]
 
-Class FLLargeIdentitySet >> includes: anObject
+Class FLLargeIdentitySet >> remove: anObject ifAbsent: aBlock
 [
-anObject ifNil: [ ^ includesNil ].^ (array at: anObject largeIdentityHash + 1) ifNil: [ false ] ifNotNil: [ :list | list fuelPointsTo: anObject ]
-]
-
-Class FLLargeIdentitySet >> addIfNotPresent: anObject ifPresentDo: aBlock
-[
-| hash |anObject	ifNil: [ 		includesNil			ifFalse: [ 				includesNil := true.				tally := tally + 1 ].		^ anObject ].(array at: (hash := anObject largeIdentityHash + 1))	ifNil: [ 		array at: hash put: (Array with: anObject).		tallies at: hash put: 1.		tally := tally + 1 ]	ifNotNil: [ :list | 		(list fuelPointsTo: anObject)			ifTrue: [ aBlock value ]			ifFalse: [ 				| newIndex |				tally := tally + 1.				list size < (newIndex := (tallies at: hash) + 1)					ifFalse: [ list at: newIndex put: anObject ]					ifTrue: [ 						| newList |						newList := Array new: list size * 2.						newList							replaceFrom: 1								to: list size								with: list								startingAt: 1;							at: newIndex put: anObject.						array at: hash put: newList ].				tallies at: hash put: newIndex ] ].^ anObject
+| list hash size |anObject	ifNil: [ 		includesNil			ifTrue: [ 				includesNil := false.				tally := tally - 1.				^ anObject ].		^ aBlock value ].list := (array at: (hash := anObject largeIdentityHash + 1)) ifNil: [ ^ aBlock value ].(list fuelPointsTo: anObject)	ifFalse: [ ^ aBlock value ].1 to: (size := tallies at: hash) do: [ :index | 	(list at: index) == anObject		ifTrue: [ 			list				at: index put: (list at: size);				at: size put: nil.			(size := size - 1) < (list size // 4)				ifTrue: [ 					| newList |					newList := Array new: size * 2.					newList						replaceFrom: 1						to: size						with: list						startingAt: 1.					array at: hash put: newList ].			tallies at: hash put: size.			tally := tally - 1.			^ anObject ] ].^ aBlock value
 ]
 
 Metaclass

@@ -6,38 +6,21 @@ Class
 	classVariables: #();
 	package: #'Kernel-Objects'.
 
+Class False >> & aBoolean
+[
+	"Evaluating conjunction -- answer false since receiver is false."
+^ self
+]
+
 Class False >> and: alternativeBlock
 [
 	"Nonevaluating conjunction -- answer with false since the receiver is false."
 ^ self
 ]
 
-Class False >> printOn: aStream
-[
-aStream nextPutAll: 'false'
-]
-
 Class False >> asBit
 [
 ^ 0
-]
-
-Class False >> xor: aBoolean
-[
-	"Posted by Eliot Miranda to squeak-dev on 3/24/2009"
-^ aBoolean value
-]
-
-Class False >> ifTrue: trueAlternativeBlock ifFalse: falseAlternativeBlock
-[
-	"Answer the value of falseAlternativeBlock. Execution does not	actually reach here because the expression is compiled in-line."
-^ falseAlternativeBlock value
-]
-
-Class False >> ifTrue: alternativeBlock
-[
-	"Since the condition is false, answer the value of the false alternative, 	which is nil. Execution does not actually reach here because the	expression is compiled in-line."
-^ nil
 ]
 
 Class False >> ifFalse: alternativeBlock
@@ -52,10 +35,22 @@ Class False >> ifFalse: falseAlternativeBlock ifTrue: trueAlternativeBlock
 ^ falseAlternativeBlock value
 ]
 
-Class False >> & aBoolean
+Class False >> ifTrue: alternativeBlock
 [
-	"Evaluating conjunction -- answer false since receiver is false."
-^ self
+	"Since the condition is false, answer the value of the false alternative, 	which is nil. Execution does not actually reach here because the	expression is compiled in-line."
+^ nil
+]
+
+Class False >> ifTrue: trueAlternativeBlock ifFalse: falseAlternativeBlock
+[
+	"Answer the value of falseAlternativeBlock. Execution does not	actually reach here because the expression is compiled in-line."
+^ falseAlternativeBlock value
+]
+
+Class False >> not
+[
+	"Negation -- answer true since the receiver is false."
+^ true
 ]
 
 Class False >> or: alternativeBlock
@@ -64,10 +59,15 @@ Class False >> or: alternativeBlock
 ^ alternativeBlock value
 ]
 
-Class False >> not
+Class False >> printOn: aStream
 [
-	"Negation -- answer true since the receiver is false."
-^ true
+aStream nextPutAll: 'false'
+]
+
+Class False >> xor: aBoolean
+[
+	"Posted by Eliot Miranda to squeak-dev on 3/24/2009"
+^ aBoolean value
 ]
 
 Class False >> | aBoolean

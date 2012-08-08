@@ -12,11 +12,6 @@ Class ClassCategoryReader >> scanFrom: aStream
 | methodText |[ methodText := aStream nextChunkText.methodText size > 0 ]	whileTrue: [ 		class			compile: methodText			classified: category			withStamp: changeStamp			notifying: nil ]
 ]
 
-Class ClassCategoryReader >> theClass
-[
-^ class
-]
-
 Class ClassCategoryReader >> setClass: aClass category: aCategory
 [
 ^ self setClass: aClass category: aCategory changeStamp: String new
@@ -25,6 +20,11 @@ Class ClassCategoryReader >> setClass: aClass category: aCategory
 Class ClassCategoryReader >> setClass: aClass category: aCategory changeStamp: aString
 [
 class := aClass.category := aCategory.changeStamp := aString
+]
+
+Class ClassCategoryReader >> theClass
+[
+^ class
 ]
 
 Metaclass

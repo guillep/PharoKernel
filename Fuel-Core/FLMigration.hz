@@ -11,9 +11,9 @@ Class FLMigration >> applyTo: aVariablesMapping
 variables do: [ :link | aVariablesMapping map: link key to: link value ]
 ]
 
-Class FLMigration >> targetClass
+Class FLMigration >> initializeClassNamed: aSymbol toClass: aClass variables: anArray
 [
-^ targetClass
+self initialize.sourceClassName := aSymbol.targetClass := aClass.variables := anArray
 ]
 
 Class FLMigration >> sourceClassName
@@ -21,9 +21,9 @@ Class FLMigration >> sourceClassName
 ^ sourceClassName
 ]
 
-Class FLMigration >> initializeClassNamed: aSymbol toClass: aClass variables: anArray
+Class FLMigration >> targetClass
 [
-self initialize.sourceClassName := aSymbol.targetClass := aClass.variables := anArray
+^ targetClass
 ]
 
 Metaclass

@@ -6,14 +6,9 @@ Class
 	classVariables: #(#CachedTranslations );
 	package: #'System-Localization'.
 
-Class NaturalLanguageFormTranslator >> translate: aString
+Class NaturalLanguageFormTranslator >> generics
 [
-^ (self generics at: aString ifAbsent: [ nil ]) deepCopy	"Do you like to write 'form ifNotNil: [form deepCopy]'?"
-]
-
-Class NaturalLanguageFormTranslator >> localeID: anID
-[
-id := anID
+^ generics ifNil: [ generics := Dictionary new ]
 ]
 
 Class NaturalLanguageFormTranslator >> localeID
@@ -21,9 +16,9 @@ Class NaturalLanguageFormTranslator >> localeID
 ^ id
 ]
 
-Class NaturalLanguageFormTranslator >> generics
+Class NaturalLanguageFormTranslator >> localeID: anID
 [
-^ generics ifNil: [ generics := Dictionary new ]
+id := anID
 ]
 
 Class NaturalLanguageFormTranslator >> name: formName form: translatedForm
@@ -31,18 +26,19 @@ Class NaturalLanguageFormTranslator >> name: formName form: translatedForm
 self generics at: formName put: translatedForm
 ]
 
+Class NaturalLanguageFormTranslator >> translate: aString
+[
+^ (self generics at: aString ifAbsent: [ nil ]) deepCopy	"Do you like to write 'form ifNotNil: [form deepCopy]'?"
+]
+
 Metaclass
 	name: #NaturalLanguageFormTranslator;
 	instanceVariables: #().
 
-Metaclass NaturalLanguageFormTranslator >> isoLanguage: isoLanguage isoCountry: isoCountry
+Metaclass NaturalLanguageFormTranslator >> cachedTranslations
 [
-^ self localeID: (LocaleID isoLanguage: isoLanguage isoCountry: isoCountry)
-]
-
-Metaclass NaturalLanguageFormTranslator >> localeID: localeID
-[
-^ self cachedTranslations at: localeID ifAbsentPut: [ self new localeID: localeID ]
+	"CachedTranslations := nil"
+^ CachedTranslations ifNil: [ CachedTranslations := Dictionary new ]
 ]
 
 Metaclass NaturalLanguageFormTranslator >> cleanUp
@@ -57,9 +53,13 @@ Metaclass NaturalLanguageFormTranslator >> isoLanguage: isoLanguage
 ^ self isoLanguage: isoLanguage isoCountry: nil
 ]
 
-Metaclass NaturalLanguageFormTranslator >> cachedTranslations
+Metaclass NaturalLanguageFormTranslator >> isoLanguage: isoLanguage isoCountry: isoCountry
 [
-	"CachedTranslations := nil"
-^ CachedTranslations ifNil: [ CachedTranslations := Dictionary new ]
+^ self localeID: (LocaleID isoLanguage: isoLanguage isoCountry: isoCountry)
+]
+
+Metaclass NaturalLanguageFormTranslator >> localeID: localeID
+[
+^ self cachedTranslations at: localeID ifAbsentPut: [ self new localeID: localeID ]
 ]
 

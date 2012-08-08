@@ -6,16 +6,6 @@ Class
 	classVariables: #();
 	package: #'Kernel-Methods'.
 
-Class CachedBlockClosure >> outerContext: aContext startpc: aStartpc numArgs: argCount cachedValue: aValue copiedValues: anArrayOrNil
-[
-cachedValue := aValue.super	outerContext: aContext	startpc: aStartpc	numArgs: argCount	copiedValues: anArrayOrNil
-]
-
-Class CachedBlockClosure >> value
-[
-^ self	becomeUncached;	value
-]
-
 Class CachedBlockClosure >> becomeCached
 [
 	"The receiver is already cached."
@@ -30,6 +20,16 @@ self	becomeForward:		(BlockClosure			outerContext: outerContext			startpc: s
 Class CachedBlockClosure >> once
 [
 ^ cachedValue
+]
+
+Class CachedBlockClosure >> outerContext: aContext startpc: aStartpc numArgs: argCount cachedValue: aValue copiedValues: anArrayOrNil
+[
+cachedValue := aValue.super	outerContext: aContext	startpc: aStartpc	numArgs: argCount	copiedValues: anArrayOrNil
+]
+
+Class CachedBlockClosure >> value
+[
+^ self	becomeUncached;	value
 ]
 
 Metaclass

@@ -6,15 +6,52 @@ Class
 	classVariables: #();
 	package: #'Collections-Streams'.
 
-Class Stream >> upToEnd
+Class Stream >> << items
 [
-	"answer the remaining elements in the string"
-| elements |elements := OrderedCollection new.[ self atEnd ] whileFalse: [ elements add: self next ].^ elements
+items putOn: self.^ self
 ]
 
-Class Stream >> next
+Class Stream >> atEnd
 [
-	"Answer the next object accessible by the receiver."
+	"Answer whether the receiver can access any more objects."
+self subclassResponsibility
+]
+
+Class Stream >> basicNext
+[
+^ self next
+]
+
+Class Stream >> basicNextPut: anObject
+[
+^ self nextPut: anObject
+]
+
+Class Stream >> basicNextPutAll: aCollection
+[
+^ self nextPutAll: aCollection
+]
+
+Class Stream >> binary
+[
+	"do nothing"
+^ self
+]
+
+Class Stream >> close
+[
+	"Presumably sets the status of the receiver to be closed. This message does 	nothing at this level, but is included for FileStream compatibility."
+^ self
+]
+
+Class Stream >> closed
+[
+^ false
+]
+
+Class Stream >> contents
+[
+	"Answer all of the contents of the receiver."
 self subclassResponsibility
 ]
 
@@ -24,60 +61,15 @@ Class Stream >> do: aBlock
 [ self atEnd ] whileFalse: [ aBlock value: self next ]
 ]
 
-Class Stream >> close
-[
-	"Presumably sets the status of the receiver to be closed. This message does 	nothing at this level, but is included for FileStream compatibility."
-^ self
-]
-
-Class Stream >> contents
-[
-	"Answer all of the contents of the receiver."
-self subclassResponsibility
-]
-
-Class Stream >> << items
-[
-items putOn: self.^ self
-]
-
-Class Stream >> binary
-[
-	"do nothing"
-^ self
-]
-
-Class Stream >> basicNextPut: anObject
-[
-^ self nextPut: anObject
-]
-
 Class Stream >> flush
 [
 	"Do nothing by default"
 
 ]
 
-Class Stream >> openReadOnly
+Class Stream >> isBinary
 [
-^ self
-]
-
-Class Stream >> next: anInteger
-[
-	"Answer the next anInteger number of objects accessible by the receiver."
-| aCollection |aCollection := OrderedCollection new.anInteger timesRepeat: [ aCollection addLast: self next ].^ aCollection
-]
-
-Class Stream >> print: anObject
-[
-	"Have anObject print itself on the receiver."
-anObject printOn: self
-]
-
-Class Stream >> write: encodedObject
-[
-^ encodedObject putOn: self
+^ false
 ]
 
 Class Stream >> isStream
@@ -86,27 +78,21 @@ Class Stream >> isStream
 ^ true
 ]
 
-Class Stream >> nextMatchAll: aColl
+Class Stream >> localName
 [
-	"Answer true if next N objects are the ones in aColl,     else false.  Advance stream of true, leave as was if false."
-| save |save := self position.aColl	do: [ :each | 		self next = each			ifFalse: [ 				self position: save.				^ false ] ].^ true
+^ 'a stream'
 ]
 
-Class Stream >> isBinary
+Class Stream >> next
 [
-^ false
+	"Answer the next object accessible by the receiver."
+self subclassResponsibility
 ]
 
-Class Stream >> nextMatchFor: anObject
+Class Stream >> next: anInteger
 [
-	"Gobble the next object and answer whether it is equal to the argument, 	anObject."
-^ anObject = self next
-]
-
-Class Stream >> nextPutAll: aCollection
-[
-	"Append the elements of aCollection to the sequence of objects accessible 	by the receiver. Answer aCollection."
-aCollection do: [ :v | self nextPut: v ].^ aCollection
+	"Answer the next anInteger number of objects accessible by the receiver."
+| aCollection |aCollection := OrderedCollection new.anInteger timesRepeat: [ aCollection addLast: self next ].^ aCollection
 ]
 
 Class Stream >> next: anInteger put: anObject
@@ -115,20 +101,16 @@ Class Stream >> next: anInteger put: anObject
 anInteger timesRepeat: [ self nextPut: anObject ].^ anObject
 ]
 
-Class Stream >> basicNextPutAll: aCollection
+Class Stream >> nextMatchAll: aColl
 [
-^ self nextPutAll: aCollection
+	"Answer true if next N objects are the ones in aColl,     else false.  Advance stream of true, leave as was if false."
+| save |save := self position.aColl	do: [ :each | 		self next = each			ifFalse: [ 				self position: save.				^ false ] ].^ true
 ]
 
-Class Stream >> readOnly
+Class Stream >> nextMatchFor: anObject
 [
-^ self
-]
-
-Class Stream >> nextWordsPutAll: aCollection
-[
-	"Write the argument a word-like object in big endian format on the receiver.	May be used to write other than plain word-like objects (such as ColorArray)."
-aCollection class isPointers | aCollection class isWords not	ifTrue: [ ^ self error: aCollection class name , ' is not word-like' ].1 to: aCollection basicSize do: [ :i | self nextNumber: 4 put: (aCollection basicAt: i) ].^ aCollection
+	"Gobble the next object and answer whether it is equal to the argument, 	anObject."
+^ anObject = self next
 ]
 
 Class Stream >> nextPut: anObject
@@ -137,25 +119,43 @@ Class Stream >> nextPut: anObject
 self subclassResponsibility
 ]
 
-Class Stream >> atEnd
+Class Stream >> nextPutAll: aCollection
 [
-	"Answer whether the receiver can access any more objects."
-self subclassResponsibility
+	"Append the elements of aCollection to the sequence of objects accessible 	by the receiver. Answer aCollection."
+aCollection do: [ :v | self nextPut: v ].^ aCollection
 ]
 
-Class Stream >> localName
+Class Stream >> nextWordsPutAll: aCollection
 [
-^ 'a stream'
+	"Write the argument a word-like object in big endian format on the receiver.	May be used to write other than plain word-like objects (such as ColorArray)."
+aCollection class isPointers | aCollection class isWords not	ifTrue: [ ^ self error: aCollection class name , ' is not word-like' ].1 to: aCollection basicSize do: [ :i | self nextNumber: 4 put: (aCollection basicAt: i) ].^ aCollection
 ]
 
-Class Stream >> basicNext
+Class Stream >> openReadOnly
 [
-^ self next
+^ self
 ]
 
-Class Stream >> closed
+Class Stream >> print: anObject
 [
-^ false
+	"Have anObject print itself on the receiver."
+anObject printOn: self
+]
+
+Class Stream >> readOnly
+[
+^ self
+]
+
+Class Stream >> upToEnd
+[
+	"answer the remaining elements in the string"
+| elements |elements := OrderedCollection new.[ self atEnd ] whileFalse: [ elements add: self next ].^ elements
+]
+
+Class Stream >> write: encodedObject
+[
+^ encodedObject putOn: self
 ]
 
 Metaclass

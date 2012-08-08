@@ -6,68 +6,9 @@ Class
 	classVariables: #();
 	package: #'System-Localization'.
 
-Class LocaleID >> hash
-[
-^ self isoLanguage hash bitXor: self isoCountry hash
-]
-
-Class LocaleID >> hasParent
-[
-^ self isoCountry notNil
-]
-
-Class LocaleID >> printOn: stream
-[
-	"<language>-<country>"
-stream nextPutAll: self isoLanguage.self isoCountry	ifNotNil: [ 		stream			nextPut: $-;			nextPutAll: self isoCountry ]
-]
-
-Class LocaleID >> isoLanguage: langString isoCountry: countryStringOrNil
-[
-isoLanguage := langString.isoCountry := countryStringOrNil
-]
-
-Class LocaleID >> translator
-[
-^ NaturalLanguageTranslator localeID: self
-]
-
-Class LocaleID >> parent
-[
-^ self class isoLanguage: self isoLanguage
-]
-
-Class LocaleID >> isoCountry
-[
-^ isoCountry
-]
-
 Class LocaleID >> = anotherObject
 [
 self class == anotherObject class	ifFalse: [ ^ false ].^ self isoLanguage = anotherObject isoLanguage and: [ self isoCountry = anotherObject isoCountry ]
-]
-
-Class LocaleID >> isoString
-[
-^ self asString
-]
-
-Class LocaleID >> posixName
-[
-	"(LocaleID isoString: 'es-MX') posixName"
-	"(LocaleID isoString: 'es') posixName"
-	"language[_territory]"
-^ self isoCountry ifNil: [ self isoLanguage ] ifNotNil: [ self isoLanguage , '_' , self isoCountry ]
-]
-
-Class LocaleID >> isoLanguage
-[
-^ isoLanguage
-]
-
-Class LocaleID >> storeOn: aStream
-[
-aStream nextPut: $(.aStream nextPutAll: self class name.aStream nextPutAll: ' isoString: '.aStream nextPutAll: '''' , self printString , ''''.aStream nextPut: $)
 ]
 
 Class LocaleID >> displayCountry
@@ -80,13 +21,77 @@ Class LocaleID >> displayLanguage
 | language |language := (ISOLanguageDefinition iso2LanguageTable at: self isoLanguage ifAbsent: [ ^ self isoLanguage ]) language.^ self isoCountry ifNil: [ language ] ifNotNil: [ language , ' (' , self displayCountry , ')' ]
 ]
 
+Class LocaleID >> hasParent
+[
+^ self isoCountry notNil
+]
+
+Class LocaleID >> hash
+[
+^ self isoLanguage hash bitXor: self isoCountry hash
+]
+
+Class LocaleID >> isoCountry
+[
+^ isoCountry
+]
+
+Class LocaleID >> isoLanguage
+[
+^ isoLanguage
+]
+
+Class LocaleID >> isoLanguage: langString isoCountry: countryStringOrNil
+[
+isoLanguage := langString.isoCountry := countryStringOrNil
+]
+
+Class LocaleID >> isoString
+[
+^ self asString
+]
+
+Class LocaleID >> parent
+[
+^ self class isoLanguage: self isoLanguage
+]
+
+Class LocaleID >> posixName
+[
+	"(LocaleID isoString: 'es-MX') posixName"
+	"(LocaleID isoString: 'es') posixName"
+	"language[_territory]"
+^ self isoCountry ifNil: [ self isoLanguage ] ifNotNil: [ self isoLanguage , '_' , self isoCountry ]
+]
+
+Class LocaleID >> printOn: stream
+[
+	"<language>-<country>"
+stream nextPutAll: self isoLanguage.self isoCountry	ifNotNil: [ 		stream			nextPut: $-;			nextPutAll: self isoCountry ]
+]
+
+Class LocaleID >> storeOn: aStream
+[
+aStream nextPut: $(.aStream nextPutAll: self class name.aStream nextPutAll: ' isoString: '.aStream nextPutAll: '''' , self printString , ''''.aStream nextPut: $)
+]
+
+Class LocaleID >> translator
+[
+^ NaturalLanguageTranslator localeID: self
+]
+
 Metaclass
 	name: #LocaleID;
 	instanceVariables: #().
 
-Metaclass LocaleID >> posixName: aString
+Metaclass LocaleID >> current
 [
-^ self isoString: (aString copyReplaceAll: '_' with: '-')
+^ Locale current localeID
+]
+
+Metaclass LocaleID >> isoLanguage: langString
+[
+^ self isoLanguage: langString isoCountry: nil
 ]
 
 Metaclass LocaleID >> isoLanguage: langString isoCountry: countryStringOrNil
@@ -102,18 +107,13 @@ Metaclass LocaleID >> isoString: isoString
 | parts language country |parts := isoString findTokens: #($-).language := parts first.parts size > 1	ifTrue: [ country := parts second ].^ self isoLanguage: language isoCountry: country
 ]
 
-Metaclass LocaleID >> current
+Metaclass LocaleID >> posixName: aString
 [
-^ Locale current localeID
+^ self isoString: (aString copyReplaceAll: '_' with: '-')
 ]
 
 Metaclass LocaleID >> previous
 [
 ^ Locale previous localeID
-]
-
-Metaclass LocaleID >> isoLanguage: langString
-[
-^ self isoLanguage: langString isoCountry: nil
 ]
 

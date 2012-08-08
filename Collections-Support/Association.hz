@@ -6,25 +6,20 @@ Class
 	classVariables: #();
 	package: #'Collections-Support'.
 
-Class Association >> isSelfEvaluating
-[
-^ self class == Association and: [ self key isSelfEvaluating and: [ self value isSelfEvaluating ] ]
-]
-
-Class Association >> value
-[
-	"Answer the value of the receiver."
-^ value
-]
-
 Class Association >> = anAssociation
 [
 ^ super = anAssociation and: [ value = anAssociation value ]
 ]
 
-Class Association >> printOn: aStream
+Class Association >> isSelfEvaluating
 [
-super printOn: aStream.aStream nextPutAll: '->'.value printOn: aStream
+^ self class == Association and: [ self key isSelfEvaluating and: [ self value isSelfEvaluating ] ]
+]
+
+Class Association >> key: aKey value: anObject
+[
+	"Store the arguments as the variables of the receiver."
+key := aKey.value := anObject
 ]
 
 Class Association >> literalEqual: otherLiteral
@@ -33,10 +28,9 @@ Class Association >> literalEqual: otherLiteral
 ^ self == otherLiteral
 ]
 
-Class Association >> value: anObject
+Class Association >> printOn: aStream
 [
-	"Store the argument, anObject, as the value of the receiver."
-value := anObject
+super printOn: aStream.aStream nextPutAll: '->'.value printOn: aStream
 ]
 
 Class Association >> storeOn: aStream
@@ -45,10 +39,16 @@ Class Association >> storeOn: aStream
 aStream nextPut: $(.key storeOn: aStream.aStream nextPutAll: '->'.value storeOn: aStream.aStream nextPut: $)
 ]
 
-Class Association >> key: aKey value: anObject
+Class Association >> value
 [
-	"Store the arguments as the variables of the receiver."
-key := aKey.value := anObject
+	"Answer the value of the receiver."
+^ value
+]
+
+Class Association >> value: anObject
+[
+	"Store the argument, anObject, as the value of the receiver."
+value := anObject
 ]
 
 Metaclass

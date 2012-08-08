@@ -6,20 +6,9 @@ Class
 	classVariables: #();
 	package: #'Announcements-Core'.
 
-Class WeakSubscriptionBuilder >> weak
+Class WeakSubscriptionBuilder >> announcer: anAnnouncer
 [
-	"already weak"
-^ self
-]
-
-Class WeakSubscriptionBuilder >> on: anAnnouncementClass send: aSelector to: anObject
-[
-^ self subscribe: anAnnouncementClass send: aSelector to: anObject
-]
-
-Class WeakSubscriptionBuilder >> when: anAnnouncementClass do: aValuable
-[
-^ self subscribe: anAnnouncementClass do: aValuable
+announcer := anAnnouncer
 ]
 
 Class WeakSubscriptionBuilder >> on: anAnnouncementClass do: aValuable
@@ -27,9 +16,9 @@ Class WeakSubscriptionBuilder >> on: anAnnouncementClass do: aValuable
 ^ self subscribe: anAnnouncementClass do: aValuable
 ]
 
-Class WeakSubscriptionBuilder >> announcer: anAnnouncer
+Class WeakSubscriptionBuilder >> on: anAnnouncementClass send: aSelector to: anObject
 [
-announcer := anAnnouncer
+^ self subscribe: anAnnouncementClass send: aSelector to: anObject
 ]
 
 Class WeakSubscriptionBuilder >> subscribe: anAnnouncementClass do: aValuable
@@ -40,6 +29,17 @@ Class WeakSubscriptionBuilder >> subscribe: anAnnouncementClass do: aValuable
 Class WeakSubscriptionBuilder >> subscribe: anAnnouncementClass send: aSelector to: anObject
 [
 ^ self subscribe: anAnnouncementClass do: (WeakMessageSend receiver: anObject selector: aSelector)
+]
+
+Class WeakSubscriptionBuilder >> weak
+[
+	"already weak"
+^ self
+]
+
+Class WeakSubscriptionBuilder >> when: anAnnouncementClass do: aValuable
+[
+^ self subscribe: anAnnouncementClass do: aValuable
 ]
 
 Metaclass

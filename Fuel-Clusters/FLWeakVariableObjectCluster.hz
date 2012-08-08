@@ -6,15 +6,15 @@ Class
 	classVariables: #();
 	package: #'Fuel-Clusters'.
 
-Class FLWeakVariableObjectCluster >> serializeReferencesVariablePartOf: anObject with: anEncoder
-[
-1 to: anObject basicSize do: [ :index | anEncoder encodeWeakReferenceTo: (anObject basicAt: index) ]
-]
-
 Class FLWeakVariableObjectCluster >> clusterReferencesDo: aBlock
 [
 	"Ensures that nil could be encoded, later in references step."
 super clusterReferencesDo: aBlock.aBlock value: nil
+]
+
+Class FLWeakVariableObjectCluster >> serializeReferencesVariablePartOf: anObject with: anEncoder
+[
+1 to: anObject basicSize do: [ :index | anEncoder encodeWeakReferenceTo: (anObject basicAt: index) ]
 ]
 
 Class FLWeakVariableObjectCluster >> variablePartReferencesOf: anObject do: aBlock

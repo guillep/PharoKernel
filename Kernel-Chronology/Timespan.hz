@@ -6,55 +6,56 @@ Class
 	classVariables: #();
 	package: #'Kernel-Chronology'.
 
-Class Timespan >> dates
+Class Timespan >> + operand
 [
-| dates |dates := OrderedCollection new.self datesDo: [ :m | dates add: m ].^ dates asArray
+	"operand conforms to protocol Duration"
+^ self class starting: self start + operand duration: self duration
+]
+
+Class Timespan >> - operand
+[
+	"operand conforms to protocol DateAndTime or protocol Duration"
+^ (operand respondsTo: #asDateAndTime)	ifTrue: [ self start - operand ]	ifFalse: [ self + operand negated ]
+]
+
+Class Timespan >> < comparand
+[
+^ self start < comparand
+]
+
+Class Timespan >> = comparand
+[
+^ self species = comparand species and: [ self start = comparand start and: [ self duration = comparand duration ] ]
+]
+
+Class Timespan >> asDate
+[
+^ start asDate
+]
+
+Class Timespan >> asDateAndTime
+[
+^ start
+]
+
+Class Timespan >> asDosTime
+[
+self deprecated: 'Use asDosTimestamp' on: '21 May 2012' in: 'Pharo 2.0'.^ start asDosTime
+]
+
+Class Timespan >> asDosTimestamp
+[
+^ start asDosTimestamp
+]
+
+Class Timespan >> asDuration
+[
+^ self duration
 ]
 
 Class Timespan >> asMonth
 [
 ^ start asMonth
-]
-
-Class Timespan >> next
-[
-^ self class starting: start + duration duration: duration
-]
-
-Class Timespan >> do: aBlock with: aFirstElement when: aConditionBlock
-[
-| element end |element := aFirstElement.end := self end.[ element start <= end ]	whileTrue: [ 		(aConditionBlock value: element)			ifTrue: [ aBlock value: element ].		element := element next ]
-]
-
-Class Timespan >> translateToUTC
-[
-^ self translateTo: 0
-]
-
-Class Timespan >> start
-[
-	"Answer the start DateAndTime of this timespan"
-^ start
-]
-
-Class Timespan >> monthIndex
-[
-^ self month
-]
-
-Class Timespan >> years
-[
-| years |years := OrderedCollection new.self yearsDo: [ :m | years add: m ].^ years asArray
-]
-
-Class Timespan >> asYear
-[
-^ start asYear
-]
-
-Class Timespan >> asTimeStamp
-[
-^ start asTimeStamp
 ]
 
 Class Timespan >> asSeconds
@@ -63,21 +64,52 @@ Class Timespan >> asSeconds
 ^ start asSeconds
 ]
 
-Class Timespan >> includesAnyOf: aCollection
+Class Timespan >> asTime
 [
-	"Answer whether any element of aCollection is included in the receiver"
-aCollection	do: [ :elem | 		(self includes: elem)			ifTrue: [ ^ true ] ].^ false
+^ start asTime
 ]
 
-Class Timespan >> julianDayNumber
+Class Timespan >> asTimeStamp
 [
-^ start julianDayNumber
+^ start asTimeStamp
 ]
 
-Class Timespan >> duration: aDuration
+Class Timespan >> asWeek
 [
-	"Set the Duration of this timespan"
-duration := aDuration
+^ start asWeek
+]
+
+Class Timespan >> asYear
+[
+^ start asYear
+]
+
+Class Timespan >> dates
+[
+| dates |dates := OrderedCollection new.self datesDo: [ :m | dates add: m ].^ dates asArray
+]
+
+Class Timespan >> datesDo: aBlock
+[
+self do: aBlock with: start asDate
+]
+
+Class Timespan >> day
+[
+	"Answer the day of the year represented by the receiver."
+^ self dayOfYear
+]
+
+Class Timespan >> dayOfMonth
+[
+	"Answer the day of the month represented by the receiver."
+^ start dayOfMonth
+]
+
+Class Timespan >> dayOfWeek
+[
+	"Answer the day of the week represented by the receiver."
+^ start dayOfWeek
 ]
 
 Class Timespan >> dayOfWeekName
@@ -92,14 +124,9 @@ Class Timespan >> dayOfYear
 ^ start dayOfYear
 ]
 
-Class Timespan >> asWeek
+Class Timespan >> daysInMonth
 [
-^ start asWeek
-]
-
-Class Timespan >> asDuration
-[
-^ self duration
+^ start daysInMonth
 ]
 
 Class Timespan >> daysInYear
@@ -108,215 +135,19 @@ Class Timespan >> daysInYear
 ^ start daysInYear
 ]
 
-Class Timespan >> do: aBlock with: aFirstElement
-[
-self do: aBlock with: aFirstElement when: [ :t | true ]
-]
-
-Class Timespan >> < comparand
-[
-^ self start < comparand
-]
-
-Class Timespan >> start: aDateAndTime
-[
-	"Store the start DateAndTime of this timespan"
-start := aDateAndTime asDateAndTime
-]
-
-Class Timespan >> weeksDo: aBlock
-[
-self do: aBlock with: self asWeek
-]
-
-Class Timespan >> every: aDuration do: aBlock
-[
-| element end |element := self start.end := self end.[ element <= end ]	whileTrue: [ 		aBlock value: element.		element := element + aDuration ]
-]
-
-Class Timespan >> = comparand
-[
-^ self species = comparand species and: [ self start = comparand start and: [ self duration = comparand duration ] ]
-]
-
-Class Timespan >> printOn: aStream
-[
-super printOn: aStream.aStream	nextPut: $(;	print: start;	nextPut: $D;	print: duration;	nextPut: $)
-]
-
-Class Timespan >> end
-[
-^ self duration asNanoSeconds = 0	ifTrue: [ self start ]	ifFalse: [ self next start - DateAndTime clockPrecision ]
-]
-
-Class Timespan >> firstDayOfMonth
-[
-^ start firstDayOfMonth
-]
-
-Class Timespan >> + operand
-[
-	"operand conforms to protocol Duration"
-^ self class starting: self start + operand duration: self duration
-]
-
-Class Timespan >> isLeapYear
-[
-^ start isLeapYear
-]
-
-Class Timespan >> translateTo: aTimeZone
-[
-^ self class starting: (start translateTo: aTimeZone)
-]
-
-Class Timespan >> dayOfWeek
-[
-	"Answer the day of the week represented by the receiver."
-^ start dayOfWeek
-]
-
-Class Timespan >> asDate
-[
-^ start asDate
-]
-
-Class Timespan >> to: anEnd
-[
-	"Answer an Timespan. anEnd must be aDateAndTime or a Timespan"
-^ Timespan starting: self start ending: anEnd asDateAndTime
-]
-
-Class Timespan >> asDateAndTime
-[
-^ start
-]
-
-Class Timespan >> months
-[
-| months |months := OrderedCollection new: 12.self monthsDo: [ :m | months add: m ].^ months asArray
-]
-
-Class Timespan >> - operand
-[
-	"operand conforms to protocol DateAndTime or protocol Duration"
-^ (operand respondsTo: #asDateAndTime)	ifTrue: [ self start - operand ]	ifFalse: [ self + operand negated ]
-]
-
-Class Timespan >> intersection: aTimespan
-[
-	"Return the Timespan both have in common, or nil"
-| aBegin anEnd |aBegin := self start max: aTimespan start.anEnd := self end min: aTimespan end.anEnd < aBegin	ifTrue: [ ^ nil ].^ self class starting: aBegin ending: anEnd
-]
-
-Class Timespan >> includes: aDateAndTime
-[
-^ (aDateAndTime isKindOf: Timespan)	ifTrue: [ (self includes: aDateAndTime start) and: [ self includes: aDateAndTime end ] ]	ifFalse: [ aDateAndTime asDateAndTime between: start and: self end ]
-]
-
 Class Timespan >> daysLeftInYear
 [
 ^ start daysLeftInYear
 ]
 
-Class Timespan >> daysInMonth
+Class Timespan >> do: aBlock with: aFirstElement
 [
-^ start daysInMonth
+self do: aBlock with: aFirstElement when: [ :t | true ]
 ]
 
-Class Timespan >> asDosTimestamp
+Class Timespan >> do: aBlock with: aFirstElement when: aConditionBlock
 [
-^ start asDosTimestamp
-]
-
-Class Timespan >> workDatesDo: aBlock
-[
-	"Exclude Saturday and Sunday"
-self do: aBlock with: start asDate when: [ :d | d dayOfWeek < 6 ]
-]
-
-Class Timespan >> hash
-[
-^ start hash + duration hash
-]
-
-Class Timespan >> day
-[
-	"Answer the day of the year represented by the receiver."
-^ self dayOfYear
-]
-
-Class Timespan >> asTime
-[
-^ start asTime
-]
-
-Class Timespan >> asDosTime
-[
-self deprecated: 'Use asDosTimestamp' on: '21 May 2012' in: 'Pharo 2.0'.^ start asDosTime
-]
-
-Class Timespan >> yearsDo: aBlock
-[
-self do: aBlock with: start asYear
-]
-
-Class Timespan >> includesAllOf: aCollection
-[
-	"Answer whether all the elements of aCollection are in the receiver."
-aCollection	do: [ :elem | 		(self includes: elem)			ifFalse: [ ^ false ] ].^ true
-]
-
-Class Timespan >> weeks
-[
-| weeks |weeks := OrderedCollection new.self weeksDo: [ :m | weeks add: m ].^ weeks asArray
-]
-
-Class Timespan >> datesDo: aBlock
-[
-self do: aBlock with: start asDate
-]
-
-Class Timespan >> monthAbbreviation
-[
-^ start monthAbbreviation
-]
-
-Class Timespan >> month
-[
-^ start month
-]
-
-Class Timespan >> monthsDo: aBlock
-[
-self do: aBlock with: start asMonth
-]
-
-Class Timespan >> dayOfMonth
-[
-	"Answer the day of the month represented by the receiver."
-^ start dayOfMonth
-]
-
-Class Timespan >> monthName
-[
-^ start monthName
-]
-
-Class Timespan >> union: aTimespan
-[
-	"Return the Timespan spanned by both"
-| aBegin anEnd |aBegin := self start min: aTimespan start.anEnd := self end max: aTimespan end.^ Timespan starting: aBegin ending: anEnd + DateAndTime clockPrecision
-]
-
-Class Timespan >> year
-[
-^ start year
-]
-
-Class Timespan >> previous
-[
-^ self class starting: start - duration duration: duration
+| element end |element := aFirstElement.end := self end.[ element start <= end ]	whileTrue: [ 		(aConditionBlock value: element)			ifTrue: [ aBlock value: element ].		element := element next ]
 ]
 
 Class Timespan >> duration
@@ -325,9 +156,183 @@ Class Timespan >> duration
 ^ duration
 ]
 
+Class Timespan >> duration: aDuration
+[
+	"Set the Duration of this timespan"
+duration := aDuration
+]
+
+Class Timespan >> end
+[
+^ self duration asNanoSeconds = 0	ifTrue: [ self start ]	ifFalse: [ self next start - DateAndTime clockPrecision ]
+]
+
+Class Timespan >> every: aDuration do: aBlock
+[
+| element end |element := self start.end := self end.[ element <= end ]	whileTrue: [ 		aBlock value: element.		element := element + aDuration ]
+]
+
+Class Timespan >> firstDayOfMonth
+[
+^ start firstDayOfMonth
+]
+
+Class Timespan >> hash
+[
+^ start hash + duration hash
+]
+
+Class Timespan >> includes: aDateAndTime
+[
+^ (aDateAndTime isKindOf: Timespan)	ifTrue: [ (self includes: aDateAndTime start) and: [ self includes: aDateAndTime end ] ]	ifFalse: [ aDateAndTime asDateAndTime between: start and: self end ]
+]
+
+Class Timespan >> includesAllOf: aCollection
+[
+	"Answer whether all the elements of aCollection are in the receiver."
+aCollection	do: [ :elem | 		(self includes: elem)			ifFalse: [ ^ false ] ].^ true
+]
+
+Class Timespan >> includesAnyOf: aCollection
+[
+	"Answer whether any element of aCollection is included in the receiver"
+aCollection	do: [ :elem | 		(self includes: elem)			ifTrue: [ ^ true ] ].^ false
+]
+
+Class Timespan >> intersection: aTimespan
+[
+	"Return the Timespan both have in common, or nil"
+| aBegin anEnd |aBegin := self start max: aTimespan start.anEnd := self end min: aTimespan end.anEnd < aBegin	ifTrue: [ ^ nil ].^ self class starting: aBegin ending: anEnd
+]
+
+Class Timespan >> isLeapYear
+[
+^ start isLeapYear
+]
+
+Class Timespan >> julianDayNumber
+[
+^ start julianDayNumber
+]
+
+Class Timespan >> month
+[
+^ start month
+]
+
+Class Timespan >> monthAbbreviation
+[
+^ start monthAbbreviation
+]
+
+Class Timespan >> monthIndex
+[
+^ self month
+]
+
+Class Timespan >> monthName
+[
+^ start monthName
+]
+
+Class Timespan >> months
+[
+| months |months := OrderedCollection new: 12.self monthsDo: [ :m | months add: m ].^ months asArray
+]
+
+Class Timespan >> monthsDo: aBlock
+[
+self do: aBlock with: start asMonth
+]
+
+Class Timespan >> next
+[
+^ self class starting: start + duration duration: duration
+]
+
+Class Timespan >> previous
+[
+^ self class starting: start - duration duration: duration
+]
+
+Class Timespan >> printOn: aStream
+[
+super printOn: aStream.aStream	nextPut: $(;	print: start;	nextPut: $D;	print: duration;	nextPut: $)
+]
+
+Class Timespan >> start
+[
+	"Answer the start DateAndTime of this timespan"
+^ start
+]
+
+Class Timespan >> start: aDateAndTime
+[
+	"Store the start DateAndTime of this timespan"
+start := aDateAndTime asDateAndTime
+]
+
+Class Timespan >> to: anEnd
+[
+	"Answer an Timespan. anEnd must be aDateAndTime or a Timespan"
+^ Timespan starting: self start ending: anEnd asDateAndTime
+]
+
+Class Timespan >> translateTo: aTimeZone
+[
+^ self class starting: (start translateTo: aTimeZone)
+]
+
+Class Timespan >> translateToUTC
+[
+^ self translateTo: 0
+]
+
+Class Timespan >> union: aTimespan
+[
+	"Return the Timespan spanned by both"
+| aBegin anEnd |aBegin := self start min: aTimespan start.anEnd := self end max: aTimespan end.^ Timespan starting: aBegin ending: anEnd + DateAndTime clockPrecision
+]
+
+Class Timespan >> weeks
+[
+| weeks |weeks := OrderedCollection new.self weeksDo: [ :m | weeks add: m ].^ weeks asArray
+]
+
+Class Timespan >> weeksDo: aBlock
+[
+self do: aBlock with: self asWeek
+]
+
+Class Timespan >> workDatesDo: aBlock
+[
+	"Exclude Saturday and Sunday"
+self do: aBlock with: start asDate when: [ :d | d dayOfWeek < 6 ]
+]
+
+Class Timespan >> year
+[
+^ start year
+]
+
+Class Timespan >> years
+[
+| years |years := OrderedCollection new.self yearsDo: [ :m | years add: m ].^ years asArray
+]
+
+Class Timespan >> yearsDo: aBlock
+[
+self do: aBlock with: start asYear
+]
+
 Metaclass
 	name: #Timespan;
 	instanceVariables: #().
+
+Metaclass Timespan >> current
+[
+^ self starting: DateAndTime now
+]
 
 Metaclass Timespan >> new
 [
@@ -335,9 +340,9 @@ Metaclass Timespan >> new
 ^ self starting: DateAndTime new
 ]
 
-Metaclass Timespan >> starting: startDateAndTime ending: endDateAndTime
+Metaclass Timespan >> starting: aDateAndTime
 [
-^ self starting: startDateAndTime duration: endDateAndTime asDateAndTime - startDateAndTime
+^ self starting: aDateAndTime duration: Duration zero
 ]
 
 Metaclass Timespan >> starting: aDateAndTime duration: aDuration
@@ -345,13 +350,8 @@ Metaclass Timespan >> starting: aDateAndTime duration: aDuration
 ^ self basicNew	start: aDateAndTime asDateAndTime;	duration: aDuration;	yourself
 ]
 
-Metaclass Timespan >> current
+Metaclass Timespan >> starting: startDateAndTime ending: endDateAndTime
 [
-^ self starting: DateAndTime now
-]
-
-Metaclass Timespan >> starting: aDateAndTime
-[
-^ self starting: aDateAndTime duration: Duration zero
+^ self starting: startDateAndTime duration: endDateAndTime asDateAndTime - startDateAndTime
 ]
 

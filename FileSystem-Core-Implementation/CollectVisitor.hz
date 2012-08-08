@@ -15,14 +15,9 @@ Metaclass
 	name: #CollectVisitor;
 	instanceVariables: #().
 
-Metaclass CollectVisitor >> postorder: aReference
+Metaclass CollectVisitor >> breadthFirst: aReference
 [
-^ self postorder: aReference collect: [ :entry | entry ]
-]
-
-Metaclass CollectVisitor >> preorder: aReference
-[
-^ self preorder: aReference collect: [ :entry | entry ]
+^ self breadthFirst: aReference collect: [ :entry | entry ]
 ]
 
 Metaclass CollectVisitor >> breadthFirst: aReference collect: aBlock
@@ -35,9 +30,9 @@ Metaclass CollectVisitor >> collect: aBlock
 ^ self basicNew initializeWithBlock: aBlock
 ]
 
-Metaclass CollectVisitor >> preorder: aReference collect: aBlock
+Metaclass CollectVisitor >> postorder: aReference
 [
-^ (self collect: aBlock) preorder: aReference
+^ self postorder: aReference collect: [ :entry | entry ]
 ]
 
 Metaclass CollectVisitor >> postorder: aReference collect: aBlock
@@ -45,8 +40,13 @@ Metaclass CollectVisitor >> postorder: aReference collect: aBlock
 ^ (self collect: aBlock) postorder: aReference
 ]
 
-Metaclass CollectVisitor >> breadthFirst: aReference
+Metaclass CollectVisitor >> preorder: aReference
 [
-^ self breadthFirst: aReference collect: [ :entry | entry ]
+^ self preorder: aReference collect: [ :entry | entry ]
+]
+
+Metaclass CollectVisitor >> preorder: aReference collect: aBlock
+[
+^ (self collect: aBlock) preorder: aReference
 ]
 

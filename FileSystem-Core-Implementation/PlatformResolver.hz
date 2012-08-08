@@ -6,9 +6,9 @@ Class
 	classVariables: #();
 	package: #'FileSystem-Core-Implementation'.
 
-Class PlatformResolver >> supportedOrigins
+Class PlatformResolver >> desktop
 [
-^ #(#home #desktop #documents #preferences)
+^ self subclassResponsibility
 ]
 
 Class PlatformResolver >> documents
@@ -21,25 +21,19 @@ Class PlatformResolver >> home
 ^ self subclassResponsibility
 ]
 
-Class PlatformResolver >> desktop
-[
-^ self subclassResponsibility
-]
-
 Class PlatformResolver >> preferences
 [
 ^ self subclassResponsibility
 ]
 
+Class PlatformResolver >> supportedOrigins
+[
+^ #(#home #desktop #documents #preferences)
+]
+
 Metaclass
 	name: #PlatformResolver;
 	instanceVariables: #().
-
-Metaclass PlatformResolver >> primitiveGetUntrustedUserDirectory
-[
-	<primitive: 'primitiveGetUntrustedUserDirectory' module: 'SecurityPlugin'>
-self primitiveFailed.self flag: 'use a more decent way to get a path in the users home directory'
-]
 
 Metaclass PlatformResolver >> forCurrentPlatform
 [
@@ -49,5 +43,11 @@ Metaclass PlatformResolver >> forCurrentPlatform
 Metaclass PlatformResolver >> platformName
 [
 ^ nil
+]
+
+Metaclass PlatformResolver >> primitiveGetUntrustedUserDirectory
+[
+	<primitive: 'primitiveGetUntrustedUserDirectory' module: 'SecurityPlugin'>
+self primitiveFailed.self flag: 'use a more decent way to get a path in the users home directory'
 ]
 

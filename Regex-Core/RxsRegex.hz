@@ -6,22 +6,6 @@ Class
 	classVariables: #();
 	package: #'Regex-Core'.
 
-Class RxsRegex >> isNullable
-[
-^ branch isNullable or: [ regex notNil and: [ regex isNullable ] ]
-]
-
-Class RxsRegex >> initializeBranch: aBranch regex: aRegex
-[
-	"See class comment for instance variable description."
-branch := aBranch.regex := aRegex
-]
-
-Class RxsRegex >> regex
-[
-^ regex
-]
-
 Class RxsRegex >> branch
 [
 ^ branch
@@ -31,6 +15,22 @@ Class RxsRegex >> dispatchTo: aMatcher
 [
 	"Inform the matcher of the kind of the node, and it	will do whatever it has to."
 ^ aMatcher syntaxRegex: self
+]
+
+Class RxsRegex >> initializeBranch: aBranch regex: aRegex
+[
+	"See class comment for instance variable description."
+branch := aBranch.regex := aRegex
+]
+
+Class RxsRegex >> isNullable
+[
+^ branch isNullable or: [ regex notNil and: [ regex isNullable ] ]
+]
+
+Class RxsRegex >> regex
+[
+^ regex
 ]
 
 Metaclass

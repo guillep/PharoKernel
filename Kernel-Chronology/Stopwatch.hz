@@ -6,14 +6,49 @@ Class
 	classVariables: #();
 	package: #'Kernel-Chronology'.
 
-Class Stopwatch >> reset
+Class Stopwatch >> activate
 [
-self suspend.timespans := nil
+self isSuspended	ifTrue: [ 		self timespans add: (Timespan starting: DateAndTime now duration: Duration zero).		self state: #active ]
 ]
 
 Class Stopwatch >> duration
 [
 | ts last |self isSuspended	ifTrue: [ 		(ts := self timespans) isEmpty			ifTrue: [ ts := {(Timespan starting: DateAndTime now duration: Duration zero)} ] ]	ifFalse: [ 		last := self timespans last.		ts := self timespans allButLast			add:					(last							duration: DateAndTime now - last start;							yourself);			yourself ].^ (ts collect: [ :t | t duration ]) sum
+]
+
+Class Stopwatch >> end
+[
+^ self timespans last next
+]
+
+Class Stopwatch >> isActive
+[
+^ self state = #active
+]
+
+Class Stopwatch >> isSuspended
+[
+^ self state = #suspended
+]
+
+Class Stopwatch >> printOn: aStream
+[
+super printOn: aStream.aStream	nextPut: $(;	nextPutAll: self state;	nextPut: $:;	print: self duration;	nextPut: $)
+]
+
+Class Stopwatch >> reActivate
+[
+self	suspend;	activate
+]
+
+Class Stopwatch >> reset
+[
+self suspend.timespans := nil
+]
+
+Class Stopwatch >> start
+[
+^ self timespans first start
 ]
 
 Class Stopwatch >> state
@@ -26,49 +61,14 @@ Class Stopwatch >> state: aSymbol
 state := aSymbol
 ]
 
-Class Stopwatch >> printOn: aStream
+Class Stopwatch >> suspend
 [
-super printOn: aStream.aStream	nextPut: $(;	nextPutAll: self state;	nextPut: $:;	print: self duration;	nextPut: $)
-]
-
-Class Stopwatch >> end
-[
-^ self timespans last next
-]
-
-Class Stopwatch >> isSuspended
-[
-^ self state = #suspended
-]
-
-Class Stopwatch >> activate
-[
-self isSuspended	ifTrue: [ 		self timespans add: (Timespan starting: DateAndTime now duration: Duration zero).		self state: #active ]
-]
-
-Class Stopwatch >> isActive
-[
-^ self state = #active
+| ts |self isActive	ifTrue: [ 		ts := self timespans last.		ts duration: DateAndTime now - ts start.		self state: #suspended ]
 ]
 
 Class Stopwatch >> timespans
 [
 ^ timespans ifNil: [ timespans := OrderedCollection new ]
-]
-
-Class Stopwatch >> reActivate
-[
-self	suspend;	activate
-]
-
-Class Stopwatch >> start
-[
-^ self timespans first start
-]
-
-Class Stopwatch >> suspend
-[
-| ts |self isActive	ifTrue: [ 		ts := self timespans last.		ts duration: DateAndTime now - ts start.		self state: #suspended ]
 ]
 
 Metaclass

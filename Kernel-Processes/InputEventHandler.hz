@@ -6,6 +6,16 @@ Class
 	classVariables: #();
 	sharedPools: #(#EventSensorConstants );	package: #'Kernel-Processes'.
 
+Class InputEventHandler >> flushEvents
+[
+
+]
+
+Class InputEventHandler >> handleEvent: eventBuffer
+[
+self subclassResponsibility
+]
+
 Class InputEventHandler >> registerIn: anEventFetcher
 [
 eventFetcher := anEventFetcher.eventFetcher registerHandler: self
@@ -14,16 +24,6 @@ eventFetcher := anEventFetcher.eventFetcher registerHandler: self
 Class InputEventHandler >> unregister
 [
 eventFetcher ifNotNil: [ eventFetcher unregisterHandler: self ]
-]
-
-Class InputEventHandler >> handleEvent: eventBuffer
-[
-self subclassResponsibility
-]
-
-Class InputEventHandler >> flushEvents
-[
-
 ]
 
 Metaclass

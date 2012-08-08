@@ -6,24 +6,19 @@ Class
 	classVariables: #();
 	package: #'Regex-Core'.
 
-Class RxCharSetParser >> parseStep
-[
-lookahead = $[	ifTrue: [ 		source peek = $:			ifTrue: [ ^ self parseNamedSet ]			ifFalse: [ ^ self parseCharOrRange ] ].lookahead = $\	ifTrue: [ ^ self parseEscapeChar ].lookahead = $-	ifTrue: [ RxParser signalSyntaxException: 'invalid range' ].self parseCharOrRange
-]
-
 Class RxCharSetParser >> addChar: aChar
 [
 elements add: (RxsCharacter with: aChar)
 ]
 
+Class RxCharSetParser >> addRangeFrom: firstChar to: lastChar
+[
+firstChar asInteger > lastChar asInteger	ifTrue: [ RxParser signalSyntaxException: ' bad character range' ].elements add: (RxsRange from: firstChar to: lastChar)
+]
+
 Class RxCharSetParser >> initialize: aStream
 [
 source := aStream.lookahead := aStream next.elements := OrderedCollection new
-]
-
-Class RxCharSetParser >> parseEscapeChar
-[
-self match: $\.$- = lookahead	ifTrue: [ elements add: (RxsCharacter with: $-) ]	ifFalse: [ elements add: (RxsPredicate forEscapedLetter: lookahead) ].self match: lookahead
 ]
 
 Class RxCharSetParser >> match: aCharacter
@@ -36,19 +31,24 @@ Class RxCharSetParser >> parse
 lookahead = $-	ifTrue: [ 		self addChar: $-.		self match: $- ].[ lookahead isNil ] whileFalse: [ self parseStep ].^ elements
 ]
 
-Class RxCharSetParser >> parseNamedSet
-[
-| name |self	match: $[;	match: $:.name := (String with: lookahead) , (source upTo: $:).lookahead := source next.self match: $].elements add: (RxsPredicate forNamedClass: name)
-]
-
 Class RxCharSetParser >> parseCharOrRange
 [
 | firstChar |firstChar := lookahead.self match: firstChar.lookahead = $-	ifTrue: [ 		self match: $-.		lookahead isNil			ifTrue: [ 				^ self					addChar: firstChar;					addChar: $- ]			ifFalse: [ 				self addRangeFrom: firstChar to: lookahead.				^ self match: lookahead ] ].self addChar: firstChar
 ]
 
-Class RxCharSetParser >> addRangeFrom: firstChar to: lastChar
+Class RxCharSetParser >> parseEscapeChar
 [
-firstChar asInteger > lastChar asInteger	ifTrue: [ RxParser signalSyntaxException: ' bad character range' ].elements add: (RxsRange from: firstChar to: lastChar)
+self match: $\.$- = lookahead	ifTrue: [ elements add: (RxsCharacter with: $-) ]	ifFalse: [ elements add: (RxsPredicate forEscapedLetter: lookahead) ].self match: lookahead
+]
+
+Class RxCharSetParser >> parseNamedSet
+[
+| name |self	match: $[;	match: $:.name := (String with: lookahead) , (source upTo: $:).lookahead := source next.self match: $].elements add: (RxsPredicate forNamedClass: name)
+]
+
+Class RxCharSetParser >> parseStep
+[
+lookahead = $[	ifTrue: [ 		source peek = $:			ifTrue: [ ^ self parseNamedSet ]			ifFalse: [ ^ self parseCharOrRange ] ].lookahead = $\	ifTrue: [ ^ self parseEscapeChar ].lookahead = $-	ifTrue: [ RxParser signalSyntaxException: 'invalid range' ].self parseCharOrRange
 ]
 
 Metaclass

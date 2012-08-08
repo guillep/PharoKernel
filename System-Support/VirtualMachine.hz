@@ -10,68 +10,30 @@ Metaclass
 	name: #VirtualMachine;
 	instanceVariables: #().
 
-Metaclass VirtualMachine >> incrementalGCCount
+Metaclass VirtualMachine >> allocationsBetweenGC
 [
-	"Answer the total number of incremental GCs since startup (read-only)."
-^ self parameterAt: 9
+	"allocations between GCs (read-write)"
+^ self parameterAt: 5
 ]
 
-Metaclass VirtualMachine >> setGCBiasToGrowGCLimit: aNumber
+Metaclass VirtualMachine >> allocationsBetweenGC: anInteger
 [
-	"Primitive. Indicate that the bias to grow logic should do a GC after aNumber Bytes"
-	<primitive: 'primitiveSetGCBiasToGrowGCLimit'>
-^ self primitiveFailed	"Example:	Smalltalk vm setGCBiasToGrowGCLimit: 16*1024*1024."
+	"allocations between GCs (read-write)"
+^ self parameterAt: 5 put: anInteger
 ]
 
-Metaclass VirtualMachine >> maxFilenameLength
+Metaclass VirtualMachine >> binary
 [
-	"Return the maximal filename length (only under MacOS)"
-	"Smalltalk vm maxFilenameLength"
-^ self getSystemAttribute: 1201
+	"Answer the a file reference to the virtual machine binary."
+	"SmalltalkImage current vmBinary"
+^ FileLocator vmBinary
 ]
 
-Metaclass VirtualMachine >> gcBiasToGrowLimit: arg
+Metaclass VirtualMachine >> buildDate
 [
-	"Tell the VM the grow limit if the GC logic has bias to grow."
-	<primitive: 'primitiveSetGCBiasToGrowGCLimit'>
-^ self primitiveFailed
-]
-
-Metaclass VirtualMachine >> isRunningCog
-[
-	"Returns true if we're running on a Cog VM (JIT or StackInterpreter)	 (parameterAt: 42 is the number of stack pages)"
-^ [ (self parameterAt: 42) > 0 ]	on: Error	do: [ :ex | ex return: false ]
-]
-
-Metaclass VirtualMachine >> processHasThreadIdInstVar: aBoolean
-[
-	"The threaded VM needs to know if the 4th inst var of Process	 is threadId which it uses to control process-to-thread binding.	 This flag persists across snapshots, stored in the image header."
-aBoolean	ifTrue: [ self assert: (Process instVarNames at: 4) = 'threadId' ].self parameterAt: 48 put: ((self parameterAt: 48) bitClear: 1) + aBoolean asBit
-]
-
-Metaclass VirtualMachine >> statisticsShortReport
-[
-	"Convenience item for access to recent statistics only"
-	"	Workspace openContents: (Smalltalk vm statisticsShortReport) label: 'VM Recent Statistics'	"
-^ self statisticsReport readStream	upToAll: 'Since';	nextLine;	upToEnd
-]
-
-Metaclass VirtualMachine >> oldSpaceEnd
-[
-	"end of old-space (0-based, read-only)"
-^ self parameterAt: 1
-]
-
-Metaclass VirtualMachine >> totalFullGCTime
-[
-	"Answer the total time in milliseconds spent in full GCs since startup (read-only)."
-^ self parameterAt: 8
-]
-
-Metaclass VirtualMachine >> maxExternalSemaphores
-[
-	"The size of array in some VM's where external signals for	semaphores in externalObjects are handled.	Essentially, if a semaphore is registered in externalObjects outside	its bounds, they will not be signalled."
-^ [ self parameterAt: 49 ]	on: PrimitiveFailed	do: [ :ex | ex return: nil ]
+	"Return a String reflecting the build date of the VM"
+	"Smalltalk buildDate"
+^ self getSystemAttribute: 1006
 ]
 
 Metaclass VirtualMachine >> cogitClass
@@ -80,10 +42,11 @@ Metaclass VirtualMachine >> cogitClass
 ^ self getSystemAttribute: 1008
 ]
 
-Metaclass VirtualMachine >> imagePath
+Metaclass VirtualMachine >> directory
 [
-	"Image file path	Ex:  '/Users/foo/Pharo/Pharo-1.1.1-dev10.09.1.image'"
-^ Smalltalk image imagePath
+	"Answer the a file reference to the directory containing the Smalltalk virtual machine."
+	"SmalltalkImage current directory"
+^ FileLocator vmDirectory
 ]
 
 Metaclass VirtualMachine >> documentPath
@@ -93,42 +56,41 @@ Metaclass VirtualMachine >> documentPath
 ^ self getSystemAttribute: 2
 ]
 
-Metaclass VirtualMachine >> imageFile
+Metaclass VirtualMachine >> extraVMMemory
 [
-	"Image file "
-^ Smalltalk image imageFile
+	"Answer the current setting of the 'extraVMMemory' VM parameter. See the comment in extraVMMemory: for details."
+^ self parameterAt: 23
 ]
 
-Metaclass VirtualMachine >> vmDirectory
+Metaclass VirtualMachine >> extraVMMemory: extraBytesToReserve
 [
-^ self directory
+	"Request that the given amount of extra memory be reserved for use by the virtual machine to leave extra C heap space available for things like plugins, network and file buffers, and so on. This request is stored when the image is saved and honored when the image is next started up. Answer the previous value of this parameter."
+extraBytesToReserve < 0	ifTrue: [ self error: 'VM memory reservation must be non-negative' ].^ self parameterAt: 23 put: extraBytesToReserve
 ]
 
-Metaclass VirtualMachine >> interpreterClass
+Metaclass VirtualMachine >> fileName
 [
-	"Return the interpreter class that is currently executing the system (Cog VM only)"
-^ self getSystemAttribute: 1007
+^ (FilePath pathName: self fullPath isEncoded: true) asSqueakPathName
 ]
 
-Metaclass VirtualMachine >> setGCParameters
+Metaclass VirtualMachine >> flagInterpretedMethods: aBoolean
 [
-	"Adjust the VM's default GC parameters to avoid premature tenuring."
-self allocationsBetweenGC: 4000.	"do an incremental GC after this many allocations"self tenuringThreshold: 2000.	"tenure when more than this many objects survive the GC"self setGCBiasToGrowGCLimit: 16 * 1024 * 1024.self setGCBiasToGrow: 1
+	"The Cog VM can be instructed to set the flag bit of CompiledMethods that it executes but will only interpret.  This can be used e.g. to profile startup. See CompiledMethod>>#flag & CompiledMethod>>#clearFlag. This flag persists across snapshots, stored in the image header."
+self	parameterAt: 48	put:		((self parameterAt: 48) bitClear: 2)			+				(aBoolean					ifTrue: [ 2 ]					ifFalse: [ 0 ])
 ]
 
-Metaclass VirtualMachine >> youngSpaceEnd
+Metaclass VirtualMachine >> fullGCCount
 [
-	"end of young-space"
-^ self parameterAt: 2
+	"Answer the total number of full GCs since startup (read-only)."
+^ self parameterAt: 7
 ]
 
-Metaclass VirtualMachine >> platformSourceVersion
+Metaclass VirtualMachine >> fullPath
 [
-	"The use of this primitive not recommended. Not all VMs providing that"
-	"Answer a string corresponding to the version of the external platform source	code, typically written in C and managed separately for each platform. This	invokes an optional primitive that may not be available on all virtual machines."
-	"Smalltalk vm platformSourceVersion"
-	<primitive: 'primitivePlatformSourceVersion'>
-self notify: 'This virtual machine does not support the optional primitive #primitivePlatformSourceVersion' translated.^ ''
+	"Return the full vm path as a string"
+	"Ex: '/Applications/Squeak/Squeak 4.2.5beta1U.app/Contents/MacOS/Squeak VM Opt'"
+	"SmalltalkImage current vmFullPath"
+^ self getSystemAttribute: 0
 ]
 
 Metaclass VirtualMachine >> gcBiasToGrow: aBool
@@ -137,16 +99,134 @@ Metaclass VirtualMachine >> gcBiasToGrow: aBool
 self	primitiveGCBiasToGrow:		(aBool			ifTrue: [ 1 ]			ifFalse: [ 0 ])
 ]
 
-Metaclass VirtualMachine >> tenuringThreshold: anInteger
+Metaclass VirtualMachine >> gcBiasToGrowLimit: arg
 [
-	"survivor count tenuring threshold (read-write).	tenure when more than this many objects survive the GC"
-^ self parameterAt: 6 put: anInteger
+	"Tell the VM the grow limit if the GC logic has bias to grow."
+	<primitive: 'primitiveSetGCBiasToGrowGCLimit'>
+^ self primitiveFailed
 ]
 
-Metaclass VirtualMachine >> tenureCount
+Metaclass VirtualMachine >> getParameters
 [
-	"tenures of surving objects since startup (read-only)."
-^ self parameterAt: 11
+	"Answer an Array containing the current values of the VM's internal	parameter/metric registers.  Each value is stored in the array at the	index corresponding to its VM register.  (See #vmParameterAt: and	#vmParameterAt:put:.)"
+	"Smalltalk vm getParameters"
+	<primitive: 254>
+self primitiveFailed
+]
+
+Metaclass VirtualMachine >> getSystemAttribute: attributeID
+[
+	"Optional. Answer the string for the system attribute with the given 	integer ID. Answer nil if the given attribute is not defined on this 	platform. On platforms that support invoking programs from command 	lines (e.g., Unix), this mechanism can be used to pass command line 	arguments to programs written in Pharo.	By convention, the first command line argument that is not a VM	configuration option is considered a 'document' to be filed in. Such a	document can add methods and classes, can contain a serialized object,	can include code to be executed, or any combination of these.	Currently defined attributes include: 	-1000   1000th command line argument that specify VM options   	...	-1              first command line argument that specify VM options      0               the full path name for currently executing VM                       (or, on some platforms, just the path name of the VM's directory)       1               full path name of this image (better use primImageName instead)       2               a Squeak document to open, if any       3               first command line argument for Squeak programs       ...       1000    1000th command line argument for Squeak programs       1001    this platform's operating system 'Mac OS', 'Win32', 'unix', ...       1002    operating system version       1003    this platform's processor type       1004    vm version       1005    window system name       1006    vm build id       1007    Interpreter class (Cog VM only)       1008    Cogit class (Cog VM only)       1201    max filename length (Mac OS only)       1202    file last error (Mac OS only)       10001   hardware details (Win32 only)       10002   operating system details (Win32 only)       10003   graphics hardware details (Win32 only)"
+	<primitive: 149>
+^ nil
+]
+
+Metaclass VirtualMachine >> imageFile
+[
+	"Image file "
+^ Smalltalk image imageFile
+]
+
+Metaclass VirtualMachine >> imagePath
+[
+	"Image file path	Ex:  '/Users/foo/Pharo/Pharo-1.1.1-dev10.09.1.image'"
+^ Smalltalk image imagePath
+]
+
+Metaclass VirtualMachine >> imageVersionNumber
+[
+	"Image version number (6505 means the Squeak V3 format with BlockClosure support (but _without_ BlockContext support)"
+^ self parameterAt: 41
+]
+
+Metaclass VirtualMachine >> incrementalGCCount
+[
+	"Answer the total number of incremental GCs since startup (read-only)."
+^ self parameterAt: 9
+]
+
+Metaclass VirtualMachine >> interpreterClass
+[
+	"Return the interpreter class that is currently executing the system (Cog VM only)"
+^ self getSystemAttribute: 1007
+]
+
+Metaclass VirtualMachine >> interpreterSourceDate
+[
+	"Return the date of changes given by `self interpreterSourceVersion`"
+| dateString parts |dateString := (self interpreterSourceVersion splitOn: 'Date: ') second.dateString first isDigit	ifTrue: [ 		"most probably the date is in ISO 8601 Format"		^ dateString asDateAndTime ].	"Otherwise assume the old format: DDD MMM DD HH:MM:SS YYYY +TTTT ..."parts := dateString substrings first: 6.	"create a more reasonable string.."dateString := String	streamContents: [ :s | 		s			nextPutAll: (parts at: 5);			space;			nextPutAll: (parts at: 2);			space;			nextPutAll: (parts at: 3);			space;			nextPutAll: (parts at: 4);			space;			nextPutAll: parts last;			space	"year"	"month name"	"day of month"	"time"	"timezone" ].^ dateString asDateAndTime
+]
+
+Metaclass VirtualMachine >> interpreterSourceVersion
+[
+	"The use of this primitive not recommended. Not all VMs providing that"
+	"Answer a string corresponding to the version of the interpreter source.	This represents the version level of the Smalltalk source code (interpreter	and various plugins) that is translated to C by a CCodeGenerator, as distinct	from the external platform source code, typically written in C and managed	separately for each platform. An optional primitive is invoked that may not	be available on all virtual machines."
+	"Smalltalk vm interpreterSourceVersion"
+	<primitive: 'primitiveInterpreterSourceVersion'>
+^ self getSystemAttribute: 1009
+]
+
+Metaclass VirtualMachine >> isRunningCog
+[
+	"Returns true if we're running on a Cog VM (JIT or StackInterpreter)	 (parameterAt: 42 is the number of stack pages)"
+^ [ (self parameterAt: 42) > 0 ]	on: Error	do: [ :ex | ex return: false ]
+]
+
+Metaclass VirtualMachine >> isRunningCogit
+[
+	"Returns true if we're running on the Cog JIT	 (vmParameterAt: 46 is the size of the machine code zone)"
+^ [ (self parameterAt: 46) > 0 ]	on: Error	do: [ :ex | ex return: false ]
+]
+
+Metaclass VirtualMachine >> maxExternalSemaphores
+[
+	"The size of array in some VM's where external signals for	semaphores in externalObjects are handled.	Essentially, if a semaphore is registered in externalObjects outside	its bounds, they will not be signalled."
+^ [ self parameterAt: 49 ]	on: PrimitiveFailed	do: [ :ex | ex return: nil ]
+]
+
+Metaclass VirtualMachine >> maxExternalSemaphores: aSize
+[
+	"This method should never be called as result of normal program	execution. If it is however, handle it differently:	- In development, signal an error to promt user to set a bigger size	at startup immediately.	- In production, accept the cost of potentially unhandled interrupts,	but log the action for later review.		See comment in maxExternalObjectsSilently: why this behaviour is	desirable, "
+	"Can't find a place where development/production is decided.	Suggest Smalltalk image inProduction, but use an overridable temp	meanwhile. "
+| inProduction |self maxExternalSemaphores ifNil: [ ^ 0 ].inProduction := false.^ inProduction	ifTrue: [ 		self maxExternalSemaphoresSilently: aSize.		self			crTrace:					'WARNING: Had to increase size of semaphore signal handling table due to many external objects concurrently in use';			crTrace: 'You should increase this size at startup using #maxExternalObjectsSilently:';			crTrace: 'Current table size: ' , self maxExternalSemaphores printString ]	ifFalse: [ 		"Smalltalk image"		self error: 'Not enough space for external objects, set a larger size at startup!'	"Smalltalk image" ]
+]
+
+Metaclass VirtualMachine >> maxExternalSemaphoresSilently: aSize
+[
+	"Changes the size of array where external signals for semaphores in	externalObjects are handled.. 	The size can only grow, and will always be the next power of two	larger than the parameter.		The intended use is to set the table size to some adequate	maximum as part of a non-resuming image startUp.		Setting this at any time other than start-up can potentially result in	lost signals during reallocation.	i.e. Requests handled during copying og signals from old to new array	won't be seen if they occur to indices already copied, before	pointers to the new and old arrays are switched."
+self maxExternalSemaphores ifNil: [ ^ 0 ].	"The vm-header field where the size is stored is a short, maximum	64k entries. 	Well, on most platforms anyways"(aSize < 0 or: [ aSize > 65535 ])	ifTrue: [ ^ DomainError signalFrom: 0 to: 65535 ].^ self parameterAt: 49 put: aSize
+]
+
+Metaclass VirtualMachine >> maxFilenameLength
+[
+	"Return the maximal filename length (only under MacOS)"
+	"Smalltalk vm maxFilenameLength"
+^ self getSystemAttribute: 1201
+]
+
+Metaclass VirtualMachine >> memoryEnd
+[
+	"end of memory"
+^ self parameterAt: 3
+]
+
+Metaclass VirtualMachine >> oldSpaceEnd
+[
+	"end of old-space (0-based, read-only)"
+^ self parameterAt: 1
+]
+
+Metaclass VirtualMachine >> optionAt: i
+[
+	"Answer the i-th option of the command line, or nil if not so many options."
+^ self getSystemAttribute: i negated
+]
+
+Metaclass VirtualMachine >> parameterAt: parameterIndex
+[
+	"parameterIndex is a positive integer corresponding to one of the VM's internal	parameter/metric registers.  Answer with the current value of that register.	Fail if parameterIndex has no corresponding register.	VM parameters are numbered as follows:		1	end of old-space (0-based, read-only)		2	end of young-space (read-only)		3	end of memory (read-only)		4	allocationCount (read-only; nil in Cog VMs)		5	allocations between GCs (read-write; nil in Cog VMs)		6	survivor count tenuring threshold (read-write)		7	full GCs since startup (read-only)		8	total milliseconds in full GCs since startup (read-only)		9	incremental GCs since startup (read-only)		10	total milliseconds in incremental GCs since startup (read-only)		11	tenures of surving objects since startup (read-only)		12-20 specific to the translating VM		21	root table size (read-only)		22	root table overflows since startup (read-only)		23	bytes of extra memory to reserve for VM buffers, plugins, etc.		24	memory threshold above whichto shrink object memory (read-write)		25	memory headroom when growing object memory (read-write)		26  interruptChecksEveryNms - force an ioProcessEvents every N milliseconds (read-write)		27	number of times mark loop iterated for current IGC/FGC (read-only) includes ALL marking		28	number of times sweep loop iterated  for current IGC/FGC (read-only)		29	number of times make forward loop iterated for current IGC/FGC (read-only)		30	number of times compact move loop iterated for current IGC/FGC (read-only)		31	number of grow memory requests (read-only)		32	number of shrink memory requests (read-only)		33	number of root table entries used for current IGC/FGC (read-only)		34	number of allocations done before current IGC/FGC (read-only)		35	number of survivor objects after current IGC/FGC (read-only)		36  millisecond clock when current IGC/FGC completed (read-only)		37  number of marked objects for Roots of the world, not including Root Table entries for current IGC/FGC (read-only)		38  milliseconds taken by current IGC  (read-only)		39  Number of finalization signals for Weak Objects pending when current IGC/FGC completed (read-only)		40  BytesPerWord for this image		41  imageFormatVersion for the VM		42	number of stack pages in use (Cog Stack VM only, otherwise nil)		43	desired number of stack pages (stored in image file header, max 65535; Cog VMs only, otherwise nil)		44	size of eden, in bytes (Cog VMs only, otherwise nil)		45	desired size of eden, in bytes (stored in image file header; Cog VMs only, otherwise nil)		46	size of machine code zone, in bytes (stored in image file header; Cog JIT VM only, otherwise nil)		47	desired size of machine code zone, in bytes (applies at startup only, stored in image file header; Cog JIT VM only)		48	various properties of the Cog VM as an integer encoding an array of bit flags.			 Bit 0: implies the image's Process class has threadId as its 3rd inst var (zero relative)		49-55 reserved for VM parameters that persist in the image (such as eden above)		56	number of process switches since startup (read-only)		57	number of ioProcessEvents calls since startup (read-only)		58	number of ForceInterruptCheck (Cog VMs) or quickCheckInterruptCalls (non-Cog VMs) calls since startup (read-only)		59	number of check event calls since startup (read-only)		60	number of stack page overflows since startup (read-only; Cog VMs only)		61	number of stack page divorces since startup (read-only; Cog VMs only)"
+	<primitive: 254>
+self primitiveFailed
 ]
 
 Metaclass VirtualMachine >> parameterAt: parameterIndex put: newValue
@@ -163,25 +243,46 @@ Metaclass VirtualMachine >> path
 ^ (FilePath pathName: self primVmPath isEncoded: true) asSqueakPathName
 ]
 
-Metaclass VirtualMachine >> interpreterSourceVersion
+Metaclass VirtualMachine >> platformSourceVersion
 [
 	"The use of this primitive not recommended. Not all VMs providing that"
-	"Answer a string corresponding to the version of the interpreter source.	This represents the version level of the Smalltalk source code (interpreter	and various plugins) that is translated to C by a CCodeGenerator, as distinct	from the external platform source code, typically written in C and managed	separately for each platform. An optional primitive is invoked that may not	be available on all virtual machines."
-	"Smalltalk vm interpreterSourceVersion"
-	<primitive: 'primitiveInterpreterSourceVersion'>
-^ self getSystemAttribute: 1009
+	"Answer a string corresponding to the version of the external platform source	code, typically written in C and managed separately for each platform. This	invokes an optional primitive that may not be available on all virtual machines."
+	"Smalltalk vm platformSourceVersion"
+	<primitive: 'primitivePlatformSourceVersion'>
+self notify: 'This virtual machine does not support the optional primitive #primitivePlatformSourceVersion' translated.^ ''
 ]
 
-Metaclass VirtualMachine >> interpreterSourceDate
+Metaclass VirtualMachine >> primVmPath
 [
-	"Return the date of changes given by `self interpreterSourceVersion`"
-| dateString parts |dateString := (self interpreterSourceVersion splitOn: 'Date: ') second.dateString first isDigit	ifTrue: [ 		"most probably the date is in ISO 8601 Format"		^ dateString asDateAndTime ].	"Otherwise assume the old format: DDD MMM DD HH:MM:SS YYYY +TTTT ..."parts := dateString substrings first: 6.	"create a more reasonable string.."dateString := String	streamContents: [ :s | 		s			nextPutAll: (parts at: 5);			space;			nextPutAll: (parts at: 2);			space;			nextPutAll: (parts at: 3);			space;			nextPutAll: (parts at: 4);			space;			nextPutAll: parts last;			space	"year"	"month name"	"day of month"	"time"	"timezone" ].^ dateString asDateAndTime
+	"Answer the path for the directory containing the Smalltalk virtual machine. Return the empty string if this primitive is not implemented."
+	"Smalltalk vmPath"
+	<primitive: 142>
+^ ''
 ]
 
-Metaclass VirtualMachine >> memoryEnd
+Metaclass VirtualMachine >> primitiveGCBiasToGrow: arg
 [
-	"end of memory"
-^ self parameterAt: 3
+	"Tell the VM to grow after tenures instead of running in a tight loop where it does IGCs over and over. For some weird reason the primitive takes an integer not a bool but oh well..."
+	<primitive: 'primitiveSetGCBiasToGrow'>
+^ self primitiveFailed
+]
+
+Metaclass VirtualMachine >> processHasThreadIdInstVar: aBoolean
+[
+	"The threaded VM needs to know if the 4th inst var of Process	 is threadId which it uses to control process-to-thread binding.	 This flag persists across snapshots, stored in the image header."
+aBoolean	ifTrue: [ self assert: (Process instVarNames at: 4) = 'threadId' ].self parameterAt: 48 put: ((self parameterAt: 48) bitClear: 1) + aBoolean asBit
+]
+
+Metaclass VirtualMachine >> processPreemptionYields
+[
+	"Answer whether the VM causes a process to yield on process preemption, i.e. to put a preempted process at the back of its run queue.  If the parameter is unavailable (non-Cog VMs) or bit 2 (4) is 0 then preemption yields."
+^ (([ self parameterAt: 48 ]	on: Error	do: [ :ex | ^ true ]) allMask: 2r100) not
+]
+
+Metaclass VirtualMachine >> processPreemptionYields: aBoolean
+[
+	"The Cog VM can be instructed not to yield on process preemption, i.e. not to put a preempted process at the back of its run queue.  By default preempting a process causes it to yield (Blue Book semantics) which can have unfortunate effects. This flag persists across snapshots, stored in the image header."
+self	parameterAt: 48	put:		((self parameterAt: 48) bitClear: 4)			+				(aBoolean					ifTrue: [ 0 ]					ifFalse: [ 2r100 ])
 ]
 
 Metaclass VirtualMachine >> setGCBiasToGrow: aNumber
@@ -191,45 +292,66 @@ Metaclass VirtualMachine >> setGCBiasToGrow: aNumber
 ^ self primitiveFailed	"Example:	Smalltalk vm  setGCBiasToGrowGCLimit: 16*1024*1024.	Smalltalk vm setGCBiasToGrow: 1."
 ]
 
-Metaclass VirtualMachine >> buildDate
+Metaclass VirtualMachine >> setGCBiasToGrowGCLimit: aNumber
 [
-	"Return a String reflecting the build date of the VM"
-	"Smalltalk buildDate"
-^ self getSystemAttribute: 1006
+	"Primitive. Indicate that the bias to grow logic should do a GC after aNumber Bytes"
+	<primitive: 'primitiveSetGCBiasToGrowGCLimit'>
+^ self primitiveFailed	"Example:	Smalltalk vm setGCBiasToGrowGCLimit: 16*1024*1024."
 ]
 
-Metaclass VirtualMachine >> maxExternalSemaphoresSilently: aSize
+Metaclass VirtualMachine >> setGCParameters
 [
-	"Changes the size of array where external signals for semaphores in	externalObjects are handled.. 	The size can only grow, and will always be the next power of two	larger than the parameter.		The intended use is to set the table size to some adequate	maximum as part of a non-resuming image startUp.		Setting this at any time other than start-up can potentially result in	lost signals during reallocation.	i.e. Requests handled during copying og signals from old to new array	won't be seen if they occur to indices already copied, before	pointers to the new and old arrays are switched."
-self maxExternalSemaphores ifNil: [ ^ 0 ].	"The vm-header field where the size is stored is a short, maximum	64k entries. 	Well, on most platforms anyways"(aSize < 0 or: [ aSize > 65535 ])	ifTrue: [ ^ DomainError signalFrom: 0 to: 65535 ].^ self parameterAt: 49 put: aSize
+	"Adjust the VM's default GC parameters to avoid premature tenuring."
+self allocationsBetweenGC: 4000.	"do an incremental GC after this many allocations"self tenuringThreshold: 2000.	"tenure when more than this many objects survive the GC"self setGCBiasToGrowGCLimit: 16 * 1024 * 1024.self setGCBiasToGrow: 1
 ]
 
-Metaclass VirtualMachine >> processPreemptionYields: aBoolean
+Metaclass VirtualMachine >> setGCSemaphore: semaIndex
 [
-	"The Cog VM can be instructed not to yield on process preemption, i.e. not to put a preempted process at the back of its run queue.  By default preempting a process causes it to yield (Blue Book semantics) which can have unfortunate effects. This flag persists across snapshots, stored in the image header."
-self	parameterAt: 48	put:		((self parameterAt: 48) bitClear: 4)			+				(aBoolean					ifTrue: [ 0 ]					ifFalse: [ 2r100 ])
+	"Primitive. Indicate the GC semaphore index to be signaled on GC occurance."
+	<primitive: 'primitiveSetGCSemaphore'>
+^ self primitiveFailed	"Example:	| index sema process |	sema := Semaphore new.	index := Smalltalk registerExternalObject: sema.	Smalltalk setGCSemaphore: index.	process := [		[[true] whileTrue:[			sema wait.			Smalltalk beep.		]] ensure:[			Smalltalk setGCSemaphore: 0.			Smalltalk unregisterExternalObject: sema.		].	] fork.	process inspect."
 ]
 
-Metaclass VirtualMachine >> imageVersionNumber
+Metaclass VirtualMachine >> statisticsReport
 [
-	"Image version number (6505 means the Squeak V3 format with BlockClosure support (but _without_ BlockContext support)"
-^ self parameterAt: 41
+	"Workspace openContents: (Smalltalk vm statisticsReport) label: 'VM Statistics'"
+| params oldSpaceEnd youngSpaceEnd memoryEnd fullGCs fullGCTime incrGCs incrGCTime tenureCount mcMisses mcHits icHits upTime sendCount upTime2 fullGCs2 fullGCTime2 incrGCs2 incrGCTime2 tenureCount2 str |params := self getParameters.oldSpaceEnd := self oldSpaceEnd.youngSpaceEnd := self youngSpaceEnd.tenureCount := self tenureCount.memoryEnd := self memoryEnd.fullGCs := self fullGCCount.fullGCTime := self totalFullGCTime.incrGCs := self incrementalGCCount.incrGCTime := self totalIncrementalGCTime.upTime := Time millisecondClockValue.str := (String new: 1000) writeStream.str	<< 'uptime			';	print: upTime / 1000 / 60 // 60;	nextPut: $h;	print: (upTime / 1000 / 60 \\ 60) asInteger;	nextPut: $m;	print: (upTime / 1000 \\ 60) asInteger;	nextPut: $s;	cr.str	<< 'memory			';	<< memoryEnd asStringWithCommas;	<< ' bytes';	cr.str	<< '	old			';	<< oldSpaceEnd asStringWithCommas;	<< ' bytes (';	print: (oldSpaceEnd / memoryEnd * 100 roundTo: 0.1);	<< '%)';	cr.str	<< '	young		';	<< (youngSpaceEnd - oldSpaceEnd) asStringWithCommas;	<< ' bytes (';	print: ((youngSpaceEnd - oldSpaceEnd) / memoryEnd * 100 roundTo: 0.1);	<< '%)';	cr.str	<< '	used		';	<< youngSpaceEnd asStringWithCommas;	<< ' bytes (';	print: (youngSpaceEnd / memoryEnd * 100 roundTo: 0.1);	<< '%)';	cr.str	<< '	free		';	<< (memoryEnd - youngSpaceEnd) asStringWithCommas;	<< ' bytes (';	print: ((memoryEnd - youngSpaceEnd) / memoryEnd * 100 roundTo: 0.1);	<< '%)';	cr.str	<< 'GCs				';	<< (fullGCs + incrGCs) asStringWithCommas.fullGCs + incrGCs > 0	ifTrue: [ 		str			<< ' (';			print: (upTime / (fullGCs + incrGCs) roundTo: 1);			<< 'ms between GCs)' ].str cr.str	<< '	full			';	print: fullGCs;	<< ' totalling ';	<< fullGCTime asStringWithCommas;	<< 'ms (';	print: (fullGCTime / upTime * 100 roundTo: 0.1);	<< '% uptime)'.fullGCs = 0	ifFalse: [ 		str			<< ', avg ';			print: (fullGCTime / fullGCs roundTo: 0.1);			<< 'ms' ].str cr.str	<< '	incr		';	print: incrGCs;	<< ' totalling ';	<< incrGCTime asStringWithCommas;	<< 'ms (';	print: (incrGCTime / upTime * 100 roundTo: 0.1);	<< '% uptime), avg ';	print: (incrGCTime / incrGCs roundTo: 0.1);	<< 'ms';	cr.str	<< '	tenures		';	<< tenureCount asStringWithCommas.tenureCount = 0	ifFalse: [ 		str			<< ' (avg ';			print: (incrGCs / tenureCount) asInteger;			<< ' GCs/tenure)' ].str cr.LastStats	ifNil: [ LastStats := Array new: 6 ]	ifNotNil: [ 		upTime2 := upTime - (LastStats at: 1).		fullGCs2 := fullGCs - (LastStats at: 2).		fullGCTime2 := fullGCTime - (LastStats at: 3).		incrGCs2 := incrGCs - (LastStats at: 4).		incrGCTime2 := incrGCTime - (LastStats at: 5).		tenureCount2 := tenureCount - (LastStats at: 6).		str			<< 'Since last view	';			<< (fullGCs2 + incrGCs2) asStringWithCommas.		fullGCs2 + incrGCs2 > 0			ifTrue: [ 				str					<< ' (';					print: (upTime2 / (fullGCs2 + incrGCs2) roundTo: 1);					<< 'ms between GCs)' ].		str cr.		str			<< '	uptime		';			print: (upTime2 / 1000.0 roundTo: 0.1);			<< 's';			cr.		str			<< '	full			';			print: fullGCs2;			<< ' totalling ';			<< fullGCTime2 asStringWithCommas;			<< 'ms (';			print: (fullGCTime2 / upTime2 * 100 roundTo: 0.1);			<< '% uptime)'.		fullGCs2 = 0			ifFalse: [ 				str					<< ', avg ';					print: (fullGCTime2 / fullGCs2 roundTo: 0.1);					<< 'ms' ].		str cr.		str			<< '	incr		';			print: incrGCs2;			<< ' totalling ';			<< incrGCTime2 asStringWithCommas;			<< 'ms (';			print: (incrGCTime2 / upTime2 * 100 roundTo: 0.1);			<< '% uptime), avg '.		incrGCs2 > 0			ifTrue: [ 				str					print: (incrGCTime2 / incrGCs2 roundTo: 0.1);					<< 'ms' ].		str cr.		str			<< '	tenures		';			<< tenureCount2 asStringWithCommas.		tenureCount2 = 0			ifFalse: [ 				str					<< ' (avg ';					print: (incrGCs2 / tenureCount2) asInteger;					<< ' GCs/tenure)' ].		str cr ].LastStats at: 1 put: upTime.LastStats at: 2 put: fullGCs.LastStats at: 3 put: fullGCTime.LastStats at: 4 put: incrGCs.LastStats at: 5 put: incrGCTime.LastStats at: 6 put: tenureCount.^ str contents
 ]
 
-Metaclass VirtualMachine >> fullPath
+Metaclass VirtualMachine >> statisticsShortReport
 [
-	"Return the full vm path as a string"
-	"Ex: '/Applications/Squeak/Squeak 4.2.5beta1U.app/Contents/MacOS/Squeak VM Opt'"
-	"SmalltalkImage current vmFullPath"
-^ self getSystemAttribute: 0
+	"Convenience item for access to recent statistics only"
+	"	Workspace openContents: (Smalltalk vm statisticsShortReport) label: 'VM Recent Statistics'	"
+^ self statisticsReport readStream	upToAll: 'Since';	nextLine;	upToEnd
 ]
 
-Metaclass VirtualMachine >> getParameters
+Metaclass VirtualMachine >> tenureCount
 [
-	"Answer an Array containing the current values of the VM's internal	parameter/metric registers.  Each value is stored in the array at the	index corresponding to its VM register.  (See #vmParameterAt: and	#vmParameterAt:put:.)"
-	"Smalltalk vm getParameters"
-	<primitive: 254>
-self primitiveFailed
+	"tenures of surving objects since startup (read-only)."
+^ self parameterAt: 11
+]
+
+Metaclass VirtualMachine >> tenuringThreshold
+[
+	"survivor count tenuring threshold (read-write)"
+^ self parameterAt: 6
+]
+
+Metaclass VirtualMachine >> tenuringThreshold: anInteger
+[
+	"survivor count tenuring threshold (read-write).	tenure when more than this many objects survive the GC"
+^ self parameterAt: 6 put: anInteger
+]
+
+Metaclass VirtualMachine >> totalFullGCTime
+[
+	"Answer the total time in milliseconds spent in full GCs since startup (read-only)."
+^ self parameterAt: 8
+]
+
+Metaclass VirtualMachine >> totalGCTime
+[
+^ self totalFullGCTime + self totalIncrementalGCTime
 ]
 
 Metaclass VirtualMachine >> totalIncrementalGCTime
@@ -238,48 +360,11 @@ Metaclass VirtualMachine >> totalIncrementalGCTime
 ^ self parameterAt: 10
 ]
 
-Metaclass VirtualMachine >> extraVMMemory
+Metaclass VirtualMachine >> version
 [
-	"Answer the current setting of the 'extraVMMemory' VM parameter. See the comment in extraVMMemory: for details."
-^ self parameterAt: 23
-]
-
-Metaclass VirtualMachine >> totalGCTime
-[
-^ self totalFullGCTime + self totalIncrementalGCTime
-]
-
-Metaclass VirtualMachine >> extraVMMemory: extraBytesToReserve
-[
-	"Request that the given amount of extra memory be reserved for use by the virtual machine to leave extra C heap space available for things like plugins, network and file buffers, and so on. This request is stored when the image is saved and honored when the image is next started up. Answer the previous value of this parameter."
-extraBytesToReserve < 0	ifTrue: [ self error: 'VM memory reservation must be non-negative' ].^ self parameterAt: 23 put: extraBytesToReserve
-]
-
-Metaclass VirtualMachine >> binary
-[
-	"Answer the a file reference to the virtual machine binary."
-	"SmalltalkImage current vmBinary"
-^ FileLocator vmBinary
-]
-
-Metaclass VirtualMachine >> maxExternalSemaphores: aSize
-[
-	"This method should never be called as result of normal program	execution. If it is however, handle it differently:	- In development, signal an error to promt user to set a bigger size	at startup immediately.	- In production, accept the cost of potentially unhandled interrupts,	but log the action for later review.		See comment in maxExternalObjectsSilently: why this behaviour is	desirable, "
-	"Can't find a place where development/production is decided.	Suggest Smalltalk image inProduction, but use an overridable temp	meanwhile. "
-| inProduction |self maxExternalSemaphores ifNil: [ ^ 0 ].inProduction := false.^ inProduction	ifTrue: [ 		self maxExternalSemaphoresSilently: aSize.		self			crTrace:					'WARNING: Had to increase size of semaphore signal handling table due to many external objects concurrently in use';			crTrace: 'You should increase this size at startup using #maxExternalObjectsSilently:';			crTrace: 'Current table size: ' , self maxExternalSemaphores printString ]	ifFalse: [ 		"Smalltalk image"		self error: 'Not enough space for external objects, set a larger size at startup!'	"Smalltalk image" ]
-]
-
-Metaclass VirtualMachine >> allocationsBetweenGC
-[
-	"allocations between GCs (read-write)"
-^ self parameterAt: 5
-]
-
-Metaclass VirtualMachine >> directory
-[
-	"Answer the a file reference to the directory containing the Smalltalk virtual machine."
-	"SmalltalkImage current directory"
-^ FileLocator vmDirectory
+	"Return the version number string of the Virtual machine built"
+	"	Smalltalk vm version	"
+^ String	streamContents: [ :s | 		1007 to: 1009 do: [ :n | 			s				nextPutAll: (self getSystemAttribute: n);				cr ] ]
 ]
 
 Metaclass VirtualMachine >> versionLabel
@@ -291,36 +376,9 @@ Metaclass VirtualMachine >> versionLabel
 self notify: 'This virtual machine does not support the optional primitive #primitiveVMVersion' translated.^ ''
 ]
 
-Metaclass VirtualMachine >> processPreemptionYields
+Metaclass VirtualMachine >> vmDirectory
 [
-	"Answer whether the VM causes a process to yield on process preemption, i.e. to put a preempted process at the back of its run queue.  If the parameter is unavailable (non-Cog VMs) or bit 2 (4) is 0 then preemption yields."
-^ (([ self parameterAt: 48 ]	on: Error	do: [ :ex | ^ true ]) allMask: 2r100) not
-]
-
-Metaclass VirtualMachine >> wordSize
-[
-^ WordSize	ifNil: [ 		WordSize := [ self parameterAt: 40 ]			on: Error			do: [ 4 ] ]
-]
-
-Metaclass VirtualMachine >> setGCSemaphore: semaIndex
-[
-	"Primitive. Indicate the GC semaphore index to be signaled on GC occurance."
-	<primitive: 'primitiveSetGCSemaphore'>
-^ self primitiveFailed	"Example:	| index sema process |	sema := Semaphore new.	index := Smalltalk registerExternalObject: sema.	Smalltalk setGCSemaphore: index.	process := [		[[true] whileTrue:[			sema wait.			Smalltalk beep.		]] ensure:[			Smalltalk setGCSemaphore: 0.			Smalltalk unregisterExternalObject: sema.		].	] fork.	process inspect."
-]
-
-Metaclass VirtualMachine >> primVmPath
-[
-	"Answer the path for the directory containing the Smalltalk virtual machine. Return the empty string if this primitive is not implemented."
-	"Smalltalk vmPath"
-	<primitive: 142>
-^ ''
-]
-
-Metaclass VirtualMachine >> fullGCCount
-[
-	"Answer the total number of full GCs since startup (read-only)."
-^ self parameterAt: 7
+^ self directory
 ]
 
 Metaclass VirtualMachine >> vmFileName
@@ -328,79 +386,21 @@ Metaclass VirtualMachine >> vmFileName
 ^ self fileName
 ]
 
-Metaclass VirtualMachine >> isRunningCogit
-[
-	"Returns true if we're running on the Cog JIT	 (vmParameterAt: 46 is the size of the machine code zone)"
-^ [ (self parameterAt: 46) > 0 ]	on: Error	do: [ :ex | ex return: false ]
-]
-
-Metaclass VirtualMachine >> allocationsBetweenGC: anInteger
-[
-	"allocations between GCs (read-write)"
-^ self parameterAt: 5 put: anInteger
-]
-
-Metaclass VirtualMachine >> version
-[
-	"Return the version number string of the Virtual machine built"
-	"	Smalltalk vm version	"
-^ String	streamContents: [ :s | 		1007 to: 1009 do: [ :n | 			s				nextPutAll: (self getSystemAttribute: n);				cr ] ]
-]
-
-Metaclass VirtualMachine >> primitiveGCBiasToGrow: arg
-[
-	"Tell the VM to grow after tenures instead of running in a tight loop where it does IGCs over and over. For some weird reason the primitive takes an integer not a bool but oh well..."
-	<primitive: 'primitiveSetGCBiasToGrow'>
-^ self primitiveFailed
-]
-
-Metaclass VirtualMachine >> optionAt: i
-[
-	"Answer the i-th option of the command line, or nil if not so many options."
-^ self getSystemAttribute: i negated
-]
-
-Metaclass VirtualMachine >> fileName
-[
-^ (FilePath pathName: self fullPath isEncoded: true) asSqueakPathName
-]
-
-Metaclass VirtualMachine >> parameterAt: parameterIndex
-[
-	"parameterIndex is a positive integer corresponding to one of the VM's internal	parameter/metric registers.  Answer with the current value of that register.	Fail if parameterIndex has no corresponding register.	VM parameters are numbered as follows:		1	end of old-space (0-based, read-only)		2	end of young-space (read-only)		3	end of memory (read-only)		4	allocationCount (read-only; nil in Cog VMs)		5	allocations between GCs (read-write; nil in Cog VMs)		6	survivor count tenuring threshold (read-write)		7	full GCs since startup (read-only)		8	total milliseconds in full GCs since startup (read-only)		9	incremental GCs since startup (read-only)		10	total milliseconds in incremental GCs since startup (read-only)		11	tenures of surving objects since startup (read-only)		12-20 specific to the translating VM		21	root table size (read-only)		22	root table overflows since startup (read-only)		23	bytes of extra memory to reserve for VM buffers, plugins, etc.		24	memory threshold above whichto shrink object memory (read-write)		25	memory headroom when growing object memory (read-write)		26  interruptChecksEveryNms - force an ioProcessEvents every N milliseconds (read-write)		27	number of times mark loop iterated for current IGC/FGC (read-only) includes ALL marking		28	number of times sweep loop iterated  for current IGC/FGC (read-only)		29	number of times make forward loop iterated for current IGC/FGC (read-only)		30	number of times compact move loop iterated for current IGC/FGC (read-only)		31	number of grow memory requests (read-only)		32	number of shrink memory requests (read-only)		33	number of root table entries used for current IGC/FGC (read-only)		34	number of allocations done before current IGC/FGC (read-only)		35	number of survivor objects after current IGC/FGC (read-only)		36  millisecond clock when current IGC/FGC completed (read-only)		37  number of marked objects for Roots of the world, not including Root Table entries for current IGC/FGC (read-only)		38  milliseconds taken by current IGC  (read-only)		39  Number of finalization signals for Weak Objects pending when current IGC/FGC completed (read-only)		40  BytesPerWord for this image		41  imageFormatVersion for the VM		42	number of stack pages in use (Cog Stack VM only, otherwise nil)		43	desired number of stack pages (stored in image file header, max 65535; Cog VMs only, otherwise nil)		44	size of eden, in bytes (Cog VMs only, otherwise nil)		45	desired size of eden, in bytes (stored in image file header; Cog VMs only, otherwise nil)		46	size of machine code zone, in bytes (stored in image file header; Cog JIT VM only, otherwise nil)		47	desired size of machine code zone, in bytes (applies at startup only, stored in image file header; Cog JIT VM only)		48	various properties of the Cog VM as an integer encoding an array of bit flags.			 Bit 0: implies the image's Process class has threadId as its 3rd inst var (zero relative)		49-55 reserved for VM parameters that persist in the image (such as eden above)		56	number of process switches since startup (read-only)		57	number of ioProcessEvents calls since startup (read-only)		58	number of ForceInterruptCheck (Cog VMs) or quickCheckInterruptCalls (non-Cog VMs) calls since startup (read-only)		59	number of check event calls since startup (read-only)		60	number of stack page overflows since startup (read-only; Cog VMs only)		61	number of stack page divorces since startup (read-only; Cog VMs only)"
-	<primitive: 254>
-self primitiveFailed
-]
-
-Metaclass VirtualMachine >> tenuringThreshold
-[
-	"survivor count tenuring threshold (read-write)"
-^ self parameterAt: 6
-]
-
-Metaclass VirtualMachine >> flagInterpretedMethods: aBoolean
-[
-	"The Cog VM can be instructed to set the flag bit of CompiledMethods that it executes but will only interpret.  This can be used e.g. to profile startup. See CompiledMethod>>#flag & CompiledMethod>>#clearFlag. This flag persists across snapshots, stored in the image header."
-self	parameterAt: 48	put:		((self parameterAt: 48) bitClear: 2)			+				(aBoolean					ifTrue: [ 2 ]					ifFalse: [ 0 ])
-]
-
-Metaclass VirtualMachine >> statisticsReport
-[
-	"Workspace openContents: (Smalltalk vm statisticsReport) label: 'VM Statistics'"
-| params oldSpaceEnd youngSpaceEnd memoryEnd fullGCs fullGCTime incrGCs incrGCTime tenureCount mcMisses mcHits icHits upTime sendCount upTime2 fullGCs2 fullGCTime2 incrGCs2 incrGCTime2 tenureCount2 str |params := self getParameters.oldSpaceEnd := self oldSpaceEnd.youngSpaceEnd := self youngSpaceEnd.tenureCount := self tenureCount.memoryEnd := self memoryEnd.fullGCs := self fullGCCount.fullGCTime := self totalFullGCTime.incrGCs := self incrementalGCCount.incrGCTime := self totalIncrementalGCTime.upTime := Time millisecondClockValue.str := (String new: 1000) writeStream.str	<< 'uptime			';	print: upTime / 1000 / 60 // 60;	nextPut: $h;	print: (upTime / 1000 / 60 \\ 60) asInteger;	nextPut: $m;	print: (upTime / 1000 \\ 60) asInteger;	nextPut: $s;	cr.str	<< 'memory			';	<< memoryEnd asStringWithCommas;	<< ' bytes';	cr.str	<< '	old			';	<< oldSpaceEnd asStringWithCommas;	<< ' bytes (';	print: (oldSpaceEnd / memoryEnd * 100 roundTo: 0.1);	<< '%)';	cr.str	<< '	young		';	<< (youngSpaceEnd - oldSpaceEnd) asStringWithCommas;	<< ' bytes (';	print: ((youngSpaceEnd - oldSpaceEnd) / memoryEnd * 100 roundTo: 0.1);	<< '%)';	cr.str	<< '	used		';	<< youngSpaceEnd asStringWithCommas;	<< ' bytes (';	print: (youngSpaceEnd / memoryEnd * 100 roundTo: 0.1);	<< '%)';	cr.str	<< '	free		';	<< (memoryEnd - youngSpaceEnd) asStringWithCommas;	<< ' bytes (';	print: ((memoryEnd - youngSpaceEnd) / memoryEnd * 100 roundTo: 0.1);	<< '%)';	cr.str	<< 'GCs				';	<< (fullGCs + incrGCs) asStringWithCommas.fullGCs + incrGCs > 0	ifTrue: [ 		str			<< ' (';			print: (upTime / (fullGCs + incrGCs) roundTo: 1);			<< 'ms between GCs)' ].str cr.str	<< '	full			';	print: fullGCs;	<< ' totalling ';	<< fullGCTime asStringWithCommas;	<< 'ms (';	print: (fullGCTime / upTime * 100 roundTo: 0.1);	<< '% uptime)'.fullGCs = 0	ifFalse: [ 		str			<< ', avg ';			print: (fullGCTime / fullGCs roundTo: 0.1);			<< 'ms' ].str cr.str	<< '	incr		';	print: incrGCs;	<< ' totalling ';	<< incrGCTime asStringWithCommas;	<< 'ms (';	print: (incrGCTime / upTime * 100 roundTo: 0.1);	<< '% uptime), avg ';	print: (incrGCTime / incrGCs roundTo: 0.1);	<< 'ms';	cr.str	<< '	tenures		';	<< tenureCount asStringWithCommas.tenureCount = 0	ifFalse: [ 		str			<< ' (avg ';			print: (incrGCs / tenureCount) asInteger;			<< ' GCs/tenure)' ].str cr.LastStats	ifNil: [ LastStats := Array new: 6 ]	ifNotNil: [ 		upTime2 := upTime - (LastStats at: 1).		fullGCs2 := fullGCs - (LastStats at: 2).		fullGCTime2 := fullGCTime - (LastStats at: 3).		incrGCs2 := incrGCs - (LastStats at: 4).		incrGCTime2 := incrGCTime - (LastStats at: 5).		tenureCount2 := tenureCount - (LastStats at: 6).		str			<< 'Since last view	';			<< (fullGCs2 + incrGCs2) asStringWithCommas.		fullGCs2 + incrGCs2 > 0			ifTrue: [ 				str					<< ' (';					print: (upTime2 / (fullGCs2 + incrGCs2) roundTo: 1);					<< 'ms between GCs)' ].		str cr.		str			<< '	uptime		';			print: (upTime2 / 1000.0 roundTo: 0.1);			<< 's';			cr.		str			<< '	full			';			print: fullGCs2;			<< ' totalling ';			<< fullGCTime2 asStringWithCommas;			<< 'ms (';			print: (fullGCTime2 / upTime2 * 100 roundTo: 0.1);			<< '% uptime)'.		fullGCs2 = 0			ifFalse: [ 				str					<< ', avg ';					print: (fullGCTime2 / fullGCs2 roundTo: 0.1);					<< 'ms' ].		str cr.		str			<< '	incr		';			print: incrGCs2;			<< ' totalling ';			<< incrGCTime2 asStringWithCommas;			<< 'ms (';			print: (incrGCTime2 / upTime2 * 100 roundTo: 0.1);			<< '% uptime), avg '.		incrGCs2 > 0			ifTrue: [ 				str					print: (incrGCTime2 / incrGCs2 roundTo: 0.1);					<< 'ms' ].		str cr.		str			<< '	tenures		';			<< tenureCount2 asStringWithCommas.		tenureCount2 = 0			ifFalse: [ 				str					<< ' (avg ';					print: (incrGCs2 / tenureCount2) asInteger;					<< ' GCs/tenure)' ].		str cr ].LastStats at: 1 put: upTime.LastStats at: 2 put: fullGCs.LastStats at: 3 put: fullGCTime.LastStats at: 4 put: incrGCs.LastStats at: 5 put: incrGCTime.LastStats at: 6 put: tenureCount.^ str contents
-]
-
-Metaclass VirtualMachine >> getSystemAttribute: attributeID
-[
-	"Optional. Answer the string for the system attribute with the given 	integer ID. Answer nil if the given attribute is not defined on this 	platform. On platforms that support invoking programs from command 	lines (e.g., Unix), this mechanism can be used to pass command line 	arguments to programs written in Pharo.	By convention, the first command line argument that is not a VM	configuration option is considered a 'document' to be filed in. Such a	document can add methods and classes, can contain a serialized object,	can include code to be executed, or any combination of these.	Currently defined attributes include: 	-1000   1000th command line argument that specify VM options   	...	-1              first command line argument that specify VM options      0               the full path name for currently executing VM                       (or, on some platforms, just the path name of the VM's directory)       1               full path name of this image (better use primImageName instead)       2               a Squeak document to open, if any       3               first command line argument for Squeak programs       ...       1000    1000th command line argument for Squeak programs       1001    this platform's operating system 'Mac OS', 'Win32', 'unix', ...       1002    operating system version       1003    this platform's processor type       1004    vm version       1005    window system name       1006    vm build id       1007    Interpreter class (Cog VM only)       1008    Cogit class (Cog VM only)       1201    max filename length (Mac OS only)       1202    file last error (Mac OS only)       10001   hardware details (Win32 only)       10002   operating system details (Win32 only)       10003   graphics hardware details (Win32 only)"
-	<primitive: 149>
-^ nil
-]
-
 Metaclass VirtualMachine >> voidCogVMState
 [
 	"Void any internal caches the VM maintains other than the method lookup caches.	 These comprise		- the stack zone, where method activations are stored, and		- the machine code zone, where the machine code form of CompiledMethods is held."
 	<primitive: 214>
 ^ self primitiveFailed
+]
+
+Metaclass VirtualMachine >> wordSize
+[
+^ WordSize	ifNil: [ 		WordSize := [ self parameterAt: 40 ]			on: Error			do: [ 4 ] ]
+]
+
+Metaclass VirtualMachine >> youngSpaceEnd
+[
+	"end of young-space"
+^ self parameterAt: 2
 ]
 

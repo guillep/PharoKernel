@@ -6,27 +6,26 @@ Class
 	classVariables: #();
 	package: #'Fuel-Core'.
 
-Class FLHeader >> at: key putAdditionalObject: anObject
-[
-	"This is useful if we want to attach objects to a package that will also be serialized. The way they are stored is key-value."
-additionalObjects at: key put: anObject
-]
-
 Class FLHeader >> addPostMaterializationAction: aCleanBlockClosure
 [
 	"The closure may (or not) have one parameter and it will be the materialization."
 aCleanBlockClosure isClean	ifFalse: [ 		self			error: 'Post materializaton actions have to be clean closures. For more details see method BlocKClosure >> #isClean' ].postMaterializationActions add: aCleanBlockClosure
 ]
 
-Class FLHeader >> materialization: aMaterialization
+Class FLHeader >> addPreMaterializationAction: aCleanBlockClosure
 [
-	"This is just set once the materialization had happened"
-materialization := aMaterialization
+aCleanBlockClosure isClean	ifFalse: [ self error: 'Pre materializaton actions have to be clean closures. For more details see method BlocKClosure >> #isClean' ].preMaterializationActions add: aCleanBlockClosure
 ]
 
-Class FLHeader >> initialize
+Class FLHeader >> additionalObjectAt: key
 [
-additionalObjects := IdentityDictionary new.preMaterializationActions := OrderedCollection new.postMaterializationActions := OrderedCollection new
+^ additionalObjects at: key
+]
+
+Class FLHeader >> at: key putAdditionalObject: anObject
+[
+	"This is useful if we want to attach objects to a package that will also be serialized. The way they are stored is key-value."
+additionalObjects at: key put: anObject
 ]
 
 Class FLHeader >> executePostMaterializationActions
@@ -39,14 +38,15 @@ Class FLHeader >> executePreMaterializationActions
 preMaterializationActions do: [ :each | each value ]
 ]
 
-Class FLHeader >> addPreMaterializationAction: aCleanBlockClosure
+Class FLHeader >> initialize
 [
-aCleanBlockClosure isClean	ifFalse: [ self error: 'Pre materializaton actions have to be clean closures. For more details see method BlocKClosure >> #isClean' ].preMaterializationActions add: aCleanBlockClosure
+additionalObjects := IdentityDictionary new.preMaterializationActions := OrderedCollection new.postMaterializationActions := OrderedCollection new
 ]
 
-Class FLHeader >> additionalObjectAt: key
+Class FLHeader >> materialization: aMaterialization
 [
-^ additionalObjects at: key
+	"This is just set once the materialization had happened"
+materialization := aMaterialization
 ]
 
 Metaclass

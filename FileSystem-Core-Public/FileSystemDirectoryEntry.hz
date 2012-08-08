@@ -6,26 +6,14 @@ Class
 	classVariables: #();
 	package: #'FileSystem-Core-Public'.
 
-Class FileSystemDirectoryEntry >> modification
+Class FileSystemDirectoryEntry >> asFileReference
 [
-^ self modificationTime
+^ reference
 ]
 
 Class FileSystemDirectoryEntry >> asReference
 [
 self deprecated: 'Use #asFileReference instead' on: '12 April 2012' in: 'Pharo 1.4'.^ self asFileReference
-]
-
-Class FileSystemDirectoryEntry >> creationTime
-[
-	"Return the creation date and time of the entry receiver."
-^ creation
-]
-
-Class FileSystemDirectoryEntry >> modificationSeconds
-[
-	"Return the modification date and time of the entry receiver in seconds."
-^ modification
 ]
 
 Class FileSystemDirectoryEntry >> basename
@@ -38,20 +26,16 @@ Class FileSystemDirectoryEntry >> creation
 ^ self creationTime
 ]
 
-Class FileSystemDirectoryEntry >> fullName
-[
-^ reference fullName
-]
-
 Class FileSystemDirectoryEntry >> creationSeconds
 [
 	"Return the creation date and time of the entry receiver in seconds."
 ^ creation
 ]
 
-Class FileSystemDirectoryEntry >> permissions
+Class FileSystemDirectoryEntry >> creationTime
 [
-^ self posixPermissions ifNotNil: [ FileSystemPermission posixPermissions: self posixPermissions ]
+	"Return the creation date and time of the entry receiver."
+^ creation
 ]
 
 Class FileSystemDirectoryEntry >> extension
@@ -59,9 +43,9 @@ Class FileSystemDirectoryEntry >> extension
 ^ reference extension
 ]
 
-Class FileSystemDirectoryEntry >> writeStream
+Class FileSystemDirectoryEntry >> fullName
 [
-^ reference writeStream
+^ reference fullName
 ]
 
 Class FileSystemDirectoryEntry >> initializeWithRef: ref creation: cTime modification: mTime isDir: directoryBoolean size: bytes posixPermissions: posixNumber isSymlink: symlinkBoolean
@@ -69,9 +53,16 @@ Class FileSystemDirectoryEntry >> initializeWithRef: ref creation: cTime modific
 reference := ref.creation := cTime.modification := mTime.isDirectory := directoryBoolean.size := bytes.posixPermissions := posixNumber.isSymlink := symlinkBoolean
 ]
 
-Class FileSystemDirectoryEntry >> posixPermissions
+Class FileSystemDirectoryEntry >> isDirectory
 [
-^ posixPermissions
+	"Return whether the receiver is a directory"
+^ isDirectory
+]
+
+Class FileSystemDirectoryEntry >> isFile
+[
+	"Return whether the receiver is a file"
+^ isDirectory not
 ]
 
 Class FileSystemDirectoryEntry >> isSymlink
@@ -79,9 +70,21 @@ Class FileSystemDirectoryEntry >> isSymlink
 ^ isSymlink
 ]
 
-Class FileSystemDirectoryEntry >> asFileReference
+Class FileSystemDirectoryEntry >> modification
 [
-^ reference
+^ self modificationTime
+]
+
+Class FileSystemDirectoryEntry >> modificationSeconds
+[
+	"Return the modification date and time of the entry receiver in seconds."
+^ modification
+]
+
+Class FileSystemDirectoryEntry >> modificationTime
+[
+	"Return the modification date and time of the entry receiver."
+^ modification
 ]
 
 Class FileSystemDirectoryEntry >> pathSegments
@@ -89,10 +92,19 @@ Class FileSystemDirectoryEntry >> pathSegments
 ^ reference pathSegments
 ]
 
-Class FileSystemDirectoryEntry >> size
+Class FileSystemDirectoryEntry >> permissions
 [
-	"Returns the receiver size"
-^ size
+^ self posixPermissions ifNotNil: [ FileSystemPermission posixPermissions: self posixPermissions ]
+]
+
+Class FileSystemDirectoryEntry >> posixPermissions
+[
+^ posixPermissions
+]
+
+Class FileSystemDirectoryEntry >> printOn: aStream
+[
+aStream nextPutAll: 'DirectoryEntry: '.reference ifNotNilDo: [ :ref | aStream nextPutAll: reference printString ]
 ]
 
 Class FileSystemDirectoryEntry >> readStream
@@ -105,27 +117,15 @@ Class FileSystemDirectoryEntry >> reference
 ^ reference
 ]
 
-Class FileSystemDirectoryEntry >> modificationTime
+Class FileSystemDirectoryEntry >> size
 [
-	"Return the modification date and time of the entry receiver."
-^ modification
+	"Returns the receiver size"
+^ size
 ]
 
-Class FileSystemDirectoryEntry >> printOn: aStream
+Class FileSystemDirectoryEntry >> writeStream
 [
-aStream nextPutAll: 'DirectoryEntry: '.reference ifNotNilDo: [ :ref | aStream nextPutAll: reference printString ]
-]
-
-Class FileSystemDirectoryEntry >> isFile
-[
-	"Return whether the receiver is a file"
-^ isDirectory not
-]
-
-Class FileSystemDirectoryEntry >> isDirectory
-[
-	"Return whether the receiver is a directory"
-^ isDirectory
+^ reference writeStream
 ]
 
 Metaclass
@@ -137,15 +137,15 @@ Metaclass FileSystemDirectoryEntry >> allPosixPermissions
 ^ 8r777
 ]
 
-Metaclass FileSystemDirectoryEntry >> reference: ref creation: cTime modification: mTime isDir: aBoolean size: anInteger posixPermissions: posixNumber isSymlink: symlinkBoolean
-[
-	"Create a directory entry for the file reference ref, with the creation time, cTime, the modification time, mTime. aBoolean indicates if the entry represents a directory or a file of size given by anInteger"
-^ self basicNew	initializeWithRef: ref	creation: cTime	modification: mTime	isDir: aBoolean	size: anInteger	posixPermissions: posixNumber	isSymlink: symlinkBoolean
-]
-
 Metaclass FileSystemDirectoryEntry >> fileSystem: aFilesystem path: aPath creation: cTime modification: mTime isDir: aBoolean size: anInteger posixPermissions: posixNumber isSymlink: symlinkBooleam
 [
 	"Create a directory entry given a filesystem and a path in such filesystem. In addition, the creation and modification time are required as well as a boolean that indicates whether the entry is a folder or a file and its size."
 ^ self	reference: (aFilesystem referenceTo: aPath)	creation: cTime	modification: mTime	isDir: aBoolean	size: anInteger	posixPermissions: posixNumber	isSymlink: symlinkBooleam
+]
+
+Metaclass FileSystemDirectoryEntry >> reference: ref creation: cTime modification: mTime isDir: aBoolean size: anInteger posixPermissions: posixNumber isSymlink: symlinkBoolean
+[
+	"Create a directory entry for the file reference ref, with the creation time, cTime, the modification time, mTime. aBoolean indicates if the entry represents a directory or a file of size given by anInteger"
+^ self basicNew	initializeWithRef: ref	creation: cTime	modification: mTime	isDir: aBoolean	size: anInteger	posixPermissions: posixNumber	isSymlink: symlinkBoolean
 ]
 

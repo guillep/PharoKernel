@@ -6,11 +6,6 @@ Class
 	classVariables: #();
 	package: #'Fuel-Clusters-Optionals'.
 
-Class FLPointCluster >> referencesOf: aPoint do: aBlock
-[
-aBlock value: aPoint x.aBlock value: aPoint y
-]
-
 Class FLPointCluster >> materializeInstanceWith: aDecoder
 [
 	"Since in Pharo #@ is associated with a special bytecode, it is faster than doing  Point basicNew"
@@ -20,6 +15,11 @@ Class FLPointCluster >> materializeInstanceWith: aDecoder
 Class FLPointCluster >> materializeReferencesOf: aPoint with: aDecoder
 [
 aPoint setX: aDecoder nextEncodedReference setY: aDecoder nextEncodedReference
+]
+
+Class FLPointCluster >> referencesOf: aPoint do: aBlock
+[
+aBlock value: aPoint x.aBlock value: aPoint y
 ]
 
 Class FLPointCluster >> serializeReferencesOf: aPoint with: anEncoder

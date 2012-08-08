@@ -6,14 +6,9 @@ Class
 	classVariables: #();
 	package: #'FileSystem-Core-Implementation'.
 
-Class InteractiveResolver >> unknownOrigin: origin
+Class InteractiveResolver >> flushLocalCache
 [
-| reference |^ (next ifNotNil: [ next resolve: origin ])	ifNil: [ 		reference := ResolutionRequest for: origin.		reference ifNotNil: [ cache at: origin put: reference ] ]
-]
-
-Class InteractiveResolver >> resolve: origin
-[
-^ cache at: origin ifAbsent: [ self unknownOrigin: origin ]
+cache := IdentityDictionary new
 ]
 
 Class InteractiveResolver >> initialize
@@ -21,9 +16,14 @@ Class InteractiveResolver >> initialize
 self flushLocalCache
 ]
 
-Class InteractiveResolver >> flushLocalCache
+Class InteractiveResolver >> resolve: origin
 [
-cache := IdentityDictionary new
+^ cache at: origin ifAbsent: [ self unknownOrigin: origin ]
+]
+
+Class InteractiveResolver >> unknownOrigin: origin
+[
+| reference |^ (next ifNotNil: [ next resolve: origin ])	ifNil: [ 		reference := ResolutionRequest for: origin.		reference ifNotNil: [ cache at: origin put: reference ] ]
 ]
 
 Metaclass

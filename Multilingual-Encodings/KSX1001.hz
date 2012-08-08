@@ -10,9 +10,9 @@ Metaclass
 	name: #KSX1001;
 	instanceVariables: #().
 
-Metaclass KSX1001 >> nextPutValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
+Metaclass KSX1001 >> compoundTextSequence
 [
-| c1 c2 |state charSize: 2.state g0Leading ~= self leadingChar	ifTrue: [ 		state g0Leading: self leadingChar.		state g0Size: 2.		aStream basicNextPutAll: compoundTextSequence ].c1 := ascii // 94 + 33.c2 := ascii \\ 94 + 33.^ aStream	basicNextPut: (Character value: c1);	basicNextPut: (Character value: c2)
+^ compoundTextSequence
 ]
 
 Metaclass KSX1001 >> initialize
@@ -26,18 +26,18 @@ Metaclass KSX1001 >> isLetter: char
 | value leading |leading := char leadingChar.value := char charCode.leading = 0	ifTrue: [ ^ super isLetter: char ].value := value // 94 + 1.^ 1 <= value and: [ value < 84 ]
 ]
 
-Metaclass KSX1001 >> compoundTextSequence
+Metaclass KSX1001 >> leadingChar
 [
-^ compoundTextSequence
+^ 3
+]
+
+Metaclass KSX1001 >> nextPutValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
+[
+| c1 c2 |state charSize: 2.state g0Leading ~= self leadingChar	ifTrue: [ 		state g0Leading: self leadingChar.		state g0Size: 2.		aStream basicNextPutAll: compoundTextSequence ].c1 := ascii // 94 + 33.c2 := ascii \\ 94 + 33.^ aStream	basicNextPut: (Character value: c1);	basicNextPut: (Character value: c2)
 ]
 
 Metaclass KSX1001 >> ucsTable
 [
 ^ UCSTable ksx1001Table
-]
-
-Metaclass KSX1001 >> leadingChar
-[
-^ 3
 ]
 

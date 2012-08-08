@@ -17,6 +17,12 @@ Class RxmLink >> next
 ^ next
 ]
 
+Class RxmLink >> next: aLink
+[
+	"Set the next link, either an RxmLink or an RxmTerminator."
+next := aLink
+]
+
 Class RxmLink >> pointTailTo: anRxmLink
 [
 	"Propagate this message along the chain of links.	Point `next' reference of the last link to <anRxmLink>.	If the chain is already terminated, blow up."
@@ -27,12 +33,6 @@ Class RxmLink >> terminateWith: aTerminator
 [
 	"Propagate this message along the chain of links, and	make aTerminator the `next' link of the last link in the chain.	If the chain is already reminated with the same terminator, 	do not blow up."
 next == nil	ifTrue: [ next := aTerminator ]	ifFalse: [ next terminateWith: aTerminator ]
-]
-
-Class RxmLink >> next: aLink
-[
-	"Set the next link, either an RxmLink or an RxmTerminator."
-next := aLink
 ]
 
 Metaclass

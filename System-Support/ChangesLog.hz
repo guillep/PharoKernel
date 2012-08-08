@@ -6,14 +6,16 @@ Class
 	classVariables: #(#DefaultInstance );
 	package: #'System-Support'.
 
-Class ChangesLog >> logExpressionEvaluated: announcement
+Class ChangesLog >> assureStartupStampLogged
 [
-self logChange: announcement expressionEvaluated
+	"If there is a startup stamp not yet actually logged to disk, do it now."
+| changesFile |startupStamp ifNil: [ ^ self ].(SourceFiles isNil or: [ (changesFile := SourceFiles at: 2) == nil ])	ifTrue: [ ^ self ].changesFile isReadOnly	ifTrue: [ ^ self ].changesFile	setToEnd;	cr;	cr.changesFile	nextChunkPut: startupStamp asString;	cr.startupStamp := nil.self forceChangesToDisk
 ]
 
-Class ChangesLog >> logMethodRemoved: announcement
+Class ChangesLog >> forceChangesToDisk
 [
-announcement methodClass acceptsLoggingOfCompilation	ifTrue: [ self logChange: announcement methodClass name , ' removeSelector: #' , announcement selector ]
+	"Ensure that the changes file has been fully written to disk by closing and re-opening it. This makes the system more robust in the face of a power failure or hard-reboot."
+| changesFile |changesFile := SourceFiles at: 2.(changesFile isKindOf: FileStream)	ifTrue: [ 		changesFile flush.		changesFile close.		changesFile open: changesFile name forWrite: true.		changesFile setToEnd ]
 ]
 
 Class ChangesLog >> logChange: aStringOrText
@@ -27,15 +29,19 @@ Class ChangesLog >> logClassRemoved: annoucement
 annoucement classRemoved acceptsLoggingOfCompilation	ifTrue: [ self logChange: 'Smalltalk globals removeClassNamed: #' , annoucement classRemoved name ]
 ]
 
+Class ChangesLog >> logExpressionEvaluated: announcement
+[
+self logChange: announcement expressionEvaluated
+]
+
+Class ChangesLog >> logMethodRemoved: announcement
+[
+announcement methodClass acceptsLoggingOfCompilation	ifTrue: [ self logChange: announcement methodClass name , ' removeSelector: #' , announcement selector ]
+]
+
 Class ChangesLog >> recordStartupStamp
 [
 startupStamp := '----STARTUP----' , Time dateAndTimeNow printString , ' as ' , Smalltalk imagePath
-]
-
-Class ChangesLog >> assureStartupStampLogged
-[
-	"If there is a startup stamp not yet actually logged to disk, do it now."
-| changesFile |startupStamp ifNil: [ ^ self ].(SourceFiles isNil or: [ (changesFile := SourceFiles at: 2) == nil ])	ifTrue: [ ^ self ].changesFile isReadOnly	ifTrue: [ ^ self ].changesFile	setToEnd;	cr;	cr.changesFile	nextChunkPut: startupStamp asString;	cr.startupStamp := nil.self forceChangesToDisk
 ]
 
 Class ChangesLog >> registerToAnnouncements
@@ -43,23 +49,17 @@ Class ChangesLog >> registerToAnnouncements
 SystemAnnouncer uniqueInstance	on: ClassRemoved send: #logClassRemoved: to: self;	on: MethodRemoved send: #logMethodRemoved: to: self;	on: ExpressionEvaluated send: #logExpressionEvaluated: to: self
 ]
 
-Class ChangesLog >> forceChangesToDisk
-[
-	"Ensure that the changes file has been fully written to disk by closing and re-opening it. This makes the system more robust in the face of a power failure or hard-reboot."
-| changesFile |changesFile := SourceFiles at: 2.(changesFile isKindOf: FileStream)	ifTrue: [ 		changesFile flush.		changesFile close.		changesFile open: changesFile name forWrite: true.		changesFile setToEnd ]
-]
-
 Metaclass
 	name: #ChangesLog;
 	instanceVariables: #().
 
-Metaclass ChangesLog >> reset
-[
-SystemAnnouncer uniqueInstance unsubscribe: DefaultInstance.DefaultInstance := nil
-]
-
 Metaclass ChangesLog >> default
 [
 ^ DefaultInstance	ifNil: [ 		DefaultInstance := self new.		DefaultInstance registerToAnnouncements ]
+]
+
+Metaclass ChangesLog >> reset
+[
+SystemAnnouncer uniqueInstance unsubscribe: DefaultInstance.DefaultInstance := nil
 ]
 

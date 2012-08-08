@@ -6,19 +6,14 @@ Class
 	classVariables: #();
 	package: #'FileSystem-Core-Implementation'.
 
-Class SystemResolver >> vmBinary
+Class SystemResolver >> changes
 [
-^ self resolveString: Smalltalk vm fullPath
+^ self image withExtension: Smalltalk changesSuffix
 ]
 
-Class SystemResolver >> supportedOrigins
+Class SystemResolver >> image
 [
-^ #(#image #imageDirectory #changes #vmBinary #vmDirectory #workingDirectory)
-]
-
-Class SystemResolver >> vmDirectory
-[
-^ self resolveString: self primVmDirectoryPath
+^ self resolveString: self primImagePath
 ]
 
 Class SystemResolver >> imageDirectory
@@ -26,9 +21,11 @@ Class SystemResolver >> imageDirectory
 ^ self image parent
 ]
 
-Class SystemResolver >> changes
+Class SystemResolver >> primImagePath
 [
-^ self image withExtension: Smalltalk changesSuffix
+	"Answer the full path name for the current image."
+	<primitive: 121>
+self primitiveFailed
 ]
 
 Class SystemResolver >> primVmDirectoryPath
@@ -38,16 +35,19 @@ Class SystemResolver >> primVmDirectoryPath
 self primitiveFailed
 ]
 
-Class SystemResolver >> image
+Class SystemResolver >> supportedOrigins
 [
-^ self resolveString: self primImagePath
+^ #(#image #imageDirectory #changes #vmBinary #vmDirectory #workingDirectory)
 ]
 
-Class SystemResolver >> primImagePath
+Class SystemResolver >> vmBinary
 [
-	"Answer the full path name for the current image."
-	<primitive: 121>
-self primitiveFailed
+^ self resolveString: Smalltalk vm fullPath
+]
+
+Class SystemResolver >> vmDirectory
+[
+^ self resolveString: self primVmDirectoryPath
 ]
 
 Metaclass

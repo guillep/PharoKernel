@@ -6,29 +6,19 @@ Class
 	classVariables: #();
 	package: #'Collections-Weak'.
 
-Class WeakFinalizerItem >> postCopy
+Class WeakFinalizerItem >> add: newExecutor
 [
-executor hasMultipleExecutors	ifTrue: [ executor := executor copy ]
+executor	ifNil: [ executor := newExecutor ]	ifNotNil: [ 		executor hasMultipleExecutors			ifTrue: [ executor add: newExecutor ]			ifFalse: [ executor := ObjectFinalizerCollection with: executor with: newExecutor ] ]
+]
+
+Class WeakFinalizerItem >> clear
+[
+list := next := nil
 ]
 
 Class WeakFinalizerItem >> copyWithList: aList
 [
 ^ self copy list: aList
-]
-
-Class WeakFinalizerItem >> list
-[
-^ list
-]
-
-Class WeakFinalizerItem >> next
-[
-^ next
-]
-
-Class WeakFinalizerItem >> add: newExecutor
-[
-executor	ifNil: [ executor := newExecutor ]	ifNotNil: [ 		executor hasMultipleExecutors			ifTrue: [ executor add: newExecutor ]			ifFalse: [ executor := ObjectFinalizerCollection with: executor with: newExecutor ] ]
 ]
 
 Class WeakFinalizerItem >> executor
@@ -42,19 +32,9 @@ Class WeakFinalizerItem >> finalizeValues
 | ex |ex := executor.executor := nil.next := nil.ex finalize
 ]
 
-Class WeakFinalizerItem >> list: weakFinalizationList object: anObject executor: anExecutor
+Class WeakFinalizerItem >> list
 [
-self assert: weakFinalizationList class == WeakFinalizationList.list := weakFinalizationList.self at: 1 put: anObject.executor := anExecutor
-]
-
-Class WeakFinalizerItem >> list: weakFinalizationList object: anObject
-[
-self assert: weakFinalizationList class == WeakFinalizationList.list := weakFinalizationList.self at: 1 put: anObject
-]
-
-Class WeakFinalizerItem >> object
-[
-^ self at: 1
+^ list
 ]
 
 Class WeakFinalizerItem >> list: aList
@@ -62,9 +42,29 @@ Class WeakFinalizerItem >> list: aList
 list := aList
 ]
 
-Class WeakFinalizerItem >> clear
+Class WeakFinalizerItem >> list: weakFinalizationList object: anObject
 [
-list := next := nil
+self assert: weakFinalizationList class == WeakFinalizationList.list := weakFinalizationList.self at: 1 put: anObject
+]
+
+Class WeakFinalizerItem >> list: weakFinalizationList object: anObject executor: anExecutor
+[
+self assert: weakFinalizationList class == WeakFinalizationList.list := weakFinalizationList.self at: 1 put: anObject.executor := anExecutor
+]
+
+Class WeakFinalizerItem >> next
+[
+^ next
+]
+
+Class WeakFinalizerItem >> object
+[
+^ self at: 1
+]
+
+Class WeakFinalizerItem >> postCopy
+[
+executor hasMultipleExecutors	ifTrue: [ executor := executor copy ]
 ]
 
 Metaclass

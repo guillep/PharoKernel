@@ -6,10 +6,16 @@ Class
 	classVariables: #();
 	package: #'Kernel-Chronology'.
 
-Class TimeStamp >> minusDays: anInteger
+Class TimeStamp >> asTimeStamp
 [
-	"Answer a TimeStamp which is anInteger days before the receiver."
-^ self - anInteger days
+	"Answer the receiver as an instance of TimeStamp."
+^ self
+]
+
+Class TimeStamp >> date
+[
+	"Answer the date of the receiver."
+^ self asDate
 ]
 
 Class TimeStamp >> dateAndTime
@@ -18,22 +24,10 @@ Class TimeStamp >> dateAndTime
 ^ Array with: self date with: self time
 ]
 
-Class TimeStamp >> printOn: aStream
+Class TimeStamp >> minusDays: anInteger
 [
-	"Print receiver's date and time on aStream."
-aStream	nextPutAll: self date printString;	space;	nextPutAll: self time printString
-]
-
-Class TimeStamp >> asTimeStamp
-[
-	"Answer the receiver as an instance of TimeStamp."
-^ self
-]
-
-Class TimeStamp >> plusSeconds: anInteger
-[
-	"Answer a TimeStamp which is anInteger number of seconds after the receiver."
-^ self + anInteger seconds
+	"Answer a TimeStamp which is anInteger days before the receiver."
+^ self - anInteger days
 ]
 
 Class TimeStamp >> minusSeconds: anInteger
@@ -42,16 +36,22 @@ Class TimeStamp >> minusSeconds: anInteger
 ^ self - anInteger seconds
 ]
 
-Class TimeStamp >> time
+Class TimeStamp >> plusDays: anInteger
 [
-	"Answer the time of the receiver."
-^ self asTime
+	"Answer a TimeStamp which is anInteger days after the receiver."
+^ self + anInteger days
 ]
 
-Class TimeStamp >> date
+Class TimeStamp >> plusSeconds: anInteger
 [
-	"Answer the date of the receiver."
-^ self asDate
+	"Answer a TimeStamp which is anInteger number of seconds after the receiver."
+^ self + anInteger seconds
+]
+
+Class TimeStamp >> printOn: aStream
+[
+	"Print receiver's date and time on aStream."
+aStream	nextPutAll: self date printString;	space;	nextPutAll: self time printString
 ]
 
 Class TimeStamp >> species
@@ -64,19 +64,24 @@ Class TimeStamp >> storeOn: aStream
 aStream	nextPut: $';	print: self;	nextPut: $';	nextPutAll: ' asTimeStamp'
 ]
 
-Class TimeStamp >> plusDays: anInteger
+Class TimeStamp >> time
 [
-	"Answer a TimeStamp which is anInteger days after the receiver."
-^ self + anInteger days
+	"Answer the time of the receiver."
+^ self asTime
 ]
 
 Metaclass
 	name: #TimeStamp;
 	instanceVariables: #().
 
-Metaclass TimeStamp >> readFrom: stream
+Metaclass TimeStamp >> current
 [
-| date time |stream skipSeparators.date := Date readFrom: stream.stream skipSeparators.time := Time readFrom: stream.^ self date: date time: time
+| ts ticks |ts := super now.ticks := ts ticks.ticks at: 3 put: 0.ts ticks: ticks offset: ts offset.^ ts
+]
+
+Metaclass TimeStamp >> fromMethodTimeStamp: aString
+[
+| stream |(stream := aString readStream)	skipSeparators;	skipTo: Character space.^ self readFrom: stream
 ]
 
 Metaclass TimeStamp >> now
@@ -85,13 +90,8 @@ Metaclass TimeStamp >> now
 ^ self current
 ]
 
-Metaclass TimeStamp >> fromMethodTimeStamp: aString
+Metaclass TimeStamp >> readFrom: stream
 [
-| stream |(stream := aString readStream)	skipSeparators;	skipTo: Character space.^ self readFrom: stream
-]
-
-Metaclass TimeStamp >> current
-[
-| ts ticks |ts := super now.ticks := ts ticks.ticks at: 3 put: 0.ts ticks: ticks offset: ts offset.^ ts
+| date time |stream skipSeparators.date := Date readFrom: stream.stream skipSeparators.time := Time readFrom: stream.^ self date: date time: time
 ]
 

@@ -6,12 +6,22 @@ Class
 	classVariables: #(#Primitives );
 	package: #'FileSystem-Core-Kernel'.
 
+Class FileSystemHandle >> at: index
+[
+| buffer |buffer := ByteArray new: 1.self	at: index	read: buffer	startingAt: 1	count: 1.^ buffer at: 1
+]
+
 Class FileSystemHandle >> at: index put: anObject
 [
 | buffer |buffer := ByteArray	with:		(anObject isCharacter			ifTrue: [ anObject codePoint ]			ifFalse: [ anObject ]).self	at: index	write: buffer	startingAt: 1	count: 1
 ]
 
-Class FileSystemHandle >> truncateTo: anInteger
+Class FileSystemHandle >> at: offset read: buffer startingAt: start count: count
+[
+self subclassResponsibility
+]
+
+Class FileSystemHandle >> at: offset write: buffer startingAt: start count: count
 [
 self subclassResponsibility
 ]
@@ -27,9 +37,9 @@ Class FileSystemHandle >> close
 self subclassResponsibility
 ]
 
-Class FileSystemHandle >> at: offset write: buffer startingAt: start count: count
+Class FileSystemHandle >> ensureClosed
 [
-self subclassResponsibility
+reference exists	ifTrue: [ self close ]
 ]
 
 Class FileSystemHandle >> fileSystem
@@ -37,7 +47,12 @@ Class FileSystemHandle >> fileSystem
 ^ reference fileSystem
 ]
 
-Class FileSystemHandle >> open
+Class FileSystemHandle >> filesystem
+[
+self deprecated: 'Use fileSystem' on: '3 April 2012' in: 'Pharo 1.4'.^ self fileSystem
+]
+
+Class FileSystemHandle >> flush
 [
 self subclassResponsibility
 ]
@@ -52,49 +67,14 @@ Class FileSystemHandle >> isOpen
 self subclassResponsibility
 ]
 
-Class FileSystemHandle >> at: index
+Class FileSystemHandle >> isWritable
 [
-| buffer |buffer := ByteArray new: 1.self	at: index	read: buffer	startingAt: 1	count: 1.^ buffer at: 1
+^ writable
 ]
 
-Class FileSystemHandle >> flush
+Class FileSystemHandle >> open
 [
 self subclassResponsibility
-]
-
-Class FileSystemHandle >> ensureClosed
-[
-reference exists	ifTrue: [ self close ]
-]
-
-Class FileSystemHandle >> writeStream
-[
-self subclassResponsability
-]
-
-Class FileSystemHandle >> filesystem
-[
-self deprecated: 'Use fileSystem' on: '3 April 2012' in: 'Pharo 1.4'.^ self fileSystem
-]
-
-Class FileSystemHandle >> reference
-[
-^ reference
-]
-
-Class FileSystemHandle >> at: offset read: buffer startingAt: start count: count
-[
-self subclassResponsibility
-]
-
-Class FileSystemHandle >> setReference: aReference writable: aBoolean
-[
-reference := aReference resolve.writable := aBoolean
-]
-
-Class FileSystemHandle >> reopen
-[
-self close.self open
 ]
 
 Class FileSystemHandle >> readStream
@@ -102,9 +82,29 @@ Class FileSystemHandle >> readStream
 self subclassResponsability
 ]
 
-Class FileSystemHandle >> isWritable
+Class FileSystemHandle >> reference
 [
-^ writable
+^ reference
+]
+
+Class FileSystemHandle >> reopen
+[
+self close.self open
+]
+
+Class FileSystemHandle >> setReference: aReference writable: aBoolean
+[
+reference := aReference resolve.writable := aBoolean
+]
+
+Class FileSystemHandle >> truncateTo: anInteger
+[
+self subclassResponsibility
+]
+
+Class FileSystemHandle >> writeStream
+[
+self subclassResponsability
 ]
 
 Metaclass

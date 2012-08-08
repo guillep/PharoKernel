@@ -6,14 +6,9 @@ Class
 	classVariables: #();
 	package: #'Fuel-Core'.
 
-Class FLAnalyzer >> setDefaultAnalysis
+Class FLAnalyzer >> analysisFor: anObject
 [
-analysisFactory := [ :anObject | (FLAnalysis newWith: self firstInMapperChain root: anObject)	run;	yourself ]
-]
-
-Class FLAnalyzer >> firstInMapperChain
-[
-^ self mappers first
+^ analysisFactory value: anObject
 ]
 
 Class FLAnalyzer >> considerGlobal: aSymbol
@@ -21,14 +16,9 @@ Class FLAnalyzer >> considerGlobal: aSymbol
 globalSymbols add: aSymbol
 ]
 
-Class FLAnalyzer >> when: aCondition substituteBy: aFactory
+Class FLAnalyzer >> firstInMapperChain
 [
-pluggableSubstitutions add: aCondition -> aFactory
-]
-
-Class FLAnalyzer >> useLightMappers
-[
-globalMappersFactory := [ self lightGlobalMappers ].generalMapperFactory := [ FLLightGeneralMapper new ]
+^ self mappers first
 ]
 
 Class FLAnalyzer >> fuelAccept: aGeneralMapper
@@ -36,9 +26,14 @@ Class FLAnalyzer >> fuelAccept: aGeneralMapper
 ^ aGeneralMapper visitSubstitution: self by: nil
 ]
 
-Class FLAnalyzer >> mappers
+Class FLAnalyzer >> generalMapper
 [
-^ OrderedCollection new	addAll: self pluggableSubstitutionMappers;	addAll: self globalMappers;	add: self generalMapper;	reduceRight: [ :left :right | left next: right ];	yourself
+^ generalMapperFactory value
+]
+
+Class FLAnalyzer >> globalMappers
+[
+^ globalMappersFactory value
 ]
 
 Class FLAnalyzer >> globalSymbols
@@ -47,24 +42,9 @@ Class FLAnalyzer >> globalSymbols
 ^ globalSymbols
 ]
 
-Class FLAnalyzer >> pluggableSubstitutionMappers
-[
-^ pluggableSubstitutions collect: [ :aLink | FLPluggableSubstitutionMapper when: aLink key substituteBy: aLink value ]
-]
-
-Class FLAnalyzer >> globalMappers
-[
-^ globalMappersFactory value
-]
-
 Class FLAnalyzer >> initialize
 [
 super initialize.self setDefaultAnalysis.self useLightMappers.pluggableSubstitutions := OrderedCollection new.internalClasses := IdentitySet new.internalMethods := IdentitySet new.globalSymbols := self class defaultGlobalSymbols asIdentitySet
-]
-
-Class FLAnalyzer >> generalMapper
-[
-^ generalMapperFactory value
 ]
 
 Class FLAnalyzer >> lightGlobalMappers
@@ -72,9 +52,29 @@ Class FLAnalyzer >> lightGlobalMappers
 ^ globalSymbols isEmpty	ifTrue: [ #() ]	ifFalse: [ Array with: (FLLightGlobalMapper for: globalSymbols) ]
 ]
 
-Class FLAnalyzer >> analysisFor: anObject
+Class FLAnalyzer >> mappers
 [
-^ analysisFactory value: anObject
+^ OrderedCollection new	addAll: self pluggableSubstitutionMappers;	addAll: self globalMappers;	add: self generalMapper;	reduceRight: [ :left :right | left next: right ];	yourself
+]
+
+Class FLAnalyzer >> pluggableSubstitutionMappers
+[
+^ pluggableSubstitutions collect: [ :aLink | FLPluggableSubstitutionMapper when: aLink key substituteBy: aLink value ]
+]
+
+Class FLAnalyzer >> setDefaultAnalysis
+[
+analysisFactory := [ :anObject | (FLAnalysis newWith: self firstInMapperChain root: anObject)	run;	yourself ]
+]
+
+Class FLAnalyzer >> useLightMappers
+[
+globalMappersFactory := [ self lightGlobalMappers ].generalMapperFactory := [ FLLightGeneralMapper new ]
+]
+
+Class FLAnalyzer >> when: aCondition substituteBy: aFactory
+[
+pluggableSubstitutions add: aCondition -> aFactory
 ]
 
 Metaclass

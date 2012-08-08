@@ -6,14 +6,40 @@ Class
 	classVariables: #();
 	package: #'Kernel-Chronology'.
 
+Class DosTimestamp >> = rhs
+[
+^ self value = rhs value
+]
+
 Class DosTimestamp >> asDateAndTime
 [
 ^ DateAndTime date: self date time: self time
 ]
 
+Class DosTimestamp >> date
+[
+	"See class comment for format details"
+| encodedDate yearsSinceDosEpoch month day year |encodedDate := self high16Bits.yearsSinceDosEpoch := encodedDate >> 9.	"High 7 bits"month := encodedDate >> 5 & 2r1111.	"Middle 4 bits"day := encodedDate & 2r11111.	"Low 5 bits"year := self epoch year + yearsSinceDosEpoch.^ Date year: year month: month day: day
+]
+
+Class DosTimestamp >> epoch
+[
+^ self class epoch
+]
+
 Class DosTimestamp >> hash
 [
 ^ self value hash
+]
+
+Class DosTimestamp >> high16Bits
+[
+^ value >> 16
+]
+
+Class DosTimestamp >> initializeValue: anInteger
+[
+value := anInteger.^ self
 ]
 
 Class DosTimestamp >> low16Bits
@@ -26,41 +52,15 @@ Class DosTimestamp >> printOn: aStream
 aStream	nextPutAll: self asDateAndTime printString;	nextPutAll: ' (';	nextPutAll: self value asString;	nextPut: $)
 ]
 
-Class DosTimestamp >> epoch
-[
-^ self class epoch
-]
-
-Class DosTimestamp >> value
-[
-^ value
-]
-
-Class DosTimestamp >> = rhs
-[
-^ self value = rhs value
-]
-
 Class DosTimestamp >> time
 [
 	"See class comment for format details"
 | encodedTime hours minutes secondsHalved seconds |encodedTime := self low16Bits.hours := encodedTime >> 11.	"High 5 bits"minutes := encodedTime >> 5 & 2r111111.	"Middle 6 bits"secondsHalved := encodedTime & 2r11111.	"Low 5 bits"seconds := (secondsHalved * 2) floor.^ Time hour: hours minute: minutes second: seconds
 ]
 
-Class DosTimestamp >> date
+Class DosTimestamp >> value
 [
-	"See class comment for format details"
-| encodedDate yearsSinceDosEpoch month day year |encodedDate := self high16Bits.yearsSinceDosEpoch := encodedDate >> 9.	"High 7 bits"month := encodedDate >> 5 & 2r1111.	"Middle 4 bits"day := encodedDate & 2r11111.	"Low 5 bits"year := self epoch year + yearsSinceDosEpoch.^ Date year: year month: month day: day
-]
-
-Class DosTimestamp >> initializeValue: anInteger
-[
-value := anInteger.^ self
-]
-
-Class DosTimestamp >> high16Bits
-[
-^ value >> 16
+^ value
 ]
 
 Metaclass
@@ -70,11 +70,6 @@ Metaclass
 Metaclass DosTimestamp >> dateValueFrom: aDate
 [
 | dosYear dosMonth dosDay |dosYear := aDate year - DateAndTime dosEpoch year << 9.dosMonth := aDate monthIndex << 5.dosDay := aDate dayOfMonth.^ dosYear + dosMonth + dosDay
-]
-
-Metaclass DosTimestamp >> timeValueFrom: aTime
-[
-| dosHours dosMinutes dosSeconds |dosHours := aTime hour << 11.dosMinutes := aTime minute << 5.dosSeconds := (aTime second / 2) floor.^ dosHours + dosMinutes + dosSeconds
 ]
 
 Metaclass DosTimestamp >> epoch
@@ -90,5 +85,10 @@ Metaclass DosTimestamp >> fromDateAndTime: aDateAndTime
 Metaclass DosTimestamp >> on: anInteger
 [
 ^ self new initializeValue: anInteger
+]
+
+Metaclass DosTimestamp >> timeValueFrom: aTime
+[
+| dosHours dosMinutes dosSeconds |dosHours := aTime hour << 11.dosMinutes := aTime minute << 5.dosSeconds := (aTime second / 2) floor.^ dosHours + dosMinutes + dosSeconds
 ]
 

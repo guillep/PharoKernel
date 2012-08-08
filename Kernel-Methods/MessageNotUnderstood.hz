@@ -11,6 +11,11 @@ Class MessageNotUnderstood >> defaultAction
 reachedDefaultHandler := true.super defaultAction
 ]
 
+Class MessageNotUnderstood >> initialize
+[
+super initialize.reachedDefaultHandler := false
+]
+
 Class MessageNotUnderstood >> isResumable
 [
 	"Determine whether an exception is resumable."
@@ -28,20 +33,15 @@ Class MessageNotUnderstood >> message: aMessage
 message := aMessage
 ]
 
-Class MessageNotUnderstood >> receiver: obj
+Class MessageNotUnderstood >> messageText
 [
-receiver := obj
+	"Return an exception's message text."
+^ messageText == nil	ifTrue: [ 		message == nil			ifTrue: [ super messageText ]			ifFalse: [ 				message lookupClass == UndefinedObject					ifTrue: [ 'receiver of "{1}" is nil' translated format: {(message selector asString)} ]					ifFalse: [ message lookupClass printString , '>>' , message selector asString ] ] ]	ifFalse: [ messageText ]
 ]
 
 Class MessageNotUnderstood >> reachedDefaultHandler
 [
 ^ reachedDefaultHandler
-]
-
-Class MessageNotUnderstood >> messageText
-[
-	"Return an exception's message text."
-^ messageText == nil	ifTrue: [ 		message == nil			ifTrue: [ super messageText ]			ifFalse: [ 				message lookupClass == UndefinedObject					ifTrue: [ 'receiver of "{1}" is nil' translated format: {(message selector asString)} ]					ifFalse: [ message lookupClass printString , '>>' , message selector asString ] ] ]	ifFalse: [ messageText ]
 ]
 
 Class MessageNotUnderstood >> receiver
@@ -50,9 +50,9 @@ Class MessageNotUnderstood >> receiver
 ^ receiver
 ]
 
-Class MessageNotUnderstood >> initialize
+Class MessageNotUnderstood >> receiver: obj
 [
-super initialize.reachedDefaultHandler := false
+receiver := obj
 ]
 
 Metaclass

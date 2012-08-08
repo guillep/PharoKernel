@@ -6,26 +6,26 @@ Class
 	classVariables: #();
 	package: #'Files-Kernel'.
 
-Class FileStreamException >> fileName: aFileName
-[
-fileName := aFileName
-]
-
 Class FileStreamException >> fileName
 [
 ^ fileName
 ]
 
-Class FileStreamException >> messageText
+Class FileStreamException >> fileName: aFileName
 [
-	"Return an exception's message text."
-^ messageText == nil	ifTrue: [ fileName printString ]	ifFalse: [ messageText ]
+fileName := aFileName
 ]
 
 Class FileStreamException >> isResumable
 [
 	"Determine whether an exception is resumable."
 ^ true
+]
+
+Class FileStreamException >> messageText
+[
+	"Return an exception's message text."
+^ messageText == nil	ifTrue: [ fileName printString ]	ifFalse: [ messageText ]
 ]
 
 Metaclass

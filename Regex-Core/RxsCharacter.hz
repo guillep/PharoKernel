@@ -6,25 +6,15 @@ Class
 	classVariables: #();
 	package: #'Regex-Core'.
 
-Class RxsCharacter >> isNullable
-[
-^ false
-]
-
-Class RxsCharacter >> isEnumerable
-[
-^ true
-]
-
 Class RxsCharacter >> character
 [
 ^ character
 ]
 
-Class RxsCharacter >> isAtomic
+Class RxsCharacter >> dispatchTo: aMatcher
 [
-	"A character is always atomic."
-^ true
+	"Inform the matcher of the kind of the node, and it	will do whatever it has to."
+^ aMatcher syntaxCharacter: self
 ]
 
 Class RxsCharacter >> enumerateTo: aSet ignoringCase: aBoolean
@@ -38,10 +28,20 @@ Class RxsCharacter >> initializeCharacter: aCharacter
 character := aCharacter
 ]
 
-Class RxsCharacter >> dispatchTo: aMatcher
+Class RxsCharacter >> isAtomic
 [
-	"Inform the matcher of the kind of the node, and it	will do whatever it has to."
-^ aMatcher syntaxCharacter: self
+	"A character is always atomic."
+^ true
+]
+
+Class RxsCharacter >> isEnumerable
+[
+^ true
+]
+
+Class RxsCharacter >> isNullable
+[
+^ false
 ]
 
 Metaclass

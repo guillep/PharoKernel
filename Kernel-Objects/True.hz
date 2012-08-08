@@ -6,38 +6,21 @@ Class
 	classVariables: #();
 	package: #'Kernel-Objects'.
 
+Class True >> & aBoolean
+[
+	"Evaluating conjunction -- answer aBoolean since receiver is true."
+^ aBoolean
+]
+
 Class True >> and: alternativeBlock
 [
 	"Nonevaluating conjunction -- answer the value of alternativeBlock since	the receiver is true."
 ^ alternativeBlock value
 ]
 
-Class True >> printOn: aStream
-[
-aStream nextPutAll: 'true'
-]
-
 Class True >> asBit
 [
 ^ 1
-]
-
-Class True >> xor: aBoolean
-[
-	"Posted by Eliot Miranda to squeak-dev on 3/24/2009"
-^ aBoolean value not
-]
-
-Class True >> ifTrue: trueAlternativeBlock ifFalse: falseAlternativeBlock
-[
-	"Answer with the value of trueAlternativeBlock. Execution does not 	actually reach here because the expression is compiled in-line."
-^ trueAlternativeBlock value
-]
-
-Class True >> ifTrue: alternativeBlock
-[
-	"Answer the value of alternativeBlock. Execution does not actually 	reach here because the expression is compiled in-line."
-^ alternativeBlock value
 ]
 
 Class True >> ifFalse: alternativeBlock
@@ -52,10 +35,22 @@ Class True >> ifFalse: falseAlternativeBlock ifTrue: trueAlternativeBlock
 ^ trueAlternativeBlock value
 ]
 
-Class True >> & aBoolean
+Class True >> ifTrue: alternativeBlock
 [
-	"Evaluating conjunction -- answer aBoolean since receiver is true."
-^ aBoolean
+	"Answer the value of alternativeBlock. Execution does not actually 	reach here because the expression is compiled in-line."
+^ alternativeBlock value
+]
+
+Class True >> ifTrue: trueAlternativeBlock ifFalse: falseAlternativeBlock
+[
+	"Answer with the value of trueAlternativeBlock. Execution does not 	actually reach here because the expression is compiled in-line."
+^ trueAlternativeBlock value
+]
+
+Class True >> not
+[
+	"Negation--answer false since the receiver is true."
+^ false
 ]
 
 Class True >> or: alternativeBlock
@@ -64,10 +59,15 @@ Class True >> or: alternativeBlock
 ^ self
 ]
 
-Class True >> not
+Class True >> printOn: aStream
 [
-	"Negation--answer false since the receiver is true."
-^ false
+aStream nextPutAll: 'true'
+]
+
+Class True >> xor: aBoolean
+[
+	"Posted by Eliot Miranda to squeak-dev on 3/24/2009"
+^ aBoolean value not
 ]
 
 Class True >> | aBoolean

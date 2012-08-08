@@ -6,6 +6,12 @@ Class
 	classVariables: #();
 	package: #'Regex-Core'.
 
+Class RxsCharSet >> dispatchTo: aMatcher
+[
+	"Inform the matcher of the kind of the node, and it	will do whatever it has to."
+^ aMatcher syntaxCharSet: self
+]
+
 Class RxsCharSet >> enumerablePartPredicateIgnoringCase: aBoolean
 [
 | enumeration |enumeration := self optimalSetIgnoringCase: aBoolean.^ negated	ifTrue: [ [ :char | (enumeration includes: char) not ] ]	ifFalse: [ [ :char | enumeration includes: char ] ]
@@ -15,6 +21,33 @@ Class RxsCharSet >> enumerableSetIgnoringCase: aBoolean
 [
 	"Answer a collection of characters that make up the portion of me	that can be enumerated."
 | set |set := Set new.elements	do: [ :each | 		each isEnumerable			ifTrue: [ each enumerateTo: set ignoringCase: aBoolean ] ].^ set
+]
+
+Class RxsCharSet >> hasPredicates
+[
+^ elements contains: [ :some | some isEnumerable not ]
+]
+
+Class RxsCharSet >> initializeElements: aCollection negated: aBoolean
+[
+	"See class comment for instance variables description."
+elements := aCollection.negated := aBoolean
+]
+
+Class RxsCharSet >> isEnumerable
+[
+elements detect: [ :some | some isEnumerable not ] ifNone: [ ^ true ].^ false
+]
+
+Class RxsCharSet >> isNegated
+[
+^ negated
+]
+
+Class RxsCharSet >> optimalSetIgnoringCase: aBoolean
+[
+	"Assuming the client with search the `set' using #includes:,	answer a collection with the contents of `set', of the class	that will provide the fastest lookup. Strings are faster than	Sets for short strings."
+| set |set := self enumerableSetIgnoringCase: aBoolean.^ set size < 10	ifTrue: [ set asArray ]	ifFalse: [ set ]
 ]
 
 Class RxsCharSet >> predicateIgnoringCase: aBoolean
@@ -28,42 +61,9 @@ Class RxsCharSet >> predicatePartPredicate
 | predicates |predicates := elements reject: [ :some | some isEnumerable ].predicates isEmpty	ifTrue: [ ^ [ :char | negated ] ].predicates size = 1	ifTrue: [ 		^ negated			ifTrue: [ predicates first predicateNegation ]			ifFalse: [ predicates first predicate ] ].predicates := predicates collect: [ :each | each predicate ].^ negated	ifFalse: [ [ :char | predicates contains: [ :some | some value: char ] ] ]	ifTrue: [ [ :char | (predicates contains: [ :some | some value: char ]) not ] ]
 ]
 
-Class RxsCharSet >> initializeElements: aCollection negated: aBoolean
-[
-	"See class comment for instance variables description."
-elements := aCollection.negated := aBoolean
-]
-
-Class RxsCharSet >> optimalSetIgnoringCase: aBoolean
-[
-	"Assuming the client with search the `set' using #includes:,	answer a collection with the contents of `set', of the class	that will provide the fastest lookup. Strings are faster than	Sets for short strings."
-| set |set := self enumerableSetIgnoringCase: aBoolean.^ set size < 10	ifTrue: [ set asArray ]	ifFalse: [ set ]
-]
-
-Class RxsCharSet >> hasPredicates
-[
-^ elements contains: [ :some | some isEnumerable not ]
-]
-
-Class RxsCharSet >> isEnumerable
-[
-elements detect: [ :some | some isEnumerable not ] ifNone: [ ^ true ].^ false
-]
-
 Class RxsCharSet >> predicates
 [
 ^ (elements reject: [ :some | some isEnumerable ]) collect: [ :each | each predicate ]
-]
-
-Class RxsCharSet >> isNegated
-[
-^ negated
-]
-
-Class RxsCharSet >> dispatchTo: aMatcher
-[
-	"Inform the matcher of the kind of the node, and it	will do whatever it has to."
-^ aMatcher syntaxCharSet: self
 ]
 
 Metaclass

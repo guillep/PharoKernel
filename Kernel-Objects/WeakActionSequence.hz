@@ -6,21 +6,14 @@ Class
 	classVariables: #();
 	package: #'Kernel-Objects'.
 
-Class WeakActionSequence >> value
-[
-	"Answer the result of evaluating the elements of the receiver.	Actually, return just the last result."
-| answer |self	do: [ :each | 		each isValid			ifTrue: [ answer := each value ] ].^ answer
-]
-
 Class WeakActionSequence >> asActionSequence
 [
 ^ self
 ]
 
-Class WeakActionSequence >> valueWithArguments: anArray
+Class WeakActionSequence >> asActionSequenceTrappingErrors
 [
-	"Return the last result"
-| answer |self	do: [ :each | 		each isValid			ifTrue: [ answer := each valueWithArguments: anArray ] ].^ answer
+^ WeakActionSequenceTrappingErrors withAll: self
 ]
 
 Class WeakActionSequence >> asMinimalRepresentation
@@ -33,9 +26,16 @@ Class WeakActionSequence >> printOn: aStream
 self size < 2	ifTrue: [ ^ super printOn: aStream ].aStream nextPutAll: '#('.self do: [ :each | each printOn: aStream ] separatedBy: [ aStream cr ].aStream nextPut: $)
 ]
 
-Class WeakActionSequence >> asActionSequenceTrappingErrors
+Class WeakActionSequence >> value
 [
-^ WeakActionSequenceTrappingErrors withAll: self
+	"Answer the result of evaluating the elements of the receiver.	Actually, return just the last result."
+| answer |self	do: [ :each | 		each isValid			ifTrue: [ answer := each value ] ].^ answer
+]
+
+Class WeakActionSequence >> valueWithArguments: anArray
+[
+	"Return the last result"
+| answer |self	do: [ :each | 		each isValid			ifTrue: [ answer := each valueWithArguments: anArray ] ].^ answer
 ]
 
 Metaclass

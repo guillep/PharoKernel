@@ -6,14 +6,14 @@ Class
 	classVariables: #();
 	package: #'Fuel-Clusters-Optionals'.
 
-Class FLDictionaryCollectionCluster >> referencesOf: anObject do: aBlock
-[
-aBlock value: anObject size.anObject	keysAndValuesDo: [ :key :value | 		aBlock value: key.		aBlock value: value ]
-]
-
 Class FLDictionaryCollectionCluster >> materializeReferencesOf: anObject with: aDecoder
 [
 aDecoder nextEncodedPositiveInteger	timesRepeat: [ anObject add: aDecoder nextEncodedReference -> aDecoder nextEncodedReference ]	"anObject size"
+]
+
+Class FLDictionaryCollectionCluster >> referencesOf: anObject do: aBlock
+[
+aBlock value: anObject size.anObject	keysAndValuesDo: [ :key :value | 		aBlock value: key.		aBlock value: value ]
 ]
 
 Class FLDictionaryCollectionCluster >> serializeReferencesOf: anObject with: anEncoder

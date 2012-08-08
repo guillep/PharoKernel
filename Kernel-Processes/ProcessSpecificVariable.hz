@@ -6,6 +6,12 @@ Class
 	classVariables: #();
 	package: #'Kernel-Processes'.
 
+Class ProcessSpecificVariable >> default
+[
+	"Answer the default value for the variable. The default for the default value is nil."
+^ nil
+]
+
 Class ProcessSpecificVariable >> index: anInteger
 [
 index := anInteger
@@ -22,15 +28,20 @@ Class ProcessSpecificVariable >> valueOrNil
 ^ Processor activeProcess psValueAt: index
 ]
 
-Class ProcessSpecificVariable >> default
-[
-	"Answer the default value for the variable. The default for the default value is nil."
-^ nil
-]
-
 Metaclass
 	name: #ProcessSpecificVariable;
 	instanceVariables: #(#hash #soleInstance ).
+
+Metaclass ProcessSpecificVariable >> initialize
+[
+	"Add Process::env if it is missing"
+(Process instVarNames includes: 'env')	ifFalse: [ Process addInstVarNamed: 'env' ]
+]
+
+Metaclass ProcessSpecificVariable >> new
+[
+| instance |instance := super new.instance index: (Process allocatePSKey: instance).^ instance
+]
 
 Metaclass ProcessSpecificVariable >> soleInstance
 [
@@ -41,16 +52,5 @@ Metaclass ProcessSpecificVariable >> value
 [
 	"Answer the current value for this variable in the current context."
 ^ self soleInstance value
-]
-
-Metaclass ProcessSpecificVariable >> new
-[
-| instance |instance := super new.instance index: (Process allocatePSKey: instance).^ instance
-]
-
-Metaclass ProcessSpecificVariable >> initialize
-[
-	"Add Process::env if it is missing"
-(Process instVarNames includes: 'env')	ifFalse: [ Process addInstVarNamed: 'env' ]
 ]
 

@@ -6,14 +6,14 @@ Class
 	classVariables: #();
 	package: #'System-CommandLine'.
 
-Class CommandLineHandler >> stdout
+Class CommandLineHandler >> << aString
 [
-^ stdout
+^ self stdout	nextPutAll: aString;	yourself
 ]
 
-Class CommandLineHandler >> commandLine
+Class CommandLineHandler >> activate
 [
-^ commandLine
+self subclassResponsibility
 ]
 
 Class CommandLineHandler >> allHandlers
@@ -21,9 +21,19 @@ Class CommandLineHandler >> allHandlers
 ^ CommandLineHandler allHandlers
 ]
 
-Class CommandLineHandler >> exitSucess
+Class CommandLineHandler >> arguments
 [
-^ Smalltalk exitSucess
+^ commandLine arguments
+]
+
+Class CommandLineHandler >> commandLine
+[
+^ commandLine
+]
+
+Class CommandLineHandler >> commandLine: aCommandLine
+[
+commandLine := aCommandLine
 ]
 
 Class CommandLineHandler >> commandName
@@ -31,9 +41,24 @@ Class CommandLineHandler >> commandName
 ^ self class commandName
 ]
 
-Class CommandLineHandler >> activate
+Class CommandLineHandler >> description
 [
-self subclassResponsibility
+^ self class description
+]
+
+Class CommandLineHandler >> exitFailure
+[
+^ Smalltalk exitFailure
+]
+
+Class CommandLineHandler >> exitSucess
+[
+^ Smalltalk exitSucess
+]
+
+Class CommandLineHandler >> initialize
+[
+super initialize.self initializeStdout
 ]
 
 Class CommandLineHandler >> initializeStdout
@@ -42,70 +67,28 @@ Class CommandLineHandler >> initializeStdout
 FileStream stdout	wantsLineEndConversion: true;	converter.stdout := FileStream stdout
 ]
 
-Class CommandLineHandler >> description
-[
-^ self class description
-]
-
-Class CommandLineHandler >> initialize
-[
-super initialize.self initializeStdout
-]
-
 Class CommandLineHandler >> quit
 [
 Smalltalk exitSucess
 ]
 
-Class CommandLineHandler >> exitFailure
+Class CommandLineHandler >> stdout
 [
-^ Smalltalk exitFailure
-]
-
-Class CommandLineHandler >> arguments
-[
-^ commandLine arguments
-]
-
-Class CommandLineHandler >> commandLine: aCommandLine
-[
-commandLine := aCommandLine
-]
-
-Class CommandLineHandler >> << aString
-[
-^ self stdout	nextPutAll: aString;	yourself
+^ stdout
 ]
 
 Metaclass
 	name: #CommandLineHandler;
 	instanceVariables: #().
 
+Metaclass CommandLineHandler >> activateWith: aCommandLine
+[
+^ self new	commandLine: (self prepareSubcommand: aCommandLine);	activate
+]
+
 Metaclass CommandLineHandler >> allHandlers
 [
 ^ self allSubclasses reject: [ :handler | handler isAbstract ]
-]
-
-Metaclass CommandLineHandler >> isAbstract
-[
-^ self = CommandLineHandler
-]
-
-Metaclass CommandLineHandler >> selectHandlersFor: aCommandLine
-[
-^ self allHandlers select: [ :handlerClass | handlerClass isResponsibleFor: aCommandLine ]
-]
-
-Metaclass CommandLineHandler >> description
-[
-	"This method should return a short one-line description of the command"
-^ nil
-]
-
-Metaclass CommandLineHandler >> prepareSubcommand: commandLineArguments
-[
-	"strip the subcommand name from the arguments"
-commandLineArguments	withFirstArgument: [ :arg | 		arg = self commandName			ifTrue: [ ^ commandLineArguments copySubcommand ] ].	"not a subcommand hence we keep the same args"^ commandLineArguments
 ]
 
 Metaclass CommandLineHandler >> commandName
@@ -114,9 +97,15 @@ Metaclass CommandLineHandler >> commandName
 ^ self name
 ]
 
-Metaclass CommandLineHandler >> activateWith: aCommandLine
+Metaclass CommandLineHandler >> description
 [
-^ self new	commandLine: (self prepareSubcommand: aCommandLine);	activate
+	"This method should return a short one-line description of the command"
+^ nil
+]
+
+Metaclass CommandLineHandler >> isAbstract
+[
+^ self = CommandLineHandler
 ]
 
 Metaclass CommandLineHandler >> isResponsibleFor: aCommandLineArguments
@@ -124,8 +113,19 @@ Metaclass CommandLineHandler >> isResponsibleFor: aCommandLineArguments
 ^ aCommandLineArguments includesSubCommand: self commandName
 ]
 
+Metaclass CommandLineHandler >> prepareSubcommand: commandLineArguments
+[
+	"strip the subcommand name from the arguments"
+commandLineArguments	withFirstArgument: [ :arg | 		arg = self commandName			ifTrue: [ ^ commandLineArguments copySubcommand ] ].	"not a subcommand hence we keep the same args"^ commandLineArguments
+]
+
 Metaclass CommandLineHandler >> priority
 [
 ^ 0
+]
+
+Metaclass CommandLineHandler >> selectHandlersFor: aCommandLine
+[
+^ self allHandlers select: [ :handlerClass | handlerClass isResponsibleFor: aCommandLine ]
 ]
 

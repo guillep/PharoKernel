@@ -6,10 +6,14 @@ Class
 	classVariables: #();
 	package: #NonInteractiveTranscript.
 
-Class NonInteractiveTranscript >> install
+Class NonInteractiveTranscript >> << anObject
 [
-	"Install me as a replacement for Transcript"
-Smalltalk globals at: #Transcript put: self
+self show: anObject
+]
+
+Class NonInteractiveTranscript >> clear
+[
+
 ]
 
 Class NonInteractiveTranscript >> close
@@ -17,9 +21,29 @@ Class NonInteractiveTranscript >> close
 self	critical: [ 		stream			ifNotNil: [ 				self isStdout					ifTrue: [ stream flush ]					ifFalse: [ stream close ].				stream := nil ] ]
 ]
 
+Class NonInteractiveTranscript >> cr
+[
+self critical: [ self stream cr ]
+]
+
+Class NonInteractiveTranscript >> crShow: anObject
+[
+self	critical: [ 		self			cr;			show: anObject ]
+]
+
 Class NonInteractiveTranscript >> critical: block
 [
 ^ accessSemaphore critical: block
+]
+
+Class NonInteractiveTranscript >> endEntry
+[
+self flush
+]
+
+Class NonInteractiveTranscript >> ensureCr
+[
+
 ]
 
 Class NonInteractiveTranscript >> fileName
@@ -28,14 +52,10 @@ Class NonInteractiveTranscript >> fileName
 ^ fileName ifNil: [ fileName := self class defaultLogFileName ]
 ]
 
-Class NonInteractiveTranscript >> << anObject
+Class NonInteractiveTranscript >> fileName: anObject
 [
-self show: anObject
-]
-
-Class NonInteractiveTranscript >> endEntry
-[
-self flush
+	"Initialize me to write to a file stream described by anObject.	anObject is either a String naming a file or the special #stdout value	for using the standard output stream of the virtual machine process."
+self close.fileName := anObject
 ]
 
 Class NonInteractiveTranscript >> flush
@@ -43,25 +63,9 @@ Class NonInteractiveTranscript >> flush
 self critical: [ self stream flush ]
 ]
 
-Class NonInteractiveTranscript >> fileName: anObject
+Class NonInteractiveTranscript >> initialize
 [
-	"Initialize me to write to a file stream described by anObject.	anObject is either a String naming a file or the special #stdout value	for using the standard output stream of the virtual machine process."
-self close.fileName := anObject
-]
-
-Class NonInteractiveTranscript >> space
-[
-^ self critical: [ self stream space ]
-]
-
-Class NonInteractiveTranscript >> cr
-[
-self critical: [ self stream cr ]
-]
-
-Class NonInteractiveTranscript >> print: anObject
-[
-self nextPutAll: anObject asString
+super initialize.accessSemaphore := Mutex new
 ]
 
 Class NonInteractiveTranscript >> initializeStream
@@ -70,25 +74,15 @@ Class NonInteractiveTranscript >> initializeStream
 stream := self isStdout	ifTrue: [ FileStream stdout ]	ifFalse: [ FileStream fileNamed: self fileName ].stream wantsLineEndConversion: true.self isStdout	ifTrue: [ stream converter	"Force lazy initialization of converter" ]	ifFalse: [ stream setToEnd ].^ stream
 ]
 
-Class NonInteractiveTranscript >> stream
+Class NonInteractiveTranscript >> install
 [
-	"The file stream I am writing to.	Lazy initialized so as not to create the file when it is not used."
-^ stream ifNil: [ self initializeStream ]
+	"Install me as a replacement for Transcript"
+Smalltalk globals at: #Transcript put: self
 ]
 
-Class NonInteractiveTranscript >> show: anObject
+Class NonInteractiveTranscript >> isSelfEvaluating
 [
-self	critical: [ 		self			print: anObject;			endEntry ]
-]
-
-Class NonInteractiveTranscript >> nextPutAll: aCollection
-[
-^ self critical: [ self stream nextPutAll: aCollection ]
-]
-
-Class NonInteractiveTranscript >> tab
-[
-^ self critical: [ self stream tab ]
+self == Transcript	ifTrue: [ ^ true ].^ super isSelfEvaluating
 ]
 
 Class NonInteractiveTranscript >> isStdout
@@ -97,29 +91,19 @@ Class NonInteractiveTranscript >> isStdout
 ^ fileName = #stdout
 ]
 
-Class NonInteractiveTranscript >> ensureCr
-[
-
-]
-
-Class NonInteractiveTranscript >> initialize
-[
-super initialize.accessSemaphore := Mutex new
-]
-
-Class NonInteractiveTranscript >> crShow: anObject
-[
-self	critical: [ 		self			cr;			show: anObject ]
-]
-
 Class NonInteractiveTranscript >> nextPut: aCharacter
 [
 ^ self critical: [ self stream nextPut: aCharacter ]
 ]
 
-Class NonInteractiveTranscript >> reset
+Class NonInteractiveTranscript >> nextPutAll: aCollection
 [
+^ self critical: [ self stream nextPutAll: aCollection ]
+]
 
+Class NonInteractiveTranscript >> print: anObject
+[
+self nextPutAll: anObject asString
 ]
 
 Class NonInteractiveTranscript >> printOn: aStream
@@ -127,42 +111,40 @@ Class NonInteractiveTranscript >> printOn: aStream
 self == Transcript	ifFalse: [ ^ super printOn: aStream ].aStream nextPutAll: 'Transcript'
 ]
 
-Class NonInteractiveTranscript >> clear
+Class NonInteractiveTranscript >> reset
 [
 
 ]
 
-Class NonInteractiveTranscript >> isSelfEvaluating
+Class NonInteractiveTranscript >> show: anObject
 [
-self == Transcript	ifTrue: [ ^ true ].^ super isSelfEvaluating
+self	critical: [ 		self			print: anObject;			endEntry ]
+]
+
+Class NonInteractiveTranscript >> space
+[
+^ self critical: [ self stream space ]
+]
+
+Class NonInteractiveTranscript >> stream
+[
+	"The file stream I am writing to.	Lazy initialized so as not to create the file when it is not used."
+^ stream ifNil: [ self initializeStream ]
+]
+
+Class NonInteractiveTranscript >> tab
+[
+^ self critical: [ self stream tab ]
 ]
 
 Metaclass
 	name: #NonInteractiveTranscript;
 	instanceVariables: #().
 
-Metaclass NonInteractiveTranscript >> initialize
+Metaclass NonInteractiveTranscript >> defaultLogFileName
 [
-	"Make sure to cleanup on shutdown"
-Smalltalk addToShutDownList: self
-]
-
-Metaclass NonInteractiveTranscript >> onFileNamed: fileName
-[
-	"Create a NonInteractiveTranscript that will write to fileName."
-^ self new	fileName: fileName;	yourself
-]
-
-Metaclass NonInteractiveTranscript >> stdout
-[
-	"Create a new NonInteractiveTranscript that will output 	to the special standard output stream of the virtual machine process."
-^ self onFileNamed: #stdout
-]
-
-Metaclass NonInteractiveTranscript >> shutDown
-[
-	"Send close to all our instances.	Their streams will be reopened on first use later on."
-self allInstances do: [ :each | each close ]
+	"The default file name that will be used to write to.	This should probably become a system setting."
+^ 'PharoTranscript.log'
 ]
 
 Metaclass NonInteractiveTranscript >> file
@@ -171,14 +153,32 @@ Metaclass NonInteractiveTranscript >> file
 ^ self onFileNamed: self defaultLogFileName
 ]
 
-Metaclass NonInteractiveTranscript >> defaultLogFileName
+Metaclass NonInteractiveTranscript >> initialize
 [
-	"The default file name that will be used to write to.	This should probably become a system setting."
-^ 'PharoTranscript.log'
+	"Make sure to cleanup on shutdown"
+Smalltalk addToShutDownList: self
 ]
 
 Metaclass NonInteractiveTranscript >> isInstalled
 [
 ^ Transcript class = self
+]
+
+Metaclass NonInteractiveTranscript >> onFileNamed: fileName
+[
+	"Create a NonInteractiveTranscript that will write to fileName."
+^ self new	fileName: fileName;	yourself
+]
+
+Metaclass NonInteractiveTranscript >> shutDown
+[
+	"Send close to all our instances.	Their streams will be reopened on first use later on."
+self allInstances do: [ :each | each close ]
+]
+
+Metaclass NonInteractiveTranscript >> stdout
+[
+	"Create a new NonInteractiveTranscript that will output 	to the special standard output stream of the virtual machine process."
+^ self onFileNamed: #stdout
 ]
 

@@ -6,24 +6,24 @@ Class
 	classVariables: #();
 	package: #'FileSystem-Memory'.
 
-Class MemoryFileSystemDirectory >> includes: aFIleName
-[
-^ entries includesKey: aFIleName
-]
-
 Class MemoryFileSystemDirectory >> ensureDirectory: aDirectoryName
 [
 ^ self fileEntryAt: aDirectoryName put: (MemoryFileSystemDirectory named: aDirectoryName)
 ]
 
-Class MemoryFileSystemDirectory >> fileEntryAt: aFileName ifPresent: aBlock
+Class MemoryFileSystemDirectory >> ensureFile: aFileName
 [
-^ entries at: aFileName ifPresent: aBlock
+^ self fileEntryAt: aFileName put: (MemoryFileSystemFile named: aFileName)
 ]
 
-Class MemoryFileSystemDirectory >> fileEntryAt: aFileName ifAbsent: aBlock
+Class MemoryFileSystemDirectory >> entries
 [
-^ entries at: aFileName ifAbsent: aBlock
+^ entries
+]
+
+Class MemoryFileSystemDirectory >> fileEntriesDo: aBlock
+[
+entries keys sorted do: [ :fileName | aBlock value: (entries at: fileName) ]
 ]
 
 Class MemoryFileSystemDirectory >> fileEntryAt: aFIleName
@@ -31,14 +31,29 @@ Class MemoryFileSystemDirectory >> fileEntryAt: aFIleName
 ^ entries at: aFIleName
 ]
 
+Class MemoryFileSystemDirectory >> fileEntryAt: aFileName ifAbsent: aBlock
+[
+^ entries at: aFileName ifAbsent: aBlock
+]
+
+Class MemoryFileSystemDirectory >> fileEntryAt: aFileName ifPresent: aBlock
+[
+^ entries at: aFileName ifPresent: aBlock
+]
+
+Class MemoryFileSystemDirectory >> fileEntryAt: aFIleName put: anEntry
+[
+^ entries	at: aFIleName	ifAbsentPut: [ 		self modified.		anEntry ]
+]
+
 Class MemoryFileSystemDirectory >> fileSize
 [
 ^ 0
 ]
 
-Class MemoryFileSystemDirectory >> entries
+Class MemoryFileSystemDirectory >> includes: aFIleName
 [
-^ entries
+^ entries includesKey: aFIleName
 ]
 
 Class MemoryFileSystemDirectory >> initialize
@@ -51,24 +66,9 @@ Class MemoryFileSystemDirectory >> isDirectory
 ^ true
 ]
 
-Class MemoryFileSystemDirectory >> fileEntryAt: aFIleName put: anEntry
-[
-^ entries	at: aFIleName	ifAbsentPut: [ 		self modified.		anEntry ]
-]
-
-Class MemoryFileSystemDirectory >> fileEntriesDo: aBlock
-[
-entries keys sorted do: [ :fileName | aBlock value: (entries at: fileName) ]
-]
-
 Class MemoryFileSystemDirectory >> remove: aFileName
 [
 modificationTime := DateAndTime now.^ entries removeKey: aFileName
-]
-
-Class MemoryFileSystemDirectory >> ensureFile: aFileName
-[
-^ self fileEntryAt: aFileName put: (MemoryFileSystemFile named: aFileName)
 ]
 
 Metaclass

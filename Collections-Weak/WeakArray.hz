@@ -10,26 +10,21 @@ Metaclass
 	name: #WeakArray;
 	instanceVariables: #().
 
-Metaclass WeakArray >> restartFinalizationProcess
-[
-	"kill any old process, just in case"
-FinalizationProcess	ifNotNil: [ 		FinalizationProcess terminate.		FinalizationProcess := nil ].FinalizationSemaphore := Smalltalk specialObjectsArray at: 42.FinalizationDependents ifNil: [ FinalizationDependents := WeakArray new: 10 ].FinalizationLock := Semaphore forMutualExclusion.FinalizationProcess := [ self finalizationProcess ] forkAt: Processor userInterruptPriority
-]
-
 Metaclass WeakArray >> addWeakDependent: anObject
 [
 FinalizationLock	critical: [ 		| index finished weakDependent |		finished := false.		index := 0.		[ 		index := index + 1.		finished not and: [ index <= FinalizationDependents size ] ]			whileTrue: [ 				weakDependent := FinalizationDependents at: index.				weakDependent					ifNil: [ 						FinalizationDependents at: index put: anObject.						finished := true ] ].		finished			ifFalse: [ 				"Grow linearly"				FinalizationDependents := FinalizationDependents , (WeakArray new: 10).				FinalizationDependents at: index put: anObject ] ]	ifError: [ :msg :rcvr | rcvr error: msg ]
 ]
 
-Metaclass WeakArray >> removeWeakDependent: anObject
+Metaclass WeakArray >> finalizationProcess
 [
-FinalizationLock	critical: [ 		1 to: FinalizationDependents size do: [ :i | 			(FinalizationDependents at: i) == anObject				ifTrue: [ FinalizationDependents at: i put: nil ] ] ]	ifError: [ :msg :rcvr | rcvr error: msg ]
+[ true ]	whileTrue: [ 		WeakFinalizationList initTestPair.		FinalizationSemaphore wait.		FinalizationLock			critical: [ 				WeakFinalizationList checkTestPair.				FinalizationDependents					do: [ :weakDependent | weakDependent ifNotNil: [ [ weakDependent finalizeValues ] on: Exception fork: [ :ex | ex pass ] ] ] ] ]
 ]
 
-Metaclass WeakArray >> runningFinalizationProcess
+Metaclass WeakArray >> initialize
 [
-	"Answer the FinalizationProcess I am running, if any"
-^ FinalizationProcess
+	"WeakArray initialize"
+	"Do we need to initialize specialObjectsArray?"
+Smalltalk specialObjectsArray size < 42	ifTrue: [ Smalltalk recreateSpecialObjectsArray ].Smalltalk addToStartUpList: self.FinalizationSemaphore := Smalltalk specialObjectsArray at: 42.FinalizationLock := Semaphore forMutualExclusion.FinalizationDependents ifNil: [ FinalizationDependents := WeakArray new: 10 ]
 ]
 
 Metaclass WeakArray >> pvtCreateTemporaryObjectIn: tempObject
@@ -38,20 +33,25 @@ Metaclass WeakArray >> pvtCreateTemporaryObjectIn: tempObject
 tempObject at: 1 put: Object new
 ]
 
-Metaclass WeakArray >> finalizationProcess
+Metaclass WeakArray >> removeWeakDependent: anObject
 [
-[ true ]	whileTrue: [ 		WeakFinalizationList initTestPair.		FinalizationSemaphore wait.		FinalizationLock			critical: [ 				WeakFinalizationList checkTestPair.				FinalizationDependents					do: [ :weakDependent | weakDependent ifNotNil: [ [ weakDependent finalizeValues ] on: Exception fork: [ :ex | ex pass ] ] ] ] ]
+FinalizationLock	critical: [ 		1 to: FinalizationDependents size do: [ :i | 			(FinalizationDependents at: i) == anObject				ifTrue: [ FinalizationDependents at: i put: nil ] ] ]	ifError: [ :msg :rcvr | rcvr error: msg ]
+]
+
+Metaclass WeakArray >> restartFinalizationProcess
+[
+	"kill any old process, just in case"
+FinalizationProcess	ifNotNil: [ 		FinalizationProcess terminate.		FinalizationProcess := nil ].FinalizationSemaphore := Smalltalk specialObjectsArray at: 42.FinalizationDependents ifNil: [ FinalizationDependents := WeakArray new: 10 ].FinalizationLock := Semaphore forMutualExclusion.FinalizationProcess := [ self finalizationProcess ] forkAt: Processor userInterruptPriority
+]
+
+Metaclass WeakArray >> runningFinalizationProcess
+[
+	"Answer the FinalizationProcess I am running, if any"
+^ FinalizationProcess
 ]
 
 Metaclass WeakArray >> startUp: resuming
 [
 resuming	ifFalse: [ ^ self ].self restartFinalizationProcess
-]
-
-Metaclass WeakArray >> initialize
-[
-	"WeakArray initialize"
-	"Do we need to initialize specialObjectsArray?"
-Smalltalk specialObjectsArray size < 42	ifTrue: [ Smalltalk recreateSpecialObjectsArray ].Smalltalk addToStartUpList: self.FinalizationSemaphore := Smalltalk specialObjectsArray at: 42.FinalizationLock := Semaphore forMutualExclusion.FinalizationDependents ifNil: [ FinalizationDependents := WeakArray new: 10 ]
 ]
 

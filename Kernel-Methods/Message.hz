@@ -18,15 +18,37 @@ Class Message >> argument
 ^ args at: 1
 ]
 
-Class Message >> sendTo: receiver
+Class Message >> argument: newValue
 [
-	"answer the result of sending this message to receiver"
-^ receiver perform: selector withArguments: args
+	"Change the first argument to newValue and answer self"
+args at: 1 put: newValue
 ]
 
-Class Message >> setSelector: aSymbol
+Class Message >> arguments
 [
-selector := aSymbol
+	"Answer the arguments of the receiver."
+^ args
+]
+
+Class Message >> hasArguments
+[
+^ args size > 0
+]
+
+Class Message >> lookupClass
+[
+^ lookupClass
+]
+
+Class Message >> lookupClass: aClass
+[
+lookupClass := aClass
+]
+
+Class Message >> numArgs
+[
+	"Answer the number of arguments in this message"
+^ args size
 ]
 
 Class Message >> printOn: stream
@@ -38,6 +60,12 @@ Class Message >> selector
 [
 	"Answer the selector of the receiver."
 ^ selector
+]
+
+Class Message >> sendTo: receiver
+[
+	"answer the result of sending this message to receiver"
+^ receiver perform: selector withArguments: args
 ]
 
 Class Message >> sends: aSelector
@@ -52,37 +80,14 @@ Class Message >> sentTo: receiver
 lookupClass == nil	ifTrue: [ ^ receiver perform: selector withArguments: args ]	ifFalse: [ ^ receiver perform: selector withArguments: args inSuperclass: lookupClass ]
 ]
 
-Class Message >> lookupClass: aClass
+Class Message >> setSelector: aSymbol
 [
-lookupClass := aClass
-]
-
-Class Message >> argument: newValue
-[
-	"Change the first argument to newValue and answer self"
-args at: 1 put: newValue
+selector := aSymbol
 ]
 
 Class Message >> setSelector: aSymbol arguments: anArray
 [
 selector := aSymbol.args := anArray
-]
-
-Class Message >> hasArguments
-[
-^ args size > 0
-]
-
-Class Message >> arguments
-[
-	"Answer the arguments of the receiver."
-^ args
-]
-
-Class Message >> numArgs
-[
-	"Answer the number of arguments in this message"
-^ args size
 ]
 
 Class Message >> storeOn: aStream
@@ -91,20 +96,9 @@ Class Message >> storeOn: aStream
 aStream	nextPut: $(;	nextPutAll: self class name;	nextPutAll: ' selector: ';	store: selector;	nextPutAll: ' arguments: ';	store: args;	nextPut: $)
 ]
 
-Class Message >> lookupClass
-[
-^ lookupClass
-]
-
 Metaclass
 	name: #Message;
 	instanceVariables: #().
-
-Metaclass Message >> selector: aSymbol arguments: anArray
-[
-	"Answer an instance of me with selector, aSymbol, and arguments, 	anArray."
-^ self new setSelector: aSymbol arguments: anArray
-]
 
 Metaclass Message >> selector: aSymbol
 [
@@ -116,5 +110,11 @@ Metaclass Message >> selector: aSymbol argument: anObject
 [
 	"Answer an instance of me whose selector is aSymbol and single 	argument is anObject."
 ^ self new setSelector: aSymbol arguments: (Array with: anObject)
+]
+
+Metaclass Message >> selector: aSymbol arguments: anArray
+[
+	"Answer an instance of me with selector, aSymbol, and arguments, 	anArray."
+^ self new setSelector: aSymbol arguments: anArray
 ]
 

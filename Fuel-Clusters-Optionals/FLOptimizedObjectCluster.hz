@@ -6,11 +6,6 @@ Class
 	classVariables: #();
 	package: #'Fuel-Clusters-Optionals'.
 
-Class FLOptimizedObjectCluster >> serializeReferencesStepWith: anEncoder
-[
-objects do: [ :anObject | self serializeReferencesOf: anObject with: anEncoder ]
-]
-
 Class FLOptimizedObjectCluster >> materializeReferencesOf: anObject with: aDecoder
 [
 	"Hook method"
@@ -22,15 +17,20 @@ Class FLOptimizedObjectCluster >> materializeReferencesStepWith: aDecoder
 objects do: [ :anObject | self materializeReferencesOf: anObject with: aDecoder ]
 ]
 
+Class FLOptimizedObjectCluster >> serializeInstancesStepWith: anEncoder
+[
+	"Do nothing. I know my objects have nothing to serialize in this step."
+
+]
+
 Class FLOptimizedObjectCluster >> serializeReferencesOf: anObject with: anEncoder
 [
 ^ self subclassResponsibility
 ]
 
-Class FLOptimizedObjectCluster >> serializeInstancesStepWith: anEncoder
+Class FLOptimizedObjectCluster >> serializeReferencesStepWith: anEncoder
 [
-	"Do nothing. I know my objects have nothing to serialize in this step."
-
+objects do: [ :anObject | self serializeReferencesOf: anObject with: anEncoder ]
 ]
 
 Metaclass

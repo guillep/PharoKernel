@@ -6,6 +6,118 @@ Class
 	classVariables: #(#SpecialConstants );
 	package: #'Kernel-Methods'.
 
+Class InstructionStream >> abstractPC
+[
+^ self method abstractPCForConcretePC: pc
+]
+
+Class InstructionStream >> addSelectorTo: set
+[
+	"If this instruction is a send, add its selector to set."
+| selectorOrSelf |(selectorOrSelf := self selectorToSendOrSelf) == self	ifFalse: [ set add: selectorOrSelf ]
+]
+
+Class InstructionStream >> atEnd
+[
+^ pc > self method endPC
+]
+
+Class InstructionStream >> debuggerMap
+[
+^ self method debuggerMap
+]
+
+Class InstructionStream >> firstByte
+[
+	"Answer the first byte of the current bytecode."
+^ self method at: pc
+]
+
+Class InstructionStream >> followingByte
+[
+	"Answer the next bytecode."
+^ self method at: pc + 1
+]
+
+Class InstructionStream >> followingBytecode
+[
+	"Answer the bytecode of the following bytecode (different to nextByte)."
+^ self method at: self followingPc
+]
+
+Class InstructionStream >> followingPc
+[
+	"Answer the pc of the following bytecode."
+^ self nextPc: (self method at: pc)
+]
+
+Class InstructionStream >> fourthByte
+[
+	"Answer the fourth byte of the current bytecode."
+^ self method at: pc + 3
+]
+
+Class InstructionStream >> interpret
+[
+| endPC |endPC := self method endPC.[ pc > endPC ] whileFalse: [ self interpretNextInstructionFor: self ]
+]
+
+Class InstructionStream >> interpretExtension: offset in: method for: client
+[
+| type offset2 byte2 byte3 byte4 |offset <= 6	ifTrue: [ 		"Extended op codes 128-134"		byte2 := method at: pc.		pc := pc + 1.		offset <= 2			ifTrue: [ 				"128-130:  extended pushes and pops"				type := byte2 // 64.				offset2 := byte2 \\ 64.				offset = 0					ifTrue: [ 						type = 0							ifTrue: [ ^ client pushReceiverVariable: offset2 ].						type = 1							ifTrue: [ ^ client pushTemporaryVariable: offset2 ].						type = 2							ifTrue: [ ^ client pushConstant: (method literalAt: offset2 + 1) ].						type = 3							ifTrue: [ ^ client pushLiteralVariable: (method literalAt: offset2 + 1) ] ].				offset = 1					ifTrue: [ 						type = 0							ifTrue: [ ^ client storeIntoReceiverVariable: offset2 ].						type = 1							ifTrue: [ ^ client storeIntoTemporaryVariable: offset2 ].						type = 2							ifTrue: [ self error: 'illegalStore' ].						type = 3							ifTrue: [ ^ client storeIntoLiteralVariable: (method literalAt: offset2 + 1) ] ].				offset = 2					ifTrue: [ 						type = 0							ifTrue: [ ^ client popIntoReceiverVariable: offset2 ].						type = 1							ifTrue: [ ^ client popIntoTemporaryVariable: offset2 ].						type = 2							ifTrue: [ self error: 'illegalStore' ].						type = 3							ifTrue: [ ^ client popIntoLiteralVariable: (method literalAt: offset2 + 1) ] ] ].	"131-134: extended sends"		offset = 3			ifTrue: [ 				"Single extended send"				^ client send: (method literalAt: byte2 \\ 32 + 1) super: false numArgs: byte2 // 32 ].		offset = 4			ifTrue: [ 				"Double extended do-anything"				byte3 := method at: pc.				pc := pc + 1.				type := byte2 // 32.				type = 0					ifTrue: [ ^ client send: (method literalAt: byte3 + 1) super: false numArgs: byte2 \\ 32 ].				type = 1					ifTrue: [ ^ client send: (method literalAt: byte3 + 1) super: true numArgs: byte2 \\ 32 ].				type = 2					ifTrue: [ ^ client pushReceiverVariable: byte3 ].				type = 3					ifTrue: [ ^ client pushConstant: (method literalAt: byte3 + 1) ].				type = 4					ifTrue: [ ^ client pushLiteralVariable: (method literalAt: byte3 + 1) ].				type = 5					ifTrue: [ ^ client storeIntoReceiverVariable: byte3 ].				type = 6					ifTrue: [ ^ client popIntoReceiverVariable: byte3 ].				type = 7					ifTrue: [ ^ client storeIntoLiteralVariable: (method literalAt: byte3 + 1) ] ].		offset = 5			ifTrue: [ 				"Single extended send to super"				^ client send: (method literalAt: byte2 \\ 32 + 1) super: true numArgs: byte2 // 32 ].		offset = 6			ifTrue: [ 				"Second extended send"				^ client send: (method literalAt: byte2 \\ 64 + 1) super: false numArgs: byte2 // 64 ] ].offset = 7	ifTrue: [ ^ client doPop ].offset = 8	ifTrue: [ ^ client doDup ].offset = 9	ifTrue: [ ^ client pushActiveContext ].byte2 := method at: pc.pc := pc + 1.offset = 10	ifTrue: [ 		^ byte2 < 128			ifTrue: [ client pushNewArrayOfSize: byte2 ]			ifFalse: [ client pushConsArrayWithElements: byte2 - 128 ] ].offset = 11	ifTrue: [ ^ self error: 'unusedBytecode' ].byte3 := method at: pc.pc := pc + 1.offset = 12	ifTrue: [ ^ client pushRemoteTemp: byte2 inVectorAt: byte3 ].offset = 13	ifTrue: [ ^ client storeIntoRemoteTemp: byte2 inVectorAt: byte3 ].offset = 14	ifTrue: [ ^ client popIntoRemoteTemp: byte2 inVectorAt: byte3 ].	"offset = 15"byte4 := method at: pc.pc := pc + 1.^ client	pushClosureCopyNumCopiedValues: (byte2 bitShift: -4)	numArgs: (byte2 bitAnd: 16rF)	blockSize: byte3 * 256 + byte4
+]
+
+Class InstructionStream >> interpretJump
+[
+| byte |byte := self method at: pc.(byte between: 144 and: 151)	ifTrue: [ 		pc := pc + 1.		^ byte - 143 ].(byte between: 160 and: 167)	ifTrue: [ 		pc := pc + 2.		^ (byte - 164) * 256 + (self method at: pc - 1) ].^ nil
+]
+
+Class InstructionStream >> interpretJumpIfCond
+[
+| byte |byte := self method at: pc.(byte between: 152 and: 159)	ifTrue: [ 		pc := pc + 1.		^ byte - 151 ].(byte between: 168 and: 175)	ifTrue: [ 		pc := pc + 2.		^ (byte bitAnd: 3) * 256 + (self method at: pc - 1) ].^ nil
+]
+
+Class InstructionStream >> interpretNextInstructionFor: client
+[
+	"Send to the argument, client, a message that specifies the type of the 	next instruction."
+| byte type offset method |method := self method.byte := method at: pc.type := byte // 16.offset := byte \\ 16.pc := pc + 1.	"We do an inline binary search on each of the possible 16 values of type:	The old, cleaner but slowe code is retained as a comment below"type < 8	ifTrue: [ 		type < 4			ifTrue: [ 				type < 2					ifTrue: [ 						type < 1							ifTrue: [ 								"type = 0"								^ client pushReceiverVariable: offset ]							ifFalse: [ 								"type = 1"								^ client pushTemporaryVariable: offset ] ]					ifFalse: [ 						type < 3							ifTrue: [ 								"type = 2"								^ client pushConstant: (method literalAt: offset + 1) ]							ifFalse: [ 								"type = 3"								^ client pushConstant: (method literalAt: offset + 17) ] ] ]			ifFalse: [ 				type < 6					ifTrue: [ 						type < 5							ifTrue: [ 								"type = 4"								^ client pushLiteralVariable: (method literalAt: offset + 1) ]							ifFalse: [ 								"type = 5"								^ client pushLiteralVariable: (method literalAt: offset + 17) ] ]					ifFalse: [ 						type < 7							ifTrue: [ 								"type = 6"								offset < 8									ifTrue: [ ^ client popIntoReceiverVariable: offset ]									ifFalse: [ ^ client popIntoTemporaryVariable: offset - 8 ] ]							ifFalse: [ 								"type = 7"								offset = 0									ifTrue: [ ^ client pushReceiver ].								offset < 8									ifTrue: [ ^ client pushConstant: (SpecialConstants at: offset) ].								offset = 8									ifTrue: [ ^ client methodReturnReceiver ].								offset < 12									ifTrue: [ ^ client methodReturnConstant: (SpecialConstants at: offset - 8) ].								offset = 12									ifTrue: [ ^ client methodReturnTop ].								offset = 13									ifTrue: [ ^ client blockReturnTop ].								offset > 13									ifTrue: [ ^ self error: 'unusedBytecode' ] ] ] ] ]	ifFalse: [ 		type < 12			ifTrue: [ 				type < 10					ifTrue: [ 						type < 9							ifTrue: [ 								"type = 8"								^ self interpretExtension: offset in: method for: client ]							ifFalse: [ 								"type = 9 (short jumps)"								offset < 8									ifTrue: [ ^ client jump: offset + 1 ].								^ client jump: offset - 8 + 1 if: false ] ]					ifFalse: [ 						type < 11							ifTrue: [ 								"type = 10 (long jumps)"								byte := method at: pc.								pc := pc + 1.								offset < 8									ifTrue: [ ^ client jump: (offset - 4) * 256 + byte ].								^ client jump: (offset bitAnd: 3) * 256 + byte if: offset < 12 ]							ifFalse: [ 								"type = 11"								^ client									send: (Smalltalk specialSelectorAt: offset + 1)									super: false									numArgs: (Smalltalk specialNargsAt: offset + 1) ] ] ]			ifFalse: [ 				type = 12					ifTrue: [ ^ client send: (Smalltalk specialSelectorAt: offset + 17) super: false numArgs: (Smalltalk specialNargsAt: offset + 17) ]					ifFalse: [ 						"type = 13, 14 or 15"						^ client send: (method literalAt: offset + 1) super: false numArgs: type - 13 ] ] ]	"    old code 	type=0 ifTrue: [^client pushReceiverVariable: offset].	type=1 ifTrue: [^client pushTemporaryVariable: offset].	type=2 ifTrue: [^client pushConstant: (method literalAt: offset+1)].	type=3 ifTrue: [^client pushConstant: (method literalAt: offset+17)].	type=4 ifTrue: [^client pushLiteralVariable: (method literalAt: offset+1)].	type=5 ifTrue: [^client pushLiteralVariable: (method literalAt: offset+17)].	type=6 		ifTrue: [offset<8					ifTrue: [^client popIntoReceiverVariable: offset]					ifFalse: [^client popIntoTemporaryVariable: offset-8]].	type=7		ifTrue: [offset=0 ifTrue: [^client pushReceiver].				offset<8 ifTrue: [^client pushConstant: (SpecialConstants at: offset)].				offset=8 ifTrue: [^client methodReturnReceiver].				offset<12 ifTrue: [^client methodReturnConstant: 												(SpecialConstants at: offset-8)].				offset=12 ifTrue: [^client methodReturnTop].				offset=13 ifTrue: [^client blockReturnTop].				offset>13 ifTrue: [^self error: 'unusedBytecode']].	type=8 ifTrue: [^self interpretExtension: offset in: method for: client].	type=9		ifTrue:  short jumps			[offset<8 ifTrue: [^client jump: offset+1].			^client jump: offset-8+1 if: false].	type=10 		ifTrue:  long jumps			[byte:= method at: pc.  pc:= pc+1.			offset<8 ifTrue: [^client jump: offset-4*256 + byte].			^client jump: (offset bitAnd: 3)*256 + byte if: offset<12].	type=11 		ifTrue: 			[^client 				send: (Smalltalk specialSelectorAt: offset+1) 				super: false				numArgs: (Smalltalk specialNargsAt: offset+1)].	type=12 		ifTrue: 			[^client 				send: (Smalltalk specialSelectorAt: offset+17) 				super: false				numArgs: (Smalltalk specialNargsAt: offset+17)].	type>12		ifTrue: 			[^client send: (method literalAt: offset+1) 					super: false					numArgs: type-13]"
+]
+
+Class InstructionStream >> method
+[
+	"Answer the compiled method that supplies the receiver's bytecodes."
+^ sender	"method access when used alone (not as part of a context)"
+]
+
+Class InstructionStream >> method: method pc: startpc
+[
+sender := method.	"allows this class to stand alone as a method scanner"pc := startpc
+]
+
+Class InstructionStream >> nextByte
+[
+	"Answer the next bytecode."
+^ self method at: pc
+]
+
+Class InstructionStream >> nextInstruction
+[
+	"Return the next bytecode instruction as a message that an InstructionClient would understand.  This advances the pc by one instruction."
+^ self interpretNextInstructionFor: MessageCatcher new
+]
+
+Class InstructionStream >> nextPc: currentByte
+[
+	"Answer the pc of the next bytecode following the current one, given the current bytecode.."
+| type |type := currentByte // 16.^ type = 8	ifTrue: [ pc + (#(2 2 2 2 3 2 2 1 1 1 2 1 3 3 3 4) at: currentByte \\ 16 + 1) ]	ifFalse: [ 		type = 10			ifTrue: [ pc + 2 ]			ifFalse: [ pc + 1 ]	"long jumps" ]	"extensions"
+]
+
+Class InstructionStream >> pc
+[
+	"Answer the index of the next bytecode."
+^ pc
+]
+
 Class InstructionStream >> pc: n
 [
 pc := n
@@ -17,122 +129,9 @@ Class InstructionStream >> peekInstruction
 | currentPc instr |currentPc := self pc.instr := self nextInstruction.self pc: currentPc.^ instr
 ]
 
-Class InstructionStream >> willSend
+Class InstructionStream >> previousPc
 [
-	"Answer whether the next bytecode is a message-send."
-| byte |byte := self method at: pc.^ byte >= 131 and: [ byte >= 176 or: [ byte <= 134 ]	"special send or short send" ]	"long sends"
-]
-
-Class InstructionStream >> willJump
-[
-	"unconditionally"
-| byte |byte := self method at: pc.^ (byte between: 144 and: 151) or: [ byte between: 160 and: 167 ]
-]
-
-Class InstructionStream >> interpretJumpIfCond
-[
-| byte |byte := self method at: pc.(byte between: 152 and: 159)	ifTrue: [ 		pc := pc + 1.		^ byte - 151 ].(byte between: 168 and: 175)	ifTrue: [ 		pc := pc + 2.		^ (byte bitAnd: 3) * 256 + (self method at: pc - 1) ].^ nil
-]
-
-Class InstructionStream >> pc
-[
-	"Answer the index of the next bytecode."
-^ pc
-]
-
-Class InstructionStream >> interpret
-[
-| endPC |endPC := self method endPC.[ pc > endPC ] whileFalse: [ self interpretNextInstructionFor: self ]
-]
-
-Class InstructionStream >> willJustPop
-[
-^ (self method at: pc) = 135
-]
-
-Class InstructionStream >> interpretJump
-[
-| byte |byte := self method at: pc.(byte between: 144 and: 151)	ifTrue: [ 		pc := pc + 1.		^ byte - 143 ].(byte between: 160 and: 167)	ifTrue: [ 		pc := pc + 2.		^ (byte - 164) * 256 + (self method at: pc - 1) ].^ nil
-]
-
-Class InstructionStream >> nextPc: currentByte
-[
-	"Answer the pc of the next bytecode following the current one, given the current bytecode.."
-| type |type := currentByte // 16.^ type = 8	ifTrue: [ pc + (#(2 2 2 2 3 2 2 1 1 1 2 1 3 3 3 4) at: currentByte \\ 16 + 1) ]	ifFalse: [ 		type = 10			ifTrue: [ pc + 2 ]			ifFalse: [ pc + 1 ]	"long jumps" ]	"extensions"
-]
-
-Class InstructionStream >> followingByte
-[
-	"Answer the next bytecode."
-^ self method at: pc + 1
-]
-
-Class InstructionStream >> method
-[
-	"Answer the compiled method that supplies the receiver's bytecodes."
-^ sender	"method access when used alone (not as part of a context)"
-]
-
-Class InstructionStream >> addSelectorTo: set
-[
-	"If this instruction is a send, add its selector to set."
-| selectorOrSelf |(selectorOrSelf := self selectorToSendOrSelf) == self	ifFalse: [ set add: selectorOrSelf ]
-]
-
-Class InstructionStream >> willJumpIfFalse
-[
-	"Answer whether the next bytecode is a jump-if-false."
-| byte |byte := self method at: pc.^ (byte between: 152 and: 159) or: [ byte between: 172 and: 175 ]
-]
-
-Class InstructionStream >> nextByte
-[
-	"Answer the next bytecode."
-^ self method at: pc
-]
-
-Class InstructionStream >> method: method pc: startpc
-[
-sender := method.	"allows this class to stand alone as a method scanner"pc := startpc
-]
-
-Class InstructionStream >> interpretNextInstructionFor: client
-[
-	"Send to the argument, client, a message that specifies the type of the 	next instruction."
-| byte type offset method |method := self method.byte := method at: pc.type := byte // 16.offset := byte \\ 16.pc := pc + 1.	"We do an inline binary search on each of the possible 16 values of type:	The old, cleaner but slowe code is retained as a comment below"type < 8	ifTrue: [ 		type < 4			ifTrue: [ 				type < 2					ifTrue: [ 						type < 1							ifTrue: [ 								"type = 0"								^ client pushReceiverVariable: offset ]							ifFalse: [ 								"type = 1"								^ client pushTemporaryVariable: offset ] ]					ifFalse: [ 						type < 3							ifTrue: [ 								"type = 2"								^ client pushConstant: (method literalAt: offset + 1) ]							ifFalse: [ 								"type = 3"								^ client pushConstant: (method literalAt: offset + 17) ] ] ]			ifFalse: [ 				type < 6					ifTrue: [ 						type < 5							ifTrue: [ 								"type = 4"								^ client pushLiteralVariable: (method literalAt: offset + 1) ]							ifFalse: [ 								"type = 5"								^ client pushLiteralVariable: (method literalAt: offset + 17) ] ]					ifFalse: [ 						type < 7							ifTrue: [ 								"type = 6"								offset < 8									ifTrue: [ ^ client popIntoReceiverVariable: offset ]									ifFalse: [ ^ client popIntoTemporaryVariable: offset - 8 ] ]							ifFalse: [ 								"type = 7"								offset = 0									ifTrue: [ ^ client pushReceiver ].								offset < 8									ifTrue: [ ^ client pushConstant: (SpecialConstants at: offset) ].								offset = 8									ifTrue: [ ^ client methodReturnReceiver ].								offset < 12									ifTrue: [ ^ client methodReturnConstant: (SpecialConstants at: offset - 8) ].								offset = 12									ifTrue: [ ^ client methodReturnTop ].								offset = 13									ifTrue: [ ^ client blockReturnTop ].								offset > 13									ifTrue: [ ^ self error: 'unusedBytecode' ] ] ] ] ]	ifFalse: [ 		type < 12			ifTrue: [ 				type < 10					ifTrue: [ 						type < 9							ifTrue: [ 								"type = 8"								^ self interpretExtension: offset in: method for: client ]							ifFalse: [ 								"type = 9 (short jumps)"								offset < 8									ifTrue: [ ^ client jump: offset + 1 ].								^ client jump: offset - 8 + 1 if: false ] ]					ifFalse: [ 						type < 11							ifTrue: [ 								"type = 10 (long jumps)"								byte := method at: pc.								pc := pc + 1.								offset < 8									ifTrue: [ ^ client jump: (offset - 4) * 256 + byte ].								^ client jump: (offset bitAnd: 3) * 256 + byte if: offset < 12 ]							ifFalse: [ 								"type = 11"								^ client									send: (Smalltalk specialSelectorAt: offset + 1)									super: false									numArgs: (Smalltalk specialNargsAt: offset + 1) ] ] ]			ifFalse: [ 				type = 12					ifTrue: [ ^ client send: (Smalltalk specialSelectorAt: offset + 17) super: false numArgs: (Smalltalk specialNargsAt: offset + 17) ]					ifFalse: [ 						"type = 13, 14 or 15"						^ client send: (method literalAt: offset + 1) super: false numArgs: type - 13 ] ] ]	"    old code 	type=0 ifTrue: [^client pushReceiverVariable: offset].	type=1 ifTrue: [^client pushTemporaryVariable: offset].	type=2 ifTrue: [^client pushConstant: (method literalAt: offset+1)].	type=3 ifTrue: [^client pushConstant: (method literalAt: offset+17)].	type=4 ifTrue: [^client pushLiteralVariable: (method literalAt: offset+1)].	type=5 ifTrue: [^client pushLiteralVariable: (method literalAt: offset+17)].	type=6 		ifTrue: [offset<8					ifTrue: [^client popIntoReceiverVariable: offset]					ifFalse: [^client popIntoTemporaryVariable: offset-8]].	type=7		ifTrue: [offset=0 ifTrue: [^client pushReceiver].				offset<8 ifTrue: [^client pushConstant: (SpecialConstants at: offset)].				offset=8 ifTrue: [^client methodReturnReceiver].				offset<12 ifTrue: [^client methodReturnConstant: 												(SpecialConstants at: offset-8)].				offset=12 ifTrue: [^client methodReturnTop].				offset=13 ifTrue: [^client blockReturnTop].				offset>13 ifTrue: [^self error: 'unusedBytecode']].	type=8 ifTrue: [^self interpretExtension: offset in: method for: client].	type=9		ifTrue:  short jumps			[offset<8 ifTrue: [^client jump: offset+1].			^client jump: offset-8+1 if: false].	type=10 		ifTrue:  long jumps			[byte:= method at: pc.  pc:= pc+1.			offset<8 ifTrue: [^client jump: offset-4*256 + byte].			^client jump: (offset bitAnd: 3)*256 + byte if: offset<12].	type=11 		ifTrue: 			[^client 				send: (Smalltalk specialSelectorAt: offset+1) 				super: false				numArgs: (Smalltalk specialNargsAt: offset+1)].	type=12 		ifTrue: 			[^client 				send: (Smalltalk specialSelectorAt: offset+17) 				super: false				numArgs: (Smalltalk specialNargsAt: offset+17)].	type>12		ifTrue: 			[^client send: (method literalAt: offset+1) 					super: false					numArgs: type-13]"
-]
-
-Class InstructionStream >> debuggerMap
-[
-^ self method debuggerMap
-]
-
-Class InstructionStream >> abstractPC
-[
-^ self method abstractPCForConcretePC: pc
-]
-
-Class InstructionStream >> followingBytecode
-[
-	"Answer the bytecode of the following bytecode (different to nextByte)."
-^ self method at: self followingPc
-]
-
-Class InstructionStream >> atEnd
-[
-^ pc > self method endPC
-]
-
-Class InstructionStream >> followingPc
-[
-	"Answer the pc of the following bytecode."
-^ self nextPc: (self method at: pc)
-]
-
-Class InstructionStream >> willStore
-[
-	"Answer whether the next bytecode is a store or store-pop"
-| byte |byte := self method at: pc.^ (byte between: 96 and: 142)	and: [ 		byte <= 111			or: [ 				byte >= 129					and: [ 						byte <= 130							or: [ 								(byte = 132 and: [ (self method at: pc + 1) >= 160 ])									or: [ byte = 141 or: [ byte = 142	"142		storeAndPopRemoteTempLongBytecode" ]	"141		storeRemoteTempLongBytecode" ]	"132		doubleExtendedDoAnythingBytecode" ]	"130		extendedStoreAndPopBytecode" ]	"129		extendedStoreBytecode" ]	"96 103		storeAndPopReceiverVariableBytecode"	"104 111	storeAndPopTemporaryVariableBytecode" ]
+^ self method pcPreviousTo: pc
 ]
 
 Class InstructionStream >> scanFor: scanBlock
@@ -141,37 +140,10 @@ Class InstructionStream >> scanFor: scanBlock
 | method end byte |method := self method.end := method endPC.[ pc <= end ]	whileTrue: [ 		(scanBlock value: (byte := method at: pc))			ifTrue: [ ^ true ].		pc := self nextPc: byte ].^ false
 ]
 
-Class InstructionStream >> thirdByte
+Class InstructionStream >> secondByte
 [
-	"Answer the third byte of the current bytecode."
-^ self method at: pc + 2
-]
-
-Class InstructionStream >> interpretExtension: offset in: method for: client
-[
-| type offset2 byte2 byte3 byte4 |offset <= 6	ifTrue: [ 		"Extended op codes 128-134"		byte2 := method at: pc.		pc := pc + 1.		offset <= 2			ifTrue: [ 				"128-130:  extended pushes and pops"				type := byte2 // 64.				offset2 := byte2 \\ 64.				offset = 0					ifTrue: [ 						type = 0							ifTrue: [ ^ client pushReceiverVariable: offset2 ].						type = 1							ifTrue: [ ^ client pushTemporaryVariable: offset2 ].						type = 2							ifTrue: [ ^ client pushConstant: (method literalAt: offset2 + 1) ].						type = 3							ifTrue: [ ^ client pushLiteralVariable: (method literalAt: offset2 + 1) ] ].				offset = 1					ifTrue: [ 						type = 0							ifTrue: [ ^ client storeIntoReceiverVariable: offset2 ].						type = 1							ifTrue: [ ^ client storeIntoTemporaryVariable: offset2 ].						type = 2							ifTrue: [ self error: 'illegalStore' ].						type = 3							ifTrue: [ ^ client storeIntoLiteralVariable: (method literalAt: offset2 + 1) ] ].				offset = 2					ifTrue: [ 						type = 0							ifTrue: [ ^ client popIntoReceiverVariable: offset2 ].						type = 1							ifTrue: [ ^ client popIntoTemporaryVariable: offset2 ].						type = 2							ifTrue: [ self error: 'illegalStore' ].						type = 3							ifTrue: [ ^ client popIntoLiteralVariable: (method literalAt: offset2 + 1) ] ] ].	"131-134: extended sends"		offset = 3			ifTrue: [ 				"Single extended send"				^ client send: (method literalAt: byte2 \\ 32 + 1) super: false numArgs: byte2 // 32 ].		offset = 4			ifTrue: [ 				"Double extended do-anything"				byte3 := method at: pc.				pc := pc + 1.				type := byte2 // 32.				type = 0					ifTrue: [ ^ client send: (method literalAt: byte3 + 1) super: false numArgs: byte2 \\ 32 ].				type = 1					ifTrue: [ ^ client send: (method literalAt: byte3 + 1) super: true numArgs: byte2 \\ 32 ].				type = 2					ifTrue: [ ^ client pushReceiverVariable: byte3 ].				type = 3					ifTrue: [ ^ client pushConstant: (method literalAt: byte3 + 1) ].				type = 4					ifTrue: [ ^ client pushLiteralVariable: (method literalAt: byte3 + 1) ].				type = 5					ifTrue: [ ^ client storeIntoReceiverVariable: byte3 ].				type = 6					ifTrue: [ ^ client popIntoReceiverVariable: byte3 ].				type = 7					ifTrue: [ ^ client storeIntoLiteralVariable: (method literalAt: byte3 + 1) ] ].		offset = 5			ifTrue: [ 				"Single extended send to super"				^ client send: (method literalAt: byte2 \\ 32 + 1) super: true numArgs: byte2 // 32 ].		offset = 6			ifTrue: [ 				"Second extended send"				^ client send: (method literalAt: byte2 \\ 64 + 1) super: false numArgs: byte2 // 64 ] ].offset = 7	ifTrue: [ ^ client doPop ].offset = 8	ifTrue: [ ^ client doDup ].offset = 9	ifTrue: [ ^ client pushActiveContext ].byte2 := method at: pc.pc := pc + 1.offset = 10	ifTrue: [ 		^ byte2 < 128			ifTrue: [ client pushNewArrayOfSize: byte2 ]			ifFalse: [ client pushConsArrayWithElements: byte2 - 128 ] ].offset = 11	ifTrue: [ ^ self error: 'unusedBytecode' ].byte3 := method at: pc.pc := pc + 1.offset = 12	ifTrue: [ ^ client pushRemoteTemp: byte2 inVectorAt: byte3 ].offset = 13	ifTrue: [ ^ client storeIntoRemoteTemp: byte2 inVectorAt: byte3 ].offset = 14	ifTrue: [ ^ client popIntoRemoteTemp: byte2 inVectorAt: byte3 ].	"offset = 15"byte4 := method at: pc.pc := pc + 1.^ client	pushClosureCopyNumCopiedValues: (byte2 bitShift: -4)	numArgs: (byte2 bitAnd: 16rF)	blockSize: byte3 * 256 + byte4
-]
-
-Class InstructionStream >> willBlockReturn
-[
-^ (self method at: pc) = 125
-]
-
-Class InstructionStream >> willStorePop
-[
-	"Answer whether the next bytecode is a store-pop."
-| byte |byte := self method at: pc.^ byte = 130	or: [ 		byte = 142			or: [ byte between: 96 and: 111	"96 103		storeAndPopReceiverVariableBytecode"	"104 111	storeAndPopTemporaryVariableBytecode" ]	"142		storeAndPopRemoteTempLongBytecode" ]	"130		extendedStoreAndPopBytecode"
-]
-
-Class InstructionStream >> fourthByte
-[
-	"Answer the fourth byte of the current bytecode."
-^ self method at: pc + 3
-]
-
-Class InstructionStream >> previousPc
-[
-^ self method pcPreviousTo: pc
+	"Answer the second byte of the current bytecode."
+^ self method at: pc + 1
 ]
 
 Class InstructionStream >> selectorToSendOrSelf
@@ -186,10 +158,27 @@ Class InstructionStream >> skipBackBeforeJump
 | strm short |strm := InstructionStream on: self method.(strm	scanFor: [ :byte | 		((short := byte between: 152 and: 159) or: [ byte between: 168 and: 175 ])			and: [ 				strm pc					=						(short							ifTrue: [ pc - 1 ]							ifFalse: [ pc - 2 ]) ] ])	ifFalse: [ self error: 'Where''s the jump??' ].self	jump:		(short			ifTrue: [ -1 ]			ifFalse: [ -2 ])
 ]
 
-Class InstructionStream >> firstByte
+Class InstructionStream >> thirdByte
 [
-	"Answer the first byte of the current bytecode."
-^ self method at: pc
+	"Answer the third byte of the current bytecode."
+^ self method at: pc + 2
+]
+
+Class InstructionStream >> willBlockReturn
+[
+^ (self method at: pc) = 125
+]
+
+Class InstructionStream >> willJump
+[
+	"unconditionally"
+| byte |byte := self method at: pc.^ (byte between: 144 and: 151) or: [ byte between: 160 and: 167 ]
+]
+
+Class InstructionStream >> willJumpIfFalse
+[
+	"Answer whether the next bytecode is a jump-if-false."
+| byte |byte := self method at: pc.^ (byte between: 152 and: 159) or: [ byte between: 172 and: 175 ]
 ]
 
 Class InstructionStream >> willJumpIfTrue
@@ -198,31 +187,43 @@ Class InstructionStream >> willJumpIfTrue
 | byte |byte := self method at: pc.^ byte between: 168 and: 171
 ]
 
+Class InstructionStream >> willJustPop
+[
+^ (self method at: pc) = 135
+]
+
 Class InstructionStream >> willReturn
 [
 	"Answer whether the next bytecode is a return."
 ^ (self method at: pc) between: 120 and: 125
 ]
 
-Class InstructionStream >> nextInstruction
+Class InstructionStream >> willSend
 [
-	"Return the next bytecode instruction as a message that an InstructionClient would understand.  This advances the pc by one instruction."
-^ self interpretNextInstructionFor: MessageCatcher new
+	"Answer whether the next bytecode is a message-send."
+| byte |byte := self method at: pc.^ byte >= 131 and: [ byte >= 176 or: [ byte <= 134 ]	"special send or short send" ]	"long sends"
 ]
 
-Class InstructionStream >> secondByte
+Class InstructionStream >> willStore
 [
-	"Answer the second byte of the current bytecode."
-^ self method at: pc + 1
+	"Answer whether the next bytecode is a store or store-pop"
+| byte |byte := self method at: pc.^ (byte between: 96 and: 142)	and: [ 		byte <= 111			or: [ 				byte >= 129					and: [ 						byte <= 130							or: [ 								(byte = 132 and: [ (self method at: pc + 1) >= 160 ])									or: [ byte = 141 or: [ byte = 142	"142		storeAndPopRemoteTempLongBytecode" ]	"141		storeRemoteTempLongBytecode" ]	"132		doubleExtendedDoAnythingBytecode" ]	"130		extendedStoreAndPopBytecode" ]	"129		extendedStoreBytecode" ]	"96 103		storeAndPopReceiverVariableBytecode"	"104 111	storeAndPopTemporaryVariableBytecode" ]
+]
+
+Class InstructionStream >> willStorePop
+[
+	"Answer whether the next bytecode is a store-pop."
+| byte |byte := self method at: pc.^ byte = 130	or: [ 		byte = 142			or: [ byte between: 96 and: 111	"96 103		storeAndPopReceiverVariableBytecode"	"104 111	storeAndPopTemporaryVariableBytecode" ]	"142		storeAndPopRemoteTempLongBytecode" ]	"130		extendedStoreAndPopBytecode"
 ]
 
 Metaclass
 	name: #InstructionStream;
 	instanceVariables: #().
 
-Metaclass InstructionStream >> isContextClass
+Metaclass InstructionStream >> initialize
 [
-^ false
+	"Initialize an array of special constants returned by single-bytecode returns."
+SpecialConstants := (Array with: true with: false with: nil)	,		(Array			with: -1			with: 0			with: 1			with: 2)	"InstructionStream initialize."
 ]
 
 Metaclass InstructionStream >> instVarNamesAndOffsetsDo: aBinaryBlock
@@ -231,10 +232,9 @@ Metaclass InstructionStream >> instVarNamesAndOffsetsDo: aBinaryBlock
 | superInstSize |(self withAllSubclasses noneSatisfy: [ :class | class isContextClass ])	ifTrue: [ ^ super instVarNamesAndOffsetsDo: aBinaryBlock ].(superInstSize := superclass notNil	ifTrue: [ superclass instSize ]	ifFalse: [ 0 ]) > 0	ifTrue: [ superclass instVarNamesAndOffsetsDo: aBinaryBlock ].1 to: self instSize - superInstSize do: [ :i | aBinaryBlock value: (instanceVariables at: i) value: (i + superInstSize) negated ]
 ]
 
-Metaclass InstructionStream >> initialize
+Metaclass InstructionStream >> isContextClass
 [
-	"Initialize an array of special constants returned by single-bytecode returns."
-SpecialConstants := (Array with: true with: false with: nil)	,		(Array			with: -1			with: 0			with: 1			with: 2)	"InstructionStream initialize."
+^ false
 ]
 
 Metaclass InstructionStream >> on: method

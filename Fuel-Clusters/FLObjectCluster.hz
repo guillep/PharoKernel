@@ -11,9 +11,19 @@ Class FLObjectCluster >> clusterMaterializeStepWith: aDecoder
 super clusterMaterializeStepWith: aDecoder.theClass := aDecoder nextEncodedReference
 ]
 
+Class FLObjectCluster >> clusterReferencesDo: aBlock
+[
+aBlock value: theClass
+]
+
 Class FLObjectCluster >> clusterSerializeStepWith: anEncoder
 [
 super clusterSerializeStepWith: anEncoder.anEncoder encodeReferenceTo: theClass
+]
+
+Class FLObjectCluster >> initializeAnalyzing: aClass
+[
+self initializeAnalyzing.theClass := aClass
 ]
 
 Class FLObjectCluster >> printNameOn: aStream
@@ -22,19 +32,9 @@ Class FLObjectCluster >> printNameOn: aStream
 super printNameOn: aStream.aStream nextPut: $[.theClass printOn: aStream.aStream nextPut: $]
 ]
 
-Class FLObjectCluster >> clusterReferencesDo: aBlock
-[
-aBlock value: theClass
-]
-
 Class FLObjectCluster >> theClass
 [
 ^ theClass
-]
-
-Class FLObjectCluster >> initializeAnalyzing: aClass
-[
-self initializeAnalyzing.theClass := aClass
 ]
 
 Metaclass

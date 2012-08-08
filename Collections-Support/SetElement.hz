@@ -6,19 +6,9 @@ Class
 	classVariables: #(#NilElement );
 	package: #'Collections-Support'.
 
-Class SetElement >> hash
-[
-^ enclosedElement hash
-]
-
 Class SetElement >> = anObject
 [
 ^ anObject class = self class and: [ enclosedElement = anObject enclosedSetElement ]
-]
-
-Class SetElement >> enclosedSetElement
-[
-^ enclosedElement
 ]
 
 Class SetElement >> asSetElement
@@ -27,19 +17,24 @@ Class SetElement >> asSetElement
 ^ SetElement with: self
 ]
 
+Class SetElement >> enclosedSetElement
+[
+^ enclosedElement
+]
+
 Class SetElement >> enclosedSetElement: anObject
 [
 enclosedElement := anObject
 ]
 
+Class SetElement >> hash
+[
+^ enclosedElement hash
+]
+
 Metaclass
 	name: #SetElement;
 	instanceVariables: #().
-
-Metaclass SetElement >> withNil
-[
-^ NilElement
-]
 
 Metaclass SetElement >> initialize
 [
@@ -49,5 +44,10 @@ NilElement := self with: nil
 Metaclass SetElement >> with: anObject
 [
 ^ self new enclosedSetElement: anObject
+]
+
+Metaclass SetElement >> withNil
+[
+^ NilElement
 ]
 

@@ -6,14 +6,9 @@ Class
 	classVariables: #();
 	package: #'Kernel-Classes'.
 
-Class ClassOrganizer >> classify: element under: heading suppressIfDefault: aBoolean
+Class ClassOrganizer >> addCategory: catString before: nextCategory
 [
-| oldCat newCat |oldCat := self categoryOfElement: element.SystemAnnouncer uniqueInstance suspendAllWhile: [ super classify: element under: heading suppressIfDefault: aBoolean ].newCat := self categoryOfElement: element.self notifyOfChangedSelector: element from: oldCat to: newCat
-]
-
-Class ClassOrganizer >> setDefaultList: aSortedCollection
-[
-| oldDict oldCategories |oldDict := self elementCategoryDict.oldCategories := self categories copy.SystemAnnouncer uniqueInstance suspendAllWhile: [ super setDefaultList: aSortedCollection ].self notifyOfChangedSelectorsOldDict: oldDict newDict: self elementCategoryDict.self notifyOfChangedCategoriesFrom: oldCategories to: self categories
+| oldCategories |oldCategories := self categories copy.SystemAnnouncer uniqueInstance suspendAllWhile: [ super addCategory: catString before: nextCategory ].self notifyOfChangedCategoriesFrom: oldCategories to: self categories
 ]
 
 Class ClassOrganizer >> changeFromCategorySpecs: categorySpecs
@@ -21,14 +16,19 @@ Class ClassOrganizer >> changeFromCategorySpecs: categorySpecs
 | oldDict oldCategories |oldDict := self elementCategoryDict.oldCategories := self categories copy.SystemAnnouncer uniqueInstance suspendAllWhile: [ super changeFromCategorySpecs: categorySpecs ].self notifyOfChangedSelectorsOldDict: oldDict newDict: self elementCategoryDict.self notifyOfChangedCategoriesFrom: oldCategories to: self categories
 ]
 
-Class ClassOrganizer >> removeEmptyCategories
+Class ClassOrganizer >> classify: element under: heading suppressIfDefault: aBoolean
 [
-| oldCategories |oldCategories := self categories copy.SystemAnnouncer uniqueInstance suspendAllWhile: [ super removeEmptyCategories ].self notifyOfChangedCategoriesFrom: oldCategories to: self categories
+| oldCat newCat |oldCat := self categoryOfElement: element.SystemAnnouncer uniqueInstance suspendAllWhile: [ super classify: element under: heading suppressIfDefault: aBoolean ].newCat := self categoryOfElement: element.self notifyOfChangedSelector: element from: oldCat to: newCat
 ]
 
-Class ClassOrganizer >> removeElement: element
+Class ClassOrganizer >> notifyOfChangedCategoriesFrom: oldCollectionOrNil to: newCollectionOrNil
 [
-| oldCat |oldCat := self categoryOfElement: element.SystemAnnouncer uniqueInstance suspendAllWhile: [ super removeElement: element ].self notifyOfChangedSelector: element from: oldCat to: (self categoryOfElement: element)
+(self hasSubject and: [ oldCollectionOrNil ~= newCollectionOrNil ])	ifTrue: [ SystemAnnouncer uniqueInstance classReorganized: self subject ]
+]
+
+Class ClassOrganizer >> notifyOfChangedCategoryFrom: oldNameOrNil to: newNameOrNil
+[
+(self hasSubject and: [ oldNameOrNil ~= newNameOrNil ])	ifTrue: [ SystemAnnouncer uniqueInstance classReorganized: self subject ]
 ]
 
 Class ClassOrganizer >> notifyOfChangedSelector: element from: oldCategory to: newCategory
@@ -41,19 +41,10 @@ Class ClassOrganizer >> notifyOfChangedSelectorsOldDict: oldDictionaryOrNil newD
 (oldDictionaryOrNil isNil and: [ newDictionaryOrNil isNil ])	ifTrue: [ ^ self ].oldDictionaryOrNil isNil	ifTrue: [ 		newDictionaryOrNil keysAndValuesDo: [ :el :cat | self notifyOfChangedSelector: el from: nil to: cat ].		^ self ].newDictionaryOrNil isNil	ifTrue: [ 		oldDictionaryOrNil keysAndValuesDo: [ :el :cat | self notifyOfChangedSelector: el from: cat to: nil ].		^ self ].oldDictionaryOrNil	keysAndValuesDo: [ :el :cat | 		| newCat |		newCat := newDictionaryOrNil at: el.		self notifyOfChangedSelector: el from: cat to: newCat ]
 ]
 
-Class ClassOrganizer >> renameCategory: oldCatString toBe: newCatString
+Class ClassOrganizer >> ownCategories
 [
-| oldCat newCat oldElementsBefore oldElementsAfter |oldCat := oldCatString asSymbol.newCat := newCatString asSymbol.oldElementsBefore := self listAtCategoryNamed: oldCat.SystemAnnouncer uniqueInstance suspendAllWhile: [ super renameCategory: oldCatString toBe: newCatString ].oldElementsAfter := (self listAtCategoryNamed: oldCat) asSet.oldElementsBefore	do: [ :each | 		(oldElementsAfter includes: each)			ifFalse: [ self notifyOfChangedSelector: each from: oldCat to: newCat ] ].self notifyOfChangedCategoryFrom: oldCat to: newCat
-]
-
-Class ClassOrganizer >> notifyOfChangedCategoriesFrom: oldCollectionOrNil to: newCollectionOrNil
-[
-(self hasSubject and: [ oldCollectionOrNil ~= newCollectionOrNil ])	ifTrue: [ SystemAnnouncer uniqueInstance classReorganized: self subject ]
-]
-
-Class ClassOrganizer >> addCategory: catString before: nextCategory
-[
-| oldCategories |oldCategories := self categories copy.SystemAnnouncer uniqueInstance suspendAllWhile: [ super addCategory: catString before: nextCategory ].self notifyOfChangedCategoriesFrom: oldCategories to: self categories
+	"get all categories that are not obtained from traits. Order is random"
+| traitsCategories |traitsCategories := self subject traits	inject: Set new	into: [ :set :trait | 		set addAll: trait organization categories.		set ].^ (self categories copyWithoutAll: traitsCategories) asArray
 ]
 
 Class ClassOrganizer >> removeCategory: cat
@@ -61,20 +52,29 @@ Class ClassOrganizer >> removeCategory: cat
 | oldCategories |oldCategories := self categories copy.SystemAnnouncer uniqueInstance suspendAllWhile: [ super removeCategory: cat ].self notifyOfChangedCategoriesFrom: oldCategories to: self categories
 ]
 
-Class ClassOrganizer >> notifyOfChangedCategoryFrom: oldNameOrNil to: newNameOrNil
+Class ClassOrganizer >> removeElement: element
 [
-(self hasSubject and: [ oldNameOrNil ~= newNameOrNil ])	ifTrue: [ SystemAnnouncer uniqueInstance classReorganized: self subject ]
+| oldCat |oldCat := self categoryOfElement: element.SystemAnnouncer uniqueInstance suspendAllWhile: [ super removeElement: element ].self notifyOfChangedSelector: element from: oldCat to: (self categoryOfElement: element)
+]
+
+Class ClassOrganizer >> removeEmptyCategories
+[
+| oldCategories |oldCategories := self categories copy.SystemAnnouncer uniqueInstance suspendAllWhile: [ super removeEmptyCategories ].self notifyOfChangedCategoriesFrom: oldCategories to: self categories
+]
+
+Class ClassOrganizer >> renameCategory: oldCatString toBe: newCatString
+[
+| oldCat newCat oldElementsBefore oldElementsAfter |oldCat := oldCatString asSymbol.newCat := newCatString asSymbol.oldElementsBefore := self listAtCategoryNamed: oldCat.SystemAnnouncer uniqueInstance suspendAllWhile: [ super renameCategory: oldCatString toBe: newCatString ].oldElementsAfter := (self listAtCategoryNamed: oldCat) asSet.oldElementsBefore	do: [ :each | 		(oldElementsAfter includes: each)			ifFalse: [ self notifyOfChangedSelector: each from: oldCat to: newCat ] ].self notifyOfChangedCategoryFrom: oldCat to: newCat
+]
+
+Class ClassOrganizer >> setDefaultList: aSortedCollection
+[
+| oldDict oldCategories |oldDict := self elementCategoryDict.oldCategories := self categories copy.SystemAnnouncer uniqueInstance suspendAllWhile: [ super setDefaultList: aSortedCollection ].self notifyOfChangedSelectorsOldDict: oldDict newDict: self elementCategoryDict.self notifyOfChangedCategoriesFrom: oldCategories to: self categories
 ]
 
 Class ClassOrganizer >> sortCategories
 [
 | oldCategories |oldCategories := self categories copy.SystemAnnouncer uniqueInstance suspendAllWhile: [ super sortCategories ].self notifyOfChangedCategoriesFrom: oldCategories to: self categories
-]
-
-Class ClassOrganizer >> ownCategories
-[
-	"get all categories that are not obtained from traits. Order is random"
-| traitsCategories |traitsCategories := self subject traits	inject: Set new	into: [ :set :trait | 		set addAll: trait organization categories.		set ].^ (self categories copyWithoutAll: traitsCategories) asArray
 ]
 
 Metaclass

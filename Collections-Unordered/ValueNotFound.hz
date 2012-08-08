@@ -6,6 +6,12 @@ Class
 	classVariables: #();
 	package: #'Collections-Unordered'.
 
+Class ValueNotFound >> standardMessageText
+[
+	"Generate a standard textual description"
+^ String	streamContents: [ :stream | 		stream << 'value '.		stream print: self object.		stream << ' not found in '.		stream print: self collection class ]
+]
+
 Class ValueNotFound >> value
 [
 ^ self object
@@ -14,12 +20,6 @@ Class ValueNotFound >> value
 Class ValueNotFound >> value: aValue
 [
 ^ self object: aValue
-]
-
-Class ValueNotFound >> standardMessageText
-[
-	"Generate a standard textual description"
-^ String	streamContents: [ :stream | 		stream << 'value '.		stream print: self object.		stream << ' not found in '.		stream print: self collection class ]
 ]
 
 Metaclass

@@ -6,20 +6,14 @@ Class
 	classVariables: #();
 	package: #'Traits-Composition'.
 
-Class TraitMethodDescription >> providedMethod
+Class TraitMethodDescription >> addLocatedMethod: aLocatedMethod
 [
-^ self providedLocatedMethod ifNotNil: [ :locatedMethod | locatedMethod method ]
+locatedMethods add: aLocatedMethod
 ]
 
-Class TraitMethodDescription >> isAliasSelector
+Class TraitMethodDescription >> conflictMethod
 [
-	"Return true if the selector is an alias (if it is different	from the original selector) or already an aliased method	in the original location (recursively search the compositions).	Return false, if not or if we have a conflict."
-| locatedMethod |^ self size = 1	and: [ 		locatedMethod := self locatedMethods anyOne.		locatedMethod selector ~= self selector or: [ locatedMethod methodClass isAliasSelector: self selector ] ]
-]
-
-Class TraitMethodDescription >> methodsDo: aBlock
-[
-self locatedMethods do: [ :each | aBlock value: each ]
+| method argumentNames binary numberOfArguments |self isConflict	ifFalse: [ ^ nil ].argumentNames := self getArgumentNames.binary := self isBinarySelector.numberOfArguments := binary	ifTrue: [ 1 ]	ifFalse: [ argumentNames size + 2 ].^ self	generateMethod: self selector	withMarker: CompiledMethod conflictMarker	forArgs: argumentNames size	binary: binary
 ]
 
 Class TraitMethodDescription >> effectiveMethod
@@ -33,54 +27,9 @@ Class TraitMethodDescription >> effectiveMethodCategory
 ^ self effectiveMethodCategoryCurrent: nil new: nil
 ]
 
-Class TraitMethodDescription >> providedLocatedMethod
-[
-| locatedMethod aLocatedMethod refOrigin |locatedMethod := nil.self locatedMethods ifEmpty: [ ^ nil ].self locatedMethods size > 1	ifTrue: [ 		aLocatedMethod := self locatedMethods anyOne.		refOrigin := (aLocatedMethod methodClass >> aLocatedMethod selector) origin.		(self locatedMethods allSatisfy: [ :each | each origin == refOrigin ])			ifTrue: [ ^ aLocatedMethod ] ].self locatedMethods	do: [ :each | 		each isProvided			ifTrue: [ 				locatedMethod isNil					ifFalse: [ ^ nil ].				locatedMethod := each ] ].^ locatedMethod
-]
-
-Class TraitMethodDescription >> selector: aSymbol
-[
-selector := aSymbol
-]
-
-Class TraitMethodDescription >> isProvided
-[
-^ self providedMethod notNil
-]
-
-Class TraitMethodDescription >> requiredMethod
-[
-| argumentNames numberOfArguments binary |self isRequired	ifFalse: [ ^ nil ].self size = 1	ifTrue: [ ^ self locatedMethods anyOne ].argumentNames := self getArgumentNames.binary := self isBinarySelector.numberOfArguments := binary	ifTrue: [ 1 ]	ifFalse: [ argumentNames size + 2 ].^ self	generateMethod: self selector	withMarker: CompiledMethod implicitRequirementMarker	forArgs: argumentNames size	binary: binary
-]
-
-Class TraitMethodDescription >> addLocatedMethod: aLocatedMethod
-[
-locatedMethods add: aLocatedMethod
-]
-
-Class TraitMethodDescription >> conflictMethod
-[
-| method argumentNames binary numberOfArguments |self isConflict	ifFalse: [ ^ nil ].argumentNames := self getArgumentNames.binary := self isBinarySelector.numberOfArguments := binary	ifTrue: [ 1 ]	ifFalse: [ argumentNames size + 2 ].^ self	generateMethod: self selector	withMarker: CompiledMethod conflictMarker	forArgs: argumentNames size	binary: binary
-]
-
-Class TraitMethodDescription >> isEmpty
-[
-^ self size = 0
-]
-
-Class TraitMethodDescription >> isConflict
-[
-| count originMethodReferenciel |count := 0.self locatedMethods size > 1	ifTrue: [ 		"If they are more than 1 located method, then check whether these methods have the same origin"		originMethodReferenciel := self locatedMethods anyOne origin.		(self locatedMethods allSatisfy: [ :each | each origin == originMethodReferenciel ])			ifTrue: [ ^ false ] ].self	methodsDo: [ :each | 		each isProvided			ifTrue: [ 				count := count + 1.				count > 1					ifTrue: [ ^ true ] ] ].^ false
-]
-
 Class TraitMethodDescription >> effectiveMethodCategoryCurrent: currentCategoryOrNil new: newCategoryOrNil
 [
 | result size isCurrent isConflict |size := self size.size = 0	ifTrue: [ ^ nil ].result := self locatedMethods anyOne category.size = 1	ifTrue: [ ^ result ].isCurrent := currentCategoryOrNil isNil.isConflict := false.self locatedMethods	do: [ :each | 		| cat |		cat := each category.		isCurrent := isCurrent or: [ cat == currentCategoryOrNil ].		isConflict := isConflict or: [ cat ~~ result ] ].isConflict	ifFalse: [ ^ result ].(isCurrent not and: [ newCategoryOrNil notNil ])	ifTrue: [ ^ newCategoryOrNil ].^ ClassOrganizer ambiguous
-]
-
-Class TraitMethodDescription >> initialize
-[
-super initialize.locatedMethods := IdentitySet new
 ]
 
 Class TraitMethodDescription >> generateMethod: aSelector withMarker: aSymbol forArgs: aNumber binary: aBoolean
@@ -93,6 +42,43 @@ Class TraitMethodDescription >> getArgumentNames
 | argumentNamesCollection names defaultName |defaultName := 'arg'.argumentNamesCollection := self locatedMethods collect: [ :each | each argumentNames ].names := Array new: argumentNamesCollection anyOne size.argumentNamesCollection	do: [ :collection | 		1 to: names size do: [ :index | 			(names at: index) isNil				ifTrue: [ names at: index put: (collection at: index) ]				ifFalse: [ 					(names at: index) ~= (collection at: index)						ifTrue: [ names at: index put: defaultName , index asString ] ] ] ].^ names
 ]
 
+Class TraitMethodDescription >> initialize
+[
+super initialize.locatedMethods := IdentitySet new
+]
+
+Class TraitMethodDescription >> isAliasSelector
+[
+	"Return true if the selector is an alias (if it is different	from the original selector) or already an aliased method	in the original location (recursively search the compositions).	Return false, if not or if we have a conflict."
+| locatedMethod |^ self size = 1	and: [ 		locatedMethod := self locatedMethods anyOne.		locatedMethod selector ~= self selector or: [ locatedMethod methodClass isAliasSelector: self selector ] ]
+]
+
+Class TraitMethodDescription >> isBinarySelector
+[
+^ self locatedMethods anyOne isBinarySelector
+]
+
+Class TraitMethodDescription >> isConflict
+[
+| count originMethodReferenciel |count := 0.self locatedMethods size > 1	ifTrue: [ 		"If they are more than 1 located method, then check whether these methods have the same origin"		originMethodReferenciel := self locatedMethods anyOne origin.		(self locatedMethods allSatisfy: [ :each | each origin == originMethodReferenciel ])			ifTrue: [ ^ false ] ].self	methodsDo: [ :each | 		each isProvided			ifTrue: [ 				count := count + 1.				count > 1					ifTrue: [ ^ true ] ] ].^ false
+]
+
+Class TraitMethodDescription >> isEmpty
+[
+^ self size = 0
+]
+
+Class TraitMethodDescription >> isLocalAliasSelector
+[
+	"Return true if the selector is an alias (if it is different	from the original selector). Return false, if not or if we	have a conflict."
+^ self size = 1 and: [ self locatedMethods anyOne selector ~= self selector ]
+]
+
+Class TraitMethodDescription >> isProvided
+[
+^ self providedMethod notNil
+]
+
 Class TraitMethodDescription >> isRequired
 [
 self isEmpty	ifTrue: [ ^ false ].^ self locatedMethods allSatisfy: [ :each | each isRequired ]
@@ -103,14 +89,24 @@ Class TraitMethodDescription >> locatedMethods
 ^ locatedMethods
 ]
 
-Class TraitMethodDescription >> size
+Class TraitMethodDescription >> methodsDo: aBlock
 [
-^ self locatedMethods size
+self locatedMethods do: [ :each | aBlock value: each ]
 ]
 
-Class TraitMethodDescription >> isBinarySelector
+Class TraitMethodDescription >> providedLocatedMethod
 [
-^ self locatedMethods anyOne isBinarySelector
+| locatedMethod aLocatedMethod refOrigin |locatedMethod := nil.self locatedMethods ifEmpty: [ ^ nil ].self locatedMethods size > 1	ifTrue: [ 		aLocatedMethod := self locatedMethods anyOne.		refOrigin := (aLocatedMethod methodClass >> aLocatedMethod selector) origin.		(self locatedMethods allSatisfy: [ :each | each origin == refOrigin ])			ifTrue: [ ^ aLocatedMethod ] ].self locatedMethods	do: [ :each | 		each isProvided			ifTrue: [ 				locatedMethod isNil					ifFalse: [ ^ nil ].				locatedMethod := each ] ].^ locatedMethod
+]
+
+Class TraitMethodDescription >> providedMethod
+[
+^ self providedLocatedMethod ifNotNil: [ :locatedMethod | locatedMethod method ]
+]
+
+Class TraitMethodDescription >> requiredMethod
+[
+| argumentNames numberOfArguments binary |self isRequired	ifFalse: [ ^ nil ].self size = 1	ifTrue: [ ^ self locatedMethods anyOne ].argumentNames := self getArgumentNames.binary := self isBinarySelector.numberOfArguments := binary	ifTrue: [ 1 ]	ifFalse: [ argumentNames size + 2 ].^ self	generateMethod: self selector	withMarker: CompiledMethod implicitRequirementMarker	forArgs: argumentNames size	binary: binary
 ]
 
 Class TraitMethodDescription >> selector
@@ -118,15 +114,24 @@ Class TraitMethodDescription >> selector
 ^ selector
 ]
 
-Class TraitMethodDescription >> isLocalAliasSelector
+Class TraitMethodDescription >> selector: aSymbol
 [
-	"Return true if the selector is an alias (if it is different	from the original selector). Return false, if not or if we	have a conflict."
-^ self size = 1 and: [ self locatedMethods anyOne selector ~= self selector ]
+selector := aSymbol
+]
+
+Class TraitMethodDescription >> size
+[
+^ self locatedMethods size
 ]
 
 Metaclass
 	name: #TraitMethodDescription;
 	instanceVariables: #().
+
+Metaclass TraitMethodDescription >> maxArguments
+[
+^ 30
+]
 
 Metaclass TraitMethodDescription >> new
 [
@@ -136,10 +141,5 @@ Metaclass TraitMethodDescription >> new
 Metaclass TraitMethodDescription >> selector: aSymbol
 [
 ^ self new selector: aSymbol yourself
-]
-
-Metaclass TraitMethodDescription >> maxArguments
-[
-^ 30
 ]
 

@@ -11,16 +11,6 @@ Class FLAbstractCollectionCluster >> afterMaterializationStepWith: aDecoder
 objects do: [ :anObject | anObject fuelAfterMaterialization ]
 ]
 
-Class FLAbstractCollectionCluster >> serializeInstance: anObject with: anEncoder
-[
-anEncoder encodePositiveInteger: anObject size
-]
-
-Class FLAbstractCollectionCluster >> serializeReferencesStepWith: anEncoder
-[
-objects do: [ :anObject | self serializeReferencesOf: anObject with: anEncoder ]
-]
-
 Class FLAbstractCollectionCluster >> materializeInstanceWith: aDecoder
 [
 ^ theClass new: aDecoder nextEncodedPositiveInteger
@@ -29,6 +19,16 @@ Class FLAbstractCollectionCluster >> materializeInstanceWith: aDecoder
 Class FLAbstractCollectionCluster >> materializeReferencesStepWith: aDecoder
 [
 objects do: [ :anObject | self materializeReferencesOf: anObject with: aDecoder ]
+]
+
+Class FLAbstractCollectionCluster >> serializeInstance: anObject with: anEncoder
+[
+anEncoder encodePositiveInteger: anObject size
+]
+
+Class FLAbstractCollectionCluster >> serializeReferencesStepWith: anEncoder
+[
+objects do: [ :anObject | self serializeReferencesOf: anObject with: anEncoder ]
 ]
 
 Metaclass

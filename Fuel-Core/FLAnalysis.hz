@@ -6,10 +6,9 @@ Class
 	classVariables: #();
 	package: #'Fuel-Core'.
 
-Class FLAnalysis >> mapAndTrace: anObject
+Class FLAnalysis >> clusterization
 [
-	"Map an object to its cluster. Trace its references."
-firstMapper mapAndTrace: anObject
+^ clusterization
 ]
 
 Class FLAnalysis >> fuelAccept: aGeneralMapper
@@ -17,9 +16,15 @@ Class FLAnalysis >> fuelAccept: aGeneralMapper
 ^ aGeneralMapper visitSubstitution: self by: nil
 ]
 
-Class FLAnalysis >> trace: anObject
+Class FLAnalysis >> initializeWith: aMapper root: anObject
 [
-objectStack push: anObject
+self initialize.firstMapper := aMapper.aMapper analysis: self.root := anObject.objectStack := FLSimpleStack new.clusterization := FLClusterization new
+]
+
+Class FLAnalysis >> mapAndTrace: anObject
+[
+	"Map an object to its cluster. Trace its references."
+firstMapper mapAndTrace: anObject
 ]
 
 Class FLAnalysis >> run
@@ -27,14 +32,9 @@ Class FLAnalysis >> run
 objectStack push: root.[ objectStack isEmpty ] whileFalse: [ self mapAndTrace: objectStack pop ]
 ]
 
-Class FLAnalysis >> initializeWith: aMapper root: anObject
+Class FLAnalysis >> trace: anObject
 [
-self initialize.firstMapper := aMapper.aMapper analysis: self.root := anObject.objectStack := FLSimpleStack new.clusterization := FLClusterization new
-]
-
-Class FLAnalysis >> clusterization
-[
-^ clusterization
+objectStack push: anObject
 ]
 
 Metaclass

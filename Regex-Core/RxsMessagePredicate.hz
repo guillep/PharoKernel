@@ -6,6 +6,12 @@ Class
 	classVariables: #();
 	package: #'Regex-Core'.
 
+Class RxsMessagePredicate >> dispatchTo: aBuilder
+[
+	"Inform the matcher of the kind of the node, and it	will do whatever it has to."
+^ aBuilder syntaxMessagePredicate: self
+]
+
 Class RxsMessagePredicate >> initializeSelector: aSelector
 [
 	"The selector must be a one-argument message understood by Character."
@@ -18,20 +24,14 @@ Class RxsMessagePredicate >> initializeSelector: aSelector negated: aBoolean
 selector := aSelector.negated := aBoolean
 ]
 
-Class RxsMessagePredicate >> selector
-[
-^ selector
-]
-
 Class RxsMessagePredicate >> negated
 [
 ^ negated
 ]
 
-Class RxsMessagePredicate >> dispatchTo: aBuilder
+Class RxsMessagePredicate >> selector
 [
-	"Inform the matcher of the kind of the node, and it	will do whatever it has to."
-^ aBuilder syntaxMessagePredicate: self
+^ selector
 ]
 
 Metaclass

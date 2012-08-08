@@ -6,6 +6,12 @@ Class
 	classVariables: #();
 	package: #'Files-Kernel'.
 
+Class FileExistsException >> defaultAction
+[
+	"The default action taken if the exception is signaled."
+^ UIManager default fileExistsDefaultAction: self
+]
+
 Class FileExistsException >> fileClass
 [
 ^ fileClass ifNil: [ StandardFileStream ]
@@ -14,12 +20,6 @@ Class FileExistsException >> fileClass
 Class FileExistsException >> fileClass: aClass
 [
 fileClass := aClass
-]
-
-Class FileExistsException >> defaultAction
-[
-	"The default action taken if the exception is signaled."
-^ UIManager default fileExistsDefaultAction: self
 ]
 
 Metaclass

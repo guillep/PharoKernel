@@ -6,39 +6,24 @@ Class
 	classVariables: #();
 	package: #'FileSystem-Memory'.
 
-Class MemoryFileSystemEntry >> isFile
-[
-^ self isDirectory not
-]
-
-Class MemoryFileSystemEntry >> modificationTime: anObject
-[
-modificationTime := anObject
-]
-
 Class MemoryFileSystemEntry >> basename
 [
 ^ basename
 ]
 
-Class MemoryFileSystemEntry >> modificationTime
+Class MemoryFileSystemEntry >> basename: aString
 [
-^ modificationTime
-]
-
-Class MemoryFileSystemEntry >> modified
-[
-modificationTime := DateAndTime now
-]
-
-Class MemoryFileSystemEntry >> fileSize
-[
-self subclassResponsability
+basename := aString
 ]
 
 Class MemoryFileSystemEntry >> creationTime
 [
 ^ creationTime
+]
+
+Class MemoryFileSystemEntry >> fileSize
+[
+self subclassResponsability
 ]
 
 Class MemoryFileSystemEntry >> initialize
@@ -51,9 +36,24 @@ Class MemoryFileSystemEntry >> isDirectory
 self subclassResponsability
 ]
 
-Class MemoryFileSystemEntry >> basename: aString
+Class MemoryFileSystemEntry >> isFile
 [
-basename := aString
+^ self isDirectory not
+]
+
+Class MemoryFileSystemEntry >> modificationTime
+[
+^ modificationTime
+]
+
+Class MemoryFileSystemEntry >> modificationTime: anObject
+[
+modificationTime := anObject
+]
+
+Class MemoryFileSystemEntry >> modified
+[
+modificationTime := DateAndTime now
 ]
 
 Metaclass

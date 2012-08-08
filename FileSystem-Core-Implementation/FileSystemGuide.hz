@@ -6,9 +6,9 @@ Class
 	classVariables: #();
 	package: #'FileSystem-Core-Implementation'.
 
-Class FileSystemGuide >> push: anObject
+Class FileSystemGuide >> initialize
 [
-work add: anObject
+super initialize.work := OrderedCollection new
 ]
 
 Class FileSystemGuide >> initializeWithVisitor: aVisitor
@@ -21,9 +21,9 @@ Class FileSystemGuide >> pop
 ^ work removeLast
 ]
 
-Class FileSystemGuide >> top
+Class FileSystemGuide >> push: anObject
 [
-^ work removeFirst
+work add: anObject
 ]
 
 Class FileSystemGuide >> pushAll: aCollection
@@ -36,27 +36,27 @@ Class FileSystemGuide >> show: aReference
 self subclassResponsibility
 ]
 
+Class FileSystemGuide >> top
+[
+^ work removeFirst
+]
+
 Class FileSystemGuide >> whileNotDoneDo: aBlock
 [
 [ work isEmpty ] whileFalse: [ aBlock value ]
-]
-
-Class FileSystemGuide >> initialize
-[
-super initialize.work := OrderedCollection new
 ]
 
 Metaclass
 	name: #FileSystemGuide;
 	instanceVariables: #().
 
-Metaclass FileSystemGuide >> show: aReference to: aVisitor
-[
-^ (self for: aVisitor) show: aReference
-]
-
 Metaclass FileSystemGuide >> for: aVisitor
 [
 ^ self basicNew initializeWithVisitor: aVisitor
+]
+
+Metaclass FileSystemGuide >> show: aReference to: aVisitor
+[
+^ (self for: aVisitor) show: aReference
 ]
 

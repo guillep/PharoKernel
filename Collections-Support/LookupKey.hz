@@ -6,6 +6,22 @@ Class
 	classVariables: #();
 	package: #'Collections-Support'.
 
+Class LookupKey >> < aLookupKey
+[
+	"Refer to the comment in Magnitude|<."
+^ key < aLookupKey key
+]
+
+Class LookupKey >> = aLookupKey
+[
+self species = aLookupKey species	ifTrue: [ ^ key = aLookupKey key ]	ifFalse: [ ^ false ]
+]
+
+Class LookupKey >> canAssign
+[
+^ true
+]
+
 Class LookupKey >> hash
 [
 	"Hash is reimplemented because = is implemented."
@@ -18,36 +34,10 @@ Class LookupKey >> isSpecialReadBinding
 ^ false
 ]
 
-Class LookupKey >> printOn: aStream
-[
-key printOn: aStream
-]
-
 Class LookupKey >> isVariableBinding
 [
 	"Return true if I represent a literal variable binding"
 ^ true
-]
-
-Class LookupKey >> canAssign
-[
-^ true
-]
-
-Class LookupKey >> name
-[
-^ self key isString	ifTrue: [ self key ]	ifFalse: [ self key printString ]
-]
-
-Class LookupKey >> key: anObject
-[
-	"Store the argument, anObject, as the lookup key of the receiver."
-key := anObject
-]
-
-Class LookupKey >> = aLookupKey
-[
-self species = aLookupKey species	ifTrue: [ ^ key = aLookupKey key ]	ifFalse: [ ^ false ]
 ]
 
 Class LookupKey >> key
@@ -56,10 +46,20 @@ Class LookupKey >> key
 ^ key
 ]
 
-Class LookupKey >> < aLookupKey
+Class LookupKey >> key: anObject
 [
-	"Refer to the comment in Magnitude|<."
-^ key < aLookupKey key
+	"Store the argument, anObject, as the lookup key of the receiver."
+key := anObject
+]
+
+Class LookupKey >> name
+[
+^ self key isString	ifTrue: [ self key ]	ifFalse: [ self key printString ]
+]
+
+Class LookupKey >> printOn: aStream
+[
+key printOn: aStream
 ]
 
 Metaclass

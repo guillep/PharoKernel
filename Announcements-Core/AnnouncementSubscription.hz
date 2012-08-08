@@ -6,9 +6,9 @@ Class
 	classVariables: #();
 	package: #'Announcements-Core'.
 
-Class AnnouncementSubscription >> subscriber
+Class AnnouncementSubscription >> action
 [
-^ subscriber
+^ action
 ]
 
 Class AnnouncementSubscription >> action: anObject
@@ -16,9 +16,9 @@ Class AnnouncementSubscription >> action: anObject
 action := anObject
 ]
 
-Class AnnouncementSubscription >> announcer
+Class AnnouncementSubscription >> announcementClass
 [
-^ announcer
+^ announcementClass
 ]
 
 Class AnnouncementSubscription >> announcementClass: anObject
@@ -26,15 +26,9 @@ Class AnnouncementSubscription >> announcementClass: anObject
 announcementClass := anObject
 ]
 
-Class AnnouncementSubscription >> makeStrong
+Class AnnouncementSubscription >> announcer
 [
-	" i am already strong. Do nothing "
-
-]
-
-Class AnnouncementSubscription >> subscriber: aSubscriber
-[
-subscriber := aSubscriber
+^ announcer
 ]
 
 Class AnnouncementSubscription >> announcer: anAnnouncer
@@ -48,30 +42,36 @@ Class AnnouncementSubscription >> deliver: anAnnouncement
 ^ (self handles: anAnnouncement class)	ifTrue: [ [ action cull: anAnnouncement cull: announcer ] on: UnhandledError fork: [ :ex | ex pass ] ]
 ]
 
+Class AnnouncementSubscription >> handles: anAnnouncementClass
+[
+^ announcementClass handles: anAnnouncementClass
+]
+
+Class AnnouncementSubscription >> makeStrong
+[
+	" i am already strong. Do nothing "
+
+]
+
 Class AnnouncementSubscription >> makeWeak
 [
 action isBlock	ifTrue: [ self error: 'Not currently available due to missing ephemerons support' ].^ announcer	replace: self	with:		(WeakAnnouncementSubscription new			announcer: announcer;			action: action asWeakMessageSend;			subscriber: subscriber;			announcementClass: announcementClass)
 ]
 
-Class AnnouncementSubscription >> announcementClass
+Class AnnouncementSubscription >> subscriber
 [
-^ announcementClass
+^ subscriber
 ]
 
-Class AnnouncementSubscription >> action
+Class AnnouncementSubscription >> subscriber: aSubscriber
 [
-^ action
+subscriber := aSubscriber
 ]
 
 Class AnnouncementSubscription >> valuable: aValuable
 [
 	"Used when subscriber should be extracted from valuable object"
 self action: aValuable.self subscriber: aValuable receiver
-]
-
-Class AnnouncementSubscription >> handles: anAnnouncementClass
-[
-^ announcementClass handles: anAnnouncementClass
 ]
 
 Metaclass

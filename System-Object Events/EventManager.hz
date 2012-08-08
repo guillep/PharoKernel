@@ -11,20 +11,16 @@ Class EventManager >> actionMap
 ^ actionMap == nil	ifTrue: [ self createActionMap ]	ifFalse: [ actionMap ]
 ]
 
-Class EventManager >> postCopy
+Class EventManager >> addDependent: anObject
 [
-super postCopy.self release
+	"Make the given object one of the receiver's dependents."
+self when: self changedEventSelector send: self updateEventSelector to: anObject.^ anObject
 ]
 
-Class EventManager >> removeDependent: anObject
+Class EventManager >> breakDependents
 [
-	"Remove the given object as one of the receiver's dependents."
-self removeActionsWithReceiver: anObject forEvent: self changedEventSelector.^ anObject
-]
-
-Class EventManager >> updateableActionMap
-[
-actionMap == nil	ifTrue: [ actionMap := self createActionMap ].^ actionMap
+	"Remove all of the receiver's dependents."
+self removeActionsForEvent: self changedEventSelector
 ]
 
 Class EventManager >> changed: aParameter
@@ -38,21 +34,25 @@ Class EventManager >> changedEventSelector
 ^ #changed:
 ]
 
-Class EventManager >> addDependent: anObject
-[
-	"Make the given object one of the receiver's dependents."
-self when: self changedEventSelector send: self updateEventSelector to: anObject.^ anObject
-]
-
 Class EventManager >> dependents
 [
 ^ (self actionSequenceForEvent: self changedEventSelector) asSet collect: [ :each | each receiver ]
 ]
 
-Class EventManager >> breakDependents
+Class EventManager >> postCopy
 [
-	"Remove all of the receiver's dependents."
-self removeActionsForEvent: self changedEventSelector
+super postCopy.self release
+]
+
+Class EventManager >> releaseActionMap
+[
+actionMap := nil
+]
+
+Class EventManager >> removeDependent: anObject
+[
+	"Remove the given object as one of the receiver's dependents."
+self removeActionsWithReceiver: anObject forEvent: self changedEventSelector.^ anObject
 ]
 
 Class EventManager >> updateEventSelector
@@ -60,9 +60,9 @@ Class EventManager >> updateEventSelector
 ^ #update:
 ]
 
-Class EventManager >> releaseActionMap
+Class EventManager >> updateableActionMap
 [
-actionMap := nil
+actionMap == nil	ifTrue: [ actionMap := self createActionMap ].^ actionMap
 ]
 
 Metaclass
@@ -74,9 +74,15 @@ Metaclass EventManager >> actionMapFor: anObject
 ^ self actionMaps at: anObject ifAbsent: [ self createActionMap ]
 ]
 
-Metaclass EventManager >> releaseActionMapFor: anObject
+Metaclass EventManager >> actionMaps
 [
-self actionMaps removeKey: anObject ifAbsent: [  ]
+^ ActionMaps ifNil: [ ActionMaps := WeakIdentityKeyDictionary new ]
+]
+
+Metaclass EventManager >> cleanUp: aggressive
+[
+	"Dump all ActionMaps but only when we're aggressively cleaning"
+aggressive	ifTrue: [ ActionMaps := nil ]
 ]
 
 Metaclass EventManager >> flushEvents
@@ -85,19 +91,13 @@ Metaclass EventManager >> flushEvents
 self actionMaps	keysAndValuesDo: [ :rcvr :evtDict | 		rcvr			ifNotNil: [ 				"make sure we don't modify evtDict while enumerating"				evtDict keys					do: [ :evtName | 						| msgSet |						msgSet := evtDict at: evtName ifAbsent: [ nil ].						msgSet == nil							ifTrue: [ rcvr removeActionsForEvent: evtName ] ] ] ].EventManager actionMaps finalizeValues
 ]
 
-Metaclass EventManager >> actionMaps
+Metaclass EventManager >> releaseActionMapFor: anObject
 [
-^ ActionMaps ifNil: [ ActionMaps := WeakIdentityKeyDictionary new ]
+self actionMaps removeKey: anObject ifAbsent: [  ]
 ]
 
 Metaclass EventManager >> updateableActionMapFor: anObject
 [
 ^ self actionMaps at: anObject ifAbsentPut: [ self createActionMap ]
-]
-
-Metaclass EventManager >> cleanUp: aggressive
-[
-	"Dump all ActionMaps but only when we're aggressively cleaning"
-aggressive	ifTrue: [ ActionMaps := nil ]
 ]
 

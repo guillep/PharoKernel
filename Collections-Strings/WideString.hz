@@ -6,43 +6,26 @@ Class
 	classVariables: #();
 	package: #'Collections-Strings'.
 
-Class WideString >> replaceFrom: start to: stop with: replacement startingAt: repStart
+Class WideString >> asFourCode
 [
-	<primitive: 105>
-replacement class == String	ifTrue: [ 		^ self			replaceFrom: start			to: stop			with: replacement asWideString			startingAt: repStart ].^ super	replaceFrom: start	to: stop	with: replacement	startingAt: repStart
+| result |self size = 1	ifFalse: [ ^ self error: 'must be exactly four octets' ].result := self basicAt: 1.(result bitAnd: 16r80000000) = 0	ifFalse: [ self error: 'cannot resolve fourcode' ].(result bitAnd: 16r40000000) = 0	ifFalse: [ ^ result - 16r80000000 ].^ result
 ]
 
-Class WideString >> isWideString
+Class WideString >> asLowercase
 [
-	"Answer whether the receiver is a WideString"
-^ true
+	"Answer a copy of self with all characters in a lower case.	This might be a difficult task, ask Unicode."
+^ Unicode toLowercase: self
+]
+
+Class WideString >> asPacked
+[
+self inject: 0 into: [ :pack :next | pack * 16r100000000 + next asInteger ]
 ]
 
 Class WideString >> asUppercase
 [
 	"Answer a copy of self with all characters in an upper case.	This might be a difficult task, ask Unicode."
 ^ Unicode toUppercase: self
-]
-
-Class WideString >> includesUnifiedCharacter
-[
-^ self isUnicodeStringWithCJK
-]
-
-Class WideString >> byteSize
-[
-^ self size * 4
-]
-
-Class WideString >> copyFrom: start to: stop
-[
-| n |n := super copyFrom: start to: stop.n isOctetString	ifTrue: [ ^ n asOctetString ].^ n
-]
-
-Class WideString >> wordAt: index put: anInteger
-[
-	<primitive: 61>
-self basicAt: index put: anInteger
 ]
 
 Class WideString >> at: index
@@ -67,26 +50,19 @@ Class WideString >> byteAt: index put: aByte
 | d r w |d := (index + 3) // 4.r := (index - 1) \\ 4 + 1.w := (self wordAt: d) bitAnd: (16rFF << ((4 - r) * 8)) bitInvert32.w := w + (aByte << ((4 - r) * 8)).self basicAt: d put: w.^ aByte
 ]
 
-Class WideString >> wordAt: index
+Class WideString >> byteSize
 [
-	<primitive: 60>
-^ self basicAt: index
+^ self size * 4
 ]
 
-Class WideString >> mutateJISX0208StringToUnicode
+Class WideString >> copyFrom: start to: stop
 [
-| c |1 to: self size do: [ :i | 	c := self at: i.	(c leadingChar = JISX0208 leadingChar or: [ c leadingChar = (JISX0208 leadingChar bitShift: 2) ])		ifTrue: [ self basicAt: i put: (Character leadingChar: JapaneseEnvironment leadingChar code: c asUnicode) asciiValue ] ]
+| n |n := super copyFrom: start to: stop.n isOctetString	ifTrue: [ ^ n asOctetString ].^ n
 ]
 
-Class WideString >> asLowercase
+Class WideString >> includesUnifiedCharacter
 [
-	"Answer a copy of self with all characters in a lower case.	This might be a difficult task, ask Unicode."
-^ Unicode toLowercase: self
-]
-
-Class WideString >> asFourCode
-[
-| result |self size = 1	ifFalse: [ ^ self error: 'must be exactly four octets' ].result := self basicAt: 1.(result bitAnd: 16r80000000) = 0	ifFalse: [ self error: 'cannot resolve fourcode' ].(result bitAnd: 16r40000000) = 0	ifFalse: [ ^ result - 16r80000000 ].^ result
+^ self isUnicodeStringWithCJK
 ]
 
 Class WideString >> isUnicodeStringWithCJK
@@ -94,34 +70,58 @@ Class WideString >> isUnicodeStringWithCJK
 ^ self anySatisfy: [ :char | Unicode isUnifiedKanji: char charCode ]
 ]
 
-Class WideString >> asPacked
+Class WideString >> isWideString
 [
-self inject: 0 into: [ :pack :next | pack * 16r100000000 + next asInteger ]
+	"Answer whether the receiver is a WideString"
+^ true
+]
+
+Class WideString >> mutateJISX0208StringToUnicode
+[
+| c |1 to: self size do: [ :i | 	c := self at: i.	(c leadingChar = JISX0208 leadingChar or: [ c leadingChar = (JISX0208 leadingChar bitShift: 2) ])		ifTrue: [ self basicAt: i put: (Character leadingChar: JapaneseEnvironment leadingChar code: c asUnicode) asciiValue ] ]
+]
+
+Class WideString >> replaceFrom: start to: stop with: replacement startingAt: repStart
+[
+	<primitive: 105>
+replacement class == String	ifTrue: [ 		^ self			replaceFrom: start			to: stop			with: replacement asWideString			startingAt: repStart ].^ super	replaceFrom: start	to: stop	with: replacement	startingAt: repStart
+]
+
+Class WideString >> wordAt: index
+[
+	<primitive: 60>
+^ self basicAt: index
+]
+
+Class WideString >> wordAt: index put: anInteger
+[
+	<primitive: 61>
+self basicAt: index put: anInteger
 ]
 
 Metaclass
 	name: #WideString;
 	instanceVariables: #().
 
-Metaclass WideString >> fromByteArray: aByteArray
-[
-| inst |aByteArray size \\ 4 = 0	ifFalse: [ ^ ByteString fromByteArray: aByteArray ].inst := self new: aByteArray size // 4.4 to: aByteArray size by: 4 do: [ :i | 	inst		basicAt: i // 4		put:			((aByteArray at: i - 3) << 24) + ((aByteArray at: i - 2) << 16) + ((aByteArray at: i - 1) << 8) + (aByteArray at: i) ].^ inst
-]
-
 Metaclass WideString >> from: aString
 [
 | newString |(aString isMemberOf: self)	ifTrue: [ ^ aString copy ].newString := self new: aString size.1 to: aString size do: [ :index | newString basicAt: index put: (aString basicAt: index) ].^ newString
 ]
 
-Metaclass WideString >> fromString: aString
+Metaclass WideString >> fromByteArray: aByteArray
 [
-	"Answer an instance of me that is a copy of the argument, aString."
-| inst |(aString isMemberOf: self)	ifTrue: [ ^ aString copy ].inst := self new: aString size.1 to: aString size do: [ :pos | inst basicAt: pos put: (aString basicAt: pos) ].^ inst
+| inst |aByteArray size \\ 4 = 0	ifFalse: [ ^ ByteString fromByteArray: aByteArray ].inst := self new: aByteArray size // 4.4 to: aByteArray size by: 4 do: [ :i | 	inst		basicAt: i // 4		put:			((aByteArray at: i - 3) << 24) + ((aByteArray at: i - 2) << 16) + ((aByteArray at: i - 1) << 8) + (aByteArray at: i) ].^ inst
 ]
 
 Metaclass WideString >> fromPacked: aLong
 [
 	"Convert from a longinteger to a String of length 4."
 | s val |s := self new: 1.val := ((aLong digitAt: 4) << 24 bitOr: (aLong digitAt: 3) << 16)	bitOr: ((aLong digitAt: 2) << 8 bitOr: (aLong digitAt: 1)).s basicAt: 1 put: val.^ s	"WideString fromPacked: 'TEXT' asPacked"
+]
+
+Metaclass WideString >> fromString: aString
+[
+	"Answer an instance of me that is a copy of the argument, aString."
+| inst |(aString isMemberOf: self)	ifTrue: [ ^ aString copy ].inst := self new: aString size.1 to: aString size do: [ :pos | inst basicAt: pos put: (aString basicAt: pos) ].^ inst
 ]
 

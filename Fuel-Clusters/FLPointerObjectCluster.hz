@@ -6,6 +6,11 @@ Class
 	classVariables: #();
 	package: #'Fuel-Clusters'.
 
+Class FLPointerObjectCluster >> afterMaterializationStepWith: aDecoder
+[
+objects do: [ :anObject | anObject fuelAfterMaterialization ]
+]
+
 Class FLPointerObjectCluster >> clusterMaterializeStepWith: aDecoder
 [
 super clusterMaterializeStepWith: aDecoder.variablesMapping := aDecoder variablesMappingFor: theClass
@@ -16,19 +21,9 @@ Class FLPointerObjectCluster >> clusterSerializeStepWith: anEncoder
 super clusterSerializeStepWith: anEncoder.variablesMapping serializeOn: anEncoder
 ]
 
-Class FLPointerObjectCluster >> referencesOf: anObject do: aBlock
+Class FLPointerObjectCluster >> initializeAnalyzing: aClass
 [
-variablesMapping referencesOf: anObject do: aBlock
-]
-
-Class FLPointerObjectCluster >> afterMaterializationStepWith: aDecoder
-[
-objects do: [ :anObject | anObject fuelAfterMaterialization ]
-]
-
-Class FLPointerObjectCluster >> serializeReferencesStepWith: anEncoder
-[
-objects do: [ :anObject | self serializeReferencesOf: anObject with: anEncoder ]
+super initializeAnalyzing: aClass.variablesMapping := FLVariablesMapping newAnalyzing: theClass
 ]
 
 Class FLPointerObjectCluster >> materializeReferencesOf: anObject with: aDecoder
@@ -41,14 +36,19 @@ Class FLPointerObjectCluster >> materializeReferencesStepWith: aDecoder
 objects do: [ :anObject | self materializeReferencesOf: anObject with: aDecoder ]
 ]
 
-Class FLPointerObjectCluster >> initializeAnalyzing: aClass
+Class FLPointerObjectCluster >> referencesOf: anObject do: aBlock
 [
-super initializeAnalyzing: aClass.variablesMapping := FLVariablesMapping newAnalyzing: theClass
+variablesMapping referencesOf: anObject do: aBlock
 ]
 
 Class FLPointerObjectCluster >> serializeReferencesOf: anObject with: anEncoder
 [
 variablesMapping serializeReferencesOf: anObject with: anEncoder
+]
+
+Class FLPointerObjectCluster >> serializeReferencesStepWith: anEncoder
+[
+objects do: [ :anObject | self serializeReferencesOf: anObject with: anEncoder ]
 ]
 
 Metaclass

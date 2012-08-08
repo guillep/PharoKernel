@@ -12,6 +12,24 @@ Class RxsContextCondition >> beAny
 kind := #syntaxAny
 ]
 
+Class RxsContextCondition >> beBeginningOfLine
+[
+	"Matches empty string at the beginning of a line."
+kind := #syntaxBeginningOfLine
+]
+
+Class RxsContextCondition >> beBeginningOfWord
+[
+	"Matches empty string at the beginning of a word."
+kind := #syntaxBeginningOfWord
+]
+
+Class RxsContextCondition >> beEndOfLine
+[
+	"Matches empty string at the end of a line."
+kind := #syntaxEndOfLine
+]
+
 Class RxsContextCondition >> beEndOfWord
 [
 	"Matches empty string at the end of a word."
@@ -24,29 +42,6 @@ Class RxsContextCondition >> beNonWordBoundary
 kind := #syntaxNonWordBoundary
 ]
 
-Class RxsContextCondition >> beBeginningOfLine
-[
-	"Matches empty string at the beginning of a line."
-kind := #syntaxBeginningOfLine
-]
-
-Class RxsContextCondition >> isNullable
-[
-^ #syntaxAny ~~ kind
-]
-
-Class RxsContextCondition >> beEndOfLine
-[
-	"Matches empty string at the end of a line."
-kind := #syntaxEndOfLine
-]
-
-Class RxsContextCondition >> beBeginningOfWord
-[
-	"Matches empty string at the beginning of a word."
-kind := #syntaxBeginningOfWord
-]
-
 Class RxsContextCondition >> beWordBoundary
 [
 	"Analog of \w (alphanumeric plus _)."
@@ -56,6 +51,11 @@ kind := #syntaxWordBoundary
 Class RxsContextCondition >> dispatchTo: aBuilder
 [
 ^ aBuilder perform: kind
+]
+
+Class RxsContextCondition >> isNullable
+[
+^ #syntaxAny ~~ kind
 ]
 
 Metaclass

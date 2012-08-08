@@ -6,85 +6,9 @@ Class
 	classVariables: #(#ProgressBarEnabled );
 	package: #UIManager.
 
-Class DummyUIManager >> warningDefaultAction: anException
-[
-^ self unhandledErrorDefaultAction: anException
-]
-
-Class DummyUIManager >> progressBarEnabled
-[
-^ ProgressBarEnabled ifNil: [ ProgressBarEnabled := true ]
-]
-
 Class DummyUIManager >> checkForNewDisplaySize
 [
 Display extent = DisplayScreen actualScreenSize	ifTrue: [ ^ self ].DisplayScreen startUp
-]
-
-Class DummyUIManager >> lowSpaceWatcherDefaultAction
-[
-Transcript	show: '*** LOW SPACE ***';	cr
-]
-
-Class DummyUIManager >> unhandledErrorDefaultAction: anException
-[
-Transcript	show: '*** EXCEPTION ***';	cr.Transcript	show: anException;	cr.Transcript	show: (thisContext stack first: (20 min: thisContext stack size));	cr.anException isResumable	ifTrue: [ anException resume ]
-]
-
-Class DummyUIManager >> informUserDuring: aBlock
-[
-aBlock value: DummySystemProgressItem new
-]
-
-Class DummyUIManager >> syntaxErrorNotificationDefaultAction: anException
-[
-Transcript	show: '*** SYNTAX ERROR ***';	cr.Transcript	show: anException;	cr.Transcript	show: (thisContext stack first: (20 min: thisContext stack size));	cr.anException return
-]
-
-Class DummyUIManager >> multiLineRequest: queryString initialAnswer: defaultAnswer answerHeight: answerHeight
-[
-
-]
-
-Class DummyUIManager >> request: queryString initialAnswer: defaultAnswer entryCompletion: anEntryCompletion
-[
-^ defaultAnswer
-]
-
-Class DummyUIManager >> fontFromUser: priorFont
-[
-self error: 'No user response possible'
-]
-
-Class DummyUIManager >> inform: aString
-[
-
-]
-
-Class DummyUIManager >> fileExistsDefaultAction: anException
-[
-
-]
-
-Class DummyUIManager >> progressBarEnabled: aBoolean
-[
-ProgressBarEnabled := aBoolean
-]
-
-Class DummyUIManager >> newDisplayDepthNoRestore: pixelSize
-[
-	"Change depths.  Check if there is enough space!  , di"
-| area need |pixelSize = Display depth	ifTrue: [ ^ self	"no change" ].pixelSize abs < Display depth	ifFalse: [ 		"Make sure there is enough space"		area := Display boundingBox area.	"pixels"		need := area * (pixelSize abs - Display depth) // 8 + Smalltalk lowSpaceThreshold.	"new bytes needed"		(Smalltalk garbageCollectMost <= need and: [ Smalltalk garbageCollect <= need ])			ifTrue: [ self error: 'Insufficient free space' ] ].Display setExtent: Display extent depth: pixelSize.DisplayScreen startUp
-]
-
-Class DummyUIManager >> restoreDisplay
-[
-
-]
-
-Class DummyUIManager >> chooseFrom: aList lines: linesArray title: aString
-[
-^ aList first
 ]
 
 Class DummyUIManager >> chooseDirectory: label from: dir
@@ -92,19 +16,9 @@ Class DummyUIManager >> chooseDirectory: label from: dir
 ^ nil
 ]
 
-Class DummyUIManager >> confirm: aString orCancel: cancelBlock
+Class DummyUIManager >> chooseFrom: aList lines: linesArray title: aString
 [
-(ProvideAnswerNotification signal: aString)	ifNotNil: [ :answer | 		^ answer == #cancel			ifTrue: [ cancelBlock value ]			ifFalse: [ answer ] ].self error: 'No user response possible'
-]
-
-Class DummyUIManager >> fileDoesNotExistsDefaultAction: anException
-[
-
-]
-
-Class DummyUIManager >> restoreDisplayAfter: aBlock
-[
-aBlock value.Sensor waitButton
+^ aList first
 ]
 
 Class DummyUIManager >> chooseFrom: labelList values: valueList lines: linesArray title: aString
@@ -117,19 +31,9 @@ Class DummyUIManager >> confirm: queryString
 (ProvideAnswerNotification signal: queryString) ifNotNil: [ :answer | ^ answer ].self error: 'No user response possible'
 ]
 
-Class DummyUIManager >> edit: aText label: labelString accept: anAction
+Class DummyUIManager >> confirm: aString orCancel: cancelBlock
 [
-^ nil
-]
-
-Class DummyUIManager >> progressInitiationExceptionDefaultAction: anException
-[
-| result |result := anException workBlock value: DummySystemProgressItem new.anException resume: result
-]
-
-Class DummyUIManager >> requestPassword: queryString
-[
-^ self request: queryString initialAnswer: ''
+(ProvideAnswerNotification signal: aString)	ifNotNil: [ :answer | 		^ answer == #cancel			ifTrue: [ cancelBlock value ]			ifFalse: [ answer ] ].self error: 'No user response possible'
 ]
 
 Class DummyUIManager >> displayProgress: titleString at: aPoint from: minVal to: maxVal during: workBlock
@@ -142,7 +46,73 @@ Class DummyUIManager >> displayProgress: titleString from: minVal to: maxVal dur
 ^ ProgressBarEnabled	ifFalse: [ nil ]	ifTrue: [ 		ProgressInitiationException			display: titleString			at: Display center			from: minVal			to: maxVal			during: workBlock ]
 ]
 
+Class DummyUIManager >> edit: aText label: labelString accept: anAction
+[
+^ nil
+]
+
+Class DummyUIManager >> fileDoesNotExistsDefaultAction: anException
+[
+
+]
+
+Class DummyUIManager >> fileExistsDefaultAction: anException
+[
+
+]
+
+Class DummyUIManager >> fontFromUser: priorFont
+[
+self error: 'No user response possible'
+]
+
+Class DummyUIManager >> inform: aString
+[
+
+]
+
+Class DummyUIManager >> informUserDuring: aBlock
+[
+aBlock value: DummySystemProgressItem new
+]
+
+Class DummyUIManager >> lowSpaceWatcherDefaultAction
+[
+Transcript	show: '*** LOW SPACE ***';	cr
+]
+
+Class DummyUIManager >> multiLineRequest: queryString initialAnswer: defaultAnswer answerHeight: answerHeight
+[
+
+]
+
+Class DummyUIManager >> newDisplayDepthNoRestore: pixelSize
+[
+	"Change depths.  Check if there is enough space!  , di"
+| area need |pixelSize = Display depth	ifTrue: [ ^ self	"no change" ].pixelSize abs < Display depth	ifFalse: [ 		"Make sure there is enough space"		area := Display boundingBox area.	"pixels"		need := area * (pixelSize abs - Display depth) // 8 + Smalltalk lowSpaceThreshold.	"new bytes needed"		(Smalltalk garbageCollectMost <= need and: [ Smalltalk garbageCollect <= need ])			ifTrue: [ self error: 'Insufficient free space' ] ].Display setExtent: Display extent depth: pixelSize.DisplayScreen startUp
+]
+
+Class DummyUIManager >> progressBarEnabled
+[
+^ ProgressBarEnabled ifNil: [ ProgressBarEnabled := true ]
+]
+
+Class DummyUIManager >> progressBarEnabled: aBoolean
+[
+ProgressBarEnabled := aBoolean
+]
+
+Class DummyUIManager >> progressInitiationExceptionDefaultAction: anException
+[
+| result |result := anException workBlock value: DummySystemProgressItem new.anException resume: result
+]
+
 Class DummyUIManager >> request: queryString initialAnswer: defaultAnswer
+[
+^ defaultAnswer
+]
+
+Class DummyUIManager >> request: queryString initialAnswer: defaultAnswer entryCompletion: anEntryCompletion
 [
 ^ defaultAnswer
 ]
@@ -152,13 +122,34 @@ Class DummyUIManager >> request: aStringOrText initialAnswer: defaultAnswer titl
 ^ defaultAnswer
 ]
 
-Metaclass
-	name: #DummyUIManager;
-	instanceVariables: #().
-
-nEntryCompletion
+Class DummyUIManager >> requestPassword: queryString
 [
-^ defaultAnswer
+^ self request: queryString initialAnswer: ''
+]
+
+Class DummyUIManager >> restoreDisplay
+[
+
+]
+
+Class DummyUIManager >> restoreDisplayAfter: aBlock
+[
+aBlock value.Sensor waitButton
+]
+
+Class DummyUIManager >> syntaxErrorNotificationDefaultAction: anException
+[
+Transcript	show: '*** SYNTAX ERROR ***';	cr.Transcript	show: anException;	cr.Transcript	show: (thisContext stack first: (20 min: thisContext stack size));	cr.anException return
+]
+
+Class DummyUIManager >> unhandledErrorDefaultAction: anException
+[
+Transcript	show: '*** EXCEPTION ***';	cr.Transcript	show: anException;	cr.Transcript	show: (thisContext stack first: (20 min: thisContext stack size));	cr.anException isResumable	ifTrue: [ anException resume ]
+]
+
+Class DummyUIManager >> warningDefaultAction: anException
+[
+^ self unhandledErrorDefaultAction: anException
 ]
 
 Metaclass

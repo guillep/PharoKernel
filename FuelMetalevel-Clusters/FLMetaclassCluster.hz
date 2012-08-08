@@ -6,9 +6,9 @@ Class
 	classVariables: #();
 	package: #'FuelMetalevel-Clusters'.
 
-Class FLMetaclassCluster >> referencesOf: aMetaclass do: aBlock
+Class FLMetaclassCluster >> materializeInstanceWith: aDecoder
 [
-super referencesOf: aMetaclass do: aBlock.aBlock value: aMetaclass superclass
+^ Metaclass new
 ]
 
 Class FLMetaclassCluster >> materializePostInstance: aMetaclass with: aDecoder
@@ -16,20 +16,20 @@ Class FLMetaclassCluster >> materializePostInstance: aMetaclass with: aDecoder
 | superclass instanceVariableNames format |superclass := aDecoder nextEncodedReference.instanceVariableNames := aDecoder nextEncodedString subStrings: ' '.format := aDecoder nextEncodedUint16.aMetaclass	superclass: superclass methodDictionary: MethodDictionary new format: format;	basicInstVarNames: instanceVariableNames
 ]
 
-Class FLMetaclassCluster >> serializePostInstance: aMetaclass with: anEncoder
+Class FLMetaclassCluster >> referencesOf: aMetaclass do: aBlock
 [
-anEncoder encodeReferenceTo: aMetaclass superclass.anEncoder encodeString: aMetaclass instanceVariablesString.anEncoder encodeUint16: aMetaclass format
-]
-
-Class FLMetaclassCluster >> materializeInstanceWith: aDecoder
-[
-^ Metaclass new
+super referencesOf: aMetaclass do: aBlock.aBlock value: aMetaclass superclass
 ]
 
 Class FLMetaclassCluster >> serializeInstancesStepWith: anEncoder
 [
 	"Do nothing. I know my objects have nothing to serialize in this step."
 
+]
+
+Class FLMetaclassCluster >> serializePostInstance: aMetaclass with: anEncoder
+[
+anEncoder encodeReferenceTo: aMetaclass superclass.anEncoder encodeString: aMetaclass instanceVariablesString.anEncoder encodeUint16: aMetaclass format
 ]
 
 Metaclass

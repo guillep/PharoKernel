@@ -6,26 +6,33 @@ Class
 	classVariables: #();
 	package: #'Regex-Core'.
 
-Class RxsPiece >> isStar
+Class RxsPiece >> atom
 [
-^ min = 0 and: [ max == nil ]
+^ atom
 ]
 
-Class RxsPiece >> initializePlusAtom: anAtom
+Class RxsPiece >> character
 [
-	"This piece is one or more occurrences of the specified RxsAtom."
-self initializeAtom: anAtom min: 1 max: nil
+	"If this node is atomic, answer the character it	represents. It is the caller's responsibility to make sure this	node is indeed atomic before using this."
+^ atom character
 ]
 
-Class RxsPiece >> max
+Class RxsPiece >> dispatchTo: aMatcher
 [
-	"The value answered may be nil, indicating infinity."
-^ max
+	"Inform the matcher of the kind of the node, and it	will do whatever it has to."
+^ aMatcher syntaxPiece: self
 ]
 
-Class RxsPiece >> min
+Class RxsPiece >> initializeAtom: anAtom
 [
-^ min
+	"This piece is exactly one occurrence of the specified RxsAtom."
+self initializeAtom: anAtom min: 1 max: 1
+]
+
+Class RxsPiece >> initializeAtom: anAtom min: minOccurrences max: maxOccurrences
+[
+	"This piece is from <minOccurrences> to <maxOccurrences> 	occurrences of the specified RxsAtom."
+atom := anAtom.min := minOccurrences.max := maxOccurrences
 ]
 
 Class RxsPiece >> initializeOptionalAtom: anAtom
@@ -34,10 +41,22 @@ Class RxsPiece >> initializeOptionalAtom: anAtom
 self initializeAtom: anAtom min: 0 max: 1
 ]
 
-Class RxsPiece >> initializeAtom: anAtom min: minOccurrences max: maxOccurrences
+Class RxsPiece >> initializePlusAtom: anAtom
 [
-	"This piece is from <minOccurrences> to <maxOccurrences> 	occurrences of the specified RxsAtom."
-atom := anAtom.min := minOccurrences.max := maxOccurrences
+	"This piece is one or more occurrences of the specified RxsAtom."
+self initializeAtom: anAtom min: 1 max: nil
+]
+
+Class RxsPiece >> initializeStarAtom: anAtom
+[
+	"This piece is any number of occurrences of the atom."
+self initializeAtom: anAtom min: 0 max: nil
+]
+
+Class RxsPiece >> isAtomic
+[
+	"A piece is atomic if only it contains exactly one atom	which is atomic (sic)."
+^ self isSingular and: [ atom isAtomic ]
 ]
 
 Class RxsPiece >> isNullable
@@ -51,24 +70,6 @@ Class RxsPiece >> isOptional
 ^ min = 0 and: [ max = 1 ]
 ]
 
-Class RxsPiece >> initializeStarAtom: anAtom
-[
-	"This piece is any number of occurrences of the atom."
-self initializeAtom: anAtom min: 0 max: nil
-]
-
-Class RxsPiece >> character
-[
-	"If this node is atomic, answer the character it	represents. It is the caller's responsibility to make sure this	node is indeed atomic before using this."
-^ atom character
-]
-
-Class RxsPiece >> isAtomic
-[
-	"A piece is atomic if only it contains exactly one atom	which is atomic (sic)."
-^ self isSingular and: [ atom isAtomic ]
-]
-
 Class RxsPiece >> isPlus
 [
 ^ min = 1 and: [ max == nil ]
@@ -80,21 +81,20 @@ Class RxsPiece >> isSingular
 ^ min = 1 and: [ max = 1 ]
 ]
 
-Class RxsPiece >> atom
+Class RxsPiece >> isStar
 [
-^ atom
+^ min = 0 and: [ max == nil ]
 ]
 
-Class RxsPiece >> initializeAtom: anAtom
+Class RxsPiece >> max
 [
-	"This piece is exactly one occurrence of the specified RxsAtom."
-self initializeAtom: anAtom min: 1 max: 1
+	"The value answered may be nil, indicating infinity."
+^ max
 ]
 
-Class RxsPiece >> dispatchTo: aMatcher
+Class RxsPiece >> min
 [
-	"Inform the matcher of the kind of the node, and it	will do whatever it has to."
-^ aMatcher syntaxPiece: self
+^ min
 ]
 
 Metaclass

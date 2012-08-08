@@ -1,6 +1,6 @@
-Class DateAndTime >> serializeOn: anEncoder
+Class DateAndTime >> fuelAccept: aGeneralMapper
 [
-anEncoder	encodeUint32: self julianDayNumberUTC;	encodeUint32: self nanoSecond;	encodeUint24: self secondsSinceMidnight;	encodeInt24: self offset asSeconds;	encodeInt32: self offset nanoSeconds
+^ aGeneralMapper visitHookPrimitive: self
 ]
 
 Class DateAndTime >> fuelSet: julianDay nanoSecond: nanoSeconds seconds: numberOfSeconds offset: anOffset
@@ -8,8 +8,8 @@ Class DateAndTime >> fuelSet: julianDay nanoSecond: nanoSeconds seconds: numberO
 julianDayNumber := julianDay.nanos := nanoSeconds.seconds := numberOfSeconds.offset := anOffset
 ]
 
-Class DateAndTime >> fuelAccept: aGeneralMapper
+Class DateAndTime >> serializeOn: anEncoder
 [
-^ aGeneralMapper visitHookPrimitive: self
+anEncoder	encodeUint32: self julianDayNumberUTC;	encodeUint32: self nanoSecond;	encodeUint24: self secondsSinceMidnight;	encodeInt24: self offset asSeconds;	encodeInt32: self offset nanoSeconds
 ]
 

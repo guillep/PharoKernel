@@ -6,100 +6,10 @@ Class
 	classVariables: #(#TimingPriority #LowIOPriority #SystemBackgroundPriority #UserBackgroundPriority #BackgroundProcess #SystemRockBottomPriority #UserSchedulingPriority #HighIOPriority #UserInterruptPriority );
 	package: #'Kernel-Processes'.
 
-Class ProcessorScheduler >> remove: aProcess ifAbsent: aBlock
+Class ProcessorScheduler >> activePriority
 [
-	"Remove aProcess from the list on which it is waiting for the processor 	and answer aProcess. If it is not waiting, evaluate aBlock."
-(quiescentProcessLists at: aProcess priority) remove: aProcess ifAbsent: aBlock.^ aProcess
-]
-
-Class ProcessorScheduler >> userInterruptPriority
-[
-	"Answer the priority at which user processes desiring immediate service 	should run. Processes run at this level will preempt the window 	scheduler and should, therefore, not consume the processor forever."
-^ UserInterruptPriority
-]
-
-Class ProcessorScheduler >> tallyCPUUsageFor: seconds every: msec
-[
-	"Start a high-priority process that will tally the next ready process for the given	number of seconds. Answer a Block that will return the tally (a Bag) after the task	is complete"
-| tally sem delay endDelay |tally := IdentityBag new: 200.delay := Delay forMilliseconds: msec truncated.endDelay := Delay forSeconds: seconds.endDelay schedule.sem := Semaphore new.[ [ endDelay isExpired ]	whileFalse: [ 		delay wait.		tally add: Processor nextReadyProcess ].sem signal ] forkAt: self highestPriority.^ [ sem wait.tally ]
-]
-
-Class ProcessorScheduler >> anyProcessesAbove: highestPriority
-[
-	"Do any instances of Process exist with higher priorities?"
-^ (Process allInstances select: [ :aProcess | aProcess priority > highestPriority ]) isEmpty	"allSubInstances"	"If anyone ever makes a subclass of Process, be sure to use allSubInstances."
-]
-
-Class ProcessorScheduler >> highIOPriority
-[
-	"Answer the priority at which the most time critical input/output 	processes should run. An example is the process handling input from a 	network."
-^ HighIOPriority
-]
-
-Class ProcessorScheduler >> lowestPriority
-[
-	"Return the lowest priority that is allowed with the scheduler"
-^ SystemRockBottomPriority
-]
-
-Class ProcessorScheduler >> highestPriority: newHighestPriority
-[
-	"Change the number of priority levels currently available for use."
-| continue newProcessLists |(quiescentProcessLists size > newHighestPriority and: [ self anyProcessesAbove: newHighestPriority ])	ifTrue: [ self error: 'There are processes with priority higher than ' , newHighestPriority printString ].newProcessLists := Array new: newHighestPriority.1 to: (quiescentProcessLists size min: newProcessLists size) do: [ :priority | newProcessLists at: priority put: (quiescentProcessLists at: priority) ].quiescentProcessLists size to: newProcessLists size do: [ :priority | newProcessLists at: priority put: LinkedList new ].quiescentProcessLists := newProcessLists
-]
-
-Class ProcessorScheduler >> lowIOPriority
-[
-	"Answer the priority at which most input/output processes should run. 	Examples are the process handling input from the user (keyboard, 	pointing device, etc.) and the process distributing input from a network."
-^ LowIOPriority
-]
-
-Class ProcessorScheduler >> waitingProcessesAt: aPriority
-[
-	"Return the list of processes at the given priority level."
-^ quiescentProcessLists at: aPriority
-]
-
-Class ProcessorScheduler >> suspendFirstAt: aPriority ifNone: noneBlock
-[
-	"Suspend the first Process that is waiting to run with priority aPriority. If 	no Process is waiting, evaluate the argument, noneBlock."
-| aList |aList := quiescentProcessLists at: aPriority.aList isEmpty	ifTrue: [ ^ noneBlock value ]	ifFalse: [ ^ aList first suspend ]
-]
-
-Class ProcessorScheduler >> highestPriority
-[
-	"Answer the number of priority levels currently available for use."
-^ quiescentProcessLists size
-]
-
-Class ProcessorScheduler >> preemptedProcess
-[
-	"Return the process that the currently active process just preempted."
-| list |activeProcess priority to: 1 by: -1 do: [ :priority | 	list := quiescentProcessLists at: priority.	list isEmpty		ifFalse: [ ^ list last ] ].^ nil	"Processor preemptedProcess"
-]
-
-Class ProcessorScheduler >> userSchedulingPriority
-[
-	"Answer the priority at which the window scheduler should run."
-^ UserSchedulingPriority
-]
-
-Class ProcessorScheduler >> suspendFirstAt: aPriority
-[
-	"Suspend the first Process that is waiting to run with priority aPriority."
-^ self suspendFirstAt: aPriority ifNone: [ self error: 'No Process to suspend' ]
-]
-
-Class ProcessorScheduler >> backgroundProcess
-[
-	"Answer the background process"
-^ BackgroundProcess
-]
-
-Class ProcessorScheduler >> terminateActive
-[
-	"Terminate the process that is currently running."
-activeProcess terminate
+	"Answer the priority level of the currently running Process."
+^ activeProcess priority
 ]
 
 Class ProcessorScheduler >> activeProcess
@@ -108,17 +18,97 @@ Class ProcessorScheduler >> activeProcess
 ^ activeProcess
 ]
 
-Class ProcessorScheduler >> activePriority
+Class ProcessorScheduler >> anyProcessesAbove: highestPriority
 [
-	"Answer the priority level of the currently running Process."
-^ activeProcess priority
+	"Do any instances of Process exist with higher priorities?"
+^ (Process allInstances select: [ :aProcess | aProcess priority > highestPriority ]) isEmpty	"allSubInstances"	"If anyone ever makes a subclass of Process, be sure to use allSubInstances."
 ]
 
-Class ProcessorScheduler >> yield
+Class ProcessorScheduler >> backgroundProcess
 [
-	"Give other Processes at the current priority a chance to run."
-	<primitive: 167>
-| semaphore |semaphore := Semaphore new.[ semaphore signal ] fork.semaphore wait
+	"Answer the background process"
+^ BackgroundProcess
+]
+
+Class ProcessorScheduler >> highIOPriority
+[
+	"Answer the priority at which the most time critical input/output 	processes should run. An example is the process handling input from a 	network."
+^ HighIOPriority
+]
+
+Class ProcessorScheduler >> highestPriority
+[
+	"Answer the number of priority levels currently available for use."
+^ quiescentProcessLists size
+]
+
+Class ProcessorScheduler >> highestPriority: newHighestPriority
+[
+	"Change the number of priority levels currently available for use."
+| continue newProcessLists |(quiescentProcessLists size > newHighestPriority and: [ self anyProcessesAbove: newHighestPriority ])	ifTrue: [ self error: 'There are processes with priority higher than ' , newHighestPriority printString ].newProcessLists := Array new: newHighestPriority.1 to: (quiescentProcessLists size min: newProcessLists size) do: [ :priority | newProcessLists at: priority put: (quiescentProcessLists at: priority) ].quiescentProcessLists size to: newProcessLists size do: [ :priority | newProcessLists at: priority put: LinkedList new ].quiescentProcessLists := newProcessLists
+]
+
+Class ProcessorScheduler >> isSelfEvaluating
+[
+^ self == Processor
+]
+
+Class ProcessorScheduler >> lowIOPriority
+[
+	"Answer the priority at which most input/output processes should run. 	Examples are the process handling input from the user (keyboard, 	pointing device, etc.) and the process distributing input from a network."
+^ LowIOPriority
+]
+
+Class ProcessorScheduler >> lowestPriority
+[
+	"Return the lowest priority that is allowed with the scheduler"
+^ SystemRockBottomPriority
+]
+
+Class ProcessorScheduler >> nextReadyProcess
+[
+quiescentProcessLists	reverseDo: [ :list | 		list isEmpty			ifFalse: [ 				| proc |				proc := list first.				proc suspendedContext ifNotNil: [ ^ proc ] ] ].^ nil
+]
+
+Class ProcessorScheduler >> preemptedProcess
+[
+	"Return the process that the currently active process just preempted."
+| list |activeProcess priority to: 1 by: -1 do: [ :priority | 	list := quiescentProcessLists at: priority.	list isEmpty		ifFalse: [ ^ list last ] ].^ nil	"Processor preemptedProcess"
+]
+
+Class ProcessorScheduler >> printOn: aStream
+[
+self isSelfEvaluating	ifFalse: [ ^ super printOn: aStream ].aStream nextPutAll: #Processor
+]
+
+Class ProcessorScheduler >> remove: aProcess ifAbsent: aBlock
+[
+	"Remove aProcess from the list on which it is waiting for the processor 	and answer aProcess. If it is not waiting, evaluate aBlock."
+(quiescentProcessLists at: aProcess priority) remove: aProcess ifAbsent: aBlock.^ aProcess
+]
+
+Class ProcessorScheduler >> scanSchedule: aBlock startingAt: topPriority
+[
+	"Iterate over scheduled processes  list, starting from topPriority down to lowest one. "
+topPriority to: 1 by: -1 do: [ :priority | 	| list |	list := quiescentProcessLists at: priority.	list do: [ :proc | aBlock value: proc ] ]
+]
+
+Class ProcessorScheduler >> suspendFirstAt: aPriority
+[
+	"Suspend the first Process that is waiting to run with priority aPriority."
+^ self suspendFirstAt: aPriority ifNone: [ self error: 'No Process to suspend' ]
+]
+
+Class ProcessorScheduler >> suspendFirstAt: aPriority ifNone: noneBlock
+[
+	"Suspend the first Process that is waiting to run with priority aPriority. If 	no Process is waiting, evaluate the argument, noneBlock."
+| aList |aList := quiescentProcessLists at: aPriority.aList isEmpty	ifTrue: [ ^ noneBlock value ]	ifFalse: [ ^ aList first suspend ]
+]
+
+Class ProcessorScheduler >> systemBackgroundPriority
+[
+	"Answer the priority at which system background processes should run. 	Examples are an incremental garbage collector or status checker."
+^ SystemBackgroundPriority
 ]
 
 Class ProcessorScheduler >> tallyCPUUsageFor: seconds
@@ -127,9 +117,16 @@ Class ProcessorScheduler >> tallyCPUUsageFor: seconds
 ^ self tallyCPUUsageFor: seconds every: 10
 ]
 
-Class ProcessorScheduler >> printOn: aStream
+Class ProcessorScheduler >> tallyCPUUsageFor: seconds every: msec
 [
-self isSelfEvaluating	ifFalse: [ ^ super printOn: aStream ].aStream nextPutAll: #Processor
+	"Start a high-priority process that will tally the next ready process for the given	number of seconds. Answer a Block that will return the tally (a Bag) after the task	is complete"
+| tally sem delay endDelay |tally := IdentityBag new: 200.delay := Delay forMilliseconds: msec truncated.endDelay := Delay forSeconds: seconds.endDelay schedule.sem := Semaphore new.[ [ endDelay isExpired ]	whileFalse: [ 		delay wait.		tally add: Processor nextReadyProcess ].sem signal ] forkAt: self highestPriority.^ [ sem wait.tally ]
+]
+
+Class ProcessorScheduler >> terminateActive
+[
+	"Terminate the process that is currently running."
+activeProcess terminate
 ]
 
 Class ProcessorScheduler >> timingPriority
@@ -144,26 +141,29 @@ Class ProcessorScheduler >> userBackgroundPriority
 ^ UserBackgroundPriority
 ]
 
-Class ProcessorScheduler >> systemBackgroundPriority
+Class ProcessorScheduler >> userInterruptPriority
 [
-	"Answer the priority at which system background processes should run. 	Examples are an incremental garbage collector or status checker."
-^ SystemBackgroundPriority
+	"Answer the priority at which user processes desiring immediate service 	should run. Processes run at this level will preempt the window 	scheduler and should, therefore, not consume the processor forever."
+^ UserInterruptPriority
 ]
 
-Class ProcessorScheduler >> nextReadyProcess
+Class ProcessorScheduler >> userSchedulingPriority
 [
-quiescentProcessLists	reverseDo: [ :list | 		list isEmpty			ifFalse: [ 				| proc |				proc := list first.				proc suspendedContext ifNotNil: [ ^ proc ] ] ].^ nil
+	"Answer the priority at which the window scheduler should run."
+^ UserSchedulingPriority
 ]
 
-Class ProcessorScheduler >> isSelfEvaluating
+Class ProcessorScheduler >> waitingProcessesAt: aPriority
 [
-^ self == Processor
+	"Return the list of processes at the given priority level."
+^ quiescentProcessLists at: aPriority
 ]
 
-Class ProcessorScheduler >> scanSchedule: aBlock startingAt: topPriority
+Class ProcessorScheduler >> yield
 [
-	"Iterate over scheduled processes  list, starting from topPriority down to lowest one. "
-topPriority to: 1 by: -1 do: [ :priority | 	| list |	list := quiescentProcessLists at: priority.	list do: [ :proc | aBlock value: proc ] ]
+	"Give other Processes at the current priority a chance to run."
+	<primitive: 167>
+| semaphore |semaphore := Semaphore new.[ semaphore signal ] fork.semaphore wait
 ]
 
 Metaclass
@@ -174,6 +174,11 @@ Metaclass ProcessorScheduler >> idleProcess
 [
 	"A default background process which is invisible."
 [ true ] whileTrue: [ self relinquishProcessorForMicroseconds: 1000 ]
+]
+
+Metaclass ProcessorScheduler >> initialize
+[
+SystemRockBottomPriority := 10.SystemBackgroundPriority := 20.UserBackgroundPriority := 30.UserSchedulingPriority := 40.UserInterruptPriority := 50.LowIOPriority := 60.HighIOPriority := 70.TimingPriority := 80	"ProcessorScheduler initialize."
 ]
 
 Metaclass ProcessorScheduler >> new
@@ -195,10 +200,5 @@ Metaclass ProcessorScheduler >> startUp
 	"Install a background process of the lowest possible priority that is always runnable."
 	"Details: The virtual machine requires that there is aways some runnable process that can be scheduled; this background process ensures that this is the case."
 Smalltalk installLowSpaceWatcher.BackgroundProcess == nil	ifFalse: [ BackgroundProcess terminate ].BackgroundProcess := [ self idleProcess ] newProcess.BackgroundProcess priority: SystemRockBottomPriority.BackgroundProcess resume
-]
-
-Metaclass ProcessorScheduler >> initialize
-[
-SystemRockBottomPriority := 10.SystemBackgroundPriority := 20.UserBackgroundPriority := 30.UserSchedulingPriority := 40.UserInterruptPriority := 50.LowIOPriority := 60.HighIOPriority := 70.TimingPriority := 80	"ProcessorScheduler initialize."
 ]
 

@@ -6,24 +6,19 @@ Class
 	classVariables: #();
 	package: #'System-Announcements'.
 
+Class MethodModified >> methodAffected
+[
+^ self newMethod
+]
+
+Class MethodModified >> methodClass
+[
+^ methodClass
+]
+
 Class MethodModified >> methodClass: anObject
 [
 methodClass := anObject
-]
-
-Class MethodModified >> selector: anObject
-[
-selector := anObject
-]
-
-Class MethodModified >> selector
-[
-^ selector
-]
-
-Class MethodModified >> oldMethod
-[
-^ oldMethod
 ]
 
 Class MethodModified >> newMethod
@@ -36,9 +31,9 @@ Class MethodModified >> newMethod: aCompiledMethod
 newMethod := aCompiledMethod
 ]
 
-Class MethodModified >> oldProtocol
+Class MethodModified >> newProtocol
 [
-^ oldProtocol
+^ newProtocol
 ]
 
 Class MethodModified >> newProtocol: anObject
@@ -46,14 +41,9 @@ Class MethodModified >> newProtocol: anObject
 newProtocol := anObject
 ]
 
-Class MethodModified >> methodClass
+Class MethodModified >> oldMethod
 [
-^ methodClass
-]
-
-Class MethodModified >> methodAffected
-[
-^ self newMethod
+^ oldMethod
 ]
 
 Class MethodModified >> oldMethod: aCompiledMethod
@@ -61,29 +51,29 @@ Class MethodModified >> oldMethod: aCompiledMethod
 oldMethod := aCompiledMethod
 ]
 
+Class MethodModified >> oldProtocol
+[
+^ oldProtocol
+]
+
 Class MethodModified >> oldProtocol: anObject
 [
 oldProtocol := anObject
 ]
 
-Class MethodModified >> newProtocol
+Class MethodModified >> selector
 [
-^ newProtocol
+^ selector
+]
+
+Class MethodModified >> selector: anObject
+[
+selector := anObject
 ]
 
 Metaclass
 	name: #MethodModified;
 	instanceVariables: #().
-
-Metaclass MethodModified >> methodChangedFrom: oldMethod to: newMethod selector: selector inClass: aClass oldProtocol: oldProtocol newProtocol: newProtocol requestor: aRequestor
-[
-^ self new	oldMethod: oldMethod;	newMethod: newMethod;	selector: selector;	methodClass: aClass;	oldProtocol: oldProtocol;	newProtocol: newProtocol;	yourself
-]
-
-d >> oldMethod: oldMethod newMethod: newMethod
-[
-oldMethod class == newMethod class	ifFalse: [ self error: 'The two methods don''t belong to the same class' ].oldMethod selector == newMethod selector	ifFalse: [ self error: 'The two methods haven''t the same selector' ].^ self new	oldMethod: oldMethod;	newMethod: newMethod;	yourself
-]
 
 Metaclass MethodModified >> methodChangedFrom: oldMethod to: newMethod selector: selector inClass: aClass oldProtocol: oldProtocol newProtocol: newProtocol requestor: aRequestor
 [

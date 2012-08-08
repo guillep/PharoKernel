@@ -11,6 +11,11 @@ Class FLGlobalCluster >> materializeGlobalAssociationFrom: aDecoder
 | globalName |globalName := aDecoder nextEncodedString asSymbol.^ Smalltalk globals associationAt: globalName ifAbsent: [ FLGlobalNotFound signalWithName: globalName ]
 ]
 
+Class FLGlobalCluster >> materializeGlobalClassFrom: aDecoder
+[
+| className |className := aDecoder nextEncodedString asSymbol.^ aDecoder classNamed: className
+]
+
 Class FLGlobalCluster >> serializeGlobalAssociationKeyed: aSymbol on: anEncoder
 [
 anEncoder encodeString: aSymbol
@@ -19,11 +24,6 @@ anEncoder encodeString: aSymbol
 Class FLGlobalCluster >> serializeGlobalClass: aClass on: anEncoder
 [
 aClass isObsolete	ifTrue: [ FLObsolete signalWithName: aClass name ].anEncoder encodeString: aClass name
-]
-
-Class FLGlobalCluster >> materializeGlobalClassFrom: aDecoder
-[
-| className |className := aDecoder nextEncodedString asSymbol.^ aDecoder classNamed: className
 ]
 
 Metaclass

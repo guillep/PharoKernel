@@ -16,14 +16,20 @@ Metaclass
 	name: #UnixStore;
 	instanceVariables: #().
 
+Metaclass UnixStore >> delimiter
+[
+^ $/
+]
+
 Metaclass UnixStore >> isActiveClass
 [
 ^ Smalltalk os isUnix and: [ super isActiveClass ]
 ]
 
-Metaclass UnixStore >> separator
+Metaclass UnixStore >> isCaseSensitive
 [
-^ $:
+	"except for OSX the default is case sensitive"
+^ OSPlatform isMacOSX not
 ]
 
 Metaclass UnixStore >> maxFileNameLength
@@ -31,14 +37,8 @@ Metaclass UnixStore >> maxFileNameLength
 ^ 255
 ]
 
-Metaclass UnixStore >> delimiter
+Metaclass UnixStore >> separator
 [
-^ $/
-]
-
-Metaclass UnixStore >> isCaseSensitive
-[
-	"except for OSX the default is case sensitive"
-^ OSPlatform isMacOSX not
+^ $:
 ]
 

@@ -6,10 +6,16 @@ Class
 	classVariables: #();
 	package: #'Kernel-Objects'.
 
-Class Boolean >> deepCopy
+Class Boolean >> & aBoolean
 [
-	"Receiver has two concrete subclasses, True and False.	Only one instance of each should be made, so return self."
+	"Evaluating conjunction. Evaluate the argument. Then answer true if 	both the receiver and the argument are true."
+self subclassResponsibility
+]
 
+Class Boolean >> ==> aBlock
+[
+	"The material conditional, also known as the material implication or truth functional conditional.	Correspond to not ... or ... and does not correspond to the English if...then... construction.			 known as:			b if a 			a implies b			if a then b			b is a consequence of a			a therefore b (but note: 'it is raining therefore it is cloudy' is implication; 'it is autumn therefore the leaves are falling' is equivalence).			Here is the truth table for material implication:		   p   |   q   |   p ==> q	-------|-------|-------------	   T   |   T   |      T	   T   |   F   |      F	   F   |   T   |      T	   F   |   F   |      T	"
+^ self not or: [ aBlock value ]
 ]
 
 Class Boolean >> and: alternativeBlock
@@ -18,16 +24,40 @@ Class Boolean >> and: alternativeBlock
 self subclassResponsibility
 ]
 
-Class Boolean >> veryDeepCopyWith: deepCopier
+Class Boolean >> asBit
 [
-	"Return self.  I can't be copied.  Do not record me."
-
+	"convert myself to an Integer representing 1 for true and 0 for false"
+self subclassResponsibility
 ]
 
-Class Boolean >> shallowCopy
+Class Boolean >> deepCopy
 [
 	"Receiver has two concrete subclasses, True and False.	Only one instance of each should be made, so return self."
 
+]
+
+Class Boolean >> eqv: aBoolean
+[
+	"Answer true if the receiver is equivalent to aBoolean."
+^ self == aBoolean
+]
+
+Class Boolean >> ifFalse: alternativeBlock
+[
+	"If the receiver is true (i.e., the condition is true), then the value is the 	true alternative, which is nil. Otherwise answer the result of evaluating 	the argument, alternativeBlock. Create an error notification if the 	receiver is nonBoolean. Execution does not actually reach here because 	the expression is compiled in-line."
+self subclassResponsibility
+]
+
+Class Boolean >> ifFalse: falseAlternativeBlock ifTrue: trueAlternativeBlock
+[
+	"Same as ifTrue:ifFalse:."
+self subclassResponsibility
+]
+
+Class Boolean >> ifTrue: alternativeBlock
+[
+	"If the receiver is false (i.e., the condition is false), then the value is the 	false alternative, which is nil. Otherwise answer the result of evaluating 	the argument, alternativeBlock. Create an error notification if the 	receiver is nonBoolean. Execution does not actually reach here because 	the expression is compiled in-line."
+self subclassResponsibility
 ]
 
 Class Boolean >> ifTrue: trueAlternativeBlock ifFalse: falseAlternativeBlock
@@ -41,39 +71,14 @@ Class Boolean >> isLiteral
 ^ true
 ]
 
-Class Boolean >> ifTrue: alternativeBlock
+Class Boolean >> isSelfEvaluating
 [
-	"If the receiver is false (i.e., the condition is false), then the value is the 	false alternative, which is nil. Otherwise answer the result of evaluating 	the argument, alternativeBlock. Create an error notification if the 	receiver is nonBoolean. Execution does not actually reach here because 	the expression is compiled in-line."
-self subclassResponsibility
+^ true
 ]
 
-Class Boolean >> asBit
+Class Boolean >> not
 [
-	"convert myself to an Integer representing 1 for true and 0 for false"
-self subclassResponsibility
-]
-
-Class Boolean >> ifFalse: alternativeBlock
-[
-	"If the receiver is true (i.e., the condition is true), then the value is the 	true alternative, which is nil. Otherwise answer the result of evaluating 	the argument, alternativeBlock. Create an error notification if the 	receiver is nonBoolean. Execution does not actually reach here because 	the expression is compiled in-line."
-self subclassResponsibility
-]
-
-Class Boolean >> ==> aBlock
-[
-	"The material conditional, also known as the material implication or truth functional conditional.	Correspond to not ... or ... and does not correspond to the English if...then... construction.			 known as:			b if a 			a implies b			if a then b			b is a consequence of a			a therefore b (but note: 'it is raining therefore it is cloudy' is implication; 'it is autumn therefore the leaves are falling' is equivalence).			Here is the truth table for material implication:		   p   |   q   |   p ==> q	-------|-------|-------------	   T   |   T   |      T	   T   |   F   |      F	   F   |   T   |      T	   F   |   F   |      T	"
-^ self not or: [ aBlock value ]
-]
-
-Class Boolean >> ifFalse: falseAlternativeBlock ifTrue: trueAlternativeBlock
-[
-	"Same as ifTrue:ifFalse:."
-self subclassResponsibility
-]
-
-Class Boolean >> & aBoolean
-[
-	"Evaluating conjunction. Evaluate the argument. Then answer true if 	both the receiver and the argument are true."
+	"Negation. Answer true if the receiver is false, answer false if the 	receiver is true."
 self subclassResponsibility
 ]
 
@@ -83,15 +88,10 @@ Class Boolean >> or: alternativeBlock
 self subclassResponsibility
 ]
 
-Class Boolean >> not
+Class Boolean >> shallowCopy
 [
-	"Negation. Answer true if the receiver is false, answer false if the 	receiver is true."
-self subclassResponsibility
-]
+	"Receiver has two concrete subclasses, True and False.	Only one instance of each should be made, so return self."
 
-Class Boolean >> isSelfEvaluating
-[
-^ true
 ]
 
 Class Boolean >> storeOn: aStream
@@ -100,16 +100,16 @@ Class Boolean >> storeOn: aStream
 self printOn: aStream
 ]
 
+Class Boolean >> veryDeepCopyWith: deepCopier
+[
+	"Return self.  I can't be copied.  Do not record me."
+
+]
+
 Class Boolean >> | aBoolean
 [
 	"Evaluating disjunction (OR). Evaluate the argument. Then answer true 	if either the receiver or the argument is true."
 self subclassResponsibility
-]
-
-Class Boolean >> eqv: aBoolean
-[
-	"Answer true if the receiver is equivalent to aBoolean."
-^ self == aBoolean
 ]
 
 Metaclass

@@ -6,10 +6,15 @@ Class
 	classVariables: #();
 	package: #'Collections-Atomic'.
 
-Class AtomicQueueItem >> next
+Class AtomicQueueItem >> initialize
 [
-	"Answer the value of next"
-^ next
+	"make circular"
+super initialize.next := self
+]
+
+Class AtomicQueueItem >> isCircular
+[
+^ next == self
 ]
 
 Class AtomicQueueItem >> makeCircular
@@ -18,10 +23,16 @@ Class AtomicQueueItem >> makeCircular
 | temp |" atomic swap here"temp := next.next := self.^ temp
 ]
 
-Class AtomicQueueItem >> initialize
+Class AtomicQueueItem >> next
 [
-	"make circular"
-super initialize.next := self
+	"Answer the value of next"
+^ next
+]
+
+Class AtomicQueueItem >> next: anObject
+[
+	"Set the value of next"
+next := anObject
 ]
 
 Class AtomicQueueItem >> object
@@ -34,17 +45,6 @@ Class AtomicQueueItem >> object: anObject
 [
 	"Set the value of object"
 object := anObject
-]
-
-Class AtomicQueueItem >> next: anObject
-[
-	"Set the value of next"
-next := anObject
-]
-
-Class AtomicQueueItem >> isCircular
-[
-^ next == self
 ]
 
 Metaclass

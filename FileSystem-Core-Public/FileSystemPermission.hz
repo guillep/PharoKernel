@@ -11,66 +11,6 @@ Class FileSystemPermission >> < other
 ^ posixPermission < other posixPermission
 ]
 
-Class FileSystemPermission >> initialize: aNumber
-[
-posixPermission := aNumber.self initialize
-]
-
-Class FileSystemPermission >> otherWrite
-[
-^ self permissionBitAt: 2
-]
-
-Class FileSystemPermission >> permissionBitAt: bitIndex
-[
-^ (posixPermission bitAt: bitIndex) == 1
-]
-
-Class FileSystemPermission >> ownerRead
-[
-^ self permissionBitAt: 9
-]
-
-Class FileSystemPermission >> printOn: aStream
-[
-aStream	nextPut:			(self ownerRead					ifTrue: [ $r ]					ifFalse: [ $- ]);	nextPut:			(self ownerWrite					ifTrue: [ $w ]					ifFalse: [ $- ]);	nextPut:			(self ownerExecute					ifTrue: [ $x ]					ifFalse: [ $- ]);	nextPut:			(self groupRead					ifTrue: [ $r ]					ifFalse: [ $- ]);	nextPut:			(self groupWrite					ifTrue: [ $w ]					ifFalse: [ $- ]);	nextPut:			(self groupExecute					ifTrue: [ $x ]					ifFalse: [ $- ]);	nextPut:			(self otherRead					ifTrue: [ $r ]					ifFalse: [ $- ]);	nextPut:			(self otherWrite					ifTrue: [ $w ]					ifFalse: [ $- ]);	nextPut:			(self otherExecute					ifTrue: [ $x ]					ifFalse: [ $- ])	"Owner"	"Group"	"Other"
-]
-
-Class FileSystemPermission >> isReadable
-[
-^ self ownerRead
-]
-
-Class FileSystemPermission >> otherRead
-[
-^ self permissionBitAt: 3
-]
-
-Class FileSystemPermission >> isWritable
-[
-^ self ownerWrite
-]
-
-Class FileSystemPermission >> groupWrite
-[
-^ self permissionBitAt: 5
-]
-
-Class FileSystemPermission >> ownerExecute
-[
-^ self permissionBitAt: 7
-]
-
-Class FileSystemPermission >> otherExecute
-[
-^ self permissionBitAt: 1
-]
-
-Class FileSystemPermission >> ownerWrite
-[
-^ self permissionBitAt: 8
-]
-
 Class FileSystemPermission >> groupExecute
 [
 ^ self permissionBitAt: 4
@@ -79,6 +19,66 @@ Class FileSystemPermission >> groupExecute
 Class FileSystemPermission >> groupRead
 [
 ^ self permissionBitAt: 6
+]
+
+Class FileSystemPermission >> groupWrite
+[
+^ self permissionBitAt: 5
+]
+
+Class FileSystemPermission >> initialize: aNumber
+[
+posixPermission := aNumber.self initialize
+]
+
+Class FileSystemPermission >> isReadable
+[
+^ self ownerRead
+]
+
+Class FileSystemPermission >> isWritable
+[
+^ self ownerWrite
+]
+
+Class FileSystemPermission >> otherExecute
+[
+^ self permissionBitAt: 1
+]
+
+Class FileSystemPermission >> otherRead
+[
+^ self permissionBitAt: 3
+]
+
+Class FileSystemPermission >> otherWrite
+[
+^ self permissionBitAt: 2
+]
+
+Class FileSystemPermission >> ownerExecute
+[
+^ self permissionBitAt: 7
+]
+
+Class FileSystemPermission >> ownerRead
+[
+^ self permissionBitAt: 9
+]
+
+Class FileSystemPermission >> ownerWrite
+[
+^ self permissionBitAt: 8
+]
+
+Class FileSystemPermission >> permissionBitAt: bitIndex
+[
+^ (posixPermission bitAt: bitIndex) == 1
+]
+
+Class FileSystemPermission >> printOn: aStream
+[
+aStream	nextPut:			(self ownerRead					ifTrue: [ $r ]					ifFalse: [ $- ]);	nextPut:			(self ownerWrite					ifTrue: [ $w ]					ifFalse: [ $- ]);	nextPut:			(self ownerExecute					ifTrue: [ $x ]					ifFalse: [ $- ]);	nextPut:			(self groupRead					ifTrue: [ $r ]					ifFalse: [ $- ]);	nextPut:			(self groupWrite					ifTrue: [ $w ]					ifFalse: [ $- ]);	nextPut:			(self groupExecute					ifTrue: [ $x ]					ifFalse: [ $- ]);	nextPut:			(self otherRead					ifTrue: [ $r ]					ifFalse: [ $- ]);	nextPut:			(self otherWrite					ifTrue: [ $w ]					ifFalse: [ $- ]);	nextPut:			(self otherExecute					ifTrue: [ $x ]					ifFalse: [ $- ])	"Owner"	"Group"	"Other"
 ]
 
 Metaclass

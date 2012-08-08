@@ -6,29 +6,9 @@ Class
 	classVariables: #();
 	package: #'FuelMetalevel-Clusters'.
 
-Class FLBehaviorCluster >> serializePostInstancesStepWith: anEncoder
+Class FLBehaviorCluster >> afterMaterializationStepWith: aDecoder
 [
-objects do: [ :aClassOrTrait | self serializePostInstance: aClassOrTrait with: anEncoder ]
-]
-
-Class FLBehaviorCluster >> materializePostInstancesStepWith: aDecoder
-[
-objects do: [ :aClassOrTrait | self materializePostInstance: aClassOrTrait with: aDecoder ]
-]
-
-Class FLBehaviorCluster >> serializeReferencesStepWith: anEncoder
-[
-objects do: [ :aClassOrTrait | self serializeReferencesOf: aClassOrTrait with: anEncoder ]
-]
-
-Class FLBehaviorCluster >> materializeReferencesOf: aClassOrTrait with: aDecoder
-[
-aClassOrTrait methodDictionary: aDecoder nextEncodedReference.aClassOrTrait organization: aDecoder nextEncodedReference.aClassOrTrait basicLocalSelectors: aDecoder nextEncodedReference.aClassOrTrait traitComposition: aDecoder nextEncodedReference
-]
-
-Class FLBehaviorCluster >> serializeReferencesOf: aClassOrTrait with: anEncoder
-[
-anEncoder encodeReferenceTo: aClassOrTrait methodDictionary.anEncoder encodeReferenceTo: aClassOrTrait organization.anEncoder encodeReferenceTo: aClassOrTrait basicLocalSelectors.anEncoder encodeReferenceTo: aClassOrTrait traitComposition
+objects	do: [ :aClassOrTrait | 		aClassOrTrait fuelInitializeTraitComposition.		aClassOrTrait fuelAfterMaterialization ]
 ]
 
 Class FLBehaviorCluster >> materializePostInstance: aClassOrTrait with: aDecoder
@@ -36,14 +16,19 @@ Class FLBehaviorCluster >> materializePostInstance: aClassOrTrait with: aDecoder
 self subclassResponsibility
 ]
 
+Class FLBehaviorCluster >> materializePostInstancesStepWith: aDecoder
+[
+objects do: [ :aClassOrTrait | self materializePostInstance: aClassOrTrait with: aDecoder ]
+]
+
+Class FLBehaviorCluster >> materializeReferencesOf: aClassOrTrait with: aDecoder
+[
+aClassOrTrait methodDictionary: aDecoder nextEncodedReference.aClassOrTrait organization: aDecoder nextEncodedReference.aClassOrTrait basicLocalSelectors: aDecoder nextEncodedReference.aClassOrTrait traitComposition: aDecoder nextEncodedReference
+]
+
 Class FLBehaviorCluster >> materializeReferencesStepWith: aDecoder
 [
 objects do: [ :aClassOrTrait | self materializeReferencesOf: aClassOrTrait with: aDecoder ]
-]
-
-Class FLBehaviorCluster >> serializePostInstance: aClassOrTrait with: anEncoder
-[
-self subclassResponsibility
 ]
 
 Class FLBehaviorCluster >> referencesOf: aClassOrTrait do: aBlock
@@ -51,9 +36,24 @@ Class FLBehaviorCluster >> referencesOf: aClassOrTrait do: aBlock
 aBlock value: aClassOrTrait methodDictionary.aBlock value: aClassOrTrait organization.aBlock value: aClassOrTrait traitComposition.aBlock value: aClassOrTrait basicLocalSelectors
 ]
 
-Class FLBehaviorCluster >> afterMaterializationStepWith: aDecoder
+Class FLBehaviorCluster >> serializePostInstance: aClassOrTrait with: anEncoder
 [
-objects	do: [ :aClassOrTrait | 		aClassOrTrait fuelInitializeTraitComposition.		aClassOrTrait fuelAfterMaterialization ]
+self subclassResponsibility
+]
+
+Class FLBehaviorCluster >> serializePostInstancesStepWith: anEncoder
+[
+objects do: [ :aClassOrTrait | self serializePostInstance: aClassOrTrait with: anEncoder ]
+]
+
+Class FLBehaviorCluster >> serializeReferencesOf: aClassOrTrait with: anEncoder
+[
+anEncoder encodeReferenceTo: aClassOrTrait methodDictionary.anEncoder encodeReferenceTo: aClassOrTrait organization.anEncoder encodeReferenceTo: aClassOrTrait basicLocalSelectors.anEncoder encodeReferenceTo: aClassOrTrait traitComposition
+]
+
+Class FLBehaviorCluster >> serializeReferencesStepWith: anEncoder
+[
+objects do: [ :aClassOrTrait | self serializeReferencesOf: aClassOrTrait with: anEncoder ]
 ]
 
 Metaclass

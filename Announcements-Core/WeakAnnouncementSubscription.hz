@@ -6,14 +6,9 @@ Class
 	classVariables: #(#FinalizationList );
 	package: #'Announcements-Core'.
 
-Class WeakAnnouncementSubscription >> subscriber
+Class WeakAnnouncementSubscription >> action
 [
-^ self basicAt: 1
-]
-
-Class WeakAnnouncementSubscription >> finalize
-[
-announcer removeSubscription: self
+^ action
 ]
 
 Class WeakAnnouncementSubscription >> action: anObject
@@ -21,14 +16,9 @@ Class WeakAnnouncementSubscription >> action: anObject
 action := anObject
 ]
 
-Class WeakAnnouncementSubscription >> next
+Class WeakAnnouncementSubscription >> announcementClass
 [
-^ next
-]
-
-Class WeakAnnouncementSubscription >> announcer
-[
-^ announcer
+^ announcementClass
 ]
 
 Class WeakAnnouncementSubscription >> announcementClass: anObject
@@ -36,34 +26,14 @@ Class WeakAnnouncementSubscription >> announcementClass: anObject
 announcementClass := anObject
 ]
 
-Class WeakAnnouncementSubscription >> action
+Class WeakAnnouncementSubscription >> announcer
 [
-^ action
-]
-
-Class WeakAnnouncementSubscription >> subscriber: anObject
-[
-self subscriber ifNotNil: [ self error: 'subscriber already set' ].self basicAt: 1 put: anObject
+^ announcer
 ]
 
 Class WeakAnnouncementSubscription >> announcer: anAnnouncer
 [
 announcer := anAnnouncer
-]
-
-Class WeakAnnouncementSubscription >> makeStrong
-[
-| sub |sub := self subscriber.sub ifNil: [ ^ self error: 'Subscriber is nil, cannot make strong subscription' ].^ announcer	replace: self	with:		(AnnouncementSubscription new			announcer: announcer;			action: action asMessageSend;			subscriber: sub;			announcementClass: announcementClass)
-]
-
-Class WeakAnnouncementSubscription >> initialize
-[
-list := self class finalizationList
-]
-
-Class WeakAnnouncementSubscription >> announcementClass
-[
-^ announcementClass
 ]
 
 Class WeakAnnouncementSubscription >> deliver: anAnnouncement
@@ -72,9 +42,44 @@ Class WeakAnnouncementSubscription >> deliver: anAnnouncement
 ^ (self handles: anAnnouncement class)	ifTrue: [ [ action cull: anAnnouncement cull: announcer ] on: UnhandledError fork: [ :ex | ex pass ] ]
 ]
 
+Class WeakAnnouncementSubscription >> finalize
+[
+announcer removeSubscription: self
+]
+
+Class WeakAnnouncementSubscription >> handles: anAnnouncementClass
+[
+^ announcementClass handles: anAnnouncementClass
+]
+
+Class WeakAnnouncementSubscription >> initialize
+[
+list := self class finalizationList
+]
+
+Class WeakAnnouncementSubscription >> makeStrong
+[
+| sub |sub := self subscriber.sub ifNil: [ ^ self error: 'Subscriber is nil, cannot make strong subscription' ].^ announcer	replace: self	with:		(AnnouncementSubscription new			announcer: announcer;			action: action asMessageSend;			subscriber: sub;			announcementClass: announcementClass)
+]
+
 Class WeakAnnouncementSubscription >> makeWeak
 [
 ^ self
+]
+
+Class WeakAnnouncementSubscription >> next
+[
+^ next
+]
+
+Class WeakAnnouncementSubscription >> subscriber
+[
+^ self basicAt: 1
+]
+
+Class WeakAnnouncementSubscription >> subscriber: anObject
+[
+self subscriber ifNotNil: [ self error: 'subscriber already set' ].self basicAt: 1 put: anObject
 ]
 
 Class WeakAnnouncementSubscription >> valuable: aValuable
@@ -83,23 +88,18 @@ Class WeakAnnouncementSubscription >> valuable: aValuable
 self action: aValuable.self subscriber: aValuable receiver
 ]
 
-Class WeakAnnouncementSubscription >> handles: anAnnouncementClass
-[
-^ announcementClass handles: anAnnouncementClass
-]
-
 Metaclass
 	name: #WeakAnnouncementSubscription;
 	instanceVariables: #().
 
-Metaclass WeakAnnouncementSubscription >> new
-[
-^ ((WeakFinalizationList hasNewFinalization	ifTrue: [ self ]	ifFalse: [ LegacyWeakSubscription ]) basicNew: 1) initialize
-]
-
 Metaclass WeakAnnouncementSubscription >> finalizationList
 [
 ^ FinalizationList ifNil: [ FinalizationList := WeakFinalizationList new ]
+]
+
+Metaclass WeakAnnouncementSubscription >> finalizeValues
+[
+| head |head := self finalizationList swapWithNil.[ head notNil ]	whileTrue: [ 		head finalize.		head := head next ]
 ]
 
 Metaclass WeakAnnouncementSubscription >> initialize
@@ -108,8 +108,8 @@ Metaclass WeakAnnouncementSubscription >> initialize
 WeakArray	removeWeakDependent: self;	addWeakDependent: self	"Make sure that it is not added twice."
 ]
 
-Metaclass WeakAnnouncementSubscription >> finalizeValues
+Metaclass WeakAnnouncementSubscription >> new
 [
-| head |head := self finalizationList swapWithNil.[ head notNil ]	whileTrue: [ 		head finalize.		head := head next ]
+^ ((WeakFinalizationList hasNewFinalization	ifTrue: [ self ]	ifFalse: [ LegacyWeakSubscription ]) basicNew: 1) initialize
 ]
 

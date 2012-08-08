@@ -6,10 +6,24 @@ Class
 	classVariables: #();
 	package: #'Announcements-Core'.
 
-Class Announcer >> subscribe: anAnnouncementClass do: aValuable
+Class Announcer >> announce: anAnnouncement
 [
-	"Declare that when anAnnouncementClass is raised, aValuable is executed."
-^ registry	add:		(AnnouncementSubscription new			announcer: self;			announcementClass: anAnnouncementClass;			valuable: aValuable)
+| announcement |announcement := anAnnouncement asAnnouncement.registry ifNotNil: [ registry deliver: announcement ].^ announcement
+]
+
+Class Announcer >> basicSubscribe: subscription
+[
+^ registry add: subscription
+]
+
+Class Announcer >> initialize
+[
+super initialize.registry := SubscriptionRegistry new
+]
+
+Class Announcer >> numberOfSubscriptions
+[
+^ registry numberOfSubscriptions
 ]
 
 Class Announcer >> on: anAnnouncementClass do: aValuable
@@ -18,32 +32,10 @@ Class Announcer >> on: anAnnouncementClass do: aValuable
 ^ self subscribe: anAnnouncementClass do: aValuable
 ]
 
-Class Announcer >> basicSubscribe: subscription
-[
-^ registry add: subscription
-]
-
-Class Announcer >> subscribe: anAnnouncementClass send: aSelector to: anObject
-[
-	"Declare that when anAnnouncementClass is raised, anObject should receive the message aSelector."
-^ self subscribe: anAnnouncementClass do: (MessageSend receiver: anObject selector: aSelector)
-]
-
-Class Announcer >> numberOfSubscriptions
-[
-^ registry numberOfSubscriptions
-]
-
 Class Announcer >> on: anAnnouncementClass send: aSelector to: anObject
 [
 	"Declare that when anAnnouncementClass is raised, anObject should receive the message aSelector."
 ^ self subscribe: anAnnouncementClass send: aSelector to: anObject
-]
-
-Class Announcer >> weak
-[
-	"announcer weak subscribe: foo"
-^ WeakSubscriptionBuilder on: self
 ]
 
 Class Announcer >> removeSubscription: subscription
@@ -52,31 +44,39 @@ Class Announcer >> removeSubscription: subscription
 ^ registry remove: subscription
 ]
 
-Class Announcer >> announce: anAnnouncement
-[
-| announcement |announcement := anAnnouncement asAnnouncement.registry ifNotNil: [ registry deliver: announcement ].^ announcement
-]
-
-Class Announcer >> initialize
-[
-super initialize.registry := SubscriptionRegistry new
-]
-
-Class Announcer >> when: anAnnouncementClass do: aValuable
-[
-	"Declare that when anAnnouncementClass is raised, aValuable is executed."
-^ self subscribe: anAnnouncementClass do: aValuable
-]
-
 Class Announcer >> replace: subscription with: newOne
 [
 ^ registry replace: subscription with: newOne
+]
+
+Class Announcer >> subscribe: anAnnouncementClass do: aValuable
+[
+	"Declare that when anAnnouncementClass is raised, aValuable is executed."
+^ registry	add:		(AnnouncementSubscription new			announcer: self;			announcementClass: anAnnouncementClass;			valuable: aValuable)
+]
+
+Class Announcer >> subscribe: anAnnouncementClass send: aSelector to: anObject
+[
+	"Declare that when anAnnouncementClass is raised, anObject should receive the message aSelector."
+^ self subscribe: anAnnouncementClass do: (MessageSend receiver: anObject selector: aSelector)
 ]
 
 Class Announcer >> unsubscribe: anObject
 [
 	"Unsubscribe all subscriptions of anObject from the receiver"
 registry removeSubscriber: anObject
+]
+
+Class Announcer >> weak
+[
+	"announcer weak subscribe: foo"
+^ WeakSubscriptionBuilder on: self
+]
+
+Class Announcer >> when: anAnnouncementClass do: aValuable
+[
+	"Declare that when anAnnouncementClass is raised, aValuable is executed."
+^ self subscribe: anAnnouncementClass do: aValuable
 ]
 
 Metaclass

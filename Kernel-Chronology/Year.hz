@@ -6,20 +6,9 @@ Class
 	classVariables: #();
 	package: #'Kernel-Chronology'.
 
-Class Year >> previous
-[
-	"This implementation handles leap years correctly"
-^ self class year: self year - 1
-]
-
 Class Year >> asYear
 [
 ^ self
-]
-
-Class Year >> printOn: aStream
-[
-aStream nextPutAll: 'a Year ('.self start year printOn: aStream.aStream nextPutAll: ')'
 ]
 
 Class Year >> daysInMonth
@@ -32,13 +21,34 @@ Class Year >> daysInYear
 ^ self duration days
 ]
 
+Class Year >> previous
+[
+	"This implementation handles leap years correctly"
+^ self class year: self year - 1
+]
+
+Class Year >> printOn: aStream
+[
+aStream nextPutAll: 'a Year ('.self start year printOn: aStream.aStream nextPutAll: ')'
+]
+
 Metaclass
 	name: #Year;
 	instanceVariables: #().
 
+Metaclass Year >> current
+[
+^ self year: DateAndTime now year
+]
+
 Metaclass Year >> daysInYear: yearInteger
 [
 ^ 365	+		((self isLeapYear: yearInteger)			ifTrue: [ 1 ]			ifFalse: [ 0 ])
+]
+
+Metaclass Year >> isLeapYear: aYearInteger
+[
+| adjustedYear |adjustedYear := aYearInteger > 0	ifTrue: [ aYearInteger ]	ifFalse: [ (aYearInteger + 1) negated ].	"There was no year 0"^ (adjustedYear \\ 4 ~= 0 or: [ adjustedYear \\ 100 = 0 and: [ adjustedYear \\ 400 ~= 0 ] ]) not
 ]
 
 Metaclass Year >> leapYear: yearInteger
@@ -50,16 +60,6 @@ Metaclass Year >> starting: aDateAndTime duration: aDuration
 [
 	"Override - start from midnight"
 | midnight |midnight := aDateAndTime asDateAndTime midnight.^ super starting: midnight duration: (Duration days: (self daysInYear: midnight year))
-]
-
-Metaclass Year >> current
-[
-^ self year: DateAndTime now year
-]
-
-Metaclass Year >> isLeapYear: aYearInteger
-[
-| adjustedYear |adjustedYear := aYearInteger > 0	ifTrue: [ aYearInteger ]	ifFalse: [ (aYearInteger + 1) negated ].	"There was no year 0"^ (adjustedYear \\ 4 ~= 0 or: [ adjustedYear \\ 100 = 0 and: [ adjustedYear \\ 400 ~= 0 ] ]) not
 ]
 
 Metaclass Year >> year: aYear

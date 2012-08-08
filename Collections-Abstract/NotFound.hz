@@ -6,10 +6,22 @@ Class
 	classVariables: #();
 	package: #'Collections-Abstract'.
 
-Class NotFound >> standardMessageText
+Class NotFound >> collection
 [
-	"Generate a standard textual description"
-^ String	streamContents: [ :stream | 		stream print: self object.		stream << ' not found in '.		stream print: self collection class ]
+	"Return the collection where something is not found in"
+^ self signaler
+]
+
+Class NotFound >> collection: aCollection
+[
+	"Set the collection where something is not found in"
+self signaler: aCollection
+]
+
+Class NotFound >> messageText
+[
+	"Overwritten to initialiaze the message text to a standard text if it has not yet been set"
+^ messageText ifNil: [ messageText := self standardMessageText ]
 ]
 
 Class NotFound >> object
@@ -24,22 +36,10 @@ Class NotFound >> object: anObject
 object := anObject
 ]
 
-Class NotFound >> messageText
+Class NotFound >> standardMessageText
 [
-	"Overwritten to initialiaze the message text to a standard text if it has not yet been set"
-^ messageText ifNil: [ messageText := self standardMessageText ]
-]
-
-Class NotFound >> collection: aCollection
-[
-	"Set the collection where something is not found in"
-self signaler: aCollection
-]
-
-Class NotFound >> collection
-[
-	"Return the collection where something is not found in"
-^ self signaler
+	"Generate a standard textual description"
+^ String	streamContents: [ :stream | 		stream print: self object.		stream << ' not found in '.		stream print: self collection class ]
 ]
 
 Metaclass

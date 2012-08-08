@@ -6,10 +6,9 @@ Class
 	classVariables: #();
 	package: #'Regex-Core'.
 
-Class RxmSubstring >> matchAgainst: aMatcher
+Class RxmSubstring >> beCaseInsensitive
 [
-	"Match if my sample stream is exactly the current prefix	of the matcher stream's contents."
-| originalState sampleStream mismatch |originalState := aMatcher currentState.sampleStream := self sampleStream.mismatch := false.[ sampleStream atEnd	or: [ aMatcher atEnd or: [ mismatch := (compare value: sampleStream next value: aMatcher next) not ] ] ] whileFalse.(mismatch not and: [ sampleStream atEnd and: [ next matchAgainst: aMatcher ] ])	ifTrue: [ ^ true ]	ifFalse: [ 		aMatcher restoreState: originalState.		^ false ]
+compare := [ :char1 :char2 | char1 sameAs: char2 ]
 ]
 
 Class RxmSubstring >> beCaseSensitive
@@ -23,15 +22,15 @@ Class RxmSubstring >> character: aCharacter ignoreCase: aBoolean
 sample := String with: aCharacter.aBoolean	ifTrue: [ self beCaseInsensitive ]
 ]
 
-Class RxmSubstring >> substring: aString ignoreCase: aBoolean
+Class RxmSubstring >> initialize
 [
-	"Match exactly this string."
-sample := aString.aBoolean	ifTrue: [ self beCaseInsensitive ]
+super initialize.self beCaseSensitive
 ]
 
-Class RxmSubstring >> beCaseInsensitive
+Class RxmSubstring >> matchAgainst: aMatcher
 [
-compare := [ :char1 :char2 | char1 sameAs: char2 ]
+	"Match if my sample stream is exactly the current prefix	of the matcher stream's contents."
+| originalState sampleStream mismatch |originalState := aMatcher currentState.sampleStream := self sampleStream.mismatch := false.[ sampleStream atEnd	or: [ aMatcher atEnd or: [ mismatch := (compare value: sampleStream next value: aMatcher next) not ] ] ] whileFalse.(mismatch not and: [ sampleStream atEnd and: [ next matchAgainst: aMatcher ] ])	ifTrue: [ ^ true ]	ifFalse: [ 		aMatcher restoreState: originalState.		^ false ]
 ]
 
 Class RxmSubstring >> sampleStream
@@ -39,9 +38,10 @@ Class RxmSubstring >> sampleStream
 ^ sample readStream
 ]
 
-Class RxmSubstring >> initialize
+Class RxmSubstring >> substring: aString ignoreCase: aBoolean
 [
-super initialize.self beCaseSensitive
+	"Match exactly this string."
+sample := aString.aBoolean	ifTrue: [ self beCaseInsensitive ]
 ]
 
 Metaclass

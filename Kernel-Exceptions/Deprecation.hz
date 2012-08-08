@@ -6,21 +6,9 @@ Class
 	classVariables: #(#Log #RaiseWarning #ShowWarning );
 	package: #'Kernel-Exceptions'.
 
-Class Deprecation >> versionString
+Class Deprecation >> = anObject
 [
-	"Answer the value of versionString"
-^ versionString
-]
-
-Class Deprecation >> explanationString
-[
-	"Answer the value of explanationString"
-^ explanationString
-]
-
-Class Deprecation >> hash
-[
-^ (methodReference ifNil: [ explanationString ]) hash
+^ self class == anObject class	and: [ 		methodReference = anObject methodReference			and: [ methodReference ifNil: [ explanationString = anObject explanationString ] ifNotNil: [ true ] ] ]
 ]
 
 Class Deprecation >> defaultAction
@@ -34,30 +22,15 @@ Class Deprecation >> deprecationDate
 ^ deprecationDate
 ]
 
-Class Deprecation >> methodReference
+Class Deprecation >> explanationString
 [
-	"Answer the value of methodReference"
-^ methodReference
+	"Answer the value of explanationString"
+^ explanationString
 ]
 
-Class Deprecation >> method: aCompiledMethod explanation: anExplanationString on: dateString in: aVersionString
+Class Deprecation >> hash
 [
-methodReference := aCompiledMethod methodReference.explanationString := anExplanationString.deprecationDate := dateString.versionString := aVersionString
-]
-
-Class Deprecation >> showWarning
-[
-^ self class showWarning
-]
-
-Class Deprecation >> = anObject
-[
-^ self class == anObject class	and: [ 		methodReference = anObject methodReference			and: [ methodReference ifNil: [ explanationString = anObject explanationString ] ifNotNil: [ true ] ] ]
-]
-
-Class Deprecation >> raiseWarning
-[
-^ self class raiseWarning
+^ (methodReference ifNil: [ explanationString ]) hash
 ]
 
 Class Deprecation >> messageText
@@ -66,13 +39,40 @@ Class Deprecation >> messageText
 ^ 'The method ' , methodReference fullName	,		' has been deprecated.' , explanationString
 ]
 
+Class Deprecation >> method: aCompiledMethod explanation: anExplanationString on: dateString in: aVersionString
+[
+methodReference := aCompiledMethod methodReference.explanationString := anExplanationString.deprecationDate := dateString.versionString := aVersionString
+]
+
+Class Deprecation >> methodReference
+[
+	"Answer the value of methodReference"
+^ methodReference
+]
+
+Class Deprecation >> raiseWarning
+[
+^ self class raiseWarning
+]
+
+Class Deprecation >> showWarning
+[
+^ self class showWarning
+]
+
+Class Deprecation >> versionString
+[
+	"Answer the value of versionString"
+^ versionString
+]
+
 Metaclass
 	name: #Deprecation;
 	instanceVariables: #().
 
-Metaclass Deprecation >> method: aCompiledMethod explanation: anExplanationString on: dateString in: aVersionString
+Metaclass Deprecation >> deprecationsWhile: aBlock
 [
-^ self new	method: aCompiledMethod	explanation: anExplanationString	on: dateString	in: aVersionString
+| oldLog result |oldLog := Log.Log := Set new.aBlock value.result := Log.oldLog ifNotNil: [ oldLog addAll: result ].Log := oldLog.^ result
 ]
 
 Metaclass Deprecation >> initialize
@@ -80,14 +80,9 @@ Metaclass Deprecation >> initialize
 Log := nil
 ]
 
-Metaclass Deprecation >> deprecationsWhile: aBlock
+Metaclass Deprecation >> method: aCompiledMethod explanation: anExplanationString on: dateString in: aVersionString
 [
-| oldLog result |oldLog := Log.Log := Set new.aBlock value.result := Log.oldLog ifNotNil: [ oldLog addAll: result ].Log := oldLog.^ result
-]
-
-Metaclass Deprecation >> showWarning
-[
-^ ShowWarning ifNil: [ ShowWarning := true ]
+^ self new	method: aCompiledMethod	explanation: anExplanationString	on: dateString	in: aVersionString
 ]
 
 Metaclass Deprecation >> raiseWarning
@@ -98,6 +93,11 @@ Metaclass Deprecation >> raiseWarning
 Metaclass Deprecation >> raiseWarning: aBoolean
 [
 RaiseWarning := aBoolean
+]
+
+Metaclass Deprecation >> showWarning
+[
+^ ShowWarning ifNil: [ ShowWarning := true ]
 ]
 
 Metaclass Deprecation >> showWarning: aBoolean
