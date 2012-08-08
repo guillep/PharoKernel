@@ -1,97 +1,0 @@
-Class
-	name: #HazelZygote;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
-	package: #'Seed-HazelBuilder'.
-
-Metaclass
-	name: #HazelZygote;
-	instanceVariables: #(#quitSemaphore ).
-
-Metaclass HazelZygote >> saveAndQuit
-[
-^ self freshProcessDoing: #saveAndQuit:
-]
-
-Metaclass HazelZygote >> freshProcessRunningTests
-[
-^ self freshProcessDoing: #runAllTests:
-]
-
-Metaclass HazelZygote >> memoryUsageReport
-[
-^ self freshProcessDoing: #printSpaceAnalysisAndQuit:
-]
-
-Metaclass HazelZygote >> brokenReferencesReport
-[
-^ self freshProcessDoing: #printReferencesReportOnStreamAndQuit:
-]
-
-Metaclass HazelZygote >> freshProcessQuitting
-[
-^ self freshProcessDoing: #justQuit:
-]
-
-Metaclass HazelZygote >> printReferencesReportForJenkinsOnStreamAndQuit: aStream
-[
-| missingVariables |missingVariables := HazelMissingVariable allInstances.aStream	nextPutAll: '<?xml version="1.0" encoding="UTF-8"?>';	nextPut: Character lf.aStream	nextPutAll: '<testsuite name="BrokenReferences';	nextPutAll: '" tests="';	print: missingVariables size;	nextPutAll: '"';	nextPutAll: ' failures="';	print: missingVariables size;	nextPutAll: '"';	nextPutAll: ' errors="0" time="0">';	lf.missingVariables	do: [ :v | 		aStream tab.		aStream nextPutAll: '<testcase classname="'.		aStream nextPutAll: v relatedClass name.		aStream nextPutAll: '" name="'.		aStream nextPutAll: (v message copyReplaceAll: '"' with: '&quot;').		aStream			nextPutAll: '" time="0">';			lf.		aStream			tab;			tab.		aStream nextPutAll: '<failure type="'.		aStream nextPutAll: v relatedClass name.		aStream nextPutAll: '" message="'.		aStream nextPutAll: (v message copyReplaceAll: '"' with: '&quot;').		aStream nextPutAll: '"></failure>'.		aStream cr.		aStream tab.		aStream nextPutAll: '</testcase>' ].aStream	tab;	nextPutAll: '<system-out><![CDATA[]]></system-out>';	nextPut: Character lf.aStream	tab;	nextPutAll: '<system-err><![CDATA[]]></system-err>';	nextPut: Character lf.aStream nextPutAll: '</testsuite>'.self justQuit: aStream
-]
-
-Metaclass HazelZygote >> writeSomething
-[
-^ self freshProcessDoing: #writeSomething:
-]
-
-Metaclass HazelZygote >> printSpaceAnalysisAndQuit: aStream
-[
-(Smalltalk at: #SpaceTally) new printSpaceAnalysis: 1 on: aStream.aStream	cr;	cr;	nextPutAll: 'Report Finished';	cr.self justQuit: aStream
-]
-
-Metaclass HazelZygote >> writeStackTraceFor: exception in: strm
-[
-| cnt startPos aContext |strm	nextPutAll: exception printString;	cr.strm	nextPutAll: '=-=-=-=-=-=-=-BEGIN STACK TRACE -=-=-=-=-=-=-=-=';	cr.aContext := exception signalerContext.cnt := 0.startPos := strm position.[ aContext notNil and: [ (cnt := cnt + 1) < 40 ] ]	whileTrue: [ 		aContext printDetails: strm.	"variable values"		strm cr.		aContext := aContext sender ].strm	cr;	nextPutAll: '--- The full stack ---';	cr.aContext := exception signalerContext.cnt := 0.[ aContext == nil ]	whileFalse: [ 		cnt := cnt + 1.		cnt = 40			ifTrue: [ 				strm					nextPutAll:							' - - - - - - - - - - - - - - -  			- - - - - - - - - - - - - - - - - -';					cr ].		strm			print: aContext;			cr.	"just class>>selector"		strm position > (startPos + 150000)			ifTrue: [ 				strm nextPutAll: '...etc...'.				^ self ].	"exit early"		cnt > 200			ifTrue: [ 				strm nextPutAll: '-- and more not shown --'.				^ self ].		aContext := aContext sender ].strm	nextPutAll: '=-=-=-=-=-=-=-END STACK TRACE -=-=-=-=-=-=-=-=';	cr
-]
-
-Metaclass HazelZygote >> printReferencesReportOnStreamAndQuit: aStream
-[
-aStream	nextPutAll: 'Chasing broken references and uninitialized variables';	cr.HazelMissingVariable allInstances	do: [ :v | 		aStream nextPutAll: v message.		aStream cr ].self justQuit: aStream
-]
-
-Metaclass HazelZygote >> saveAndQuit: aStream
-[
-| process |[ aStream close ]	on: Error	do: [  ].process := Processor activeProcess.[ process terminate.Smalltalk snapshot: true andQuit: true.Processor yield ] fork
-]
-
-Metaclass HazelZygote >> brokenReferencesReportForJenkins
-[
-^ self freshProcessDoing: #printReferencesReportForJenkinsOnStreamAndQuit:
-]
-
-Metaclass HazelZygote >> methodSizeReport
-[
-| sizeOf |^ self freshProcessDoing: #printMethodSizeReportOnStreamAndQuit:
-]
-
-Metaclass HazelZygote >> justQuit: aStream
-[
-Smalltalk snapshot: false andQuit: true
-]
-
-Metaclass HazelZygote >> runAllTests: aStream
-[
-| result d |Author fullName: 'Mr. Tester'.SmalltalkImage classPool at: #EndianCache put: #little.result := (Smalltalk at: #TestResult) new.((Smalltalk at: #TestCase) allSubclasses collect: #buildSuite) do: [ :suite | suite run: result ].aStream	nextPutAll: result asString;	cr;	cr.aStream	nextPutAll: 'Errors:';	cr.result unexpectedErrors	do: [ :err | 		aStream			nextPutAll: err asString;			cr ].aStream	cr;	nextPutAll: 'Failures:';	cr.result failures	do: [ :err | 		aStream			nextPutAll: err asString;			cr ].self justQuit: aStream
-]
-
-Metaclass HazelZygote >> freshProcessDoing: something
-[
-^ Process	forContext:		[ 		| f |		Symbol initialize.		HashedCollection rehashAll.		FileStream shutDown.		quitSemaphore := Semaphore new.		1 to: 5 do: [ :i | Smalltalk garbageCollect ].		[ 		f := StandardFileStream fileNamed: 'fileok.txt'.		Smalltalk sourceFileVersionString: 'PharoV10'.		[ 		LanguageEnvironment resetKnownEnvironments.		Smalltalk startupImage: true snapshotWorked: true.		self perform: something with: f ]			on: Error			do: [ :ex | self writeStackTraceFor: ex in: f ] ]			ensure: [ 				[ f close ]					on: Error					do: [  ].				Smalltalk quitPrimitive ] ] asContext	priority: 40
-]
-
-Metaclass HazelZygote >> printMethodSizeReportOnStreamAndQuit: aStream
-[
-| sizeOf |aStream	nextPutAll: 'Measuring method sizes';	cr.sizeOf := [ :m | | size |size := m sizeInMemory.(m literals reject: #isVariableBinding) do: [ :l | size := size + l sizeInMemory ].size ].aStream	nextPutAll: 'Methods analysis';	cr.((CompiledMethod allInstances sort: [ :a :b | (sizeOf value: a) > (sizeOf value: b) ]) first: 100)	do: [ :m | 		aStream nextPutAll: m methodClass name.		aStream nextPutAll: '>>'.		aStream nextPutAll: m selector.		aStream			tab;			tab;			tab;			tab.		aStream nextPutAll: (sizeOf value: m) asString.		aStream cr ].self justQuit: aStream
-]
-

@@ -1,125 +1,0 @@
-Class
-	name: #HazelKernelBuilder;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #(#kernelSpec #variableInitializer #bootstrapEnvironment #bootstrapDefinitionCache #methodBuilder );
-	classVariables: #(#problematicMethods #problematicClassVars );
-	package: #'Seed-HazelBuilder'.
-
-Class HazelKernelBuilder >> bootstrapEnvironment: aHzBootstrapEnvironment
-[
-bootstrapEnvironment := aHzBootstrapEnvironment
-]
-
-Class HazelKernelBuilder >> buildBehaviors
-[
-| sourceClasses |self bootstrapMetamodel.self behaviorDefinitions	do: [ :c | 		"We first generated the meta model objects, so we skip them"		(bootstrapEnvironment includesGlobalNamed: c name)			ifFalse: [ c buildRealBehaviorInEnvironment: bootstrapEnvironment ] ]
-]
-
-Class HazelKernelBuilder >> kernelSpec
-[
-^ kernelSpec
-]
-
-Class HazelKernelBuilder >> declareGlobalVariables
-[
-	"#(#SystemOrganization #Display #ActiveWorld #SourceFiles #Smalltalk #Processor #Sensor #ActiveHand #World #Undeclared #ActiveEvent #ImageImports #ScheduledControllers #Transcript #TextConstants)		do: [ :global | bootstrapEnvironment addGlobal: global pointingTo: nil. ]"
-
-]
-
-Class HazelKernelBuilder >> variableInitializer: anInitializer
-[
-variableInitializer := anInitializer
-]
-
-Class HazelKernelBuilder >> installMethods
-[
-self behaviorDefinitions	do: [ :behaviorDefinition | 		behaviorDefinition			installMethodsInBehavior: (bootstrapEnvironment globalNamed: behaviorDefinition name)			using: self methodBuilder ]
-]
-
-Class HazelKernelBuilder >> kernelSpec: anObject
-[
-kernelSpec := anObject
-]
-
-Class HazelKernelBuilder >> bootstrapEnvironment
-[
-^ bootstrapEnvironment
-]
-
-Class HazelKernelBuilder >> buildKernel
-[
-	"Entry point of the process: create a new self referential namespace and virtual machine meta data."
-self	declareGlobalVariables;	buildBehaviors;	installMethods;	closeEnvironment;	initializeImage
-]
-
-Class HazelKernelBuilder >> bootstrapMetamodel
-[
-kernelSpec bootstrapMetamodelOn: bootstrapEnvironment
-]
-
-Class HazelKernelBuilder >> createNewProcessor
-[
-	"Create new ProcessScheduler and install it as global 'Processor'."
-kernelSpec createNewProcessorForBootstrapEnvironment: bootstrapEnvironment
-]
-
-Class HazelKernelBuilder >> initialize
-[
-kernelSpec := PharoInternalSeed new.variableInitializer := NilValueInitializer new.methodBuilder := HzMethodBuilderByCopy new	builder: self;	yourself.bootstrapEnvironment := HzBootstrapEnvironment new
-]
-
-Class HazelKernelBuilder >> methodBuilder
-[
-^ methodBuilder
-]
-
-Class HazelKernelBuilder >> closeEnvironment
-[
-bootstrapEnvironment globalNamed: #Transcript pointTo: Transcript.	"We first fix the behavior relations, such as superclass, subclass relations used by the model"self behaviorDefinitions do: [ :definition | definition fixBehaviorRelationsOn: bootstrapEnvironment ].	"Afterwards, we make our behaviors know objects inside the environment"self behaviorDefinitions	do: [ :definition | definition closeOnEnvironment: bootstrapEnvironment andVariableInitializer: variableInitializer ]
-]
-
-Class HazelKernelBuilder >> cacheBootstrapDefinition
-[
-bootstrapDefinitionCache := Dictionary new.self behaviorDefinitions do: [ :spec | bootstrapDefinitionCache at: spec name put: spec ]
-]
-
-Class HazelKernelBuilder >> installSpecialObjectsArray
-[
-kernelSpec initializeSpecialObjectsArrayOnBootstrapEnvironment: self bootstrapEnvironment
-]
-
-Class HazelKernelBuilder >> methodBuilder: aMethodBuilder
-[
-methodBuilder := aMethodBuilder
-]
-
-Class HazelKernelBuilder >> createNewProcess
-[
-| newProcess ctx m cls |newProcess := kernelSpec newProcessForEnvironment: self bootstrapEnvironment.self flag: #Hack.	"we make the new process now the respective methods on our new image"ctx := newProcess suspendedContext.[ ctx = nil ]	whileFalse: [ 		m := ctx instVarAt: 4.	"'method'"		cls := self bootstrapEnvironment globalNamed: m methodClass theNonMetaClass name.		m methodClass isMeta			ifTrue: [ cls := cls class ].		ctx instVarAt: 4 put: cls >> m selector.	"'method'"		ctx := (ctx instVarNamed: 'closureOrNil') ifNotNil: [ (ctx instVarNamed: 'closureOrNil') outerContext ] ].(self bootstrapEnvironment globalNamed: #Processor) instVarAt: 2 put: newProcess	"activeProcess"
-]
-
-Class HazelKernelBuilder >> getGlobalBindingFor: key from: aMethod
-[
-(self bootstrapEnvironment includesGlobalNamed: key)	ifFalse: [ 		self bootstrapEnvironment addGlobal: key pointingTo: (variableInitializer valueForGlobal: key fromMethod: aMethod).		self bootstrapEnvironment addUndeclaredVariable: key ].^ self bootstrapEnvironment bindingOfGlobal: key
-]
-
-Class HazelKernelBuilder >> classDefinitionForClassName: aClassName
-[
-bootstrapDefinitionCache ifNil: [ self cacheBootstrapDefinition ].^ bootstrapDefinitionCache at: aClassName
-]
-
-Class HazelKernelBuilder >> initializeImage
-[
-| associationClass |self createNewProcessor.kernelSpec buildBasicSystemObjectFromClassTable: bootstrapEnvironment.	"We have to initialize the special objects array before the rest of the system, because they can use it"self installSpecialObjectsArray.kernelSpec initializeImageFor: bootstrapEnvironment.self createNewProcess
-]
-
-Class HazelKernelBuilder >> behaviorDefinitions
-[
-^ (kernelSpec behaviorsForEnvironment: bootstrapEnvironment) , (variableInitializer extraClassesForBuilder: self)
-]
-
-Metaclass
-	name: #HazelKernelBuilder;
-	instanceVariables: #().
-

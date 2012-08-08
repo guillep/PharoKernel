@@ -1,33 +1,0 @@
-Class
-	name: #ReportValueInitializer;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #(#exceptions );
-	classVariables: #();
-	package: #'Seed-HazelBuilder'.
-
-Class ReportValueInitializer >> extraClassesForBuilder: aBuilder
-[
-^ {(HzClassMapping	forClass: HazelMissingVariable	onClassRole: HazelMissingVariable	kernelSpec: aBuilder kernelSpec	inEnvironment: aBuilder bootstrapEnvironment)}
-]
-
-Class ReportValueInitializer >> exceptions
-[
-	"here are exposed all the exceptions to be replaced for hazel missing variables.  They are normally lazy initialized variables that depend on its value being nil"
-exceptions ifNotNil: [ ^ exceptions ].exceptions := {{#Behavior.#ObsoleteSubclasses}.{#HashTableSizes.'sizes'}.{#SystemChangeNotifier.#UniqueInstance}.{#SmalltalkImage.#StartUpList}.{#SmalltalkImage.#ShutDownList}.{#CommandLineArguments.'singleton'}.{#LanguageEnvironment.#FileNameConverterClass}.{#LanguageEnvironment.#KnownEnvironments}.{#LanguageEnvironment.#SystemConverterClass}.{#Locale.#CurrentPlatform}.{#WeakArray.#FinalizationDependents}.{#FileStream.#TheStdioHandles}.{#FileStream.#StdioFiles}.{#FileStream.#Stdout}.{#FileStream.#Stdin}.{#FileStream.#Stderr}.{#Object.#DependentsFields}.{#EventManager.#ActionMaps}.{#ISO885915TextConverter.'latin1Map'}.{#ISO885915TextConverter.'latin1Encodings'}.{#ISO88592TextConverter.'latin1Map'}.{#ISO88592TextConverter.'latin1Encodings'}.{#ISO88597TextConverter.'latin1Map'}.{#ISO88597TextConverter.'latin1Encodings'}.{#Latin1TextConverter.'latin1Map'}.{#Latin1TextConverter.'latin1Encodings'}.{"This should be done for every subclass of TextConverter"#UTF8TextConverter.'latin1Map'}.	"This should be done for every subclass of TextConverter"{#UTF8TextConverter.'latin1Encodings'}.{#StandardFileStream.#Registry}.{#Delay.#SuspendedDelays}.{#Delay.#ScheduledDelay}.{#Delay.#FinishedDelay}.{#Delay.#ActiveDelay}.{#SmalltalkImage.#LowSpaceProcess}.{#ProcessorScheduler.#BackgroundProcess}.{#SmalltalkImage.#Tools}.{#Author.'uniqueInstance'}.{#VirtualMachine.#WordSize}.{#SmalltalkImage.#CheckSourcesFileAvailability}.{#SmalltalkImage.#CheckChangesFileAvailability}.{#Locale.#Current}.{#Locale.#Activated}.{#WeakArray.#FinalizationDependents}.{#WeakArray.#FinalizationProcess}.{#SystemVersion.#Current}.{#InputEventFetcher.#Default}.{#WeakAnnouncementSubscription.#FinalizationList}.{#DiskStore.#CurrentFS}.{#FileLocator.#Resolver}.{#FileHandle.#Registry}.{#Categorizer.#Default}.{#ChangesLog.#Default}.#World}.^ exceptions
-]
-
-Class ReportValueInitializer >> valueForGlobal: globalName fromMethod: aCompiledMethod
-[
-(self exceptions includes: globalName)	ifTrue: [ ^ nil ].^ HazelMissingVariable new	message:			('Undeclared global {1} is referenced in method {2}'					format:						{globalName.						(aCompiledMethod printString)});	class: aCompiledMethod methodClass name
-]
-
-Class ReportValueInitializer >> valueForClassPool: aByteSymbol ofClassNamed: aClassName
-[
-(self exceptions	includes:		{aClassName.		aByteSymbol})	ifTrue: [ ^ nil ].^ HazelMissingVariable new	message:			('ClassPool {1} is not initialized in class {2}'					format:						{aByteSymbol.						aClassName});	class: aClassName
-]
-
-Metaclass
-	name: #ReportValueInitializer;
-	instanceVariables: #().
-
