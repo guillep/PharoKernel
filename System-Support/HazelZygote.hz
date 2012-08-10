@@ -1,0 +1,26 @@
+Class
+	name: #HazelZygote;
+	superclass: #ClassObject;
+	instanceSpecification: #(#pointers #words );
+	instanceVariables: #();
+	classVariables: #();
+	package: #'Seed-HazelBuilder'.
+
+Metaclass
+	name: #HazelZygote;
+	instanceVariables: #(#quitSemaphore ).
+
+Metaclass HazelZygote >> freshProcessDoing: something
+[
+^ Process	forContext:		[ 		| f |		Symbol initialize.		HashedCollection rehashAll.		FileStream shutDown.		quitSemaphore := Semaphore new.		1 to: 5 do: [ :i | Smalltalk garbageCollect ].		[ 		f := StandardFileStream fileNamed: 'fileok.txt'.		Smalltalk sourceFileVersionString: 'PharoV10'.		[ 		LanguageEnvironment resetKnownEnvironments.		Smalltalk startupImage: true snapshotWorked: true.		self perform: something with: f ]			on: Error			do: [ :ex | self writeStackTraceFor: ex in: f ] ]			ensure: [ 				[ f close ]					on: Error					do: [  ].				Smalltalk quitPrimitive ] ] asContext	priority: 40
+]
+
+Metaclass HazelZygote >> freshProcessQuitting
+[
+^ self freshProcessDoing: #justQuit:
+]
+
+Metaclass HazelZygote >> justQuit: aStream
+[
+Smalltalk snapshot: false andQuit: true
+]
