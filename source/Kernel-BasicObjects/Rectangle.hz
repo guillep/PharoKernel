@@ -44,8 +44,7 @@ Class Rectangle >> allAreasOutsideList: aCollection startingAt: startIndex do: a
 
 Class Rectangle >> amountToTranslateWithin: aRectangle
 [
-	"Answer a Point, delta, such that self + delta is forced within aRectangle."
-	"Altered so as to prefer to keep self topLeft inside when all of self	cannot be made to fit 7/27/96 di"
+	"Answer a Point, delta, such that self + delta is forced within aRectangle.	Keep self topLeft inside when all of self cannot be made to fit"
 | dx dy |dx := 0.dy := 0.self right > aRectangle right	ifTrue: [ dx := aRectangle right - self right ].self bottom > aRectangle bottom	ifTrue: [ dy := aRectangle bottom - self bottom ].self left + dx < aRectangle left	ifTrue: [ dx := aRectangle left - self left ].self top + dy < aRectangle top	ifTrue: [ dy := aRectangle top - self top ].^ dx @ dy
 ]
 
@@ -115,7 +114,7 @@ Class Rectangle >> center
 
 Class Rectangle >> centeredBeneath: aRectangle
 [
-	"Move the reciever so that its top center point coincides with the bottom center point of aRectangle.  5/20/96 sw:"
+	"Move the reciever so that its top center point coincides with the bottom center point of aRectangle."
 ^ self align: self topCenter with: aRectangle bottomCenter
 ]
 
@@ -162,7 +161,7 @@ Class Rectangle >> deltaToEnsureInOrCentered: r extra: aNumber
 
 Class Rectangle >> encompass: aPoint
 [
-	"Answer a Rectangle that contains both the receiver and aPoint.  5/30/96 sw"
+	"Answer a Rectangle that contains both the receiver and aPoint."
 ^ Rectangle origin: (origin min: aPoint) corner: (corner max: aPoint)
 ]
 
@@ -487,7 +486,7 @@ Class Rectangle >> translatedAndSquishedToBeWithin: aRectangle
 
 Class Rectangle >> translatedToBeWithin: aRectangle
 [
-	"Answer a copy of the receiver that does not extend beyond aRectangle.  7/8/96 sw"
+	"Answer a copy of the receiver that does not extend beyond aRectangle."
 ^ self translateBy: (self amountToTranslateWithin: aRectangle)
 ]
 

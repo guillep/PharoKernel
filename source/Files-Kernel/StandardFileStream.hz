@@ -77,7 +77,7 @@ self closed	ifTrue: [ ^ self reopen ].(self primSizeNoError: fileID) ifNotNil:
 
 Class StandardFileStream >> file
 [
-	"Answer the object representing the receiver's file.  Need for compatibility with some calls -- check senders.  2/14/96 sw"
+	"Answer the object representing the receiver's file.  Need for compatibility with some calls -- check senders. "
 ^ self
 ]
 
@@ -134,7 +134,7 @@ Class StandardFileStream >> isBinary
 
 Class StandardFileStream >> isDirectory
 [
-	"Answer whether the receiver represents a directory.  For the post-transition case, uncertain what to do.  2/14/96 sw"
+	"Answer whether the receiver represents a directory.  For the post-transition case, uncertain what to do."
 ^ false
 ]
 
@@ -162,7 +162,7 @@ Class StandardFileStream >> next
 
 Class StandardFileStream >> next: n
 [
-	"Return a string with the next n characters of the filestream in it.  1/31/96 sw"
+	"Return a string with the next n characters of the filestream in it."
 ^ self nextInto: (self collectionSpecies new: n)
 ]
 
@@ -198,14 +198,13 @@ self next: aBitmap basicSize into: aBitmap startingAt: 1.aBitmap restoreEndiann
 
 Class StandardFileStream >> open
 [
-	"For compatibility with a few existing things.  2/14/96 sw"
+	"For compatibility with a few existing things."
 ^ self reopen
 ]
 
 Class StandardFileStream >> open: fileName forWrite: writeMode
 [
 	"Open the file with the given name. If writeMode is true, allow writing, otherwise open the file in read-only mode."
-	"Changed to do a GC and retry before failing ar 3/21/98 17:25"
 | f |f := fileName asVmPathName.fileID := StandardFileStream	retryWithGC: [ self primOpen: f writable: writeMode ]	until: [ :id | id notNil ]	forFileNamed: fileName.fileID ifNil: [ ^ nil ].	"allows sender to detect failure"name := fileName.self register.rwmode := writeMode.buffer1 := String new: 1.self enableReadBuffering
 ]
 
@@ -217,7 +216,7 @@ fileID := aFileID.name := streamName.rwmode := writeMode.buffer1 := String ne
 
 Class StandardFileStream >> openReadOnly
 [
-	"Open the receiver as a read-only file.  1/31/96 sw"
+	"Open the receiver as a read-only file."
 ^ self open: name forWrite: false
 ]
 
@@ -247,13 +246,13 @@ Class StandardFileStream >> peekLast
 
 Class StandardFileStream >> position
 [
-	"Return the receiver's current file position.  2/12/96 sw"
+	"Return the receiver's current file position."
 collection	ifNotNil: [ 		position < readLimit			ifTrue: [ ^ (self primGetPosition: fileID) - readLimit + position ] ].^ self primGetPosition: fileID
 ]
 
 Class StandardFileStream >> position: pos
 [
-	"Set the receiver's position as indicated.  2/12/96 sw"
+	"Set the receiver's position as indicated."
 collection	ifNotNil: [ 		position < readLimit			ifTrue: [ 				| newPosition |				newPosition := pos - (self primGetPosition: fileID) + readLimit.				newPosition < 0					ifTrue: [ 						| offsetPos |						self primSetPosition: fileID to: (offsetPos := pos - (collection size // 4) max: 0).						readLimit := self							primRead: fileID							into: collection							startingAt: 1							count: collection size.						position := pos - offsetPos.						^ self ].				newPosition < readLimit					ifTrue: [ 						position := newPosition.						^ self ]					ifFalse: [ readLimit := position := 0 ] ] ].^ self primSetPosition: fileID to: pos
 ]
 
@@ -357,7 +356,7 @@ Class StandardFileStream >> primWrite: id from: stringOrByteArray startingAt: st
 
 Class StandardFileStream >> printOn: aStream
 [
-	"Put a printed version of the receiver onto aStream.  1/31/96 sw"
+	"Put a printed version of the receiver onto aStream."
 aStream	nextPutAll: self class name;	nextPutAll: ': ';	print: name
 ]
 
@@ -415,19 +414,19 @@ self fullName asFileReference setMacType: 'SOBJ' creator: 'FAST'
 
 Class StandardFileStream >> setToEnd
 [
-	"Set the position of the receiver to the end of file.  1/31/96 sw"
+	"Set the position of the receiver to the end of file."
 self position: self size
 ]
 
 Class StandardFileStream >> size
 [
-	"Answer the size of the file in characters.  2/12/96 sw"
+	"Answer the size of the file in characters."
 ^ self primSize: fileID
 ]
 
 Class StandardFileStream >> skip: n
 [
-	"Set the character position to n characters from the current position.	Error if not enough characters left in the file.  1/31/96 sw"
+	"Set the character position to n characters from the current position.	Error if not enough characters left in the file."
 collection	ifNotNil: [ 		position < readLimit			ifTrue: [ 				| newPosition |				((newPosition := position + n) >= 0 and: [ newPosition < readLimit ])					ifTrue: [ 						position := newPosition.						^ self ] ] ].self position: self position + n
 ]
 

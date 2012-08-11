@@ -16,11 +16,6 @@ Class CompiledMethodTrailer >> createMethod: numberOfBytesForAllButTrailer class
 | meth |encodedData ifNil: [ self encode ].meth := aCompiledMethodClass newMethod: numberOfBytesForAllButTrailer + size header: headerWord.	"copy the encoded trailer data"1 to: size do: [ :i | meth at: meth size - size + i put: (encodedData at: i) ].^ meth
 ]
 
-Class CompiledMethodTrailer >> createMethod: numberOfBytesForAllButTrailer header: headerWord
-[
-| meth |encodedData ifNil: [ self encode ].meth := CompiledMethod newMethod: numberOfBytesForAllButTrailer + size header: headerWord.	"copy the encoded trailer data"1 to: size do: [ :i | meth at: meth size - size + i put: (encodedData at: i) ].^ meth
-]
-
 Class CompiledMethodTrailer >> createMethod: numberOfBytesForAllButTrailer header: headerWord methodClass: aCompiledMethodClass
 [
 | meth |encodedData ifNil: [ self encode ].meth := aCompiledMethodClass newMethod: numberOfBytesForAllButTrailer + size header: headerWord.	"copy the encoded trailer data"1 to: size do: [ :i | meth at: meth size - size + i put: (encodedData at: i) ].^ meth

@@ -427,7 +427,7 @@ aCollection	do: [ :suffix | 		(self endsWith: suffix)			ifTrue: [ ^ true ] ].
 
 Class String >> endsWithDigit
 [
-	"Answer whether the receiver's final character represents a digit.  3/11/96 sw"
+	"Answer whether the receiver's final character represents a digit."
 ^ self size > 0 and: [ self last isDigit ]
 ]
 
@@ -640,7 +640,7 @@ Class String >> indexOfFirstUppercaseCharacter
 
 Class String >> indexOfSubCollection: sub
 [
-#Collectn.	"Added 2000/04/08 For ANSI <sequenceReadableCollection> protocol."^ self indexOfSubCollection: sub startingAt: 1 ifAbsent: [ 0 ]
+^ self indexOfSubCollection: sub startingAt: 1 ifAbsent: [ 0 ]
 ]
 
 Class String >> indexOfSubCollection: sub startingAt: start ifAbsent: exceptionBlock
@@ -910,8 +910,9 @@ Class String >> startsWithDigit
 
 Class String >> stemAndNumericSuffix
 [
-	"Parse the receiver into a string-valued stem and a numeric-valued suffix.  6/7/96 sw"
-| stem suffix position |stem := self.suffix := 0.position := 1.[ stem endsWithDigit and: [ stem size > 1 ] ]	whileTrue: [ 		suffix := stem last digitValue * position + suffix.		position := position * 10.		stem := stem copyFrom: 1 to: stem size - 1 ].^ Array with: stem with: suffix	"'Fred2305' stemAndNumericSuffix"
+	"Parse the receiver into a string-valued stem and a numeric-valued suffix."
+	"'Fred2305' stemAndNumericSuffix"
+| stem suffix position |stem := self.suffix := 0.position := 1.[ stem endsWithDigit and: [ stem size > 1 ] ]	whileTrue: [ 		suffix := stem last digitValue * position + suffix.		position := position * 10.		stem := stem copyFrom: 1 to: stem size - 1 ].^ Array with: stem with: suffix
 ]
 
 Class String >> storeOn: aStream
@@ -927,7 +928,7 @@ Class String >> string
 
 Class String >> stringRepresentation
 [
-	"Answer a string that represents the receiver.  For most objects this is simply its printString, but for strings themselves, it's themselves, to avoid the superfluous extra pair of quotes.  6/12/96 sw"
+	"Answer a string that represents the receiver.  For most objects this is simply its printString, but for strings themselves, it's themselves, to avoid the superfluous extra pair of quotes."
 ^ self
 ]
 
@@ -939,13 +940,13 @@ Class String >> stringhash
 Class String >> subStrings
 [
 	"Answer an array of the substrings that compose the receiver."
-#Collectn.	"Added 2000/04/08 For ANSI <readableString> protocol."^ self substrings
+^ self substrings
 ]
 
 Class String >> subStrings: separators
 [
 	"Answer an array containing the substrings in the receiver separated 	by the elements of separators."
-| result sourceStream subStringStream |#Collectn.	"Changed 2000/04/08 For ANSI <readableString> protocol."(separators isString or: [ separators allSatisfy: [ :element | element isKindOf: Character ] ])	ifFalse: [ ^ self error: 'separators must be Characters.' ].sourceStream := self readStream.result := OrderedCollection new.subStringStream := String new writeStream.[ sourceStream atEnd ]	whileFalse: [ 		| char |		char := sourceStream next.		(separators includes: char)			ifTrue: [ 				subStringStream isEmpty					ifFalse: [ 						result add: subStringStream contents.						subStringStream := String new writeStream ] ]			ifFalse: [ subStringStream nextPut: char ] ].subStringStream isEmpty	ifFalse: [ result add: subStringStream contents ].^ result asArray
+| result sourceStream subStringStream |(separators isString or: [ separators allSatisfy: [ :element | element isKindOf: Character ] ])	ifFalse: [ ^ self error: 'separators must be Characters.' ].sourceStream := self readStream.result := OrderedCollection new.subStringStream := String new writeStream.[ sourceStream atEnd ]	whileFalse: [ 		| char |		char := sourceStream next.		(separators includes: char)			ifTrue: [ 				subStringStream isEmpty					ifFalse: [ 						result add: subStringStream contents.						subStringStream := String new writeStream ] ]			ifFalse: [ subStringStream nextPut: char ] ].subStringStream isEmpty	ifFalse: [ result add: subStringStream contents ].^ result asArray
 ]
 
 Class String >> substrings
@@ -1052,7 +1053,7 @@ Class String >> trimRight: aBlock
 
 Class String >> truncateTo: smallSize
 [
-	"return myself or a copy shortened to smallSize.  1/18/96 sw"
+	"return myself or a copy shortened to smallSize."
 ^ self size <= smallSize	ifTrue: [ self ]	ifFalse: [ self copyFrom: 1 to: smallSize ]
 ]
 
