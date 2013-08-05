@@ -1,48 +1,65 @@
-Class
-	name: #FLAnalysis;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #(#objectStack #firstMapper #clusterization #root );
-	classVariables: #();
+FLAnalysis
+	instanceVariables: #(#objectStack #firstMapper #clusterization #root #privateObjectStack #privateFirstMapper );
 	package: #'Fuel-Core'.
 
-Class FLAnalysis >> clusterization
+FLAnalysis >> clusterization
 [
-^ clusterization
+	^ clusterization
 ]
 
-Class FLAnalysis >> fuelAccept: aGeneralMapper
+FLAnalysis >> fuelAccept: aGeneralMapper
 [
-^ aGeneralMapper visitSubstitution: self by: nil
+	^ aGeneralMapper visitSubstitution: self by: nil
 ]
 
-Class FLAnalysis >> initializeWith: aMapper root: anObject
+FLAnalysis >> initializeWith: aMapper private: privateMapper root: anObject
 [
-self initialize.firstMapper := aMapper.aMapper analysis: self.root := anObject.objectStack := FLSimpleStack new.clusterization := FLClusterization new
+	self initialize.
+	firstMapper := aMapper.
+	privateFirstMapper := privateMapper.
+	aMapper analysis: self.
+	privateMapper analysis: self.
+	root := anObject.
+	objectStack := FLSimpleStack new.
+	privateObjectStack := FLSimpleStack new.
+	clusterization := FLClusterization new
 ]
 
-Class FLAnalysis >> mapAndTrace: anObject
+FLAnalysis >> mapAndTrace: anObject
 [
 	"Map an object to its cluster. Trace its references."
-firstMapper mapAndTrace: anObject
+
+	firstMapper mapAndTrace: anObject fuelReplacement
 ]
 
-Class FLAnalysis >> run
+FLAnalysis >> privateMapAndTrace: anObject
 [
-objectStack push: root.[ objectStack isEmpty ] whileFalse: [ self mapAndTrace: objectStack pop ]
+	"Map an object to its cluster. Trace its references."
+
+	privateFirstMapper mapAndTrace: anObject
 ]
 
-Class FLAnalysis >> trace: anObject
+FLAnalysis >> privateTrace: anObject
 [
-objectStack push: anObject
+	privateObjectStack push: anObject
 ]
 
-Metaclass
-	name: #FLAnalysis;
-	instanceVariables: #().
-
-Metaclass FLAnalysis >> newWith: aMapper root: anObject
+FLAnalysis >> run
 [
-^ self basicNew	initializeWith: aMapper root: anObject;	yourself
+	objectStack push: root.
+	[ objectStack isEmpty ] whileFalse: [ self mapAndTrace: objectStack pop ].
+	[ privateObjectStack isEmpty ] whileFalse: [ self privateMapAndTrace: privateObjectStack pop ]
+]
+
+FLAnalysis >> trace: anObject
+[
+	objectStack push: anObject
+]
+
+FLAnalysis class >> newWith: aMapper private: privateMapper root: anObject
+[
+	^ self basicNew
+		initializeWith: aMapper private: privateMapper root: anObject;
+		yourself
 ]
 

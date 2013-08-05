@@ -1,43 +1,51 @@
-Class
-	name: #Latin1Environment;
-	superclass: #ClassLanguageEnvironment;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+Latin1Environment
+	superclass: #LanguageEnvironment;
 	package: #'Multilingual-Languages'.
 
-Metaclass
-	name: #Latin1Environment;
-	instanceVariables: #().
-
-Metaclass Latin1Environment >> leadingChar
+Latin1Environment class >> leadingChar
 [
-^ 0
+	^ 0
 ]
 
-Metaclass Latin1Environment >> nextPutRightHalfValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
+Latin1Environment class >> nextPutRightHalfValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
 [
-^ self traditionalCharsetClass	nextPutRightHalfValue: ascii	toStream: aStream	withShiftSequenceIfNeededForTextConverterState: state
+	^ self traditionalCharsetClass
+		nextPutRightHalfValue: ascii
+		toStream: aStream
+		withShiftSequenceIfNeededForTextConverterState: state
 ]
 
-Metaclass Latin1Environment >> nextPutValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
+Latin1Environment class >> nextPutValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
 [
-^ self traditionalCharsetClass	nextPutValue: ascii	toStream: aStream	withShiftSequenceIfNeededForTextConverterState: state
+	^ self traditionalCharsetClass
+		nextPutValue: ascii
+		toStream: aStream
+		withShiftSequenceIfNeededForTextConverterState: state
 ]
 
-Metaclass Latin1Environment >> supportedLanguages
+Latin1Environment class >> supportedLanguages
 [
-	"Return the languages that this class supports. 	Any translations for those languages will use this class as their environment."
-^ #('fr' 'es' 'ca' 'eu' 'pt' 'it' 'sq' 'rm' 'nl' 'de' 'da' 'sv' 'no' 'fi' 'fo' 'is' 'ga' 'gd' 'en' 'af' 'sw')
+	"Return the languages that this class supports. 
+	Any translations for those languages will use this class as their environment."
+
+	^ #('fr' 'es' 'ca' 'eu' 'pt' 'it' 'sq' 'rm' 'nl' 'de' 'da' 'sv' 'no' 'fi' 'fo' 'is' 'ga' 'gd' 'en' 'af' 'sw')
 ]
 
-Metaclass Latin1Environment >> systemConverterClass
+Latin1Environment class >> systemConverterClass
 [
-^ Latin1TextConverter
+	OSPlatform isWin32
+		ifTrue: [ ^ UTF8TextConverter ].
+	OSPlatform isMacOSX
+		ifTrue: [ ^ UTF8TextConverter ].
+	OSPlatform isMacOS
+		ifTrue: [ ^ MacRomanTextConverter ].
+	OSPlatform isUnix
+		ifTrue: [ ^ UTF8TextConverter ].
+	^ Latin1TextConverter
 ]
 
-Metaclass Latin1Environment >> traditionalCharsetClass
+Latin1Environment class >> traditionalCharsetClass
 [
-^ Latin1
+	^ Latin1
 ]
 

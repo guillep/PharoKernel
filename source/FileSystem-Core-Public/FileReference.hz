@@ -1,299 +1,348 @@
-Class
-	name: #FileReference;
-	superclass: #ClassAbstractFileReference;
-	instanceSpecification: #(#pointers #words );
+FileReference
+	superclass: #AbstractFileReference;
 	instanceVariables: #(#filesystem #path );
-	classVariables: #();
 	package: #'FileSystem-Core-Public'.
 
-Class FileReference >> = other
+FileReference >> = other
 [
-^ self species = other species and: [ self path = other path and: [ self fileSystem = other fileSystem ] ]
+	^ self species = other species and: [ self path = other path and: [ self fileSystem = other fileSystem ] ]
 ]
 
-Class FileReference >> asAbsolute
+FileReference >> absolutePath
+[
+	"Return the absolute of the receiver"
+
+	^ self path
+]
+
+FileReference >> asAbsolute
 [
 	"Return the receiver as an absolute file reference."
-^ self isAbsolute	ifTrue: [ self ]	ifFalse: [ filesystem referenceTo: (filesystem resolve: path) ]
+
+	^ self isAbsolute
+		ifTrue: [ self ]
+		ifFalse: [ filesystem referenceTo: (filesystem resolve: path) ]
 ]
 
-Class FileReference >> asFileReference
+FileReference >> asFileReference
 [
-^ self
+	^ self
 ]
 
-Class FileReference >> contains: anObject
+FileReference >> containsReference: aReference
 [
-^ anObject isContainedBy: self
+	^ aReference fileSystem = filesystem and: [ path contains: aReference path ]
 ]
 
-Class FileReference >> containsReference: aReference
+FileReference >> copyTo: aReference
 [
-^ aReference fileSystem = filesystem and: [ path contains: aReference path ]
+	self isDirectory
+		ifTrue: [ aReference ensureDirectory ]
+		ifFalse: [ filesystem = aReference fileSystem
+				ifTrue: [ filesystem copy: path to: aReference path ]
+				ifFalse: [ filesystem copy: path toReference: aReference ] ]
 ]
 
-Class FileReference >> copyTo: aReference
+FileReference >> copyWithPath: newPath
 [
-self isDirectory	ifTrue: [ aReference ensureDirectory ]	ifFalse: [ 		filesystem = aReference fileSystem			ifTrue: [ filesystem copy: path to: aReference path ]			ifFalse: [ filesystem copy: path toReference: aReference ] ]
+	^ filesystem referenceTo: newPath
 ]
 
-Class FileReference >> copyWithPath: newPath
+FileReference >> createDirectory
 [
-^ filesystem referenceTo: newPath
+	"Create a directory if it does not already exist, if this is the case raise the DirectoryExists exception."
+
+	filesystem createDirectory: path
 ]
 
-Class FileReference >> createDirectory
+FileReference >> creationTime
 [
-filesystem createDirectory: path
+	^ filesystem creationTime: self path
 ]
 
-Class FileReference >> creationTime
+FileReference >> delete
 [
-^ filesystem creationTime: self path
+	filesystem delete: path
 ]
 
-Class FileReference >> delete
+FileReference >> deleteIfAbsent: aBlock
 [
-filesystem delete: path
+	self exists
+		ifTrue: [ self delete ]
+		ifFalse: aBlock
 ]
 
-Class FileReference >> deleteIfAbsent: aBlock
-[
-self exists	ifTrue: [ self delete ]	ifFalse: aBlock
-]
-
-Class FileReference >> ensureDirectory
+FileReference >> ensureDirectory
 [
 	"Create if necessary a directory for the receiver."
-filesystem ensureDirectory: path
+
+	filesystem ensureDirectory: path
 ]
 
-Class FileReference >> entries
+FileReference >> entries
 [
 	"Return the entries (meta data - file description) of the direct children of the receiver"
-^ self fileSystem entriesAt: self path
+
+	^ self fileSystem entriesAt: self path
 ]
 
-Class FileReference >> entry
+FileReference >> entry
 [
 	"Return the entry (meta data) describing the receiver."
-^ filesystem entryAt: path
+
+	^ filesystem entryAt: path
 ]
 
-Class FileReference >> exists
+FileReference >> exists
 [
-^ filesystem exists: path
+	^ filesystem exists: path
 ]
 
-Class FileReference >> fileSystem
+FileReference >> fileSystem
 [
 	"Return the filesystem to which the receiver belong."
-^ filesystem
+
+	^ filesystem
 ]
 
-Class FileReference >> fullName
+FileReference >> fullName
 [
 	"Return the full path name of the receiver."
-^ filesystem stringFromPath: (filesystem resolve: path)
+
+	^ filesystem stringFromPath: (filesystem resolve: path)
 ]
 
-Class FileReference >> fullPath
+FileReference >> fullPath
 [
-^ self path
+	^ self path
 ]
 
-Class FileReference >> hasChildren
+FileReference >> hasChildren
 [
 	"Return whether the receiver has any children."
+
 	"FileSystem workingDirectory hasChildren"
-^ filesystem hasChildren: path
+
+	^ filesystem hasChildren: path
 ]
 
-Class FileReference >> hasDirectories
+FileReference >> hasDirectories
 [
 	"Return whether the receiver has children that are directories."
+
 	"FileSystem workingDirectory hasDirectories"
-^ filesystem hasDirectories: path
+
+	^ filesystem hasDirectories: path
 ]
 
-Class FileReference >> hasFiles
+FileReference >> hasFiles
 [
 	"Return whether the receiver has children that are files."
+
 	"FileSystem workingDirectory hasFiles"
-^ filesystem hasFiles: path
+
+	^ filesystem hasFiles: path
 ]
 
-Class FileReference >> hash
+FileReference >> hash
 [
-^ path hash bitXor: filesystem hash
+	^ path hash bitXor: filesystem hash
 ]
 
-Class FileReference >> isAbsolute
+FileReference >> isAbsolute
 [
-^ path isAbsolute
+	^ path isAbsolute
 ]
 
-Class FileReference >> isDirectory
+FileReference >> isDirectory
 [
-^ filesystem isDirectory: path
+	^ filesystem isDirectory: path
 ]
 
-Class FileReference >> isFile
+FileReference >> isFile
 [
-^ filesystem isFile: path
+	^ filesystem isFile: path
 ]
 
-Class FileReference >> isReadable
+FileReference >> isReadable
 [
-^ filesystem isReadable: path
+	^ filesystem isReadable: path
 ]
 
-Class FileReference >> isRelative
+FileReference >> isRelative
 [
-^ path isRelative
+	^ path isRelative
 ]
 
-Class FileReference >> isRoot
+FileReference >> isRoot
 [
-^ path isRoot
+	^ path isRoot
 ]
 
-Class FileReference >> isSymlink
+FileReference >> isSymlink
 [
-^ filesystem isSymlink: path
+	^ filesystem isSymlink: path
 ]
 
-Class FileReference >> isWritable
+FileReference >> isWritable
 [
-^ filesystem isWritable: path
+	^ filesystem isWritable: path
 ]
 
-Class FileReference >> macTypeAndCreator
+FileReference >> macTypeAndCreator
 [
-| results typeString creatorString |"get the Macintosh file type and creator info for the file with the given name. Fails if the file does not exist or if the type and creator type arguments are not strings of length 4. Does nothing on other platforms (where the underlying primitive is a noop).""FileDirectory default getMacFileNamed: 'foo'"self flag: 'TODO'	"	typeString := ByteArray new: 4 withAll: ($? asInteger). #[63 63 63 63]	creatorString := ByteArray new: 4 withAll: ($? asInteger).	[self primGetMacFileNamed: (self fullNameFor: fileName) asVmPathName		type: typeString		creator: creatorString.] ensure: 		[typeString := typeString asString. 		creatorString := creatorString asString].	results := Array with: typeString convertFromSystemString with: creatorString convertFromSystemString.	^results"
+	| results typeString creatorString |
+	"get the Macintosh file type and creator info for the file with the given name. Fails if the file does not exist or if the type and creator type arguments are not strings of length 4. Does nothing on other platforms (where the underlying primitive is a noop)."
+	"FileDirectory default getMacFileNamed: 'foo'"
+	self flag: 'TODO'	"	typeString := ByteArray new: 4 withAll: ($? asInteger). #[63 63 63 63]	creatorString := ByteArray new: 4 withAll: ($? asInteger).	[self primGetMacFileNamed: (self fullNameFor: fileName) asVmPathName		type: typeString		creator: creatorString.] ensure: 		[typeString := typeString asString. 		creatorString := creatorString asString].	results := Array with: typeString convertFromSystemString with: creatorString convertFromSystemString.	^results"
 ]
 
-Class FileReference >> mimeTypes
+FileReference >> mimeTypes
 [
 	"Return the possible mime types for the given path."
-^ filesystem mimeTypesAt: path
+
+	^ filesystem mimeTypesAt: path
 ]
 
-Class FileReference >> modificationTime
+FileReference >> modificationTime
 [
-^ filesystem modificationTime: self path
+	^ filesystem modificationTime: self path
 ]
 
-Class FileReference >> moveTo: aReference
+FileReference >> moveTo: aReference
 [
-| result |result := self fileSystem rename: self path to: aReference path.result ifNotNil: [ self setFileSystem: filesystem path: aReference path ]
+	| result |
+	result := self fileSystem rename: self path to: aReference path.
+	result ifNotNil: [ self setFileSystem: filesystem path: aReference path ]
 ]
 
-Class FileReference >> nextVersion
+FileReference >> nextVersion
 [
-	"Assumes a file name includes a version number encoded as '.' followed by digits 	preceding the file extension.  Increment the version number and answer the new file name.	If a version number is not found, return just the file"
-| parent version versionNumbers nameWithoutExtension |self exists	ifFalse: [ ^ self ].parent := self parent.nameWithoutExtension := self basename copyUpTo: $..versionNumbers := parent files	select: [ :f | f basename beginsWith: nameWithoutExtension ]	thenCollect: [ :f | Number squeezeNumberOutOfString: f basename ifFail: [ 0 ] ].versionNumbers ifEmpty: [ ^ self ].version := versionNumbers max + 1.^ parent / (nameWithoutExtension , '.' , version asString) , self extension
+	"Assumes a file name includes a version number encoded as '.' followed by digits 
+	preceding the file extension.  Increment the version number and answer the new file name.
+	If a version number is not found, return just the file"
+
+	| parent version versionNumbers nameWithoutExtension |
+	self exists
+		ifFalse: [ ^ self ].
+	parent := self parent.
+	nameWithoutExtension := self basename copyUpTo: $..
+	versionNumbers := parent files
+		select: [ :f | f basename beginsWith: nameWithoutExtension ]
+		thenCollect: [ :f | Number squeezeNumberOutOfString: f basename ifFail: [ 0 ] ].
+	versionNumbers ifEmpty: [ ^ self ].
+	version := versionNumbers max + 1.
+	^ parent / (nameWithoutExtension , '.' , version asString) , self extension
 ]
 
-Class FileReference >> openWritable: aBoolean
+FileReference >> openWritable: aBoolean
 [
-^ filesystem open: path writable: aBoolean
+	^ filesystem open: path writable: aBoolean
 ]
 
-Class FileReference >> path
+FileReference >> path
 [
 	"Return the path internal representation that denotes the receiver in the context of its filesystem. "
-^ path
+
+	^ path
 ]
 
-Class FileReference >> pathName
+FileReference >> pathName
 [
-self deprecated: 'Use fullName instead' on: '2012-06-22 19:00' in: #Pharo20.^ self fullName
+	self deprecated: 'Use fullName instead' on: '2012-06-22 19:00' in: #Pharo20.
+	^ self fullName
 ]
 
-Class FileReference >> pathString
+FileReference >> pathString
 [
 	"Return the full path name of the receiver."
-^ filesystem stringFromPath: (filesystem resolve: path)
+
+	^ filesystem stringFromPath: (filesystem resolve: path)
 ]
 
-Class FileReference >> permissions
+FileReference >> permissions
 [
-^ filesystem permissions: self path
+	^ filesystem permissions: self path
 ]
 
-Class FileReference >> printOn: aStream
+FileReference >> printOn: aStream
 [
-filesystem forReferencePrintOn: aStream.filesystem printPath: path on: aStream
+	filesystem forReferencePrintOn: aStream.
+	filesystem printPath: path on: aStream
 ]
 
-Class FileReference >> readStream
+FileReference >> readStream
 [
-^ filesystem readStreamOn: self path
+	^ filesystem readStreamOn: self path
 ]
 
-Class FileReference >> renameTo: newBasename
+FileReference >> renameTo: newBasename
 [
-| destinationPath |destinationPath := self fileSystem rename: self to: self parent / newBasename.destinationPath ifNotNil: [ self setFileSystem: filesystem path: destinationPath ].^ self
+	| destinationPath |
+	destinationPath := self fileSystem rename: self to: self parent / newBasename.
+	destinationPath ifNotNil: [ self setFileSystem: filesystem path: destinationPath ].
+	^ self
 ]
 
-Class FileReference >> resolve
+FileReference >> resolve
 [
-^ self
+	^ self
 ]
 
-Class FileReference >> resolve: anObject
+FileReference >> resolve: anObject
 [
-^ anObject asResolvedBy: self
+	^ anObject asResolvedBy: self
 ]
 
-Class FileReference >> resolvePath: anObject
+FileReference >> resolvePath: anObject
 [
-^ self withPath: (path resolve: anObject)
+	^ self withPath: (path resolve: anObject)
 ]
 
-Class FileReference >> resolveReference: aReference
+FileReference >> resolveReference: aReference
 [
-^ (filesystem = aReference fileSystem or: [ aReference isRelative ])	ifTrue: [ filesystem referenceTo: (path resolvePath: aReference path) ]	ifFalse: [ aReference ]
+	^ (filesystem = aReference fileSystem or: [ aReference isRelative ])
+		ifTrue: [ filesystem referenceTo: (path resolvePath: aReference path) ]
+		ifFalse: [ aReference ]
 ]
 
-Class FileReference >> resolveString: aString
+FileReference >> resolveString: aString
 [
-| thePath |thePath := filesystem pathFromString: aString.^ filesystem referenceTo: (path resolve: thePath)
+	| thePath |
+	thePath := filesystem pathFromString: aString.
+	^ filesystem referenceTo: (path resolve: thePath)
 ]
 
-Class FileReference >> setFileSystem: aFilesystem path: aPath
+FileReference >> setFileSystem: aFilesystem path: aPath
 [
-filesystem := aFilesystem.path := aPath
+	filesystem := aFilesystem.
+	path := aPath
 ]
 
-Class FileReference >> setMacType: aTypeString creator: aCreatorString
+FileReference >> setMacType: aTypeString creator: aCreatorString
 [
-self flag: 'TODO'	" 	self primSetMacFileNamed: (self fullNameFor: fileName) asVmPathName		type: typeString convertToSystemString		creator: creatorString convertToSystemString."
+	self flag: 'TODO'	" 	self primSetMacFileNamed: (self fullNameFor: fileName) asVmPathName		type: typeString convertToSystemString		creator: creatorString convertToSystemString."
 ]
 
-Class FileReference >> size
+FileReference >> size
 [
-^ filesystem size: path
+	^ filesystem size: path
 ]
 
-Class FileReference >> writeStream
+FileReference >> writeStream
 [
-^ filesystem writeStreamOn: self path
+	^ filesystem writeStreamOn: self path
 ]
 
-Metaclass
-	name: #FileReference;
-	instanceVariables: #().
-
-Metaclass FileReference >> / aString
+FileReference class >> / aString
 [
 	"Answer a reference to the argument resolved against the root of the current disk filesystem."
-^ FileSystem disk / aString
+
+	^ FileSystem disk / aString
 ]
 
-Metaclass FileReference >> fileSystem: aFilesystem path: aPath
+FileReference class >> fileSystem: aFilesystem path: aPath
 [
-^ self new setFileSystem: aFilesystem path: aPath
+	^ self new setFileSystem: aFilesystem path: aPath
 ]
 

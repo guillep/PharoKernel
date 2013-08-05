@@ -1,40 +1,38 @@
-Class
-	name: #RxsMessagePredicate;
-	superclass: #ClassRxsNode;
-	instanceSpecification: #(#pointers #words );
+RxsMessagePredicate
+	superclass: #RxsNode;
 	instanceVariables: #(#selector #negated );
-	classVariables: #();
 	package: #'Regex-Core'.
 
-Class RxsMessagePredicate >> dispatchTo: aBuilder
+RxsMessagePredicate >> dispatchTo: aBuilder
 [
-	"Inform the matcher of the kind of the node, and it	will do whatever it has to."
-^ aBuilder syntaxMessagePredicate: self
+	"Inform the matcher of the kind of the node, and it
+	will do whatever it has to."
+
+	^ aBuilder syntaxMessagePredicate: self
 ]
 
-Class RxsMessagePredicate >> initializeSelector: aSelector
-[
-	"The selector must be a one-argument message understood by Character."
-selector := aSelector
-]
-
-Class RxsMessagePredicate >> initializeSelector: aSelector negated: aBoolean
+RxsMessagePredicate >> initializeSelector: aSelector
 [
 	"The selector must be a one-argument message understood by Character."
-selector := aSelector.negated := aBoolean
+
+	selector := aSelector
 ]
 
-Class RxsMessagePredicate >> negated
+RxsMessagePredicate >> initializeSelector: aSelector negated: aBoolean
 [
-^ negated
+	"The selector must be a one-argument message understood by Character."
+
+	selector := aSelector.
+	negated := aBoolean
 ]
 
-Class RxsMessagePredicate >> selector
+RxsMessagePredicate >> negated
 [
-^ selector
+	^ negated
 ]
 
-Metaclass
-	name: #RxsMessagePredicate;
-	instanceVariables: #().
+RxsMessagePredicate >> selector
+[
+	^ selector
+]
 

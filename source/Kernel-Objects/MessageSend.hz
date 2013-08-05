@@ -1,151 +1,199 @@
-Class
-	name: #MessageSend;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+MessageSend
 	instanceVariables: #(#receiver #selector #arguments );
-	classVariables: #();
 	package: #'Kernel-Objects'.
 
-Class MessageSend >> = anObject
+MessageSend >> = anObject
 [
-^ anObject species == self species	and: [ receiver == anObject receiver and: [ selector == anObject selector and: [ arguments = anObject arguments ] ] ]
+	^ anObject species == self species
+		and: [ receiver == anObject receiver and: [ selector == anObject selector and: [ arguments = anObject arguments ] ] ]
 ]
 
-Class MessageSend >> arguments
+MessageSend >> arguments
 [
-^ arguments
+	^ arguments
 ]
 
-Class MessageSend >> arguments: anArray
+MessageSend >> arguments: anArray
 [
-arguments := anArray
+	arguments := anArray
 ]
 
-Class MessageSend >> asMinimalRepresentation
+MessageSend >> asMinimalRepresentation
 [
-^ self
+	^ self
 ]
 
-Class MessageSend >> asWeakMessageSend
+MessageSend >> asWeakMessageSend
 [
-^ WeakMessageSend receiver: receiver selector: selector arguments: arguments copy
+	^ WeakMessageSend receiver: receiver selector: selector arguments: arguments copy
 ]
 
-Class MessageSend >> collectArguments: anArgArray
+MessageSend >> collectArguments: anArgArray
 [
 	"Private"
-| staticArgs |staticArgs := self arguments.^ anArgArray size = staticArgs size	ifTrue: [ anArgArray ]	ifFalse: [ 		(staticArgs isEmpty			ifTrue: [ staticArgs := Array new: selector numArgs ]			ifFalse: [ staticArgs copy ])			replaceFrom: 1			to: (anArgArray size min: staticArgs size)			with: anArgArray			startingAt: 1 ]
+
+	| staticArgs |
+	staticArgs := self arguments.
+	^ anArgArray size = staticArgs size
+		ifTrue: [ anArgArray ]
+		ifFalse: [ (staticArgs isEmpty
+				ifTrue: [ staticArgs := Array new: selector numArgs ]
+				ifFalse: [ staticArgs copy ])
+				replaceFrom: 1
+				to: (anArgArray size min: staticArgs size)
+				with: anArgArray
+				startingAt: 1 ]
 ]
 
-Class MessageSend >> cull: arg
+MessageSend >> cull: arg
 [
-^ selector numArgs = 0	ifTrue: [ self value ]	ifFalse: [ self value: arg ]
+	^ selector numArgs = 0
+		ifTrue: [ self value ]
+		ifFalse: [ self value: arg ]
 ]
 
-Class MessageSend >> cull: arg1 cull: arg2
+MessageSend >> cull: arg1 cull: arg2
 [
-^ selector numArgs < 2	ifTrue: [ self cull: arg1 ]	ifFalse: [ self value: arg1 value: arg2 ]
+	^ selector numArgs < 2
+		ifTrue: [ self cull: arg1 ]
+		ifFalse: [ self value: arg1 value: arg2 ]
 ]
 
-Class MessageSend >> cull: arg1 cull: arg2 cull: arg3
+MessageSend >> cull: arg1 cull: arg2 cull: arg3
 [
-^ selector numArgs < 3	ifTrue: [ self cull: arg1 cull: arg2 ]	ifFalse: [ self value: arg1 value: arg2 value: arg3 ]
+	^ selector numArgs < 3
+		ifTrue: [ self cull: arg1 cull: arg2 ]
+		ifFalse: [ self value: arg1 value: arg2 value: arg3 ]
 ]
 
-Class MessageSend >> hash
+MessageSend >> hash
 [
-^ receiver hash bitXor: selector hash
+	^ receiver hash bitXor: selector hash
 ]
 
-Class MessageSend >> isMessageSend
+MessageSend >> isMessageSend
 [
-^ true
+	^ true
 ]
 
-Class MessageSend >> isValid
+MessageSend >> isValid
 [
-^ true
+	^ true
 ]
 
-Class MessageSend >> numArgs
+MessageSend >> numArgs
 [
 	"Answer the number of arguments in this message"
-^ arguments size
+
+	^ arguments size
 ]
 
-Class MessageSend >> printOn: aStream
+MessageSend >> printOn: aStream
 [
-aStream	nextPutAll: self class name;	nextPut: $(.selector printOn: aStream.aStream nextPutAll: ' -> '.receiver printOn: aStream.aStream nextPut: $)
+	aStream
+		nextPutAll: self class name;
+		nextPut: $(.
+	selector printOn: aStream.
+	aStream nextPutAll: ' -> '.
+	receiver printOn: aStream.
+	aStream nextPut: $)
 ]
 
-Class MessageSend >> receiver
+MessageSend >> receiver
 [
-^ receiver
+	^ receiver
 ]
 
-Class MessageSend >> receiver: anObject
+MessageSend >> receiver: anObject
 [
-receiver := anObject
+	receiver := anObject
 ]
 
-Class MessageSend >> selector
+MessageSend >> selector
 [
-^ selector
+	^ selector
 ]
 
-Class MessageSend >> selector: aSymbol
+MessageSend >> selector: aSymbol
 [
-selector := aSymbol
+	selector := aSymbol
 ]
 
-Class MessageSend >> value
+MessageSend >> value
 [
 	"Send the message and answer the return value"
-receiver class isObsolete	ifTrue: [ ^ nil ].(receiver isBehavior and: [ receiver isObsolete ])	ifTrue: [ ^ nil ].arguments ifNil: [ ^ receiver perform: selector ].^ receiver perform: selector withArguments: (self collectArguments: arguments)
+
+	receiver class isObsolete
+		ifTrue: [ ^ nil ].
+	(receiver isBehavior and: [ receiver isObsolete ])
+		ifTrue: [ ^ nil ].
+	arguments ifNil: [ ^ receiver perform: selector ].
+	^ receiver perform: selector withArguments: (self collectArguments: arguments)
 ]
 
-Class MessageSend >> value: anObject
+MessageSend >> value: anObject
 [
-receiver class isObsolete	ifTrue: [ ^ nil ].(receiver isBehavior and: [ receiver isObsolete ])	ifTrue: [ ^ nil ].^ receiver perform: selector with: anObject
+	receiver class isObsolete
+		ifTrue: [ ^ nil ].
+	(receiver isBehavior and: [ receiver isObsolete ])
+		ifTrue: [ ^ nil ].
+	^ receiver perform: selector with: anObject
 ]
 
-Class MessageSend >> value: anObject1 value: anObject2
+MessageSend >> value: anObject1 value: anObject2
 [
-^ receiver perform: selector with: anObject1 with: anObject2
+	^ receiver perform: selector with: anObject1 with: anObject2
 ]
 
-Class MessageSend >> value: anObject1 value: anObject2 value: anObject3
+MessageSend >> value: anObject1 value: anObject2 value: anObject3
 [
-^ receiver	perform: selector	with: anObject1	with: anObject2	with: anObject3
+	^ receiver
+		perform: selector
+		with: anObject1
+		with: anObject2
+		with: anObject3
 ]
 
-Class MessageSend >> valueWithArguments: anArray
+MessageSend >> valueWithArguments: anArray
 [
-^ receiver perform: selector withArguments: (self collectArguments: anArray)
+	^ receiver perform: selector withArguments: (self collectArguments: anArray)
 ]
 
-Class MessageSend >> valueWithEnoughArguments: anArray
+MessageSend >> valueWithEnoughArguments: anArray
 [
 	"call the selector with enough arguments from arguments and anArray"
-| args |args := Array new: selector numArgs.args	replaceFrom: 1	to: (arguments size min: args size)	with: arguments	startingAt: 1.args size > arguments size	ifTrue: [ 		args			replaceFrom: arguments size + 1			to: (arguments size + anArray size min: args size)			with: anArray			startingAt: 1 ].^ receiver perform: selector withArguments: args
+
+	| args |
+	args := Array new: selector numArgs.
+	args
+		replaceFrom: 1
+		to: (arguments size min: args size)
+		with: arguments
+		startingAt: 1.
+	args size > arguments size
+		ifTrue: [ args
+				replaceFrom: arguments size + 1
+				to: (arguments size + anArray size min: args size)
+				with: anArray
+				startingAt: 1 ].
+	^ receiver perform: selector withArguments: args
 ]
 
-Metaclass
-	name: #MessageSend;
-	instanceVariables: #().
-
-Metaclass MessageSend >> receiver: anObject selector: aSymbol
+MessageSend class >> receiver: anObject selector: aSymbol
 [
-^ self receiver: anObject selector: aSymbol arguments: #()
+	^ self receiver: anObject selector: aSymbol arguments: #()
 ]
 
-Metaclass MessageSend >> receiver: anObject selector: aSymbol argument: aParameter
+MessageSend class >> receiver: anObject selector: aSymbol argument: aParameter
 [
-^ self receiver: anObject selector: aSymbol arguments: (Array with: aParameter)
+	^ self receiver: anObject selector: aSymbol arguments: (Array with: aParameter)
 ]
 
-Metaclass MessageSend >> receiver: anObject selector: aSymbol arguments: anArray
+MessageSend class >> receiver: anObject selector: aSymbol arguments: anArray
 [
-^ self new	receiver: anObject;	selector: aSymbol;	arguments: anArray
+	^ self new
+		receiver: anObject;
+		selector: aSymbol;
+		arguments: anArray
 ]
 

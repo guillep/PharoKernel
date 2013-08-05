@@ -1,217 +1,488 @@
-Class
-	name: #CommandLineUIManager;
-	superclass: #ClassUIManager;
-	instanceSpecification: #(#pointers #words );
+CommandLineUIManager
+	superclass: #UIManager;
 	instanceVariables: #(#doNotQuitOnRestart #uiManager );
 	classVariables: #(#SnapshotErrorImage );
 	package: #UIManager.
 
-Class CommandLineUIManager >> checkForNewDisplaySize
+CommandLineUIManager >> abort: aStringOrText
+[
+	self abort: aStringOrText title: 'Error'
+]
+
+CommandLineUIManager >> abort: aStringOrText title: aString
+[
+	self logTitle: aString andDescription: aStringOrText to: self stderr
+]
+
+CommandLineUIManager >> alert: aStringOrText
+[
+	self abort: aStringOrText title: 'Alert'
+]
+
+CommandLineUIManager >> alert: aStringOrText title: aString
+[
+	self logTitle: aString andDescription: aStringOrText to: self stdout
+]
+
+CommandLineUIManager >> alert: aStringOrText title: aString configure: aBlock
+[
+	"Ignore the block, because we don't create a dialog, so there is nothing to configure."
+
+	self alert: aStringOrText title: aString
+]
+
+CommandLineUIManager >> checkForNewDisplaySize
 [
 	"do nothing"
 
+	
 ]
 
-Class CommandLineUIManager >> choose: questionsAnswerDict title: queryString
+CommandLineUIManager >> choose: questionsAnswerDict title: queryString
 [
-
+	
 ]
 
-Class CommandLineUIManager >> chooseFrom: aList lines: linesArray title: aString
+CommandLineUIManager >> chooseFrom: aList lines: linesArray title: aString
 [
-| maxPad |maxPad := aList size asString size.self stdout	nextPutAll: aString;	nextPut: $:;	cr.aList	withIndexDo: [ :item :index | 		self stdout			nextPutAll: '    [';			nextPutAll: (index asString padLeftTo: maxPad);			nextPutAll: '] ';			print: item;			cr ].self stdout nextPutAll: '> '.^ aList at: (self stdin upToAnyOf: String crlf do: [ :chr |  ]) asInteger
+	| maxPad |
+	maxPad := aList size asString size.
+	self stdout
+		nextPutAll: aString;
+		nextPut: $:;
+		cr.
+	aList
+		withIndexDo: [ :item :index | self stdout
+				nextPutAll: '    [';
+				nextPutAll: (index asString padLeftTo: maxPad);
+				nextPutAll: '] ';
+				print: item;
+				cr ].
+	self stdout nextPutAll: '> '.
+	^ aList at: (self stdin upToAnyOf: String crlf do: [ :chr |  ]) asInteger
 ]
 
-Class CommandLineUIManager >> confirm: queryString trueChoice: trueLabel falseChoice: falseLabel
+CommandLineUIManager >> confirm: queryString trueChoice: trueLabel falseChoice: falseLabel
 [
-^ self	confirm: queryString	trueChoice: trueLabel	falseChoice: falseLabel	cancelChoice: nil	default: nil
+	^ self
+		confirm: queryString
+		trueChoice: trueLabel
+		falseChoice: falseLabel
+		cancelChoice: nil
+		default: nil
 ]
 
-Class CommandLineUIManager >> confirm: queryString trueChoice: trueLabel falseChoice: falseLabel cancelChoice: cancelLabel default: trueFalseNil
+CommandLineUIManager >> confirm: queryString trueChoice: trueLabel falseChoice: falseLabel cancelChoice: cancelLabel default: trueFalseNil
 [
-| questions |questions := Dictionary new.trueLabel ifNotNil: [ questions at: 'y' put: trueLabel ].falseLabel ifNotNil: [ questions at: 'n' put: falseLabel ].cancelLabel ifNotNil: [ questions at: 'c' put: cancelLabel ].^ self choose: questions title: queryString
+	| questions |
+	questions := Dictionary new.
+	trueLabel ifNotNil: [ questions at: 'y' put: trueLabel ].
+	falseLabel ifNotNil: [ questions at: 'n' put: falseLabel ].
+	cancelLabel ifNotNil: [ questions at: 'c' put: cancelLabel ].
+	^ self choose: questions title: queryString
 ]
 
-Class CommandLineUIManager >> displayProgress: titleString at: aPoint from: minVal to: maxVal during: workBlock
+CommandLineUIManager >> deny: aStringOrText
 [
-	"Display titleString as a caption over a progress bar while workBlock is evaluated."
-^ ProgressInitiationException	display: titleString	at: aPoint	from: minVal	to: maxVal	during: workBlock
+	"Open a denial dialog."
+
+	
 ]
 
-Class CommandLineUIManager >> displayProgress: titleString from: minVal to: maxVal during: workBlock
+CommandLineUIManager >> deny: aStringOrText title: aString
 [
-	"Display titleString as a caption over a progress bar while workBlock is evaluated."
-^ ProgressInitiationException	display: titleString	at: Display center	from: minVal	to: maxVal	during: workBlock
+	"Open a denial dialog."
+
+	
 ]
 
-Class CommandLineUIManager >> exitFailure
+CommandLineUIManager >> exitFailure
 [
-[ self class snapshotErrorImage	ifTrue: [ 		doNotQuitOnRestart := true.	"make a new image version snapshot before leaving"		Smalltalk saveAsNewVersion ] ]	ensure: [ 		doNotQuitOnRestart			ifFalse: [ Smalltalk exitFailure ].		doNotQuitOnRestart := false ]
+	[ self class snapshotErrorImage
+		ifTrue: [ doNotQuitOnRestart := true.	"make a new image version snapshot before leaving"
+			Smalltalk saveAsNewVersion ] ]
+		ensure: [ doNotQuitOnRestart
+				ifFalse: [ Smalltalk exitFailure ].
+			doNotQuitOnRestart := false ]
 ]
 
-Class CommandLineUIManager >> headlessManager
+CommandLineUIManager >> headlessManager
 [
-self class == CommandLineUIManager	ifFalse: [ ^ self ].^ CommandLineUIManager replacing: uiManager
+	self class == CommandLineUIManager
+		ifFalse: [ ^ self ].
+	^ CommandLineUIManager replacing: uiManager
 ]
 
-Class CommandLineUIManager >> inform: aString
+CommandLineUIManager >> inform: aString
 [
-| logBlock |"Just log notifications"(ProvideAnswerNotification signal: aString) ifNotNil: [ :answer | ^ true ].logBlock := [ :logger | logger	cr;	nextPutAll: (String new: 79 withAll: $=);	cr;	nextPutAll: 'Notice: ';	nextPutAll: aString;	cr;	nextPutAll: (String new: 79 withAll: $=);	cr ].Smalltalk logDuring: logBlock.self logYellowDuring: logBlock.Transcript	show: aString;	cr
+	| logBlock |
+	"Just log notifications"
+	(ProvideAnswerNotification signal: aString) ifNotNil: [ :answer | ^ true ].
+	logBlock := [ :logger | logger
+		cr;
+		nextPutAll: (String new: 79 withAll: $=);
+		cr;
+		nextPutAll: 'Notice: ';
+		nextPutAll: aString;
+		cr;
+		nextPutAll: (String new: 79 withAll: $=);
+		cr ].
+	Smalltalk logDuring: logBlock.
+	self logYellowDuring: logBlock.
+	Transcript
+		show: aString;
+		cr
 ]
 
-Class CommandLineUIManager >> informUserDuring: aBlock
+CommandLineUIManager >> informUserDuring: aBlock
 [
-self	displayProgress: ''	at: 0 @ 0	from: 1	to: 100	during: aBlock
+	self
+		displayProgress: ''
+		from: 1
+		to: 100
+		during: aBlock
 ]
 
-Class CommandLineUIManager >> initialize
+CommandLineUIManager >> initialize
 [
-doNotQuitOnRestart := false
+	doNotQuitOnRestart := false
 ]
 
-Class CommandLineUIManager >> logColored: anAnsiiColorCode during: aBlock
+CommandLineUIManager >> logColored: anAnsiiColorCode during: aBlock
 [
-Smalltalk	logStdErrorDuring: [ :stderr | 		stderr			nextPut: Character escape;			nextPut: $[;			nextPutAll: anAnsiiColorCode;			nextPut: $m.		aBlock value: stderr.		stderr			nextPut: Character escape;			nextPutAll: '[0m' ]
+	Smalltalk
+		logStdErrorDuring: [ :stderr | stderr
+				nextPut: Character escape;
+				nextPut: $[;
+				nextPutAll: anAnsiiColorCode;
+				nextPut: $m.
+			aBlock value: stderr.
+			stderr
+				nextPut: Character escape;
+				nextPutAll: '[0m' ]
 ]
 
-Class CommandLineUIManager >> logDuring: aBlock
+CommandLineUIManager >> logDuring: aBlock
 [
-Smalltalk logStdErrorDuring: [ :stderr | aBlock value: stderr ]
+	Smalltalk logStdErrorDuring: [ :stderr | aBlock value: stderr ]
 ]
 
-Class CommandLineUIManager >> logGreenDuring: aBlock
+CommandLineUIManager >> logGreenDuring: aBlock
 [
-^ self logColored: '32' during: aBlock
+	^ self logColored: '32' during: aBlock
 ]
 
-Class CommandLineUIManager >> logRedDuring: aBlock
+CommandLineUIManager >> logRedDuring: aBlock
 [
-^ self logColored: '31' during: aBlock
+	^ self logColored: '31' during: aBlock
 ]
 
-Class CommandLineUIManager >> logYellowDuring: aBlock
+CommandLineUIManager >> logTitle: aString andDescription: aStringOrText to: aStream
 [
-^ self logColored: '33' during: aBlock
+	aStream
+		nextPutAll: aString;
+		nextPutAll: ': ';
+		nextPutAll: aStringOrText asString;
+		cr
 ]
 
-Class CommandLineUIManager >> newDisplayDepthNoRestore: pixelSize
+CommandLineUIManager >> logYellowDuring: aBlock
+[
+	^ self logColored: '33' during: aBlock
+]
+
+CommandLineUIManager >> newDisplayDepthNoRestore: pixelSize
 [
 	"do nothing"
 
+	
 ]
 
-Class CommandLineUIManager >> nonInteractiveManager
+CommandLineUIManager >> nonInteractiveManager
 [
 	" Answer an instance of non-interactive manager, which will be used when image runs headless.
 	  We put it here, so subclasses can override it. "
-^ NonInteractiveUIManager replacing: uiManager
+
+	^ NonInteractiveUIManager replacing: uiManager
 ]
 
-Class CommandLineUIManager >> onPrimitiveError: aString
+CommandLineUIManager >> onPrimitiveError: aString
 [
 	" log error and quit "
-^ self quitFrom: thisContext sender withMessage: aString
+
+	^ self quitFrom: thisContext sender withMessage: aString
 ]
 
-Class CommandLineUIManager >> onSnapshot: resuming
+CommandLineUIManager >> onSnapshot: resuming
 [
-	"The resuming argument is true when image boots from disk,	and false, if user just did an image snapshot."
-resuming	ifTrue: [ 		Smalltalk isInteractive			ifFalse: [ ^ self nonInteractiveManager onSnapshot: resuming ].		Smalltalk isHeadless			ifFalse: [ 				uiManager beDefault.	"restore old, or nil, so it will be set in #default "				UIManager default onSnapshot: resuming ].		^ self ].	" this flag set to true only if we are saving a snapshot before quitting "doNotQuitOnRestart	ifTrue: [ Smalltalk snapshot: false andQuit: true ]
+	"The resuming argument is true when image boots from disk,
+	and false, if user just did an image snapshot."
+
+	resuming
+		ifTrue: [ Smalltalk isInteractive
+				ifFalse: [ ^ self nonInteractiveManager onSnapshot: resuming ].
+			Smalltalk isHeadless
+				ifFalse: [ uiManager beDefault.	"restore old, or nil, so it will be set in #default "
+					UIManager default onSnapshot: resuming ].
+			^ self ].	" this flag set to true only if we are saving a snapshot before quitting "
+	doNotQuitOnRestart
+		ifTrue: [ Smalltalk snapshot: false andQuit: true ]
 ]
 
-Class CommandLineUIManager >> progressInitiationExceptionDefaultAction: anException
+CommandLineUIManager >> proceed: aStringOrText
 [
-| result |result := anException workBlock value: DummySystemProgressItem new.anException resume: result
+	"Open a proceed dialog."
+
+	
 ]
 
-Class CommandLineUIManager >> quitFrom: aContext withMessage: aString
+CommandLineUIManager >> proceed: aStringOrText title: aString
+[
+	"Open a proceed dialog and answer true if not cancelled, false otherwise."
+
+	
+]
+
+CommandLineUIManager >> progressInitiationExceptionDefaultAction: anException
+[
+	| result |
+	result := anException workBlock value: DummySystemProgressItem new.
+	anException resume: result
+]
+
+CommandLineUIManager >> question: aStringOrText
+[
+	"Open a question dialog."
+
+	
+]
+
+CommandLineUIManager >> question: aStringOrText title: aString
+[
+	"Open a question dialog and answer true if yes,
+	false if no and nil if cancelled."
+
+	
+]
+
+CommandLineUIManager >> questionWithoutCancel: aStringOrText
+[
+	"Open a question dialog."
+
+	
+]
+
+CommandLineUIManager >> questionWithoutCancel: aStringOrText title: aString
+[
+	"Open a question dialog and answer true if yes,
+	false if no and nil if cancelled."
+
+	
+]
+
+CommandLineUIManager >> quitFrom: aContext withMessage: aString
 [
 	" log error and quit "
-[ Smalltalk logError: aString inContext: aContext.	" Print stacks of all current processes "Smalltalk	logDuring: [ :logger | 		logger			nextPutAll: 'Processes and their stacks: ';			cr.		Process allInstances			do: [ :each | 				| ctx |				logger					nextPutAll: 'Process: ';					print: each;					cr;					nextPutAll: '  stack:';					cr;					cr.				ctx := each isActiveProcess					ifTrue: [ thisContext sender ]					ifFalse: [ each suspendedContext ].				ctx					ifNotNil: [ 						(ctx stackOfSize: 20)							do: [ :s | 								logger									print: s;									cr ] ].				logger					nextPutAll: '------------------------------';					cr;					cr ] ] ]	ensure: [ self exitFailure ]
+
+	[ Smalltalk logError: aString inContext: aContext.	" Print stacks of all current processes "
+	Smalltalk
+		logDuring: [ :logger | logger
+				nextPutAll: 'Processes and their stacks: ';
+				cr.
+			Process allInstances
+				do: [ :each | | ctx |
+					logger
+						nextPutAll: 'Process: ';
+						print: each;
+						cr;
+						nextPutAll: '  stack:';
+						cr;
+						cr.
+					ctx := each isActiveProcess
+						ifTrue: [ thisContext sender ]
+						ifFalse: [ each suspendedContext ].
+					ctx ifNotNil: [ (ctx stackOfSize: 20) do: [ :s | logger
+										print: s;
+										cr ] ].
+					logger
+						nextPutAll: '------------------------------';
+						cr;
+						cr ] ] ]
+		ensure: [ self exitFailure ]
 ]
 
-Class CommandLineUIManager >> replacing: aUIManager
+CommandLineUIManager >> replacing: aUIManager
 [
 	" save the aUIManager to restore it later, when we become interactive again "
-uiManager := aUIManager.self beDefault
+
+	uiManager := aUIManager.
+	self beDefault
 ]
 
-Class CommandLineUIManager >> restoreDisplay
+CommandLineUIManager >> restoreDisplay
 [
 	"do nothing"
 
+	
 ]
 
-Class CommandLineUIManager >> restoreDisplayAfter: aBlock
+CommandLineUIManager >> restoreDisplayAfter: aBlock
 [
 	"do nothing"
 
+	
 ]
 
-Class CommandLineUIManager >> stderr
+CommandLineUIManager >> stderr
 [
 	"install the line end conversion and initialize the converter"
-FileStream stderr	wantsLineEndConversion: true;	converter.^ FileStream stderr
+
+	FileStream stderr
+		wantsLineEndConversion: true;
+		converter.
+	^ FileStream stderr
 ]
 
-Class CommandLineUIManager >> stdin
+CommandLineUIManager >> stdin
 [
-^ FileStream stdin
+	^ FileStream stdin
 ]
 
-Class CommandLineUIManager >> stdout
+CommandLineUIManager >> stdout
 [
 	"install the line end conversion and initialize the converter"
-FileStream stdout	wantsLineEndConversion: true;	converter.^ FileStream stdout
+
+	FileStream stdout
+		wantsLineEndConversion: true;
+		converter.
+	^ FileStream stdout
 ]
 
-Class CommandLineUIManager >> syntaxErrorNotificationDefaultAction: aSyntaxErrorNotification
+CommandLineUIManager >> syntaxErrorNotificationDefaultAction: aSyntaxErrorNotification
 [
 	"log the syntax notificaiton and print a nicely formatted and colored syntax error on stderr"
-| contents position errorMessage lineNumber maxLineNumberSize errorLine |"log the error"Smalltalk	logDuring: [ :logger | 		logger			print: aSyntaxErrorNotification;			cr.		aSyntaxErrorNotification signalerContext errorReportOn: logger ].	"format the error"position := aSyntaxErrorNotification location.contents := aSyntaxErrorNotification errorCode.errorLine := contents lineNumberCorrespondingToIndex: position.	"first gather the error title to be able to underline it properly"errorMessage := String	streamContents: [ :s | 		s			nextPutAll: 'Syntax Error on line ';			print: errorLine;			nextPutAll: ': ';			print: aSyntaxErrorNotification errorMessage ].self	logRedDuring: [ :s | 		s			nextPutAll: errorMessage;			cr;			nextPutAll: ('' padLeftTo: errorMessage size with: $=);			cr ].	"print each source line and mark the found syntax error"maxLineNumberSize := contents lines size asString size.lineNumber := 0.contents	lineIndicesDo: [ :start :endWithoutDelimiters :end | 		lineNumber := lineNumber + 1.		self			logColored:				(lineNumber == errorLine					ifTrue: [ '31' ]					ifFalse: [ '33' ])			during: [ :s | 				"0 pad the line numbers to the same size"				s					nextPutAll: (lineNumber asString padLeftTo: maxLineNumberSize with: $0);					nextPutAll: ': ' ].		self stderr			nextPutAll: (contents copyFrom: start to: endWithoutDelimiters);			cr.	"print the marker under the error line"		lineNumber == errorLine			ifTrue: [ 				self					logRedDuring: [ :s | 						s							nextPutAll: ('_^_' padLeftTo: position - start + maxLineNumberSize + 4);							cr ] ] ].	"in noninteractive mode simply quit"^ self exitFailure
+
+	| contents position errorMessage lineNumber maxLineNumberSize errorLine |
+	"log the error"
+	Smalltalk
+		logDuring: [ :logger | logger
+				print: aSyntaxErrorNotification;
+				cr.
+			aSyntaxErrorNotification signalerContext errorReportOn: logger ].	"format the error"
+	position := aSyntaxErrorNotification location.
+	contents := aSyntaxErrorNotification errorCode.
+	errorLine := contents lineNumberCorrespondingToIndex: position.	"first gather the error title to be able to underline it properly"
+	errorMessage := String
+		streamContents: [ :s | s
+				nextPutAll: 'Syntax Error on line ';
+				print: errorLine;
+				nextPutAll: ': ';
+				print: aSyntaxErrorNotification errorMessage ].
+	self
+		logRedDuring: [ :s | s
+				nextPutAll: errorMessage;
+				cr;
+				nextPutAll: ('' padLeftTo: errorMessage size with: $=);
+				cr ].	"print each source line and mark the found syntax error"
+	maxLineNumberSize := contents lines size asString size.
+	lineNumber := 0.
+	contents
+		lineIndicesDo: [ :start :endWithoutDelimiters :end | lineNumber := lineNumber + 1.
+			self
+				logColored: (lineNumber == errorLine
+						ifTrue: [ '31' ]
+						ifFalse: [ '33' ])
+				during: [ :s | "0 pad the line numbers to the same size"
+					s
+						nextPutAll: (lineNumber asString padLeftTo: maxLineNumberSize with: $0);
+						nextPutAll: ': ' ].
+			self stderr
+				nextPutAll: (contents copyFrom: start to: endWithoutDelimiters);
+				cr.	"print the marker under the error line"
+			lineNumber == errorLine
+				ifTrue: [ self
+						logRedDuring: [ :s | s
+								nextPutAll: ('_^_' padLeftTo: position - start + maxLineNumberSize + 4);
+								cr ] ] ].	"in noninteractive mode simply quit"
+	^ self exitFailure
 ]
 
-Class CommandLineUIManager >> uiProcess
+CommandLineUIManager >> textEntry: aStringOrText
+[
+	"Open a text entry dialog."
+
+	
+]
+
+CommandLineUIManager >> textEntry: aStringOrText title: aString
+[
+	"Open a text entry dialog."
+
+	
+]
+
+CommandLineUIManager >> textEntry: aStringOrText title: aString entryText: defaultEntryText
+[
+	"Open a text entry dialog."
+
+	
+]
+
+CommandLineUIManager >> uiProcess
 [
 	" receiver don't have a ui process, associated with it,
 	client should check explicitly if #uiProcess answers nil or not"
-^ nil
+
+	^ nil
 ]
 
-Class CommandLineUIManager >> unhandledErrorDefaultAction: anException
+CommandLineUIManager >> unhandledErrorDefaultAction: anException
 [
-self quitFrom: anException signalerContext withMessage: anException description.UIManager default == self	ifFalse: [ ^ UIManager default unhandledErrorDefaultAction: anException ]
+	self quitFrom: anException signalerContext withMessage: anException description.
+	UIManager default == self
+		ifFalse: [ ^ UIManager default unhandledErrorDefaultAction: anException ]
 ]
 
-Class CommandLineUIManager >> warningDefaultAction: aWarning
+CommandLineUIManager >> warningDefaultAction: aWarning
 [
-| logBlock |"Pass all warnings, but log them"logBlock := [ :logger | logger	cr;	nextPutAll: '*** Warning: ';	nextPutAll: aWarning description;	cr ].Smalltalk logDuring: logBlock.self logYellowDuring: logBlock.aWarning resume
+	| logBlock |
+	"Pass all warnings, but log them"
+	logBlock := [ :logger | logger
+		cr;
+		nextPutAll: '*** Warning: ';
+		nextPutAll: aWarning description;
+		cr ].
+	Smalltalk logDuring: logBlock.
+	self logYellowDuring: logBlock.
+	aWarning resume
 ]
 
-Metaclass
-	name: #CommandLineUIManager;
-	instanceVariables: #().
-
-Metaclass CommandLineUIManager >> replacing: aUIManager
+CommandLineUIManager class >> replacing: aUIManager
 [
 	"Replace the current UI manager with instance of myself. 
 	Keep a backup reference to old manager, and then restore it, when image will be interactive again. "
-^ self new replacing: aUIManager
+
+	^ self new replacing: aUIManager
 ]
 
-Metaclass CommandLineUIManager >> snapshotErrorImage
+CommandLineUIManager class >> snapshotErrorImage
 [
-^ SnapshotErrorImage == true
+	^ SnapshotErrorImage == true
 ]
 
-Metaclass CommandLineUIManager >> snapshotErrorImage: aBoolean
+CommandLineUIManager class >> snapshotErrorImage: aBoolean
 [
-SnapshotErrorImage := aBoolean
+	SnapshotErrorImage := aBoolean
 ]
 
-Metaclass CommandLineUIManager >> uiSettingsOn: aBuilder
+CommandLineUIManager class >> uiSettingsOn: aBuilder
 [
 	<systemsettings>
-(aBuilder group: #nonInteractive)	label: 'Headless mode';	with: [ 				(aBuilder setting: #snapshotErrorImage)					label: 'Make a snapshot of new version before quit' translated;					target: CommandLineUIManager;					description: 'On unhandled exception, save a new version of image before quit' translated ]
+	(aBuilder group: #nonInteractive)
+		label: 'Headless mode';
+		with: [ (aBuilder setting: #snapshotErrorImage)
+						label: 'Make a snapshot of new version before quit' translated;
+						target: CommandLineUIManager;
+						description: 'On unhandled exception, save a new version of image before quit' translated ]
 ]
 

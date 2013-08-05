@@ -1,37 +1,34 @@
-Class
-	name: #PostorderGuide;
-	superclass: #ClassFileSystemGuide;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+PostorderGuide
+	superclass: #FileSystemGuide;
 	package: #'FileSystem-Core-Implementation'.
 
-Class PostorderGuide >> pushTraverse: aReference
+PostorderGuide >> pushTraverse: aReference
 [
-self push: (Message selector: #traverse: argument: aReference)
+	self push: (Message selector: #traverse: argument: aReference)
 ]
 
-Class PostorderGuide >> pushVisit: aReference
+PostorderGuide >> pushVisit: aReference
 [
-self push: (Message selector: #visit: argument: aReference)
+	self push: (Message selector: #visit: argument: aReference)
 ]
 
-Class PostorderGuide >> show: aReference
+PostorderGuide >> show: aReference
 [
-self pushTraverse: aReference entry.self whileNotDoneDo: [ self pop sendTo: self ]
+	self pushTraverse: aReference entry.
+	self whileNotDoneDo: [ self pop sendTo: self ]
 ]
 
-Class PostorderGuide >> traverse: anEntry
+PostorderGuide >> traverse: anEntry
 [
-self pushVisit: anEntry.anEntry isDirectory	ifTrue: [ anEntry reference entries reverseDo: [ :ea | self pushTraverse: ea ] ]
+	self pushVisit: anEntry.
+	anEntry isDirectory
+		ifTrue: [ anEntry reference entries reverseDo: [ :ea | self pushTraverse: ea ] ]
 ]
 
-Class PostorderGuide >> visit: anEntry
+PostorderGuide >> visit: anEntry
 [
-anEntry isDirectory	ifTrue: [ visitor visitDirectory: anEntry ]	ifFalse: [ visitor visitFile: anEntry ]
+	anEntry isDirectory
+		ifTrue: [ visitor visitDirectory: anEntry ]
+		ifFalse: [ visitor visitFile: anEntry ]
 ]
-
-Metaclass
-	name: #PostorderGuide;
-	instanceVariables: #().
 

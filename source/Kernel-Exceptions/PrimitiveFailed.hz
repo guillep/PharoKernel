@@ -1,18 +1,16 @@
-Class
-	name: #PrimitiveFailed;
-	superclass: #ClassSelectorException;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+PrimitiveFailed
+	superclass: #SelectorException;
 	package: #'Kernel-Exceptions'.
 
-Class PrimitiveFailed >> standardMessageText
+PrimitiveFailed >> standardMessageText
 [
 	"Generate a standard textual description"
-^ String	streamContents: [ :stream | 		stream << 'primitive '.		stream print: self selector.		stream << ' in '.		stream print: self signaler class.		stream << ' failed' ]
-]
 
-Metaclass
-	name: #PrimitiveFailed;
-	instanceVariables: #().
+	^ String
+		streamContents: [ :stream | stream << 'primitive '.
+			stream print: self selector.
+			stream << ' in '.
+			stream print: self signaler class.
+			stream << ' failed' ]
+]
 

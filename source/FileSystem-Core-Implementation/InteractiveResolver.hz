@@ -1,32 +1,28 @@
-Class
-	name: #InteractiveResolver;
-	superclass: #ClassFileSystemResolver;
-	instanceSpecification: #(#pointers #words );
+InteractiveResolver
+	superclass: #FileSystemResolver;
 	instanceVariables: #(#cache );
-	classVariables: #();
 	package: #'FileSystem-Core-Implementation'.
 
-Class InteractiveResolver >> flushLocalCache
+InteractiveResolver >> flushLocalCache
 [
-cache := IdentityDictionary new
+	cache := IdentityDictionary new
 ]
 
-Class InteractiveResolver >> initialize
+InteractiveResolver >> initialize
 [
-self flushLocalCache
+	self flushLocalCache
 ]
 
-Class InteractiveResolver >> resolve: origin
+InteractiveResolver >> resolve: origin
 [
-^ cache at: origin ifAbsent: [ self unknownOrigin: origin ]
+	^ cache at: origin ifAbsent: [ self unknownOrigin: origin ]
 ]
 
-Class InteractiveResolver >> unknownOrigin: origin
+InteractiveResolver >> unknownOrigin: origin
 [
-| reference |^ (next ifNotNil: [ next resolve: origin ])	ifNil: [ 		reference := ResolutionRequest for: origin.		reference ifNotNil: [ cache at: origin put: reference ] ]
+	| reference |
+	^ (next ifNotNil: [ next resolve: origin ])
+		ifNil: [ reference := ResolutionRequest for: origin.
+			reference ifNotNil: [ cache at: origin put: reference ] ]
 ]
-
-Metaclass
-	name: #InteractiveResolver;
-	instanceVariables: #().
 

@@ -1,58 +1,73 @@
-Class
-	name: #PluggableSet;
-	superclass: #ClassSet;
-	instanceSpecification: #(#pointers #words );
+PluggableSet
+	superclass: #Set;
 	instanceVariables: #(#hashBlock #equalBlock );
-	classVariables: #();
 	package: #'Collections-Unordered'.
 
-Class PluggableSet >> copyEmpty
+PluggableSet >> copyEmpty
 [
-^ super copyEmpty	hashBlock: hashBlock;	equalBlock: equalBlock
+	^ super copyEmpty
+		hashBlock: hashBlock;
+		equalBlock: equalBlock
 ]
 
-Class PluggableSet >> equalBlock
+PluggableSet >> equalBlock
 [
 	"Return the block used for comparing the elements in the receiver."
-^ equalBlock
+
+	^ equalBlock
 ]
 
-Class PluggableSet >> equalBlock: aBlock
+PluggableSet >> equalBlock: aBlock
 [
 	"Set a new equality block. The block must accept two arguments and return true if the argumets are considered equal, false otherwise"
-equalBlock := aBlock
+
+	equalBlock := aBlock
 ]
 
-Class PluggableSet >> hashBlock
+PluggableSet >> hashBlock
 [
 	"Return the block used for hashing the elements in the receiver."
-^ hashBlock
+
+	^ hashBlock
 ]
 
-Class PluggableSet >> hashBlock: aBlock
+PluggableSet >> hashBlock: aBlock
 [
 	"Set a new hash block. The block must accept one argument and return the hash value of the given argument."
-hashBlock := aBlock
+
+	hashBlock := aBlock
 ]
 
-Class PluggableSet >> scanFor: anObject
+PluggableSet >> scanFor: anObject
 [
 	"Scan the key array for the first slot containing either a nil (indicating an empty slot) or an element that matches anObject. Answer the index of that slot or raise an error if no slot is found. This method will be overridden in various subclasses that have different interpretations for matching elements."
-| index start |index := start := (hashBlock ifNil: [ anObject hash ] ifNotNil: [ hashBlock value: anObject ]) \\ array size + 1.[ | element |((element := array at: index) == nil	or: [ 		equalBlock			ifNil: [ element enclosedSetElement = anObject ]			ifNotNil: [ equalBlock value: element enclosedSetElement value: anObject ] ])	ifTrue: [ ^ index ].(index := index \\ array size + 1) = start ] whileFalse.self errorNoFreeSpace
+
+	| index start |
+	index := start := (hashBlock ifNil: [ anObject hash ] ifNotNil: [ hashBlock value: anObject ]) \\ array size + 1.
+	[ | element |
+	((element := array at: index) == nil
+		or: [ equalBlock
+				ifNil: [ element enclosedSetElement = anObject ]
+				ifNotNil: [ equalBlock value: element enclosedSetElement value: anObject ] ])
+		ifTrue: [ ^ index ].
+	(index := index \\ array size + 1) = start ]
+		whileFalse.
+	self errorNoFreeSpace
 ]
 
-Class PluggableSet >> scanForEmptySlotFor: aKey
+PluggableSet >> scanForEmptySlotFor: aKey
 [
 	"Scan the key array for the first slot containing an empty slot (indicated by a nil). Answer the index of that slot. This method will be overridden in various subclasses that have different interpretations for matching elements."
-| index start |index := start := (hashBlock ifNil: [ aKey hash ] ifNotNil: [ hashBlock value: aKey ]) \\ array size + 1.[ (array at: index) ifNil: [ ^ index ].(index := index \\ array size + 1) = start ] whileFalse.self errorNoFreeSpace
+
+	| index start |
+	index := start := (hashBlock ifNil: [ aKey hash ] ifNotNil: [ hashBlock value: aKey ]) \\ array size + 1.
+	[ (array at: index) ifNil: [ ^ index ].
+	(index := index \\ array size + 1) = start ] whileFalse.
+	self errorNoFreeSpace
 ]
 
-Metaclass
-	name: #PluggableSet;
-	instanceVariables: #().
-
-Metaclass PluggableSet >> integerSet
+PluggableSet class >> integerSet
 [
-^ self new hashBlock: [ :integer | integer hash \\ 1064164 * 1009 ]
+	^ self new hashBlock: [ :integer | integer hash \\ 1064164 * 1009 ]
 ]
 

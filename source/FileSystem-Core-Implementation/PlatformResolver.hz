@@ -1,53 +1,48 @@
-Class
-	name: #PlatformResolver;
-	superclass: #ClassFileSystemResolver;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+PlatformResolver
+	superclass: #FileSystemResolver;
 	package: #'FileSystem-Core-Implementation'.
 
-Class PlatformResolver >> desktop
+PlatformResolver >> desktop
 [
-^ self subclassResponsibility
+	^ self subclassResponsibility
 ]
 
-Class PlatformResolver >> documents
+PlatformResolver >> documents
 [
-^ self subclassResponsibility
+	^ self subclassResponsibility
 ]
 
-Class PlatformResolver >> home
+PlatformResolver >> home
 [
-^ self subclassResponsibility
+	^ self subclassResponsibility
 ]
 
-Class PlatformResolver >> preferences
+PlatformResolver >> preferences
 [
-^ self subclassResponsibility
+	^ self subclassResponsibility
 ]
 
-Class PlatformResolver >> supportedOrigins
+PlatformResolver >> supportedOrigins
 [
-^ #(#home #desktop #documents #preferences)
+	^ #(#home #desktop #documents #preferences)
 ]
 
-Metaclass
-	name: #PlatformResolver;
-	instanceVariables: #().
-
-Metaclass PlatformResolver >> forCurrentPlatform
+PlatformResolver class >> forCurrentPlatform
 [
-| platformName |platformName := Smalltalk os platformName.^ (self allSubclasses detect: [ :ea | ea platformName = platformName ]) new
+	| platformName |
+	platformName := Smalltalk os platformName.
+	^ (self allSubclasses detect: [ :ea | ea platformName = platformName ]) new
 ]
 
-Metaclass PlatformResolver >> platformName
+PlatformResolver class >> platformName
 [
-^ nil
+	^ nil
 ]
 
-Metaclass PlatformResolver >> primitiveGetUntrustedUserDirectory
+PlatformResolver class >> primitiveGetUntrustedUserDirectory
 [
 	<primitive: 'primitiveGetUntrustedUserDirectory' module: 'SecurityPlugin'>
-self primitiveFailed.self flag: 'use a more decent way to get a path in the users home directory'
+	self primitiveFailed.
+	self flag: 'use a more decent way to get a path in the users home directory'
 ]
 

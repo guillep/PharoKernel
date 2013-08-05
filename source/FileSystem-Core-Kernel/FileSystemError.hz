@@ -1,37 +1,31 @@
-Class
-	name: #FileSystemError;
-	superclass: #ClassError;
-	instanceSpecification: #(#pointers #words );
+FileSystemError
+	superclass: #Error;
 	instanceVariables: #(#reference );
-	classVariables: #();
 	package: #'FileSystem-Core-Kernel'.
 
-Class FileSystemError >> initializeWithReference: aReference
+FileSystemError >> initializeWithReference: aReference
 [
-reference := aReference.messageText := aReference printString
+	reference := aReference.
+	messageText := aReference printString
 ]
 
-Class FileSystemError >> isResumable
+FileSystemError >> isResumable
 [
-^ true
+	^ true
 ]
 
-Class FileSystemError >> reference
+FileSystemError >> reference
 [
-^ reference
+	^ reference
 ]
 
-Metaclass
-	name: #FileSystemError;
-	instanceVariables: #().
-
-Metaclass FileSystemError >> reference: aReference
+FileSystemError class >> reference: aReference
 [
-^ self basicNew initializeWithReference: aReference
+	^ self basicNew initializeWithReference: aReference
 ]
 
-Metaclass FileSystemError >> signalWith: aReference
+FileSystemError class >> signalWith: aReference
 [
-^ (self reference: aReference) signal
+	^ (self reference: aReference) signal
 ]
 

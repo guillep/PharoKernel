@@ -1,30 +1,39 @@
-Class Behavior >> allCallsOn
+Behavior >> allCallsOn
 [
 	"Answer a SortedCollection of all the methods that refer to me by name or as part of an association in a global dict."
-^ self allCallsOnIn: self systemNavigation
+
+	^ self allCallsOnIn: self systemNavigation
 ]
 
-Class Behavior >> allCallsOn: aSymbol
+Behavior >> allCallsOn: aSymbol
 [
 	"Answer a SortedCollection of all the methods that call on aSymbol."
-^ self systemNavigation allCallsOn: aSymbol from: self
+
+	^ self systemNavigation allCallsOn: aSymbol from: self
 ]
 
-Class Behavior >> allCallsOnIn: aSystemNavigation
+Behavior >> allCallsOnIn: aSystemNavigation
 [
 	"Answer a SortedCollection of all the methods that refer to me by name or as part of an association in a global dict."
-^ (aSystemNavigation allReferencesTo: (self environment associationAt: self theNonMetaClass name))	, (aSystemNavigation allCallsOn: self theNonMetaClass name)
+
+	^ (aSystemNavigation allReferencesTo: (self environment associationAt: self theNonMetaClass name))
+		, (aSystemNavigation allCallsOn: self theNonMetaClass name)
 ]
 
-Class Behavior >> allUnsentMessages
+Behavior >> allUnsentMessages
 [
 	"Answer an array of all the messages defined by the receiver that are not sent anywhere in the system."
-^ SystemNavigation new allUnsentMessagesIn: self selectors
+
+	^ SystemNavigation new allUnsentMessagesIn: self selectors
 ]
 
-Class Behavior >> referencedClasses
+Behavior >> referencedClasses
 [
 	"Return the set of classes that are directly referenced by my methods"
-| answer |answer := Set new.self methods do: [ :cm | answer addAll: (cm literals select: [ :l | l isKindOf: Association ] thenCollect: #value) ].^ answer
+
+	| answer |
+	answer := Set new.
+	self methods do: [ :cm | answer addAll: (cm literals select: [ :l | l isKindOf: Association ] thenCollect: #value) ].
+	^ answer
 ]
 

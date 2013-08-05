@@ -1,39 +1,49 @@
-Trait
-	name: #TTransformationCompatibility;
-	package: #'Traits-Kernel-Traits'.
-
-Trait TTransformationCompatibility >> aliasesForSelector: aSelector
+Trait named: #TTransformationCompatibility
+	package: #'Traits-Kernel-Traits'.TTransformationCompatibility >> aliasesForSelector: aSelector
 [
-^ OrderedCollection new
+	^ OrderedCollection new
 ]
 
-Trait TTransformationCompatibility >> allAliasesDict
+TTransformationCompatibility >> allAliasesDict
 [
-^ IdentityDictionary new
+	^ IdentityDictionary new
 ]
 
-Trait TTransformationCompatibility >> changedSelectorsComparedTo: aTraitTransformation
+TTransformationCompatibility >> changedSelectorsComparedTo: aTraitTransformation
 [
-| selectors otherSelectors changedSelectors aliases otherAliases |selectors := self allSelectors asIdentitySet.otherSelectors := aTraitTransformation allSelectors asIdentitySet.changedSelectors := IdentitySet	withAll: ((selectors difference: otherSelectors) union: (otherSelectors difference: selectors)).aliases := self allAliasesDict.otherAliases := aTraitTransformation allAliasesDict.aliases	keysAndValuesDo: [ :key :value | 		value ~~ (otherAliases at: key ifAbsent: [ nil ])			ifTrue: [ changedSelectors add: key ] ].otherAliases	keysAndValuesDo: [ :key :value | 		value ~~ (aliases at: key ifAbsent: [ nil ])			ifTrue: [ changedSelectors add: key ] ].^ changedSelectors
+	| selectors otherSelectors changedSelectors aliases otherAliases |
+	selectors := self allSelectors asIdentitySet.
+	otherSelectors := aTraitTransformation allSelectors asIdentitySet.
+	changedSelectors := IdentitySet
+		withAll: ((selectors difference: otherSelectors) union: (otherSelectors difference: selectors)).
+	aliases := self allAliasesDict.
+	otherAliases := aTraitTransformation allAliasesDict.
+	aliases
+		keysAndValuesDo: [ :key :value | value ~~ (otherAliases at: key ifAbsent: [ nil ])
+				ifTrue: [ changedSelectors add: key ] ].
+	otherAliases
+		keysAndValuesDo: [ :key :value | value ~~ (aliases at: key ifAbsent: [ nil ])
+				ifTrue: [ changedSelectors add: key ] ].
+	^ changedSelectors
 ]
 
-Trait TTransformationCompatibility >> collectMethodsFor: aSelector into: methodDescription
+TTransformationCompatibility >> collectMethodsFor: aSelector into: methodDescription
 [
-(self includesSelector: aSelector)	ifTrue: [ methodDescription addLocatedMethod: (self compiledMethodAt: aSelector) ]
+	(self includesSelector: aSelector)
+		ifTrue: [ methodDescription addLocatedMethod: (self compiledMethodAt: aSelector) ]
 ]
 
-Trait TTransformationCompatibility >> subject
+TTransformationCompatibility >> subject
 [
 	"for compatibility with TraitTransformations"
-^ self
+
+	^ self
 ]
 
-Trait TTransformationCompatibility >> trait
+TTransformationCompatibility >> trait
 [
 	"for compatibility with TraitTransformations"
-^ self
-]
 
-ClassTrait
-	name: #TTransformationCompatibility.
+	^ self
+]
 

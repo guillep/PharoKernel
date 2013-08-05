@@ -1,103 +1,116 @@
-Class
-	name: #RxsPiece;
-	superclass: #ClassRxsNode;
-	instanceSpecification: #(#pointers #words );
+RxsPiece
+	superclass: #RxsNode;
 	instanceVariables: #(#atom #min #max );
-	classVariables: #();
 	package: #'Regex-Core'.
 
-Class RxsPiece >> atom
+RxsPiece >> atom
 [
-^ atom
+	^ atom
 ]
 
-Class RxsPiece >> character
+RxsPiece >> character
 [
-	"If this node is atomic, answer the character it	represents. It is the caller's responsibility to make sure this	node is indeed atomic before using this."
-^ atom character
+	"If this node is atomic, answer the character it
+	represents. It is the caller's responsibility to make sure this
+	node is indeed atomic before using this."
+
+	^ atom character
 ]
 
-Class RxsPiece >> dispatchTo: aMatcher
+RxsPiece >> dispatchTo: aMatcher
 [
-	"Inform the matcher of the kind of the node, and it	will do whatever it has to."
-^ aMatcher syntaxPiece: self
+	"Inform the matcher of the kind of the node, and it
+	will do whatever it has to."
+
+	^ aMatcher syntaxPiece: self
 ]
 
-Class RxsPiece >> initializeAtom: anAtom
+RxsPiece >> initializeAtom: anAtom
 [
 	"This piece is exactly one occurrence of the specified RxsAtom."
-self initializeAtom: anAtom min: 1 max: 1
+
+	self initializeAtom: anAtom min: 1 max: 1
 ]
 
-Class RxsPiece >> initializeAtom: anAtom min: minOccurrences max: maxOccurrences
+RxsPiece >> initializeAtom: anAtom min: minOccurrences max: maxOccurrences
 [
-	"This piece is from <minOccurrences> to <maxOccurrences> 	occurrences of the specified RxsAtom."
-atom := anAtom.min := minOccurrences.max := maxOccurrences
+	"This piece is from <minOccurrences> to <maxOccurrences> 
+	occurrences of the specified RxsAtom."
+
+	atom := anAtom.
+	min := minOccurrences.
+	max := maxOccurrences
 ]
 
-Class RxsPiece >> initializeOptionalAtom: anAtom
+RxsPiece >> initializeOptionalAtom: anAtom
 [
 	"This piece is 0 or 1 occurrences of the specified RxsAtom."
-self initializeAtom: anAtom min: 0 max: 1
+
+	self initializeAtom: anAtom min: 0 max: 1
 ]
 
-Class RxsPiece >> initializePlusAtom: anAtom
+RxsPiece >> initializePlusAtom: anAtom
 [
 	"This piece is one or more occurrences of the specified RxsAtom."
-self initializeAtom: anAtom min: 1 max: nil
+
+	self initializeAtom: anAtom min: 1 max: nil
 ]
 
-Class RxsPiece >> initializeStarAtom: anAtom
+RxsPiece >> initializeStarAtom: anAtom
 [
 	"This piece is any number of occurrences of the atom."
-self initializeAtom: anAtom min: 0 max: nil
+
+	self initializeAtom: anAtom min: 0 max: nil
 ]
 
-Class RxsPiece >> isAtomic
+RxsPiece >> isAtomic
 [
-	"A piece is atomic if only it contains exactly one atom	which is atomic (sic)."
-^ self isSingular and: [ atom isAtomic ]
+	"A piece is atomic if only it contains exactly one atom
+	which is atomic (sic)."
+
+	^ self isSingular and: [ atom isAtomic ]
 ]
 
-Class RxsPiece >> isNullable
+RxsPiece >> isNullable
 [
-	"A piece is nullable if it allows 0 matches. 	This is often handy to know for optimization."
-^ min = 0 or: [ atom isNullable ]
+	"A piece is nullable if it allows 0 matches. 
+	This is often handy to know for optimization."
+
+	^ min = 0 or: [ atom isNullable ]
 ]
 
-Class RxsPiece >> isOptional
+RxsPiece >> isOptional
 [
-^ min = 0 and: [ max = 1 ]
+	^ min = 0 and: [ max = 1 ]
 ]
 
-Class RxsPiece >> isPlus
+RxsPiece >> isPlus
 [
-^ min = 1 and: [ max == nil ]
+	^ min = 1 and: [ max == nil ]
 ]
 
-Class RxsPiece >> isSingular
+RxsPiece >> isSingular
 [
-	"A piece with a range is 1 to 1 needs can be compiled	as a simple match."
-^ min = 1 and: [ max = 1 ]
+	"A piece with a range is 1 to 1 needs can be compiled
+	as a simple match."
+
+	^ min = 1 and: [ max = 1 ]
 ]
 
-Class RxsPiece >> isStar
+RxsPiece >> isStar
 [
-^ min = 0 and: [ max == nil ]
+	^ min = 0 and: [ max == nil ]
 ]
 
-Class RxsPiece >> max
+RxsPiece >> max
 [
 	"The value answered may be nil, indicating infinity."
-^ max
+
+	^ max
 ]
 
-Class RxsPiece >> min
+RxsPiece >> min
 [
-^ min
+	^ min
 ]
-
-Metaclass
-	name: #RxsPiece;
-	instanceVariables: #().
 

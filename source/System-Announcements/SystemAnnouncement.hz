@@ -1,38 +1,37 @@
-Class
-	name: #SystemAnnouncement;
-	superclass: #ClassAnnouncement;
-	instanceSpecification: #(#pointers #words );
+SystemAnnouncement
+	superclass: #Announcement;
 	instanceVariables: #(#timeStamp );
-	classVariables: #();
 	package: #'System-Announcements'.
 
-Class SystemAnnouncement >> initialize
+SystemAnnouncement >> initialize
 [
-super initialize	"self setTimeStamp."
+	super initialize.
+	self setTimeStamp
 ]
 
-Class SystemAnnouncement >> setTimeStamp
+SystemAnnouncement >> setTimeStamp
 [
-timeStamp := TimeStamp current
+	timeStamp := TimeStamp current
 ]
 
-Class SystemAnnouncement >> timeStamp
+SystemAnnouncement >> timeStamp
 [
-^ timeStamp
+	^ timeStamp
 ]
 
-Class SystemAnnouncement >> timeStamp: aTimeStamp
+SystemAnnouncement >> timeStamp: aTimeStamp
 [
-timeStamp := aTimeStamp
+	timeStamp := aTimeStamp
 ]
 
-Metaclass
-	name: #SystemAnnouncement;
-	instanceVariables: #().
-
-Metaclass SystemAnnouncement >> fromInternal: anInternalAnnouncement
+SystemAnnouncement class >> fromInternal: anInternalAnnouncement
 [
 	"create a new announcement from an internal announcement. Copy the variables"
-| instance |self flag: #ben.	"why copy does not work?"instance := self new.1 to: self allInstVarNames size do: [ :i | instance instVarAt: i put: (anInternalAnnouncement instVarAt: i) ].^ instance
+
+	| instance |
+	self flag: #ben.	"why copy does not work?"
+	instance := self new.
+	1 to: self allInstVarNames size do: [ :i | instance instVarAt: i put: (anInternalAnnouncement instVarAt: i) ].
+	^ instance
 ]
 

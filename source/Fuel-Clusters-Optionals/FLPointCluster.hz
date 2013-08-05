@@ -1,33 +1,22 @@
-Class
-	name: #FLPointCluster;
-	superclass: #ClassFLOptimizedObjectCluster;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+FLPointCluster
+	superclass: #FLOptimizedObjectCluster;
 	package: #'Fuel-Clusters-Optionals'.
 
-Class FLPointCluster >> materializeInstanceWith: aDecoder
+FLPointCluster >> materializeInstanceWith: aDecoder
 [
 	"Since in Pharo #@ is associated with a special bytecode, it is faster than doing  Point basicNew"
-^ 0 @ 0
+
+	^ 0 @ 0
 ]
 
-Class FLPointCluster >> materializeReferencesOf: aPoint with: aDecoder
+FLPointCluster >> materializeReferencesOf: aPoint with: aDecoder
 [
-aPoint setX: aDecoder nextEncodedReference setY: aDecoder nextEncodedReference
+	aPoint setX: aDecoder nextEncodedReference setY: aDecoder nextEncodedReference
 ]
 
-Class FLPointCluster >> referencesOf: aPoint do: aBlock
+FLPointCluster >> referencesOf: aPoint do: aBlock
 [
-aBlock value: aPoint x.aBlock value: aPoint y
+	aBlock value: aPoint x.
+	aBlock value: aPoint y
 ]
-
-Class FLPointCluster >> serializeReferencesOf: aPoint with: anEncoder
-[
-anEncoder encodeReferenceTo: aPoint x.anEncoder encodeReferenceTo: aPoint y
-]
-
-Metaclass
-	name: #FLPointCluster;
-	instanceVariables: #().
 

@@ -1,94 +1,132 @@
-Class
-	name: #FLAnalyzer;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #(#internalClasses #pluggableSubstitutions #globalMappersFactory #analysisFactory #generalMapperFactory #globalSymbols #internalMethods #globalMappers );
-	classVariables: #();
+FLAnalyzer
+	instanceVariables: #(#internalClasses #pluggableSubstitutions #globalMappersFactory #analysisFactory #generalMapperFactory #globalSymbols #internalMethods #globalMappers #globalEnvironment );
 	package: #'Fuel-Core'.
 
-Class FLAnalyzer >> analysisFor: anObject
+FLAnalyzer >> analysisFor: anObject
 [
-^ analysisFactory value: anObject
+	^ analysisFactory value: anObject
 ]
 
-Class FLAnalyzer >> considerGlobal: aSymbol
+FLAnalyzer >> considerGlobal: aSymbol
 [
-globalSymbols add: aSymbol
+	globalSymbols add: aSymbol
 ]
 
-Class FLAnalyzer >> firstInMapperChain
+FLAnalyzer >> firstInMapperChain
 [
-^ self mappers first
+	^ self mappers first
 ]
 
-Class FLAnalyzer >> fuelAccept: aGeneralMapper
+FLAnalyzer >> fuelAccept: aGeneralMapper
 [
-^ aGeneralMapper visitSubstitution: self by: nil
+	^ aGeneralMapper visitSubstitution: self by: nil
 ]
 
-Class FLAnalyzer >> generalMapper
+FLAnalyzer >> generalMapper
 [
-^ generalMapperFactory value
+	^ generalMapperFactory value
 ]
 
-Class FLAnalyzer >> globalMappers
+FLAnalyzer >> globalEnvironment
 [
-^ globalMappersFactory value
+	"Answer a dictionary where the look up for global symbols will be done during serialization."
+
+	^ globalEnvironment
 ]
 
-Class FLAnalyzer >> globalSymbols
+FLAnalyzer >> globalEnvironment: aDictionary
+[
+	globalEnvironment := aDictionary
+]
+
+FLAnalyzer >> globalMappers
+[
+	^ globalMappersFactory value
+]
+
+FLAnalyzer >> globalSymbols
 [
 	"Answer the collection of symbols whose associations and values in Smalltalk globals will be considered as globals by Fuel."
-^ globalSymbols
+
+	^ globalSymbols
 ]
 
-Class FLAnalyzer >> initialize
+FLAnalyzer >> initialize
 [
-super initialize.self setDefaultAnalysis.self useLightMappers.pluggableSubstitutions := OrderedCollection new.internalClasses := IdentitySet new.internalMethods := IdentitySet new.globalSymbols := self class defaultGlobalSymbols asIdentitySet
+	super initialize.
+	self setDefaultAnalysis.
+	self useLightMappers.
+	pluggableSubstitutions := OrderedCollection new.
+	internalClasses := IdentitySet new.
+	internalMethods := IdentitySet new.
+	globalEnvironment := self class environment.
+	globalSymbols := self class defaultGlobalSymbols asIdentitySet
 ]
 
-Class FLAnalyzer >> lightGlobalMappers
+FLAnalyzer >> lightGlobalMappers
 [
-^ globalSymbols isEmpty	ifTrue: [ #() ]	ifFalse: [ Array with: (FLLightGlobalMapper for: globalSymbols) ]
+	^ globalSymbols isEmpty
+		ifTrue: [ #() ]
+		ifFalse: [ Array with: (FLLightGlobalMapper for: globalSymbols in: self globalEnvironment) ]
 ]
 
-Class FLAnalyzer >> mappers
+FLAnalyzer >> mappers
 [
-^ OrderedCollection new	addAll: self pluggableSubstitutionMappers;	addAll: self globalMappers;	add: self generalMapper;	reduceRight: [ :left :right | left next: right ];	yourself
+	^ OrderedCollection new
+		addAll: self pluggableSubstitutionMappers;
+		addAll: self globalMappers;
+		add: self generalMapper;
+		reduceRight: [ :left :right | left next: right ];
+		yourself
 ]
 
-Class FLAnalyzer >> pluggableSubstitutionMappers
+FLAnalyzer >> pluggableSubstitutionMappers
 [
-^ pluggableSubstitutions collect: [ :aLink | FLPluggableSubstitutionMapper when: aLink key substituteBy: aLink value ]
+	^ pluggableSubstitutions collect: [ :aLink | FLPluggableSubstitutionMapper when: aLink key substituteBy: aLink value ]
 ]
 
-Class FLAnalyzer >> setDefaultAnalysis
+FLAnalyzer >> privateFirstInMapperChain
 [
-analysisFactory := [ :anObject | (FLAnalysis newWith: self firstInMapperChain root: anObject)	run;	yourself ]
+	^ self privateMappers first
 ]
 
-Class FLAnalyzer >> useLightMappers
+FLAnalyzer >> privateMappers
 [
-globalMappersFactory := [ self lightGlobalMappers ].generalMapperFactory := [ FLLightGeneralMapper new ]
+	^ OrderedCollection new
+		addAll: self globalMappers;
+		add: self generalMapper;
+		reduceRight: [ :left :right | left next: right ];
+		yourself
 ]
 
-Class FLAnalyzer >> when: aCondition substituteBy: aFactory
+FLAnalyzer >> setDefaultAnalysis
 [
-pluggableSubstitutions add: aCondition -> aFactory
+	analysisFactory := [ :anObject | (FLAnalysis newWith: self firstInMapperChain private: self privateFirstInMapperChain root: anObject)
+		run;
+		yourself ]
 ]
 
-Metaclass
-	name: #FLAnalyzer;
-	instanceVariables: #().
-
-Metaclass FLAnalyzer >> defaultGlobalSymbols
+FLAnalyzer >> useLightMappers
 [
-^ #(#Smalltalk #SourceFiles #Transcript #Undeclared #Display #TextConstants #ActiveWorld #ActiveHand #ActiveEvent #Sensor #Processor #ImageImports #SystemOrganization #World)	select: [ :each | Smalltalk globals includesKey: each ]
+	globalMappersFactory := [ self lightGlobalMappers ].
+	generalMapperFactory := [ FLLightGeneralMapper new ]
 ]
 
-Metaclass FLAnalyzer >> newDefault
+FLAnalyzer >> when: aCondition substituteBy: aFactory
+[
+	pluggableSubstitutions add: aCondition -> aFactory
+]
+
+FLAnalyzer class >> defaultGlobalSymbols
+[
+	^ #(#Smalltalk #SourceFiles #Transcript #Undeclared #Display #TextConstants #ActiveWorld #ActiveHand #ActiveEvent #Sensor #Processor #ImageImports #SystemOrganization #World)
+		select: [ :each | self environment includesKey: each ]
+]
+
+FLAnalyzer class >> newDefault
 [
 	"Returns an instance with default configuration."
-^ self new
+
+	^ self new
 ]
 

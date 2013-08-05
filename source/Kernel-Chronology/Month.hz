@@ -1,74 +1,90 @@
-Class
-	name: #Month;
-	superclass: #ClassTimespan;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
-	sharedPools: #(#ChronologyConstants );	package: #'Kernel-Chronology'.
+Month
+	superclass: #Timespan;
+	sharedPools: #(#ChronologyConstants );
+	package: #'Kernel-Chronology'.
 
-Class Month >> asMonth
+Month >> asMonth
 [
-^ self
+	^ self
 ]
 
-Class Month >> daysInMonth
+Month >> daysInMonth
 [
-^ self duration days
+	^ self duration days
 ]
 
-Class Month >> index
+Month >> index
 [
-^ self monthIndex
+	^ self monthIndex
 ]
 
-Class Month >> name
+Month >> name
 [
-^ self monthName
+	^ self monthName
 ]
 
-Class Month >> previous
+Month >> previous
 [
-^ self class starting: self start - 1
+	^ self class starting: self start - 1
 ]
 
-Class Month >> printOn: aStream
+Month >> printOn: aStream
 [
-aStream nextPutAll: self monthName , ' ' , self year printString
+	aStream nextPutAll: self monthName , ' ' , self year printString
 ]
 
-Metaclass
-	name: #Month;
-	instanceVariables: #().
-
-Metaclass Month >> daysInMonth: indexOrName forYear: yearInteger
+Month class >> daysInMonth: indexOrName forYear: yearInteger
 [
-| index |index := indexOrName isInteger	ifTrue: [ indexOrName ]	ifFalse: [ self indexOfMonth: indexOrName ].^ (DaysInMonth at: index)	+		((index = 2 and: [ Year isLeapYear: yearInteger ])			ifTrue: [ 1 ]			ifFalse: [ 0 ])
+	| index |
+	index := indexOrName isInteger
+		ifTrue: [ indexOrName ]
+		ifFalse: [ self indexOfMonth: indexOrName ].
+	^ (DaysInMonth at: index) + ((index = 2 and: [ Year isLeapYear: yearInteger ])
+				ifTrue: [ 1 ]
+				ifFalse: [ 0 ])
 ]
 
-Metaclass Month >> indexOfMonth: aMonthName
+Month class >> indexOfMonth: aMonthName
 [
-1 to: 12 do: [ :i | 	(aMonthName , '*' match: (MonthNames at: i))		ifTrue: [ ^ i ] ].self error: aMonthName , ' is not a recognized month name'
+	1 to: 12 do: [ :i | (aMonthName , '*' match: (MonthNames at: i))
+			ifTrue: [ ^ i ] ].
+	self error: aMonthName , ' is not a recognized month name'
 ]
 
-Metaclass Month >> month: month year: year
+Month class >> month: month year: year
 [
-	"Create a Month for the given <year> and <month>.	<month> may be a number or a String with the	name of the month. <year> should be with 4 digits."
-^ self starting: (DateAndTime year: year month: month day: 1)
+	"Create a Month for the given <year> and <month>.
+	<month> may be a number or a String with the
+	name of the month. <year> should be with 4 digits."
+
+	^ self starting: (DateAndTime year: year month: month day: 1)
 ]
 
-Metaclass Month >> nameOfMonth: anIndex
+Month class >> nameOfMonth: anIndex
 [
-^ MonthNames at: anIndex
+	^ MonthNames at: anIndex
 ]
 
-Metaclass Month >> readFrom: aStream
+Month class >> readFrom: aStream
 [
-| m y c |m := (ReadWriteStream with: '') reset.[ (c := aStream next) isSeparator ] whileFalse: [ m nextPut: c ].[ (c := aStream next) isSeparator ] whileTrue.y := (ReadWriteStream with: '') reset.y nextPut: c.[ aStream atEnd ] whileFalse: [ y nextPut: aStream next ].^ self month: (Month indexOfMonth: m contents) year: y contents asNumber	"Month readFrom: 'July 1998' readStream"
+	| m y c |
+	m := (ReadWriteStream with: '') reset.
+	[ (c := aStream next) isSeparator ] whileFalse: [ m nextPut: c ].
+	[ (c := aStream next) isSeparator ] whileTrue.
+	y := (ReadWriteStream with: '') reset.
+	y nextPut: c.
+	[ aStream atEnd ] whileFalse: [ y nextPut: aStream next ].
+	^ self month: (Month indexOfMonth: m contents) year: y contents asNumber	"Month readFrom: 'July 1998' readStream"
 ]
 
-Metaclass Month >> starting: aDateAndTime duration: aDuration
+Month class >> starting: aDateAndTime duration: aDuration
 [
 	"Override - a each month has a defined duration"
-| start adjusted days |start := aDateAndTime asDateAndTime.adjusted := DateAndTime year: start year month: start month day: 1.days := self daysInMonth: adjusted month forYear: adjusted year.^ super starting: adjusted duration: (Duration days: days)
+
+	| start adjusted days |
+	start := aDateAndTime asDateAndTime.
+	adjusted := DateAndTime year: start year month: start month day: 1.
+	days := self daysInMonth: adjusted month forYear: adjusted year.
+	^ super starting: adjusted duration: (Duration days: days)
 ]
 

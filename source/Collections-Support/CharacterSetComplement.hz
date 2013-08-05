@@ -1,127 +1,157 @@
-Class
-	name: #CharacterSetComplement;
-	superclass: #ClassCollection;
-	instanceSpecification: #(#pointers #words );
+CharacterSetComplement
+	superclass: #Collection;
 	instanceVariables: #(#absent #byteArrayMapCache );
-	classVariables: #();
 	package: #'Collections-Support'.
 
-Class CharacterSetComplement >> = anObject
+CharacterSetComplement >> = anObject
 [
-	"Implementation note: we do not test if equal to a WideCharacterSet,	because it is unlikely that WideCharacterSet is as complete as self"
-^ self class == anObject class and: [ absent = anObject complement ]
+	"Implementation note: we do not test if equal to a WideCharacterSet,
+	because it is unlikely that WideCharacterSet is as complete as self"
+
+	^ self class == anObject class and: [ absent = anObject complement ]
 ]
 
-Class CharacterSetComplement >> add: aCharacter
+CharacterSetComplement >> add: aCharacter
 [
 	"a character is present if not absent, so adding a character is removing it from the absent"
-(absent includes: aCharacter)	ifTrue: [ 		byteArrayMapCache := nil.		absent remove: aCharacter ].^ aCharacter
+
+	(absent includes: aCharacter)
+		ifTrue: [ byteArrayMapCache := nil.
+			absent remove: aCharacter ].
+	^ aCharacter
 ]
 
-Class CharacterSetComplement >> byteArrayMap
+CharacterSetComplement >> byteArrayMap
 [
 	"return a ByteArray mapping each ascii value to a 1 if that ascii value is in the set, and a 0 if it isn't.  Intended for use by primitives only"
-^ byteArrayMapCache ifNil: [ byteArrayMapCache := absent byteArrayMap collect: [ :i | 1 - i ] ]
+
+	^ byteArrayMapCache ifNil: [ byteArrayMapCache := absent byteArrayMap collect: [ :i | 1 - i ] ]
 ]
 
-Class CharacterSetComplement >> complement
+CharacterSetComplement >> complement
 [
 	"return a character set containing precisely the characters the receiver does not"
-^ absent copy
+
+	^ absent copy
 ]
 
-Class CharacterSetComplement >> complement: aCharacterSet
+CharacterSetComplement >> complement: aCharacterSet
 [
 	"initialize with the complement"
-byteArrayMapCache := nil.absent := aCharacterSet
+
+	byteArrayMapCache := nil.
+	absent := aCharacterSet
 ]
 
-Class CharacterSetComplement >> do: aBlock
+CharacterSetComplement >> do: aBlock
 [
-	"evaluate aBlock with each character in the set.	don't do it, there are too many..."
-self shouldNotImplement
+	"evaluate aBlock with each character in the set.
+	don't do it, there are too many..."
+
+	self shouldNotImplement
 ]
 
-Class CharacterSetComplement >> findFirstInByteString: aByteString startingAt: startIndex
+CharacterSetComplement >> findFirstInByteString: aByteString startingAt: startIndex
 [
 	"Double dispatching: since we know this is a ByteString, we can use a superfast primitive using a ByteArray map with 0 slots for byte characters not included and 1 for byte characters included in the receiver."
-^ ByteString findFirstInString: aByteString inSet: self byteArrayMap startingAt: startIndex
+
+	^ ByteString findFirstInString: aByteString inSet: self byteArrayMap startingAt: startIndex
 ]
 
-Class CharacterSetComplement >> hasWideCharacters
+CharacterSetComplement >> hasWideCharacters
 [
 	"This is a guess that absent is not holding each and every possible wideCharacter..."
-^ true
+
+	^ true
 ]
 
-Class CharacterSetComplement >> hash
+CharacterSetComplement >> hash
 [
-^ absent hash bitXor: self class hash
+	^ absent hash bitXor: self class hash
 ]
 
-Class CharacterSetComplement >> includes: aCharacter
+CharacterSetComplement >> includes: aCharacter
 [
-^ (absent includes: aCharacter) not
+	^ (absent includes: aCharacter) not
 ]
 
-Class CharacterSetComplement >> postCopy
+CharacterSetComplement >> postCopy
 [
-super postCopy.absent := absent copy
+	super postCopy.
+	absent := absent copy
 ]
 
-Class CharacterSetComplement >> printOn: aStream
+CharacterSetComplement >> printOn: aStream
 [
-	"Print a description of the complement rather than self.	Rationale: self would be too long to print."
-aStream nextPut: $(.absent printOn: aStream.aStream	nextPut: $);	space;	nextPutAll: #complement
+	"Print a description of the complement rather than self.
+	Rationale: self would be too long to print."
+
+	aStream nextPut: $(.
+	absent printOn: aStream.
+	aStream
+		nextPut: $);
+		space;
+		nextPutAll: #complement
 ]
 
-Class CharacterSetComplement >> reject: aBlock
+CharacterSetComplement >> reject: aBlock
 [
 	"Implementation note: rejecting present is selecting absent"
-^ (absent select: aBlock) complement
+
+	^ (absent select: aBlock) complement
 ]
 
-Class CharacterSetComplement >> remove: aCharacter
+CharacterSetComplement >> remove: aCharacter
 [
-	"This means aCharacter is now absent from myself.	It must be added to my absent."
-byteArrayMapCache := nil.^ absent add: aCharacter
+	"This means aCharacter is now absent from myself.
+	It must be added to my absent."
+
+	byteArrayMapCache := nil.
+	^ absent add: aCharacter
 ]
 
-Class CharacterSetComplement >> remove: aCharacter ifAbsent: aBlock
+CharacterSetComplement >> remove: aCharacter ifAbsent: aBlock
 [
-(self includes: aCharacter)	ifFalse: [ ^ aBlock value ].^ self remove: aCharacter
+	(self includes: aCharacter)
+		ifFalse: [ ^ aBlock value ].
+	^ self remove: aCharacter
 ]
 
-Class CharacterSetComplement >> removeAll
+CharacterSetComplement >> removeAll
 [
-self becomeForward: CharacterSet new
+	self becomeForward: CharacterSet new
 ]
 
-Class CharacterSetComplement >> select: aBlock
+CharacterSetComplement >> select: aBlock
 [
 	"Implementation note: selecting present is rejecting absent"
-^ (absent reject: aBlock) complement
+
+	^ (absent reject: aBlock) complement
 ]
 
-Class CharacterSetComplement >> size
+CharacterSetComplement >> size
 [
 	"Is this 2**32-absent size ?"
-^ self shouldNotImplement
+
+	^ self shouldNotImplement
 ]
 
-Class CharacterSetComplement >> storeOn: aStream
+CharacterSetComplement >> storeOn: aStream
 [
 	"Store a description of the elements of the complement rather than self."
-aStream nextPut: $(.absent storeOn: aStream.aStream	nextPut: $);	space;	nextPutAll: #complement
+
+	aStream nextPut: $(.
+	absent storeOn: aStream.
+	aStream
+		nextPut: $);
+		space;
+		nextPutAll: #complement
 ]
 
-Metaclass
-	name: #CharacterSetComplement;
-	instanceVariables: #().
-
-Metaclass CharacterSetComplement >> of: aCharacterSet
+CharacterSetComplement class >> of: aCharacterSet
 [
 	"answer the complement of aCharacterSet"
-^ super new complement: aCharacterSet
+
+	^ super new complement: aCharacterSet
 ]
 

@@ -1,0 +1,94 @@
+BasicCodeLoader
+	superclass: #CommandLineHandler;
+	instanceVariables: #(#sourceFiles );
+	package: #'System-CommandLine'.
+
+BasicCodeLoader >> activate
+[
+	self activateHelp.
+	self loadSourceFiles: (self commandLine allFilesWithExtension: 'st').
+	self installSourceFiles.
+	(self commandLine hasOption: 'quit')
+		ifTrue: [ self exitSuccess ]
+]
+
+BasicCodeLoader >> handleError: error
+[
+	"for syntax errors we can used the default action"
+
+	"otherwise resignal it"
+
+	(error isKindOf: SyntaxErrorNotification)
+		ifTrue: [ error defaultAction ]
+		ifFalse: [ error pass ]
+]
+
+BasicCodeLoader >> handleError: error reference: aReference
+[
+	"Print a header before failing on an errro / syntax notification from the the script loaded by the given request"
+
+	"spit out a warning if in headless mode, otherwise a debugger will popup"
+
+	Smalltalk isHeadless
+		ifTrue: [ self inform: 'Errors in script loaded from ' , aReference fullName ].
+	(error isKindOf: SyntaxErrorNotification)
+		ifTrue: [ error defaultAction ]
+		ifFalse: [ error pass ]	"for syntax errors we can used the default action"	"otherwise resignal it"
+]
+
+BasicCodeLoader >> handleErrorsDuring: aBlock reference: aReference
+[
+	aBlock
+		on: Error , ParserNotification
+		do: [ :e | self handleError: e reference: aReference ]
+]
+
+BasicCodeLoader >> installSourceFile: aReference
+[
+	"Install the the source file given by aFileReference"
+
+	| codeImporter |
+	" parse the code given in the source file"
+	aReference
+		readStreamDo: [ :stream | self
+				handleErrorsDuring: [ codeImporter := CodeImporter fileStream: stream.
+					codeImporter parseDeclarations ]
+				reference: aReference ].	"evaluate the declarations in a second step to allow for properly closing the source file stream"
+	self handleErrorsDuring: [ codeImporter evaluate ] reference: aReference
+]
+
+BasicCodeLoader >> installSourceFiles
+[
+	"Install the previously loaded source files"
+
+	sourceFiles ifNil: [ ^ self ].
+	[ sourceFiles do: [ :reference | self installSourceFile: reference ] ]
+		ensure: [ sourceFiles := nil ]
+]
+
+BasicCodeLoader >> loadSourceFiles: anArray
+[
+	"Load all the source files in the given array."
+
+	sourceFiles := anArray collect: [ :each | (FileSystem disk resolve: each) asFileReference ]
+]
+
+BasicCodeLoader class >> commandName
+[
+	^ 'st'
+]
+
+BasicCodeLoader class >> description
+[
+	^ 'Loads and executes .st source files'
+]
+
+BasicCodeLoader class >> isResponsibleFor: aCommandLine
+[
+	"This handler is reponsible only for .st files"
+
+	(aCommandLine hasFileWithExtension: '.st')
+		ifTrue: [ ^ true ].
+	^ super isResponsibleFor: aCommandLine
+]
+

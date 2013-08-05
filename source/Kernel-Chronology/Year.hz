@@ -1,69 +1,75 @@
-Class
-	name: #Year;
-	superclass: #ClassTimespan;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+Year
+	superclass: #Timespan;
 	package: #'Kernel-Chronology'.
 
-Class Year >> asYear
+Year >> asYear
 [
-^ self
+	^ self
 ]
 
-Class Year >> daysInMonth
+Year >> daysInMonth
 [
-self shouldNotImplement
+	self shouldNotImplement
 ]
 
-Class Year >> daysInYear
+Year >> daysInYear
 [
-^ self duration days
+	^ self duration days
 ]
 
-Class Year >> previous
+Year >> previous
 [
 	"This implementation handles leap years correctly"
-^ self class year: self year - 1
+
+	^ self class year: self year - 1
 ]
 
-Class Year >> printOn: aStream
+Year >> printOn: aStream
 [
-aStream nextPutAll: 'a Year ('.self start year printOn: aStream.aStream nextPutAll: ')'
+	aStream nextPutAll: 'a Year ('.
+	self start year printOn: aStream.
+	aStream nextPutAll: ')'
 ]
 
-Metaclass
-	name: #Year;
-	instanceVariables: #().
-
-Metaclass Year >> current
+Year class >> current
 [
-^ self year: DateAndTime now year
+	^ self year: DateAndTime now year
 ]
 
-Metaclass Year >> daysInYear: yearInteger
+Year class >> daysInYear: yearInteger
 [
-^ 365	+		((self isLeapYear: yearInteger)			ifTrue: [ 1 ]			ifFalse: [ 0 ])
+	^ 365 + ((self isLeapYear: yearInteger)
+				ifTrue: [ 1 ]
+				ifFalse: [ 0 ])
 ]
 
-Metaclass Year >> isLeapYear: aYearInteger
+Year class >> isLeapYear: aYearInteger
 [
-| adjustedYear |adjustedYear := aYearInteger > 0	ifTrue: [ aYearInteger ]	ifFalse: [ (aYearInteger + 1) negated ].	"There was no year 0"^ (adjustedYear \\ 4 ~= 0 or: [ adjustedYear \\ 100 = 0 and: [ adjustedYear \\ 400 ~= 0 ] ]) not
+	| adjustedYear |
+	adjustedYear := aYearInteger > 0
+		ifTrue: [ aYearInteger ]
+		ifFalse: [ (aYearInteger + 1) negated ].	"There was no year 0"
+	^ (adjustedYear \\ 4 ~= 0 or: [ adjustedYear \\ 100 = 0 and: [ adjustedYear \\ 400 ~= 0 ] ]) not
 ]
 
-Metaclass Year >> leapYear: yearInteger
+Year class >> leapYear: yearInteger
 [
-^ (self isLeapYear: yearInteger)	ifTrue: [ 1 ]	ifFalse: [ 0 ]
+	^ (self isLeapYear: yearInteger)
+		ifTrue: [ 1 ]
+		ifFalse: [ 0 ]
 ]
 
-Metaclass Year >> starting: aDateAndTime duration: aDuration
+Year class >> starting: aDateAndTime duration: aDuration
 [
 	"Override - start from midnight"
-| midnight |midnight := aDateAndTime asDateAndTime midnight.^ super starting: midnight duration: (Duration days: (self daysInYear: midnight year))
+
+	| midnight |
+	midnight := aDateAndTime asDateAndTime midnight.
+	^ super starting: midnight duration: (Duration days: (self daysInYear: midnight year))
 ]
 
-Metaclass Year >> year: aYear
+Year class >> year: aYear
 [
-^ self starting: (DateAndTime year: aYear month: 1 day: 1)
+	^ self starting: (DateAndTime year: aYear month: 1 day: 1)
 ]
 

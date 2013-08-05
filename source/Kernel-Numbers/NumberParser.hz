@@ -1,165 +1,330 @@
-Class
-	name: #NumberParser;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+NumberParser
 	instanceVariables: #(#sourceStream #base #neg #integerPart #fractionPart #exponent #scale #nDigits #lastNonZero #requestor #failBlock );
-	classVariables: #();
 	package: #'Kernel-Numbers'.
 
-Class NumberParser >> allowPlusSign
+NumberParser >> allowPlusSign
 [
 	"return a boolean indicating if plus sign is allowed or not"
-^ self subclassResponsibility
+
+	^ self subclassResponsibility
 ]
 
-Class NumberParser >> allowPlusSignInExponent
+NumberParser >> allowPlusSignInExponent
 [
 	"return a boolean indicating if plus sign is allowed or not in exponent"
-^ self allowPlusSign
+
+	^ self allowPlusSign
 ]
 
-Class NumberParser >> expected: aString
+NumberParser >> expected: aString
 [
-| errorString |errorString := aString , ' expected'.requestor isNil	ifFalse: [ requestor notify: errorString at: sourceStream position + 1 in: sourceStream ].failBlock ifNotNil: [ ^ failBlock cull: errorString cull: sourceStream position + 1 ].self error: 'Reading a number failed: ' , errorString
+	| errorString |
+	errorString := aString , ' expected'.
+	requestor isNil
+		ifFalse: [ requestor notify: errorString at: sourceStream position + 1 in: sourceStream ].
+	failBlock ifNotNil: [ ^ failBlock cull: errorString cull: sourceStream position + 1 ].
+	self error: 'Reading a number failed: ' , errorString
 ]
 
-Class NumberParser >> exponentLetters
+NumberParser >> exponentLetters
 [
 	"answer the list of possible exponents for Numbers."
-^ self subclassResponsibility
+
+	^ self subclassResponsibility
 ]
 
-Class NumberParser >> fail
+NumberParser >> fail
 [
-failBlock ifNotNil: [ ^ failBlock value ].self error: 'Reading a number failed'
+	failBlock ifNotNil: [ ^ failBlock value ].
+	self error: 'Reading a number failed'
 ]
 
-Class NumberParser >> failBlock: aBlockOrNil
+NumberParser >> failBlock: aBlockOrNil
 [
-failBlock := aBlockOrNil
+	failBlock := aBlockOrNil
 ]
 
-Class NumberParser >> makeFloatFromMantissa: m exponent: k base: aRadix
+NumberParser >> makeFloatFromMantissa: m exponent: k base: aRadix
 [
-	"Convert infinite precision arithmetic into Floating point.	This alogrithm rely on correct IEEE rounding mode	being implemented in Integer>>asFloat and Fraction>>asFloat"
-^ (k positive	ifTrue: [ m * (aRadix raisedToInteger: k) ]	ifFalse: [ Fraction numerator: m denominator: (aRadix raisedToInteger: k negated) ]) asFloat
+	"Convert infinite precision arithmetic into Floating point.
+	This alogrithm rely on correct IEEE rounding mode
+	being implemented in Integer>>asFloat and Fraction>>asFloat"
+
+	^ (k positive
+		ifTrue: [ m * (aRadix raisedToInteger: k) ]
+		ifFalse: [ Fraction numerator: m denominator: (aRadix raisedToInteger: k negated) ]) asFloat
 ]
 
-Class NumberParser >> makeScaledDecimalWithNumberOfNonZeroFractionDigits: numberOfNonZeroFractionDigits andNumberOfTrailingZeroInFractionPart: numberOfTrailingZeroInFractionPart
+NumberParser >> makeScaledDecimalWithNumberOfNonZeroFractionDigits: numberOfNonZeroFractionDigits andNumberOfTrailingZeroInFractionPart: numberOfTrailingZeroInFractionPart
 [
-	"at this point integerPart fractionPart and scale have been read out (in inst var).	Form a ScaledDecimal.	Care of eliminating trailing zeroes from the fractionPart"
-| decimalMultiplier decimalFraction |decimalMultiplier := base raisedToInteger: numberOfNonZeroFractionDigits.decimalFraction := (integerPart * decimalMultiplier	+ (fractionPart // (base raisedTo: numberOfTrailingZeroInFractionPart))) / decimalMultiplier.neg	ifTrue: [ decimalFraction := decimalFraction negated ].^ decimalFraction asScaledDecimal: scale
+	"at this point integerPart fractionPart and scale have been read out (in inst var).
+	Form a ScaledDecimal.
+	Care of eliminating trailing zeroes from the fractionPart"
+
+	| decimalMultiplier decimalFraction |
+	decimalMultiplier := base raisedToInteger: numberOfNonZeroFractionDigits.
+	decimalFraction := (integerPart * decimalMultiplier
+		+ (fractionPart // (base raisedTo: numberOfTrailingZeroInFractionPart))) / decimalMultiplier.
+	neg
+		ifTrue: [ decimalFraction := decimalFraction negated ].
+	^ decimalFraction asScaledDecimal: scale
 ]
 
-Class NumberParser >> nextElementaryLargeIntegerBase: aRadix
+NumberParser >> nextElementaryLargeIntegerBase: aRadix
 [
-	"Form an unsigned integer with incoming digits from sourceStream.	Return this integer, or zero if no digits found.	Stop reading if end of digits or if a LargeInteger is formed.	Count the number of digits and the position of lastNonZero digit and store them in instVar."
-| value digit char |value := 0.nDigits := 0.lastNonZero := 0.[ value isLarge	or: [ 		(char := sourceStream next) == nil			or: [ 				digit := char digitValue.				(0 > digit or: [ digit >= aRadix ])					and: [ 						sourceStream skip: -1.						true ] ] ] ]	whileFalse: [ 		nDigits := nDigits + 1.		0 = digit			ifFalse: [ lastNonZero := nDigits ].		value := value * aRadix + digit ].^ value
+	"Form an unsigned integer with incoming digits from sourceStream.
+	Return this integer, or zero if no digits found.
+	Stop reading if end of digits or if a LargeInteger is formed.
+	Count the number of digits and the position of lastNonZero digit and store them in instVar."
+
+	| value digit char |
+	value := 0.
+	nDigits := 0.
+	lastNonZero := 0.
+	[ value isLarge
+		or: [ (char := sourceStream next) == nil
+				or: [ digit := char digitValue.
+					(0 > digit or: [ digit >= aRadix ]) and: [ sourceStream skip: -1.
+							true ] ] ] ]
+		whileFalse: [ nDigits := nDigits + 1.
+			0 = digit
+				ifFalse: [ lastNonZero := nDigits ].
+			value := value * aRadix + digit ].
+	^ value
 ]
 
-Class NumberParser >> nextFraction
+NumberParser >> nextFraction
 [
-| numerator denominator |numerator := self nextInteger.(sourceStream peekFor: $/)	ifFalse: [ ^ numerator ].denominator := self nextInteger.^ numerator / denominator
+	| numerator denominator |
+	numerator := self nextInteger.
+	(sourceStream peekFor: $/)
+		ifFalse: [ ^ numerator ].
+	denominator := self nextInteger.
+	^ numerator / denominator
 ]
 
-Class NumberParser >> nextInteger
+NumberParser >> nextInteger
 [
-	"Read and answer next integer from sourceStream contents.	Default behaviour is to read an integer in base 10.	Subclasses might implement alternatives."
-^ self nextIntegerBase: 10
+	"Read and answer next integer from sourceStream contents.
+	Default behaviour is to read an integer in base 10.
+	Subclasses might implement alternatives."
+
+	^ self nextIntegerBase: 10
 ]
 
-Class NumberParser >> nextIntegerBase: aRadix
+NumberParser >> nextIntegerBase: aRadix
 [
-	"Form an integer with following digits.	Fail if no digit found"
-| isNeg value |isNeg := self peekSignIsMinus.value := self nextUnsignedIntegerBase: aRadix.^ isNeg	ifTrue: [ value negated ]	ifFalse: [ value ]
+	"Form an integer with following digits.
+	Fail if no digit found"
+
+	| isNeg value |
+	isNeg := self peekSignIsMinus.
+	value := self nextUnsignedIntegerBase: aRadix.
+	^ isNeg
+		ifTrue: [ value negated ]
+		ifFalse: [ value ]
 ]
 
-Class NumberParser >> nextIntegerBase: aRadix ifFail: aBlock
+NumberParser >> nextIntegerBase: aRadix ifFail: aBlock
 [
 	"Form an integer with optional sign and following digits from sourceStream."
-| isNeg value |isNeg := self peekSignIsMinus.value := self nextUnsignedIntegerOrNilBase: aRadix.value ifNil: [ ^ aBlock value ].^ isNeg	ifTrue: [ value negated ]	ifFalse: [ value ]
+
+	| isNeg value |
+	isNeg := self peekSignIsMinus.
+	value := self nextUnsignedIntegerOrNilBase: aRadix.
+	value ifNil: [ ^ aBlock value ].
+	^ isNeg
+		ifTrue: [ value negated ]
+		ifFalse: [ value ]
 ]
 
-Class NumberParser >> nextLargeIntegerBase: aRadix nPackets: nPackets
+NumberParser >> nextLargeIntegerBase: aRadix nPackets: nPackets
 [
-	"Form a Large integer with incoming digits from sourceStream.	Return this integer, or zero if no digits found.	Stop reading when no more digits or when nPackets elementary LargeInteger have been encountered.	Count the number of digits and the lastNonZero digit and store them in instVar"
-| high nDigitsHigh low nDigitsLow halfPackets |halfPackets := nPackets bitShift: -1.halfPackets = 0	ifTrue: [ ^ self nextElementaryLargeIntegerBase: aRadix ].high := self nextLargeIntegerBase: aRadix nPackets: halfPackets.high isLarge	ifFalse: [ ^ high ].nDigitsHigh := nDigits.low := self nextLargeIntegerBase: aRadix nPackets: halfPackets.nDigitsLow := nDigits.nDigits := nDigitsHigh + nDigitsLow.lastNonZero = 0	ifFalse: [ lastNonZero := lastNonZero + nDigitsHigh ].^ high * (aRadix raisedToInteger: nDigitsLow) + low
+	"Form a Large integer with incoming digits from sourceStream.
+	Return this integer, or zero if no digits found.
+	Stop reading when no more digits or when nPackets elementary LargeInteger have been encountered.
+	Count the number of digits and the lastNonZero digit and store them in instVar"
+
+	| high nDigitsHigh low nDigitsLow halfPackets |
+	halfPackets := nPackets bitShift: -1.
+	halfPackets = 0
+		ifTrue: [ ^ self nextElementaryLargeIntegerBase: aRadix ].
+	high := self nextLargeIntegerBase: aRadix nPackets: halfPackets.
+	high isLarge
+		ifFalse: [ ^ high ].
+	nDigitsHigh := nDigits.
+	low := self nextLargeIntegerBase: aRadix nPackets: halfPackets.
+	nDigitsLow := nDigits.
+	nDigits := nDigitsHigh + nDigitsLow.
+	lastNonZero = 0
+		ifFalse: [ lastNonZero := lastNonZero + nDigitsHigh ].
+	^ high * (aRadix raisedToInteger: nDigitsLow) + low
 ]
 
-Class NumberParser >> nextNumber
+NumberParser >> nextNumber
 [
 	"read next number from sourceStream contents"
-^ self subclassResponsibility
+
+	^ self subclassResponsibility
 ]
 
-Class NumberParser >> nextUnsignedIntegerBase: aRadix
+NumberParser >> nextUnsignedIntegerBase: aRadix
 [
-	"Form an unsigned integer with incoming digits from sourceStream.	Fail if no digit found.	Count the number of digits and the lastNonZero digit and store int in instVar "
-| value |value := self nextUnsignedIntegerOrNilBase: aRadix.value ifNil: [ ^ self expected: ('a digit between 0 and ' copyWith: (Character digitValue: aRadix - 1)) ].^ value
+	"Form an unsigned integer with incoming digits from sourceStream.
+	Fail if no digit found.
+	Count the number of digits and the lastNonZero digit and store int in instVar "
+
+	| value |
+	value := self nextUnsignedIntegerOrNilBase: aRadix.
+	value ifNil: [ ^ self expected: ('a digit between 0 and ' copyWith: (Character digitValue: aRadix - 1)) ].
+	^ value
 ]
 
-Class NumberParser >> nextUnsignedIntegerBase: aRadix ifFail: errorBlock
+NumberParser >> nextUnsignedIntegerBase: aRadix ifFail: errorBlock
 [
-	"Form an unsigned integer with incoming digits from sourceStream.	Answer this integer, or execute errorBlock if no digit found.	Count the number of digits and the position of lastNonZero digit and store them in instVar"
-| value |value := self nextUnsignedIntegerOrNilBase: aRadix.value ifNil: [ ^ errorBlock value ].^ value
+	"Form an unsigned integer with incoming digits from sourceStream.
+	Answer this integer, or execute errorBlock if no digit found.
+	Count the number of digits and the position of lastNonZero digit and store them in instVar"
+
+	| value |
+	value := self nextUnsignedIntegerOrNilBase: aRadix.
+	value ifNil: [ ^ errorBlock value ].
+	^ value
 ]
 
-Class NumberParser >> nextUnsignedIntegerOrNilBase: aRadix
+NumberParser >> nextUnsignedIntegerOrNilBase: aRadix
 [
-	"Form an unsigned integer with incoming digits from sourceStream.	Answer this integer, or nil if no digit found.	Count the number of digits and the position of lastNonZero digit and store them in instVar"
-| nPackets high nDigitsHigh lastNonZeroHigh low |"read no more digits than one elementary LargeInteger"high := self nextElementaryLargeIntegerBase: aRadix.nDigits = 0	ifTrue: [ ^ nil ].	"Not enough digits to form a LargeInteger, stop iteration"high isLarge	ifFalse: [ ^ high ].	"We now have to engage arithmetic with LargeInteger	Decompose the integer in a high and low packets of growing size:"nPackets := 1.nDigitsHigh := nDigits.lastNonZeroHigh := lastNonZero.[ low := self nextLargeIntegerBase: aRadix nPackets: nPackets.high := high * (aRadix raisedToInteger: nDigits) + low.lastNonZero = 0	ifFalse: [ lastNonZeroHigh := lastNonZero + nDigitsHigh ].nDigitsHigh := nDigitsHigh + nDigits.low isLarge ] whileTrue: [ nPackets := nPackets * 2 ].nDigits := nDigitsHigh.lastNonZero := lastNonZeroHigh.^ high
+	"Form an unsigned integer with incoming digits from sourceStream.
+	Answer this integer, or nil if no digit found.
+	Count the number of digits and the position of lastNonZero digit and store them in instVar"
+
+	| nPackets high nDigitsHigh lastNonZeroHigh low |
+	"read no more digits than one elementary LargeInteger"
+	high := self nextElementaryLargeIntegerBase: aRadix.
+	nDigits = 0
+		ifTrue: [ ^ nil ].	"Not enough digits to form a LargeInteger, stop iteration"
+	high isLarge
+		ifFalse: [ ^ high ].	"We now have to engage arithmetic with LargeInteger	Decompose the integer in a high and low packets of growing size:"
+	nPackets := 1.
+	nDigitsHigh := nDigits.
+	lastNonZeroHigh := lastNonZero.
+	[ low := self nextLargeIntegerBase: aRadix nPackets: nPackets.
+	high := high * (aRadix raisedToInteger: nDigits) + low.
+	lastNonZero = 0
+		ifFalse: [ lastNonZeroHigh := lastNonZero + nDigitsHigh ].
+	nDigitsHigh := nDigitsHigh + nDigits.
+	low isLarge ]
+		whileTrue: [ nPackets := nPackets * 2 ].
+	nDigits := nDigitsHigh.
+	lastNonZero := lastNonZeroHigh.
+	^ high
 ]
 
-Class NumberParser >> on: aStringOrStream
+NumberParser >> on: aStringOrStream
 [
-sourceStream := aStringOrStream isString	ifTrue: [ aStringOrStream readStream ]	ifFalse: [ aStringOrStream ].base := 10.neg := false.integerPart := fractionPart := exponent := scale := 0.requestor := failBlock := nil
+	sourceStream := aStringOrStream isString
+		ifTrue: [ aStringOrStream readStream ]
+		ifFalse: [ aStringOrStream ].
+	base := 10.
+	neg := false.
+	integerPart := fractionPart := exponent := scale := 0.
+	requestor := failBlock := nil
 ]
 
-Class NumberParser >> peekSignIsMinus
+NumberParser >> peekSignIsMinus
 [
-	"Peek an optional sign from sourceStream.	Answer true if it is minus sign"
-| isMinus |isMinus := sourceStream peekFor: $-.isMinus	ifFalse: [ 		self allowPlusSign			ifTrue: [ sourceStream peekFor: $+ ] ].^ isMinus
+	"Peek an optional sign from sourceStream.
+	Answer true if it is minus sign"
+
+	| isMinus |
+	isMinus := sourceStream peekFor: $-.
+	isMinus
+		ifFalse: [ self allowPlusSign
+				ifTrue: [ sourceStream peekFor: $+ ] ].
+	^ isMinus
 ]
 
-Class NumberParser >> readExponent
+NumberParser >> readExponent
 [
-	"read the exponent if any (stored in instVar).	Answer true if found, answer false if none.	If exponent letter is not followed by a digit,	this is not considered as an error.	Exponent are always read in base 10."
-| eneg epos |exponent := 0.sourceStream atEnd	ifTrue: [ ^ false ].(self exponentLetters includes: sourceStream peek)	ifFalse: [ ^ false ].sourceStream next.eneg := sourceStream peekFor: $-.epos := eneg not and: [ self allowPlusSignInExponent and: [ sourceStream peekFor: $+ ] ].exponent := self nextUnsignedIntegerOrNilBase: 10.exponent	ifNil: [ 		"Oops, there was no digit after the exponent letter.Ungobble the letter"		exponent := 0.		sourceStream			skip:				((eneg or: [ epos ])					ifTrue: [ -2 ]					ifFalse: [ -1 ]).		^ false ].eneg	ifTrue: [ exponent := exponent negated ].^ true
+	"read the exponent if any (stored in instVar).
+	Answer true if found, answer false if none.
+	If exponent letter is not followed by a digit,
+	this is not considered as an error.
+	Exponent are always read in base 10."
+
+	| eneg epos |
+	exponent := 0.
+	sourceStream atEnd
+		ifTrue: [ ^ false ].
+	(self exponentLetters includes: sourceStream peek)
+		ifFalse: [ ^ false ].
+	sourceStream next.
+	eneg := sourceStream peekFor: $-.
+	epos := eneg not and: [ self allowPlusSignInExponent and: [ sourceStream peekFor: $+ ] ].
+	exponent := self nextUnsignedIntegerOrNilBase: 10.
+	exponent
+		ifNil: [ "Oops, there was no digit after the exponent letter.Ungobble the letter"
+			exponent := 0.
+			sourceStream skip: ((eneg or: [ epos ])
+						ifTrue: [ -2 ]
+						ifFalse: [ -1 ]).
+			^ false ].
+	eneg
+		ifTrue: [ exponent := exponent negated ].
+	^ true
 ]
 
-Class NumberParser >> requestor: anObjectOrNil
+NumberParser >> requestor: anObjectOrNil
 [
-requestor := anObjectOrNil
+	requestor := anObjectOrNil
 ]
 
-Metaclass
-	name: #NumberParser;
-	instanceVariables: #().
-
-Metaclass NumberParser >> on: aStringOrStream
+NumberParser class >> on: aStringOrStream
 [
-^ self new on: aStringOrStream
+	^ self new on: aStringOrStream
 ]
 
-Metaclass NumberParser >> parse: aStringOrStream
+NumberParser class >> parse: aStringOrStream
 [
-^ self new	on: aStringOrStream;	nextNumber
+	^ self new
+		on: aStringOrStream;
+		nextNumber
 ]
 
-Metaclass NumberParser >> parse: aStringOrStream onError: failBlock
+NumberParser class >> parse: aStringOrStream onError: failBlock
 [
-^ self new	on: aStringOrStream;	failBlock: failBlock;	nextNumber
+	^ self new
+		on: aStringOrStream;
+		failBlock: failBlock;
+		nextNumber
 ]
 
-Metaclass NumberParser >> squeezeNumberOutOfString: stringOrStream
+NumberParser class >> squeezeNumberOutOfString: stringOrStream
 [
-	"Try and find a number in this string. First, look if the string 	starts with a number. Then, see if it ends with a number. Then,	remove a character from the front and see if the remaining 	string makes a number. Repeat the process until no characters	are left or the number has been found. As soon as a number is	found, it is returned. Otherwise, the method fails."
-^ self squeezeNumberOutOfString: stringOrStream onError: [ self error: 'Reading a number failed' ]
+	"Try and find a number in this string. First, look if the string 
+	starts with a number. Then, see if it ends with a number. Then,
+	remove a character from the front and see if the remaining 
+	string makes a number. Repeat the process until no characters
+	are left or the number has been found. As soon as a number is
+	found, it is returned. Otherwise, the method fails."
+
+	^ self squeezeNumberOutOfString: stringOrStream onError: [ self error: 'Reading a number failed' ]
 ]
 
-Metaclass NumberParser >> squeezeNumberOutOfString: stringOrStream onError: errorBlock
+NumberParser class >> squeezeNumberOutOfString: stringOrStream onError: errorBlock
 [
-	"Try and find a number in this string. First, look if the string 	starts with a number. Then, see if it ends with a number. Then,	remove a character from the front and see if the remaining 	string makes a number. Repeat the process until no characters	are left or the number has been found. As soon as a number is	found, it is returned. Otherwise, the method fails."
-| string |string := stringOrStream.stringOrStream size	timesRepeat: [ 		(self parse: string onError: [ nil ]) ifNotNilDo: [ :result | ^ result ].		string := string allButFirst ].^ errorBlock value
+	"Try and find a number in this string. First, look if the string 
+	starts with a number. Then, see if it ends with a number. Then,
+	remove a character from the front and see if the remaining 
+	string makes a number. Repeat the process until no characters
+	are left or the number has been found. As soon as a number is
+	found, it is returned. Otherwise, the method fails."
+
+	| string |
+	string := stringOrStream.
+	stringOrStream size
+		timesRepeat: [ (self parse: string onError: [ nil ]) ifNotNilDo: [ :result | ^ result ].
+			string := string allButFirst ].
+	^ errorBlock value
 ]
 

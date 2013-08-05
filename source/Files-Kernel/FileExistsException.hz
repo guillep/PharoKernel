@@ -1,33 +1,29 @@
-Class
-	name: #FileExistsException;
-	superclass: #ClassFileStreamException;
-	instanceSpecification: #(#pointers #words );
+FileExistsException
+	superclass: #FileStreamException;
 	instanceVariables: #(#fileClass );
-	classVariables: #();
 	package: #'Files-Kernel'.
 
-Class FileExistsException >> defaultAction
+FileExistsException >> defaultAction
 [
 	"The default action taken if the exception is signaled."
-^ UIManager default fileExistsDefaultAction: self
+
+	^ UIManager default fileExistsDefaultAction: self
 ]
 
-Class FileExistsException >> fileClass
+FileExistsException >> fileClass
 [
-^ fileClass ifNil: [ StandardFileStream ]
+	^ fileClass ifNil: [ StandardFileStream ]
 ]
 
-Class FileExistsException >> fileClass: aClass
+FileExistsException >> fileClass: aClass
 [
-fileClass := aClass
+	fileClass := aClass
 ]
 
-Metaclass
-	name: #FileExistsException;
-	instanceVariables: #().
-
-Metaclass FileExistsException >> fileName: aFileName fileClass: aClass
+FileExistsException class >> fileName: aFileName fileClass: aClass
 [
-^ self new	fileName: aFileName;	fileClass: aClass
+	^ self new
+		fileName: aFileName;
+		fileClass: aClass
 ]
 

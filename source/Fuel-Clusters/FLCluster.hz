@@ -1,118 +1,119 @@
-Class
-	name: #FLCluster;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+FLCluster
 	package: #'Fuel-Clusters'.
 
-Class FLCluster >> afterMaterializationStepWith: aDecoder
+FLCluster >> afterMaterializationStepWith: aDecoder
 [
-
+	
 ]
 
-Class FLCluster >> clusterMaterializeStepWith: aDecoder
+FLCluster >> clusterMaterializeStepWith: aMaterialization
 [
 	"Materialize cluster stuff"
 
+	
 ]
 
-Class FLCluster >> clusterReferencesDo: aBlock
+FLCluster >> clusterReferencesDo: aBlock
 [
 	"Evaluate a block with each object referenced by the cluster"
 
+	
 ]
 
-Class FLCluster >> clusterSerializeStepWith: anEncoder
+FLCluster >> clusterSerializeStepWith: aSerialization
 [
 	"Serialize cluster stuff"
 
+	
 ]
 
-Class FLCluster >> fuelAccept: aGeneralMapper
+FLCluster >> fuelAccept: aGeneralMapper
 [
-^ aGeneralMapper visitSubstitution: self by: nil
+	^ aGeneralMapper visitSubstitution: self by: nil
 ]
 
-Class FLCluster >> initializeAnalyzing
+FLCluster >> initializeAnalyzing
 [
-self initialize
+	self initialize
 ]
 
-Class FLCluster >> initializeMaterializing
+FLCluster >> initializeMaterializing
 [
-self initialize
+	self initialize
 ]
 
-Class FLCluster >> materializeInstancesStepWith: aDecoder
+FLCluster >> materializeInstancesStepWith: aDecoder
 [
-
+	
 ]
 
-Class FLCluster >> materializePostInstancesStepWith: aDecoder
+FLCluster >> materializePostInstancesStepWith: aDecoder
 [
-
+	
 ]
 
-Class FLCluster >> materializeReferencesStepWith: aDecoder
+FLCluster >> materializeReferencesStepWith: aDecoder
 [
-
+	
 ]
 
-Class FLCluster >> objects
+FLCluster >> objects
 [
 	"Answer the objects that this cluster groups."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FLCluster >> registerIndexesOn: aDictionary
+FLCluster >> registerIndexesOn: aDictionary
 [
 	"Maps objects with indexes in the dictionary."
 
+	
 ]
 
-Class FLCluster >> serializeInstancesStepWith: anEncoder
+FLCluster >> serializeInstancesStepWith: anEncoder
 [
-
+	
 ]
 
-Class FLCluster >> serializePostInstancesStepWith: anEncoder
+FLCluster >> serializePostInstancesStepWith: anEncoder
 [
-
+	
 ]
 
-Class FLCluster >> serializeReferencesStepWith: anEncoder
+FLCluster >> serializeReferencesStepWith: anEncoder
 [
-
+	
 ]
 
-Class FLCluster >> traceWith: anAnalysis
+FLCluster >> traceWith: anAnalysis
 [
-self clusterReferencesDo: [ :aChild | anAnalysis trace: aChild ]
+	self clusterReferencesDo: [ :aChild | anAnalysis privateTrace: aChild ]
 ]
 
-Metaclass
-	name: #FLCluster;
-	instanceVariables: #().
-
-Metaclass FLCluster >> clusterBucketIn: aClusterization
+FLCluster class >> clusterBucketIn: aClusterization
 [
 	"Answer in which clusters bucket place this cluster. This defines the sort order in which the clusters will be ordered. See FLAnalyzer >> clusteredObjects for more information."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Metaclass FLCluster >> new
+FLCluster class >> new
 [
-self error: 'Use another instance creation message.'
+	self error: 'Use another instance creation message.'
 ]
 
-Metaclass FLCluster >> newAnalyzing
+FLCluster class >> newAnalyzing
 [
-^ self basicNew	initializeAnalyzing;	yourself
+	^ self basicNew
+		initializeAnalyzing;
+		yourself
 ]
 
-Metaclass FLCluster >> newMaterializing
+FLCluster class >> newMaterializing
 [
-^ self basicNew	initializeMaterializing;	yourself
+	^ self basicNew
+		initializeMaterializing;
+		yourself
 ]
 

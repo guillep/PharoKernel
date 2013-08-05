@@ -1,53 +1,58 @@
-Class
-	name: #FLSubstitutionCluster;
-	superclass: #ClassFLCluster;
-	instanceSpecification: #(#pointers #words );
+FLSubstitutionCluster
+	superclass: #FLCluster;
 	instanceVariables: #(#substitutions #substitutes );
-	classVariables: #();
 	package: #'Fuel-Clusters'.
 
-Class FLSubstitutionCluster >> add: anObject substitutedBy: anotherObject traceWith: aAnalysis
+FLSubstitutionCluster >> add: anObject substitutedBy: anotherObject traceWith: aAnalysis
 [
-substitutions	at: anObject	ifAbsent: [ 		substitutions at: anObject put: anotherObject.		substitutes add: anotherObject.		aAnalysis trace: anotherObject ]
+	substitutions
+		at: anObject
+		ifAbsent: [ substitutions at: anObject put: anotherObject.
+			substitutes add: anotherObject.
+			aAnalysis trace: anotherObject ]
 ]
 
-Class FLSubstitutionCluster >> initializeAnalyzing
+FLSubstitutionCluster >> initializeAnalyzing
 [
-super initializeAnalyzing.substitutions := IdentityDictionary new.substitutes := IdentitySet new
+	super initializeAnalyzing.
+	substitutions := IdentityDictionary new.
+	substitutes := IdentitySet new
 ]
 
-Class FLSubstitutionCluster >> isSubstitute: anObject
+FLSubstitutionCluster >> isSubstitute: anObject
 [
-^ substitutes includes: anObject
+	^ substitutes identityIncludes: anObject
 ]
 
-Class FLSubstitutionCluster >> objects
+FLSubstitutionCluster >> objects
 [
 	"This cluster does not have objects"
-^ #()
+
+	^ #()
 ]
 
-Class FLSubstitutionCluster >> printOn: aStream
+FLSubstitutionCluster >> printOn: aStream
 [
-super printOn: aStream.aStream nextPutAll: '->'.substitutions printElementsOn: aStream
+	super printOn: aStream.
+	aStream nextPutAll: '->'.
+	substitutions printElementsOn: aStream
 ]
 
-Class FLSubstitutionCluster >> registerIndexesOn: aDictionary
+FLSubstitutionCluster >> registerIndexesOn: aDictionary
 [
-substitutions	keysAndValuesDo: [ :anObject :theSubstitution | 		| substitutionIndex |		substitutionIndex := aDictionary at: theSubstitution.		aDictionary at: anObject put: substitutionIndex ]
+	substitutions
+		keysAndValuesDo: [ :anObject :theSubstitution | | substitutionIndex |
+			substitutionIndex := aDictionary at: theSubstitution.
+			aDictionary at: anObject put: substitutionIndex ]
 ]
 
-Class FLSubstitutionCluster >> substitutions
+FLSubstitutionCluster >> substitutions
 [
-^ substitutions
+	^ substitutions
 ]
 
-Metaclass
-	name: #FLSubstitutionCluster;
-	instanceVariables: #().
-
-Metaclass FLSubstitutionCluster >> clusterBucketIn: aClusterization
+FLSubstitutionCluster class >> clusterBucketIn: aClusterization
 [
-^ aClusterization substitutionsBucket
+	^ aClusterization substitutionsBucket
 ]
 

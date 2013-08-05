@@ -1,43 +1,58 @@
-Class
-	name: #GB2312;
-	superclass: #ClassEncodedCharSet;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+GB2312
+	superclass: #EncodedCharSet;
 	package: #'Multilingual-Encodings'.
 
-Metaclass
-	name: #GB2312;
-	instanceVariables: #().
-
-Metaclass GB2312 >> compoundTextSequence
+GB2312 class >> compoundTextSequence
 [
-^ compoundTextSequence
+	^ compoundTextSequence
 ]
 
-Metaclass GB2312 >> initialize
+GB2312 class >> initialize
 [
-	"	GB2312 initialize"
-compoundTextSequence := String	streamContents: [ :stream | 		stream nextPut: Character escape.		stream nextPut: $$.		stream nextPut: $(.		stream nextPut: $A ]
+	"
+	GB2312 initialize
+"
+
+	compoundTextSequence := String
+		streamContents: [ :stream | stream nextPut: Character escape.
+			stream nextPut: $$.
+			stream nextPut: $(.
+			stream nextPut: $A ]
 ]
 
-Metaclass GB2312 >> isLetter: char
+GB2312 class >> isLetter: char
 [
-| value leading |leading := char leadingChar.value := char charCode.leading = 0	ifTrue: [ ^ super isLetter: char ].value := value // 94 + 1.^ 1 <= value and: [ value < 84 ]
+	| value leading |
+	leading := char leadingChar.
+	value := char charCode.
+	leading = 0
+		ifTrue: [ ^ super isLetter: char ].
+	value := value // 94 + 1.
+	^ 1 <= value and: [ value < 84 ]
 ]
 
-Metaclass GB2312 >> leadingChar
+GB2312 class >> leadingChar
 [
-^ 2
+	^ 2
 ]
 
-Metaclass GB2312 >> nextPutValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
+GB2312 class >> nextPutValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
 [
-| c1 c2 |state charSize: 2.state g0Leading ~= self leadingChar	ifTrue: [ 		state g0Leading: self leadingChar.		state g0Size: 2.		aStream basicNextPutAll: compoundTextSequence ].c1 := ascii // 94 + 33.c2 := ascii \\ 94 + 33.^ aStream	basicNextPut: (Character value: c1);	basicNextPut: (Character value: c2)
+	| c1 c2 |
+	state charSize: 2.
+	state g0Leading ~= self leadingChar
+		ifTrue: [ state g0Leading: self leadingChar.
+			state g0Size: 2.
+			aStream basicNextPutAll: compoundTextSequence ].
+	c1 := ascii // 94 + 33.
+	c2 := ascii \\ 94 + 33.
+	^ aStream
+		basicNextPut: (Character value: c1);
+		basicNextPut: (Character value: c2)
 ]
 
-Metaclass GB2312 >> ucsTable
+GB2312 class >> ucsTable
 [
-^ UCSTable gb2312Table
+	^ UCSTable gb2312Table
 ]
 

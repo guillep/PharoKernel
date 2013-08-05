@@ -1,140 +1,180 @@
-Class
-	name: #FLEncoder;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #(#stream #objectsIndexes #objectCount #indexStream );
-	classVariables: #();
+FLEncoder
+	instanceVariables: #(#stream #objectsIndexes #objectCount #indexStream #globalEnvironment );
 	package: #'Fuel-Core'.
 
-Class FLEncoder >> encodeBitmap: aBitmap
+FLEncoder >> encodeBitmap: aBitmap
 [
 	"Append to the receiver an Integer as the next two bytes."
-aBitmap writeOn: stream
+
+	aBitmap writeOn: stream
 ]
 
-Class FLEncoder >> encodeByte: aSmallInteger
+FLEncoder >> encodeByte: aSmallInteger
 [
-stream nextPut: aSmallInteger
+	stream nextPut: aSmallInteger
 ]
 
-Class FLEncoder >> encodeBytes: aBytesObject
+FLEncoder >> encodeBytes: aBytesObject
 [
-stream nextBytesPutAll: aBytesObject
+	stream nextBytesPutAll: aBytesObject
 ]
 
-Class FLEncoder >> encodeClusterClass: aClusterClass
+FLEncoder >> encodeClusterClass: aClusterClass
 [
-self encodeString: aClusterClass name
+	self encodeString: aClusterClass name
 ]
 
-Class FLEncoder >> encodeInt24: aSmallInteger
-[
-	"Write a signed integer to the next 4 bytes"
-| pos |pos := aSmallInteger < 0	ifTrue: [ (0 - aSmallInteger bitXor: 16rFFFFFF) + 1 ]	ifFalse: [ aSmallInteger ].1 to: 3 do: [ :i | stream nextPut: (pos digitAt: 4 - i) ]
-]
-
-Class FLEncoder >> encodeInt32: aSmallInteger
+FLEncoder >> encodeInt24: aSmallInteger
 [
 	"Write a signed integer to the next 4 bytes"
-| pos |pos := aSmallInteger < 0	ifTrue: [ (0 - aSmallInteger) bitInvert32 + 1 ]	ifFalse: [ aSmallInteger ].1 to: 4 do: [ :i | stream nextPut: (pos digitAt: 5 - i) ]
+
+	| pos |
+	pos := aSmallInteger < 0
+		ifTrue: [ (0 - aSmallInteger bitXor: 16rFFFFFF) + 1 ]
+		ifFalse: [ aSmallInteger ].
+	1 to: 3 do: [ :i | stream nextPut: (pos digitAt: 4 - i) ]
 ]
 
-Class FLEncoder >> encodePositiveInteger: anInteger
+FLEncoder >> encodeInt32: aSmallInteger
+[
+	"Write a signed integer to the next 4 bytes"
+
+	| pos |
+	pos := aSmallInteger < 0
+		ifTrue: [ (0 - aSmallInteger) bitInvert32 + 1 ]
+		ifFalse: [ aSmallInteger ].
+	1 to: 4 do: [ :i | stream nextPut: (pos digitAt: 5 - i) ]
+]
+
+FLEncoder >> encodePositiveInteger: anInteger
 [
 	"Append to the receiver an Integer as the next 4 bytes."
-1 to: 4 do: [ :i | stream nextPut: (anInteger digitAt: 4 + 1 - i) ]
+
+	1 to: 4 do: [ :i | stream nextPut: (anInteger digitAt: 4 + 1 - i) ]
 ]
 
-Class FLEncoder >> encodeReferenceTo: anObject
+FLEncoder >> encodeReferenceTo: anObject
 [
-indexStream nextIndexPut: (objectsIndexes at: anObject ifAbsent: [ FLObjectNotFound signalWith: anObject ])
+	indexStream nextIndexPut: (objectsIndexes at: anObject ifAbsent: [ FLObjectNotFound signalWith: anObject ])
 ]
 
-Class FLEncoder >> encodeString: aString
+FLEncoder >> encodeString: aString
 [
-| length |(length := aString size) < 192	ifTrue: [ stream nextPut: length ]	ifFalse: [ 		stream nextPut: (length digitAt: 4) + 192.		stream nextPut: (length digitAt: 3).		stream nextPut: (length digitAt: 2).		stream nextPut: (length digitAt: 1) ].stream nextBytesPutAll: aString
+	| length |
+	(length := aString size) < 192
+		ifTrue: [ stream nextPut: length ]
+		ifFalse: [ stream nextPut: (length digitAt: 4) + 192.
+			stream nextPut: (length digitAt: 3).
+			stream nextPut: (length digitAt: 2).
+			stream nextPut: (length digitAt: 1) ].
+	stream nextBytesPutAll: aString
 ]
 
-Class FLEncoder >> encodeUint16: aSmallInteger
+FLEncoder >> encodeUint16: aSmallInteger
 [
 	"Append to the receiver an Integer as the next two bytes."
-stream nextPut: (aSmallInteger bitShift: -8).stream nextPut: (aSmallInteger bitAnd: 255)
+
+	stream nextPut: (aSmallInteger bitShift: -8).
+	stream nextPut: (aSmallInteger bitAnd: 255)
 ]
 
-Class FLEncoder >> encodeUint24: aSmallInteger
+FLEncoder >> encodeUint24: aSmallInteger
 [
 	"Append to the receiver an Integer as the next 3 bytes."
-stream	nextPut: ((aSmallInteger bitShift: -16) bitAnd: 255);	nextPut: ((aSmallInteger bitShift: -8) bitAnd: 255);	nextPut: (aSmallInteger bitAnd: 255)
+
+	stream
+		nextPut: ((aSmallInteger bitShift: -16) bitAnd: 255);
+		nextPut: ((aSmallInteger bitShift: -8) bitAnd: 255);
+		nextPut: (aSmallInteger bitAnd: 255)
 ]
 
-Class FLEncoder >> encodeUint32: aSmallInteger
+FLEncoder >> encodeUint32: aSmallInteger
 [
 	"Append to the receiver an Integer as the next 4 bytes."
-stream	nextPut: (aSmallInteger bitShift: -24);	nextPut: ((aSmallInteger bitShift: -16) bitAnd: 255);	nextPut: ((aSmallInteger bitShift: -8) bitAnd: 255);	nextPut: (aSmallInteger bitAnd: 255)
+
+	stream
+		nextPut: (aSmallInteger bitShift: -24);
+		nextPut: ((aSmallInteger bitShift: -16) bitAnd: 255);
+		nextPut: ((aSmallInteger bitShift: -8) bitAnd: 255);
+		nextPut: (aSmallInteger bitAnd: 255)
 ]
 
-Class FLEncoder >> encodeUint8: aSmallInteger
+FLEncoder >> encodeUint8: aSmallInteger
 [
 	"Append to the receiver an Integer as the next two bytes."
-stream nextPut: aSmallInteger
+
+	stream nextPut: aSmallInteger
 ]
 
-Class FLEncoder >> encodeWeakReferenceTo: anObject
+FLEncoder >> encodeWeakReferenceTo: anObject
 [
-indexStream nextIndexPut: (objectsIndexes at: anObject ifAbsent: [ objectsIndexes at: nil ])
+	indexStream nextIndexPut: (objectsIndexes at: anObject ifAbsent: [ objectsIndexes at: nil ])
 ]
 
-Class FLEncoder >> encodeWords: aWordsObject
+FLEncoder >> encodeWords: aWordsObject
 [
-stream nextWordsPut: aWordsObject
+	stream nextWordsPut: aWordsObject
 ]
 
-Class FLEncoder >> encodeYourself
+FLEncoder >> encodeYourself
 [
-self encodePositiveInteger: objectCount.self encodePositiveInteger: Smalltalk isBigEndian asBit
+	self encodePositiveInteger: objectCount.
+	self encodePositiveInteger: Smalltalk isBigEndian asBit
 ]
 
-Class FLEncoder >> flush
+FLEncoder >> flush
 [
-^ stream flush
+	^ stream flush
 ]
 
-Class FLEncoder >> fuelAccept: aGeneralMapper
+FLEncoder >> fuelAccept: aGeneralMapper
 [
-^ aGeneralMapper visitSubstitution: self by: nil
+	^ aGeneralMapper visitSubstitution: self by: nil
 ]
 
-Class FLEncoder >> initializeOn: aStream
+FLEncoder >> globalEnvironment
 [
-self initialize.stream := FLBufferedWriteStream on: aStream
+	"Answer a dictionary where the look up for global symbols will be done during serialization."
+
+	^ globalEnvironment
 ]
 
-Class FLEncoder >> objectCount
+FLEncoder >> initializeOn: aStream globalEnvironment: aDictionary
 [
-^ objectCount
+	self initialize.
+	stream := FLBufferedWriteStream on: aStream.
+	globalEnvironment := aDictionary
 ]
 
-Class FLEncoder >> objectCount: aNumber
+FLEncoder >> objectCount
 [
-objectCount := aNumber.objectsIndexes := FLLargeIdentityDictionary new.indexStream := FLIndexStream on: stream digits: aNumber digitLength
+	^ objectCount
 ]
 
-Class FLEncoder >> objectsIndexes
+FLEncoder >> objectCount: aNumber
 [
-^ objectsIndexes
+	objectCount := aNumber.
+	objectsIndexes := FLLargeIdentityDictionary new.
+	indexStream := FLIndexStream on: stream digits: aNumber digitLength
 ]
 
-Metaclass
-	name: #FLEncoder;
-	instanceVariables: #().
-
-Metaclass FLEncoder >> on: aStream
+FLEncoder >> objectsIndexes
 [
-^ self basicNew	initializeOn: aStream;	yourself
+	^ objectsIndexes
 ]
 
-Metaclass FLEncoder >> on: aStream do: aBlock
+FLEncoder class >> on: aStream globalEnvironment: aDictionary
 [
-| anEncoder |anEncoder := self on: aStream.^ [ aBlock value: anEncoder ]	ensure: [ anEncoder flush ]
+	^ self basicNew
+		initializeOn: aStream globalEnvironment: aDictionary;
+		yourself
+]
+
+FLEncoder class >> on: aStream globalEnvironment: aDictionary do: aBlock
+[
+	| anEncoder |
+	anEncoder := self on: aStream globalEnvironment: aDictionary.
+	^ [ aBlock value: anEncoder ]
+		ensure: [ anEncoder flush ]
 ]
 

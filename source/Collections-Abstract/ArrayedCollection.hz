@@ -1,189 +1,394 @@
-Class
-	name: #ArrayedCollection;
-	superclass: #ClassSequenceableCollection;
+ArrayedCollection
+	superclass: #SequenceableCollection;
 	traitComposition: #TSortable;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
 	package: #'Collections-Abstract'.
 
-Class ArrayedCollection >> add: newObject
+ArrayedCollection >> add: newObject
 [
-self shouldNotImplement
+	self shouldNotImplement
 ]
 
-Class ArrayedCollection >> byteSize
+ArrayedCollection >> byteSize
 [
-^ self basicSize * self bytesPerBasicElement
+	^ self basicSize * self bytesPerBasicElement
 ]
 
-Class ArrayedCollection >> bytesPerBasicElement
+ArrayedCollection >> bytesPerBasicElement
 [
-	"Answer the number of bytes that each of my basic elements requires.	In other words:		self basicSize * self bytesPerBasicElement	should equal the space required on disk by my variable sized representation."
-^ self class isBytes	ifTrue: [ 1 ]	ifFalse: [ 4 ]
+	"Answer the number of bytes that each of my basic elements requires.
+	In other words:
+		self basicSize * self bytesPerBasicElement
+	should equal the space required on disk by my variable sized representation."
+
+	^ self class isBytes
+		ifTrue: [ 1 ]
+		ifFalse: [ 4 ]
 ]
 
-Class ArrayedCollection >> defaultElement
+ArrayedCollection >> defaultElement
 [
-^ nil
+	^ nil
 ]
 
-Class ArrayedCollection >> fillFrom: aCollection with: aBlock
+ArrayedCollection >> fillFrom: aCollection with: aBlock
 [
-	"Evaluate aBlock with each of aCollections's elements as the argument.  	Collect the resulting values into self. Answer self."
-| index |index := 0.aCollection do: [ :each | self at: (index := index + 1) put: (aBlock value: each) ]
+	"Evaluate aBlock with each of aCollections's elements as the argument.  
+	Collect the resulting values into self. Answer self."
+
+	| index |
+	index := 0.
+	aCollection do: [ :each | self at: (index := index + 1) put: (aBlock value: each) ]
 ]
 
-Class ArrayedCollection >> isSorted
+ArrayedCollection >> isSorted
 [
-	"Return true if the receiver is sorted by the given criterion.	Optimization for isSortedBy: [:a :b | a <= b]."
-| lastElm elm |self isEmpty	ifTrue: [ ^ true ].lastElm := self first.2 to: self size do: [ :index | 	elm := self at: index.	lastElm <= elm		ifFalse: [ ^ false ].	lastElm := elm ].^ true
+	"Return true if the receiver is sorted by the given criterion.
+	Optimization for isSortedBy: [:a :b | a <= b]."
+
+	| lastElm elm |
+	self isEmpty
+		ifTrue: [ ^ true ].
+	lastElm := self first.
+	2 to: self size do: [ :index | elm := self at: index.
+		lastElm <= elm
+			ifFalse: [ ^ false ].
+		lastElm := elm ].
+	^ true
 ]
 
-Class ArrayedCollection >> isSortedBy: aBlock
+ArrayedCollection >> isSortedBy: aBlock
 [
 	"Return true if the receiver is sorted by the given criterion."
-| lastElm elm |self isEmpty	ifTrue: [ ^ true ].lastElm := self first.2 to: self size do: [ :index | 	elm := self at: index.	(aBlock value: lastElm value: elm)		ifFalse: [ ^ false ].	lastElm := elm ].^ true
+
+	| lastElm elm |
+	self isEmpty
+		ifTrue: [ ^ true ].
+	lastElm := self first.
+	2 to: self size do: [ :index | elm := self at: index.
+		(aBlock value: lastElm value: elm)
+			ifFalse: [ ^ false ].
+		lastElm := elm ].
+	^ true
 ]
 
-Class ArrayedCollection >> mergeFirst: first middle: middle last: last into: dst by: aBlock
+ArrayedCollection >> mergeFirst: first middle: middle last: last into: dst by: aBlock
 [
-	"Private. Merge the sorted ranges [first..middle] and [middle+1..last] 	of the receiver into the range [first..last] of dst."
-| i1 i2 val1 val2 out |i1 := first.i2 := middle + 1.val1 := self at: i1.val2 := self at: i2.out := first - 1.	"will be pre-incremented"	"select 'lower' half of the elements based on comparator"[ i1 <= middle and: [ i2 <= last ] ]	whileTrue: [ 		(aBlock ifNil: [ val1 <= val2 ] ifNotNil: [ aBlock value: val1 value: val2 ])			ifTrue: [ 				dst at: (out := out + 1) put: val1.				val1 := self at: (i1 := i1 + 1) ]			ifFalse: [ 				dst at: (out := out + 1) put: val2.				i2 := i2 + 1.				i2 <= last					ifTrue: [ val2 := self at: i2 ] ] ].	"copy the remaining elements"i1 <= middle	ifTrue: [ 		dst			replaceFrom: out + 1			to: last			with: self			startingAt: i1 ]	ifFalse: [ 		dst			replaceFrom: out + 1			to: last			with: self			startingAt: i2 ]
+	"Private. Merge the sorted ranges [first..middle] and [middle+1..last] 
+	of the receiver into the range [first..last] of dst."
+
+	| i1 i2 val1 val2 out |
+	i1 := first.
+	i2 := middle + 1.
+	val1 := self at: i1.
+	val2 := self at: i2.
+	out := first - 1.	"will be pre-incremented"	"select 'lower' half of the elements based on comparator"
+	[ i1 <= middle and: [ i2 <= last ] ]
+		whileTrue: [ (aBlock value: val1 value: val2)
+				ifTrue: [ dst at: (out := out + 1) put: val1.
+					val1 := self at: (i1 := i1 + 1) ]
+				ifFalse: [ dst at: (out := out + 1) put: val2.
+					i2 := i2 + 1.
+					i2 <= last
+						ifTrue: [ val2 := self at: i2 ] ] ].	"copy the remaining elements"
+	i1 <= middle
+		ifTrue: [ dst
+				replaceFrom: out + 1
+				to: last
+				with: self
+				startingAt: i1 ]
+		ifFalse: [ dst
+				replaceFrom: out + 1
+				to: last
+				with: self
+				startingAt: i2 ]
 ]
 
-Class ArrayedCollection >> mergeSortFrom: startIndex to: stopIndex by: aBlock
+ArrayedCollection >> mergeSortFrom: startIndex to: stopIndex by: aBlock
 [
-	"Sort the given range of indices using the mergesort algorithm.	Mergesort is a worst-case O(N log N) sorting algorithm that usually	does only half as many comparisons as heapsort or quicksort."
-	"Details: recursively split the range to be sorted into two halves,	mergesort each half, then merge the two halves together. An extra 	copy of the data is used as temporary storage and successive merge 	phases copy data back and forth between the receiver and this copy.	The recursion is set up so that the final merge is performed into the	receiver, resulting in the receiver being completely sorted."
-self size <= 1	ifTrue: [ ^ self ].	"nothing to do"startIndex = stopIndex	ifTrue: [ ^ self ].[ startIndex >= 1 and: [ startIndex < stopIndex ] ] assert.	"bad start index"[ stopIndex <= self size ] assert.	"bad stop index"self	mergeSortFrom: startIndex	to: stopIndex	src: self shallowCopy	dst: self	by: aBlock
+	"Sort the given range of indices using the mergesort algorithm.
+	Mergesort is a worst-case O(N log N) sorting algorithm that usually
+	does only half as many comparisons as heapsort or quicksort."
+
+	"Details: recursively split the range to be sorted into two halves,
+	mergesort each half, then merge the two halves together. An extra 
+	copy of the data is used as temporary storage and successive merge 
+	phases copy data back and forth between the receiver and this copy.
+	The recursion is set up so that the final merge is performed into the
+	receiver, resulting in the receiver being completely sorted."
+
+	self size <= 1
+		ifTrue: [ ^ self ].	"nothing to do"
+	startIndex = stopIndex
+		ifTrue: [ ^ self ].
+	[ startIndex >= 1 and: [ startIndex < stopIndex ] ] assert.	"bad start index"
+	[ stopIndex <= self size ] assert.	"bad stop index"
+	self
+		mergeSortFrom: startIndex
+		to: stopIndex
+		src: self copy
+		dst: self
+		by: aBlock
 ]
 
-Class ArrayedCollection >> mergeSortFrom: first to: last src: src dst: dst by: aBlock
+ArrayedCollection >> mergeSortFrom: first to: last src: src dst: dst by: aBlock
 [
-	"Private. Split the range to be sorted in half, sort each half, and 	merge the two half-ranges into dst."
-| middle |first = last	ifTrue: [ ^ self ].middle := (first + last) // 2.self	mergeSortFrom: first	to: middle	src: dst	dst: src	by: aBlock.self	mergeSortFrom: middle + 1	to: last	src: dst	dst: src	by: aBlock.src	mergeFirst: first	middle: middle	last: last	into: dst	by: aBlock
+	"Private. Split the range to be sorted in half, sort each half, and 
+	merge the two half-ranges into dst."
+
+	| middle |
+	first = last
+		ifTrue: [ ^ self ].
+	middle := (first + last) // 2.
+	self
+		mergeSortFrom: first
+		to: middle
+		src: dst
+		dst: src
+		by: aBlock.
+	self
+		mergeSortFrom: middle + 1
+		to: last
+		src: dst
+		dst: src
+		by: aBlock.
+	src
+		mergeFirst: first
+		middle: middle
+		last: last
+		into: dst
+		by: aBlock
 ]
 
-Class ArrayedCollection >> removeAll
+ArrayedCollection >> removeAll
 [
-self shouldNotImplement
+	self shouldNotImplement
 ]
 
-Class ArrayedCollection >> restoreEndianness
+ArrayedCollection >> restoreEndianness
 [
-	"This word object was just read in from a stream.  It was stored in Big Endian (Mac) format.  Reverse the byte order if the current machine is Little Endian.	We only intend this for non-pointer arrays.  Do nothing if I contain pointers."
-self class isPointers | self class isWords not	ifTrue: [ ^ self ].Smalltalk isLittleEndian	ifTrue: [ Bitmap swapBytesIn: self from: 1 to: self basicSize ]
+	"This word object was just read in from a stream.  It was stored in Big Endian (Mac) format.  Reverse the byte order if the current machine is Little Endian.
+ 	We only intend this for non-pointer arrays.  Do nothing if I contain pointers."
+
+	self class isPointers | self class isWords not
+		ifTrue: [ ^ self ].
+	Smalltalk isLittleEndian
+		ifTrue: [ Bitmap swapBytesIn: self from: 1 to: self basicSize ]
 ]
 
-Class ArrayedCollection >> size
+ArrayedCollection >> size
 [
 	"Answer how many elements the receiver contains."
+
 	<primitive: 62>
-^ self basicSize
+	^ self basicSize
 ]
 
-Class ArrayedCollection >> sort
+ArrayedCollection >> sort
 [
 	"Sort this collection into ascending order using the '<=' operator."
-self sort: [ :a :b | a <= b ]
+
+	self sort: [ :a :b | a <= b ]
 ]
 
-Class ArrayedCollection >> sort: aSortBlock
+ArrayedCollection >> sort: aSortBlock
 [
-	"Sort this array using aSortBlock. The block should take two arguments	and return true if the first element should preceed the second one."
-self mergeSortFrom: 1 to: self size by: aSortBlock
+	"Sort this array using aSortBlock. The block should take two arguments
+	and return true if the first element should preceed the second one."
+
+	self mergeSortFrom: 1 to: self size by: aSortBlock
 ]
 
-Class ArrayedCollection >> storeElementsFrom: firstIndex to: lastIndex on: aStream
+ArrayedCollection >> storeElementsFrom: firstIndex to: lastIndex on: aStream
 [
-| noneYet defaultElement arrayElement |noneYet := true.defaultElement := self defaultElement.firstIndex to: lastIndex do: [ :index | 	arrayElement := self at: index.	arrayElement = defaultElement		ifFalse: [ 			noneYet				ifTrue: [ noneYet := false ]				ifFalse: [ aStream nextPut: $; ].			aStream nextPutAll: ' at: '.			aStream store: index.			aStream nextPutAll: ' put: '.			aStream store: arrayElement ] ].^ noneYet
+	| noneYet defaultElement arrayElement |
+	noneYet := true.
+	defaultElement := self defaultElement.
+	firstIndex to: lastIndex do: [ :index | arrayElement := self at: index.
+		arrayElement = defaultElement
+			ifFalse: [ noneYet
+					ifTrue: [ noneYet := false ]
+					ifFalse: [ aStream nextPut: $; ].
+				aStream nextPutAll: ' at: '.
+				aStream store: index.
+				aStream nextPutAll: ' put: '.
+				aStream store: arrayElement ] ].
+	^ noneYet
 ]
 
-Class ArrayedCollection >> storeOn: aStream
+ArrayedCollection >> storeOn: aStream
 [
-aStream nextPutAll: '(('.aStream nextPutAll: self class name.aStream nextPutAll: ' new: '.aStream store: self size.aStream nextPut: $).(self storeElementsFrom: 1 to: self size on: aStream)	ifFalse: [ aStream nextPutAll: '; yourself' ].aStream nextPut: $)
+	aStream nextPutAll: '(('.
+	aStream nextPutAll: self class name.
+	aStream nextPutAll: ' new: '.
+	aStream store: self size.
+	aStream nextPut: $).
+	(self storeElementsFrom: 1 to: self size on: aStream)
+		ifFalse: [ aStream nextPutAll: '; yourself' ].
+	aStream nextPut: $)
 ]
 
-Class ArrayedCollection >> swapHalves
+ArrayedCollection >> swapHalves
 [
-	"A normal switch in endianness (byte order in words) reverses the order of 4 bytes.  That is not correct for SoundBuffers, which use 2-bytes units.  If a normal switch has be done, this method corrects it further by swapping the two halves of the long word.	This method is only used for 16-bit quanities in SoundBuffer, ShortIntegerArray, etc."
-| hack blt |"The implementation is a hack, but fast for large ranges"hack := Form new hackBits: self.blt := (BitBlt toForm: hack) sourceForm: hack.blt combinationRule: Form reverse.	"XOR"blt	sourceY: 0;	destY: 0;	height: self size;	width: 2.blt	sourceX: 0;	destX: 2;	copyBits.	"Exchange bytes 0&1 with 2&3"blt	sourceX: 2;	destX: 0;	copyBits.blt	sourceX: 0;	destX: 2;	copyBits
+	"A normal switch in endianness (byte order in words) reverses the order of 4 bytes.  That is not correct for SoundBuffers, which use 2-bytes units.  If a normal switch has be done, this method corrects it further by swapping the two halves of the long word.
+ 	This method is only used for 16-bit quanities in SoundBuffer, ShortIntegerArray, etc."
+
+	| hack blt |
+	"The implementation is a hack, but fast for large ranges"
+	hack := Form new hackBits: self.
+	blt := (BitBlt toForm: hack) sourceForm: hack.
+	blt combinationRule: Form reverse.	"XOR"
+	blt
+		sourceY: 0;
+		destY: 0;
+		height: self size;
+		width: 2.
+	blt
+		sourceX: 0;
+		destX: 2;
+		copyBits.	"Exchange bytes 0&1 with 2&3"
+	blt
+		sourceX: 2;
+		destX: 0;
+		copyBits.
+	blt
+		sourceX: 0;
+		destX: 2;
+		copyBits
 ]
 
-Class ArrayedCollection >> writeOn: aStream
+ArrayedCollection >> writeOn: aStream
 [
 	"Store the array of bits onto the argument, aStream.  (leading byte ~= 16r80) identifies this as raw bits (uncompressed).  Always store in Big Endian (Mac) byte order.  Do the writing at BitBlt speeds. We only intend this for non-pointer arrays.  Do nothing if I contain pointers."
-(self class isPointers or: [ self class isWords not ])	ifTrue: [ ^ self ].aStream nextInt32Put: self basicSize.aStream nextWordsPutAll: self
+
+	(self class isPointers or: [ self class isWords not ])
+		ifTrue: [ ^ self ].
+	aStream nextInt32Put: self basicSize.
+	aStream nextWordsPutAll: self
 ]
 
-Metaclass
-	name: #ArrayedCollection;
-	instanceVariables: #().
-
-Metaclass ArrayedCollection >> new
+ArrayedCollection class >> new
 [
 	"Answer a new instance of me, with size = 0."
-^ self new: 0
+
+	^ self new: 0
 ]
 
-Metaclass ArrayedCollection >> new: size withAll: value
+ArrayedCollection class >> new: size withAll: value
 [
-	"Answer an instance of me, with number of elements equal to size, each 	of which refers to the argument, value."
-^ (self new: size) atAllPut: value
+	"Answer an instance of me, with number of elements equal to size, each 
+	of which refers to the argument, value."
+
+	^ (self new: size) atAllPut: value
 ]
 
-Metaclass ArrayedCollection >> newFrom: aCollection
+ArrayedCollection class >> newFrom: aCollection
 [
 	"Answer an instance of me containing the same elements as aCollection."
-| newArray |newArray := self new: aCollection size.1 to: aCollection size do: [ :i | newArray at: i put: (aCollection at: i) ].^ newArray	"	Array newFrom: {1. 2. 3}	{1. 2. 3} as: Array	{1. 2. 3} as: ByteArray	{$c. $h. $r} as: String	{$c. $h. $r} as: Text"
+
+	| newArray |
+	newArray := self new: aCollection size.
+	1 to: aCollection size do: [ :i | newArray at: i put: (aCollection at: i) ].
+	^ newArray	"	Array newFrom: {1. 2. 3}	{1. 2. 3} as: Array	{1. 2. 3} as: ByteArray	{$c. $h. $r} as: String	{$c. $h. $r} as: Text"
 ]
 
-Metaclass ArrayedCollection >> newFromStream: s
+ArrayedCollection class >> newFromStream: s
 [
 	"Only meant for my subclasses that are raw bits and word-like.  For quick unpack form the disk."
-| len |self isPointers not & self isWords	ifFalse: [ self error: 'This method is only meant for raw bits and word-like subclasses ' ].s next = 16r80	ifTrue: [ 		"A compressed format.  Could copy what BitMap does, or use a 		special sound compression format.  Callers normally compress their own way."		^ self error: 'not implemented' ].s skip: -1.len := s nextInt32.^ s nextWordsInto: (self basicNew: len)
+
+	| len |
+	self isPointers not & self isWords
+		ifFalse: [ self error: 'This method is only meant for raw bits and word-like subclasses ' ].
+	s next = 16r80
+		ifTrue: [ 
+			"A compressed format.  Could copy what BitMap does, or use a 		special sound compression format.  Callers normally compress their own way."
+			^ self error: 'not implemented' ].
+	s skip: -1.
+	len := s nextInt32.
+	^ s nextWordsInto: (self basicNew: len)
 ]
 
-Metaclass ArrayedCollection >> with: anObject
+ArrayedCollection class >> with: anObject
 [
 	"Answer a new instance of me, containing only anObject."
-| newCollection |newCollection := self new: 1.newCollection at: 1 put: anObject.^ newCollection
+
+	| newCollection |
+	newCollection := self new: 1.
+	newCollection at: 1 put: anObject.
+	^ newCollection
 ]
 
-Metaclass ArrayedCollection >> with: firstObject with: secondObject
+ArrayedCollection class >> with: firstObject with: secondObject
 [
 	"Answer a new instance of me, containing firstObject and secondObject."
-| newCollection |newCollection := self new: 2.newCollection at: 1 put: firstObject.newCollection at: 2 put: secondObject.^ newCollection
+
+	| newCollection |
+	newCollection := self new: 2.
+	newCollection at: 1 put: firstObject.
+	newCollection at: 2 put: secondObject.
+	^ newCollection
 ]
 
-Metaclass ArrayedCollection >> with: firstObject with: secondObject with: thirdObject
+ArrayedCollection class >> with: firstObject with: secondObject with: thirdObject
 [
-	"Answer a new instance of me, containing only the three arguments as	elements."
-| newCollection |newCollection := self new: 3.newCollection at: 1 put: firstObject.newCollection at: 2 put: secondObject.newCollection at: 3 put: thirdObject.^ newCollection
+	"Answer a new instance of me, containing only the three arguments as
+	elements."
+
+	| newCollection |
+	newCollection := self new: 3.
+	newCollection at: 1 put: firstObject.
+	newCollection at: 2 put: secondObject.
+	newCollection at: 3 put: thirdObject.
+	^ newCollection
 ]
 
-Metaclass ArrayedCollection >> with: firstObject with: secondObject with: thirdObject with: fourthObject
+ArrayedCollection class >> with: firstObject with: secondObject with: thirdObject with: fourthObject
 [
-	"Answer a new instance of me, containing only the three arguments as	elements."
-| newCollection |newCollection := self new: 4.newCollection at: 1 put: firstObject.newCollection at: 2 put: secondObject.newCollection at: 3 put: thirdObject.newCollection at: 4 put: fourthObject.^ newCollection
+	"Answer a new instance of me, containing only the three arguments as
+	elements."
+
+	| newCollection |
+	newCollection := self new: 4.
+	newCollection at: 1 put: firstObject.
+	newCollection at: 2 put: secondObject.
+	newCollection at: 3 put: thirdObject.
+	newCollection at: 4 put: fourthObject.
+	^ newCollection
 ]
 
-Metaclass ArrayedCollection >> with: firstObject with: secondObject with: thirdObject with: fourthObject with: fifthObject
+ArrayedCollection class >> with: firstObject with: secondObject with: thirdObject with: fourthObject with: fifthObject
 [
-	"Answer a new instance of me, containing only the five arguments as	elements."
-| newCollection |newCollection := self new: 5.newCollection at: 1 put: firstObject.newCollection at: 2 put: secondObject.newCollection at: 3 put: thirdObject.newCollection at: 4 put: fourthObject.newCollection at: 5 put: fifthObject.^ newCollection
+	"Answer a new instance of me, containing only the five arguments as
+	elements."
+
+	| newCollection |
+	newCollection := self new: 5.
+	newCollection at: 1 put: firstObject.
+	newCollection at: 2 put: secondObject.
+	newCollection at: 3 put: thirdObject.
+	newCollection at: 4 put: fourthObject.
+	newCollection at: 5 put: fifthObject.
+	^ newCollection
 ]
 
-Metaclass ArrayedCollection >> with: firstObject with: secondObject with: thirdObject with: fourthObject with: fifthObject with: sixthObject
+ArrayedCollection class >> with: firstObject with: secondObject with: thirdObject with: fourthObject with: fifthObject with: sixthObject
 [
 	"Answer a new instance of me, containing only the 6 arguments as elements."
-| newCollection |newCollection := self new: 6.newCollection at: 1 put: firstObject.newCollection at: 2 put: secondObject.newCollection at: 3 put: thirdObject.newCollection at: 4 put: fourthObject.newCollection at: 5 put: fifthObject.newCollection at: 6 put: sixthObject.^ newCollection
+
+	| newCollection |
+	newCollection := self new: 6.
+	newCollection at: 1 put: firstObject.
+	newCollection at: 2 put: secondObject.
+	newCollection at: 3 put: thirdObject.
+	newCollection at: 4 put: fourthObject.
+	newCollection at: 5 put: fifthObject.
+	newCollection at: 6 put: sixthObject.
+	^ newCollection
 ]
 
-Metaclass ArrayedCollection >> withAll: aCollection
+ArrayedCollection class >> withAll: aCollection
 [
 	"Create a new collection containing all the elements from aCollection."
-^ (self new: aCollection size) replaceFrom: 1 to: aCollection size with: aCollection
+
+	^ (self new: aCollection size) replaceFrom: 1 to: aCollection size with: aCollection
 ]
 

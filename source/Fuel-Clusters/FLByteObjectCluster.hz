@@ -1,22 +1,19 @@
-Class
-	name: #FLByteObjectCluster;
-	superclass: #ClassFLBitsObjectCluster;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+FLByteObjectCluster
+	superclass: #FLBitsObjectCluster;
 	package: #'Fuel-Clusters'.
 
-Class FLByteObjectCluster >> materializeInstanceWith: aDecoder
+FLByteObjectCluster >> materializeInstanceWith: aDecoder
 [
-| instance size |size := aDecoder nextEncodedPositiveInteger.instance := theClass basicNew: size.aDecoder nextEncodedBytesInto: instance.^ instance
+	| instance size |
+	size := aDecoder nextEncodedPositiveInteger.
+	instance := theClass basicNew: size.
+	aDecoder nextEncodedBytesInto: instance.
+	^ instance
 ]
 
-Class FLByteObjectCluster >> serializeInstance: anObject with: anEncoder
+FLByteObjectCluster >> serializeInstance: anObject with: anEncoder
 [
-anEncoder encodePositiveInteger: anObject basicSize.anEncoder encodeBytes: anObject
+	anEncoder encodePositiveInteger: anObject basicSize.
+	anEncoder encodeBytes: anObject
 ]
-
-Metaclass
-	name: #FLByteObjectCluster;
-	instanceVariables: #().
 

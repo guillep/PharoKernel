@@ -1,123 +1,136 @@
-Class
-	name: #FileSystemHandle;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+FileSystemHandle
 	instanceVariables: #(#reference #writable );
 	classVariables: #(#Primitives );
 	package: #'FileSystem-Core-Kernel'.
 
-Class FileSystemHandle >> at: index
+FileSystemHandle >> at: index
 [
-| buffer |buffer := ByteArray new: 1.self	at: index	read: buffer	startingAt: 1	count: 1.^ buffer at: 1
+	| buffer |
+	buffer := ByteArray new: 1.
+	self
+		at: index
+		read: buffer
+		startingAt: 1
+		count: 1.
+	^ buffer at: 1
 ]
 
-Class FileSystemHandle >> at: index put: anObject
+FileSystemHandle >> at: index put: anObject
 [
-| buffer |buffer := ByteArray	with:		(anObject isCharacter			ifTrue: [ anObject codePoint ]			ifFalse: [ anObject ]).self	at: index	write: buffer	startingAt: 1	count: 1
+	| buffer |
+	buffer := ByteArray with: (anObject isCharacter
+				ifTrue: [ anObject codePoint ]
+				ifFalse: [ anObject ]).
+	self
+		at: index
+		write: buffer
+		startingAt: 1
+		count: 1
 ]
 
-Class FileSystemHandle >> at: offset read: buffer startingAt: start count: count
+FileSystemHandle >> at: offset read: buffer startingAt: start count: count
 [
-self subclassResponsibility
+	self subclassResponsibility
 ]
 
-Class FileSystemHandle >> at: offset write: buffer startingAt: start count: count
+FileSystemHandle >> at: offset write: buffer startingAt: start count: count
 [
-self subclassResponsibility
+	self subclassResponsibility
 ]
 
-Class FileSystemHandle >> basicOpen
+FileSystemHandle >> basicOpen
 [
 	"get the raw stream description from the filesystem's store"
-^ self fileSystem openStreamDescription: reference path writable: writable
+
+	^ self fileSystem openStreamDescription: reference path writable: writable
 ]
 
-Class FileSystemHandle >> close
+FileSystemHandle >> close
 [
-self subclassResponsibility
+	self subclassResponsibility
 ]
 
-Class FileSystemHandle >> ensureClosed
+FileSystemHandle >> ensureClosed
 [
-reference exists	ifTrue: [ self close ]
+	reference exists
+		ifTrue: [ self close ]
 ]
 
-Class FileSystemHandle >> fileSystem
+FileSystemHandle >> fileSystem
 [
-^ reference fileSystem
+	^ reference fileSystem
 ]
 
-Class FileSystemHandle >> filesystem
+FileSystemHandle >> filesystem
 [
-self deprecated: 'Use fileSystem' on: '3 April 2012' in: 'Pharo 1.4'.^ self fileSystem
+	self deprecated: 'Use fileSystem' on: '3 April 2012' in: 'Pharo 1.4'.
+	^ self fileSystem
 ]
 
-Class FileSystemHandle >> flush
+FileSystemHandle >> flush
 [
-self subclassResponsibility
+	self subclassResponsibility
 ]
 
-Class FileSystemHandle >> fullName
+FileSystemHandle >> fullName
 [
-^ reference fullName
+	^ reference fullName
 ]
 
-Class FileSystemHandle >> isOpen
+FileSystemHandle >> isOpen
 [
-self subclassResponsibility
+	self subclassResponsibility
 ]
 
-Class FileSystemHandle >> isWritable
+FileSystemHandle >> isWritable
 [
-^ writable
+	^ writable
 ]
 
-Class FileSystemHandle >> open
+FileSystemHandle >> open
 [
-self subclassResponsibility
+	self subclassResponsibility
 ]
 
-Class FileSystemHandle >> readStream
+FileSystemHandle >> readStream
 [
-self subclassResponsability
+	self subclassResponsibility
 ]
 
-Class FileSystemHandle >> reference
+FileSystemHandle >> reference
 [
-^ reference
+	^ reference
 ]
 
-Class FileSystemHandle >> reopen
+FileSystemHandle >> reopen
 [
-self close.self open
+	self close.
+	self open
 ]
 
-Class FileSystemHandle >> setReference: aReference writable: aBoolean
+FileSystemHandle >> setReference: aReference writable: aBoolean
 [
-reference := aReference resolve.writable := aBoolean
+	reference := aReference resolve.
+	writable := aBoolean
 ]
 
-Class FileSystemHandle >> truncateTo: anInteger
+FileSystemHandle >> truncateTo: anInteger
 [
-self subclassResponsibility
+	self subclassResponsibility
 ]
 
-Class FileSystemHandle >> writeStream
+FileSystemHandle >> writeStream
 [
-self subclassResponsability
+	self subclassResponsibility
 ]
 
-Metaclass
-	name: #FileSystemHandle;
-	instanceVariables: #().
-
-Metaclass FileSystemHandle >> on: aReference writable: aBoolean
+FileSystemHandle class >> on: aReference writable: aBoolean
 [
-^ self new setReference: aReference writable: aBoolean
+	^ self new setReference: aReference writable: aBoolean
 ]
 
-Metaclass FileSystemHandle >> open: aReference writable: aBoolean
+FileSystemHandle class >> open: aReference writable: aBoolean
 [
-^ (self on: aReference writable: aBoolean) open
+	^ (self on: aReference writable: aBoolean) open
 ]
 

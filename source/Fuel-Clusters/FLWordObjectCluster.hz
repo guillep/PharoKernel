@@ -1,27 +1,27 @@
-Class
-	name: #FLWordObjectCluster;
-	superclass: #ClassFLBitsObjectCluster;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+FLWordObjectCluster
+	superclass: #FLBitsObjectCluster;
 	package: #'Fuel-Clusters'.
 
-Class FLWordObjectCluster >> materializeInstanceWith: aDecoder
+FLWordObjectCluster >> materializeInstanceWith: aDecoder
 [
-| inst wideSize |wideSize := aDecoder nextEncodedPositiveInteger.inst := theClass basicNew: wideSize.aDecoder nextEncodedWordsInto: inst.aDecoder isBigEndian = Smalltalk isBigEndian asBit	ifTrue: [ ^ inst ]	ifFalse: [ ^ self swapBytesOf: inst ]
+	| inst wideSize |
+	wideSize := aDecoder nextEncodedPositiveInteger.
+	inst := theClass basicNew: wideSize.
+	aDecoder nextEncodedWordsInto: inst.
+	aDecoder isBigEndian = Smalltalk isBigEndian asBit
+		ifTrue: [ ^ inst ]
+		ifFalse: [ ^ self swapBytesOf: inst ]
 ]
 
-Class FLWordObjectCluster >> serializeInstance: aWordObject with: anEncoder
+FLWordObjectCluster >> serializeInstance: aWordObject with: anEncoder
 [
-anEncoder encodePositiveInteger: aWordObject basicSize.anEncoder encodeWords: aWordObject
+	anEncoder encodePositiveInteger: aWordObject basicSize.
+	anEncoder encodeWords: aWordObject
 ]
 
-Class FLWordObjectCluster >> swapBytesOf: aWordObject
+FLWordObjectCluster >> swapBytesOf: aWordObject
 [
-Bitmap swapBytesIn: aWordObject from: 1 to: aWordObject basicSize.^ aWordObject
+	Bitmap swapBytesIn: aWordObject from: 1 to: aWordObject basicSize.
+	^ aWordObject
 ]
-
-Metaclass
-	name: #FLWordObjectCluster;
-	instanceVariables: #().
 

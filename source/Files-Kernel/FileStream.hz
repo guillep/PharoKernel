@@ -1,399 +1,548 @@
-Class
-	name: #FileStream;
-	superclass: #ClassReadWriteStream;
-	instanceSpecification: #(#pointers #words );
+FileStream
+	superclass: #ReadWriteStream;
 	instanceVariables: #(#rwmode );
 	classVariables: #(#Stdin #Stdout #TheStdioHandles #StdioFiles #Stderr );
 	package: #'Files-Kernel'.
 
-Class FileStream >> asBinaryOrTextStream
+FileStream >> asBinaryOrTextStream
 [
 	"I can switch between binary and text data"
-^ self
+
+	^ self
 ]
 
-Class FileStream >> ascii
+FileStream >> ascii
 [
 	"Set this file to ascii (text) mode."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FileStream >> atEnd
+FileStream >> atEnd
 [
 	"Answer true if the current position is >= the end of file position."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FileStream >> binary
+FileStream >> binary
 [
 	"Set this file to binary mode."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FileStream >> close
+FileStream >> close
 [
 	"Close this file."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FileStream >> closed
+FileStream >> closed
 [
 	"Answer true if this file is closed."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FileStream >> contents
+FileStream >> contents
 [
 	"Return the contents of the receiver. Do not close or otherwise touch the receiver. Return data in whatever mode the receiver is in (e.g., binary or text)."
-| s savePos |savePos := self position.self position: 0.s := self next: self size.self position: savePos.^ s
+
+	| s savePos |
+	savePos := self position.
+	self position: 0.
+	s := self next: self size.
+	self position: savePos.
+	^ s
 ]
 
-Class FileStream >> contentsOfEntireFile
+FileStream >> contentsOfEntireFile
 [
 	"Read all of the contents of the receiver."
-| s binary |self readOnly.binary := self isBinary.self reset.	"erases knowledge of whether it is binary"binary	ifTrue: [ self binary ].s := self next: self size.self close.^ s
+
+	| s binary |
+	self readOnly.
+	binary := self isBinary.
+	self reset.	"erases knowledge of whether it is binary"
+	binary
+		ifTrue: [ self binary ].
+	s := self next: self size.
+	self close.
+	^ s
 ]
 
-Class FileStream >> dataIsValid
+FileStream >> directoryEntry
 [
-self flag: #bob	"we needed this if a remote stream, but could be local as well"
+	^ (self directory / self localName) entry
 ]
 
-Class FileStream >> directoryEntry
-[
-^ (self directory / self localName) entry
-]
-
-Class FileStream >> file
+FileStream >> file
 [
 	"Answer the file for the page the receiver is streaming over."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FileStream >> flush
+FileStream >> flush
 [
 	"When writing, flush the current buffer out to disk."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FileStream >> localName
+FileStream >> localName
 [
-^ self name asFileReference basename
+	^ self name asFileReference basename
 ]
 
-Class FileStream >> longPrintOn: aStream
+FileStream >> longPrintOn: aStream
+[
+	"Do nothing, so it will print short.  Called to print the error file.  If the error was in a file operation, we can't read the contents of that file.  Just print its name instead."
+
+	
+]
+
+FileStream >> longPrintOn: aStream limitedTo: sizeLimit indent: indent
 [
 	"Do nothing, so it will print short.  Called to print the error file.  If the error was in a file operation, we can't read the contents of that file.  Just print its name instead."
 
+	aStream cr
 ]
 
-Class FileStream >> longPrintOn: aStream limitedTo: sizeLimit indent: indent
+FileStream >> mimeTypes
 [
-	"Do nothing, so it will print short.  Called to print the error file.  If the error was in a file operation, we can't read the contents of that file.  Just print its name instead."
-aStream cr
+	^ self name asFileReference mimeTypes
 ]
 
-Class FileStream >> mimeTypes
-[
-^ self name asFileReference mimeTypes
-]
-
-Class FileStream >> name
+FileStream >> name
 [
 	"Answer the name of the file for the page the receiver is streaming over."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FileStream >> next
+FileStream >> next
 [
-(position >= readLimit and: [ self atEnd ])	ifTrue: [ ^ nil ]	ifFalse: [ ^ collection at: (position := position + 1) ]
+	(position >= readLimit and: [ self atEnd ])
+		ifTrue: [ ^ nil ]
+		ifFalse: [ ^ collection at: (position := position + 1) ]
 ]
 
-Class FileStream >> next: anInteger
+FileStream >> next: anInteger
 [
-| newCollection howManyRead increment |newCollection := self collectionSpecies new: anInteger.howManyRead := 0.[ howManyRead < anInteger ]	whileTrue: [ 		self atEnd			ifTrue: [ 				howManyRead + 1 to: anInteger do: [ :i | newCollection at: i put: self next ].				^ newCollection ].		increment := readLimit - position min: anInteger - howManyRead.		newCollection			replaceFrom: howManyRead + 1			to: (howManyRead := howManyRead + increment)			with: collection			startingAt: position + 1.		position := position + increment ].^ newCollection
+	| newCollection howManyRead increment |
+	newCollection := self collectionSpecies new: anInteger.
+	howManyRead := 0.
+	[ howManyRead < anInteger ]
+		whileTrue: [ self atEnd
+				ifTrue: [ howManyRead + 1 to: anInteger do: [ :i | newCollection at: i put: self next ].
+					^ newCollection ].
+			increment := readLimit - position min: anInteger - howManyRead.
+			newCollection
+				replaceFrom: howManyRead + 1
+				to: (howManyRead := howManyRead + increment)
+				with: collection
+				startingAt: position + 1.
+			position := position + increment ].
+	^ newCollection
 ]
 
-Class FileStream >> nextPut: aByte
+FileStream >> nextPut: aByte
 [
 	"1/31/96 sw: subclassResponsibility"
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FileStream >> nextPutAll: aCollection
+FileStream >> nextPutAll: aCollection
 [
 	"1/31/96 sw: made subclass responsibility"
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FileStream >> position
+FileStream >> position
 [
 	"Answer the current character position in the file."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FileStream >> position: pos
+FileStream >> position: pos
 [
 	"Set the current character position in the file to pos."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FileStream >> printOn: aStream
+FileStream >> printOn: aStream
 [
-super printOn: aStream.aStream nextPutAll: ' on '.self file printOn: aStream
+	super printOn: aStream.
+	aStream nextPutAll: ' on '.
+	self file printOn: aStream
 ]
 
-Class FileStream >> readOnly
+FileStream >> readOnly
 [
 	"Set this file's mode to read-only."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FileStream >> readOnlyStream
+FileStream >> readOnlyStream
 [
-^ self readOnly
+	^ self readOnly
 ]
 
-Class FileStream >> readWrite
+FileStream >> readWrite
 [
 	"Set this file's mode to read-write."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FileStream >> reopen
+FileStream >> reopen
 [
 	"Ensure that the receiver is open, re-open it if necessary."
+
 	"Details: Files that were open when a snapshot occurs are no longer valid when the snapshot is resumed. This operation re-opens the file if that has happened."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FileStream >> reset
+FileStream >> reset
 [
 	"Set the current character position to the beginning of the file."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FileStream >> setToEnd
+FileStream >> setToEnd
 [
-	"Set the current character position to the end of the File. The same as	self position: self size."
-self subclassResponsibility
+	"Set the current character position to the end of the File. The same as
+	self position: self size."
+
+	self subclassResponsibility
 ]
 
-Class FileStream >> size
+FileStream >> size
 [
 	"Answer the size of the file in characters."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FileStream >> skip: n
+FileStream >> skip: n
 [
-	"Set the character position to n characters from the current position.	Error if not enough characters left in the file."
-self subclassResponsibility
+	"Set the character position to n characters from the current position.
+	Error if not enough characters left in the file."
+
+	self subclassResponsibility
 ]
 
-Class FileStream >> text
+FileStream >> text
 [
 	"Set this file to text (ascii) mode."
-self ascii
+
+	self ascii
 ]
 
-Class FileStream >> truncate: pos
+FileStream >> truncate: pos
 [
 	"Truncate file to pos"
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Metaclass
-	name: #FileStream;
-	instanceVariables: #().
-
-Metaclass FileStream >> concreteStream
+FileStream class >> concreteStream
 [
 	"Who should we really direct class queries to?  "
-^ MultiByteFileStream
+
+	^ MultiByteFileStream
 ]
 
-Metaclass FileStream >> convertCRtoLF: fileName
+FileStream class >> convertCRtoLF: fileName
 [
 	"Convert the given file to LF line endings. Put the result in a file with the extention '.lf'"
-| in out c justPutCR |in := (self readOnlyFileNamed: fileName) binary.out := (self newFileNamed: fileName , '.lf') binary.justPutCR := false.[ in atEnd ]	whileFalse: [ 		c := in next.		c = 10			ifTrue: [ 				out nextPut: 13.				justPutCR := true ]			ifFalse: [ 				(justPutCR and: [ c = 10 ])					ifFalse: [ out nextPut: c ].				justPutCR := false ] ].in close.out close
+
+	| in out c justPutCR |
+	in := (self readOnlyFileNamed: fileName) binary.
+	out := (self newFileNamed: fileName , '.lf') binary.
+	justPutCR := false.
+	[ in atEnd ]
+		whileFalse: [ c := in next.
+			c = 10
+				ifTrue: [ out nextPut: 13.
+					justPutCR := true ]
+				ifFalse: [ (justPutCR and: [ c = 10 ])
+						ifFalse: [ out nextPut: c ].
+					justPutCR := false ] ].
+	in close.
+	out close
 ]
 
-Metaclass FileStream >> detectFile: aBlock do: anotherBlock
+FileStream class >> detectFile: aBlock do: anotherBlock
 [
-^ aBlock value	ifNil: [ nil ]	ifNotNil: [ :file | 		[ anotherBlock value: file ]			ensure: [ file close ] ]
+	^ aBlock value ifNil: [ nil ] ifNotNil: [ :file | [ anotherBlock value: file ]
+				ensure: [ file close ] ]
 ]
 
-Metaclass FileStream >> fileIn: fullName
+FileStream class >> fileIn: fullName
 [
 	"File in the entire contents of the file specified by the name provided"
-| ff fn |fullName ifNil: [ ^ Beeper beep ].fn := fullName asFileReference.fn := (Smalltalk hasClassNamed: #GZipReadStream)	ifTrue: [ (Smalltalk classNamed: #GZipReadStream) uncompressedFileName: fn fullName ]	ifFalse: [ fn fullName ].ff := self readOnlyFileNamed: fn.ff fileIn
+
+	| ff fn |
+	fullName ifNil: [ ^ Beeper beep ].
+	fn := fullName asFileReference.
+	fn := (Smalltalk hasClassNamed: #GZipReadStream)
+		ifTrue: [ (Smalltalk classNamed: #GZipReadStream) uncompressedFileName: fn fullName ]
+		ifFalse: [ fn fullName ].
+	ff := self readOnlyFileNamed: fn.
+	ff fileIn
 ]
 
-Metaclass FileStream >> fileNamed: fileName
+FileStream class >> fileNamed: fileName
 [
-^ self concreteStream fileNamed: (self fullName: fileName)
+	^ self concreteStream fileNamed: (self fullName: fileName)
 ]
 
-Metaclass FileStream >> fileNamed: fileName do: aBlock
+FileStream class >> fileNamed: fileName do: aBlock
 [
 	"Returns the result of aBlock."
-^ self detectFile: [ self fileNamed: fileName ] do: aBlock
+
+	^ self detectFile: [ self fileNamed: fileName ] do: aBlock
 ]
 
-Metaclass FileStream >> flushAndVoidStdioFiles
+FileStream class >> flushAndVoidStdioFiles
 [
-StdioFiles	ifNotNil: [ 		StdioFiles			do: [ :file | 				file					ifNotNil: [ 						file isReadOnly							ifFalse: [ 								[ file flush ]									on: Error									do: [ :ex | 										"care less"										 ] ] ] ].		self voidStdioFiles ]
+	StdioFiles
+		ifNotNil: [ StdioFiles
+				do: [ :file | file
+						ifNotNil: [ file isReadOnly
+								ifFalse: [ [ file flush ]
+										on: Error
+										do: [ :ex | "care less"
+											 ] ] ] ].
+			self voidStdioFiles ]
 ]
 
-Metaclass FileStream >> forceNewFileNamed: fileName
+FileStream class >> forceNewFileNamed: fileName
 [
 	"Create a new file with the given name, and answer a stream opened for writing on that file. If the file already exists, delete it without asking before creating the new file."
-^ self concreteStream forceNewFileNamed: fileName
+
+	^ self concreteStream forceNewFileNamed: fileName
 ]
 
-Metaclass FileStream >> forceNewFileNamed: fileName do: aBlock
+FileStream class >> forceNewFileNamed: fileName do: aBlock
 [
 	"Returns the result of aBlock."
-^ self detectFile: [ self forceNewFileNamed: fileName ] do: aBlock
+
+	^ self detectFile: [ self forceNewFileNamed: fileName ] do: aBlock
 ]
 
-Metaclass FileStream >> fullName: fileName
+FileStream class >> fullName: fileName
 [
-^ fileName asFileReference fullName
+	^ fileName asFileReference fullName
 ]
 
-Metaclass FileStream >> initialize
+FileStream class >> initialize
 [
-TheStdioHandles := Array new: 3.	"original comment was: the intent being before: AutoStart"Smalltalk	addToStartUpList: self after: DiskStore;	addToShutDownList: self after: DiskStore
+	TheStdioHandles := Array new: 3.	"original comment was: the intent being before: AutoStart"
+	Smalltalk
+		addToStartUpList: self after: DiskStore;
+		addToShutDownList: self after: DiskStore
 ]
 
-Metaclass FileStream >> isAFileNamed: fName
+FileStream class >> isAFileNamed: fName
 [
 	"return whether a file exists with the given name"
-^ self concreteStream isAFileNamed: (self fullName: fName)
+
+	^ self concreteStream isAFileNamed: (self fullName: fName)
 ]
 
-Metaclass FileStream >> isSourceFileSuffix: suffix
+FileStream class >> isSourceFileSuffix: suffix
 [
-^ FileStream sourceFileSuffixes includes: suffix
+	^ FileStream sourceFileSuffixes includes: suffix
 ]
 
-Metaclass FileStream >> new
+FileStream class >> new
 [
-^ self basicNew
+	^ self basicNew
 ]
 
-Metaclass FileStream >> newFileNamed: fileName
+FileStream class >> newFileNamed: fileName
 [
-^ self concreteStream newFileNamed: (self fullName: fileName)
+	^ self concreteStream newFileNamed: (self fullName: fileName)
 ]
 
-Metaclass FileStream >> newFileNamed: fileName do: aBlock
+FileStream class >> newFileNamed: fileName do: aBlock
 [
 	"Returns the result of aBlock."
-^ self detectFile: [ self newFileNamed: fileName ] do: aBlock
+
+	^ self detectFile: [ self newFileNamed: fileName ] do: aBlock
 ]
 
-Metaclass FileStream >> newForStdio
+FileStream class >> newForStdio
 [
 	"This is a hook for subclasses to initialize themselves properly."
-^ self new
+
+	^ self new
 ]
 
-Metaclass FileStream >> oldFileNamed: fileName
+FileStream class >> oldFileNamed: fileName
 [
-^ self concreteStream oldFileNamed: (self fullName: fileName)
+	^ self concreteStream oldFileNamed: (self fullName: fileName)
 ]
 
-Metaclass FileStream >> oldFileNamed: fileName do: aBlock
+FileStream class >> oldFileNamed: fileName do: aBlock
 [
 	"Returns the result of aBlock."
-^ self detectFile: [ self oldFileNamed: fileName ] do: aBlock
+
+	^ self detectFile: [ self oldFileNamed: fileName ] do: aBlock
 ]
 
-Metaclass FileStream >> oldFileOrNoneNamed: fileName
+FileStream class >> oldFileOrNoneNamed: fileName
 [
 	"If the file exists, answer a read-only FileStream on it. If it doesn't, answer nil."
-| fullName |fullName := self fullName: fileName.^ (self concreteStream isAFileNamed: fullName)	ifTrue: [ self concreteStream readOnlyFileNamed: fullName ]	ifFalse: [ nil ]
+
+	| fullName |
+	fullName := self fullName: fileName.
+	^ (self concreteStream isAFileNamed: fullName)
+		ifTrue: [ self concreteStream readOnlyFileNamed: fullName ]
+		ifFalse: [ nil ]
 ]
 
-Metaclass FileStream >> readOnlyFileNamed: fileName
+FileStream class >> readOnlyFileNamed: fileName
 [
-^ self concreteStream readOnlyFileNamed: (self fullName: fileName)
+	^ self concreteStream readOnlyFileNamed: (self fullName: fileName)
 ]
 
-Metaclass FileStream >> readOnlyFileNamed: fileName do: aBlock
+FileStream class >> readOnlyFileNamed: fileName do: aBlock
 [
-	"Open the existing file with the given name for read-only access and pass it as argument to aBlock.	Returns the result of aBlock."
-^ self detectFile: [ self readOnlyFileNamed: fileName ] do: aBlock
+	"Open the existing file with the given name for read-only access and pass it as argument to aBlock.
+	Returns the result of aBlock."
+
+	^ self detectFile: [ self readOnlyFileNamed: fileName ] do: aBlock
 ]
 
-Metaclass FileStream >> removeLineFeeds: fullName
+FileStream class >> removeLineFeeds: fullName
 [
-| fileContents |fileContents := ((FileStream readOnlyFileNamed: fullName) wantsLineEndConversion: true) contentsOfEntireFile.(FileStream newFileNamed: fullName)	nextPutAll: fileContents;	close
+	| fileContents |
+	fileContents := ((FileStream readOnlyFileNamed: fullName) wantsLineEndConversion: true) contentsOfEntireFile.
+	(FileStream newFileNamed: fullName)
+		nextPutAll: fileContents;
+		close
 ]
 
-Metaclass FileStream >> requestDropStream: dropIndex
+FileStream class >> requestDropStream: dropIndex
 [
 	"Request a read-only stream for some file that was dropped onto the application"
-^ self concreteStream new requestDropStream: dropIndex
+
+	^ self concreteStream new requestDropStream: dropIndex
 ]
 
-Metaclass FileStream >> shutDown: quitting
+FileStream class >> shutDown: quitting
 [
-quitting	ifTrue: [ self flushAndVoidStdioFiles ]
+	quitting
+		ifTrue: [ self flushAndVoidStdioFiles ]
 ]
 
-Metaclass FileStream >> sourceFileSuffixes
+FileStream class >> sourceFileSuffixes
 [
-^ #('st' 'cs')
+	^ #('st' 'cs')
 ]
 
-Metaclass FileStream >> standardIOStreamNamed: moniker forWrite: forWrite
+FileStream class >> standardIOStreamNamed: moniker forWrite: forWrite
 [
 	"Create if necessary and store default stdin, stdout and other files based on the their names"
-| index |self flag: #todo.	"This is an ugly hack, while waiting for a real fix for windows. There  several problems with this approach, but it allow us to run tests, etc."OSPlatform isWin32	ifTrue: [ ^ MultiByteFileStream forceNewFileNamed: moniker asString ].index := #(#stdin #stdout #stderr) identityIndexOf: moniker.^ ((StdioFiles ifNil: [ StdioFiles := Array new: 3 ]) at: index)	ifNil: [ 		StdioFiles			at: index			put:				((TheStdioHandles at: index)					ifNil: [ ^ self error: moniker , ' is unavailable' ]					ifNotNil: [ :handle | MultiByteFileStream newForStdio openOnHandle: handle name: moniker forWrite: forWrite ]) ]
+
+	| index |
+	self flag: #todo.	"This is an ugly hack, while waiting for a real fix for windows. There  several problems with this approach, but it allow us to run tests, etc."
+	OSPlatform isWin32
+		ifTrue: [ [ ^ MultiByteFileStream forceNewFileNamed: moniker asString ]
+				on: CannotDeleteFileException
+				do: [ "HACK: if the image is opened a second time windows barks about the already opened locked file"
+					^ MultiByteFileStream
+						forceNewFileNamed: moniker asString , '_' , (Random new nextInt: SmallInteger maxVal) asString ] ].
+	index := #(#stdin #stdout #stderr) identityIndexOf: moniker.
+	^ ((StdioFiles ifNil: [ StdioFiles := Array new: 3 ]) at: index)
+		ifNil: [ StdioFiles
+				at: index
+				put:
+					((TheStdioHandles at: index)
+						ifNil: [ ^ self error: moniker , ' is unavailable' ]
+						ifNotNil: [ :handle | MultiByteFileStream newForStdio openOnHandle: handle name: moniker forWrite: forWrite ]) ]
 ]
 
-Metaclass FileStream >> startUp: resuming
+FileStream class >> startUp: resuming
 [
-resuming	ifTrue: [ 		self voidStdioFiles.		[ TheStdioHandles := self stdioHandles ]			on: Error			do: [ :ex | 				TheStdioHandles isArray					ifFalse: [ TheStdioHandles := Array new: 3 ] ] ]
+	resuming
+		ifTrue: [ self voidStdioFiles.
+			[ TheStdioHandles := self stdioHandles ]
+				on: Error
+				do: [ :ex | TheStdioHandles isArray
+						ifFalse: [ TheStdioHandles := Array new: 3 ] ] ]
 ]
 
-Metaclass FileStream >> stderr
+FileStream class >> stderr
 [
-^ Stderr ifNil: [ Stderr := self standardIOStreamNamed: #stderr forWrite: true ]
+	^ Stderr ifNil: [ Stderr := self standardIOStreamNamed: #stderr forWrite: true ]
 ]
 
-Metaclass FileStream >> stdin
+FileStream class >> stdin
 [
-^ Stdin	ifNil: [ 		Stdin := self standardIOStreamNamed: #stdin forWrite: false.		Stdin			disableReadBuffering;			yourself ]
+	^ Stdin
+		ifNil: [ Stdin := self standardIOStreamNamed: #stdin forWrite: false.
+			Stdin
+				disableReadBuffering;
+				yourself ]
 ]
 
-Metaclass FileStream >> stdioHandles
+FileStream class >> stdioHandles
 [
 	<primitive: 'primitiveFileStdioHandles' module: 'FilePlugin' error: #ec>
-self primitiveFailed
+	self primitiveFailed
 ]
 
-Metaclass FileStream >> stdout
+FileStream class >> stdout
 [
-^ Stdout ifNil: [ Stdout := self standardIOStreamNamed: #stdout forWrite: true ]
+	^ Stdout ifNil: [ Stdout := self standardIOStreamNamed: #stdout forWrite: true ]
 ]
 
-Metaclass FileStream >> unload
+FileStream class >> unload
 [
-FileServices unregisterFileReader: self
+	FileServices unregisterFileReader: self
 ]
 
-Metaclass FileStream >> voidStdioFiles
+FileStream class >> voidStdioFiles
 [
-Stdin := Stdout := Stderr := StdioFiles := nil
+	Stdin := Stdout := Stderr := StdioFiles := nil
 ]
 
-Metaclass FileStream >> writeSourceCodeFrom: aStream baseName: baseName isSt: stOrCsFlag
+FileStream class >> writeSourceCodeFrom: aStream baseName: baseName isSt: stOrCsFlag
 [
-| extension converter fileName |extension := stOrCsFlag	ifTrue: [ '.st' ]	ifFalse: [ '.cs' ].converter := aStream contents isAsciiString	ifTrue: [ MacRomanTextConverter new ]	ifFalse: [ UTF8TextConverter new ].fileName := baseName , extension.fileName := FileSystem disk checkName: fileName fixErrors: true.[ FileStream	newFileNamed: fileName	do: [ :fileStream | 		(converter isMemberOf: UTF8TextConverter)			ifTrue: [ 				fileStream binary.				UTF8TextConverter writeBOMOn: fileStream ].		fileStream			text;			converter: converter;			nextPutAll: aStream contents;			close ] ]	on: Abort	do: [ :e |  ]
+	| extension converter fileName |
+	extension := stOrCsFlag
+		ifTrue: [ '.st' ]
+		ifFalse: [ '.cs' ].
+	converter := aStream contents isAsciiString
+		ifTrue: [ MacRomanTextConverter new ]
+		ifFalse: [ UTF8TextConverter new ].
+	fileName := baseName , extension.
+	fileName := FileSystem disk checkName: fileName fixErrors: true.
+	[ FileStream
+		newFileNamed: fileName
+		do: [ :fileStream | (converter isMemberOf: UTF8TextConverter)
+				ifTrue: [ fileStream binary.
+					UTF8TextConverter writeBOMOn: fileStream ].
+			fileStream
+				text;
+				converter: converter;
+				nextPutAll: aStream contents;
+				close ] ]
+		on: Abort
+		do: [ :e |  ]
 ]
 

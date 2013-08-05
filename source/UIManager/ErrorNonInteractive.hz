@@ -1,38 +1,43 @@
-Class
-	name: #ErrorNonInteractive;
-	superclass: #ClassError;
-	instanceSpecification: #(#pointers #words );
+ErrorNonInteractive
+	superclass: #Error;
 	instanceVariables: #(#exception );
-	classVariables: #();
 	package: #UIManager.
 
-Class ErrorNonInteractive >> defaultAction
+ErrorNonInteractive >> defaultAction
 [
 	" log error and quit "
-^ UIManager default quitFrom: self signalerContext withMessage: self description
+
+	^ UIManager default quitFrom: self signalerContext withMessage: self description
 ]
 
-Class ErrorNonInteractive >> description
+ErrorNonInteractive >> description
 [
-^ String	streamContents: [ :s | 		s nextPutAll: 'An attempt to use interactive tools detected, while in non-interactive mode'.		self messageText			ifNotEmpty: [ :message | 				s					cr;					tab;					nextPutAll: message ].		self exception			ifNotNilDo: [ :ex | 				s					cr;					tab;					print: ex ] ]
+	^ String
+		streamContents: [ :s | s nextPutAll: 'An attempt to use interactive tools detected, while in non-interactive mode'.
+			self messageText ifNotEmpty: [ :message | s
+						cr;
+						tab;
+						nextPutAll: message ].
+			self exception ifNotNilDo: [ :ex | s
+						cr;
+						tab;
+						print: ex ] ]
 ]
 
-Class ErrorNonInteractive >> exception
+ErrorNonInteractive >> exception
 [
-^ exception
+	^ exception
 ]
 
-Class ErrorNonInteractive >> exception: anError
+ErrorNonInteractive >> exception: anError
 [
-exception := anError
+	exception := anError
 ]
 
-Metaclass
-	name: #ErrorNonInteractive;
-	instanceVariables: #().
-
-Metaclass ErrorNonInteractive >> signalForException: anError
+ErrorNonInteractive class >> signalForException: anError
 [
-^ self new	exception: anError;	signal
+	^ self new
+		exception: anError;
+		signal
 ]
 

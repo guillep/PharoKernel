@@ -1,56 +1,50 @@
-Class
-	name: #SystemResolver;
-	superclass: #ClassFileSystemResolver;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+SystemResolver
+	superclass: #FileSystemResolver;
 	package: #'FileSystem-Core-Implementation'.
 
-Class SystemResolver >> changes
+SystemResolver >> changes
 [
-^ self image withExtension: Smalltalk changesSuffix
+	^ self image withExtension: Smalltalk changesSuffix
 ]
 
-Class SystemResolver >> image
+SystemResolver >> image
 [
-^ self resolveString: self primImagePath
+	^ self resolveString: self primImagePath
 ]
 
-Class SystemResolver >> imageDirectory
+SystemResolver >> imageDirectory
 [
-^ self image parent
+	^ self image parent
 ]
 
-Class SystemResolver >> primImagePath
+SystemResolver >> primImagePath
 [
 	"Answer the full path name for the current image."
+
 	<primitive: 121>
-self primitiveFailed
+	self primitiveFailed
 ]
 
-Class SystemResolver >> primVmDirectoryPath
+SystemResolver >> primVmDirectoryPath
 [
 	"Answer the full path name for the current virtual machine."
+
 	<primitive: 142>
-self primitiveFailed
+	self primitiveFailed
 ]
 
-Class SystemResolver >> supportedOrigins
+SystemResolver >> supportedOrigins
 [
-^ #(#image #imageDirectory #changes #vmBinary #vmDirectory #workingDirectory)
+	^ #(#image #imageDirectory #changes #vmBinary #vmDirectory #workingDirectory)
 ]
 
-Class SystemResolver >> vmBinary
+SystemResolver >> vmBinary
 [
-^ self resolveString: Smalltalk vm fullPath
+	^ self resolveString: Smalltalk vm fullPath
 ]
 
-Class SystemResolver >> vmDirectory
+SystemResolver >> vmDirectory
 [
-^ self resolveString: self primVmDirectoryPath
+	^ self resolveString: self primVmDirectoryPath
 ]
-
-Metaclass
-	name: #SystemResolver;
-	instanceVariables: #().
 

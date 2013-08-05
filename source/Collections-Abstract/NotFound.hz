@@ -1,60 +1,69 @@
-Class
-	name: #NotFound;
-	superclass: #ClassError;
-	instanceSpecification: #(#pointers #words );
+NotFound
+	superclass: #Error;
 	instanceVariables: #(#object );
-	classVariables: #();
 	package: #'Collections-Abstract'.
 
-Class NotFound >> collection
+NotFound >> collection
 [
 	"Return the collection where something is not found in"
-^ self signaler
+
+	^ self signaler
 ]
 
-Class NotFound >> collection: aCollection
+NotFound >> collection: aCollection
 [
 	"Set the collection where something is not found in"
-self signaler: aCollection
+
+	self signaler: aCollection
 ]
 
-Class NotFound >> messageText
+NotFound >> messageText
 [
 	"Overwritten to initialiaze the message text to a standard text if it has not yet been set"
-^ messageText ifNil: [ messageText := self standardMessageText ]
+
+	^ messageText ifNil: [ messageText := self standardMessageText ]
 ]
 
-Class NotFound >> object
+NotFound >> object
 [
 	"Return the object that was not found"
-^ object
+
+	^ object
 ]
 
-Class NotFound >> object: anObject
+NotFound >> object: anObject
 [
 	"Set the object that was not found"
-object := anObject
+
+	object := anObject
 ]
 
-Class NotFound >> standardMessageText
+NotFound >> standardMessageText
 [
 	"Generate a standard textual description"
-^ String	streamContents: [ :stream | 		stream print: self object.		stream << ' not found in '.		stream print: self collection class ]
+
+	^ String
+		streamContents: [ :stream | stream print: self object.
+			stream << ' not found in '.
+			stream print: self collection class ]
 ]
 
-Metaclass
-	name: #NotFound;
-	instanceVariables: #().
-
-Metaclass NotFound >> signalFor: anObject
+NotFound class >> signalFor: anObject
 [
 	"Create and signal a NotFond exception for anObject in the default receiver."
-^ self new	object: anObject;	signal
+
+	^ self new
+		object: anObject;
+		signal
 ]
 
-Metaclass NotFound >> signalFor: anObject in: aCollection
+NotFound class >> signalFor: anObject in: aCollection
 [
 	"Create and signal a NotFond exception for anObject in aCollection."
-^ self new	object: anObject;	collection: aCollection;	signal
+
+	^ self new
+		object: anObject;
+		collection: aCollection;
+		signal
 ]
 

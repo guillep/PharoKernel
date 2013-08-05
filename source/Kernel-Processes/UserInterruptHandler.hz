@@ -1,50 +1,85 @@
-Class
-	name: #UserInterruptHandler;
-	superclass: #ClassInputEventHandler;
-	instanceSpecification: #(#pointers #words );
+UserInterruptHandler
+	superclass: #InputEventHandler;
 	instanceVariables: #(#interruptKey );
 	classVariables: #(#CmdDotEnabled );
-	sharedPools: #(#EventSensorConstants );	package: #'Kernel-Processes'.
+	sharedPools: #(#EventSensorConstants );
+	package: #'Kernel-Processes'.
 
-Class UserInterruptHandler >> handleEvent: evt
+UserInterruptHandler >> handleEvent: evt
 [
-	"Store the event in the queue if there's any"
-| type |type := evt at: 1.type = EventTypeKeyboard	ifTrue: [ 		"Check if the event is a user interrupt"		((evt at: 4) = 0 and: [ ((evt at: 3) bitOr: (((evt at: 5) bitAnd: 8) bitShift: 8)) = interruptKey ])			ifTrue: [ 				Display deferUpdates: false.				(Smalltalk hasClassNamed: #SoundService)					ifTrue: [ (Smalltalk classNamed: #SoundService) default shutDown ].				self handleUserInterrupt ].		^ self ]
+	"Interrupt event... evt is shared, so make a copy of it."
+
+	| buf |
+	buf := evt shallowCopy.
+	(self isKbdEvent: evt)
+		ifTrue: [ | keycode modifiers |
+			"Check if the event is a user interrupt"
+			keycode := buf sixth.
+			modifiers := buf fifth.
+			(keycode = interruptKey and: [ modifiers anyMask: 16r0E ])
+				ifTrue: [ Display deferUpdates: false.
+					(Smalltalk hasClassNamed: #SoundService)
+						ifTrue: [ (Smalltalk classNamed: #SoundService) default shutDown ].
+					self handleUserInterrupt ].
+			^ self ]
 ]
 
-Class UserInterruptHandler >> handleUserInterrupt
+UserInterruptHandler >> handleUserInterrupt
 [
-	"This will be called from the event-fetcher process. 	Assume no system-vital processes have a lower priority than this, and are thus ok to interrupt"
-UserInterruptHandler cmdDotEnabled	ifTrue: [ 		[ 		| toInterrupt |		toInterrupt := self processToInterrupt.		toInterrupt ifNotNil: [ toInterrupt debugWithTitle: 'User Interrupt' ]	"fork exceptions, we don't want interrupt handler to die" ]			on: Error			fork: [ :ex | ex pass ] ]
+	"This will be called from the event-fetcher process. 
+	Assume no system-vital processes have a lower priority than this, and are thus ok to interrupt"
+
+	UserInterruptHandler cmdDotEnabled
+		ifFalse: [ ^ self ].
+	[ self processToInterrupt
+		ifNotNil: [ :proc | proc debugWithTitle: 'User Interrupt' ]
+		ifNil: [ UIManager default inform: 'Process not interruptable' ]	"fork exceptions, we don't want interrupt handler to die" ]
+		on: Error
+		fork: [ :ex | ex pass ]
 ]
 
-Class UserInterruptHandler >> processToInterrupt
+UserInterruptHandler >> isKbdEvent: bufEvt
 [
-	"look for best candidate to interrupt:	   first who is not weak-finalization process	   and only then weak-finalization process, if nothing left to interrupt.		  filter out the idle process, since killing it is fatal	"
-| list |list := OrderedCollection new.Processor	scanSchedule: [ :p | 		"gather everything but idle process, and processes whose suspendedContext sender == nil,		which usually means that process is only scheduled but had no chance to run"		(p ~~ Processor backgroundProcess and: [ p suspendedContext sender notNil ])			ifTrue: [ list add: p ] ]	startingAt: Processor activePriority.	"now answer first process in list, skipping the finalization process"list	do: [ :p | 		p == WeakArray runningFinalizationProcess			ifFalse: [ ^ p ] ].	"now answer first process , if any"^ list isEmpty	ifTrue: [ nil ]	ifFalse: [ list first ]
+	^ bufEvt first = EventTypeKeyboard and: [ bufEvt fourth = EventKeyChar ]
 ]
 
-Class UserInterruptHandler >> setInterruptKeyValue: anInt
+UserInterruptHandler >> processToInterrupt
 [
-interruptKey := anInt
+	"Look for best candidate to interrupt: 
+           - any scheduled non-finalization process of lower priority 
+           - the weak-finalization process, if scheduled 
+           - the UI process 
+        Never interrupt the idle process, since killing it is fatal"
+
+	| fallback |
+	fallback := UIManager default uiProcess.
+	Processor
+		scanSchedule: [ :p | "suspendedContext sender == nil usually means that process is only scheduled but had no chance to run"
+			(p ~~ Processor backgroundProcess and: [ p suspendedContext sender notNil ])
+				ifTrue: [ p ~~ WeakArray runningFinalizationProcess
+						ifTrue: [ ^ p ]
+						ifFalse: [ fallback := p ] ] ]
+		startingAt: Processor activePriority.
+	^ fallback
 ]
 
-Metaclass
-	name: #UserInterruptHandler;
-	instanceVariables: #().
-
-Metaclass UserInterruptHandler >> cmdDotEnabled
+UserInterruptHandler >> setInterruptKeyValue: anInt
 [
-^ CmdDotEnabled ifNil: [ CmdDotEnabled := true ]
+	interruptKey := anInt
 ]
 
-Metaclass UserInterruptHandler >> cmdDotEnabled: aBoolean
+UserInterruptHandler class >> cmdDotEnabled
 [
-CmdDotEnabled := aBoolean
+	^ CmdDotEnabled ifNil: [ CmdDotEnabled := true ]
 ]
 
-Metaclass UserInterruptHandler >> new
+UserInterruptHandler class >> cmdDotEnabled: aBoolean
 [
-^ super new setInterruptKeyValue: ($. asciiValue bitOr: 16r0800)
+	CmdDotEnabled := aBoolean
+]
+
+UserInterruptHandler class >> new
+[
+	^ super new setInterruptKeyValue: $. asciiValue
 ]
 

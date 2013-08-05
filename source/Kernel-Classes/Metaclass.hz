@@ -1,268 +1,407 @@
-Class
-	name: #Metaclass;
-	superclass: #ClassClassDescription;
+Metaclass
+	superclass: #ClassDescription;
 	traitComposition: #TApplyingOnClassSide;
-	instanceSpecification: #(#pointers #words );
 	instanceVariables: #(#thisClass #traitComposition #localSelectors );
-	classVariables: #();
 	package: #'Kernel-Classes'.
 
-Class Metaclass >> acceptsLoggingOfCompilation
+Metaclass >> acceptsLoggingOfCompilation
 [
 	"Answer whether the receiver's method submisions and class defintions should be logged to the changes file and to the current change set.  The metaclass follows the rule of the class itself."
-^ thisClass acceptsLoggingOfCompilation
+
+	^ thisClass acceptsLoggingOfCompilation
 ]
 
-Class Metaclass >> addInstVarNamed: aString
+Metaclass >> addInstVarNamed: aString
 [
 	"Add the argument, aString, as one of the receiver's instance variables."
-| fullString |fullString := String	streamContents: [ :strm | 		self instVarNames			do: [ :aString2 | 				strm					nextPutAll: aString2;					space ].		strm nextPutAll: aString ].self instanceVariableNames: fullString
+
+	| fullString |
+	fullString := String
+		streamContents: [ :strm | self instVarNames do: [ :aString2 | strm
+						nextPutAll: aString2;
+						space ].
+			strm nextPutAll: aString ].
+	self instanceVariableNames: fullString
 ]
 
-Class Metaclass >> addObsoleteSubclass: aClass
+Metaclass >> addObsoleteSubclass: aClass
 [
 	"Do nothing."
 
+	
 ]
 
-Class Metaclass >> addSubclass: aClass
+Metaclass >> addSubclass: aClass
 [
 	"Do nothing."
 
+	
 ]
 
-Class Metaclass >> adoptInstance: oldInstance from: oldMetaClass
+Metaclass >> adoptInstance: oldInstance from: oldMetaClass
 [
-	"Recreate any existing instances of the argument, oldClass, as instances of 	the receiver, which is a newly changed class. Permute variables as 	necessary."
-thisClass class == self	ifTrue: [ ^ self error: 'Metaclasses have only one instance' ].oldMetaClass isMeta	ifFalse: [ ^ self error: 'Argument must be Metaclass' ].oldInstance class == oldMetaClass	ifFalse: [ ^ self error: 'Not the class of argument' ].^ thisClass := self	newInstanceFrom: oldInstance	variable: self isVariable	size: self instSize	map: (self instVarMappingFrom: oldMetaClass)
+	"Recreate any existing instances of the argument, oldClass, as instances of 
+	the receiver, which is a newly changed class. Permute variables as 
+	necessary."
+
+	thisClass class == self
+		ifTrue: [ ^ self error: 'Metaclasses have only one instance' ].
+	oldMetaClass isMeta
+		ifFalse: [ ^ self error: 'Argument must be Metaclass' ].
+	oldInstance class == oldMetaClass
+		ifFalse: [ ^ self error: 'Not the class of argument' ].
+	^ thisClass := self
+		newInstanceFrom: oldInstance
+		variable: self isVariable
+		size: self instSize
+		map: (self instVarMappingFrom: oldMetaClass)
 ]
 
-Class Metaclass >> assertConsistantCompositionsForNew: aTraitComposition
+Metaclass >> assertConsistantCompositionsForNew: aTraitComposition
 [
-	"Applying or modifying a trait composition on the class side	of a behavior has some restrictions."
-| baseTraits notAddable message |baseTraits := aTraitComposition traits select: [ :each | each isBaseTrait ].baseTraits isEmpty	ifFalse: [ 		notAddable := baseTraits reject: [ :each | each classSide methodDict isEmpty ].		notAddable isEmpty			ifFalse: [ 				message := String					streamContents: [ :stream | 						stream							nextPutAll: 'You can not add the base trait(s)';							cr.						notAddable do: [ :each | stream nextPutAll: each name ] separatedBy: [ stream nextPutAll: ', ' ].						stream							cr;							nextPutAll: 'to this composition because it/they define(s) methods on the class side.' ].				^ TraitCompositionException signal: message ] ].self instanceSide traitComposition traits asSet	= (aTraitComposition traits select: [ :each | each isClassTrait ] thenCollect: [ :each | each baseTrait ]) asSet	ifFalse: [ 		^ TraitCompositionException			signal:				'You can not add or remove class side traits on				the class side of a composition. (But you can specify aliases or exclusions				for existing traits or add a trait which does not have any methods on the class side.)' ]
+	"Applying or modifying a trait composition on the class side
+	of a behavior has some restrictions."
+
+	| baseTraits notAddable message |
+	baseTraits := aTraitComposition traits select: [ :each | each isBaseTrait ].
+	baseTraits isEmpty
+		ifFalse: [ notAddable := baseTraits reject: [ :each | each classSide methodDict isEmpty ].
+			notAddable isEmpty
+				ifFalse: [ message := String
+						streamContents: [ :stream | stream
+								nextPutAll: 'You can not add the base trait(s)';
+								cr.
+							notAddable do: [ :each | stream nextPutAll: each name ] separatedBy: [ stream nextPutAll: ', ' ].
+							stream
+								cr;
+								nextPutAll: 'to this composition because it/they define(s) methods on the class side.' ].
+					^ TraitCompositionException signal: message ] ].
+	self instanceSide traitComposition traits asSet
+		= (aTraitComposition traits select: [ :each | each isClassTrait ] thenCollect: [ :each | each baseTrait ]) asSet
+		ifFalse: [ 
+			^ TraitCompositionException
+				signal:
+					'You can not add or remove class side traits on				the class side of a composition. (But you can specify aliases or exclusions				for existing traits or add a trait which does not have any methods on the class side.)' ]
 ]
 
-Class Metaclass >> basicLocalSelectors
+Metaclass >> basicLocalSelectors
 [
-	"Direct accessor for the instance variable localSelectors.	Since localSelectors is lazily initialized, this may 	return nil, which means that all selectors are local."
-^ localSelectors
+	"Direct accessor for the instance variable localSelectors.
+	Since localSelectors is lazily initialized, this may 
+	return nil, which means that all selectors are local."
+
+	^ localSelectors
 ]
 
-Class Metaclass >> basicLocalSelectors: aSetOrNil
+Metaclass >> basicLocalSelectors: aSetOrNil
 [
-localSelectors := aSetOrNil
+	localSelectors := aSetOrNil
 ]
 
-Class Metaclass >> binding
+Metaclass >> binding
 [
-^ nil -> self
+	"return an association that can be used as the binding
+	 To share it between methods, reuse an existing one if possible"
+
+	^ self methodDict ifEmpty: [ nil -> self ] ifNotEmpty: [ :dict | dict anyOne methodClassAssociation ]
 ]
 
-Class Metaclass >> bindingOf: varName
+Metaclass >> bindingOf: varName
 [
-^ thisClass classBindingOf: varName
+	^ thisClass classBindingOf: varName
 ]
 
-Class Metaclass >> canZapMethodDictionary
+Metaclass >> canZapMethodDictionary
 [
 	"Return true if it is safe to zap the method dictionary on #obsolete"
-thisClass == nil	ifTrue: [ ^ true ]	ifFalse: [ ^ thisClass canZapMethodDictionary ]
+
+	thisClass == nil
+		ifTrue: [ ^ true ]
+		ifFalse: [ ^ thisClass canZapMethodDictionary ]
 ]
 
-Class Metaclass >> classPool
+Metaclass >> classPool
 [
 	"Answer the dictionary of class variables."
-^ thisClass classPool
+
+	^ thisClass classPool
 ]
 
-Class Metaclass >> classVarNames
+Metaclass >> classVarNames
 [
 	"Answer a set of the names of the class variables defined in the receiver's instance."
-thisClass ifNil: [ ^ Set new ].^ thisClass classVarNames
+
+	thisClass ifNil: [ ^ Set new ].
+	^ thisClass classVarNames
 ]
 
-Class Metaclass >> definition
+Metaclass >> definition
 [
 	"Refer to the comment in ClassDescription|definition."
-^ String	streamContents: [ :strm | 		strm print: self.		(self hasTraitComposition and: [ self traitComposition notEmpty ])			ifTrue: [ 				strm					crtab;					nextPutAll: 'uses: ';					print: self traitComposition ].		strm			crtab;			nextPutAll: 'instanceVariableNames: ';			store: self instanceVariablesString ]
+
+	^ String
+		streamContents: [ :strm | strm print: self.
+			(self hasTraitComposition and: [ self traitComposition notEmpty ])
+				ifTrue: [ strm
+						crtab;
+						nextPutAll: 'uses: ';
+						print: self traitComposition ].
+			strm
+				crtab;
+				nextPutAll: 'instanceVariableNames: ';
+				store: self instanceVariablesString ]
 ]
 
-Class Metaclass >> environment
+Metaclass >> environment
 [
-^ thisClass environment
+	^ thisClass environment
 ]
 
-Class Metaclass >> fileOutInitializerOn: aStream
+Metaclass >> fileOutInitializerOn: aStream
 [
-(self methodDict includesKey: #initialize)	ifTrue: [ 		aStream cr.		aStream nextChunkPut: thisClass name , ' initialize' ]
+	(self methodDict includesKey: #initialize)
+		ifTrue: [ aStream cr.
+			aStream nextChunkPut: thisClass name , ' initialize' ]
 ]
 
-Class Metaclass >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex
+Metaclass >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex
 [
-^ self	fileOutOn: aFileStream	moveSource: moveSource	toFile: fileIndex	initializing: true
+	^ self
+		fileOutOn: aFileStream
+		moveSource: moveSource
+		toFile: fileIndex
+		initializing: true
 ]
 
-Class Metaclass >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex initializing: aBool
+Metaclass >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex initializing: aBool
 [
-super fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex.(aBool and: [ moveSource not and: [ self methodDict includesKey: #initialize ] ])	ifTrue: [ 		aFileStream cr.		aFileStream cr.		aFileStream nextChunkPut: thisClass name , ' initialize'.		aFileStream cr ]
+	super fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex.
+	(aBool and: [ moveSource not and: [ self methodDict includesKey: #initialize ] ])
+		ifTrue: [ aFileStream cr.
+			aFileStream cr.
+			aFileStream nextChunkPut: thisClass name , ' initialize'.
+			aFileStream cr ]
 ]
 
-Class Metaclass >> hasTraitComposition
+Metaclass >> hasTraitComposition
 [
-^ traitComposition notNil and: [ traitComposition notEmpty ]
+	^ traitComposition notNil and: [ traitComposition notEmpty ]
 ]
 
-Class Metaclass >> instanceVariableNames: instVarString
+Metaclass >> instanceVariableNames: instVarString
 [
 	"Declare additional named variables for my instance."
-^ ClassBuilder new class: self instanceVariableNames: instVarString
+
+	^ ClassBuilder new class: self instanceVariableNames: instVarString
 ]
 
-Class Metaclass >> isAbstractClass
+Metaclass >> isAbstractClass
 [
-^ self theNonMetaClass isAbstractClass
+	self deprecated: 'Use hasAbstractMethods' on: '16 December 2012' in: #Pharo2.
+	0.
+	^ self theNonMetaClass isAbstractClass
 ]
 
-Class Metaclass >> isMeta
+Metaclass >> isAnonymous
 [
-^ true
+	^ thisClass isAnonymous
 ]
 
-Class Metaclass >> isObsolete
+Metaclass >> isMeta
+[
+	^ true
+]
+
+Metaclass >> isObsolete
 [
 	"Return true if the receiver is obsolete"
-^ thisClass == nil or: [ thisClass class ~~ self or: [ thisClass isObsolete ]	"or I am not the class of thisClass" ]	"Either no thisClass"	"or my instance is obsolete"
+
+	^ thisClass == nil or: [ thisClass class ~~ self or: [ thisClass isObsolete ]	"or I am not the class of thisClass" ]	"Either no thisClass"	"or my instance is obsolete"
 ]
 
-Class Metaclass >> isSelfEvaluating
+Metaclass >> isSelfEvaluating
 [
-^ self isObsolete not
+	^ self isObsolete not
 ]
 
-Class Metaclass >> name
+Metaclass >> name
 [
-	"Answer a String that is the name of the receiver, either 'Metaclass' or 	the name of the receiver's class followed by ' class'."
-thisClass == nil	ifTrue: [ ^ 'a Metaclass' ]	ifFalse: [ ^ thisClass name , ' class' ]
+	"Answer a String that is the name of the receiver, either 'Metaclass' or 
+	the name of the receiver's class followed by ' class'."
+
+	thisClass == nil
+		ifTrue: [ ^ 'a Metaclass' ]
+		ifFalse: [ ^ thisClass name , ' class' ]
 ]
 
-Class Metaclass >> new
+Metaclass >> new
 [
-	"The receiver can only have one instance. Create it or complain that	one already exists."
-thisClass class ~~ self	ifTrue: [ ^ thisClass := self basicNew ]	ifFalse: [ self error: 'A Metaclass should only have one instance!' ]
+	"The receiver can only have one instance. Create it or complain that
+	one already exists."
+
+	thisClass class ~~ self
+		ifTrue: [ ^ thisClass := self basicNew ]
+		ifFalse: [ self error: 'A Metaclass should only have one instance!' ]
 ]
 
-Class Metaclass >> nonTrivial
+Metaclass >> nonTrivial
 [
 	"Answer whether the receiver has any methods or instance variables."
-^ self instVarNames notEmpty or: [ self hasMethods or: [ self hasTraitComposition ] ]
+
+	^ self instVarNames notEmpty or: [ self hasMethods or: [ self hasTraitComposition ] ]
 ]
 
-Class Metaclass >> noteNewBaseTraitCompositionApplied: aTraitComposition
+Metaclass >> noteNewBaseTraitCompositionApplied: aTraitComposition
 [
-	"The argument is the new trait composition of my base trait - add	the new traits or remove non existing traits on my class side composition.	(Each class trait in my composition has its base trait on the instance side	of the composition - manually added traits to the class side are always 	base traits.)"
-| newComposition traitsFromInstanceSide |traitsFromInstanceSide := self traitComposition traits	select: [ :each | each isClassTrait ]	thenCollect: [ :each | each baseTrait ].newComposition := self traitComposition copyTraitExpression.(traitsFromInstanceSide copyWithoutAll: aTraitComposition traits)	do: [ :each | newComposition removeFromComposition: each classTrait ].(aTraitComposition traits copyWithoutAll: traitsFromInstanceSide) do: [ :each | newComposition add: each classTrait ].self setTraitComposition: newComposition
+	"The argument is the new trait composition of my base trait - add
+	the new traits or remove non existing traits on my class side composition.
+	(Each class trait in my composition has its base trait on the instance side
+	of the composition - manually added traits to the class side are always 
+	base traits.)"
+
+	| newComposition traitsFromInstanceSide |
+	traitsFromInstanceSide := self traitComposition traits
+		select: [ :each | each isClassTrait ]
+		thenCollect: [ :each | each baseTrait ].
+	newComposition := self traitComposition copyTraitExpression.
+	(traitsFromInstanceSide copyWithoutAll: aTraitComposition traits)
+		do: [ :each | newComposition removeFromComposition: each classTrait ].
+	(aTraitComposition traits copyWithoutAll: traitsFromInstanceSide) do: [ :each | newComposition add: each classTrait ].
+	self setTraitComposition: newComposition
 ]
 
-Class Metaclass >> obsoleteSubclasses
+Metaclass >> obsoleteSubclasses
 [
 	"Answer the receiver's subclasses."
-thisClass == nil	ifTrue: [ ^ #() ].^ thisClass obsoleteSubclasses	select: [ :aSubclass | aSubclass isMeta not ]	thenCollect: [ :aSubclass | aSubclass class ]	"Metaclass allInstancesDo:		[:m | Compiler evaluate: 'subclasses:=nil' for: m logged: false]"
+
+	thisClass == nil
+		ifTrue: [ ^ #() ].
+	^ thisClass obsoleteSubclasses
+		select: [ :aSubclass | aSubclass isMeta not ]
+		thenCollect: [ :aSubclass | aSubclass class ]	"Metaclass allInstancesDo:		[:m | Compiler evaluate: 'subclasses:=nil' for: m logged: false]"
 ]
 
-Class Metaclass >> possibleVariablesFor: misspelled continuedFrom: oldResults
+Metaclass >> possibleVariablesFor: misspelled continuedFrom: oldResults
 [
-^ thisClass possibleVariablesFor: misspelled continuedFrom: oldResults
+	^ thisClass possibleVariablesFor: misspelled continuedFrom: oldResults
 ]
 
-Class Metaclass >> postCopy
+Metaclass >> postCopy
 [
 	"Don't share the reference to the sole instance."
-super postCopy.thisClass := nil
+
+	super postCopy.
+	thisClass := nil
 ]
 
-Class Metaclass >> removeInstVarNamed: aString
+Metaclass >> removeInstVarNamed: aString
 [
 	"Remove the argument, aString, as one of the receiver's instance variables."
-| newArray newString |(self instVarNames includes: aString)	ifFalse: [ self error: aString , ' is not one of my instance variables' ].newArray := self instVarNames copyWithout: aString.newString := ''.newArray do: [ :aString2 | newString := aString2 , ' ' , newString ].self instanceVariableNames: newString
+
+	| newArray newString |
+	(self instVarNames includes: aString)
+		ifFalse: [ self error: aString , ' is not one of my instance variables' ].
+	newArray := self instVarNames copyWithout: aString.
+	newString := ''.
+	newArray do: [ :aString2 | newString := aString2 , ' ' , newString ].
+	self instanceVariableNames: newString
 ]
 
-Class Metaclass >> removeObsoleteSubclass: aClass
+Metaclass >> removeObsoleteSubclass: aClass
 [
 	"Do nothing."
 
+	
 ]
 
-Class Metaclass >> removeSubclass: aClass
+Metaclass >> removeSubclass: aClass
 [
 	"Do nothing."
 
+	
 ]
 
-Class Metaclass >> soleInstance
+Metaclass >> soleInstance
 [
 	"The receiver has only one instance. Answer it."
-^ thisClass
+
+	^ thisClass
 ]
 
-Class Metaclass >> subclasses
+Metaclass >> subclasses
 [
 	"Answer the receiver's subclasses."
-thisClass == nil	ifTrue: [ ^ #() ].^ thisClass subclasses select: [ :aSubclass | aSubclass isMeta not ] thenCollect: [ :aSubclass | aSubclass class ]	"Metaclass allInstancesDo:		[:m | Compiler evaluate: 'subclasses:=nil' for: m logged: false]"
+
+	thisClass == nil
+		ifTrue: [ ^ #() ].
+	^ thisClass subclasses select: [ :aSubclass | aSubclass isMeta not ] thenCollect: [ :aSubclass | aSubclass class ]	"Metaclass allInstancesDo:		[:m | Compiler evaluate: 'subclasses:=nil' for: m logged: false]"
 ]
 
-Class Metaclass >> subclassesDo: aBlock
+Metaclass >> subclassesDo: aBlock
 [
 	"Evaluate aBlock for each of the receiver's immediate subclasses."
-thisClass	subclassesDo: [ :aSubclass | 		"The following test is for Class class which has to exclude		the Metaclasses being subclasses of Class."		aSubclass isMeta			ifFalse: [ aBlock value: aSubclass class ] ]
+
+	thisClass
+		subclassesDo: [ :aSubclass | 
+			"The following test is for Class class which has to exclude		the Metaclasses being subclasses of Class."
+			aSubclass isMeta
+				ifFalse: [ aBlock value: aSubclass class ] ]
 ]
 
-Class Metaclass >> theMetaClass
+Metaclass >> theMetaClass
 [
 	"Sent to a class or metaclass, always return the metaclass"
-^ self
+
+	^ self
 ]
 
-Class Metaclass >> theNonMetaClass
+Metaclass >> theNonMetaClass
 [
 	"Sent to a class or metaclass, always return the class"
-^ thisClass
+
+	^ thisClass
 ]
 
-Class Metaclass >> traitComposition
+Metaclass >> traitComposition
 [
-traitComposition ifNil: [ traitComposition := TraitComposition new ].^ traitComposition
+	traitComposition ifNil: [ traitComposition := TraitComposition new ].
+	^ traitComposition
 ]
 
-Class Metaclass >> traitComposition: aTraitComposition
+Metaclass >> traitComposition: aTraitComposition
 [
-traitComposition := aTraitComposition
+	traitComposition := aTraitComposition
 ]
 
-Class Metaclass >> uses: aTraitCompositionOrArray instanceVariableNames: instVarString
+Metaclass >> uses: aTraitCompositionOrArray instanceVariableNames: instVarString
 [
-| newComposition newMetaClass copyOfOldMetaClass |copyOfOldMetaClass := self copy.newMetaClass := self instanceVariableNames: instVarString.newComposition := aTraitCompositionOrArray asTraitComposition.newMetaClass assertConsistantCompositionsForNew: newComposition.newMetaClass setTraitComposition: newComposition.SystemAnnouncer uniqueInstance classDefinitionChangedFrom: copyOfOldMetaClass to: newMetaClass
+	| newComposition newMetaClass copyOfOldMetaClass |
+	copyOfOldMetaClass := self copy.
+	newMetaClass := self instanceVariableNames: instVarString.
+	newComposition := aTraitCompositionOrArray asTraitComposition.
+	newMetaClass assertConsistantCompositionsForNew: newComposition.
+	newMetaClass setTraitComposition: newComposition.
+	SystemAnnouncer uniqueInstance classDefinitionChangedFrom: copyOfOldMetaClass to: newMetaClass
 ]
 
-Class Metaclass >> veryDeepCopyWith: deepCopier
+Metaclass >> veryDeepCopyWith: deepCopier
 [
 	"Return self.  Must be created, not copied.  Do not record me."
 
+	
 ]
 
-Class Metaclass >> wantsChangeSetLogging
+Metaclass >> wantsChangeSetLogging
 [
 	"Answer whether code submitted for the receiver should be remembered by the changeSet mechanism.The metaclass follows the rule of the class itself."
-^ thisClass wantsChangeSetLogging
+
+	^ thisClass wantsChangeSetLogging
 ]
 
-Class Metaclass >> wantsRecompilationProgressReported
+Metaclass >> wantsRecompilationProgressReported
 [
 	"The metaclass follows the rule of the class itself."
-^ thisClass wantsRecompilationProgressReported
-]
 
-Metaclass
-	name: #Metaclass;
-	instanceVariables: #().
+	^ thisClass wantsRecompilationProgressReported
+]
 

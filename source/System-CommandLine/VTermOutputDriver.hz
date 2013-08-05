@@ -1,0 +1,582 @@
+VTermOutputDriver
+	instanceVariables: #(#termcap #outStream #currentBackground #currentColor #light #blink #shouldEcho );
+	package: #'System-CommandLine'.
+
+VTermOutputDriver class
+	instanceVariables: #(#stdoutTerminalInstance #stderrTerminalInstance ).
+
+VTermOutputDriver >> << aStringOrCharacter
+[
+	aStringOrCharacter putOn: outStream
+]
+
+VTermOutputDriver >> background256: aColor
+[
+	"output an xterm 256 color extension sequence"
+
+	self color256: aColor background: true
+]
+
+VTermOutputDriver >> backspace
+[
+	outStream nextPut: Character backspace.
+	self deleteCharacter
+]
+
+VTermOutputDriver >> black
+[
+	self color: 30
+]
+
+VTermOutputDriver >> black: aString
+[
+	self
+		black;
+		<< aString;
+		flush;
+		clear
+]
+
+VTermOutputDriver >> blinking
+[
+	self termcap: 'mb'
+]
+
+VTermOutputDriver >> blue
+[
+	self color: 34
+]
+
+VTermOutputDriver >> blue: aString
+[
+	self
+		blue;
+		<< aString;
+		flush;
+		clear
+]
+
+VTermOutputDriver >> bold
+[
+	" double bright mode "
+
+	self termcap: 'md'
+]
+
+VTermOutputDriver >> clear
+[
+	self reset.
+	self colorEscape
+]
+
+VTermOutputDriver >> clearFromBeginning
+[
+	self termcap: 'cb'
+]
+
+VTermOutputDriver >> clearScreen
+[
+	self termcap: 'cl'
+]
+
+VTermOutputDriver >> clearToEnd
+[
+	self termcap: 'ce'
+]
+
+VTermOutputDriver >> closed
+[
+	^ outStream isNil or: [ outStream closed ]
+]
+
+VTermOutputDriver >> color256: aColor
+[
+	"output an xterm 256 color extension sequence."
+
+	self color256: aColor background: false
+]
+
+VTermOutputDriver >> color256: aColor background: isBackground
+[
+	"use the resources for colors 0-15 - usually more-or-less a reproduction of the standard ANSI colors, but possibly more pleasing shades
+
+	colors 16-231 are a 6x6x6 color cube
+
+	colors 232-255 are a grayscale ramp, intentionally leaving out black and white"
+
+	| colorIndex |
+	self csiEscape.
+	outStream nextPutAll: (isBackground
+				ifFalse: [ '38;5;' ]
+				ifTrue: [ '48;5;' ]).
+	outStream
+		print: aColor closestXTermPixelValue;
+		nextPut: $m
+]
+
+VTermOutputDriver >> color: aColor
+[
+	currentColor := aColor.
+	self colorEscape
+]
+
+VTermOutputDriver >> colorEscape
+[
+	self csiEscape.
+	blink
+		ifTrue: [ outStream nextPutAll: '5;' ].
+	outStream print: currentColor.
+	currentBackground == 0
+		ifFalse: [ outStream
+				nextPut: $;;
+				print: currentBackground ].
+	outStream nextPut: $m
+]
+
+VTermOutputDriver >> columns
+[
+	^ termcap getnum: 'co'
+]
+
+VTermOutputDriver >> cr
+[
+	self termcap: 'cr'
+]
+
+VTermOutputDriver >> csiEscape
+[
+	"Control Sequence Introducer escape"
+
+	outStream
+		nextPut: Character escape;
+		nextPut: $[
+]
+
+VTermOutputDriver >> cursorEnhanced
+[
+	self termcap: 'vs'
+]
+
+VTermOutputDriver >> cursorInvisible
+[
+	self termcap: 'vi'
+]
+
+VTermOutputDriver >> cursorNormal
+[
+	self termcap: 've'
+]
+
+VTermOutputDriver >> cyan
+[
+	self color: 36
+]
+
+VTermOutputDriver >> cyan: aString
+[
+	self
+		cyan;
+		<< aString;
+		flush;
+		clear
+]
+
+VTermOutputDriver >> deleteCharacter
+[
+	self termcap: 'dc'
+]
+
+VTermOutputDriver >> deleteLine
+[
+	self termcap: 'dl'
+]
+
+VTermOutputDriver >> down
+[
+	self termcap: 'do'
+]
+
+VTermOutputDriver >> down: distance
+[
+	distance < 0
+		ifTrue: [ 0 - distance timesRepeat: [ self up ] ]
+		ifFalse: [ distance timesRepeat: [ self down ] ]
+]
+
+VTermOutputDriver >> echo
+[
+	self echo: true
+]
+
+VTermOutputDriver >> echo: aBool
+[
+	shouldEcho = aBool
+		ifTrue: [ ^ self ].
+	shouldEcho := aBool.
+	self enable: #echo
+]
+
+VTermOutputDriver >> endInsertMode
+[
+	self termcap: 'ei'
+]
+
+VTermOutputDriver >> erase
+[
+	"outStream nextPutAll:
+		(termcap parm: '1' in:
+			(termcap getstr: 'ec'))"
+
+	self shouldBeImplemented
+]
+
+VTermOutputDriver >> errorColor
+[
+	self red.
+	self reverse
+]
+
+VTermOutputDriver >> escape
+[
+	outStream nextPut: Character escape
+]
+
+VTermOutputDriver >> flush
+[
+	outStream flush
+]
+
+VTermOutputDriver >> green
+[
+	self color: 32
+]
+
+VTermOutputDriver >> green: aString
+[
+	self
+		green;
+		<< aString;
+		flush;
+		clear
+]
+
+VTermOutputDriver >> here
+[
+	self flag: #todo.	"use termcap here"
+	self csiEscape.
+	outStream nextPut: $E
+]
+
+VTermOutputDriver >> home
+[
+	self termcap: 'ho'
+]
+
+VTermOutputDriver >> initialize
+[
+	super initialize.
+	termcap := Termcap new.
+	self reset
+]
+
+VTermOutputDriver >> insertCharacter
+[
+	self termcap: 'ic'
+]
+
+VTermOutputDriver >> insertLine
+[
+	self termcap: 'al'.
+	self lf
+]
+
+VTermOutputDriver >> insertMode
+[
+	self termcap: 'im'
+]
+
+VTermOutputDriver >> invisible
+[
+	self termcap: 'mk'
+]
+
+VTermOutputDriver >> left
+[
+	self termcap: 'le'
+]
+
+VTermOutputDriver >> left: distance
+[
+	distance < 0
+		ifTrue: [ 0 - distance timesRepeat: [ self right ] ]
+		ifFalse: [ distance timesRepeat: [ self left ] ]
+]
+
+VTermOutputDriver >> lf
+[
+	outStream lf
+]
+
+VTermOutputDriver >> light
+[
+	light := true
+]
+
+VTermOutputDriver >> lines
+[
+	^ termcap getnum: 'li'
+]
+
+VTermOutputDriver >> nextPut: aCharacter
+[
+	outStream nextPut: aCharacter
+]
+
+VTermOutputDriver >> nextPutAll: aString
+[
+	outStream nextPutAll: aString
+]
+
+VTermOutputDriver >> noEcho
+[
+	self echo: false
+]
+
+VTermOutputDriver >> normal
+[
+	self termcap: 'me'
+]
+
+VTermOutputDriver >> outStream
+[
+	^ outStream
+]
+
+VTermOutputDriver >> outStream: stream
+[
+	outStream := stream
+]
+
+VTermOutputDriver >> overwrite: char
+[
+	self flag: #TODO.	"properly implement this"
+	outStream nextPut: char
+]
+
+VTermOutputDriver >> pink
+[
+	self color: 35
+]
+
+VTermOutputDriver >> pink: aString
+[
+	self
+		pink;
+		nextPutAll: aString;
+		flush;
+		clear
+]
+
+VTermOutputDriver >> print: anObject
+[
+	outStream print: anObject
+]
+
+VTermOutputDriver >> red
+[
+	self color: 31
+]
+
+VTermOutputDriver >> red: aString
+[
+	self
+		red;
+		<< aString;
+		flush;
+		clear
+]
+
+VTermOutputDriver >> reset
+[
+	currentColor := 0.
+	currentBackground := 0.
+	light := false.
+	blink := false
+]
+
+VTermOutputDriver >> restoreCursor
+[
+	self termcap: 'rc'
+]
+
+VTermOutputDriver >> reverse
+[
+	self termcap: 'mr'
+]
+
+VTermOutputDriver >> right
+[
+	self termcap: 'nd'
+]
+
+VTermOutputDriver >> right: distance
+[
+	distance < 0
+		ifTrue: [ 0 - distance timesRepeat: [ self left ] ]
+		ifFalse: [ distance timesRepeat: [ self right ] ]
+]
+
+VTermOutputDriver >> saveCursor
+[
+	outStream nextPutAll: (termcap getstr: 'sc')
+]
+
+VTermOutputDriver >> scrollBackward
+[
+	self termcap: 'sr'
+]
+
+VTermOutputDriver >> scrollForward
+[
+	self termcap: 'sf'
+]
+
+VTermOutputDriver >> space
+[
+	outStream space
+]
+
+VTermOutputDriver >> ss3Escape
+[
+	"Control Sequence Introducer escape"
+
+	outStream
+		nextPut: Character escape;
+		nextPut: $O
+]
+
+VTermOutputDriver >> startOfLine
+[
+	^ self cr
+]
+
+VTermOutputDriver >> store: anObject
+[
+	outStream store: anObject
+]
+
+VTermOutputDriver >> tab
+[
+	outStream tab
+]
+
+VTermOutputDriver >> termcap
+[
+	^ termcap
+]
+
+VTermOutputDriver >> termcap: termcapCapabilityIdentifier
+[
+	"Output the termcap command sequence for the identifier.
+	Use #basicNextPutAll: to avoid possible conversions applied by the stream"
+
+	outStream basicNextPutAll: (termcap getstr: termcapCapabilityIdentifier)
+]
+
+VTermOutputDriver >> topLeft
+[
+	self termcap: 'ho'
+]
+
+VTermOutputDriver >> underline
+[
+	self termcap: 'us'
+]
+
+VTermOutputDriver >> underlineOff
+[
+	self termcap: 'ue'
+]
+
+VTermOutputDriver >> up
+[
+	self termcap: 'up'
+]
+
+VTermOutputDriver >> up: distance
+[
+	distance < 0
+		ifTrue: [ 0 - distance timesRepeat: [ self down ] ]
+		ifFalse: [ distance timesRepeat: [ self up ] ]
+]
+
+VTermOutputDriver >> white
+[
+	self color: 37
+]
+
+VTermOutputDriver >> white: aString
+[
+	self
+		white;
+		<< aString;
+		flush;
+		clear
+]
+
+VTermOutputDriver >> width
+[
+	^ self columns
+]
+
+VTermOutputDriver >> yellow
+[
+	self color: 33
+]
+
+VTermOutputDriver >> yellow: aString
+[
+	self
+		yellow;
+		<< aString;
+		flush;
+		clear
+]
+
+VTermOutputDriver class >> on: anOutputStream
+[
+	^ self new
+		outStream: anOutputStream;
+		yourself
+]
+
+VTermOutputDriver class >> printText: aText
+[
+	" Example code shows how to output formatted text"
+
+	| out |
+	out := self stdout.
+	aText
+		doWithIndex: [ :char :index | aText
+				attributesAt: index
+				do: [ :attr | (attr isKindOf: TextEmphasis)
+						ifTrue: [ out bold ].
+					(attr isKindOf: TextColor)
+						ifTrue: [ out color256: attr color ] ].
+			char = Character cr
+				ifTrue: [ out lf ]
+				ifFalse: [ out << char ].
+			out clear ].
+	out lf
+]
+
+VTermOutputDriver class >> stderr
+[
+	^ self on: FileStream stderr
+]
+
+VTermOutputDriver class >> stdout
+[
+	^ self on: FileStream stdout
+]
+

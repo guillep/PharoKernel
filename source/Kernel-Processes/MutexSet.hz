@@ -1,33 +1,30 @@
-Class
-	name: #MutexSet;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+MutexSet
 	instanceVariables: #(#array );
-	classVariables: #();
 	package: #'Kernel-Processes'.
 
-Class MutexSet >> critical: aBlock
+MutexSet >> critical: aBlock
 [
 	"Evaluate aBlock aquiring all mutexes"
-^ self pvtCritical: aBlock startingAt: 1
+
+	^ self pvtCritical: aBlock startingAt: 1
 ]
 
-Class MutexSet >> pvtCritical: aBlock startingAt: index
+MutexSet >> pvtCritical: aBlock startingAt: index
 [
-| mutex |index > array size	ifTrue: [ ^ aBlock value ].mutex := array at: index.^ mutex critical: [ self pvtCritical: aBlock startingAt: index + 1 ]
+	| mutex |
+	index > array size
+		ifTrue: [ ^ aBlock value ].
+	mutex := array at: index.
+	^ mutex critical: [ self pvtCritical: aBlock startingAt: index + 1 ]
 ]
 
-Class MutexSet >> withAll: mutexList
+MutexSet >> withAll: mutexList
 [
-array := mutexList
+	array := mutexList
 ]
 
-Metaclass
-	name: #MutexSet;
-	instanceVariables: #().
-
-Metaclass MutexSet >> withAll: mutexList
+MutexSet class >> withAll: mutexList
 [
-^ self new withAll: mutexList
+	^ self new withAll: mutexList
 ]
 

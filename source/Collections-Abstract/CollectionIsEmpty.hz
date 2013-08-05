@@ -1,41 +1,40 @@
-Class
-	name: #CollectionIsEmpty;
-	superclass: #ClassError;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+CollectionIsEmpty
+	superclass: #Error;
 	package: #'Collections-Abstract'.
 
-Class CollectionIsEmpty >> collection
+CollectionIsEmpty >> collection
 [
 	"Return the collection where something is not found in"
-^ self signaler
+
+	^ self signaler
 ]
 
-Class CollectionIsEmpty >> collection: aCollection
+CollectionIsEmpty >> collection: aCollection
 [
 	"Set the collection where something is not found in"
-self signaler: aCollection
+
+	self signaler: aCollection
 ]
 
-Class CollectionIsEmpty >> messageText
+CollectionIsEmpty >> messageText
 [
 	"Overwritten to initialiaze the message text to a standard text if it has not yet been set"
-^ messageText ifNil: [ messageText := self standardMessageText ]
+
+	^ messageText ifNil: [ messageText := self standardMessageText ]
 ]
 
-Class CollectionIsEmpty >> standardMessageText
+CollectionIsEmpty >> standardMessageText
 [
 	"Generate a standard textual description"
-^ String	streamContents: [ :stream | 		stream print: self collection.		stream << ' is empty' ]
+
+	^ String streamContents: [ :stream | stream print: self collection.
+			stream << ' is empty' ]
 ]
 
-Metaclass
-	name: #CollectionIsEmpty;
-	instanceVariables: #().
-
-Metaclass CollectionIsEmpty >> signalWith: aCollection
+CollectionIsEmpty class >> signalWith: aCollection
 [
-^ self new	collection: aCollection;	signal
+	^ self new
+		collection: aCollection;
+		signal
 ]
 

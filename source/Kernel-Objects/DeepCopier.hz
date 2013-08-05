@@ -1,73 +1,130 @@
-Class
-	name: #DeepCopier;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+DeepCopier
 	instanceVariables: #(#references );
 	classVariables: #(#NextVariableCheckTime );
 	package: #'Kernel-Objects'.
 
-Class DeepCopier >> checkBasicClasses
+DeepCopier >> checkBasicClasses
 [
-	"Check that no indexes of instance vars have changed in certain classes.  If you get an error in this method, an implementation of veryDeepCopyWith: needs to be updated.  The idea is to catch a change while it is still in the system of the programmer who made it.  	DeepCopier new checkVariables	"
-| str objCls morphCls |str := '|veryDeepCopyWith: or veryDeepInner: is out of date.'.Object instSize = 0	ifFalse: [ self error: 'Many implementers of veryDeepCopyWith: are out of date' ].Morph superclass == Object	ifFalse: [ self error: 'Morph' , str ].(Morph instVarNames copyFrom: 1 to: 6) = #('bounds' 'owner' 'submorphs' 'fullBounds' 'color' 'extension')	ifFalse: [ self error: 'Morph' , str ]	"added ones are OK"
+	"Check that no indexes of instance vars have changed in certain classes.  If you get an error in this method, an implementation of veryDeepCopyWith: needs to be updated.  The idea is to catch a change while it is still in the system of the programmer who made it.  
+	DeepCopier new checkVariables	"
+
+	| str objCls morphCls |
+	str := '|veryDeepCopyWith: or veryDeepInner: is out of date.'.
+	Object instSize = 0
+		ifFalse: [ self error: 'Many implementers of veryDeepCopyWith: are out of date' ]
 ]
 
-Class DeepCopier >> checkClass: aClass
+DeepCopier >> checkClass: aClass
 [
-| meth |"Check that no indexes of instance vars have changed in certain classes.  If you get an error in this method, an implementation of veryDeepCopyWith: needs to be updated.  The idea is to catch a change while it is still in the system of the programmer who made it."self checkBasicClasses.	"Unlikely, but important to catch when it does happen."	"Every class that implements veryDeepInner: must copy all its inst vars.  Danger is that a user will add a new instance variable and forget to copy it.  So check that the last one is mentioned in the copy method."(aClass includesSelector: #veryDeepInner:)	ifTrue: [ 		((aClass compiledMethodAt: #veryDeepInner:) writesField: aClass instSize)			ifFalse: [ 				aClass instSize > 0					ifTrue: [ self warnIverNotCopiedIn: aClass sel: #veryDeepInner: ] ] ].(aClass includesSelector: #veryDeepCopyWith:)	ifTrue: [ 		meth := aClass compiledMethodAt: #veryDeepCopyWith:.		meth size > 20 & (meth literals includes: #veryDeepCopyWith:) not			ifTrue: [ 				(meth writesField: aClass instSize)					ifFalse: [ self warnIverNotCopiedIn: aClass sel: #veryDeepCopyWith: ] ] ]
+	| meth |
+	"Check that no indexes of instance vars have changed in certain classes.  If you get an error in this method, an implementation of veryDeepCopyWith: needs to be updated.  The idea is to catch a change while it is still in the system of the programmer who made it."
+	self checkBasicClasses.	"Unlikely, but important to catch when it does happen."	"Every class that implements veryDeepInner: must copy all its inst vars.  Danger is that a user will add a new instance variable and forget to copy it.  So check that the last one is mentioned in the copy method."
+	(aClass includesSelector: #veryDeepInner:)
+		ifTrue: [ ((aClass compiledMethodAt: #veryDeepInner:) writesField: aClass instSize)
+				ifFalse: [ aClass instSize > 0
+						ifTrue: [ self warnIverNotCopiedIn: aClass sel: #veryDeepInner: ] ] ].
+	(aClass includesSelector: #veryDeepCopyWith:)
+		ifTrue: [ meth := aClass compiledMethodAt: #veryDeepCopyWith:.
+			meth size > 20 & (meth literals includes: #veryDeepCopyWith:) not
+				ifTrue: [ (meth writesField: aClass instSize)
+						ifFalse: [ self warnIverNotCopiedIn: aClass sel: #veryDeepCopyWith: ] ] ]
 ]
 
-Class DeepCopier >> checkDeep
+DeepCopier >> checkDeep
 [
-	"Write exceptions in the Transcript.  Every class that implements veryDeepInner: must copy all its inst vars.  Danger is that a user will add a new instance variable and forget to copy it.  This check is only run by hand once in a while to make sure nothing was forgotten.  (Please do not remove this method.)	DeepCopier new checkDeep 	"
-Transcript	cr;	show: 'Instance variables shared with the original object when it is copied'.(self systemNavigation allClassesImplementing: #veryDeepInner:)	do: [ :aClass | 		| mm |		(mm := aClass instVarNames size) > 0			ifTrue: [ 				aClass instSize - mm + 1 to: aClass instSize do: [ :index | 					((aClass compiledMethodAt: #veryDeepInner:) writesField: index)						ifFalse: [ 							Transcript								cr;								show: aClass name;								space;								show: (aClass allInstVarNames at: index) ] ] ] ]
+	"Write exceptions in the Transcript.  Every class that implements veryDeepInner: must copy all its inst vars.  Danger is that a user will add a new instance variable and forget to copy it.  This check is only run by hand once in a while to make sure nothing was forgotten.  
+(Please do not remove this method.)
+	DeepCopier new checkDeep 	"
+
+	Transcript
+		cr;
+		show: 'Instance variables shared with the original object when it is copied'.
+	(self systemNavigation allClassesImplementing: #veryDeepInner:)
+		do: [ :aClass | | mm |
+			(mm := aClass instVarNames size) > 0
+				ifTrue: [ aClass instSize - mm + 1 to: aClass instSize do: [ :index | ((aClass compiledMethodAt: #veryDeepInner:) writesField: index)
+							ifFalse: [ Transcript
+									cr;
+									show: aClass name;
+									space;
+									show: (aClass allInstVarNames at: index) ] ] ] ]
 ]
 
-Class DeepCopier >> checkVariables
+DeepCopier >> checkVariables
 [
-	"Check that no indexes of instance vars have changed in certain classes.  If you get an error in this method, an implementation of veryDeepCopyWith: needs to be updated.  The idea is to catch a change while it is still in the system of the programmer who made it.  	DeepCopier new checkVariables	"
-self checkBasicClasses.	"Every class that implements veryDeepInner: must copy all its inst vars.  Danger is that a user will add a new instance variable and forget to copy it.  So check that the last one is mentioned in the copy method."(self systemNavigation allClassesImplementing: #veryDeepInner:)	do: [ :aClass | 		((aClass compiledMethodAt: #veryDeepInner:) writesField: aClass instSize)			ifFalse: [ 				aClass instSize > 0					ifTrue: [ self warnIverNotCopiedIn: aClass sel: #veryDeepInner: ] ] ].(self systemNavigation allClassesImplementing: #veryDeepCopyWith:)	do: [ :aClass | 		| meth |		meth := aClass compiledMethodAt: #veryDeepCopyWith:.		meth size > 20 & (meth literals includes: #veryDeepCopyWith:) not			ifTrue: [ 				(meth writesField: aClass instSize)					ifFalse: [ self warnIverNotCopiedIn: aClass sel: #veryDeepCopyWith: ] ] ]
+	"Check that no indexes of instance vars have changed in certain classes.  If you get an error in this method, an implementation of veryDeepCopyWith: needs to be updated.  The idea is to catch a change while it is still in the system of the programmer who made it.  
+	DeepCopier new checkVariables	"
+
+	self checkBasicClasses.	"Every class that implements veryDeepInner: must copy all its inst vars.  Danger is that a user will add a new instance variable and forget to copy it.  So check that the last one is mentioned in the copy method."
+	(self systemNavigation allClassesImplementing: #veryDeepInner:)
+		do: [ :aClass | ((aClass compiledMethodAt: #veryDeepInner:) writesField: aClass instSize)
+				ifFalse: [ aClass instSize > 0
+						ifTrue: [ self warnIverNotCopiedIn: aClass sel: #veryDeepInner: ] ] ].
+	(self systemNavigation allClassesImplementing: #veryDeepCopyWith:)
+		do: [ :aClass | | meth |
+			meth := aClass compiledMethodAt: #veryDeepCopyWith:.
+			meth size > 20 & (meth literals includes: #veryDeepCopyWith:) not
+				ifTrue: [ (meth writesField: aClass instSize)
+						ifFalse: [ self warnIverNotCopiedIn: aClass sel: #veryDeepCopyWith: ] ] ]
 ]
 
-Class DeepCopier >> fixDependents
+DeepCopier >> fixDependents
 [
 	"They are not used much, but need to be right"
-DependentsFields	associationsDo: [ :pair | 		pair value			do: [ :dep | 				(references at: dep ifAbsent: [ nil ])					ifNotNil: [ :newDep | 						| newModel |						newModel := references at: pair key ifAbsent: [ pair key ].						newModel addDependent: newDep ] ] ]
+
+	DependentsFields
+		associationsDo: [ :pair | pair value
+				do: [ :dep | (references at: dep ifAbsent: [ nil ])
+						ifNotNil: [ :newDep | | newModel |
+							newModel := references at: pair key ifAbsent: [ pair key ].
+							newModel addDependent: newDep ] ] ]
 ]
 
-Class DeepCopier >> initialize
+DeepCopier >> initialize
 [
-super initialize.self initialize: 4096
+	super initialize.
+	self initialize: 4096
 ]
 
-Class DeepCopier >> initialize: size
+DeepCopier >> initialize: size
 [
-references := IdentityDictionary new: size
+	references := IdentityDictionary new: size
 ]
 
-Class DeepCopier >> intervalForChecks
+DeepCopier >> intervalForChecks
 [
 	"set delay interval for checking for new instance variables to 10 minutes. hg 11/23/1999"
-^ 600
+
+	^ 600
 ]
 
-Class DeepCopier >> isItTimeToCheckVariables
+DeepCopier >> isItTimeToCheckVariables
 [
-| now isIt |NextVariableCheckTime	ifNil: [ 		NextVariableCheckTime := Time totalSeconds.		^ true ].now := Time totalSeconds.isIt := NextVariableCheckTime < now.isIt	ifTrue: [ 		"update time for next check"		NextVariableCheckTime := now + self intervalForChecks ].^ isIt
+	| now isIt |
+	NextVariableCheckTime ifNil: [ NextVariableCheckTime := Time totalSeconds.
+			^ true ].
+	now := Time totalSeconds.
+	isIt := NextVariableCheckTime < now.
+	isIt
+		ifTrue: [ "update time for next check"
+			NextVariableCheckTime := now + self intervalForChecks ].
+	^ isIt
 ]
 
-Class DeepCopier >> references
+DeepCopier >> references
 [
-^ references
+	^ references
 ]
 
-Class DeepCopier >> warnIverNotCopiedIn: aClass sel: sel
+DeepCopier >> warnIverNotCopiedIn: aClass sel: sel
 [
 	"Warn the user to update veryDeepCopyWith: or veryDeepInner:"
-self	inform:		('An instance variable was added to to class ' , aClass name , ',\and it is not copied in the method ' , sel			, '.\Please rewrite it to handle all instance variables.\See DeepCopier class comment.') withCRs.(Smalltalk respondsTo: #tools)	ifTrue: [ Smalltalk tools browser fullOnClass: aClass selector: sel ]
-]
 
-Metaclass
-	name: #DeepCopier;
-	instanceVariables: #().
+	self
+		inform:
+			('An instance variable was added to to class ' , aClass name , ',\and it is not copied in the method ' , sel
+				, '.\Please rewrite it to handle all instance variables.\See DeepCopier class comment.') withCRs.
+	(Smalltalk respondsTo: #tools)
+		ifTrue: [ Smalltalk tools browser fullOnClass: aClass selector: sel ]
+]
 

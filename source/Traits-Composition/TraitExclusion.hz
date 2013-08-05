@@ -1,62 +1,72 @@
-Class
-	name: #TraitExclusion;
-	superclass: #ClassTraitTransformation;
-	instanceSpecification: #(#pointers #words );
+TraitExclusion
+	superclass: #TraitTransformation;
 	instanceVariables: #(#exclusions );
-	classVariables: #();
 	package: #'Traits-Composition'.
 
-Class TraitExclusion >> addExclusionOf: aSymbol
+TraitExclusion >> addExclusionOf: aSymbol
 [
-self exclusions: (self exclusions copyWith: aSymbol)
+	self exclusions: (self exclusions copyWith: aSymbol)
 ]
 
-Class TraitExclusion >> allSelectors
+TraitExclusion >> allSelectors
 [
-| selectors |selectors := self subject allSelectors.self exclusions do: [ :each | selectors remove: each ifAbsent: [  ] ].^ selectors
+	| selectors |
+	selectors := self subject allSelectors.
+	self exclusions do: [ :each | selectors remove: each ifAbsent: [  ] ].
+	^ selectors
 ]
 
-Class TraitExclusion >> collectMethodsFor: aSelector into: methodDescription
+TraitExclusion >> collectMethodsFor: aSelector into: methodDescription
 [
-(self exclusions includes: aSelector)	ifFalse: [ self subject collectMethodsFor: aSelector into: methodDescription ]
+	(self exclusions includes: aSelector)
+		ifFalse: [ self subject collectMethodsFor: aSelector into: methodDescription ]
 ]
 
-Class TraitExclusion >> copyTraitExpression
+TraitExclusion >> copyTraitExpression
 [
-^ super copyTraitExpression	exclusions: self exclusions deepCopy;	yourself
+	^ super copyTraitExpression
+		exclusions: self exclusions deepCopy;
+		yourself
 ]
 
-Class TraitExclusion >> exclusions
+TraitExclusion >> exclusions
 [
-^ exclusions
+	^ exclusions
 ]
 
-Class TraitExclusion >> exclusions: aCollection
+TraitExclusion >> exclusions: aCollection
 [
-exclusions := aCollection
+	exclusions := aCollection
 ]
 
-Class TraitExclusion >> isEmpty
+TraitExclusion >> isEmpty
 [
-^ self exclusions isEmpty
+	^ self exclusions isEmpty
 ]
 
-Class TraitExclusion >> postCopy
+TraitExclusion >> postCopy
 [
-super postCopy.exclusions := exclusions copy
+	super postCopy.
+	exclusions := exclusions copy
 ]
 
-Class TraitExclusion >> printOn: aStream
+TraitExclusion >> printOn: aStream
 [
-super printOn: aStream.aStream	space;	nextPut: $-;	space;	nextPut: ${.self exclusions do: [ :each | aStream print: each ] separatedBy: [ aStream nextPutAll: '. ' ].aStream nextPut: $}
+	super printOn: aStream.
+	aStream
+		space;
+		nextPut: $-;
+		space;
+		nextPut: ${.
+	self exclusions do: [ :each | aStream print: each ] separatedBy: [ aStream nextPutAll: '. ' ].
+	aStream nextPut: $}
 ]
 
-Metaclass
-	name: #TraitExclusion;
-	instanceVariables: #().
-
-Metaclass TraitExclusion >> with: aTraitComposition exclusions: anArrayOfSelectors
+TraitExclusion class >> with: aTraitComposition exclusions: anArrayOfSelectors
 [
-^ self new	subject: aTraitComposition;	exclusions: anArrayOfSelectors;	yourself
+	^ self new
+		subject: aTraitComposition;
+		exclusions: anArrayOfSelectors;
+		yourself
 ]
 

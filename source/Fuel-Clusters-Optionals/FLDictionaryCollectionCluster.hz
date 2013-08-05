@@ -1,27 +1,25 @@
-Class
-	name: #FLDictionaryCollectionCluster;
-	superclass: #ClassFLAbstractCollectionCluster;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+FLDictionaryCollectionCluster
+	superclass: #FLAbstractCollectionCluster;
 	package: #'Fuel-Clusters-Optionals'.
 
-Class FLDictionaryCollectionCluster >> materializeReferencesOf: anObject with: aDecoder
+FLDictionaryCollectionCluster >> materializeReferencesOf: anObject with: aDecoder
 [
-aDecoder nextEncodedPositiveInteger	timesRepeat: [ anObject add: aDecoder nextEncodedReference -> aDecoder nextEncodedReference ]	"anObject size"
+	aDecoder nextEncodedPositiveInteger
+		timesRepeat: [ anObject add: aDecoder nextEncodedReference -> aDecoder nextEncodedReference ]	"anObject size"
 ]
 
-Class FLDictionaryCollectionCluster >> referencesOf: anObject do: aBlock
+FLDictionaryCollectionCluster >> referencesOf: anObject do: aBlock
 [
-aBlock value: anObject size.anObject	keysAndValuesDo: [ :key :value | 		aBlock value: key.		aBlock value: value ]
+	aBlock value: anObject size.
+	anObject keysAndValuesDo: [ :key :value | aBlock value: key.
+			aBlock value: value ]
 ]
 
-Class FLDictionaryCollectionCluster >> serializeReferencesOf: anObject with: anEncoder
+FLDictionaryCollectionCluster >> serializeReferencesOf: anObject with: anEncoder
 [
-anEncoder encodePositiveInteger: anObject size.anObject	keysAndValuesDo: [ :key :value | 		anEncoder encodeReferenceTo: key.		anEncoder encodeReferenceTo: value ]
+	| refs |
+	refs := self references at: anObject ifAbsent: [ ^ self ].
+	anEncoder encodePositiveInteger: refs first.
+	refs allButFirst do: [ :value | anEncoder encodeReferenceTo: value ]
 ]
-
-Metaclass
-	name: #FLDictionaryCollectionCluster;
-	instanceVariables: #().
 

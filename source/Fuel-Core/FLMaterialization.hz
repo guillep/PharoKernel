@@ -1,83 +1,97 @@
-Class
-	name: #FLMaterialization;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+FLMaterialization
 	instanceVariables: #(#clusterCount #clusters #root #decoder #header );
-	classVariables: #();
 	package: #'Fuel-Core'.
 
-Class FLMaterialization >> additionalObjectAt: aKey
+FLMaterialization >> additionalObjectAt: aKey
 [
-^ header additionalObjectAt: aKey
+	^ header additionalObjectAt: aKey
 ]
 
-Class FLMaterialization >> afterMaterializationStep
+FLMaterialization >> afterMaterializationStep
 [
-clusters do: [ :aCluster | aCluster afterMaterializationStepWith: decoder ]
+	clusters do: [ :aCluster | aCluster afterMaterializationStepWith: decoder ]
 ]
 
-Class FLMaterialization >> clusterInstancesStep
+FLMaterialization >> clusterInstancesStep
 [
-| aCluster |aCluster := decoder nextEncodedClusterClass newMaterializing.aCluster clusterMaterializeStepWith: decoder.aCluster materializeInstancesStepWith: decoder.self registerAll: aCluster objects.aCluster materializePostInstancesStepWith: decoder.clusters add: aCluster
+	| aCluster |
+	aCluster := decoder nextEncodedClusterClass newMaterializing.
+	aCluster clusterMaterializeStepWith: self.
+	aCluster materializeInstancesStepWith: decoder.
+	self registerAll: aCluster objects.
+	aCluster materializePostInstancesStepWith: decoder.
+	clusters add: aCluster
 ]
 
-Class FLMaterialization >> header: aHeader
+FLMaterialization >> decoder
 [
-header := aHeader
+	^ decoder
 ]
 
-Class FLMaterialization >> headerStep
+FLMaterialization >> header: aHeader
 [
-decoder decodeYourself.clusterCount := decoder nextEncodedPositiveInteger.clusters := OrderedCollection new: clusterCount.clusters resetTo: 1	"Hack that avoids OrderedCollection>>makeRoomAtLast"
+	header := aHeader
 ]
 
-Class FLMaterialization >> initializeWith: aDecoder
+FLMaterialization >> headerStep
 [
-self initialize.decoder := aDecoder
+	decoder decodeYourself.
+	clusterCount := decoder nextEncodedPositiveInteger.
+	clusters := OrderedCollection new: clusterCount.
+	clusters resetTo: 1	"Hack that avoids OrderedCollection>>makeRoomAtLast"
 ]
 
-Class FLMaterialization >> instancesStep
+FLMaterialization >> initializeWith: aDecoder
 [
-clusterCount timesRepeat: [ self clusterInstancesStep ]
+	self initialize.
+	decoder := aDecoder
 ]
 
-Class FLMaterialization >> objects
+FLMaterialization >> instancesStep
+[
+	clusterCount timesRepeat: [ self clusterInstancesStep ]
+]
+
+FLMaterialization >> objects
 [
 	"Answer a collection with the materialized objects."
-^ decoder objects
+
+	^ decoder objects
 ]
 
-Class FLMaterialization >> referencesStep
+FLMaterialization >> referencesStep
 [
-clusters do: [ :aCluster | aCluster materializeReferencesStepWith: decoder ]
+	clusters do: [ :aCluster | aCluster materializeReferencesStepWith: decoder ]
 ]
 
-Class FLMaterialization >> registerAll: materializedObjects
+FLMaterialization >> registerAll: materializedObjects
 [
-decoder registerAll: materializedObjects
+	decoder registerAll: materializedObjects
 ]
 
-Class FLMaterialization >> root
+FLMaterialization >> root
 [
-^ root
+	^ root
 ]
 
-Class FLMaterialization >> run
+FLMaterialization >> run
 [
-self headerStep.self instancesStep.self referencesStep.self trailerStep.self afterMaterializationStep
+	self headerStep.
+	self instancesStep.
+	self referencesStep.
+	self trailerStep.
+	self afterMaterializationStep
 ]
 
-Class FLMaterialization >> trailerStep
+FLMaterialization >> trailerStep
 [
-root := decoder nextEncodedReference
+	root := decoder nextEncodedReference
 ]
 
-Metaclass
-	name: #FLMaterialization;
-	instanceVariables: #().
-
-Metaclass FLMaterialization >> with: aDecoder
+FLMaterialization class >> with: aDecoder
 [
-^ self basicNew	initializeWith: aDecoder;	yourself
+	^ self basicNew
+		initializeWith: aDecoder;
+		yourself
 ]
 

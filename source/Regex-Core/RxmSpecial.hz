@@ -1,48 +1,43 @@
-Class
-	name: #RxmSpecial;
-	superclass: #ClassRxmLink;
-	instanceSpecification: #(#pointers #words );
+RxmSpecial
+	superclass: #RxmLink;
 	instanceVariables: #(#matchSelector );
-	classVariables: #();
 	package: #'Regex-Core'.
 
-Class RxmSpecial >> beBeginningOfLine
+RxmSpecial >> beBeginningOfLine
 [
-matchSelector := #atBeginningOfLine
+	matchSelector := #atBeginningOfLine
 ]
 
-Class RxmSpecial >> beBeginningOfWord
+RxmSpecial >> beBeginningOfWord
 [
-matchSelector := #atBeginningOfWord
+	matchSelector := #atBeginningOfWord
 ]
 
-Class RxmSpecial >> beEndOfLine
+RxmSpecial >> beEndOfLine
 [
-matchSelector := #atEndOfLine
+	matchSelector := #atEndOfLine
 ]
 
-Class RxmSpecial >> beEndOfWord
+RxmSpecial >> beEndOfWord
 [
-matchSelector := #atEndOfWord
+	matchSelector := #atEndOfWord
 ]
 
-Class RxmSpecial >> beNotWordBoundary
+RxmSpecial >> beNotWordBoundary
 [
-matchSelector := #notAtWordBoundary
+	matchSelector := #notAtWordBoundary
 ]
 
-Class RxmSpecial >> beWordBoundary
+RxmSpecial >> beWordBoundary
 [
-matchSelector := #atWordBoundary
+	matchSelector := #atWordBoundary
 ]
 
-Class RxmSpecial >> matchAgainst: aMatcher
+RxmSpecial >> matchAgainst: aMatcher
 [
-	"Match without consuming any input, if the matcher is	in appropriate state."
-^ (aMatcher perform: matchSelector) and: [ next matchAgainst: aMatcher ]
-]
+	"Match without consuming any input, if the matcher is
+	in appropriate state."
 
-Metaclass
-	name: #RxmSpecial;
-	instanceVariables: #().
+	^ (aMatcher perform: matchSelector) and: [ next matchAgainst: aMatcher ]
+]
 

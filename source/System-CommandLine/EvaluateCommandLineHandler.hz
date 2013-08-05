@@ -1,0 +1,64 @@
+EvaluateCommandLineHandler
+	superclass: #BasicCodeLoader;
+	package: #'System-CommandLine'.
+
+EvaluateCommandLineHandler >> activate
+[
+	self activateHelp.
+	self arguments ifEmpty: [ ^ self evaluateStdIn ].
+	self evaluateArguments.
+	(self hasOption: 'save')
+		ifTrue: [ Smalltalk snapshot: true andQuit: true ]
+		ifFalse: [ self quit ]
+]
+
+EvaluateCommandLineHandler >> evaluate: aStream
+[
+	[ self stdout
+		print: (Compiler evaluate: aStream);
+		lf ]
+		on: Error , ParserNotification
+		do: [ :e | self handleError: e ]
+]
+
+EvaluateCommandLineHandler >> evaluateArguments
+[
+	| args |
+	args := ((self arguments size > 1 and: [ self arguments first = '--save' ])
+		ifTrue: [ self arguments allButFirst ]
+		ifFalse: [ self arguments ]) joinUsing: Character space.
+	args ifEmpty: [ ^ self ].
+	self evaluate: args
+]
+
+EvaluateCommandLineHandler >> evaluateStdIn
+[
+	| stdin |
+	stdin := FileStream stdin ifNil: [ ^ self ].
+	stdin atEnd
+		ifTrue: [ ^ self ].
+	self flag: #todo.	"the whole compilation machinery does not work with stdin directly, hence we load everything a buffer first"
+	self
+		evaluate:
+			(String streamContents: [ :s | [ stdin atEnd ] whileFalse: [ stdin next ifNotNilDo: [ :char | s nextPut: char ] ] ])
+]
+
+EvaluateCommandLineHandler class >> commandName
+[
+	^ 'eval'
+]
+
+EvaluateCommandLineHandler class >> description
+[
+	^ 'Directly evaluates passed in one line scripts'
+]
+
+EvaluateCommandLineHandler class >> isResponsibleFor: commandLineArguments
+[
+	"directly handle top-level -e and --evaluate options"
+
+	commandLineArguments withFirstArgument: [ :arg | (#('-e' '--evaluate') includes: arg)
+				ifTrue: [ ^ true ] ].
+	^ commandLineArguments includesSubCommand: self commandName
+]
+

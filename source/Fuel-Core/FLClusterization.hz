@@ -1,73 +1,82 @@
-Class
-	name: #FLClusterization;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+FLClusterization
 	instanceVariables: #(#baselevelBucket #substitutionsBucket #globalsBucket #metalevelInstanceSideBucket #metalevelClassSideBucket #primitivesBucket #postBaselevelBucket );
-	classVariables: #();
 	package: #'Fuel-Core'.
 
-Class FLClusterization >> baselevelBucket
+FLClusterization >> baselevelBucket
 [
-^ baselevelBucket
+	^ baselevelBucket
 ]
 
-Class FLClusterization >> clusterBuckets
+FLClusterization >> clusterBuckets
 [
 	"Answer a new collection with all the clusters that have been collected in trace. Note that order is imporant."
-^ OrderedCollection new	add: globalsBucket;	add: primitivesBucket;	add: metalevelClassSideBucket;	add: metalevelInstanceSideBucket;	add: baselevelBucket;	add: postBaselevelBucket;	add: substitutionsBucket;	yourself
+
+	^ OrderedCollection new
+		add: globalsBucket;
+		add: primitivesBucket;
+		add: metalevelClassSideBucket;
+		add: metalevelInstanceSideBucket;
+		add: baselevelBucket;
+		add: postBaselevelBucket;
+		add: substitutionsBucket;
+		yourself
 ]
 
-Class FLClusterization >> clusters
+FLClusterization >> clusters
 [
-^ self clusterBuckets gather: [ :c | c ]
+	^ self clusterBuckets gather: [ :c | c ]
 ]
 
-Class FLClusterization >> fuelAccept: aGeneralMapper
+FLClusterization >> fuelAccept: aGeneralMapper
 [
-^ aGeneralMapper visitSubstitution: self by: nil
+	^ aGeneralMapper visitSubstitution: self by: nil
 ]
 
-Class FLClusterization >> globalsBucket
+FLClusterization >> globalsBucket
 [
-^ globalsBucket
+	^ globalsBucket
 ]
 
-Class FLClusterization >> initialize
+FLClusterization >> initialize
 [
-super initialize.primitivesBucket := IdentityDictionary new.baselevelBucket := IdentityDictionary new.globalsBucket := IdentityDictionary new.metalevelInstanceSideBucket := IdentityDictionary new.metalevelClassSideBucket := IdentityDictionary new.substitutionsBucket := IdentityDictionary new.postBaselevelBucket := IdentityDictionary new
+	super initialize.
+	primitivesBucket := IdentityDictionary new.
+	baselevelBucket := IdentityDictionary new.
+	globalsBucket := IdentityDictionary new.
+	metalevelInstanceSideBucket := IdentityDictionary new.
+	metalevelClassSideBucket := IdentityDictionary new.
+	substitutionsBucket := IdentityDictionary new.
+	postBaselevelBucket := IdentityDictionary new
 ]
 
-Class FLClusterization >> metalevelClassSideBucket
+FLClusterization >> metalevelClassSideBucket
 [
-^ metalevelClassSideBucket
+	^ metalevelClassSideBucket
 ]
 
-Class FLClusterization >> metalevelInstanceSideBucket
+FLClusterization >> metalevelInstanceSideBucket
 [
-^ metalevelInstanceSideBucket
+	^ metalevelInstanceSideBucket
 ]
 
-Class FLClusterization >> objectCount
+FLClusterization >> objectCount
 [
-^ self clusterBuckets	sum: [ :aClusterBucket | aClusterBucket inject: 0 into: [ :sum :aCluster | sum + aCluster objects size ] ]
+	^ self clusterBuckets
+		sum: [ :aClusterBucket | aClusterBucket inject: 0 into: [ :sum :aCluster | sum + aCluster objects size ] ]
 ]
 
-Class FLClusterization >> postBaselevelBucket
+FLClusterization >> postBaselevelBucket
 [
-^ postBaselevelBucket
+	^ postBaselevelBucket
 ]
 
-Class FLClusterization >> primitivesBucket
+FLClusterization >> primitivesBucket
 [
-^ primitivesBucket
+	^ primitivesBucket
 ]
 
-Class FLClusterization >> substitutionsBucket
+FLClusterization >> substitutionsBucket
 [
-^ substitutionsBucket
+	^ substitutionsBucket
 ]
-
-Metaclass
-	name: #FLClusterization;
-	instanceVariables: #().
 

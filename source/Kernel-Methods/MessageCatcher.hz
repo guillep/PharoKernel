@@ -1,27 +1,21 @@
-Class
-	name: #MessageCatcher;
-	superclass: #ClassProtoObject;
-	instanceSpecification: #(#pointers #words );
+MessageCatcher
+	superclass: #ProtoObject;
 	instanceVariables: #(#accumulator );
-	classVariables: #();
 	package: #'Kernel-Methods'.
 
-Class MessageCatcher >> doesNotUnderstand: aMessage
+MessageCatcher >> doesNotUnderstand: aMessage
 [
-accumulator ifNotNil: [ accumulator add: aMessage ].^ aMessage
+	accumulator ifNotNil: [ accumulator add: aMessage ].
+	^ aMessage
 ]
 
-Class MessageCatcher >> privAccumulator
+MessageCatcher >> privAccumulator
 [
-^ accumulator
+	^ accumulator
 ]
 
-Class MessageCatcher >> privAccumulator: collection
+MessageCatcher >> privAccumulator: collection
 [
-accumulator := collection
+	accumulator := collection
 ]
-
-Metaclass
-	name: #MessageCatcher;
-	instanceVariables: #().
 

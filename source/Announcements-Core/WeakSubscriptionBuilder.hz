@@ -1,53 +1,51 @@
-Class
-	name: #WeakSubscriptionBuilder;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+WeakSubscriptionBuilder
 	instanceVariables: #(#announcer );
-	classVariables: #();
 	package: #'Announcements-Core'.
 
-Class WeakSubscriptionBuilder >> announcer: anAnnouncer
+WeakSubscriptionBuilder >> announcer: anAnnouncer
 [
-announcer := anAnnouncer
+	announcer := anAnnouncer
 ]
 
-Class WeakSubscriptionBuilder >> on: anAnnouncementClass do: aValuable
+WeakSubscriptionBuilder >> on: anAnnouncementClass do: aValuable
 [
-^ self subscribe: anAnnouncementClass do: aValuable
+	^ self subscribe: anAnnouncementClass do: aValuable
 ]
 
-Class WeakSubscriptionBuilder >> on: anAnnouncementClass send: aSelector to: anObject
+WeakSubscriptionBuilder >> on: anAnnouncementClass send: aSelector to: anObject
 [
-^ self subscribe: anAnnouncementClass send: aSelector to: anObject
+	^ self subscribe: anAnnouncementClass send: aSelector to: anObject
 ]
 
-Class WeakSubscriptionBuilder >> subscribe: anAnnouncementClass do: aValuable
+WeakSubscriptionBuilder >> subscribe: anAnnouncementClass do: aValuable
 [
-^ announcer	basicSubscribe:		(WeakAnnouncementSubscription new			announcer: announcer;			announcementClass: anAnnouncementClass;			valuable: aValuable)
+	^ announcer
+		basicSubscribe:
+			(WeakAnnouncementSubscription new
+				announcer: announcer;
+				announcementClass: anAnnouncementClass;
+				valuable: aValuable)
 ]
 
-Class WeakSubscriptionBuilder >> subscribe: anAnnouncementClass send: aSelector to: anObject
+WeakSubscriptionBuilder >> subscribe: anAnnouncementClass send: aSelector to: anObject
 [
-^ self subscribe: anAnnouncementClass do: (WeakMessageSend receiver: anObject selector: aSelector)
+	^ self subscribe: anAnnouncementClass do: (WeakMessageSend receiver: anObject selector: aSelector)
 ]
 
-Class WeakSubscriptionBuilder >> weak
+WeakSubscriptionBuilder >> weak
 [
 	"already weak"
-^ self
+
+	^ self
 ]
 
-Class WeakSubscriptionBuilder >> when: anAnnouncementClass do: aValuable
+WeakSubscriptionBuilder >> when: anAnnouncementClass do: aValuable
 [
-^ self subscribe: anAnnouncementClass do: aValuable
+	^ self subscribe: anAnnouncementClass do: aValuable
 ]
 
-Metaclass
-	name: #WeakSubscriptionBuilder;
-	instanceVariables: #().
-
-Metaclass WeakSubscriptionBuilder >> on: announcer
+WeakSubscriptionBuilder class >> on: announcer
 [
-^ self new announcer: announcer
+	^ self new announcer: announcer
 ]
 

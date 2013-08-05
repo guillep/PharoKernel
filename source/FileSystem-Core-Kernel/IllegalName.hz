@@ -1,32 +1,26 @@
-Class
-	name: #IllegalName;
-	superclass: #ClassFileSystemError;
-	instanceSpecification: #(#pointers #words );
+IllegalName
+	superclass: #FileSystemError;
 	instanceVariables: #(#name );
-	classVariables: #();
 	package: #'FileSystem-Core-Kernel'.
 
-Class IllegalName >> initializeWithName: aName
+IllegalName >> initializeWithName: aName
 [
-name := aName.self messageText: aName
+	name := aName.
+	self messageText: aName
 ]
 
-Class IllegalName >> name
+IllegalName >> name
 [
-^ name
+	^ name
 ]
 
-Metaclass
-	name: #IllegalName;
-	instanceVariables: #().
-
-Metaclass IllegalName >> name: aName
+IllegalName class >> name: aName
 [
-^ self basicNew initializeWithName: aName
+	^ self basicNew initializeWithName: aName
 ]
 
-Metaclass IllegalName >> signalWith: aName
+IllegalName class >> signalWith: aName
 [
-^ (self name: aName) signal
+	^ (self name: aName) signal
 ]
 

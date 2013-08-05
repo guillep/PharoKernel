@@ -1,33 +1,38 @@
-Class
-	name: #KoreanEnvironment;
-	superclass: #ClassLanguageEnvironment;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+KoreanEnvironment
+	superclass: #LanguageEnvironment;
 	package: #'Multilingual-Languages'.
 
-Metaclass
-	name: #KoreanEnvironment;
-	instanceVariables: #().
-
-Metaclass KoreanEnvironment >> leadingChar
+KoreanEnvironment class >> leadingChar
 [
-^ 7
+	^ 7
 ]
 
-Metaclass KoreanEnvironment >> supportedLanguages
+KoreanEnvironment class >> supportedLanguages
 [
-	"Return the languages that this class supports. 	Any translations for those languages will use this class as their environment."
-^ #('ko')
+	"Return the languages that this class supports. 
+	Any translations for those languages will use this class as their environment."
+
+	^ #('ko')
 ]
 
-Metaclass KoreanEnvironment >> systemConverterClass
+KoreanEnvironment class >> systemConverterClass
 [
-| encoding |OSPlatform isWin32	ifTrue: [ ^ EUCKRTextConverter ].OSPlatform isMacOS	ifTrue: [ ^ UTF8TextConverter ].OSPlatform isUnix	ifTrue: [ 		encoding := X11Encoding encoding.		encoding ifNil: [ ^ EUCKRTextConverter ].		encoding = 'utf-8'			ifTrue: [ ^ UTF8TextConverter ].		^ EUCKRTextConverter ].^ UTF8TextConverter
+	| encoding |
+	OSPlatform isWin32
+		ifTrue: [ ^ EUCKRTextConverter ].
+	OSPlatform isMacOS
+		ifTrue: [ ^ UTF8TextConverter ].
+	OSPlatform isUnix
+		ifTrue: [ encoding := X11Encoding encoding.
+			encoding ifNil: [ ^ EUCKRTextConverter ].
+			encoding = 'utf-8'
+				ifTrue: [ ^ UTF8TextConverter ].
+			^ EUCKRTextConverter ].
+	^ UTF8TextConverter
 ]
 
-Metaclass KoreanEnvironment >> traditionalCharsetClass
+KoreanEnvironment class >> traditionalCharsetClass
 [
-^ KSX1001
+	^ KSX1001
 ]
 

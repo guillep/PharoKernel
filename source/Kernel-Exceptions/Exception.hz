@@ -1,225 +1,277 @@
-Class
-	name: #Exception;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+Exception
 	instanceVariables: #(#messageText #tag #signaler #signalContext #handlerContext #outerContext );
-	classVariables: #();
 	package: #'Kernel-Exceptions'.
 
-Class Exception >> debug
+Exception >> debug
 [
 	"open a debugger on myself"
-Smalltalk tools debugError: self
+
+	^ Smalltalk tools debugError: self
 ]
 
-Class Exception >> defaultAction
+Exception >> defaultAction
 [
 	"The default action taken if the exception is signaled."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class Exception >> defaultResumeValue
+Exception >> defaultResumeValue
 [
 	"Answer the value that by default should be returned if the exception is resumed"
-^ nil
+
+	^ nil
 ]
 
-Class Exception >> defaultReturnValue
+Exception >> defaultReturnValue
 [
 	"Answer the value that by default should be returned if the exception is returned"
-^ nil
+
+	^ nil
 ]
 
-Class Exception >> description
+Exception >> description
 [
 	"Return a textual description of the exception."
-^ String	streamContents: [ :stream | 		| mt |		stream << self class name.		(mt := self messageText) isEmptyOrNil			ifFalse: [ stream << ': ' << mt ] ]
+
+	^ String
+		streamContents: [ :stream | | mt |
+			stream << self class name.
+			(mt := self messageText) isEmptyOrNil
+				ifFalse: [ stream << ': ' << mt ] ]
 ]
 
-Class Exception >> freeze
+Exception >> freeze
 [
 	"freeze the context stack to keep the exception usable outside the catch blocks"
-self freezeUpTo: thisContext
+
+	self freezeUpTo: thisContext
 ]
 
-Class Exception >> freezeUpTo: aContext
+Exception >> freezeUpTo: aContext
 [
 	"freeze the signal context up to the given context so the exception is usable outside the catch block"
-signalContext := signalContext copyTo: aContext
+
+	signalContext := signalContext copyTo: aContext
 ]
 
-Class Exception >> isNested
+Exception >> isNested
 [
 	"Determine whether the current exception handler is within the scope of another handler for the same exception."
-^ handlerContext nextHandlerContext canHandleSignal: self
+
+	^ handlerContext nextHandlerContext canHandleSignal: self
 ]
 
-Class Exception >> isResumable
+Exception >> isResumable
 [
 	"Determine whether an exception is resumable."
-^ true
+
+	^ true
 ]
 
-Class Exception >> messageText
+Exception >> messageText
 [
 	"Return an exception's message text."
-^ messageText ifNil: [ String empty ]
+
+	^ messageText ifNil: [ String empty ]
 ]
 
-Class Exception >> messageText: signalerText
+Exception >> messageText: signalerText
 [
 	"Set an exception's message text."
-messageText := signalerText
+
+	messageText := signalerText
 ]
 
-Class Exception >> outer
+Exception >> outer
 [
 	"Evaluate the enclosing exception action and return to here instead of signal if it resumes (see #resumeUnchecked:)."
-| prevOuterContext |self isResumable	ifTrue: [ 		prevOuterContext := outerContext.		outerContext := thisContext contextTag ].self pass
+
+	| prevOuterContext |
+	self isResumable
+		ifTrue: [ prevOuterContext := outerContext.
+			outerContext := thisContext contextTag ].
+	self pass
 ]
 
-Class Exception >> pass
+Exception >> pass
 [
 	"Yield control to the enclosing exception action for the receiver."
-handlerContext nextHandlerContext handleSignal: self
+
+	handlerContext nextHandlerContext handleSignal: self
 ]
 
-Class Exception >> printOn: stream
+Exception >> printOn: stream
 [
-stream nextPutAll: self description
+	stream nextPutAll: self description
 ]
 
-Class Exception >> privHandlerContext: aContextTag
+Exception >> privHandlerContext: aContextTag
 [
-handlerContext := aContextTag
+	handlerContext := aContextTag
 ]
 
-Class Exception >> receiver
+Exception >> receiver
 [
-^ self signalerContext receiver
+	^ self signalerContext receiver
 ]
 
-Class Exception >> resignalAs: replacementException
+Exception >> resignalAs: replacementException
 [
 	"Signal an alternative exception in place of the receiver."
-self resumeUnchecked: replacementException signal
+
+	self resumeUnchecked: replacementException signal
 ]
 
-Class Exception >> resume
+Exception >> resume
 [
 	"Return from the message that signaled the receiver."
-self resume: self defaultResumeValue
+
+	self resume: self defaultResumeValue
 ]
 
-Class Exception >> resume: resumptionValue
+Exception >> resume: resumptionValue
 [
 	"Return resumptionValue as the value of the signal message."
-self isResumable	ifFalse: [ IllegalResumeAttempt signal ].self resumeUnchecked: resumptionValue
+
+	self isResumable
+		ifFalse: [ IllegalResumeAttempt signal ].
+	self resumeUnchecked: resumptionValue
 ]
 
-Class Exception >> resumeUnchecked: resumptionValue
+Exception >> resumeUnchecked: resumptionValue
 [
 	"Return resumptionValue as the value of #signal, unless this was called after an #outer message, then return resumptionValue as the value of #outer."
-| ctxt |outerContext	ifNil: [ signalContext return: resumptionValue ]	ifNotNil: [ 		ctxt := outerContext.		outerContext := ctxt tempAt: 1.	"prevOuterContext in #outer"		ctxt return: resumptionValue ]
+
+	| ctxt |
+	outerContext
+		ifNil: [ signalContext return: resumptionValue ]
+		ifNotNil: [ ctxt := outerContext.
+			outerContext := ctxt tempAt: 1.	"prevOuterContext in #outer"
+			ctxt return: resumptionValue ]
 ]
 
-Class Exception >> retry
+Exception >> retry
 [
 	"Abort an exception handler and re-evaluate its protected block."
-handlerContext restart
+
+	handlerContext restart
 ]
 
-Class Exception >> retryUsing: alternativeBlock
+Exception >> retryUsing: alternativeBlock
 [
 	"Abort an exception handler and evaluate a new block in place of the handler's protected block."
-handlerContext restartWithNewReceiver: alternativeBlock
+
+	handlerContext restartWithNewReceiver: alternativeBlock
 ]
 
-Class Exception >> return
+Exception >> return
 [
 	"Return nil as the value of the block protected by the active exception handler."
-self return: self defaultReturnValue
+
+	self return: self defaultReturnValue
 ]
 
-Class Exception >> return: returnValue
+Exception >> return: returnValue
 [
 	"Return the argument as the value of the block protected by the active exception handler."
-handlerContext return: returnValue
+
+	handlerContext return: returnValue
 ]
 
-Class Exception >> searchFrom: aContext
+Exception >> searchFrom: aContext
 [
 	" Set the context where the handler search will start. "
-signalContext := aContext contextTag
+
+	signalContext := aContext contextTag
 ]
 
-Class Exception >> signal
+Exception >> signal
 [
 	"Ask ContextHandlers in the sender chain to handle this signal.  The default is to execute and return my defaultAction."
-signalContext := thisContext contextTag.signaler ifNil: [ signaler := self receiver ].^ signalContext nextHandlerContext handleSignal: self
+
+	signalContext := thisContext contextTag.
+	signaler ifNil: [ signaler := self receiver ].
+	^ signalContext nextHandlerContext handleSignal: self
 ]
 
-Class Exception >> signal: signalerText
+Exception >> signal: signalerText
 [
 	"Signal the occurrence of an exceptional condition with a specified textual description."
-self messageText: signalerText.^ self signal
+
+	self messageText: signalerText.
+	^ self signal
 ]
 
-Class Exception >> signaler
+Exception >> signaler
 [
-	"Return the object that is the subject involving me.	This is set automatically to my #receiver during #signal	but could be overwritten when I am signaled"
-^ signaler
+	"Return the object that is the subject involving me.
+	This is set automatically to my #receiver during #signal
+	but could be overwritten when I am signaled"
+
+	^ signaler
 ]
 
-Class Exception >> signaler: anObject
+Exception >> signaler: anObject
 [
-	"Set the object that is the subject involving me.	This is set automatically to my #receiver during #signal	but could be overwritten when I am signaled"
-signaler := anObject
+	"Set the object that is the subject involving me.
+	This is set automatically to my #receiver during #signal
+	but could be overwritten when I am signaled"
+
+	signaler := anObject
 ]
 
-Class Exception >> signalerContext
+Exception >> signalerContext
 [
 	"Find the first sender of signal(:)"
-^ signalContext findContextSuchThat: [ :ctxt | (ctxt receiver == self or: [ ctxt receiver == self class ]) not ]
+
+	^ signalContext findContextSuchThat: [ :ctxt | (ctxt receiver == self or: [ ctxt receiver == self class ]) not ]
 ]
 
-Class Exception >> tag
+Exception >> tag
 [
 	"Return an exception's tag value."
-^ tag == nil	ifTrue: [ self messageText ]	ifFalse: [ tag ]
+
+	^ tag == nil
+		ifTrue: [ self messageText ]
+		ifFalse: [ tag ]
 ]
 
-Class Exception >> tag: t
+Exception >> tag: t
 [
 	"This message is not specified in the ANSI protocol, but that looks like an oversight because #tag is specified, and the spec states that the signaler may store the tag value."
-tag := t
+
+	tag := t
 ]
 
-Metaclass
-	name: #Exception;
-	instanceVariables: #().
-
-Metaclass Exception >> , anotherException
+Exception class >> , anotherException
 [
 	"Create an exception set."
-^ ExceptionSet new	add: self;	add: anotherException;	yourself
+
+	^ ExceptionSet new
+		add: self;
+		add: anotherException;
+		yourself
 ]
 
-Metaclass Exception >> handles: exception
+Exception class >> handles: exception
 [
 	"Determine whether an exception handler will accept a signaled exception."
-^ exception isKindOf: self
+
+	^ exception isKindOf: self
 ]
 
-Metaclass Exception >> signal
+Exception class >> signal
 [
 	"Signal the occurrence of an exceptional condition."
-^ self new signal
+
+	^ self new signal
 ]
 
-Metaclass Exception >> signal: signalerText
+Exception class >> signal: signalerText
 [
 	"Signal the occurrence of an exceptional condition with a specified textual description."
-^ self new signal: signalerText
+
+	^ self new signal: signalerText
 ]
 

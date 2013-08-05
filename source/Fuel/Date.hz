@@ -1,15 +1,15 @@
-Class Date >> fuelAccept: aGeneralMapper
+Date >> fuelAccept: aGeneralMapper
 [
-^ aGeneralMapper visitHookPrimitive: self
+	^ aGeneralMapper visitHookPrimitive: self
 ]
 
-Class Date >> serializeOn: anEncoder
+Date >> serializeOn: anEncoder
 [
-anEncoder	encodeInt32: start julianDayNumberUTC;	encodeInt24: start offset asSeconds;	encodeInt32: start offset nanoSeconds
+	start serializeOn: anEncoder
 ]
 
-Metaclass Date >> materializeFrom: aDecoder
+Date class >> materializeFrom: aDecoder
 [
-^ self	starting:		(DateAndTime			julianDayNumber: aDecoder nextEncodedInt32			offset: (Duration seconds: aDecoder nextEncodedInt24 nanoSeconds: aDecoder nextEncodedInt32)) midnight	duration: (Duration days: 1)
+	^ self starting: (DateAndTime materializeFrom: aDecoder) midnight duration: (Duration days: 1)
 ]
 

@@ -1,124 +1,163 @@
-Class
-	name: #InputEventFetcher;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+InputEventFetcher
 	instanceVariables: #(#eventHandlers #fetcherProcess #inputSemaphore );
 	classVariables: #(#Default );
-	sharedPools: #(#EventSensorConstants );	package: #'Kernel-Processes'.
+	sharedPools: #(#EventSensorConstants );
+	package: #'Kernel-Processes'.
 
-Class InputEventFetcher >> eventHandlers
+InputEventFetcher >> eventHandlers
 [
-^ eventHandlers ifNil: [ eventHandlers := OrderedCollection new ]
+	^ eventHandlers ifNil: [ eventHandlers := OrderedCollection new ]
 ]
 
-Class InputEventFetcher >> eventLoop
+InputEventFetcher >> eventLoop
 [
-	"Fetch pending raw events from the VM.	 This method is run at high priority."
-| eventBuffer |eventBuffer := Array new: 8.[ true ]	whileTrue: [ 		| type window |		self waitForInput.		[ 		self primGetNextEvent: eventBuffer.		type := eventBuffer at: 1.		type = EventTypeNone ]			whileFalse: [ 				"Patch up the window index in case we don't get one"				window := eventBuffer at: 8.				(window isNil or: [ window isZero ])					ifTrue: [ eventBuffer at: 8 put: 1 ].				self signalEvent: eventBuffer ] ]
+	"Fetch pending raw events from the VM.
+	 This method is run at high priority."
+
+	| eventBuffer |
+	eventBuffer := Array new: 8.
+	[ true ]
+		whileTrue: [ | type window |
+			self waitForInput.
+			[ self primGetNextEvent: eventBuffer.
+			type := eventBuffer at: 1.
+			type = EventTypeNone ]
+				whileFalse: [ "Patch up the window index in case we don't get one"
+					window := eventBuffer at: 8.
+					(window isNil or: [ window isZero ])
+						ifTrue: [ eventBuffer at: 8 put: 1 ].
+					self signalEvent: eventBuffer ] ]
 ]
 
-Class InputEventFetcher >> fetcherProcess
+InputEventFetcher >> fetcherProcess
 [
-^ fetcherProcess
+	^ fetcherProcess
 ]
 
-Class InputEventFetcher >> installEventLoop
+InputEventFetcher >> installEventLoop
 [
 	"Initialize the event loop process. Terminate the old process if any."
+
 	"InputEventFetcher default installEventLoop"
-self terminateEventLoop.fetcherProcess := [ self eventLoop ] forkAt: Processor lowIOPriority.fetcherProcess name: 'Input events fetching process'
+
+	self terminateEventLoop.
+	fetcherProcess := [ self eventLoop ] forkAt: Processor lowIOPriority.
+	fetcherProcess name: 'Input events fetching process'
 ]
 
-Class InputEventFetcher >> primGetNextEvent: array
+InputEventFetcher >> primGetNextEvent: array
 [
-	"Store the next OS event available into the provided array.	Essential."
+	"Store the next OS event available into the provided array.
+	Essential."
+
 	<primitive: 94>
-array at: 1 put: EventTypeNone.^ nil
+	array at: 1 put: EventTypeNone.
+	^ nil
 ]
 
-Class InputEventFetcher >> primInterruptSemaphore: aSemaphore
+InputEventFetcher >> primInterruptSemaphore: aSemaphore
 [
 	"Primitive. Install the argument as the semaphore to be signalled whenever the user presses the interrupt key. The semaphore will be signaled once each time the interrupt key is pressed."
+
 	<primitive: 134>
-^ self primitiveFailed	"Note: This primitive was marked obsolete but is still used and actually quite useful. It could bre replace with a check in the event loop though, without a need for the now obsolete event tickler as event fetching isn't bound to the Morphic loop."
+	^ self primitiveFailed	"Note: This primitive was marked obsolete but is still used and actually quite useful. It could bre replace with a check in the event loop though, without a need for the now obsolete event tickler as event fetching isn't bound to the Morphic loop."
 ]
 
-Class InputEventFetcher >> primSetInputSemaphore: semaIndex
+InputEventFetcher >> primSetInputSemaphore: semaIndex
 [
 	"Set the input semaphore the VM should use for asynchronously signaling the availability of events. Primitive. Optional."
+
 	<primitive: 93>
-^ nil
+	^ nil
 ]
 
-Class InputEventFetcher >> registerHandler: handler
+InputEventFetcher >> registerHandler: handler
 [
-self eventHandlers add: handler
+	self eventHandlers add: handler
 ]
 
-Class InputEventFetcher >> shutDown
+InputEventFetcher >> shutDown
 [
-self terminateEventLoop.inputSemaphore ifNotNil: [ Smalltalk unregisterExternalObject: inputSemaphore ]
+	self terminateEventLoop.
+	inputSemaphore ifNotNil: [ Smalltalk unregisterExternalObject: inputSemaphore ]
 ]
 
-Class InputEventFetcher >> signalEvent: eventBuffer
+InputEventFetcher >> signalEvent: eventBuffer
 [
-	"Signal the event buffer to all registered event handlers.	Handlers need make sure to copy the buffer or extract the data otherwise, as the buffer will be reused."
-self eventHandlers do: [ :handler | handler handleEvent: eventBuffer ]
+	"Signal the event buffer to all registered event handlers.
+	Handlers need make sure to copy the buffer or extract the data otherwise, as the buffer will be reused."
+
+	self eventHandlers do: [ :handler | handler handleEvent: eventBuffer ]
 ]
 
-Class InputEventFetcher >> startUp
+InputEventFetcher >> startUp
 [
-inputSemaphore := Semaphore new.self primSetInputSemaphore: (Smalltalk registerExternalObject: inputSemaphore).inputSemaphore initSignals.self installEventLoop
+	inputSemaphore := Semaphore new.
+	self primSetInputSemaphore: (Smalltalk registerExternalObject: inputSemaphore).
+	inputSemaphore initSignals.
+	self installEventLoop
 ]
 
-Class InputEventFetcher >> terminateEventLoop
+InputEventFetcher >> terminateEventLoop
 [
 	"Terminate the event loop process. Terminate the old process if any."
+
 	"InputEventFetcher default terminateEventLoop"
-fetcherProcess ifNotNil: [ fetcherProcess terminate ]
+
+	fetcherProcess ifNotNil: [ fetcherProcess terminate ]
 ]
 
-Class InputEventFetcher >> unregisterHandler: handler
+InputEventFetcher >> unregisterHandler: handler
 [
-self eventHandlers remove: handler ifAbsent: [  ]
+	self eventHandlers remove: handler ifAbsent: [  ]
 ]
 
-Class InputEventFetcher >> waitForInput
+InputEventFetcher >> waitForInput
 [
-inputSemaphore wait
+	inputSemaphore wait
 ]
 
-Metaclass
-	name: #InputEventFetcher;
-	instanceVariables: #().
-
-Metaclass InputEventFetcher >> default
+InputEventFetcher class >> default
 [
 	"InputEventFetcher default"
-^ Default ifNil: [ Default := InputEventFetcher new ]
+
+	^ Default ifNil: [ Default := InputEventFetcher new ]
 ]
 
-Metaclass InputEventFetcher >> deinstall
+InputEventFetcher class >> deinstall
 [
 	"InputEventFetcher deinstall"
-Default	ifNotNil: [ 		Default shutDown.		Smalltalk removeFromStartUpList: Default class.		Smalltalk removeFromShutDownList: Default class.		Default := nil ].Smalltalk removeFromStartUpList: self.Smalltalk removeFromShutDownList: self
+
+	Default
+		ifNotNil: [ Default shutDown.
+			Smalltalk removeFromStartUpList: Default class.
+			Smalltalk removeFromShutDownList: Default class.
+			Default := nil ].
+	Smalltalk removeFromStartUpList: self.
+	Smalltalk removeFromShutDownList: self
 ]
 
-Metaclass InputEventFetcher >> install
+InputEventFetcher class >> install
 [
 	"InputEventFetcher install"
-Smalltalk addToStartUpList: self after: Cursor.Smalltalk addToShutDownList: self after: Form.Default := self new.Default startUp
+
+	Smalltalk addToStartUpList: self after: Cursor.
+	Smalltalk addToShutDownList: self after: Form.
+	Default := self new.
+	Default startUp
 ]
 
-Metaclass InputEventFetcher >> shutDown
+InputEventFetcher class >> shutDown
 [
 	"InputEventFetcher shutDown"
-self default shutDown
+
+	self default shutDown
 ]
 
-Metaclass InputEventFetcher >> startUp
+InputEventFetcher class >> startUp
 [
 	"InputEventFetcher startUp"
-self default startUp
+
+	self default startUp
 ]
 

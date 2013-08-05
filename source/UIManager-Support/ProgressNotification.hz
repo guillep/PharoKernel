@@ -1,48 +1,45 @@
-Class
-	name: #ProgressNotification;
-	superclass: #ClassNotification;
-	instanceSpecification: #(#pointers #words );
+ProgressNotification
+	superclass: #Notification;
 	instanceVariables: #(#amount #done #extra );
-	classVariables: #();
 	package: #'UIManager-Support'.
 
-Class ProgressNotification >> amount
+ProgressNotification >> amount
 [
-^ amount
+	^ amount
 ]
 
-Class ProgressNotification >> amount: aNumber
+ProgressNotification >> amount: aNumber
 [
-amount := aNumber
+	amount := aNumber
 ]
 
-Class ProgressNotification >> done
+ProgressNotification >> done
 [
-^ done
+	^ done
 ]
 
-Class ProgressNotification >> done: aNumber
+ProgressNotification >> done: aNumber
 [
-done := aNumber
+	done := aNumber
 ]
 
-Class ProgressNotification >> extraParam
+ProgressNotification >> extraParam
 [
-^ extra
+	^ extra
 ]
 
-Class ProgressNotification >> extraParam: anObject
+ProgressNotification >> extraParam: anObject
 [
-extra := anObject
+	extra := anObject
 ]
 
-Metaclass
-	name: #ProgressNotification;
-	instanceVariables: #().
-
-Metaclass ProgressNotification >> signal: signalerText extra: extraParam
+ProgressNotification class >> signal: signalerText extra: extraParam
 [
 	"TFEI - Signal the occurrence of an exceptional condition with a specified textual description."
-| ex |ex := self new.ex extraParam: extraParam.^ ex signal: signalerText
+
+	| ex |
+	ex := self new.
+	ex extraParam: extraParam.
+	^ ex signal: signalerText
 ]
 

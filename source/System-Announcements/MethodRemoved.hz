@@ -1,62 +1,76 @@
-Class
-	name: #MethodRemoved;
-	superclass: #ClassSystemAnnouncement;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #(#methodRemoved #protocol #selector #methodClass );
-	classVariables: #();
+MethodRemoved
+	superclass: #SystemAnnouncement;
+	instanceVariables: #(#methodRemoved #protocol #selector #methodClass #methodOrigin );
 	package: #'System-Announcements'.
 
-Class MethodRemoved >> methodAffected
+MethodRemoved >> isProvidedByATrait
 [
-^ self methodRemoved
+	^ self methodOrigin ~= self methodClass
 ]
 
-Class MethodRemoved >> methodClass
+MethodRemoved >> methodAffected
 [
-^ methodClass
+	^ self methodRemoved
 ]
 
-Class MethodRemoved >> methodClass: anObject
+MethodRemoved >> methodClass
 [
-methodClass := anObject
+	^ methodClass
 ]
 
-Class MethodRemoved >> methodRemoved
+MethodRemoved >> methodClass: anObject
 [
-^ methodRemoved
+	methodClass := anObject
 ]
 
-Class MethodRemoved >> methodRemoved: anObject
+MethodRemoved >> methodOrigin
 [
-methodRemoved := anObject
+	^ methodOrigin
 ]
 
-Class MethodRemoved >> protocol
+MethodRemoved >> methodOrigin: anObject
 [
-^ protocol
+	methodOrigin := anObject
 ]
 
-Class MethodRemoved >> protocol: anObject
+MethodRemoved >> methodRemoved
 [
-protocol := anObject
+	^ methodRemoved
 ]
 
-Class MethodRemoved >> selector
+MethodRemoved >> methodRemoved: anObject
 [
-^ selector
+	methodRemoved := anObject
 ]
 
-Class MethodRemoved >> selector: anObject
+MethodRemoved >> protocol
 [
-selector := anObject
+	^ protocol
 ]
 
-Metaclass
-	name: #MethodRemoved;
-	instanceVariables: #().
-
-Metaclass MethodRemoved >> methodRemoved: aCompiledMethod selector: aSelector protocol: aProtocol class: aClass
+MethodRemoved >> protocol: anObject
 [
-^ self new	methodRemoved: aCompiledMethod;	selector: aSelector;	protocol: aProtocol;	methodClass: aClass;	yourself
+	protocol := anObject
+]
+
+MethodRemoved >> selector
+[
+	^ selector
+]
+
+MethodRemoved >> selector: anObject
+[
+	selector := anObject
+]
+
+MethodRemoved class >> methodRemoved: aCompiledMethod selector: aSelector protocol: aProtocol class: aClass origin: anOrigin
+[
+	^ self new
+		methodRemoved: aCompiledMethod;
+		selector: aSelector;
+		protocol: aProtocol;
+		methodClass: aClass;
+		methodOrigin: anOrigin;
+		yourself
 ]
 

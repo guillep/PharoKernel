@@ -1,29 +1,26 @@
-Class
-	name: #Win32Platform;
-	superclass: #ClassOSPlatform;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+Win32Platform
+	superclass: #OSPlatform;
 	package: #'System-Platforms'.
 
-Class Win32Platform >> platformFamily
+Win32Platform >> platformFamily
 [
-^ #Windows
+	^ #Windows
 ]
 
-Metaclass
-	name: #Win32Platform;
-	instanceVariables: #().
-
-Metaclass Win32Platform >> isActivePlatform
+Win32Platform class >> isActivePlatform
 [
 	"Answer whether the receiver is the active platform"
-^ OSPlatform isWin32
+
+	^ OSPlatform isWin32
 ]
 
-Metaclass Win32Platform >> virtualKey: virtualKeyCode
+Win32Platform class >> virtualKey: virtualKeyCode
 [
 	"Win32Platform virtualKey: $C charCode"
-(virtualKeyCode <= 90 and: [ virtualKeyCode >= 65	"$A " ])	ifFalse: [ ^ nil ].	"$Z charCode"	"#($a $b $c $d $e $f $g $h $i $j $k $l $m $n $o $p $q $r $s $t $u $v $w $x $y $z)"^ (#($a nil $c $d nil $f $g nil nil nil nil $l $m $n nil $p nil nil $s nil nil $v nil $x nil $z) at: virtualKeyCode - 64)	ifNotNil: [ :char | char charCode ]
+
+	(virtualKeyCode <= 90 and: [ virtualKeyCode >= 65	"$A " ])
+		ifFalse: [ ^ nil ].	"$Z charCode"	"#($a $b $c $d $e $f $g $h $i $j $k $l $m $n $o $p $q $r $s $t $u $v $w $x $y $z)"
+	^ (#($a nil $c $d nil $f $g nil nil nil nil $l $m $n nil $p nil nil $s nil nil $v nil $x nil $z)
+		at: virtualKeyCode - 64) ifNotNil: [ :char | char charCode ]
 ]
 

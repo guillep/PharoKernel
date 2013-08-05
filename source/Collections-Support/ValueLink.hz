@@ -1,42 +1,38 @@
-Class
-	name: #ValueLink;
-	superclass: #ClassLink;
-	instanceSpecification: #(#pointers #words );
+ValueLink
+	superclass: #Link;
 	instanceVariables: #(#value );
-	classVariables: #();
 	package: #'Collections-Support'.
 
-Class ValueLink >> = anotherObject
+ValueLink >> = anotherObject
 [
-^ self species == anotherObject species	and: [ self value = anotherObject value and: [ self nextLink == anotherObject nextLink ] ]
+	^ self species == anotherObject species
+		and: [ self value = anotherObject value and: [ self nextLink == anotherObject nextLink ] ]
 ]
 
-Class ValueLink >> hash
+ValueLink >> hash
 [
-^ self value hash bitXor: nextLink identityHash
+	^ self value hash bitXor: nextLink identityHash
 ]
 
-Class ValueLink >> printOn: aStream
+ValueLink >> printOn: aStream
 [
-aStream nextPutAll: 'ValueLink('.value printOn: aStream.aStream nextPut: $)
+	aStream nextPutAll: 'ValueLink('.
+	value printOn: aStream.
+	aStream nextPut: $)
 ]
 
-Class ValueLink >> value
+ValueLink >> value
 [
-^ value
+	^ value
 ]
 
-Class ValueLink >> value: aValue
+ValueLink >> value: aValue
 [
-value := aValue
+	value := aValue
 ]
 
-Metaclass
-	name: #ValueLink;
-	instanceVariables: #().
-
-Metaclass ValueLink >> value: aValue
+ValueLink class >> value: aValue
 [
-^ self new value: aValue
+	^ self new value: aValue
 ]
 

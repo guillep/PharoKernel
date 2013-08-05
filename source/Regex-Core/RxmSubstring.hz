@@ -1,50 +1,62 @@
-Class
-	name: #RxmSubstring;
-	superclass: #ClassRxmLink;
-	instanceSpecification: #(#pointers #words );
+RxmSubstring
+	superclass: #RxmLink;
 	instanceVariables: #(#sample #compare );
-	classVariables: #();
 	package: #'Regex-Core'.
 
-Class RxmSubstring >> beCaseInsensitive
+RxmSubstring >> beCaseInsensitive
 [
-compare := [ :char1 :char2 | char1 sameAs: char2 ]
+	compare := [ :char1 :char2 | char1 sameAs: char2 ]
 ]
 
-Class RxmSubstring >> beCaseSensitive
+RxmSubstring >> beCaseSensitive
 [
-compare := [ :char1 :char2 | char1 = char2 ]
+	compare := [ :char1 :char2 | char1 = char2 ]
 ]
 
-Class RxmSubstring >> character: aCharacter ignoreCase: aBoolean
+RxmSubstring >> character: aCharacter ignoreCase: aBoolean
 [
 	"Match exactly this character."
-sample := String with: aCharacter.aBoolean	ifTrue: [ self beCaseInsensitive ]
+
+	sample := String with: aCharacter.
+	aBoolean
+		ifTrue: [ self beCaseInsensitive ]
 ]
 
-Class RxmSubstring >> initialize
+RxmSubstring >> initialize
 [
-super initialize.self beCaseSensitive
+	super initialize.
+	self beCaseSensitive
 ]
 
-Class RxmSubstring >> matchAgainst: aMatcher
+RxmSubstring >> matchAgainst: aMatcher
 [
-	"Match if my sample stream is exactly the current prefix	of the matcher stream's contents."
-| originalState sampleStream mismatch |originalState := aMatcher currentState.sampleStream := self sampleStream.mismatch := false.[ sampleStream atEnd	or: [ aMatcher atEnd or: [ mismatch := (compare value: sampleStream next value: aMatcher next) not ] ] ] whileFalse.(mismatch not and: [ sampleStream atEnd and: [ next matchAgainst: aMatcher ] ])	ifTrue: [ ^ true ]	ifFalse: [ 		aMatcher restoreState: originalState.		^ false ]
+	"Match if my sample stream is exactly the current prefix
+	of the matcher stream's contents."
+
+	| originalState sampleStream mismatch |
+	originalState := aMatcher currentState.
+	sampleStream := self sampleStream.
+	mismatch := false.
+	[ sampleStream atEnd
+		or: [ aMatcher atEnd or: [ mismatch := (compare value: sampleStream next value: aMatcher next) not ] ] ]
+		whileFalse.
+	(mismatch not and: [ sampleStream atEnd and: [ next matchAgainst: aMatcher ] ])
+		ifTrue: [ ^ true ]
+		ifFalse: [ aMatcher restoreState: originalState.
+			^ false ]
 ]
 
-Class RxmSubstring >> sampleStream
+RxmSubstring >> sampleStream
 [
-^ sample readStream
+	^ sample readStream
 ]
 
-Class RxmSubstring >> substring: aString ignoreCase: aBoolean
+RxmSubstring >> substring: aString ignoreCase: aBoolean
 [
 	"Match exactly this string."
-sample := aString.aBoolean	ifTrue: [ self beCaseInsensitive ]
-]
 
-Metaclass
-	name: #RxmSubstring;
-	instanceVariables: #().
+	sample := aString.
+	aBoolean
+		ifTrue: [ self beCaseInsensitive ]
+]
 

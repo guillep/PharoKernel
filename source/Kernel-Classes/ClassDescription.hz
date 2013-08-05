@@ -1,802 +1,1768 @@
-Class
-	name: #ClassDescription;
-	superclass: #ClassBehavior;
+ClassDescription
+	superclass: #Behavior;
 	traitComposition: #TClassAndTraitDescription - {#removeSelector:};
-	instanceSpecification: #(#pointers #words );
 	instanceVariables: #(#instanceVariables #organization );
-	classVariables: #();
 	package: #'Kernel-Classes'.
 
-Class ClassDescription >> acceptsLoggingOfCompilation
+ClassDescription >> acceptsLoggingOfCompilation
 [
-	"Answer whether the receiver's method submisions and class defintions should be logged to the changes file and to the current change set.  The metaclass follows the rule of the class itself.	weird name is so that it will come lexically before #compile, so that a clean build can make it through."
-^ true
+	"Answer whether the receiver's method submisions and class defintions should be logged to the changes file and to the current change set.  The metaclass follows the rule of the class itself.
+	weird name is so that it will come lexically before #compile, so that a clean build can make it through."
+
+	^ true
 ]
 
-Class ClassDescription >> addAndClassifySelector: selector withMethod: compiledMethod inProtocol: category notifying: requestor
+ClassDescription >> addAndClassifySelector: selector withMethod: compiledMethod inProtocol: category notifying: requestor
 [
-| priorMethodOrNil oldProtocol newProtocol |priorMethodOrNil := self compiledMethodAt: selector ifAbsent: [ nil ].self addSelectorSilently: selector withMethod: compiledMethod.oldProtocol := self organization categoryOfElement: selector.SystemAnnouncer uniqueInstance suspendAllWhile: [ self organization classify: selector under: category ].newProtocol := self organization categoryOfElement: selector.priorMethodOrNil isNil	ifTrue: [ 		SystemAnnouncer uniqueInstance			methodAdded: compiledMethod			selector: selector			inProtocol: category			class: self			requestor: requestor ]	ifFalse: [ 		SystemAnnouncer uniqueInstance			methodChangedFrom: priorMethodOrNil			to: compiledMethod			selector: selector			inClass: self			oldProtocol: oldProtocol			newProtocol: newProtocol			requestor: requestor ]
+	| priorMethodOrNil oldProtocol newProtocol |
+	priorMethodOrNil := self compiledMethodAt: selector ifAbsent: [ nil ].
+	self addSelectorSilently: selector withMethod: compiledMethod.
+	oldProtocol := self organization categoryOfElement: selector.
+	SystemAnnouncer uniqueInstance suspendAllWhile: [ self organization classify: selector under: category ].
+	newProtocol := self organization categoryOfElement: selector.
+	priorMethodOrNil isNil
+		ifTrue: [ SystemAnnouncer uniqueInstance
+				methodAdded: compiledMethod
+				selector: selector
+				inProtocol: category
+				class: self
+				requestor: requestor ]
+		ifFalse: [ "If protocol changed and someone is from different package, I need to throw a method recategorized"
+			newProtocol = oldProtocol
+				ifFalse: [ | oldPackage newPackage |
+					"Check for repackage"
+					newPackage := RPackage organizer packageForProtocol: newProtocol inClass: self.
+					oldPackage := RPackage organizer packageForProtocol: oldProtocol inClass: self.
+					newPackage = oldPackage
+						ifFalse: [ SystemAnnouncer uniqueInstance methodRepackaged: compiledMethod from: oldPackage to: newPackage ].	"Announce recategorization"
+					SystemAnnouncer uniqueInstance
+						selector: selector
+						recategorizedFrom: oldProtocol
+						to: newProtocol
+						inClass: self ].
+			SystemAnnouncer uniqueInstance
+				methodChangedFrom: priorMethodOrNil
+				to: compiledMethod
+				selector: selector
+				inClass: self
+				oldProtocol: oldProtocol
+				newProtocol: newProtocol
+				requestor: requestor ]
 ]
 
-Class ClassDescription >> addAuthorsTo: result
+ClassDescription >> addAuthorsTo: result
 [
 	"private method that  to store the result in the argument."
-self methodsDo: [ :each | result add: each author ]
+
+	self methodsDo: [ :each | result add: each author ]
 ]
 
-Class ClassDescription >> addInstVarNamed: aString
+ClassDescription >> addInstVarNamed: aString
 [
 	"Add the argument, aString, as one of the receiver's instance variables."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class ClassDescription >> addSelector: selector withMethod: compiledMethod notifying: requestor
+ClassDescription >> addSelector: selector withMethod: compiledMethod notifying: requestor
 [
-| priorMethodOrNil |priorMethodOrNil := self compiledMethodAt: selector ifAbsent: [ nil ].self addSelectorSilently: selector withMethod: compiledMethod.priorMethodOrNil isNil	ifTrue: [ 		SystemAnnouncer uniqueInstance			methodAdded: compiledMethod			selector: selector			inClass: self			requestor: requestor ]	ifFalse: [ 		SystemAnnouncer uniqueInstance			methodChangedFrom: priorMethodOrNil			to: compiledMethod			selector: selector			inClass: self			requestor: requestor ]
+	| priorMethodOrNil |
+	priorMethodOrNil := self compiledMethodAt: selector ifAbsent: [ nil ].
+	self addSelectorSilently: selector withMethod: compiledMethod.
+	priorMethodOrNil isNil
+		ifTrue: [ SystemAnnouncer uniqueInstance
+				methodAdded: compiledMethod
+				selector: selector
+				inClass: self
+				requestor: requestor ]
+		ifFalse: [ SystemAnnouncer uniqueInstance
+				methodChangedFrom: priorMethodOrNil
+				to: compiledMethod
+				selector: selector
+				inClass: self
+				requestor: requestor ]
 ]
 
-Class ClassDescription >> addSelectorSilently: selector withMethod: compiledMethod
+ClassDescription >> addSelectorSilently: selector withMethod: compiledMethod
 [
-super addSelectorSilently: selector withMethod: compiledMethod.self instanceSide noteAddedSelector: selector meta: self isMeta
+	super addSelectorSilently: selector withMethod: compiledMethod.
+	self instanceSide noteAddedSelector: selector meta: self isMeta
 ]
 
-Class ClassDescription >> allInstVarNamesEverywhere
+ClassDescription >> allInstVarNamesEverywhere
 [
 	"Answer the set of inst var names used by the receiver, all superclasses, and all subclasses"
-| aList |aList := OrderedCollection new.self allSuperclasses , self withAllSubclasses asOrderedCollection do: [ :cls | aList addAll: cls instVarNames ].^ aList asSet	"BorderedMorph allInstVarNamesEverywhere"
+
+	| aList |
+	aList := OrderedCollection new.
+	self allSuperclasses , self withAllSubclasses asOrderedCollection do: [ :cls | aList addAll: cls instVarNames ].
+	^ aList asSet	"BorderedMorph allInstVarNamesEverywhere"
 ]
 
-Class ClassDescription >> allMethodCategoriesIntegratedThrough: mostGenericClass
+ClassDescription >> allMethodCategoriesIntegratedThrough: mostGenericClass
 [
 	"Answer a list of all the method categories of the receiver and all its superclasses, up through mostGenericClass"
-| aColl |aColl := OrderedCollection new.self withAllSuperclasses	do: [ :aClass | 		(aClass includesBehavior: mostGenericClass)			ifTrue: [ aColl addAll: aClass organization categories ] ].aColl remove: 'no messages' asSymbol ifAbsent: [  ].^ (aColl asSet asSortedCollection: [ :a :b | a asLowercase < b asLowercase ]) asArray	"ColorTileMorph allMethodCategoriesIntegratedThrough: TileMorph"
+
+	| otherClassCategories thisClassCategories lowercaseSortBlock combinedClassCategories |
+	otherClassCategories := OrderedCollection new.
+	lowercaseSortBlock := [ :a :b | a asLowercase <= b asLowercase ].
+	(self allSuperclassesIncluding: mostGenericClass)
+		do: [ :aClass | otherClassCategories addAll: aClass organization categories ].
+	otherClassCategories remove: 'no messages' ifAbsent: [  ].
+	thisClassCategories := self organization categories sorted: lowercaseSortBlock.
+	^ thisClassCategories
+		,
+			((otherClassCategories asSet removeAllSuchThat: [ :each | thisClassCategories includes: each ])
+				sorted: lowercaseSortBlock)
 ]
 
-Class ClassDescription >> allMethodsInCategory: aName
+ClassDescription >> allMethodsInCategory: aName
 [
-	"Answer a list of all the methods of the receiver and all its 	superclasses that are in the category named aName"
-| aColl |aColl := OrderedCollection new.self withAllSuperclasses	do: [ :aClass | 		aColl			addAll:				(aName = ClassOrganizer allCategory					ifTrue: [ aClass organization allMethodSelectors ]					ifFalse: [ aClass organization listAtCategoryNamed: aName ]) ].^ aColl asSet asArray sort
+	"Answer a list of all the methods of the receiver and all its 
+	superclasses that are in the category named aName"
+
+	| aColl |
+	aColl := OrderedCollection new.
+	self withAllSuperclasses
+		do: [ :aClass | aColl
+				addAll:
+					(aName = ClassOrganizer allCategory
+						ifTrue: [ aClass organization allMethodSelectors ]
+						ifFalse: [ aClass organization listAtCategoryNamed: aName ]) ].
+	^ aColl asSet asArray sort
 ]
 
-Class ClassDescription >> allSharedPools
+ClassDescription >> allSharedPools
 [
 	"Answer an ordered collection  of the shared pools the receiver shares, including those defined  in the superclasses of the receiver."
-^ OrderedCollection new
+
+	^ OrderedCollection new
 ]
 
-Class ClassDescription >> applyChangesOfNewTraitCompositionReplacing: oldComposition
+ClassDescription >> applyChangesOfNewTraitCompositionReplacing: oldComposition
 [
-| oldMethodDict changedSelectors |oldMethodDict := self methodDict copy.changedSelectors := super applyChangesOfNewTraitCompositionReplacing: oldComposition.self noteChangesFrom: oldMethodDict.^ changedSelectors
+	| changedSelectors oldMethodDict |
+	oldMethodDict := self methodDict copy.
+	changedSelectors := super applyChangesOfNewTraitCompositionReplacing: oldComposition.
+	self noteRecategorizedSelectors: changedSelectors oldComposition: oldComposition.
+	self noteChangesFrom: oldMethodDict.
+	^ changedSelectors
 ]
 
-Class ClassDescription >> authors
+ClassDescription >> authors
 [
 	"Returns a bag representing the author frequency based on the latest version of the methods of the receiver."
+
 	"self new authorsgather: Date"
-| br result selectors |result := Bag new.self addAuthorsTo: result.self class addAuthorsTo: result.^ result
+
+	| br result selectors |
+	result := Bag new.
+	self addAuthorsTo: result.
+	self class addAuthorsTo: result.
+	^ result
 ]
 
-Class ClassDescription >> checkForInstVarsOK: instVarString
+ClassDescription >> checkForInstVarsOK: instVarString
 [
 	"Return true if instVarString does no include any names used in a subclass"
-| instVarArray |instVarArray := instVarString subStrings: ' '.self allSubclasses	do: [ :cl | 		cl instVarNames			do: [ :n | 				(instVarArray includes: n)					ifTrue: [ 						self error: n , ' is already used in ' , cl name.						^ false ] ] ].^ true
+
+	| instVarArray |
+	instVarArray := instVarString subStrings: ' '.
+	self allSubclasses
+		do: [ :cl | cl instVarNames
+				do: [ :n | (instVarArray includes: n)
+						ifTrue: [ self error: n , ' is already used in ' , cl name.
+							^ false ] ] ].
+	^ true
 ]
 
-Class ClassDescription >> classComment: aString
+ClassDescription >> classComment: aString
 [
 	"Store the comment, aString or Text or RemoteString, associated with the class we are orgainzing.  Empty string gets stored only if had a non-empty one before."
-^ self classComment: aString stamp: '<historical>'
+
+	^ self classComment: aString stamp: '<historical>'
 ]
 
-Class ClassDescription >> classComment: aString stamp: aStamp
+ClassDescription >> classComment: aString stamp: aStamp
 [
 	"Store the comment, aString or Text or RemoteString, associated with the class we are organizing.  Empty string gets stored only if had a non-empty one before."
-| ptr header file oldCommentRemoteStr oldComment oldStamp |oldComment := self organization classComment.oldStamp := self organization commentStamp.(aString isKindOf: RemoteString)	ifTrue: [ 		SystemAnnouncer uniqueInstance			class: self			oldComment: oldComment			newComment: aString string			oldStamp: oldStamp			newStamp: aStamp.		^ self organization classComment: aString stamp: aStamp ].oldCommentRemoteStr := self organization commentRemoteStr.aString size = 0 & oldCommentRemoteStr isNil	ifTrue: [ ^ self organization classComment: nil ].	"never had a class comment, no need to write empty string out"ptr := oldCommentRemoteStr ifNil: [ 0 ] ifNotNil: [ oldCommentRemoteStr sourcePointer ].SourceFiles	ifNotNil: [ 		(file := SourceFiles at: 2)			ifNotNil: [ 				file					setToEnd;					cr;					nextPut: $!.	"directly"	"Should be saying (file command: 'H3') for HTML, but ignoring it here"				header := String					streamContents: [ :strm | 						strm							nextPutAll: self name;							nextPutAll: ' commentStamp: '.						aStamp storeOn: strm.						strm							nextPutAll: ' prior: ';							nextPutAll: ptr printString ].				file nextChunkPut: header ] ].self organization classComment: (RemoteString newString: aString onFileNumber: 2) stamp: aStamp.SystemAnnouncer uniqueInstance	class: self	oldComment: oldComment	newComment: aString	oldStamp: oldStamp	newStamp: aStamp
+
+	| ptr header file oldCommentRemoteStr oldComment oldStamp |
+	oldComment := self organization classComment.
+	oldStamp := self organization commentStamp.
+	(aString isKindOf: RemoteString)
+		ifTrue: [ SystemAnnouncer uniqueInstance
+				class: self
+				oldComment: oldComment
+				newComment: aString string
+				oldStamp: oldStamp
+				newStamp: aStamp.
+			^ self organization classComment: aString stamp: aStamp ].
+	oldCommentRemoteStr := self organization commentRemoteStr.
+	aString size = 0 & oldCommentRemoteStr isNil
+		ifTrue: [ ^ self organization classComment: nil ].	"never had a class comment, no need to write empty string out"
+	ptr := oldCommentRemoteStr ifNil: [ 0 ] ifNotNil: [ oldCommentRemoteStr sourcePointer ].
+	SourceFiles
+		ifNotNil: [ (file := SourceFiles at: 2)
+				ifNotNil: [ file
+						setToEnd;
+						cr;
+						nextPut: $!.	"directly"	"Should be saying (file command: 'H3') for HTML, but ignoring it here"
+					header := String
+						streamContents: [ :strm | strm
+								nextPutAll: self name;
+								nextPutAll: ' commentStamp: '.
+							aStamp storeOn: strm.
+							strm
+								nextPutAll: ' prior: ';
+								nextPutAll: ptr printString ].
+					file nextChunkPut: header ] ].
+	self organization classComment: (RemoteString newString: aString onFileNumber: 2) stamp: aStamp.
+	SystemAnnouncer uniqueInstance
+		class: self
+		oldComment: oldComment
+		newComment: aString
+		oldStamp: oldStamp
+		newStamp: aStamp
 ]
 
-Class ClassDescription >> classCommentBlank
+ClassDescription >> classCommentBlank
 [
-| existingComment stream |existingComment := self theNonMetaClass organization classComment.existingComment isEmpty	ifFalse: [ ^ existingComment ].stream := (String new: 100) writeStream.stream	nextPutAll: 'A';	nextPutAll:			(self name first isVowel					ifTrue: [ 'n ' ]					ifFalse: [ ' ' ]);	nextPutAll: self name;	nextPutAll: ' is xxxxxxxxx.';	cr;	cr;	nextPutAll: 'Instance Variables'.self instVarNames asSortedCollection	do: [ :each | 		stream			cr;			tab;			nextPutAll: each;			nextPut: $:;			tab;			tab;			nextPutAll: '<Object>' ].stream cr.self instVarNames asSortedCollection	do: [ :each | 		stream			cr;			nextPutAll: each;			cr;			tab;			nextPutAll: '- xxxxx';			cr ].^ stream contents
+	| existingComment stream |
+	existingComment := self theNonMetaClass organization classComment.
+	existingComment isEmpty
+		ifFalse: [ ^ existingComment ].
+	stream := (String new: 100) writeStream.
+	stream
+		nextPutAll: 'A';
+		nextPutAll: (self name first isVowel
+						ifTrue: [ 'n ' ]
+						ifFalse: [ ' ' ]);
+		nextPutAll: self name;
+		nextPutAll: ' is xxxxxxxxx.';
+		cr;
+		cr;
+		nextPutAll: 'Instance Variables'.
+	self instVarNames asSortedCollection
+		do: [ :each | stream
+				cr;
+				tab;
+				nextPutAll: each;
+				nextPut: $:;
+				tab;
+				tab;
+				nextPutAll: '<Object>' ].
+	stream cr.
+	self instVarNames asSortedCollection
+		do: [ :each | stream
+				cr;
+				nextPutAll: each;
+				cr;
+				tab;
+				nextPutAll: '- xxxxx';
+				cr ].
+	^ stream contents
 ]
 
-Class ClassDescription >> classSide
+ClassDescription >> classSide
 [
-^ self theMetaClass
+	^ self theMetaClass
 ]
 
-Class ClassDescription >> classThatDefinesClassVariable: classVarName
+ClassDescription >> classThatDefinesClassVariable: classVarName
 [
 	"Answer the class that defines the given class variable"
-(self classPool includesKey: classVarName asSymbol)	ifTrue: [ ^ self ].^ self superclass ifNotNil: [ self superclass classThatDefinesClassVariable: classVarName ]
+
+	(self classPool includesKey: classVarName asSymbol)
+		ifTrue: [ ^ self ].
+	^ self superclass ifNotNil: [ self superclass classThatDefinesClassVariable: classVarName ]
 ]
 
-Class ClassDescription >> classThatDefinesInstanceVariable: instVarName
+ClassDescription >> classThatDefinesInstanceVariable: instVarName
 [
-(self instVarNames notNil and: [ self instVarNames includes: instVarName asString ])	ifTrue: [ ^ self ].^ self superclass ifNotNil: [ self superclass classThatDefinesInstanceVariable: instVarName ]
+	(self instVarNames notNil and: [ self instVarNames includes: instVarName asString ])
+		ifTrue: [ ^ self ].
+	^ self superclass ifNotNil: [ self superclass classThatDefinesInstanceVariable: instVarName ]
 ]
 
-Class ClassDescription >> classVariablesString
+ClassDescription >> classVariablesString
 [
 	"Answer a string of my class variable names separated by spaces."
-^ String	streamContents: [ :stream | self classVarNames do: [ :each | stream nextPutAll: each ] separatedBy: [ stream space ] ]
+
+	^ String
+		streamContents: [ :stream | self classVarNames do: [ :each | stream nextPutAll: each ] separatedBy: [ stream space ] ]
 ]
 
-Class ClassDescription >> classVersion
+ClassDescription >> classVersion
 [
-	"Default.  Any class may return a later version to inform readers that use ReferenceStream. 	This method allows you to distinguish between class versions when the shape of the class 	hasn't changed (when there's no change in the instVar names).	In the conversion methods you usually can tell by the inst var names 	what old version you have. In a few cases, though, the same inst var 	names were kept but their interpretation changed (like in the layoutFrame).	By changing the class version when you keep the same instVars you can 	warn older and newer images that they have to convert."
-^ 0
+	"Default.  Any class may return a later version to inform readers that use ReferenceStream. 
+	This method allows you to distinguish between class versions when the shape of the class 
+	hasn't changed (when there's no change in the instVar names).
+	In the conversion methods you usually can tell by the inst var names 
+	what old version you have. In a few cases, though, the same inst var 
+	names were kept but their interpretation changed (like in the layoutFrame).
+	By changing the class version when you keep the same instVars you can 
+	warn older and newer images that they have to convert."
+
+	^ 0
 ]
 
-Class ClassDescription >> classesThatImplementAllOf: selectorSet
+ClassDescription >> classesThatImplementAllOf: selectorSet
 [
 	"Return an array of any classes that implement all the messages in selectorSet."
-| found remaining |found := OrderedCollection new.selectorSet	do: [ :sel | 		(self methodDict includesKey: sel)			ifTrue: [ found add: sel ] ].found isEmpty	ifTrue: [ 		^ self subclasses			inject: Array new			into: [ :subsThatDo :sub | subsThatDo , (sub classesThatImplementAllOf: selectorSet) ] ]	ifFalse: [ 		remaining := selectorSet copyWithoutAll: found.		remaining isEmpty			ifTrue: [ ^ Array with: self ].		^ self subclasses			inject: Array new			into: [ :subsThatDo :sub | subsThatDo , (sub classesThatImplementAllOf: remaining) ] ]
+
+	| found remaining |
+	found := OrderedCollection new.
+	selectorSet do: [ :sel | (self methodDict includesKey: sel)
+				ifTrue: [ found add: sel ] ].
+	found isEmpty
+		ifTrue: [ ^ self subclasses
+				inject: Array new
+				into: [ :subsThatDo :sub | subsThatDo , (sub classesThatImplementAllOf: selectorSet) ] ]
+		ifFalse: [ remaining := selectorSet copyWithoutAll: found.
+			remaining isEmpty
+				ifTrue: [ ^ Array with: self ].
+			^ self subclasses
+				inject: Array new
+				into: [ :subsThatDo :sub | subsThatDo , (sub classesThatImplementAllOf: remaining) ] ]
 ]
 
-Class ClassDescription >> comment
+ClassDescription >> comment
 [
 	"Answer the receiver's comment. (If missing, supply a template) "
-| aString |aString := self instanceSide organization classComment.aString isEmpty	ifFalse: [ ^ aString ].^ self classCommentBlank
+
+	| aString |
+	aString := self instanceSide organization classComment.
+	aString isEmpty
+		ifFalse: [ ^ aString ].
+	^ self classCommentBlank
 ]
 
-Class ClassDescription >> comment: aStringOrText
+ClassDescription >> comment: aStringOrText
 [
 	"Set the receiver's comment to be the argument, aStringOrText."
-self instanceSide classComment: aStringOrText
+
+	self instanceSide classComment: aStringOrText
 ]
 
-Class ClassDescription >> comment: aStringOrText stamp: aStamp
+ClassDescription >> comment: aStringOrText stamp: aStamp
 [
 	"Set the receiver's comment to be the argument, aStringOrText."
-self instanceSide classComment: aStringOrText stamp: aStamp
+
+	self instanceSide classComment: aStringOrText stamp: aStamp
 ]
 
-Class ClassDescription >> commentInventory
+ClassDescription >> commentInventory
 [
-	"Answer a string with a count of the classes with and without comments 	for all the classes in the package of which this class is a member."
+	"Answer a string with a count of the classes with and without comments 
+	for all the classes in the package of which this class is a member."
+
 	"Morph commentInventory"
-^ self environment organization commentInventory: (self category copyUpTo: $-) , '*'
+
+	^ self environment organization commentInventory: (self category copyUpTo: $-) , '*'
 ]
 
-Class ClassDescription >> commentStamp: changeStamp
+ClassDescription >> commentStamp: changeStamp
 [
-self organization commentStamp: changeStamp.^ self commentStamp: changeStamp prior: 0
+	self organization commentStamp: changeStamp.
+	^ self commentStamp: changeStamp prior: 0
 ]
 
-Class ClassDescription >> commentStamp: changeStamp prior: indexAndOffset
+ClassDescription >> commentStamp: changeStamp prior: indexAndOffset
 [
 	"Prior source link ignored when filing in."
-^ ClassCommentReader new setClass: self category: #Comment changeStamp: changeStamp
+
+	^ ClassCommentReader new setClass: self category: #Comment changeStamp: changeStamp
 ]
 
-Class ClassDescription >> compile: code classified: heading
+ClassDescription >> compile: code classified: heading
 [
-	"Compile the argument, code, as source code in the context of the 	receiver and install the result in the receiver's method dictionary under 	the classification indicated by the second argument, heading. nil is to be 	notified if an error occurs. The argument code is either a string or an 	object that converts to a string or a PositionableStream on an object that 	converts to a string."
-^ self compile: code classified: heading notifying: nil
+	"Compile the argument, code, as source code in the context of the 
+	receiver and install the result in the receiver's method dictionary under 
+	the classification indicated by the second argument, heading. nil is to be 
+	notified if an error occurs. The argument code is either a string or an 
+	object that converts to a string or a PositionableStream on an object that 
+	converts to a string."
+
+	^ self compile: code classified: heading notifying: nil
 ]
 
-Class ClassDescription >> compile: text classified: category notifying: requestor
+ClassDescription >> compile: text classified: category notifying: requestor
 [
-| stamp |stamp := self acceptsLoggingOfCompilation	ifTrue: [ Author changeStamp ]	ifFalse: [ nil ].^ self	compile: text	classified: category	withStamp: stamp	notifying: requestor
+	| stamp |
+	stamp := self acceptsLoggingOfCompilation
+		ifTrue: [ Author changeStamp ]
+		ifFalse: [ nil ].
+	^ self
+		compile: text
+		classified: category
+		withStamp: stamp
+		notifying: requestor
 ]
 
-Class ClassDescription >> compile: text classified: category withStamp: changeStamp notifying: requestor
+ClassDescription >> compile: text classified: category withStamp: changeStamp notifying: requestor
 [
-^ self	compile: text	classified: category	withStamp: changeStamp	notifying: requestor	logSource: self acceptsLoggingOfCompilation
+	^ self
+		compile: text
+		classified: category
+		withStamp: changeStamp
+		notifying: requestor
+		logSource: self acceptsLoggingOfCompilation
 ]
 
-Class ClassDescription >> compile: text classified: category withStamp: changeStamp notifying: requestor logSource: logSource
+ClassDescription >> compile: text classified: category withStamp: changeStamp notifying: requestor logSource: logSource
 [
-| methodAndNode |methodAndNode := self	compile: text asString	classified: category	notifying: requestor	trailer: self defaultMethodTrailer	ifFail: [ ^ nil ].logSource	ifTrue: [ 		" replace 'text' with 'methodAndNode node sourceText' "		self			logMethodSource: methodAndNode node sourceText			forMethodWithNode: methodAndNode			inCategory: category			withStamp: changeStamp			notifying: requestor ].self	addAndClassifySelector: methodAndNode selector	withMethod: methodAndNode method	inProtocol: category	notifying: requestor.self instanceSide noteCompilationOf: methodAndNode selector meta: self isClassSide.^ methodAndNode selector
+	| methodAndNode |
+	methodAndNode := self
+		compile: text asString
+		classified: category
+		notifying: requestor
+		trailer: self defaultMethodTrailer
+		ifFail: [ ^ nil ].
+	logSource
+		ifTrue: [ self
+				logMethodSource: methodAndNode node sourceCode
+				forMethodWithNode: methodAndNode
+				inCategory: category
+				withStamp: changeStamp
+				notifying: requestor ].
+	self
+		addAndClassifySelector: methodAndNode selector
+		withMethod: methodAndNode method
+		inProtocol: category
+		notifying: requestor.
+	self instanceSide noteCompilationOf: methodAndNode selector meta: self isClassSide.
+	^ methodAndNode selector
 ]
 
-Class ClassDescription >> compile: code notifying: requestor
+ClassDescription >> compile: code notifying: requestor
 [
 	"Refer to the comment in Behavior|compile:notifying:."
-^ self compile: code classified: ClassOrganizer default notifying: requestor
+
+	^ self compile: code classified: ClassOrganizer default notifying: requestor
 ]
 
-Class ClassDescription >> compileSilently: code classified: category
+ClassDescription >> compileSilently: code classified: category
 [
 	"Compile the code and classify the resulting method in the given category, leaving no trail in the system log, nor in any change set, nor in the 'recent submissions' list. This should only be used when you know for sure that the compilation will succeed."
-^ self compileSilently: code classified: category notifying: nil
+
+	^ self compileSilently: code classified: category notifying: nil
 ]
 
-Class ClassDescription >> compileSilently: code classified: category notifying: requestor
+ClassDescription >> compileSilently: code classified: category notifying: requestor
 [
 	"Compile the code and classify the resulting method in the given category, leaving no trail in the system log, nor in any change set, nor in the 'recent submissions' list. This should only be used when you know for sure that the compilation will succeed."
-^ SystemAnnouncer uniqueInstance	suspendAllWhile: [ 		self			compile: code			classified: category			withStamp: nil			notifying: requestor			logSource: false ]
+
+	^ SystemAnnouncer uniqueInstance suspendAllWhile: [ self compile: code classified: category notifying: requestor ]
 ]
 
-Class ClassDescription >> copy: sel from: class
+ClassDescription >> copy: sel from: class
 [
-	"Install the method associated with the first argument, sel, a message 	selector, found in the method dictionary of the second argument, class, 	as one of the receiver's methods. Classify the message under -As yet not 	classified-."
-self copy: sel from: class classified: nil
+	"Install the method associated with the first argument, sel, a message 
+	selector, found in the method dictionary of the second argument, class, 
+	as one of the receiver's methods. Classify the message under -As yet not 
+	classified-."
+
+	self copy: sel from: class classified: nil
 ]
 
-Class ClassDescription >> copy: sel from: class classified: cat
+ClassDescription >> copy: sel from: class classified: cat
 [
-	"Install the method associated with the first arugment, sel, a message 	selector, found in the method dictionary of the second argument, class, 	as one of the receiver's methods. Classify the message under the third 	argument, cat."
-| code category |"Useful when modifying an existing class"code := class sourceCodeAt: sel.code	ifNotNil: [ 		cat ifNil: [ category := class organization categoryOfElement: sel ] ifNotNil: [ category := cat ].		(self includesLocalSelector: sel)			ifTrue: [ 				code asString = (self sourceCodeAt: sel) asString					ifFalse: [ self error: self name , ' ' , sel , ' will be redefined if you proceed.' ] ].		self compile: code classified: category ]
+	"Install the method associated with the first arugment, sel, a message 
+	selector, found in the method dictionary of the second argument, class, 
+	as one of the receiver's methods. Classify the message under the third 
+	argument, cat."
+
+	| code category |
+	"Useful when modifying an existing class"
+	code := class sourceCodeAt: sel.
+	code
+		ifNotNil: [ cat ifNil: [ category := class organization categoryOfElement: sel ] ifNotNil: [ category := cat ].
+			(self includesLocalSelector: sel)
+				ifTrue: [ code asString = (self sourceCodeAt: sel) asString
+						ifFalse: [ self error: self name , ' ' , sel , ' will be redefined if you proceed.' ] ].
+			self compile: code classified: category ]
 ]
 
-Class ClassDescription >> copyAll: selArray from: class
+ClassDescription >> copyAll: selArray from: class
 [
-	"Install all the methods found in the method dictionary of the second 	argument, class, as the receiver's methods. Classify the messages under 	-As yet not classified-."
-self copyAll: selArray from: class classified: nil
+	"Install all the methods found in the method dictionary of the second 
+	argument, class, as the receiver's methods. Classify the messages under 
+	-As yet not classified-."
+
+	self copyAll: selArray from: class classified: nil
 ]
 
-Class ClassDescription >> copyAll: selArray from: class classified: cat
+ClassDescription >> copyAll: selArray from: class classified: cat
 [
-	"Install all the methods found in the method dictionary of the second 	argument, class, as the receiver's methods. Classify the messages under 	the third argument, cat."
-selArray	do: [ :s | 		(class includesLocalSelector: s)			ifTrue: [ self copy: s from: class classified: cat ] ]
+	"Install all the methods found in the method dictionary of the second 
+	argument, class, as the receiver's methods. Classify the messages under 
+	the third argument, cat."
+
+	selArray do: [ :s | (class includesLocalSelector: s)
+				ifTrue: [ self copy: s from: class classified: cat ] ]
 ]
 
-Class ClassDescription >> copyAllCategoriesFrom: aClass
+ClassDescription >> copyAllCategoriesFrom: aClass
 [
-	"Specify that the categories of messages for the receiver include all of 	those found in the class, aClass. Install each of the messages found in 	these categories into the method dictionary of the receiver, classified 	under the appropriate categories."
-aClass organization categories do: [ :cat | self copyCategory: cat from: aClass ]
+	"Specify that the categories of messages for the receiver include all of 
+	those found in the class, aClass. Install each of the messages found in 
+	these categories into the method dictionary of the receiver, classified 
+	under the appropriate categories."
+
+	aClass organization categories do: [ :cat | self copyCategory: cat from: aClass ]
 ]
 
-Class ClassDescription >> copyCategory: cat from: class
+ClassDescription >> copyCategory: cat from: class
 [
-	"Specify that one of the categories of messages for the receiver is cat, as 	found in the class, class. Copy each message found in this category."
-self copyCategory: cat from: class classified: cat
+	"Specify that one of the categories of messages for the receiver is cat, as 
+	found in the class, class. Copy each message found in this category."
+
+	self copyCategory: cat from: class classified: cat
 ]
 
-Class ClassDescription >> copyCategory: cat from: aClass classified: newCat
+ClassDescription >> copyCategory: cat from: aClass classified: newCat
 [
-	"Specify that one of the categories of messages for the receiver is the 	third argument, newCat. Copy each message found in the category cat in 	class aClass into this new category."
-self copyAll: (aClass organization listAtCategoryNamed: cat) from: aClass classified: newCat
+	"Specify that one of the categories of messages for the receiver is the 
+	third argument, newCat. Copy each message found in the category cat in 
+	class aClass into this new category."
+
+	self copyAll: (aClass organization listAtCategoryNamed: cat) from: aClass classified: newCat
 ]
 
-Class ClassDescription >> copyMethodDictionaryFrom: donorClass
+ClassDescription >> copyMethodDictionaryFrom: donorClass
 [
 	"Copy the method dictionary of the donor class over to the receiver"
-self methodDict: donorClass copyOfMethodDictionary.self organization: donorClass organization deepCopy
+
+	self methodDict: donorClass copyOfMethodDictionary.
+	self organization: donorClass organization deepCopy
 ]
 
-Class ClassDescription >> definition
+ClassDescription >> correspondingForTest
+[
+	"Return the unit test that correspond to me. If it does not exist, it returns myself. 
+	 Return the tested class if sent to a class"
+
+	| className |
+	className := (self inheritsFrom: TestCase)
+		ifTrue: [ self name copyReplaceAll: 'Test' with: '' ]
+		ifFalse: [ self name , 'Test' ].
+	^ Smalltalk at: className asSymbol ifAbsent: [ self ]
+]
+
+ClassDescription >> definition
 [
 	"Answer a String that defines the receiver."
-| aStream |aStream := (String new: 800) writeStream.superclass == nil	ifTrue: [ aStream nextPutAll: 'ProtoObject' ]	ifFalse: [ aStream nextPutAll: superclass name ].aStream	nextPutAll: self kindOfSubclass;	store: self name.self hasTraitComposition	ifTrue: [ 		aStream			cr;			tab;			nextPutAll: 'uses: ';			nextPutAll: self traitCompositionString ].aStream	cr;	tab;	nextPutAll: 'instanceVariableNames: ';	store: self instanceVariablesString.aStream	cr;	tab;	nextPutAll: 'classVariableNames: ';	store: self classVariablesString.aStream	cr;	tab;	nextPutAll: 'poolDictionaries: ';	store: self sharedPoolsString.aStream	cr;	tab;	nextPutAll: 'category: ';	store: self category asString.superclass	ifNil: [ 		aStream			nextPutAll: '.';			cr.		aStream nextPutAll: self name.		aStream			space;			nextPutAll: 'superclass: nil' ].^ aStream contents
+
+	| aStream |
+	aStream := (String new: 800) writeStream.
+	superclass == nil
+		ifTrue: [ aStream nextPutAll: 'ProtoObject' ]
+		ifFalse: [ aStream nextPutAll: superclass name ].
+	aStream
+		nextPutAll: self kindOfSubclass;
+		store: self name.
+	self hasTraitComposition
+		ifTrue: [ aStream
+				cr;
+				tab;
+				nextPutAll: 'uses: ';
+				nextPutAll: self traitCompositionString ].
+	aStream
+		cr;
+		tab;
+		nextPutAll: 'instanceVariableNames: ';
+		store: self instanceVariablesString.
+	aStream
+		cr;
+		tab;
+		nextPutAll: 'classVariableNames: ';
+		store: self classVariablesString.
+	aStream
+		cr;
+		tab;
+		nextPutAll: 'poolDictionaries: ';
+		store: self sharedPoolsString.
+	aStream
+		cr;
+		tab;
+		nextPutAll: 'category: ';
+		store: self category asString.
+	superclass
+		ifNil: [ aStream
+				nextPutAll: '.';
+				cr.
+			aStream nextPutAll: self name.
+			aStream
+				space;
+				nextPutAll: 'superclass: nil' ].
+	^ aStream contents
 ]
 
-Class ClassDescription >> duringTestCompileSilently: code
+ClassDescription >> duringTestCompileSilently: code
 [
-^ Author useAuthor: 'TestsAuthor' during: [ self compileSilently: code classified: '' ]
+	^ Author
+		useAuthor: 'TestsAuthor'
+		during: [ [ self
+				compile: code
+				classified: ''
+				withStamp: nil
+				notifying: nil
+				logSource: true ]
+				fuelValueWithoutNotifications ]
 ]
 
-Class ClassDescription >> duringTestCompileSilently: code classified: aCategory
+ClassDescription >> duringTestCompileSilently: code classified: aCategory
 [
-^ Author useAuthor: 'TestsAuthor' during: [ self compileSilently: code classified: aCategory ]
+	^ Author
+		useAuthor: 'TestsAuthor'
+		during: [ SystemAnnouncer uniqueInstance
+				suspendAllWhile: [ self
+						compile: code
+						classified: aCategory
+						withStamp: nil
+						notifying: nil
+						logSource: true ] ]
 ]
 
-Class ClassDescription >> errorCategoryName
+ClassDescription >> errorCategoryName
 [
-self error: 'Category name must be a String'
+	self error: 'Category name must be a String'
 ]
 
-Class ClassDescription >> fileOutCategory: catName
+ClassDescription >> fileOutCategory: catName
 [
-| internalStream |internalStream := (String new: 1000) writeStream.internalStream	header;	timeStamp.self	fileOutCategory: catName	on: internalStream	moveSource: false	toFile: 0.internalStream trailer.^ FileStream writeSourceCodeFrom: internalStream baseName: self name , '-' , catName isSt: true
+	| internalStream |
+	internalStream := (String new: 1000) writeStream.
+	internalStream
+		header;
+		timeStamp.
+	self
+		fileOutCategory: catName
+		on: internalStream
+		moveSource: false
+		toFile: 0.
+	internalStream trailer.
+	^ FileStream writeSourceCodeFrom: internalStream baseName: self name , '-' , catName isSt: true
 ]
 
-Class ClassDescription >> fileOutCategory: aSymbol on: aFileStream moveSource: moveSource toFile: fileIndex
+ClassDescription >> fileOutCategory: aSymbol on: aFileStream moveSource: moveSource toFile: fileIndex
 [
-	"File a description of the receiver's category, aString, onto aFileStream. If 	moveSource, is true, then set the method source pointer to the new file position.	Note when this method is called with moveSource=true, it is condensing the	.sources file, and should only write one preamble per method category."
-| selectors |aFileStream cr.selectors := self selectorsToFileOutCategory: aSymbol.	"Overridden to preserve author stamps in sources file regardless"selectors	do: [ :sel | 		self			printMethodChunk: sel			withPreamble: true			on: aFileStream			moveSource: moveSource			toFile: fileIndex ].^ self
+	"File a description of the receiver's category, aString, onto aFileStream. If 
+	moveSource, is true, then set the method source pointer to the new file position.
+	Note when this method is called with moveSource=true, it is condensing the
+	.sources file, and should only write one preamble per method category."
+
+	| selectors |
+	aFileStream cr.
+	selectors := self selectorsToFileOutCategory: aSymbol.	"Overridden to preserve author stamps in sources file regardless"
+	selectors
+		do: [ :sel | self
+				printMethodChunk: sel
+				withPreamble: true
+				on: aFileStream
+				moveSource: moveSource
+				toFile: fileIndex ].
+	^ self
 ]
 
-Class ClassDescription >> fileOutChangedMessages: aSet on: aFileStream
+ClassDescription >> fileOutChangedMessages: aSet on: aFileStream
 [
-	"File a description of the messages of the receiver that have been 	changed (i.e., are entered into the argument, aSet) onto aFileStream."
-self	fileOutChangedMessages: aSet	on: aFileStream	moveSource: false	toFile: 0
+	"File a description of the messages of the receiver that have been 
+	changed (i.e., are entered into the argument, aSet) onto aFileStream."
+
+	self
+		fileOutChangedMessages: aSet
+		on: aFileStream
+		moveSource: false
+		toFile: 0
 ]
 
-Class ClassDescription >> fileOutChangedMessages: aSet on: aFileStream moveSource: moveSource toFile: fileIndex
+ClassDescription >> fileOutChangedMessages: aSet on: aFileStream moveSource: moveSource toFile: fileIndex
 [
-	"File a description of the messages of this class that have been 	changed (i.e., are entered into the argument, aSet) onto aFileStream.  If 	moveSource, is true, then set the method source pointer to the new file position.	Note when this method is called with moveSource=true, it is condensing the	.changes file, and should only write a preamble for every method."
-| org |(org := self organization) categories	do: [ :cat | 		| sels |		sels := (org listAtCategoryNamed: cat) select: [ :sel | aSet includes: sel ].		sels			do: [ :sel | 				self					printMethodChunk: sel					withPreamble: true					on: aFileStream					moveSource: moveSource					toFile: fileIndex ] ]
+	"File a description of the messages of this class that have been 
+	changed (i.e., are entered into the argument, aSet) onto aFileStream.  If 
+	moveSource, is true, then set the method source pointer to the new file position.
+	Note when this method is called with moveSource=true, it is condensing the
+	.changes file, and should only write a preamble for every method."
+
+	| org |
+	(org := self organization) categories
+		do: [ :cat | | sels |
+			sels := (org listAtCategoryNamed: cat) select: [ :sel | aSet includes: sel ].
+			sels
+				do: [ :sel | self
+						printMethodChunk: sel
+						withPreamble: true
+						on: aFileStream
+						moveSource: moveSource
+						toFile: fileIndex ] ]
 ]
 
-Class ClassDescription >> fileOutChangedMessagesHistorically: aSet on: aFileStream moveSource: moveSource toFile: fileIndex
+ClassDescription >> fileOutChangedMessagesHistorically: aSet on: aFileStream moveSource: moveSource toFile: fileIndex
 [
-	"File all historical description of the messages of this class that have been 	changed (i.e., are entered into the argument, aSet) onto aFileStream.  If 	moveSource, is true, then set the method source pointer to the new file position.	Note when this method is called with moveSource=true, it is condensing the	.changes file, and should only write a preamble for every method."
-| org |(org := self organization) categories	do: [ :cat | 		| sels |		sels := (org listAtCategoryNamed: cat) select: [ :sel | aSet includes: sel ].		sels			do: [ :sel | 				self					printMethodChunkHistorically: sel					on: aFileStream					moveSource: moveSource					toFile: fileIndex ] ]
+	"File all historical description of the messages of this class that have been 
+	changed (i.e., are entered into the argument, aSet) onto aFileStream.  If 
+	moveSource, is true, then set the method source pointer to the new file position.
+	Note when this method is called with moveSource=true, it is condensing the
+	.changes file, and should only write a preamble for every method."
+
+	| org |
+	(org := self organization) categories
+		do: [ :cat | | sels |
+			sels := (org listAtCategoryNamed: cat) select: [ :sel | aSet includes: sel ].
+			sels
+				do: [ :sel | self
+						printMethodChunkHistorically: sel
+						on: aFileStream
+						moveSource: moveSource
+						toFile: fileIndex ] ]
 ]
 
-Class ClassDescription >> fileOutMethod: selector
+ClassDescription >> fileOutMethod: selector
 [
 	"Write source code of a single method on a file.  Make up a name for the file."
-| internalStream |selector == #Comment	ifTrue: [ ^ self inform: 'Sorry, cannot file out class comment in isolation.' ].(self includesSelector: selector)	ifFalse: [ ^ self error: 'Selector ' , selector asString , ' not found' ].internalStream := (String new: 1000) writeStream.internalStream	header;	timeStamp.self	printMethodChunk: selector	withPreamble: true	on: internalStream	moveSource: false	toFile: 0.FileStream	writeSourceCodeFrom: internalStream	baseName: self name , '-' , (selector copyReplaceAll: ':' with: '')	isSt: true
+
+	| internalStream |
+	selector == #Comment
+		ifTrue: [ ^ self inform: 'Sorry, cannot file out class comment in isolation.' ].
+	(self includesSelector: selector)
+		ifFalse: [ ^ self error: 'Selector ' , selector asString , ' not found' ].
+	internalStream := (String new: 1000) writeStream.
+	internalStream
+		header;
+		timeStamp.
+	self
+		printMethodChunk: selector
+		withPreamble: true
+		on: internalStream
+		moveSource: false
+		toFile: 0.
+	FileStream
+		writeSourceCodeFrom: internalStream
+		baseName: self name , '-' , (selector copyReplaceAll: ':' with: '')
+		isSt: true
 ]
 
-Class ClassDescription >> fileOutOn: aFileStream
+ClassDescription >> fileOutMethod: selector on: aStream
+[
+	selector == #Comment
+		ifTrue: [ ^ self inform: 'Sorry, cannot file out class comment in isolation.' ].
+	(self includesSelector: selector)
+		ifFalse: [ ^ self error: 'Selector ' , selector asString , ' not found' ].
+	aStream
+		header;
+		timeStamp.
+	self
+		printMethodChunk: selector
+		withPreamble: true
+		on: aStream
+		moveSource: false
+		toFile: 0
+]
+
+ClassDescription >> fileOutOn: aFileStream
 [
 	"File a description of the receiver on aFileStream."
-self fileOutOn: aFileStream moveSource: false toFile: 0
+
+	self fileOutOn: aFileStream moveSource: false toFile: 0
 ]
 
-Class ClassDescription >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex
+ClassDescription >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex
 [
-	"File a description of the receiver on aFileStream. If the boolean 	argument, moveSource, is true, then set the trailing bytes to the position 	of aFileStream and to fileIndex in order to indicate where to find the 	source code."
-aFileStream nextChunkPut: self definition.self organization	putCommentOnFile: aFileStream	numbered: fileIndex	moveSource: moveSource	forClass: self.self organization categories	do: [ :heading | 		self			fileOutCategory: heading			on: aFileStream			moveSource: moveSource			toFile: fileIndex ]
+	"File a description of the receiver on aFileStream. If the boolean 
+	argument, moveSource, is true, then set the trailing bytes to the position 
+	of aFileStream and to fileIndex in order to indicate where to find the 
+	source code."
+
+	aFileStream nextChunkPut: self definition.
+	self organization
+		putCommentOnFile: aFileStream
+		numbered: fileIndex
+		moveSource: moveSource
+		forClass: self.
+	self organization categories
+		do: [ :heading | self
+				fileOutCategory: heading
+				on: aFileStream
+				moveSource: moveSource
+				toFile: fileIndex ]
 ]
 
-Class ClassDescription >> fileOutOrganizationOn: aFileStream
+ClassDescription >> fileOutOrganizationOn: aFileStream
 [
 	"File a description of the receiver's organization on aFileStream."
-aFileStream	cr;	nextPut: $!.aFileStream	nextChunkPut: self name , ' reorganize';	cr.aFileStream	nextChunkPut: self organization stringForFileOut;	cr
+
+	aFileStream
+		cr;
+		nextPut: $!.
+	aFileStream
+		nextChunkPut: self name , ' reorganize';
+		cr.
+	aFileStream
+		nextChunkPut: self organization stringForFileOut;
+		cr
 ]
 
-Class ClassDescription >> forceNewFrom: anArray
+ClassDescription >> forceNewFrom: anArray
 [
-	"Create a new instance of the class and fill    its instance variables up with the array."
-| object max |object := self new.max := self instSize.anArray	doWithIndex: [ :each :index | 		index > max			ifFalse: [ object instVarAt: index put: each ] ].^ object
+	"Create a new instance of the class and fill
+    its instance variables up with the array."
+
+	| object max |
+	object := self new.
+	max := self instSize.
+	anArray doWithIndex: [ :each :index | index > max
+				ifFalse: [ object instVarAt: index put: each ] ].
+	^ object
 ]
 
-Class ClassDescription >> hasComment
+ClassDescription >> hasComment
 [
 	"return whether this class truly has a comment other than the default"
-| org |org := self instanceSide organization.^ org classComment isEmptyOrNil not
+
+	| org |
+	org := self instanceSide organization.
+	^ org classComment isEmptyOrNil not
 ]
 
-Class ClassDescription >> hasInstVarNamed: aString
+ClassDescription >> hasInstVarNamed: aString
 [
 	"Return true whether the receiver defines an instance variable named aString."
-^ self instVarNames includes: aString
+
+	^ self instVarNames includes: aString
 ]
 
-Class ClassDescription >> hasSharedPools
+ClassDescription >> hasSharedPools
 [
 	"Only a class may have shared pools"
-^ false
+
+	^ false
 ]
 
-Class ClassDescription >> instVarIndexFor: instVarName
+ClassDescription >> instVarIndexFor: instVarName
 [
 	"Answer the index of the named instance variable."
-| index |index := instanceVariables == nil	ifTrue: [ 0 ]	ifFalse: [ instanceVariables indexOf: instVarName ].index = 0	ifTrue: [ 		^ superclass == nil			ifTrue: [ 0 ]			ifFalse: [ superclass instVarIndexFor: instVarName ] ].^ superclass == nil	ifTrue: [ index ]	ifFalse: [ index + superclass instSize ]
+
+	| index |
+	index := instanceVariables == nil
+		ifTrue: [ 0 ]
+		ifFalse: [ instanceVariables indexOf: instVarName ].
+	index = 0
+		ifTrue: [ ^ superclass == nil
+				ifTrue: [ 0 ]
+				ifFalse: [ superclass instVarIndexFor: instVarName ] ].
+	^ superclass == nil
+		ifTrue: [ index ]
+		ifFalse: [ index + superclass instSize ]
 ]
 
-Class ClassDescription >> instVarIndexFor: instVarName ifAbsent: aBlock
+ClassDescription >> instVarIndexFor: instVarName ifAbsent: aBlock
 [
 	"Answer the index of the named instance variable."
-| index |index := instanceVariables == nil	ifTrue: [ 0 ]	ifFalse: [ instanceVariables indexOf: instVarName ifAbsent: [ 0 ] ].index = 0	ifTrue: [ 		^ superclass == nil			ifTrue: [ aBlock value ]			ifFalse: [ superclass instVarIndexFor: instVarName ifAbsent: aBlock ] ].^ superclass == nil	ifTrue: [ index ]	ifFalse: [ index + superclass instSize ]
+
+	| index |
+	index := instanceVariables == nil
+		ifTrue: [ 0 ]
+		ifFalse: [ instanceVariables indexOf: instVarName ifAbsent: [ 0 ] ].
+	index = 0
+		ifTrue: [ ^ superclass == nil
+				ifTrue: [ aBlock value ]
+				ifFalse: [ superclass instVarIndexFor: instVarName ifAbsent: aBlock ] ].
+	^ superclass == nil
+		ifTrue: [ index ]
+		ifFalse: [ index + superclass instSize ]
 ]
 
-Class ClassDescription >> instVarMappingFrom: oldClass
+ClassDescription >> instVarMappingFrom: oldClass
 [
 	"Return the mapping from instVars of oldClass to new class that is used for converting old instances of oldClass."
-| oldInstVarNames |oldInstVarNames := oldClass allInstVarNames.^ self allInstVarNames collect: [ :instVarName | oldInstVarNames indexOf: instVarName ]
+
+	| oldInstVarNames |
+	oldInstVarNames := oldClass allInstVarNames.
+	^ self allInstVarNames collect: [ :instVarName | oldInstVarNames indexOf: instVarName ]
 ]
 
-Class ClassDescription >> instVarNameForIndex: index
+ClassDescription >> instVarNameForIndex: index
 [
 	"Answer the named instance variable with index index or nil if none."
-| superInstSize |index > self instSize	ifTrue: [ ^ nil ].superInstSize := superclass isNil	ifTrue: [ 0 ]	ifFalse: [ superclass instSize ].index > superInstSize	ifTrue: [ ^ instanceVariables at: index - superInstSize ].superclass isNil	ifTrue: [ ^ nil ].^ superclass instVarNameForIndex: index	"(Object allSubclasses select:		[:cls| cls instSize > cls superclass instSize and: [cls subclasses isEmpty and: [cls superclass instSize > 0]]]) collect:			[:cls| (1 to: cls instSize) collect: [:i| cls instVarNameForIndex: i]]"
+
+	| superInstSize |
+	index > self instSize
+		ifTrue: [ ^ nil ].
+	superInstSize := superclass isNil
+		ifTrue: [ 0 ]
+		ifFalse: [ superclass instSize ].
+	index > superInstSize
+		ifTrue: [ ^ instanceVariables at: index - superInstSize ].
+	superclass isNil
+		ifTrue: [ ^ nil ].
+	^ superclass instVarNameForIndex: index	"(Object allSubclasses select:		[:cls| cls instSize > cls superclass instSize and: [cls subclasses isEmpty and: [cls superclass instSize > 0]]]) collect:			[:cls| (1 to: cls instSize) collect: [:i| cls instVarNameForIndex: i]]"
 ]
 
-Class ClassDescription >> instVarNames
+ClassDescription >> instVarNames
 [
 	"Answer an Array of the receiver's instance variable names."
-instanceVariables == nil	ifTrue: [ ^ #() ]	ifFalse: [ ^ instanceVariables ]
+
+	instanceVariables == nil
+		ifTrue: [ ^ #() ]
+		ifFalse: [ ^ instanceVariables ]
 ]
 
-Class ClassDescription >> instVarNamesAndOffsetsDo: aBinaryBlock
+ClassDescription >> instVarNamesAndOffsetsDo: aBinaryBlock
 [
-	"This is part of the interface between the compiler and a class's instance or field names.	 The class should enumerate aBinaryBlock with the instance variable name strings and	 their integer offsets.  The order is important. Names evaluated later will override the	 same names occurring earlier."
-| superInstSize |(superInstSize := superclass notNil	ifTrue: [ superclass instSize ]	ifFalse: [ 0 ]) > 0	ifTrue: [ superclass instVarNamesAndOffsetsDo: aBinaryBlock ].1 to: self instSize - superInstSize do: [ :i | aBinaryBlock value: (instanceVariables at: i) value: i + superInstSize ]
+	"This is part of the interface between the compiler and a class's instance or field names.
+	 The class should enumerate aBinaryBlock with the instance variable name strings and
+	 their integer offsets.  The order is important. Names evaluated later will override the
+	 same names occurring earlier."
+
+	| superInstSize |
+	(superInstSize := superclass notNil
+		ifTrue: [ superclass instSize ]
+		ifFalse: [ 0 ]) > 0
+		ifTrue: [ superclass instVarNamesAndOffsetsDo: aBinaryBlock ].
+	1 to: self instSize - superInstSize do: [ :i | aBinaryBlock value: (instanceVariables at: i) value: i + superInstSize ]
 ]
 
-Class ClassDescription >> instanceSide
+ClassDescription >> instanceSide
 [
-^ self theNonMetaClass
+	^ self theNonMetaClass
 ]
 
-Class ClassDescription >> instanceVariablesString
+ClassDescription >> instanceVariablesString
 [
 	"Answer a string of my instance variable names separated by spaces."
-^ String	streamContents: [ :stream | self instVarNames do: [ :each | stream nextPutAll: each ] separatedBy: [ stream space ] ]
+
+	^ String
+		streamContents: [ :stream | self instVarNames do: [ :each | stream nextPutAll: each ] separatedBy: [ stream space ] ]
 ]
 
-Class ClassDescription >> isAbstractClass
+ClassDescription >> isAbstractClass
 [
-self subclassResponsibility
+	self deprecated: 'Use hasAbstractMethods' on: '16 December 2012' in: #Pharo2.
+	0.
+	self subclassResponsibility
 ]
 
-Class ClassDescription >> isClassSide
+ClassDescription >> isClassSide
 [
-^ self == self classSide
+	^ self == self classSide
 ]
 
-Class ClassDescription >> isInstanceSide
+ClassDescription >> isInstanceSide
 [
-^ self isClassSide not
+	^ self isClassSide not
 ]
 
-Class ClassDescription >> isMeta
+ClassDescription >> isMeta
 [
-^ self isClassSide
+	^ self isClassSide
 ]
 
-Class ClassDescription >> linesOfCode
+ClassDescription >> linesOfCode
 [
-	"An approximate measure of lines of code.	Includes comments, but excludes blank lines."
-| lines |lines := self localMethods inject: 0 into: [ :sum :each | sum + each linesOfCode ].^ self isMeta	ifTrue: [ lines ]	ifFalse: [ lines + self class linesOfCode ]
+	"An approximate measure of lines of code.
+	Includes comments, but excludes blank lines."
+
+	| lines |
+	lines := self localMethods inject: 0 into: [ :sum :each | sum + each linesOfCode ].
+	^ self isMeta
+		ifTrue: [ lines ]
+		ifFalse: [ lines + self class linesOfCode ]
 ]
 
-Class ClassDescription >> localMethods
+ClassDescription >> localMethods
 [
 	"returns the methods of classes including the ones of the traits that the class uses"
-^ self methods select: [ :each | self includesLocalSelector: each selector ]
+
+	^ self methods select: [ :each | self includesLocalSelector: each selector ]
 ]
 
-Class ClassDescription >> logMethodSource: aText forMethodWithNode: aCompiledMethodWithNode inCategory: category withStamp: changeStamp notifying: requestor
+ClassDescription >> logMethodSource: aText forMethodWithNode: aCompiledMethodWithNode inCategory: category withStamp: changeStamp notifying: requestor
 [
-aCompiledMethodWithNode method	putSource: aText	fromParseNode: aCompiledMethodWithNode node	class: self	category: category	withStamp: changeStamp	inFile: 2	priorMethod: (self compiledMethodAt: aCompiledMethodWithNode selector ifAbsent: [  ])
+	aCompiledMethodWithNode method
+		putSource: aText
+		fromParseNode: aCompiledMethodWithNode node
+		class: self
+		category: category
+		withStamp: changeStamp
+		inFile: 2
+		priorMethod: (self compiledMethodAt: aCompiledMethodWithNode selector ifAbsent: [  ])
 ]
 
-Class ClassDescription >> methods
+ClassDescription >> methods
 [
 	"returns the methods of classes including the ones of the traits that the class uses"
-^ self methodDict values
+
+	^ self methodDict values
 ]
 
-Class ClassDescription >> methodsFor: categoryName
+ClassDescription >> methodsFor: categoryName
 [
 	"Answer a ClassCategoryReader for compiling the messages in the category, categoryName, of the receiver."
-^ ClassCategoryReader new setClass: self category: categoryName asSymbol	"(False methodsFor: 'logical operations') inspect"
+
+	^ ClassCategoryReader new setClass: self category: categoryName asSymbol	"(False methodsFor: 'logical operations') inspect"
 ]
 
-Class ClassDescription >> methodsFor: aString priorSource: sourcePosition inFile: fileIndex
+ClassDescription >> methodsFor: aString priorSource: sourcePosition inFile: fileIndex
 [
 	"Prior source pointer ignored when filing in."
-^ self methodsFor: aString
+
+	^ self methodsFor: aString
 ]
 
-Class ClassDescription >> methodsFor: categoryName stamp: changeStamp
+ClassDescription >> methodsFor: categoryName stamp: changeStamp
 [
-^ self methodsFor: categoryName stamp: (Author fixStamp: changeStamp) prior: 0
+	^ self methodsFor: categoryName stamp: (Author fixStamp: changeStamp) prior: 0
 ]
 
-Class ClassDescription >> methodsFor: categoryName stamp: changeStamp prior: indexAndOffset
+ClassDescription >> methodsFor: categoryName stamp: changeStamp prior: indexAndOffset
 [
 	"Prior source link ignored when filing in."
-^ ClassCategoryReader new setClass: self category: categoryName asSymbol changeStamp: changeStamp	"Most importantly, return the new ClassCategoryReader, so a fileIn will let it seize control.  So method will be placed in the proper category.  See the transfer of control where ReadWriteStream fileIn calls scanFrom:"
+
+	^ ClassCategoryReader new setClass: self category: categoryName asSymbol changeStamp: changeStamp	"Most importantly, return the new ClassCategoryReader, so a fileIn will let it seize control.  So method will be placed in the proper category.  See the transfer of control where ReadWriteStream fileIn calls scanFrom:"
 ]
 
-Class ClassDescription >> methodsInCategory: aName
+ClassDescription >> methodsInCategory: aName
 [
 	"Answer a list of the methods of the receiver that are in category named aName"
-| aColl |aColl := Set	withAll:		(aName = ClassOrganizer allCategory			ifTrue: [ self organization allMethodSelectors ]			ifFalse: [ self organization listAtCategoryNamed: aName ]).^ aColl asArray sort
+
+	| aColl |
+	aColl := Set
+		withAll:
+			(aName = ClassOrganizer allCategory
+				ifTrue: [ self organization allMethodSelectors ]
+				ifFalse: [ self organization listAtCategoryNamed: aName ]).
+	^ aColl asArray sort
 ]
 
-Class ClassDescription >> moveChangesTo: newFile
+ClassDescription >> moveChangesTo: newFile
 [
-	"Used in the process of condensing changes, this message requests that 	the source code of all methods of the receiver that have been changed 	should be moved to newFile."
-| changes |changes := self selectors select: [ :sel | (self compiledMethodAt: sel) fileIndex > 1 ].self	fileOutChangedMessages: changes	on: newFile	moveSource: true	toFile: 2
+	"Used in the process of condensing changes, this message requests that 
+	the source code of all methods of the receiver that have been changed 
+	should be moved to newFile."
+
+	| changes |
+	changes := self selectors select: [ :sel | (self compiledMethodAt: sel) fileIndex > 1 ].
+	self
+		fileOutChangedMessages: changes
+		on: newFile
+		moveSource: true
+		toFile: 2
 ]
 
-Class ClassDescription >> moveChangesWithVersionsTo: newFile
+ClassDescription >> moveChangesWithVersionsTo: newFile
 [
-	"Used in the process of condensing changes, this message requests that 	the source code of all methods of the receiver that have been changed 	should be moved to newFile."
-| changes |changes := self selectors select: [ :sel | (self methodDict at: sel) fileIndex > 1 ].self	fileOutChangedMessagesHistorically: changes	on: newFile	moveSource: true	toFile: 2
+	"Used in the process of condensing changes, this message requests that 
+	the source code of all methods of the receiver that have been changed 
+	should be moved to newFile."
+
+	| changes |
+	changes := self selectors select: [ :sel | (self methodDict at: sel) fileIndex > 1 ].
+	self
+		fileOutChangedMessagesHistorically: changes
+		on: newFile
+		moveSource: true
+		toFile: 2
 ]
 
-Class ClassDescription >> moveInstVarNamed: instVarName to: anotherClass after: prevInstVarName
+ClassDescription >> moveInstVarNamed: instVarName to: anotherClass after: prevInstVarName
 [
 	"Move the given instance variable to another class."
-self == anotherClass	ifFalse: [ 		self			notify:				'Warning:' asText allBold , ' moving ' , instVarName printString , ' from ' , self name , ' to ' , anotherClass name					,						' will not be recorded in the change set correctly.Proceed to do it anyways.' ].^ ClassBuilder new	moveInstVarNamed: instVarName	from: self	to: anotherClass	after: prevInstVarName
+
+	self == anotherClass
+		ifFalse: [ 
+			self
+				notify:
+					'Warning:' asText allBold , ' moving ' , instVarName printString , ' from ' , self name , ' to ' , anotherClass name
+						,
+							' will not be recorded in the change set correctly.Proceed to do it anyways.' ].
+	^ ClassBuilder new
+		moveInstVarNamed: instVarName
+		from: self
+		to: anotherClass
+		after: prevInstVarName
 ]
 
-Class ClassDescription >> newInstanceFrom: oldInstance variable: variable size: instSize map: map
+ClassDescription >> newInstanceFrom: oldInstance variable: variable size: instSize map: map
 [
-	"Create a new instance of the receiver based on the given old instance.	The supplied map contains a mapping of the old instVar names into	the receiver's instVars"
-| new |variable	ifTrue: [ new := self basicNew: oldInstance basicSize ]	ifFalse: [ new := self basicNew ].1 to: instSize do: [ :offset | 	(map at: offset) > 0		ifTrue: [ new instVarAt: offset put: (oldInstance instVarAt: (map at: offset)) ] ].variable	ifTrue: [ 1 to: oldInstance basicSize do: [ :offset | new basicAt: offset put: (oldInstance basicAt: offset) ] ].^ new
+	"Create a new instance of the receiver based on the given old instance.
+	The supplied map contains a mapping of the old instVar names into
+	the receiver's instVars"
+
+	| new |
+	variable
+		ifTrue: [ new := self basicNew: oldInstance basicSize ]
+		ifFalse: [ new := self basicNew ].
+	1 to: instSize do: [ :offset | (map at: offset) > 0
+			ifTrue: [ new instVarAt: offset put: (oldInstance instVarAt: (map at: offset)) ] ].
+	variable
+		ifTrue: [ 1 to: oldInstance basicSize do: [ :offset | new basicAt: offset put: (oldInstance basicAt: offset) ] ].
+	^ new
 ]
 
-Class ClassDescription >> noteAddedSelector: aSelector meta: isMeta
+ClassDescription >> noteAddedSelector: aSelector meta: isMeta
 [
 	"A hook allowing some classes to react to adding of certain selectors"
 
+	
 ]
 
-Class ClassDescription >> noteChangesFrom: oldMethodDict
+ClassDescription >> noteChangesFrom: oldMethodDict
 [
 	"create notifications about the changes made to the method dictionary"
+
 	"additions have already been notified in #addTraitSelector:withMethod:"
+
 	" deal with removal / updates relative to the old method dictionary"
-oldMethodDict	keysAndValuesDo: [ :selector :oldMethod | 		self methodDict			at: selector			ifPresent: [ :currentMethod | 				currentMethod == oldMethod					ifFalse: [ self noteMethodChanged: oldMethod to: currentMethod ] ]			ifAbsent: [ self noteMethodRemoved: oldMethod ] ]
+
+	oldMethodDict
+		keysAndValuesDo: [ :selector :oldMethod | self methodDict
+				at: selector
+				ifPresent: [ :currentMethod | currentMethod == oldMethod
+						ifFalse: [ self noteMethodChanged: oldMethod to: currentMethod ] ]
+				ifAbsent: [ self noteMethodRemoved: oldMethod ] ]
 ]
 
-Class ClassDescription >> noteChangesFrom: oldMethodDict with: changedSelectors
+ClassDescription >> noteChangesFrom: oldMethodDict with: changedSelectors
 [
 	"create notifications about the changes made to the method dictionary"
-self haltIf: changedSelectors isEmpty not.	"oldMethodDict keys \ methodDict keys"changedSelectors	do: [ :selector | 		" deal with removal / updates relative to the old method dictionary"		oldMethodDict			at: selector			ifPresent: [ :oldMethod | 				methodDict					at: selector					ifPresent: [ :newMethod | self noteMethodChanged: oldMethod to: newMethod ]					ifAbsent: [ self noteMethodRemoved: oldMethod ] ]			ifAbsent: [ self noteMethodAdded: (methodDict at: selector) ] ]
+
+	self haltIf: changedSelectors isEmpty not.	"oldMethodDict keys \ methodDict keys"
+	changedSelectors
+		do: [ :selector | " deal with removal / updates relative to the old method dictionary"
+			oldMethodDict
+				at: selector
+				ifPresent: [ :oldMethod | methodDict
+						at: selector
+						ifPresent: [ :newMethod | self noteMethodChanged: oldMethod to: newMethod ]
+						ifAbsent: [ self noteMethodRemoved: oldMethod ] ]
+				ifAbsent: [ self noteMethodAdded: (methodDict at: selector) ] ]
 ]
 
-Class ClassDescription >> noteCompilationOf: aSelector meta: isMeta
+ClassDescription >> noteCompilationOf: aSelector meta: isMeta
 [
 	"A hook allowing some classes to react to recompilation of certain selectors"
 
+	
 ]
 
-Class ClassDescription >> noteMethodAdded: aMethod
+ClassDescription >> noteMethodAdded: aMethod
 [
-SystemAnnouncer uniqueInstance methodAdded: aMethod
+	SystemAnnouncer uniqueInstance methodAdded: aMethod
 ]
 
-Class ClassDescription >> noteMethodChanged: oldMethod to: newMethod
+ClassDescription >> noteMethodChanged: oldMethod to: newMethod
 [
-SystemAnnouncer uniqueInstance methodChangedFrom: oldMethod to: newMethod
+	SystemAnnouncer uniqueInstance methodChangedFrom: oldMethod to: newMethod
 ]
 
-Class ClassDescription >> noteMethodRemoved: oldMethod
+ClassDescription >> noteMethodRemoved: oldMethod
 [
-SystemAnnouncer uniqueInstance methodRemoved: oldMethod
+	SystemAnnouncer uniqueInstance methodRemoved: oldMethod
 ]
 
-Class ClassDescription >> noteRecategorizedSelector: aSymbol from: oldCategoryOrNil to: newCategoryOrNil
+ClassDescription >> noteRecategorizedSelector: aSymbol from: oldCategoryOrNil to: newCategoryOrNil
 [
-| changedCategories |changedCategories := self	updateOrganizationSelector: aSymbol	oldCategory: oldCategoryOrNil	newCategory: newCategoryOrNil.changedCategories	do: [ :each | 		(self organization isEmptyCategoryNamed: each)			ifTrue: [ self organization removeCategory: each ] ]
+	| changedCategories |
+	changedCategories := self
+		updateOrganizationSelector: aSymbol
+		oldCategory: oldCategoryOrNil
+		newCategory: newCategoryOrNil.
+	changedCategories
+		do: [ :each | (self organization isEmptyCategoryNamed: each)
+				ifTrue: [ self organization removeCategory: each ] ]
 ]
 
-Class ClassDescription >> noteRecategorizedSelectors: aCollection oldComposition: aTraitComposition
+ClassDescription >> noteRecategorizedSelectors: aCollection oldComposition: aTraitComposition
 [
-aCollection	do: [ :each | 		| oldCategory newCategory |		oldCategory := self organization categoryOfElement: each.		newCategory := (self traitComposition methodDescriptionForSelector: each) effectiveMethodCategory.		self noteRecategorizedSelector: each from: oldCategory to: newCategory ]
+	aCollection
+		do: [ :each | | oldCategory newCategory |
+			oldCategory := self organization categoryOfElement: each.
+			newCategory := (self traitComposition methodDescriptionForSelector: each) effectiveMethodCategory.
+			self noteRecategorizedSelector: each from: oldCategory to: newCategory ]
 ]
 
-Class ClassDescription >> notifyOfRecategorizedSelector: element from: oldCategory to: newCategory
+ClassDescription >> notifyOfRecategorizedSelector: element from: oldCategory to: newCategory
 [
-SystemAnnouncer uniqueInstance	selector: element	recategorizedFrom: oldCategory	to: newCategory	inClass: self
+	SystemAnnouncer uniqueInstance
+		selector: element
+		recategorizedFrom: oldCategory
+		to: newCategory
+		inClass: self
 ]
 
-Class ClassDescription >> numberOfMethods
+ClassDescription >> numberOfMethods
 [
 	"count all methods that are local (not comming from a trait)"
-| num |num := self localMethods size.^ self isMeta	ifTrue: [ num ]	ifFalse: [ num + self class numberOfMethods ]
+
+	| num |
+	num := self localMethods size.
+	^ self isMeta
+		ifTrue: [ num ]
+		ifFalse: [ num + self class numberOfMethods ]
 ]
 
-Class ClassDescription >> obsolete
+ClassDescription >> obsolete
 [
 	"Make the receiver obsolete."
-superclass removeSubclass: self.self organization: nil.super obsolete
+
+	superclass removeSubclass: self.
+	self organization: nil.
+	super obsolete
 ]
 
-Class ClassDescription >> organization
+ClassDescription >> organization
 [
-	"Answer the instance of ClassOrganizer that represents the organization 	of the messages of the receiver."
-organization ifNil: [ self organization: (ClassOrganizer defaultList: self selectors asArray sort) ].	"Making sure that subject is set correctly. It should not be necessary."organization ifNotNil: [ organization setSubject: self ].^ organization
+	"Answer the instance of ClassOrganizer that represents the organization 
+	of the messages of the receiver."
+
+	organization ifNil: [ self organization: (ClassOrganizer defaultList: self selectors asArray sort) ].	"Making sure that subject is set correctly. It should not be necessary."
+	organization ifNotNil: [ organization setSubject: self ].
+	^ organization
 ]
 
-Class ClassDescription >> organization: aClassOrg
+ClassDescription >> organization: aClassOrg
 [
 	"Install an instance of ClassOrganizer that represents the organization of the messages of the receiver."
-aClassOrg ifNotNil: [ aClassOrg setSubject: self ].organization := aClassOrg
+
+	aClassOrg ifNotNil: [ aClassOrg setSubject: self ].
+	organization := aClassOrg
 ]
 
-Class ClassDescription >> printCategoryChunk: categoryName on: aFileStream
+ClassDescription >> printCategoryChunk: categoryName on: aFileStream
 [
-^ self printCategoryChunk: categoryName withStamp: '' on: aFileStream
+	^ self printCategoryChunk: categoryName withStamp: '' on: aFileStream
 ]
 
-Class ClassDescription >> printCategoryChunk: category on: aFileStream priorMethod: priorMethod
+ClassDescription >> printCategoryChunk: category on: aFileStream priorMethod: priorMethod
 [
-^ self	printCategoryChunk: category	on: aFileStream	withStamp: Author changeStamp	priorMethod: priorMethod
+	^ self
+		printCategoryChunk: category
+		on: aFileStream
+		withStamp: Author changeStamp
+		priorMethod: priorMethod
 ]
 
-Class ClassDescription >> printCategoryChunk: category on: aFileStream withStamp: changeStamp priorMethod: priorMethod
+ClassDescription >> printCategoryChunk: category on: aFileStream withStamp: changeStamp priorMethod: priorMethod
 [
-	"Print a method category preamble.  This must have a category name.	It may have an author/date stamp, and it may have a prior source link.	If it has a prior source link, it MUST have a stamp, even if it is empty."
+	"Print a method category preamble.  This must have a category name.
+	It may have an author/date stamp, and it may have a prior source link.
+	If it has a prior source link, it MUST have a stamp, even if it is empty."
+
 	"The current design is that changeStamps and prior source links are preserved in the changes file.  All fileOuts include changeStamps.  Condensing sources, however, eliminates all stamps (and links, natch)."
-aFileStream	cr;	nextPut: $!.aFileStream	nextChunkPut:		(String			streamContents: [ :strm | 				strm					nextPutAll: self name;					nextPutAll: ' methodsFor: ';					print: category asString.				(changeStamp ~~ nil and: [ changeStamp size > 0 or: [ priorMethod ~~ nil ] ])					ifTrue: [ 						strm							nextPutAll: ' stamp: ';							print: changeStamp ].				priorMethod ~~ nil					ifTrue: [ 						strm							nextPutAll: ' prior: ';							print: priorMethod sourcePointer ] ])
+
+	aFileStream
+		cr;
+		nextPut: $!.
+	aFileStream
+		nextChunkPut:
+			(String
+				streamContents: [ :strm | strm
+						nextPutAll: self name;
+						nextPutAll: ' methodsFor: ';
+						print: category asString.
+					(changeStamp ~~ nil and: [ changeStamp size > 0 or: [ priorMethod ~~ nil ] ])
+						ifTrue: [ strm
+								nextPutAll: ' stamp: ';
+								print: changeStamp ].
+					priorMethod ~~ nil
+						ifTrue: [ strm
+								nextPutAll: ' prior: ';
+								print: priorMethod sourcePointer ] ])
 ]
 
-Class ClassDescription >> printCategoryChunk: categoryName withStamp: changeStamp on: aFileStream
+ClassDescription >> printCategoryChunk: categoryName withStamp: changeStamp on: aFileStream
 [
-^ self	printCategoryChunk: categoryName	on: aFileStream	withStamp: changeStamp	priorMethod: nil
+	^ self
+		printCategoryChunk: categoryName
+		on: aFileStream
+		withStamp: changeStamp
+		priorMethod: nil
 ]
 
-Class ClassDescription >> printMethodChunk: selector withPreamble: doPreamble on: outStream moveSource: moveSource toFile: fileIndex
+ClassDescription >> printMethodChunk: selector withPreamble: doPreamble on: outStream moveSource: moveSource toFile: fileIndex
 [
 	"Copy the source code for the method associated with selector onto the fileStream.  If moveSource true, then also set the source code pointer of the method."
-| preamble method oldPos newPos sourceFile endPos |doPreamble	ifTrue: [ preamble := self name , ' methodsFor: ' , (self organization categoryOfElement: selector) asString printString ]	ifFalse: [ preamble := '' ].method := self methodDict	at: selector	ifAbsent: [ 		outStream			nextPutAll: selector;			cr.		outStream			tab;			nextPutAll: '** ERROR!  THIS SCRIPT IS MISSING ** ' translated;			cr;			cr.		outStream nextPutAll: '  '.		^ outStream ].((method fileIndex = 0 or: [ (SourceFiles at: method fileIndex) == nil ]) or: [ (oldPos := method filePosition) = 0 ])	ifTrue: [ 		"The source code is not accessible.  We must decompile..."		preamble size > 0			ifTrue: [ 				outStream					cr;					nextPut: $!;					nextChunkPut: preamble;					cr ].		outStream nextChunkPut: method decompileString ]	ifFalse: [ 		sourceFile := SourceFiles at: method fileIndex.		preamble size > 0			ifTrue: [ 				"Copy the preamble"				outStream copyPreamble: preamble from: sourceFile at: oldPos ]			ifFalse: [ sourceFile position: oldPos ].	"Copy the method chunk"		newPos := outStream position.		outStream copyMethodChunkFrom: sourceFile.		sourceFile skipSeparators.	"The following chunk may have ]style["		sourceFile peek == $]			ifTrue: [ 				outStream					cr;					copyMethodChunkFrom: sourceFile ].		moveSource			ifTrue: [ 				"Set the new method source pointer"				endPos := outStream position.				method setSourcePosition: newPos inFile: fileIndex ] ].preamble size > 0	ifTrue: [ outStream nextChunkPut: ' ' ].^ outStream cr
+
+	| preamble method oldPos newPos sourceFile endPos |
+	doPreamble
+		ifTrue: [ preamble := self name , ' methodsFor: ' , (self organization categoryOfElement: selector) asString printString ]
+		ifFalse: [ preamble := '' ].
+	method := self methodDict
+		at: selector
+		ifAbsent: [ outStream
+				nextPutAll: selector;
+				cr.
+			outStream
+				tab;
+				nextPutAll: '** ERROR!  THIS SCRIPT IS MISSING ** ' translated;
+				cr;
+				cr.
+			outStream nextPutAll: '  '.
+			^ outStream ].
+	((method fileIndex = 0 or: [ (SourceFiles at: method fileIndex) == nil ]) or: [ (oldPos := method filePosition) = 0 ])
+		ifTrue: [ "The source code is not accessible.  We must decompile..."
+			preamble size > 0
+				ifTrue: [ outStream
+						cr;
+						nextPut: $!;
+						nextChunkPut: preamble;
+						cr ].
+			outStream nextChunkPut: method decompileString ]
+		ifFalse: [ sourceFile := SourceFiles at: method fileIndex.
+			preamble size > 0
+				ifTrue: [ "Copy the preamble"
+					outStream copyPreamble: preamble from: sourceFile at: oldPos ]
+				ifFalse: [ sourceFile position: oldPos ].	"Copy the method chunk"
+			newPos := outStream position.
+			outStream copyMethodChunkFrom: sourceFile.
+			sourceFile skipSeparators.	"The following chunk may have ]style["
+			sourceFile peek == $]
+				ifTrue: [ outStream
+						cr;
+						copyMethodChunkFrom: sourceFile ].
+			moveSource
+				ifTrue: [ "Set the new method source pointer"
+					endPos := outStream position.
+					method setSourcePosition: newPos inFile: fileIndex ] ].
+	preamble size > 0
+		ifTrue: [ outStream nextChunkPut: ' ' ].
+	^ outStream cr
 ]
 
-Class ClassDescription >> printMethodChunkHistorically: selector on: outStream moveSource: moveSource toFile: fileIndex
+ClassDescription >> printMethodChunkHistorically: selector on: outStream moveSource: moveSource toFile: fileIndex
 [
-	"Copy all source codes historically for the method associated with selector onto the 	fileStream.  If moveSource true, then also set the source code pointer of the method."
-| preamble method sourceFile endPos category changeList newPos |category := self organization categoryOfElement: selector.preamble := self name , ' methodsFor: ' , category asString printString.method := self methodDict at: selector.((method fileIndex = 0 or: [ (SourceFiles at: method fileIndex) == nil ]) or: [ method filePosition = 0 ])	ifTrue: [ 		outStream			cr;			nextPut: $!;			nextChunkPut: preamble;			cr.		outStream nextChunkPut: method decompileString.		outStream			nextChunkPut: ' ';			cr ]	ifFalse: [ 		changeList := ChangeSet			scanVersionsOf: method			class: self			meta: self isMeta			category: category			selector: selector.		newPos := nil.		sourceFile := SourceFiles at: method fileIndex.		changeList			reverseDo: [ :chgRec | 				| prior |				chgRec fileIndex = fileIndex					ifTrue: [ 						outStream copyPreamble: preamble from: sourceFile at: chgRec position.						(prior := chgRec prior)							ifNotNil: [ 								outStream position: outStream position - 2.								outStream									nextPutAll:										' prior: '											,												(prior first = method fileIndex													ifFalse: [ prior third ]													ifTrue: [ SourceFiles sourcePointerFromFileIndex: method fileIndex andPosition: newPos ]) printString.								outStream									nextPut: $!;									cr ].	"Copy the method chunk"						newPos := outStream position.						outStream copyMethodChunkFrom: sourceFile at: chgRec position.						sourceFile skipSeparators.	"The following chunk may have ]style["						sourceFile peek == $]							ifTrue: [ 								outStream									cr;									copyMethodChunkFrom: sourceFile ].						outStream							nextChunkPut: ' ';							cr ] ].		moveSource			ifTrue: [ 				endPos := outStream position.				method setSourcePosition: newPos inFile: fileIndex ] ].^ outStream
+	"Copy all source codes historically for the method associated with selector onto the 
+	fileStream.  If moveSource true, then also set the source code pointer of the method."
+
+	| preamble method sourceFile endPos category changeList newPos |
+	category := self organization categoryOfElement: selector.
+	preamble := self name , ' methodsFor: ' , category asString printString.
+	method := self methodDict at: selector.
+	((method fileIndex = 0 or: [ (SourceFiles at: method fileIndex) == nil ]) or: [ method filePosition = 0 ])
+		ifTrue: [ outStream
+				cr;
+				nextPut: $!;
+				nextChunkPut: preamble;
+				cr.
+			outStream nextChunkPut: method decompileString.
+			outStream
+				nextChunkPut: ' ';
+				cr ]
+		ifFalse: [ changeList := ChangeSet
+				scanVersionsOf: method
+				class: self
+				meta: self isMeta
+				category: category
+				selector: selector.
+			newPos := nil.
+			sourceFile := SourceFiles at: method fileIndex.
+			changeList
+				reverseDo: [ :chgRec | | prior |
+					chgRec fileIndex = fileIndex
+						ifTrue: [ outStream copyPreamble: preamble from: sourceFile at: chgRec position.
+							(prior := chgRec prior)
+								ifNotNil: [ outStream position: outStream position - 2.
+									outStream
+										nextPutAll:
+											' prior: '
+												,
+													(prior first = method fileIndex
+														ifFalse: [ prior third ]
+														ifTrue: [ SourceFiles sourcePointerFromFileIndex: method fileIndex andPosition: newPos ]) printString.
+									outStream
+										nextPut: $!;
+										cr ].	"Copy the method chunk"
+							newPos := outStream position.
+							outStream copyMethodChunkFrom: sourceFile at: chgRec position.
+							sourceFile skipSeparators.	"The following chunk may have ]style["
+							sourceFile peek == $]
+								ifTrue: [ outStream
+										cr;
+										copyMethodChunkFrom: sourceFile ].
+							outStream
+								nextChunkPut: ' ';
+								cr ] ].
+			moveSource
+				ifTrue: [ endPos := outStream position.
+					method setSourcePosition: newPos inFile: fileIndex ] ].
+	^ outStream
 ]
 
-Class ClassDescription >> printSubclassesOn: aStream level: level
+ClassDescription >> printSubclassesOn: aStream level: level
 [
-	"As part of the algorithm for printing a description of the receiver, print the	subclass on the file stream, aStream, indenting level times."
-| subclassNames |aStream crtab: level.aStream nextPutAll: self name.aStream	space;	print: self instVarNames.self == Class	ifTrue: [ 		aStream			crtab: level + 1;			nextPutAll: '[ ... all the Metaclasses ... ]'.		^ self ].subclassNames := self subclasses asSortedCollection: [ :c1 :c2 | c1 name <= c2 name ].	"Print subclasses in alphabetical order"subclassNames do: [ :subclass | subclass printSubclassesOn: aStream level: level + 1 ]
+	"As part of the algorithm for printing a description of the receiver, print the
+	subclass on the file stream, aStream, indenting level times."
+
+	| subclassNames |
+	aStream crtab: level.
+	aStream nextPutAll: self name.
+	aStream
+		space;
+		print: self instVarNames.
+	self == Class
+		ifTrue: [ aStream
+				crtab: level + 1;
+				nextPutAll: '[ ... all the Metaclasses ... ]'.
+			^ self ].
+	subclassNames := self subclasses asSortedCollection: [ :c1 :c2 | c1 name <= c2 name ].	"Print subclasses in alphabetical order"
+	subclassNames do: [ :subclass | subclass printSubclassesOn: aStream level: level + 1 ]
 ]
 
-Class ClassDescription >> printWithClosureAnalysisOn: aStream
+ClassDescription >> printWithClosureAnalysisOn: aStream
 [
-aStream nextPutAll: self name
+	aStream nextPutAll: self name
 ]
 
-Class ClassDescription >> putClassCommentToCondensedChangesFile: aFileStream
+ClassDescription >> putClassCommentToCondensedChangesFile: aFileStream
 [
 	"Called when condensing changes.  If the receiver has a class comment, and if that class comment does not reside in the .sources file, then write it to the given filestream, with the resulting RemoteString being reachable from the source file #2.  Note that any existing backpointer into the .sources file is lost by this process -- a situation that maybe should be fixed someday."
-| header aStamp aCommentRemoteStr |self isMeta	ifTrue: [ ^ self ].	"bulletproofing only"((aCommentRemoteStr := self organization commentRemoteStr) isNil or: [ aCommentRemoteStr sourceFileNumber = 1 ])	ifTrue: [ ^ self ].aFileStream	cr;	nextPut: $!.header := String	streamContents: [ :strm | 		strm			nextPutAll: self name;			nextPutAll: ' commentStamp: '.		(aStamp := self organization commentStamp ifNil: [ '<historical>' ]) storeOn: strm.		strm nextPutAll: ' prior: 0' ].aFileStream nextChunkPut: header.aFileStream cr.self organization	classComment: (RemoteString newString: self organization classComment onFileNumber: 2 toFile: aFileStream)	stamp: aStamp
+
+	| header aStamp aCommentRemoteStr |
+	self isMeta
+		ifTrue: [ ^ self ].	"bulletproofing only"
+	((aCommentRemoteStr := self organization commentRemoteStr) isNil or: [ aCommentRemoteStr sourceFileNumber = 1 ])
+		ifTrue: [ ^ self ].
+	aFileStream
+		cr;
+		nextPut: $!.
+	header := String
+		streamContents: [ :strm | strm
+				nextPutAll: self name;
+				nextPutAll: ' commentStamp: '.
+			(aStamp := self organization commentStamp ifNil: [ '<historical>' ]) storeOn: strm.
+			strm nextPutAll: ' prior: 0' ].
+	aFileStream nextChunkPut: header.
+	aFileStream cr.
+	self organization
+		classComment: (RemoteString newString: self organization classComment onFileNumber: 2 toFile: aFileStream)
+		stamp: aStamp
 ]
 
-Class ClassDescription >> reformatAll
+ClassDescription >> reformatAll
 [
-	"Reformat all methods in this class.	Leaves old code accessible to version browsing"
-self selectorsDo: [ :sel | self reformatMethodAt: sel ]
+	"Reformat all methods in this class.
+	Leaves old code accessible to version browsing"
+
+	self selectorsDo: [ :sel | self reformatMethodAt: sel ]
 ]
 
-Class ClassDescription >> reformatMethodAt: selector
+ClassDescription >> reformatMethodAt: selector
 [
-| newCodeString method |newCodeString := self prettyPrinterClass format: (self sourceCodeAt: selector) in: self notifying: nil.method := self compiledMethodAt: selector.method	putSource: newCodeString	fromParseNode: nil	class: self	category: (self organization categoryOfElement: selector)	inFile: 2	priorMethod: method
+	| newCodeString method |
+	newCodeString := self prettyPrinterClass format: (self sourceCodeAt: selector) in: self notifying: nil.
+	method := self compiledMethodAt: selector.
+	method
+		putSource: newCodeString
+		fromParseNode: nil
+		class: self
+		category: (self organization categoryOfElement: selector)
+		inFile: 2
+		priorMethod: method
 ]
 
-Class ClassDescription >> removeCategory: aString
+ClassDescription >> removeCategory: aString
 [
-	"Remove each of the messages categorized under aString in the method 	dictionary of the receiver. Then remove the category aString."
-| categoryName |categoryName := aString asSymbol.(self organization listAtCategoryNamed: categoryName) do: [ :sel | self removeSelector: sel ].self organization removeCategory: categoryName
+	"Remove each of the messages categorized under aString in the method 
+	dictionary of the receiver. Then remove the category aString."
+
+	| categoryName |
+	categoryName := aString asSymbol.
+	(self organization listAtCategoryNamed: categoryName) do: [ :sel | self removeSelector: sel ].
+	self organization removeCategory: categoryName
 ]
 
-Class ClassDescription >> removeInstVarNamed: aString
+ClassDescription >> removeInstVarNamed: aString
 [
-	"Remove the argument, aString, as one of the receiver's instance 	variables. Create an error notification if the argument is not found."
-self subclassResponsibility
+	"Remove the argument, aString, as one of the receiver's instance 
+	variables. Create an error notification if the argument is not found."
+
+	self subclassResponsibility
 ]
 
-Class ClassDescription >> removeSelector: selector
+ClassDescription >> removeSelector: selector
 [
-	"Remove the message whose selector is given from the method    dictionary of the receiver, if it is there. Answer nil otherwise."
-| priorMethod priorProtocol |priorMethod := self compiledMethodAt: selector ifAbsent: [ ^ nil ].priorProtocol := self whichCategoryIncludesSelector: selector.super removeSelector: selector.SystemAnnouncer uniqueInstance	suspendAllWhile: [ self updateOrganizationSelector: selector oldCategory: priorProtocol newCategory: nil ].SystemAnnouncer uniqueInstance	methodRemoved: priorMethod	selector: selector	inProtocol: priorProtocol	class: self
+	"Remove the message whose selector is given from the method
+    dictionary of the receiver, if it is there. Answer nil otherwise."
+
+	| priorMethod priorProtocol origin |
+	priorMethod := self compiledMethodAt: selector ifAbsent: [ ^ nil ].
+	origin := priorMethod origin.
+	priorProtocol := self whichCategoryIncludesSelector: selector.
+	super removeSelector: selector.
+	SystemAnnouncer uniqueInstance
+		suspendAllWhile: [ self updateOrganizationSelector: selector oldCategory: priorProtocol newCategory: nil ].
+	SystemAnnouncer uniqueInstance
+		methodRemoved: priorMethod
+		selector: selector
+		inProtocol: priorProtocol
+		class: self
+		origin: origin
 ]
 
-Class ClassDescription >> renameInstVar: oldName to: newName
+ClassDescription >> renameInstVar: oldName to: newName
 [
-(self	confirm:		'WARNING: Renaming of instance variablesis subject to substitution ambiguities.Do you still wish to attempt it?')	ifFalse: [ self halt ].	"...In other words, this does a dumb text search-and-replace,	which might improperly alter, eg, a literal string.  As long as	the oldName is unique, everything should work jes' fine. - di"^ self renameSilentlyInstVar: oldName to: newName
+	(self
+		confirm:
+			'WARNING: Renaming of instance variablesis subject to substitution ambiguities.Do you still wish to attempt it?')
+		ifFalse: [ self halt ].	"...In other words, this does a dumb text search-and-replace,	which might improperly alter, eg, a literal string.  As long as	the oldName is unique, everything should work jes' fine. - di"
+	^ self renameSilentlyInstVar: oldName to: newName
 ]
 
-Class ClassDescription >> renameSilentlyInstVar: old to: new
+ClassDescription >> renameSilentlyInstVar: old to: new
 [
-| i oldName newName |oldName := old asString.newName := new asString.(i := self instVarNames indexOf: oldName) = 0	ifTrue: [ self error: oldName , ' is not defined in ' , self name ].self allSuperclasses , self withAllSubclasses asOrderedCollection	do: [ :cls | 		(cls instVarNames includes: newName)			ifTrue: [ self error: newName , ' is already used in ' , cls name ] ].self instVarNames replaceFrom: i to: i with: (Array with: newName).self replaceSilently: oldName to: newName	"replace in text body of all methods"
+	| i oldName newName |
+	oldName := old asString.
+	newName := new asString.
+	(i := self instVarNames indexOf: oldName) = 0
+		ifTrue: [ self error: oldName , ' is not defined in ' , self name ].
+	self allSuperclasses , self withAllSubclasses asOrderedCollection
+		do: [ :cls | (cls instVarNames includes: newName)
+				ifTrue: [ self error: newName , ' is already used in ' , cls name ] ].
+	self instVarNames replaceFrom: i to: i with: (Array with: newName).
+	self replaceSilently: oldName to: newName	"replace in text body of all methods"
 ]
 
-Class ClassDescription >> reorganize
+ClassDescription >> reorganize
 [
 	"During fileIn, !Rectangle reorganize! allows Rectangle to seize control and treat the next chunk as its organization.  See the transfer of control where ReadWriteStream fileIn calls scanFrom:"
-^ self organization
+
+	^ self organization
 ]
 
-Class ClassDescription >> replaceSilently: old to: new
+ClassDescription >> replaceSilently: old to: new
 [
 	"text-replace any part of a method.  Used for class and pool variables.  Don't touch the header.  Not guaranteed to work if name appears in odd circumstances"
-| oldName newName |oldName := old asString.newName := new asString.self withAllSubclasses	do: [ :cls | 		| sels |		sels := cls selectors copyWithoutAll: #(#DoIt #DoItIn:).		sels			do: [ :sel | 				| oldCode newCode parser header body |				oldCode := cls sourceCodeAt: sel.	"Don't make changes in the method header"				(parser := cls parserClass new) parseSelector: oldCode.				header := oldCode copyFrom: 1 to: (parser endOfLastToken min: oldCode size).				body := header size > oldCode size					ifTrue: [ '' ]					ifFalse: [ oldCode copyFrom: header size + 1 to: oldCode size ].				newCode := header , (body copyReplaceTokens: oldName with: newName).				newCode ~= oldCode					ifTrue: [ cls compile: newCode classified: (cls organization categoryOfElement: sel) notifying: nil ] ].		cls isMeta			ifFalse: [ 				| oldCode newCode |				oldCode := cls comment.				newCode := oldCode copyReplaceTokens: oldName with: newName.				newCode ~= oldCode					ifTrue: [ cls comment: newCode ] ] ]
+
+	| oldName newName |
+	oldName := old asString.
+	newName := new asString.
+	self withAllSubclasses
+		do: [ :cls | | sels |
+			sels := cls selectors copyWithoutAll: #(#DoIt #DoItIn:).
+			sels
+				do: [ :sel | | oldCode newCode parser header body |
+					oldCode := cls sourceCodeAt: sel.	"Don't make changes in the method header"
+					(parser := cls parserClass new) parseSelector: oldCode.
+					header := oldCode copyFrom: 1 to: (parser endOfLastToken min: oldCode size).
+					body := header size > oldCode size
+						ifTrue: [ '' ]
+						ifFalse: [ oldCode copyFrom: header size + 1 to: oldCode size ].
+					newCode := header , (body copyReplaceTokens: oldName with: newName).
+					newCode ~= oldCode
+						ifTrue: [ cls compile: newCode classified: (cls organization categoryOfElement: sel) notifying: nil ] ].
+			cls isMeta
+				ifFalse: [ | oldCode newCode |
+					oldCode := cls comment.
+					newCode := oldCode copyReplaceTokens: oldName with: newName.
+					newCode ~= oldCode
+						ifTrue: [ cls comment: newCode ] ] ]
 ]
 
-Class ClassDescription >> selectorsToFileOutCategory: aSymbol
+ClassDescription >> selectorsToFileOutCategory: aSymbol
 [
-^ (aSymbol asString = ClassOrganizer allCategory	ifTrue: [ self organization allMethodSelectors ]	ifFalse: [ self organization listAtCategoryNamed: aSymbol ]) select: [ :sel | self includesLocalSelector: sel ]
+	^ aSymbol asString = ClassOrganizer allCategory
+		ifTrue: [ self organization allMethodSelectors ]
+		ifFalse: [ self organization listAtCategoryNamed: aSymbol ]
 ]
 
-Class ClassDescription >> setInstVarNames: instVarArray
+ClassDescription >> setInstVarNames: instVarArray
 [
 	"Private - for class initialization only"
-| required |required := self instSize.superclass notNil	ifTrue: [ required := required - superclass instSize ].instVarArray size = required	ifFalse: [ ^ self error: required printString , ' instvar names are required' ].instVarArray isEmpty	ifTrue: [ instanceVariables := nil ]	ifFalse: [ instanceVariables := instVarArray asArray ]
+
+	| required |
+	required := self instSize.
+	superclass notNil
+		ifTrue: [ required := required - superclass instSize ].
+	instVarArray size = required
+		ifFalse: [ ^ self error: required printString , ' instvar names are required' ].
+	instVarArray isEmpty
+		ifTrue: [ instanceVariables := nil ]
+		ifFalse: [ instanceVariables := instVarArray asArray ]
 ]
 
-Class ClassDescription >> sharedPoolOfVarNamed: aString
+ClassDescription >> sharedPoolOfVarNamed: aString
 [
 	"Only classes may have shared pools"
-^ nil
+
+	^ nil
 ]
 
-Class ClassDescription >> sharedPoolsString
+ClassDescription >> sharedPoolsString
 [
 	"Answer a string of my shared pool names separated by spaces."
-^ String	streamContents: [ :stream | 		self sharedPools			do: [ :each | stream nextPutAll: (self environment keyAtIdentityValue: each ifAbsent: [ 'private' ]) ]			separatedBy: [ stream space ] ]
+
+	^ String
+		streamContents: [ :stream | self sharedPools
+				do: [ :each | stream nextPutAll: (self environment keyAtIdentityValue: each ifAbsent: [ 'private' ]) ]
+				separatedBy: [ stream space ] ]
 ]
 
-Class ClassDescription >> subclasses
+ClassDescription >> subclasses
 [
-^ Array new
+	^ Array new
 ]
 
-Class ClassDescription >> subclassesDo: aBlock
+ClassDescription >> subclassesDo: aBlock
 [
 	"Evaluate the argument, aBlock, for each of the receiver's immediate subclasses."
-^ self subclasses do: aBlock
+
+	^ self subclasses do: aBlock
 ]
 
-Class ClassDescription >> superclass: aClass methodDictionary: mDict format: fmt
+ClassDescription >> superclass: aClass methodDictionary: mDict format: fmt
 [
 	"Basic initialization of the receiver"
-super superclass: aClass methodDictionary: mDict format: fmt.instanceVariables := nil.self organization: nil
+
+	super superclass: aClass methodDictionary: mDict format: fmt.
+	instanceVariables := nil.
+	self organization: nil
 ]
 
-Class ClassDescription >> theMetaClass
+ClassDescription >> theMetaClass
 [
 	"Sent to a class or metaclass, always return the metaclass"
-^ self class
+
+	^ self class
 ]
 
-Class ClassDescription >> theNonMetaClass
+ClassDescription >> theNonMetaClass
 [
 	"Sent to a class or metaclass, always return the class"
-^ self
+
+	^ self
 ]
 
-Class ClassDescription >> updateInstances: oldInstances from: oldClass isMeta: isMeta
+ClassDescription >> uncategorizedMethods
+[
+	^ self methodsInCategory: ClassOrganizer default
+]
+
+ClassDescription >> updateInstances: oldInstances from: oldClass isMeta: isMeta
 [
 	"Recreate any existing instances of the argument, oldClass, as instances of the receiver, which is a newly changed class. Permute variables as necessary. Return the array of old instances (none of which should be pointed to legally by anyone but the array)."
+
 	"If there are any contexts having an old instance as receiver it might crash the system because the layout has changed, and the method only knows about the old layout."
-| map variable instSize newInstances |oldInstances isEmpty	ifTrue: [ ^ #() ].	"no instances to convert"isMeta	ifTrue: [ 		oldInstances size = 1			ifFalse: [ ^ self error: 'Metaclasses can only have one instance' ].		self soleInstance class == self			ifTrue: [ ^ self error: 'Metaclasses can only have one instance' ] ].map := self instVarMappingFrom: oldClass.variable := self isVariable.instSize := self instSize.newInstances := Array new: oldInstances size.1 to: oldInstances size do: [ :i | 	newInstances		at: i		put:			(self				newInstanceFrom: (oldInstances at: i)				variable: variable				size: instSize				map: map) ].	"Now perform a bulk mutation of old instances into new ones"oldInstances elementsExchangeIdentityWith: newInstances.^ newInstances	"which are now old"
+
+	| map variable instSize newInstances |
+	oldInstances isEmpty
+		ifTrue: [ ^ #() ].	"no instances to convert"
+	isMeta
+		ifTrue: [ oldInstances size = 1
+				ifFalse: [ ^ self error: 'Metaclasses can only have one instance' ].
+			self soleInstance class == self
+				ifTrue: [ ^ self error: 'Metaclasses can only have one instance' ] ].
+	map := self instVarMappingFrom: oldClass.
+	variable := self isVariable.
+	instSize := self instSize.
+	newInstances := Array new: oldInstances size.
+	1 to: oldInstances size do: [ :i | newInstances
+			at: i
+			put: (self
+					newInstanceFrom: (oldInstances at: i)
+					variable: variable
+					size: instSize
+					map: map) ].	"Now perform a bulk mutation of old instances into new ones"
+	oldInstances elementsExchangeIdentityWith: newInstances.
+	^ newInstances	"which are now old"
 ]
 
-Class ClassDescription >> updateInstancesFrom: oldClass
+ClassDescription >> updateInstancesFrom: oldClass
 [
-	"Recreate any existing instances of the argument, oldClass, as instances of 	the receiver, which is a newly changed class. Permute variables as 	necessary. Return the array of old instances (none of which should be	pointed to legally by anyone but the array)."
-	"ar 7/15/1999: The updating below is possibly dangerous. If there are any	contexts having an old instance as receiver it might crash the system if	the new receiver in which the context is executed has a different layout.	See bottom below for a simple example:"
-| oldInstances |oldInstances := oldClass allInstances asArray.oldInstances := self updateInstances: oldInstances from: oldClass isMeta: self isMeta.^ oldInstances	"	| crashingBlock class |	class := Object subclass: #CrashTestDummy		instanceVariableNames: 'instVar'		classVariableNames: ''		poolDictionaries: ''		category: 'Crash-Test'.	class compile:'instVar: value instVar := value'.	class compile:'crashingBlock ^[instVar]'.	crashingBlock := (class new) instVar: 42; crashingBlock.	Object subclass: #CrashTestDummy		instanceVariableNames: ''		classVariableNames: ''		poolDictionaries: ''		category: 'Crash-Test'.	crashingBlock.	crashingBlock value.	"
+	"Recreate any existing instances of the argument, oldClass, as instances of 
+	the receiver, which is a newly changed class. Permute variables as 
+	necessary. Return the array of old instances (none of which should be
+	pointed to legally by anyone but the array)."
+
+	"ar 7/15/1999: The updating below is possibly dangerous. If there are any
+	contexts having an old instance as receiver it might crash the system if
+	the new receiver in which the context is executed has a different layout.
+	See bottom below for a simple example:"
+
+	| oldInstances |
+	oldInstances := oldClass allInstances asArray.
+	oldInstances := self updateInstances: oldInstances from: oldClass isMeta: self isMeta.
+	^ oldInstances	"	| crashingBlock class |	class := Object subclass: #CrashTestDummy		instanceVariableNames: 'instVar'		classVariableNames: ''		poolDictionaries: ''		category: 'Crash-Test'.	class compile:'instVar: value instVar := value'.	class compile:'crashingBlock ^[instVar]'.	crashingBlock := (class new) instVar: 42; crashingBlock.	Object subclass: #CrashTestDummy		instanceVariableNames: ''		classVariableNames: ''		poolDictionaries: ''		category: 'Crash-Test'.	crashingBlock.	crashingBlock value.	"
 ]
 
-Class ClassDescription >> updateOrganizationDescription: aTraitMethodDescription oldCategory: oldCategoryOrNil newCategory: newCategoryOrNil changedCategories: changedCategories
+ClassDescription >> updateOrganizationDescription: aTraitMethodDescription oldCategory: oldCategoryOrNil newCategory: newCategoryOrNil changedCategories: changedCategories
 [
-| sel effectiveCategory currentCategory |sel := aTraitMethodDescription selector.(self includesLocalSelector: sel)	ifTrue: [ ^ self ].currentCategory := self organization categoryOfElement: sel.effectiveCategory := aTraitMethodDescription effectiveMethodCategoryCurrent: currentCategory new: newCategoryOrNil.effectiveCategory	ifNil: [ 		currentCategory ifNotNil: [ changedCategories add: currentCategory ].		^ self organization removeElement: sel ].((currentCategory isNil or: [ currentCategory == ClassOrganizer ambiguous or: [ currentCategory == oldCategoryOrNil ] ])	and: [ currentCategory ~~ effectiveCategory ])	ifTrue: [ 		currentCategory ifNotNil: [ changedCategories add: currentCategory ].		self organization classify: sel under: effectiveCategory suppressIfDefault: false ]
+	| sel effectiveCategory currentCategory |
+	sel := aTraitMethodDescription selector.
+	(self includesLocalSelector: sel)
+		ifTrue: [ ^ self ].
+	currentCategory := self organization categoryOfElement: sel.
+	effectiveCategory := aTraitMethodDescription effectiveMethodCategoryCurrent: currentCategory new: newCategoryOrNil.
+	effectiveCategory
+		ifNil: [ currentCategory ifNotNil: [ changedCategories add: currentCategory ].
+			^ self organization removeElement: sel ].
+	((currentCategory isNil or: [ currentCategory == ClassOrganizer ambiguous or: [ currentCategory == oldCategoryOrNil ] ])
+		and: [ currentCategory ~~ effectiveCategory ])
+		ifTrue: [ currentCategory ifNotNil: [ changedCategories add: currentCategory ].
+			self organization classify: sel under: effectiveCategory suppressIfDefault: false ]
 ]
 
-Class ClassDescription >> updateOrganizationSelector: aSymbol oldCategory: oldCategoryOrNil newCategory: newCategoryOrNil
+ClassDescription >> updateOrganizationSelector: aSymbol oldCategory: oldCategoryOrNil newCategory: newCategoryOrNil
 [
-| changedCategories composition |changedCategories := IdentitySet new.composition := self hasTraitComposition	ifTrue: [ self traitComposition ]	ifFalse: [ TraitComposition new ].(composition methodDescriptionsForSelector: aSymbol)	do: [ :each | 		self			updateOrganizationDescription: each			oldCategory: oldCategoryOrNil			newCategory: newCategoryOrNil			changedCategories: changedCategories ].^ changedCategories
+	| changedCategories composition |
+	changedCategories := IdentitySet new.
+	composition := self hasTraitComposition
+		ifTrue: [ self traitComposition ]
+		ifFalse: [ TraitComposition new ].
+	(composition methodDescriptionsForSelector: aSymbol)
+		do: [ :each | self
+				updateOrganizationDescription: each
+				oldCategory: oldCategoryOrNil
+				newCategory: newCategoryOrNil
+				changedCategories: changedCategories ].
+	^ changedCategories
 ]
 
-Class ClassDescription >> usesLocalPoolVarNamed: aString
+ClassDescription >> usesLocalPoolVarNamed: aString
 [
-^ false
+	^ false
 ]
 
-Class ClassDescription >> usesPoolVarNamed: aString
+ClassDescription >> usesPoolVarNamed: aString
 [
 	"Only classes may use a pool variable named: aString"
-^ false
+
+	^ false
 ]
 
-Class ClassDescription >> version
+ClassDescription >> version
 [
 	"Allows polymorphism with TraitDescription>>version"
-^ self classVersion
+
+	^ self classVersion
 ]
 
-Class ClassDescription >> wantsChangeSetLogging
+ClassDescription >> wantsChangeSetLogging
 [
 	"Answer whether code submitted for the receiver should be remembered by the changeSet mechanism."
-^ true
+
+	^ true
 ]
 
-Class ClassDescription >> wantsRecompilationProgressReported
+ClassDescription >> whichCategoryIncludesSelector: aSelector
 [
-	"Answer whether the receiver would like progress of its recompilation reported interactively to the user."
-^ true
+	"Answer the category of the argument, aSelector, in the organization of 
+	the receiver, or answer nil if the receiver does not inlcude this selector."
+
+	(self includesSelector: aSelector)
+		ifTrue: [ ^ self organization categoryOfElement: aSelector ]
+		ifFalse: [ ^ nil ]
 ]
 
-Class ClassDescription >> whichCategoryIncludesSelector: aSelector
+ClassDescription >> zapOrganization
 [
-	"Answer the category of the argument, aSelector, in the organization of 	the receiver, or answer nil if the receiver does not inlcude this selector."
-(self includesSelector: aSelector)	ifTrue: [ ^ self organization categoryOfElement: aSelector ]	ifFalse: [ ^ nil ]
-]
+	"Remove the organization of this class by message categories.
+	This is typically done to save space in small systems.  Classes and methods
+	created or filed in subsequently will, nonetheless, be organized"
 
-Class ClassDescription >> zapOrganization
-[
-	"Remove the organization of this class by message categories.	This is typically done to save space in small systems.  Classes and methods	created or filed in subsequently will, nonetheless, be organized"
-self organization: nil.self isClassSide	ifFalse: [ self classSide zapOrganization ]
+	self organization: nil.
+	self isClassSide
+		ifFalse: [ self classSide zapOrganization ]
 ]
-
-Metaclass
-	name: #ClassDescription;
-	instanceVariables: #().
 

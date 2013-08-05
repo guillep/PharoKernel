@@ -1,65 +1,61 @@
-Class
-	name: #NaturalLanguageFormTranslator;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+NaturalLanguageFormTranslator
 	instanceVariables: #(#id #generics );
 	classVariables: #(#CachedTranslations );
 	package: #'System-Localization'.
 
-Class NaturalLanguageFormTranslator >> generics
+NaturalLanguageFormTranslator >> generics
 [
-^ generics ifNil: [ generics := Dictionary new ]
+	^ generics ifNil: [ generics := Dictionary new ]
 ]
 
-Class NaturalLanguageFormTranslator >> localeID
+NaturalLanguageFormTranslator >> localeID
 [
-^ id
+	^ id
 ]
 
-Class NaturalLanguageFormTranslator >> localeID: anID
+NaturalLanguageFormTranslator >> localeID: anID
 [
-id := anID
+	id := anID
 ]
 
-Class NaturalLanguageFormTranslator >> name: formName form: translatedForm
+NaturalLanguageFormTranslator >> name: formName form: translatedForm
 [
-self generics at: formName put: translatedForm
+	self generics at: formName put: translatedForm
 ]
 
-Class NaturalLanguageFormTranslator >> translate: aString
+NaturalLanguageFormTranslator >> translate: aString
 [
-^ (self generics at: aString ifAbsent: [ nil ]) deepCopy	"Do you like to write 'form ifNotNil: [form deepCopy]'?"
+	^ (self generics at: aString ifAbsent: [ nil ]) deepCopy	"Do you like to write 'form ifNotNil: [form deepCopy]'?"
 ]
 
-Metaclass
-	name: #NaturalLanguageFormTranslator;
-	instanceVariables: #().
-
-Metaclass NaturalLanguageFormTranslator >> cachedTranslations
+NaturalLanguageFormTranslator class >> cachedTranslations
 [
 	"CachedTranslations := nil"
-^ CachedTranslations ifNil: [ CachedTranslations := Dictionary new ]
+
+	^ CachedTranslations ifNil: [ CachedTranslations := Dictionary new ]
 ]
 
-Metaclass NaturalLanguageFormTranslator >> cleanUp
+NaturalLanguageFormTranslator class >> cleanUp
 [
 	"Flush caches"
-CachedTranslations := nil
+
+	CachedTranslations := nil
 ]
 
-Metaclass NaturalLanguageFormTranslator >> isoLanguage: isoLanguage
+NaturalLanguageFormTranslator class >> isoLanguage: isoLanguage
 [
 	"Return the generic language translator as there is no information about the country code"
-^ self isoLanguage: isoLanguage isoCountry: nil
+
+	^ self isoLanguage: isoLanguage isoCountry: nil
 ]
 
-Metaclass NaturalLanguageFormTranslator >> isoLanguage: isoLanguage isoCountry: isoCountry
+NaturalLanguageFormTranslator class >> isoLanguage: isoLanguage isoCountry: isoCountry
 [
-^ self localeID: (LocaleID isoLanguage: isoLanguage isoCountry: isoCountry)
+	^ self localeID: (LocaleID isoLanguage: isoLanguage isoCountry: isoCountry)
 ]
 
-Metaclass NaturalLanguageFormTranslator >> localeID: localeID
+NaturalLanguageFormTranslator class >> localeID: localeID
 [
-^ self cachedTranslations at: localeID ifAbsentPut: [ self new localeID: localeID ]
+	^ self cachedTranslations at: localeID ifAbsentPut: [ self new localeID: localeID ]
 ]
 

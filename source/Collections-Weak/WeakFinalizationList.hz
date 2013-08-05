@@ -1,42 +1,40 @@
-Class
-	name: #WeakFinalizationList;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+WeakFinalizationList
 	instanceVariables: #(#first );
 	classVariables: #(#HasNewFinalization #TestItem #TestList );
 	package: #'Collections-Weak'.
 
-Class WeakFinalizationList >> first
+WeakFinalizationList >> first
 [
-^ first
+	^ first
 ]
 
-Class WeakFinalizationList >> swapWithNil
+WeakFinalizationList >> swapWithNil
 [
-| head |head := first.first := nil.^ head
+	| head |
+	head := first.
+	first := nil.
+	^ head
 ]
 
-Metaclass
-	name: #WeakFinalizationList;
-	instanceVariables: #().
-
-Metaclass WeakFinalizationList >> checkTestPair
+WeakFinalizationList class >> checkTestPair
 [
-HasNewFinalization := TestList swapWithNil notNil
+	HasNewFinalization := TestList swapWithNil notNil
 ]
 
-Metaclass WeakFinalizationList >> hasNewFinalization
+WeakFinalizationList class >> hasNewFinalization
 [
-^ HasNewFinalization == true
+	^ HasNewFinalization == true
 ]
 
-Metaclass WeakFinalizationList >> initTestPair
+WeakFinalizationList class >> initTestPair
 [
-TestItem := WeakFinalizerItem new list: TestList object: Object new
+	TestItem := WeakFinalizerItem new list: TestList object: Object new
 ]
 
-Metaclass WeakFinalizationList >> initialize
+WeakFinalizationList class >> initialize
 [
-TestList := self new.self initTestPair.self checkTestPair
+	TestList := self new.
+	self initTestPair.
+	self checkTestPair
 ]
 

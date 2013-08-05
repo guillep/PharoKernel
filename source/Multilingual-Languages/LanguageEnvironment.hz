@@ -1,169 +1,194 @@
-Class
-	name: #LanguageEnvironment;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+LanguageEnvironment
 	instanceVariables: #(#id );
-	classVariables: #(#KnownEnvironments #SystemConverterClass #FileNameConverterClass #Current #InputInterpreterClass #ClipboardInterpreterClass );
+	classVariables: #(#KnownEnvironments #InputInterpreterClass #FileNameConverter #SystemConverter #Current #ClipboardInterpreterClass );
 	package: #'Multilingual-Languages'.
 
-Class LanguageEnvironment >> isoCountry
+LanguageEnvironment >> isoCountry
 [
-^ self localeID isoCountry
+	^ self localeID isoCountry
 ]
 
-Class LanguageEnvironment >> isoLanguage
+LanguageEnvironment >> isoLanguage
 [
-^ self localeID isoLanguage
+	^ self localeID isoLanguage
 ]
 
-Class LanguageEnvironment >> leadingChar
+LanguageEnvironment >> leadingChar
 [
-^ self class leadingChar
+	^ self class leadingChar
 ]
 
-Class LanguageEnvironment >> localeID
+LanguageEnvironment >> localeID
 [
-^ id
+	^ id
 ]
 
-Class LanguageEnvironment >> localeID: anID
+LanguageEnvironment >> localeID: anID
 [
-id := anID
+	id := anID
 ]
 
-Metaclass
-	name: #LanguageEnvironment;
-	instanceVariables: #().
-
-Metaclass LanguageEnvironment >> canBeGlobalVarInitial: char
+LanguageEnvironment class >> canBeGlobalVarInitial: char
 [
-^ Unicode canBeGlobalVarInitial: char
+	^ Unicode canBeGlobalVarInitial: char
 ]
 
-Metaclass LanguageEnvironment >> canBeNonGlobalVarInitial: char
+LanguageEnvironment class >> canBeNonGlobalVarInitial: char
 [
-^ Unicode canBeNonGlobalVarInitial: char
+	^ Unicode canBeNonGlobalVarInitial: char
 ]
 
-Metaclass LanguageEnvironment >> clearDefault
+LanguageEnvironment class >> clearDefault
 [
-ClipboardInterpreterClass := nil.InputInterpreterClass := nil.SystemConverterClass := nil.FileNameConverterClass := nil
+	SystemConverter := nil.
+	FileNameConverter := nil
 ]
 
-Metaclass LanguageEnvironment >> currentPlatform
+LanguageEnvironment class >> currentPlatform
 [
-^ Locale currentPlatform languageEnvironment
+	^ Locale currentPlatform languageEnvironment
 ]
 
-Metaclass LanguageEnvironment >> defaultFileNameConverter
+LanguageEnvironment class >> defaultFileNameConverter
 [
-FileNameConverterClass ifNil: [ FileNameConverterClass := self currentPlatform class fileNameConverterClass ].^ FileNameConverterClass new
+	FileNameConverter ifNil: [ FileNameConverter := self currentPlatform class fileNameConverterClass new ].
+	^ FileNameConverter
 ]
 
-Metaclass LanguageEnvironment >> defaultSystemConverter
+LanguageEnvironment class >> defaultSystemConverter
 [
-SystemConverterClass ifNil: [ SystemConverterClass := self currentPlatform class systemConverterClass ].^ SystemConverterClass new
+	SystemConverter ifNil: [ SystemConverter := self currentPlatform class systemConverterClass new ].
+	^ SystemConverter
 ]
 
-Metaclass LanguageEnvironment >> digitValueOf: char
+LanguageEnvironment class >> digitValueOf: char
 [
-	"Answer 0-9 if the receiver is $0-$9, 10-35 if it is $A-$Z, and < 0	otherwise. This is used to parse literal numbers of radix 2-36."
-^ Unicode digitValueOf: char
+	"Answer 0-9 if the receiver is $0-$9, 10-35 if it is $A-$Z, and < 0
+	otherwise. This is used to parse literal numbers of radix 2-36."
+
+	^ Unicode digitValueOf: char
 ]
 
-Metaclass LanguageEnvironment >> fileNameConverterClass
+LanguageEnvironment class >> fileNameConverterClass
 [
-^ UTF8TextConverter
+	^ UTF8TextConverter
 ]
 
-Metaclass LanguageEnvironment >> initKnownEnvironments
+LanguageEnvironment class >> initKnownEnvironments
 [
 	"LanguageEnvironment initKnownEnvironments"
-| known |known := Dictionary new.self	allSubclassesDo: [ :subClass | 		subClass supportedLanguages			do: [ :language | 				| env id |				env := subClass new.				id := LocaleID isoString: language.				env localeID: id.				known at: id put: env ] ].^ known
+
+	| known |
+	known := Dictionary new.
+	self
+		allSubclassesDo: [ :subClass | subClass supportedLanguages
+				do: [ :language | | env id |
+					env := subClass new.
+					id := LocaleID isoString: language.
+					env localeID: id.
+					known at: id put: env ] ].
+	^ known
 ]
 
-Metaclass LanguageEnvironment >> initialize
+LanguageEnvironment class >> initialize
 [
 	"LanguageEnvironment initialize"
-Smalltalk addToStartUpList: LanguageEnvironment
+
+	Smalltalk addToStartUpList: LanguageEnvironment
 ]
 
-Metaclass LanguageEnvironment >> isBreakableAt: index in: text
+LanguageEnvironment class >> isBreakableAt: index in: text
 [
-| char |char := text at: index.char = Character space	ifTrue: [ ^ true ].char = Character cr	ifTrue: [ ^ true ].^ false
+	| char |
+	char := text at: index.
+	char = Character space
+		ifTrue: [ ^ true ].
+	char = Character cr
+		ifTrue: [ ^ true ].
+	^ false
 ]
 
-Metaclass LanguageEnvironment >> isCharset
+LanguageEnvironment class >> isCharset
 [
-^ false
+	^ false
 ]
 
-Metaclass LanguageEnvironment >> isDigit: char
+LanguageEnvironment class >> isDigit: char
 [
-^ Unicode isDigit: char
+	^ Unicode isDigit: char
 ]
 
-Metaclass LanguageEnvironment >> isLetter: char
+LanguageEnvironment class >> isLetter: char
 [
-^ Unicode isLetter: char
+	^ Unicode isLetter: char
 ]
 
-Metaclass LanguageEnvironment >> isLowercase: char
+LanguageEnvironment class >> isLowercase: char
 [
-^ Unicode isLowercase: char
+	^ Unicode isLowercase: char
 ]
 
-Metaclass LanguageEnvironment >> isUppercase: char
+LanguageEnvironment class >> isUppercase: char
 [
-^ Unicode isUppercase: char
+	^ Unicode isUppercase: char
 ]
 
-Metaclass LanguageEnvironment >> knownEnvironments
+LanguageEnvironment class >> knownEnvironments
 [
 	"LanguageEnvironment knownEnvironments"
+
 	"KnownEnvironments := nil"
-^ KnownEnvironments ifNil: [ KnownEnvironments := self initKnownEnvironments ]
+
+	^ KnownEnvironments ifNil: [ KnownEnvironments := self initKnownEnvironments ]
 ]
 
-Metaclass LanguageEnvironment >> leadingChar
+LanguageEnvironment class >> leadingChar
 [
-self subclassResponsibility.^ 0
+	self subclassResponsibility.
+	^ 0
 ]
 
-Metaclass LanguageEnvironment >> localeChanged
+LanguageEnvironment class >> localeChanged
 [
-self startUp
+	self startUp
 ]
 
-Metaclass LanguageEnvironment >> localeID: localeID
+LanguageEnvironment class >> localeID: localeID
 [
-self knownEnvironments at: localeID ifPresent: [ :value | ^ value ].^ self knownEnvironments	at: (LocaleID isoLanguage: localeID isoLanguage)	ifAbsent: [ self localeID: (LocaleID isoLanguage: 'en') ]
+	self knownEnvironments at: localeID ifPresent: [ :value | ^ value ].
+	^ self knownEnvironments
+		at: (LocaleID isoLanguage: localeID isoLanguage)
+		ifAbsent: [ self localeID: (LocaleID isoLanguage: 'en') ]
 ]
 
-Metaclass LanguageEnvironment >> resetKnownEnvironments
+LanguageEnvironment class >> resetKnownEnvironments
 [
 	"LanguageEnvironment resetKnownEnvironments"
-KnownEnvironments := nil
+
+	KnownEnvironments := nil
 ]
 
-Metaclass LanguageEnvironment >> scanSelector
+LanguageEnvironment class >> scanSelector
 [
-^ #scanMultiCharactersFrom:to:in:rightX:stopConditions:kern:
+	^ #scanMultiCharactersFrom:to:in:rightX:stopConditions:kern:
 ]
 
-Metaclass LanguageEnvironment >> startUp
+LanguageEnvironment class >> startUp
 [
-self clearDefault
+	self clearDefault
 ]
 
-Metaclass LanguageEnvironment >> supportedLanguages
+LanguageEnvironment class >> supportedLanguages
 [
-	"Return the languages that this class supports. 	Any translations for those languages will use this class as their environment."
-self subclassResponsibility
+	"Return the languages that this class supports. 
+	Any translations for those languages will use this class as their environment."
+
+	self subclassResponsibility
 ]
 
-Metaclass LanguageEnvironment >> systemConverterClass
+LanguageEnvironment class >> systemConverterClass
 [
-self subclassResponsibility.^ Latin1TextConverter
+	self subclassResponsibility.
+	^ Latin1TextConverter
 ]
 

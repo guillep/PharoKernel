@@ -1,53 +1,48 @@
-Class
-	name: #SetElement;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+SetElement
 	instanceVariables: #(#enclosedElement );
 	classVariables: #(#NilElement );
 	package: #'Collections-Support'.
 
-Class SetElement >> = anObject
+SetElement >> = anObject
 [
-^ anObject class = self class and: [ enclosedElement = anObject enclosedSetElement ]
+	^ anObject class = self class and: [ enclosedElement = anObject enclosedSetElement ]
 ]
 
-Class SetElement >> asSetElement
+SetElement >> asSetElement
 [
-	"A receiver has to be included into a set, as a distinct object.	We need to wrap receiver in own turn, otherwise #enclosedSetElement will return wrong object for that set"
-^ SetElement with: self
+	"A receiver has to be included into a set, as a distinct object.
+	We need to wrap receiver in own turn, otherwise #enclosedSetElement will return wrong object for that set"
+
+	^ SetElement with: self
 ]
 
-Class SetElement >> enclosedSetElement
+SetElement >> enclosedSetElement
 [
-^ enclosedElement
+	^ enclosedElement
 ]
 
-Class SetElement >> enclosedSetElement: anObject
+SetElement >> enclosedSetElement: anObject
 [
-enclosedElement := anObject
+	enclosedElement := anObject
 ]
 
-Class SetElement >> hash
+SetElement >> hash
 [
-^ enclosedElement hash
+	^ enclosedElement hash
 ]
 
-Metaclass
-	name: #SetElement;
-	instanceVariables: #().
-
-Metaclass SetElement >> initialize
+SetElement class >> initialize
 [
-NilElement := self with: nil
+	NilElement := self with: nil
 ]
 
-Metaclass SetElement >> with: anObject
+SetElement class >> with: anObject
 [
-^ self new enclosedSetElement: anObject
+	^ self new enclosedSetElement: anObject
 ]
 
-Metaclass SetElement >> withNil
+SetElement class >> withNil
 [
-^ NilElement
+	^ NilElement
 ]
 

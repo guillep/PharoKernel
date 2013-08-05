@@ -1,48 +1,101 @@
-Class
-	name: #LRUCache;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+LRUCache
 	instanceVariables: #(#size #factory #calls #hits #values );
-	classVariables: #();
 	package: #'System-Support'.
 
-Class LRUCache >> at: aKey
+LRUCache >> at: aKey
 [
-	"answer the object for aKey, if not present in the cache creates it.	Clone the factory block before calling in case of multiple processes!"
-| element keyHash |calls := calls + 1.keyHash := aKey hash.1 to: size do: [ :index | 	element := values at: index.	(keyHash = (element at: 2) and: [ aKey = (element at: 1) ])		ifTrue: [ 			"Found!"			hits := hits + 1.			values replaceFrom: 2 to: index with: (values first: index - 1).			values at: 1 put: element.			^ element at: 3 ] ].	"Not found!"element := {aKey.keyHash.(factory shallowCopy value: aKey)}.values replaceFrom: 2 to: size with: values allButLast.values at: 1 put: element.^ element at: 3
+	"answer the object for aKey, if not present in the cache creates it.
+	Clone the factory block before calling in case of multiple processes!"
+
+	| element keyHash |
+	calls := calls + 1.
+	keyHash := aKey hash.
+	1 to: size do: [ :index | element := values at: index.
+		(keyHash = (element at: 2) and: [ aKey = (element at: 1) ])
+			ifTrue: [ "Found!"
+				hits := hits + 1.
+				values replaceFrom: 2 to: index with: (values first: index - 1).
+				values at: 1 put: element.
+				^ element at: 3 ] ].	"Not found!"
+	element := {aKey.
+	keyHash.
+	(factory shallowCopy value: aKey)}.
+	values replaceFrom: 2 to: size with: values allButLast.
+	values at: 1 put: element.
+	^ element at: 3
 ]
 
-Class LRUCache >> initializeSize: aNumber factory: aBlock
+LRUCache >> initializeSize: aNumber factory: aBlock
 [
 	"initialize the receiver's size and factory"
-size := aNumber.values := Array	new: aNumber	withAll:		{nil.		nil.		nil}.factory := aBlock.calls := 0.hits := 0
+
+	size := aNumber.
+	values := Array new: aNumber withAll: {nil.
+			nil.
+			nil}.
+	factory := aBlock.
+	calls := 0.
+	hits := 0
 ]
 
-Class LRUCache >> printOn: aStream
+LRUCache >> printOn: aStream
 [
-	"Append to the argument, aStream, a sequence of characters 	that identifies the receiver."
-aStream	nextPutAll: self class name;	nextPutAll: ' size:';	nextPutAll: size asString;	nextPutAll: ', calls:';	nextPutAll: calls asString;	nextPutAll: ', hits:';	nextPutAll: hits asString;	nextPutAll: ', ratio:'.calls = 0	ifTrue: [ aStream nextPutAll: 0 asFloat asString ]	ifFalse: [ aStream nextPutAll: (hits / calls) asFloat asString ]
+	"Append to the argument, aStream, a sequence of characters 
+	that identifies the receiver."
+
+	aStream
+		nextPutAll: self class name;
+		nextPutAll: ' size:';
+		nextPutAll: size asString;
+		nextPutAll: ', calls:';
+		nextPutAll: calls asString;
+		nextPutAll: ', hits:';
+		nextPutAll: hits asString;
+		nextPutAll: ', ratio:'.
+	calls = 0
+		ifTrue: [ aStream nextPutAll: 0 asFloat asString ]
+		ifFalse: [ aStream nextPutAll: (hits / calls) asFloat asString ]
 ]
 
-Metaclass
-	name: #LRUCache;
-	instanceVariables: #().
-
-Metaclass LRUCache >> size: aNumber factory: aBlock
+LRUCache class >> size: aNumber factory: aBlock
 [
 	"answer an instance of the receiver"
-^ self new initializeSize: aNumber factory: aBlock
+
+	^ self new initializeSize: aNumber factory: aBlock
 ]
 
-Metaclass LRUCache >> test
+LRUCache class >> test
 [
-	" 	LRUCache test 	"
-| c |c := LRUCache size: 5 factory: [ :key | key * 2 ].c at: 1.c at: 2.c at: 3.c at: 4.c at: 1.c at: 5.c at: 6.c at: 7.c at: 8.c at: 1.^ c
+	" 
+	LRUCache test 
+	"
+
+	| c |
+	c := LRUCache size: 5 factory: [ :key | key * 2 ].
+	c at: 1.
+	c at: 2.
+	c at: 3.
+	c at: 4.
+	c at: 1.
+	c at: 5.
+	c at: 6.
+	c at: 7.
+	c at: 8.
+	c at: 1.
+	^ c
 ]
 
-Metaclass LRUCache >> test2
+LRUCache class >> test2
 [
-	" 	LRUCache test2.  	Time millisecondsToRun:[LRUCache test2]. 	MessageTally spyOn:[LRUCache test2].  	"
-| c |c := LRUCache size: 600 factory: [ :key | key * 2 ].1 to: 6000 do: [ :each | c at: each ].^ c
+	" 
+	LRUCache test2.  
+	Time millisecondsToRun:[LRUCache test2]. 
+	MessageTally spyOn:[LRUCache test2].  
+	"
+
+	| c |
+	c := LRUCache size: 600 factory: [ :key | key * 2 ].
+	1 to: 6000 do: [ :each | c at: each ].
+	^ c
 ]
 

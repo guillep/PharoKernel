@@ -1,710 +1,1293 @@
-Class
-	name: #DateAndTime;
-	superclass: #ClassMagnitude;
-	instanceSpecification: #(#pointers #words );
+DateAndTime
+	superclass: #Magnitude;
 	instanceVariables: #(#seconds #offset #julianDayNumber #nanos );
-	classVariables: #(#OffsetsAreValid #LocalTimeZone #LastTick #LastTickSemaphore #MilliSecondOffset #ClockProvider #LastMilliSeconds #DaysSinceEpoch );
-	sharedPools: #(#ChronologyConstants );	package: #'Kernel-Chronology'.
+	classVariables: #(#DaysSinceEpoch #LocalTimeZone #LastTick #LastTickSemaphore #MilliSecondOffset #ClockProvider #LastMilliSeconds #OffsetsAreValid );
+	sharedPools: #(#ChronologyConstants );
+	package: #'Kernel-Chronology'.
 
-Class DateAndTime >> + operand
+DateAndTime >> + operand
 [
 	"operand conforms to protocol Duration"
-| ticks |ticks := self ticks with: operand asDuration ticks collect: [ :ticks1 :dticks | ticks1 + dticks ].^ self class basicNew	ticks: ticks offset: self offset;	yourself
+
+	| ticks |
+	ticks := self ticks with: operand asDuration ticks collect: [ :ticks1 :dticks | ticks1 + dticks ].
+	^ self class basicNew
+		ticks: ticks offset: self offset;
+		yourself
 ]
 
-Class DateAndTime >> - operand
+DateAndTime >> - operand
 [
 	"operand conforms to protocol DateAndTime or protocol Duration"
-^ (operand respondsTo: #asDateAndTime)	ifTrue: [ 		| lticks rticks |		lticks := self asLocal ticks.		rticks := operand asDateAndTime asLocal ticks.		Duration			seconds: SecondsInDay * (lticks first - rticks first) + (lticks second - rticks second)			nanoSeconds: lticks third - rticks third ]	ifFalse: [ self + operand negated ]
+
+	^ (operand respondsTo: #asDateAndTime)
+		ifTrue: [ | lticks rticks |
+			lticks := self asLocal ticks.
+			rticks := operand asDateAndTime asLocal ticks.
+			Duration
+				seconds: SecondsInDay * (lticks first - rticks first) + (lticks second - rticks second)
+				nanoSeconds: lticks third - rticks third ]
+		ifFalse: [ self + operand negated ]
 ]
 
-Class DateAndTime >> < comparand
+DateAndTime >> < comparand
 [
-	"comparand conforms to protocol DateAndTime,	or can be converted into something that conforms."
-| other utcSeconds otherUTCSeconds |other := comparand asDateAndTime.julianDayNumber < other julianDayNumber	ifTrue: [ ^ true ].utcSeconds := self asSeconds.otherUTCSeconds := other asSeconds.^ utcSeconds = otherUTCSeconds	ifFalse: [ utcSeconds < otherUTCSeconds ]	ifTrue: [ nanos < other nanoSecond ]
+	"comparand conforms to protocol DateAndTime,
+	or can be converted into something that conforms."
+
+	| other utcSeconds otherUTCSeconds |
+	other := comparand asDateAndTime.
+	julianDayNumber < other julianDayNumber
+		ifTrue: [ ^ true ].
+	utcSeconds := self asSeconds.
+	otherUTCSeconds := other asSeconds.
+	^ utcSeconds = otherUTCSeconds
+		ifFalse: [ utcSeconds < otherUTCSeconds ]
+		ifTrue: [ nanos < other nanoSecond ]
 ]
 
-Class DateAndTime >> = other
+DateAndTime >> = other
 [
-self == other	ifTrue: [ ^ true ].self species = other species	ifFalse: [ ^ false ].^ self asSeconds = other asSeconds and: [ self nanoSecond = other nanoSecond ]
+	self == other
+		ifTrue: [ ^ true ].
+	self species = other species
+		ifFalse: [ ^ false ].
+	^ self asSeconds = other asSeconds and: [ self nanoSecond = other nanoSecond ]
 ]
 
-Class DateAndTime >> asDate
+DateAndTime >> asDate
 [
-^ Date starting: self
+	^ Date starting: self
 ]
 
-Class DateAndTime >> asDateAndTime
+DateAndTime >> asDateAndTime
 [
-^ self
+	^ self
 ]
 
-Class DateAndTime >> asDosTime
+DateAndTime >> asDosTime
 [
-self deprecated: 'Use asDosTimestamp' on: '21 May 2012' in: 'Pharo 2.0'.^ self asDosTimestamp
+	self deprecated: 'Use asDosTimestamp' on: '21 May 2012' in: 'Pharo 2.0'.
+	^ self asDosTimestamp
 ]
 
-Class DateAndTime >> asDosTimestamp
+DateAndTime >> asDosTimestamp
 [
-^ (DosTimestamp fromDateAndTime: self) value
+	^ (DosTimestamp fromDateAndTime: self) value
 ]
 
-Class DateAndTime >> asDuration
+DateAndTime >> asDuration
 [
 	"Answer the duration since midnight."
-^ Duration seconds: self localSeconds nanoSeconds: nanos
+
+	^ Duration seconds: self localSeconds nanoSeconds: nanos
 ]
 
-Class DateAndTime >> asLocal
+DateAndTime >> asLocal
 [
-^ self offset = self class localOffset	ifTrue: [ self ]	ifFalse: [ self offset: self class localOffset ]
+	^ self offset = self class localOffset
+		ifTrue: [ self ]
+		ifFalse: [ self offset: self class localOffset ]
 ]
 
-Class DateAndTime >> asMonth
+DateAndTime >> asMonth
 [
-^ Month starting: self
+	^ Month starting: self
 ]
 
-Class DateAndTime >> asNanoSeconds
+DateAndTime >> asNanoSeconds
 [
 	"Answer the number of nanoseconds since midnight"
-^ self asDuration asNanoSeconds
+
+	^ self asDuration asNanoSeconds
 ]
 
-Class DateAndTime >> asSeconds
+DateAndTime >> asSeconds
 [
 	"Return the number of seconds since the Squeak epoch"
-^ (self - self class epoch) asSeconds
+
+	^ (self - self class epoch) asSeconds
 ]
 
-Class DateAndTime >> asTime
+DateAndTime >> asTime
 [
-^ Time seconds: self localSeconds nanoSeconds: nanos
+	^ Time seconds: self localSeconds nanoSeconds: nanos
 ]
 
-Class DateAndTime >> asTimeStamp
+DateAndTime >> asTimeStamp
 [
-^ self as: TimeStamp
+	^ self as: TimeStamp
 ]
 
-Class DateAndTime >> asUTC
+DateAndTime >> asUTC
 [
-^ offset isZero	ifTrue: [ self ]	ifFalse: [ self offset: 0 ]
+	^ offset isZero
+		ifTrue: [ self ]
+		ifFalse: [ self offset: 0 ]
 ]
 
-Class DateAndTime >> asUnixTime
+DateAndTime >> asUnixTime
 [
 	"answer number of seconds since unix epoch (midnight Jan 1, 1970, UTC)"
-^ ((self offset: Duration zero) - self class unixEpoch) asSeconds
+
+	^ ((self offset: Duration zero) - self class unixEpoch) asSeconds
 ]
 
-Class DateAndTime >> asWeek
+DateAndTime >> asWeek
 [
-^ Week starting: self
+	^ Week starting: self
 ]
 
-Class DateAndTime >> asYear
+DateAndTime >> asYear
 [
-^ Year starting: self
+	^ Year starting: self
 ]
 
-Class DateAndTime >> day
+DateAndTime >> day
 [
-^ self dayOfYear
+	^ self dayOfYear
 ]
 
-Class DateAndTime >> dayMonthYearDo: aBlock
+DateAndTime >> dayMonthYearDo: aBlock
 [
-	"Return the value of executing block with the Gregorian Calender day, month and year as arguments,	as computed from my Julian Day Number, julianDayNumber.	See http://en.wikipedia.org/wiki/Julian_date#Gregorian_calendar_from_Julian_day_number        A short Description for the Constants used below:    - 400 years span 146097 days in gregorian calendar.    - 100 years span 36524 days, except every 400 years.    - 4 years span 1461 days, except every 100 years.    - 1 year spans 365 days, except every four years    "
-| l n i j monthDay month fullYear |l := self julianDayNumber + 68569.n := 4 * l // 146097.l := l - ((146097 * n + 3) // 4).i := 4000 * (l + 1) // 1461001.l := l - (1461 * i // 4) + 31.j := 80 * l // 2447.monthDay := l - (2447 * j // 80).l := j // 11.month := j + 2 - (12 * l).fullYear := 100 * (n - 49) + i + l.^ aBlock value: monthDay value: month value: fullYear
+	"Return the value of executing block with the Gregorian Calender day, month and year as arguments,
+	as computed from my Julian Day Number, julianDayNumber.
+	See http://en.wikipedia.org/wiki/Julian_date#Gregorian_calendar_from_Julian_day_number
+    
+    A short Description for the Constants used below:
+    - 400 years span 146097 days in gregorian calendar.
+    - 100 years span 36524 days, except every 400 years.
+    - 4 years span 1461 days, except every 100 years.
+    - 1 year spans 365 days, except every four years
+    "
+
+	| l n i j monthDay month fullYear |
+	l := self julianDayNumber + 68569.
+	n := 4 * l // 146097.
+	l := l - ((146097 * n + 3) // 4).
+	i := 4000 * (l + 1) // 1461001.
+	l := l - (1461 * i // 4) + 31.
+	j := 80 * l // 2447.
+	monthDay := l - (2447 * j // 80).
+	l := j // 11.
+	month := j + 2 - (12 * l).
+	fullYear := 100 * (n - 49) + i + l.
+	^ aBlock value: monthDay value: month value: fullYear
 ]
 
-Class DateAndTime >> dayOfMonth
+DateAndTime >> dayOfMonth
 [
 	"Answer which day of the month is represented by the receiver."
-^ self dayMonthYearDo: [ :d :m :y | d ]
+
+	^ self dayMonthYearDo: [ :d :m :y | d ]
 ]
 
-Class DateAndTime >> dayOfWeek
+DateAndTime >> dayOfWeek
 [
 	"Sunday=1, ... , Saturday=7"
-^ (julianDayNumber + 1 rem: 7) + 1
+
+	^ (self julianDayNumber + 1 rem: 7) + 1
 ]
 
-Class DateAndTime >> dayOfWeekAbbreviation
+DateAndTime >> dayOfWeekAbbreviation
 [
-^ self dayOfWeekName copyFrom: 1 to: 3
+	^ self dayOfWeekName copyFrom: 1 to: 3
 ]
 
-Class DateAndTime >> dayOfWeekName
+DateAndTime >> dayOfWeekName
 [
-^ Week nameOfDay: self dayOfWeek
+	^ Week nameOfDay: self dayOfWeek
 ]
 
-Class DateAndTime >> dayOfYear
+DateAndTime >> dayOfYear
 [
-	"This code was contributed by Dan Ingalls. It is equivalent to the terser		^ jdn - (Year year: self year) start julianDayNumber + 1 but much quicker."
-^ self	dayMonthYearDo: [ :d :m :y | 		| monthStart |		monthStart := #(1 32 60 91 121 152 182 213 244 274 305 335) at: m.		(m > 2 and: [ Year isLeapYear: y ])			ifTrue: [ monthStart + d ]			ifFalse: [ monthStart + d - 1 ] ]
+	"This code was contributed by Dan Ingalls. It is equivalent to the terser
+		^ jdn - (Year year: self year) start julianDayNumber + 1 but much quicker."
+
+	^ self
+		dayMonthYearDo: [ :d :m :y | | monthStart |
+			monthStart := #(1 32 60 91 121 152 182 213 244 274 305 335) at: m.
+			(m > 2 and: [ Year isLeapYear: y ])
+				ifTrue: [ monthStart + d ]
+				ifFalse: [ monthStart + d - 1 ] ]
 ]
 
-Class DateAndTime >> daysInMonth
+DateAndTime >> daysInMonth
 [
 	"Answer the number of days in the month represented by the receiver."
-^ self asMonth daysInMonth
+
+	^ self asMonth daysInMonth
 ]
 
-Class DateAndTime >> daysInYear
+DateAndTime >> daysInYear
 [
 	"Answer the number of days in the year represented by the receiver."
-^ self asYear daysInYear
+
+	^ self asYear daysInYear
 ]
 
-Class DateAndTime >> daysLeftInYear
+DateAndTime >> daysLeftInYear
 [
 	"Answer the number of days in the year after the date of the receiver."
-^ self daysInYear - self dayOfYear
+
+	^ self daysInYear - self dayOfYear
 ]
 
-Class DateAndTime >> duration
+DateAndTime >> duration
 [
-^ Duration zero
+	^ Duration zero
 ]
 
-Class DateAndTime >> firstDayOfMonth
+DateAndTime >> firstDayOfMonth
 [
-^ self asMonth start day
+	^ self asMonth start day
 ]
 
-Class DateAndTime >> hasEqualTicks: aDateAndTime
+DateAndTime >> hasEqualTicks: aDateAndTime
 [
-^ julianDayNumber = aDateAndTime julianDayNumber	and: [ seconds = aDateAndTime secondsSinceMidnight and: [ nanos = aDateAndTime nanoSecond ] ]
+	^ julianDayNumber = aDateAndTime julianDayNumber
+		and: [ seconds = aDateAndTime secondsSinceMidnight and: [ nanos = aDateAndTime nanoSecond ] ]
 ]
 
-Class DateAndTime >> hash
+DateAndTime >> hash
 [
-| totalSeconds |totalSeconds := seconds - offset asSeconds.^ ((totalSeconds // 86400 + julianDayNumber) hashMultiply bitXor: totalSeconds \\ 86400) bitXor: nanos
+	| totalSeconds |
+	totalSeconds := seconds - offset asSeconds.
+	^ ((totalSeconds // 86400 + julianDayNumber) hashMultiply bitXor: totalSeconds \\ 86400) bitXor: nanos
 ]
 
-Class DateAndTime >> hour
+DateAndTime >> hour
 [
-^ self hour24
+	^ self hour24
 ]
 
-Class DateAndTime >> hour12
+DateAndTime >> hour12
 [
-	"Answer an <integer> between 1 and 12, inclusive, representing the hour 	of the day in the 12-hour clock of the local time of the receiver."
-^ (self hour24 - 1) \\ 12 + 1
+	"Answer an <integer> between 1 and 12, inclusive, representing the hour 
+	of the day in the 12-hour clock of the local time of the receiver."
+
+	^ (self hour24 - 1) \\ 12 + 1
 ]
 
-Class DateAndTime >> hour24
+DateAndTime >> hour24
 [
-	"Answer a number that represents the number of complete hours in the receiver's time part,	 after the number of complete days has been removed."
-^ ((self localSeconds rem: SecondsInDay) / SecondsInHour) floor % 24
+	"Answer a number that represents the number of complete hours in the receiver's time part,
+	 after the number of complete days has been removed."
+
+	^ ((self localSeconds rem: SecondsInDay) / SecondsInHour) floor % 24
 ]
 
-Class DateAndTime >> hours
+DateAndTime >> hours
 [
-^ self hour
+	^ self hour
 ]
 
-Class DateAndTime >> isLeapYear
+DateAndTime >> isLeapYear
 [
-^ Year isLeapYear: self year
+	^ Year isLeapYear: self year
 ]
 
-Class DateAndTime >> julianDayNumber
+DateAndTime >> julianDayNumber
 [
-^ julianDayNumber + self julianDayOffset
+	^ julianDayNumber + self julianDayOffset
 ]
 
-Class DateAndTime >> julianDayNumberUTC
+DateAndTime >> julianDayNumberUTC
 [
-^ julianDayNumber
+	^ julianDayNumber
 ]
 
-Class DateAndTime >> julianDayOffset
+DateAndTime >> julianDayOffset
 [
 	"Return the offset in julian days possibly introduced by the timezone offset"
-^ ((seconds + self offset asSeconds) / SecondsInDay) floor
+
+	^ ((seconds + self offset asSeconds) / SecondsInDay) floor
 ]
 
-Class DateAndTime >> localSeconds
+DateAndTime >> localSeconds
 [
 	" Return the seconds since the epoch in local time."
-^ seconds + self offset asSeconds
+
+	^ seconds + self offset asSeconds
 ]
 
-Class DateAndTime >> meridianAbbreviation
+DateAndTime >> meridianAbbreviation
 [
-^ self asTime meridianAbbreviation
+	^ self asTime meridianAbbreviation
 ]
 
-Class DateAndTime >> middleOf: aDuration
+DateAndTime >> middleOf: aDuration
 [
 	"Return a Timespan where the receiver is the middle of the Duration"
-| duration |duration := aDuration asDuration.^ Timespan starting: self - (duration / 2) duration: duration
+
+	| duration |
+	duration := aDuration asDuration.
+	^ Timespan starting: self - (duration / 2) duration: duration
 ]
 
-Class DateAndTime >> midnight
+DateAndTime >> midnight
 [
 	"Answer a DateAndTime starting at midnight local time"
-self	dayMonthYearDo: [ :day :month :year | 		^ self class			year: year			month: month			day: day			offset: offset ]
+
+	self
+		dayMonthYearDo: [ :day :month :year | ^ self class
+				year: year
+				month: month
+				day: day
+				offset: offset ]
 ]
 
-Class DateAndTime >> minute
+DateAndTime >> minute
 [
-	"Answer a number that represents the number of complete minutes in the receiver' time part, 	after the number of complete hours has been removed."
-^ ((self localSeconds rem: SecondsInHour) / SecondsInMinute) floor % 60
+	"Answer a number that represents the number of complete minutes in the receiver' time part, 
+	after the number of complete hours has been removed."
+
+	^ ((self localSeconds rem: SecondsInHour) / SecondsInMinute) floor % 60
 ]
 
-Class DateAndTime >> minutes
+DateAndTime >> minutes
 [
-^ self minute
+	^ self minute
 ]
 
-Class DateAndTime >> month
+DateAndTime >> month
 [
-^ self dayMonthYearDo: [ :d :m :y | m ]
+	^ self dayMonthYearDo: [ :d :m :y | m ]
 ]
 
-Class DateAndTime >> monthAbbreviation
+DateAndTime >> monthAbbreviation
 [
-^ self monthName copyFrom: 1 to: 3
+	^ self monthName copyFrom: 1 to: 3
 ]
 
-Class DateAndTime >> monthIndex
+DateAndTime >> monthIndex
 [
-^ self month
+	^ self month
 ]
 
-Class DateAndTime >> monthName
+DateAndTime >> monthName
 [
-^ Month nameOfMonth: self month
+	^ Month nameOfMonth: self month
 ]
 
-Class DateAndTime >> nanoSecond
+DateAndTime >> nanoSecond
 [
-^ nanos
+	^ nanos
 ]
 
-Class DateAndTime >> noon
+DateAndTime >> noon
 [
 	"Answer a DateAndTime starting at noon"
-^ self	dayMonthYearDo: [ :d :m :y | 		self class			year: y			month: m			day: d			hour: 12			minute: 0			second: 0			offset: offset ]
+
+	^ self
+		dayMonthYearDo: [ :d :m :y | self class
+				year: y
+				month: m
+				day: d
+				hour: 12
+				minute: 0
+				second: 0
+				offset: offset ]
 ]
 
-Class DateAndTime >> normalize: i ticks: ticks base: base
+DateAndTime >> normalize: i ticks: ticks base: base
 [
-| tick div quo rem |tick := ticks at: i.div := tick digitDiv: base neg: tick negative.quo := (div at: 1) normalize.rem := (div at: 2) normalize.rem < 0	ifTrue: [ 		quo := quo - 1.		rem := base + rem ].ticks at: i - 1 put: (ticks at: i - 1) + quo.ticks at: i put: rem
+	| tick div quo rem |
+	tick := ticks at: i.
+	div := tick digitDiv: base neg: tick negative.
+	quo := (div at: 1) normalize.
+	rem := (div at: 2) normalize.
+	rem < 0
+		ifTrue: [ quo := quo - 1.
+			rem := base + rem ].
+	ticks at: i - 1 put: (ticks at: i - 1) + quo.
+	ticks at: i put: rem
 ]
 
-Class DateAndTime >> offset
+DateAndTime >> offset
 [
-^ offset
+	^ offset
 ]
 
-Class DateAndTime >> offset: anOffset
+DateAndTime >> offset: anOffset
 [
-	"Answer a <DateAndTime> equivalent to the receiver but with its local time 	being offset from UTC by offset."
-^ self class basicNew	ticks: self ticks offset: anOffset asDuration;	yourself
+	"Answer a <DateAndTime> equivalent to the receiver but with its local time 
+	being offset from UTC by offset."
+
+	^ self class basicNew
+		ticks: self ticks offset: anOffset asDuration;
+		yourself
 ]
 
-Class DateAndTime >> printHMSOn: aStream
+DateAndTime >> printHMSOn: aStream
 [
 	"Print just hh:mm:ss"
-self hour	printOn: aStream	base: 10	length: 2	padded: true.aStream nextPut: $:.self minute	printOn: aStream	base: 10	length: 2	padded: true.aStream nextPut: $:.self second	printOn: aStream	base: 10	length: 2	padded: true
+
+	self hour
+		printOn: aStream
+		base: 10
+		length: 2
+		padded: true.
+	aStream nextPut: $:.
+	self minute
+		printOn: aStream
+		base: 10
+		length: 2
+		padded: true.
+	aStream nextPut: $:.
+	self second
+		printOn: aStream
+		base: 10
+		length: 2
+		padded: true
 ]
 
-Class DateAndTime >> printMSOn: aStream
+DateAndTime >> printMSOn: aStream
 [
 	"Print just mm:ss"
-self minute	printOn: aStream	base: 10	length: 2	padded: true.aStream nextPut: $:.self second	printOn: aStream	base: 10	length: 2	padded: true
+
+	self minute
+		printOn: aStream
+		base: 10
+		length: 2
+		padded: true.
+	aStream nextPut: $:.
+	self second
+		printOn: aStream
+		base: 10
+		length: 2
+		padded: true
 ]
 
-Class DateAndTime >> printOn: aStream
+DateAndTime >> printOn: aStream
 [
-	"Print as per ISO 8601 sections 5.3.3 and 5.4.1.	Prints either:		'YYYY-MM-DDThh:mm:ss.s+ZZ:zz:z' (for positive years) or '-YYYY-MM-DDThh:mm:ss.s+ZZ:zz:z' (for negative years)"
-^ self printOn: aStream withLeadingSpace: false
+	"Print as per ISO 8601 sections 5.3.3 and 5.4.1.
+	Prints either:
+		'YYYY-MM-DDThh:mm:ss.s+ZZ:zz:z' (for positive years) or '-YYYY-MM-DDThh:mm:ss.s+ZZ:zz:z' (for negative years)"
+
+	^ self printOn: aStream withLeadingSpace: false
 ]
 
-Class DateAndTime >> printOn: aStream withLeadingSpace: printLeadingSpaceToo
+DateAndTime >> printOn: aStream withLeadingSpace: printLeadingSpaceToo
 [
-	"Print as per ISO 8601 sections 5.3.3 and 5.4.1.	If printLeadingSpaceToo is false, prints either:		'YYYY-MM-DDThh:mm:ss.s+ZZ:zz:z' (for positive years) or '-YYYY-MM-DDThh:mm:ss.s+ZZ:zz:z' (for negative years)	If printLeadingSpaceToo is true, prints either:		' YYYY-MM-DDThh:mm:ss.s+ZZ:zz:z' (for positive years) or '-YYYY-MM-DDThh:mm:ss.s+ZZ:zz:z' (for negative years)	"
-self printYMDOn: aStream withLeadingSpace: printLeadingSpaceToo.aStream nextPut: $T.self printHMSOn: aStream.nanos ~= 0	ifTrue: [ 		| n len |		n := nanos.		len := 9.		[ n \\ 10 = 0 ]			whileTrue: [ 				n := n / 10.				len := len - 1 ].		aStream nextPut: $..		n			printOn: aStream			base: 10			length: len			padded: true ].aStream	nextPut:		(offset positive			ifTrue: [ $+ ]			ifFalse: [ $- ]).offset hours abs	printOn: aStream	base: 10	length: 2	padded: true.aStream nextPut: $:.offset minutes abs	printOn: aStream	base: 10	length: 2	padded: true.offset seconds = 0	ifFalse: [ 		aStream			nextPut: $:;			print: offset seconds abs truncated ]
+	"Print as per ISO 8601 sections 5.3.3 and 5.4.1.
+	If printLeadingSpaceToo is false, prints either:
+		'YYYY-MM-DDThh:mm:ss.s+ZZ:zz:z' (for positive years) or '-YYYY-MM-DDThh:mm:ss.s+ZZ:zz:z' (for negative years)
+	If printLeadingSpaceToo is true, prints either:
+		' YYYY-MM-DDThh:mm:ss.s+ZZ:zz:z' (for positive years) or '-YYYY-MM-DDThh:mm:ss.s+ZZ:zz:z' (for negative years)
+	"
+
+	self printYMDOn: aStream withLeadingSpace: printLeadingSpaceToo.
+	aStream nextPut: $T.
+	self printHMSOn: aStream.
+	nanos ~= 0
+		ifTrue: [ | n len |
+			n := nanos.
+			len := 9.
+			[ n \\ 10 = 0 ] whileTrue: [ n := n / 10.
+					len := len - 1 ].
+			aStream nextPut: $..
+			n
+				printOn: aStream
+				base: 10
+				length: len
+				padded: true ].
+	aStream nextPut: (offset positive
+				ifTrue: [ $+ ]
+				ifFalse: [ $- ]).
+	offset hours abs
+		printOn: aStream
+		base: 10
+		length: 2
+		padded: true.
+	aStream nextPut: $:.
+	offset minutes abs
+		printOn: aStream
+		base: 10
+		length: 2
+		padded: true.
+	offset seconds = 0
+		ifFalse: [ aStream
+				nextPut: $:;
+				print: offset seconds abs truncated ]
 ]
 
-Class DateAndTime >> printYMDOn: aStream
+DateAndTime >> printYMDOn: aStream
 [
-	"Print just YYYY-MM-DD part.	If the year is negative, prints out '-YYYY-MM-DD'."
-^ self printYMDOn: aStream withLeadingSpace: false
+	"Print just YYYY-MM-DD part.
+	If the year is negative, prints out '-YYYY-MM-DD'."
+
+	^ self printYMDOn: aStream withLeadingSpace: false
 ]
 
-Class DateAndTime >> printYMDOn: aStream withLeadingSpace: printLeadingSpaceToo
+DateAndTime >> printYMDOn: aStream withLeadingSpace: printLeadingSpaceToo
 [
-	"Print just the year, month, and day on aStream.	If printLeadingSpaceToo is true, then print as:		' YYYY-MM-DD' (if the year is positive) or '-YYYY-MM-DD' (if the year is negative)	otherwise print as:		'YYYY-MM-DD' or '-YYYY-MM-DD' "
-| year month day |self	dayMonthYearDo: [ :d :m :y | 		year := y.		month := m.		day := d ].year negative	ifTrue: [ aStream nextPut: $- ]	ifFalse: [ 		printLeadingSpaceToo			ifTrue: [ aStream space ] ].year abs	printOn: aStream	base: 10	length: 4	padded: true.aStream nextPut: $-.month	printOn: aStream	base: 10	length: 2	padded: true.aStream nextPut: $-.day	printOn: aStream	base: 10	length: 2	padded: true
+	"Print just the year, month, and day on aStream.
+
+	If printLeadingSpaceToo is true, then print as:
+		' YYYY-MM-DD' (if the year is positive) or '-YYYY-MM-DD' (if the year is negative)
+	otherwise print as:
+		'YYYY-MM-DD' or '-YYYY-MM-DD' "
+
+	| year month day |
+	self dayMonthYearDo: [ :d :m :y | year := y.
+			month := m.
+			day := d ].
+	year negative
+		ifTrue: [ aStream nextPut: $- ]
+		ifFalse: [ printLeadingSpaceToo
+				ifTrue: [ aStream space ] ].
+	year abs
+		printOn: aStream
+		base: 10
+		length: 4
+		padded: true.
+	aStream nextPut: $-.
+	month
+		printOn: aStream
+		base: 10
+		length: 2
+		padded: true.
+	aStream nextPut: $-.
+	day
+		printOn: aStream
+		base: 10
+		length: 2
+		padded: true
 ]
 
-Class DateAndTime >> rounded
+DateAndTime >> rounded
 [
 	"Answer a date and time to the nearest whole second"
-^ NanosInSecond / 2 >= self nanoSecond abs	ifTrue: [ self species fromSeconds: self asSeconds ]	ifFalse: [ self species fromSeconds: self asSeconds + 1 ]
+
+	^ NanosInSecond / 2 >= self nanoSecond abs
+		ifTrue: [ self species fromSeconds: self asSeconds ]
+		ifFalse: [ self species fromSeconds: self asSeconds + 1 ]
 ]
 
-Class DateAndTime >> second
+DateAndTime >> second
 [
-	"Answer a number that represents the number of complete seconds in the receiver's time part, 	after the number of complete minutes has been removed."
-^ (self localSeconds rem: SecondsInMinute) % 60
+	"Answer a number that represents the number of complete seconds in the receiver's time part, 
+	after the number of complete minutes has been removed."
+
+	^ (self localSeconds rem: SecondsInMinute) % 60
 ]
 
-Class DateAndTime >> seconds
+DateAndTime >> seconds
 [
-^ self second
+	^ self second
 ]
 
-Class DateAndTime >> secondsSinceMidnight
+DateAndTime >> secondsSinceMidnight
 [
-^ seconds
+	^ seconds
 ]
 
-Class DateAndTime >> setJdn: julDays seconds: secs nano: nanoSecs offset: anOffset
+DateAndTime >> setJdn: julDays seconds: secs nano: nanoSecs offset: anOffset
 [
-julianDayNumber := julDays.seconds := secs.nanos := nanoSecs.offset := anOffset
+	julianDayNumber := julDays.
+	seconds := secs.
+	nanos := nanoSecs.
+	offset := anOffset
 ]
 
-Class DateAndTime >> ticks
+DateAndTime >> ticks
 [
 	"Private - answer an array with our instance variables. Assumed to be UTC "
-^ Array with: julianDayNumber with: seconds with: nanos
+
+	^ Array with: julianDayNumber with: seconds with: nanos
 ]
 
-Class DateAndTime >> ticks: ticks offset: utcOffset
+DateAndTime >> ticks: ticks offset: utcOffset
 [
 	"ticks is {julianDayNumber. secondCount. nanoSeconds}"
-self normalize: 3 ticks: ticks base: NanosInSecond.self normalize: 2 ticks: ticks base: SecondsInDay.julianDayNumber := ticks at: 1.seconds := ticks at: 2.nanos := ticks at: 3.offset := utcOffset
+
+	self normalize: 3 ticks: ticks base: NanosInSecond.
+	self normalize: 2 ticks: ticks base: SecondsInDay.
+	julianDayNumber := ticks at: 1.
+	seconds := ticks at: 2.
+	nanos := ticks at: 3.
+	offset := utcOffset
 ]
 
-Class DateAndTime >> timeZone
+DateAndTime >> timeZone
 [
-^ TimeZone offset: self offset
+	^ TimeZone offset: self offset
 ]
 
-Class DateAndTime >> timeZoneAbbreviation
+DateAndTime >> timeZoneAbbreviation
 [
-^ self timeZone abbreviation
+	^ self timeZone abbreviation
 ]
 
-Class DateAndTime >> timeZoneName
+DateAndTime >> timeZoneName
 [
-^ self timeZone name
+	^ self timeZone name
 ]
 
-Class DateAndTime >> to: anEnd
-[
-	"Answer a Timespan. anEnd conforms to protocol DateAndTime or protocol Timespan"
-^ Timespan starting: self ending: anEnd asDateAndTime
-]
-
-Class DateAndTime >> to: anEnd by: aDuration
-[
-	"Answer a Timespan. anEnd conforms to protocol DateAndTime or protocol Timespan"
-^ (Schedule starting: self ending: anEnd asDateAndTime)	schedule: (Array with: aDuration asDuration);	yourself
-]
-
-Class DateAndTime >> to: anEnd by: aDuration do: aBlock
+DateAndTime >> to: anEnd
 [
 	"Answer a Timespan. anEnd conforms to protocol DateAndTime or protocol Timespan"
-^ (self to: anEnd by: aDuration) scheduleDo: aBlock
+
+	^ Timespan starting: self ending: anEnd asDateAndTime
 ]
 
-Class DateAndTime >> translateTo: anOffset
+DateAndTime >> to: anEnd by: aDuration
 [
-	"Keep myself's representation and move it to another timezone offset.	Note that unlike #offset: this will change the absolute time in utc		|t|	t := DateAndTime now.	t = (t offset: 2 hours).	t = (t translateTo: 2 hours).	"
-self	dayMonthYearDo: [ :day :month :year | 		^ self class			year: year			month: month			day: day			hour: self hour			minute: self minute			second: self second			nanoSecond: self nanoSecond			offset: anOffset asDuration ]
+	"Answer a Timespan. anEnd conforms to protocol DateAndTime or protocol Timespan"
+
+	^ (Schedule starting: self ending: anEnd asDateAndTime)
+		schedule: (Array with: aDuration asDuration);
+		yourself
 ]
 
-Class DateAndTime >> translateToUTC
+DateAndTime >> to: anEnd by: aDuration do: aBlock
+[
+	"Answer a Timespan. anEnd conforms to protocol DateAndTime or protocol Timespan"
+
+	^ (self to: anEnd by: aDuration) scheduleDo: aBlock
+]
+
+DateAndTime >> translateTo: anOffset
+[
+	"Keep myself's representation and move it to another timezone offset.
+	Note that unlike #offset: this will change the absolute time in utc
+	
+	|t|
+	t := DateAndTime now.
+	t = (t offset: 2 hours).
+	t = (t translateTo: 2 hours).
+	"
+
+	self
+		dayMonthYearDo: [ :day :month :year | ^ self class
+				year: year
+				month: month
+				day: day
+				hour: self hour
+				minute: self minute
+				second: self second
+				nanoSecond: self nanoSecond
+				offset: anOffset asDuration ]
+]
+
+DateAndTime >> translateToUTC
 [
 	" Move this reprsenation to UTC"
-^ self translateTo: 0 asDuration
+
+	^ self translateTo: 0 asDuration
 ]
 
-Class DateAndTime >> truncated
+DateAndTime >> truncated
 [
 	"Answer a date and time to the nearest preceding whole second"
-^ self species	year: self year	month: self month	day: self dayOfMonth	hour: self hour	minute: self minute	second: self second	offset: self offset
+
+	^ self species
+		year: self year
+		month: self month
+		day: self dayOfMonth
+		hour: self hour
+		minute: self minute
+		second: self second
+		offset: self offset
 ]
 
-Class DateAndTime >> utcOffset: anOffset
+DateAndTime >> utcOffset: anOffset
 [
-self deprecated: 'Use offset: instead' on: '7/13/2012 16:36' in: 'Pharo 2.0'.^ self offset: anOffset
+	self deprecated: 'Use offset: instead' on: '7/13/2012 16:36' in: 'Pharo 2.0'.
+	^ self offset: anOffset
 ]
 
-Class DateAndTime >> withoutOffset
+DateAndTime >> withoutOffset
 [
-^ self offset: 0
+	^ self offset: 0
 ]
 
-Class DateAndTime >> year
+DateAndTime >> year
 [
-^ self dayMonthYearDo: [ :d :m :y | y ]
+	^ self dayMonthYearDo: [ :d :m :y | y ]
 ]
 
-Metaclass
-	name: #DateAndTime;
-	instanceVariables: #().
-
-Metaclass DateAndTime >> clock
+DateAndTime class >> clock
 [
 	"the provider of real time seconds/milliseconds."
-^ ClockProvider
+
+	^ ClockProvider
 ]
 
-Metaclass DateAndTime >> clockPrecision
+DateAndTime class >> clockPrecision
 [
 	"One nanosecond precision"
-^ Duration seconds: 0 nanoSeconds: 1
+
+	^ Duration seconds: 0 nanoSeconds: 1
 ]
 
-Metaclass DateAndTime >> current
+DateAndTime class >> current
 [
-^ self now
+	^ self now
 ]
 
-Metaclass DateAndTime >> date: aDate time: aTime
+DateAndTime class >> date: aDate time: aTime
 [
-^ self	year: aDate year	day: aDate dayOfYear	hour: aTime hour	minute: aTime minute	second: aTime second
+	^ self
+		year: aDate year
+		day: aDate dayOfYear
+		hour: aTime hour
+		minute: aTime minute
+		second: aTime second
 ]
 
-Metaclass DateAndTime >> dosEpoch
+DateAndTime class >> dosEpoch
 [
 	"Answer a DateAndTime representing the DOS epoch (1 January 1980, midnight UTC)"
-^ self basicNew	ticks: #(2444240 0 0) offset: Duration zero;	yourself
+
+	^ self basicNew
+		ticks: #(2444240 0 0) offset: Duration zero;
+		yourself
 ]
 
-Metaclass DateAndTime >> epoch
+DateAndTime class >> epoch
 [
 	"Answer a DateAndTime representing the Squeak epoch: 1 January 1901"
-^ (self julianDayNumber: SqueakEpoch) offset: 0
+
+	^ (self julianDayNumber: SqueakEpoch) offset: 0
 ]
 
-Metaclass DateAndTime >> fromDosTime: anInteger
+DateAndTime class >> fromDosTime: anInteger
 [
-self deprecated: 'Use fromDosTimestamp:' on: '21 May 2012' in: 'Pharo 2.0'.^ self fromDosTimestamp: anInteger
+	self deprecated: 'Use fromDosTimestamp:' on: '21 May 2012' in: 'Pharo 2.0'.
+	^ self fromDosTimestamp: anInteger
 ]
 
-Metaclass DateAndTime >> fromDosTimestamp: anInteger
+DateAndTime class >> fromDosTimestamp: anInteger
 [
-^ (DosTimestamp on: anInteger) asDateAndTime
+	^ (DosTimestamp on: anInteger) asDateAndTime
 ]
 
-Metaclass DateAndTime >> fromSeconds: secondsSinceEpochUTC
+DateAndTime class >> fromSeconds: secondsSinceEpochUTC
 [
 	"Answer a DateAndTime since the Squeak epoch: 1 January 1901 for the seconds in UTC time"
-^ self fromSeconds: secondsSinceEpochUTC offset: self localOffset
+
+	^ self fromSeconds: secondsSinceEpochUTC offset: self localOffset
 ]
 
-Metaclass DateAndTime >> fromSeconds: utcSecondsSinceEpoch offset: aUTCOffset
+DateAndTime class >> fromSeconds: utcSecondsSinceEpoch offset: aUTCOffset
 [
 	"Answer a DateAndTime since the Squeak epoch: 1 January 1901 for the given timeZone"
-| integerSeconds nanos |integerSeconds := utcSecondsSinceEpoch truncated.integerSeconds = utcSecondsSinceEpoch	ifTrue: [ nanos := 0 ]	ifFalse: [ nanos := ((utcSecondsSinceEpoch - integerSeconds) * NanosInSecond) asInteger ].^ self basicNew ticks: (Array with: SqueakEpoch with: integerSeconds with: nanos) offset: aUTCOffset asDuration
+
+	| integerSeconds nanos |
+	integerSeconds := utcSecondsSinceEpoch truncated.
+	integerSeconds = utcSecondsSinceEpoch
+		ifTrue: [ nanos := 0 ]
+		ifFalse: [ nanos := ((utcSecondsSinceEpoch - integerSeconds) * NanosInSecond) asInteger ].
+	^ self basicNew ticks: (Array with: SqueakEpoch with: integerSeconds with: nanos) offset: aUTCOffset asDuration
 ]
 
-Metaclass DateAndTime >> fromString: aString
+DateAndTime class >> fromString: aString
 [
-^ self readFrom: aString readStream
+	^ self readFrom: aString readStream
 ]
 
-Metaclass DateAndTime >> fromUnixTime: anInteger
+DateAndTime class >> fromUnixTime: anInteger
 [
-^ self fromSeconds: anInteger + 2177452800	"unix epoch constant"
+	^ self fromSeconds: anInteger + 2177452800	"unix epoch constant"
 ]
 
-Metaclass DateAndTime >> fuzzyReadFrom: aStream
+DateAndTime class >> fuzzyReadFrom: aStream
 [
-| bc year month day hour minute second nanos offset buffer ch |aStream peek = $-	ifTrue: [ 		aStream next.		bc := -1 ]	ifFalse: [ bc := 1 ].year := (aStream upTo: $-) asInteger * bc.month := (aStream upTo: $-) asInteger ifNil: [ 1 ].day := (aStream upTo: $T) asInteger ifNil: [ 1 ].hour := (aStream upTo: $:) asInteger ifNil: [ 0 ].buffer := '00:' copy.ch := nil.minute := buffer writeStream.[ aStream atEnd | (ch = $:) | (ch = $+) | (ch = $-) ] whileFalse: [ ch := minute nextPut: aStream next ].(ch isNil or: [ ch isDigit ])	ifTrue: [ ch := $: ].minute := (buffer readStream upTo: ch) asInteger.buffer := '00.' copy.second := buffer writeStream.[ aStream atEnd | (ch = $.) | (ch = $+) | (ch = $-) ] whileFalse: [ ch := second nextPut: aStream next ].(ch isNil or: [ ch isDigit ])	ifTrue: [ ch := $. ].second := (buffer readStream upTo: ch) asInteger.buffer := '000000000' copy.ch = $.	ifTrue: [ 		nanos := buffer writeStream.		[ aStream atEnd | ((ch := aStream next) = $+) | (ch = $-) ] whileFalse: [ nanos nextPut: ch ].		(ch isNil or: [ ch isDigit ])			ifTrue: [ ch := $+ ] ].nanos := buffer asInteger.aStream atEnd	ifTrue: [ offset := Duration zero ]	ifFalse: [ 		ch := aStream next.		ch = $+			ifTrue: [ ch := Character space ].		offset := Duration fromString: ch asString , '0:' , aStream upToEnd , ':0' ].^ self	year: year	month: month	day: day	hour: hour	minute: minute	second: second	nanoSecond: nanos	offset: offset
+	| bc year month day hour minute second nanos offset buffer ch |
+	aStream peek = $-
+		ifTrue: [ aStream next.
+			bc := -1 ]
+		ifFalse: [ bc := 1 ].
+	year := (aStream upTo: $-) asInteger * bc.
+	month := (aStream upTo: $-) asInteger ifNil: [ 1 ].
+	day := (aStream upTo: $T) asInteger ifNil: [ 1 ].
+	hour := (aStream upTo: $:) asInteger ifNil: [ 0 ].
+	buffer := '00:' copy.
+	ch := nil.
+	minute := buffer writeStream.
+	[ aStream atEnd | (ch = $:) | (ch = $+) | (ch = $-) ] whileFalse: [ ch := minute nextPut: aStream next ].
+	(ch isNil or: [ ch isDigit ])
+		ifTrue: [ ch := $: ].
+	minute := (buffer readStream upTo: ch) asInteger.
+	buffer := '00.' copy.
+	second := buffer writeStream.
+	[ aStream atEnd | (ch = $.) | (ch = $+) | (ch = $-) ] whileFalse: [ ch := second nextPut: aStream next ].
+	(ch isNil or: [ ch isDigit ])
+		ifTrue: [ ch := $. ].
+	second := (buffer readStream upTo: ch) asInteger.
+	buffer := '000000000' copy.
+	ch = $.
+		ifTrue: [ nanos := buffer writeStream.
+			[ aStream atEnd | ((ch := aStream next) = $+) | (ch = $-) ] whileFalse: [ nanos nextPut: ch ].
+			(ch isNil or: [ ch isDigit ])
+				ifTrue: [ ch := $+ ] ].
+	nanos := buffer asInteger.
+	aStream atEnd
+		ifTrue: [ offset := Duration zero ]
+		ifFalse: [ ch := aStream next.
+			ch = $+
+				ifTrue: [ ch := Character space ].
+			offset := Duration fromString: ch asString , '0:' , aStream upToEnd , ':0' ].
+	^ self
+		year: year
+		month: month
+		day: day
+		hour: hour
+		minute: minute
+		second: second
+		nanoSecond: nanos
+		offset: offset
 ]
 
-Metaclass DateAndTime >> initialize
+DateAndTime class >> initialize
 [
-ClockProvider := Time.LastTickSemaphore := Semaphore forMutualExclusion.LastMilliSeconds := 0.LastTick := 0.OffsetsAreValid := false.Smalltalk addToStartUpList: self
+	super initialize.
+	ClockProvider := Time.
+	LastTickSemaphore := Semaphore forMutualExclusion.
+	LastMilliSeconds := 0.
+	LastTick := 0.
+	Smalltalk addToStartUpList: self.
+	self startUp: true
 ]
 
-Metaclass DateAndTime >> initializeOffsets
+DateAndTime class >> initializeOffsets
 [
-| durationSinceEpoch secondsSinceMidnight nowSecs |LastTick := 0.nowSecs := self clock secondsWhenClockTicks.LastMilliSeconds := self millisecondClockValue.durationSinceEpoch := Duration	days: SqueakEpoch	hours: 0	minutes: 0	seconds: nowSecs.DaysSinceEpoch := durationSinceEpoch days.secondsSinceMidnight := (durationSinceEpoch	-		(Duration			days: DaysSinceEpoch			hours: 0			minutes: 0			seconds: 0)) asSeconds.MilliSecondOffset := secondsSinceMidnight * 1000 - LastMilliSeconds
+	| durationSinceEpoch secondsSinceMidnight nowSecs |
+	LastTick := 0.
+	nowSecs := self clock secondsWhenClockTicks.
+	LastMilliSeconds := self millisecondClockValue.
+	durationSinceEpoch := Duration
+		days: SqueakEpoch
+		hours: 0
+		minutes: 0
+		seconds: nowSecs.
+	DaysSinceEpoch := durationSinceEpoch days.
+	secondsSinceMidnight := (durationSinceEpoch
+		- (Duration
+				days: DaysSinceEpoch
+				hours: 0
+				minutes: 0
+				seconds: 0)) asSeconds.
+	MilliSecondOffset := secondsSinceMidnight * 1000 - LastMilliSeconds
 ]
 
-Metaclass DateAndTime >> julianDayNumber: aJulianDayNumber
+DateAndTime class >> julianDayNumber: aJulianDayNumber
 [
-^ self basicNew	ticks: aJulianDayNumber days ticks offset: Duration new;	yourself
+	^ self basicNew
+		ticks: aJulianDayNumber days ticks offset: Duration new;
+		yourself
 ]
 
-Metaclass DateAndTime >> julianDayNumber: aJulianDayNumber offset: aTimeZoneOffset
+DateAndTime class >> julianDayNumber: aJulianDayNumber offset: aTimeZoneOffset
 [
 	"Return a DateAndTime at midnight local time at the given julian day"
-| ticks |"create a ticks representation in UTC, take the given julian day in local time"ticks := aJulianDayNumber days ticks.ticks at: 2 put: aTimeZoneOffset asSeconds negated.^ self basicNew	ticks: ticks offset: aTimeZoneOffset;	yourself
+
+	| ticks |
+	"create a ticks representation in UTC, take the given julian day in local time"
+	ticks := aJulianDayNumber days ticks.
+	ticks at: 2 put: aTimeZoneOffset asSeconds negated.
+	^ self basicNew
+		ticks: ticks offset: aTimeZoneOffset;
+		yourself
 ]
 
-Metaclass DateAndTime >> localOffset
+DateAndTime class >> localOffset
 [
 	"Answer the duration we are offset from UTC"
-^ self localTimeZone offset
+
+	^ self localTimeZone offset
 ]
 
-Metaclass DateAndTime >> localTimeZone
+DateAndTime class >> localTimeZone
 [
 	"Answer the local time zone"
-^ LocalTimeZone ifNil: [ LocalTimeZone := TimeZone default ]
+
+	^ LocalTimeZone ifNil: [ LocalTimeZone := TimeZone default ]
 ]
 
-Metaclass DateAndTime >> localTimeZone: aTimeZone
+DateAndTime class >> localTimeZone: aTimeZone
 [
 	"Set the local time zone"
-	"	DateAndTime localTimeZone: (TimeZone offset:  0 hours name: 'Universal Time' abbreviation: 'UTC').	DateAndTime localTimeZone: (TimeZone offset: -8 hours name: 'Pacific Standard Time' abbreviation: 'PST').	"
-LocalTimeZone := aTimeZone
+
+	"
+	DateAndTime localTimeZone: (TimeZone offset:  0 hours name: 'Universal Time' abbreviation: 'UTC').
+	DateAndTime localTimeZone: (TimeZone offset: -8 hours name: 'Pacific Standard Time' abbreviation: 'PST').
+	"
+
+	LocalTimeZone := aTimeZone
 ]
 
-Metaclass DateAndTime >> midnight
+DateAndTime class >> midnight
 [
-^ self now midnight
+	^ self now midnight
 ]
 
-Metaclass DateAndTime >> milliSecondsSinceMidnight
+DateAndTime class >> milliSecondsSinceMidnight
 [
-| msm msClock |"This is usually only during system startup..."self waitForOffsets.msClock := self millisecondClockValue.msClock < LastMilliSeconds	ifTrue: [ 		"rolled over"		MilliSecondOffset := MilliSecondOffset + (SmallInteger maxVal // 2) + 1 ].LastMilliSeconds := msClock.[ msm := msClock + MilliSecondOffset.msm >= 86400000 ]	whileTrue: [ 		"next day"		LastTick := -1.		DaysSinceEpoch := DaysSinceEpoch + 1.		MilliSecondOffset := MilliSecondOffset - 86400000 ].	"day rolled over sanity check"(LastTick = -1	and: [ 		(Duration			days: SqueakEpoch			hours: 0			minutes: 0			seconds: self clock totalSeconds) days ~= DaysSinceEpoch ])	ifTrue: [ 		self initializeOffsets.		^ self milliSecondsSinceMidnight ].^ msm
+	| msm msClock |
+	"This is usually only during system startup..."
+	self waitForOffsets.
+	msClock := self millisecondClockValue.
+	msClock < LastMilliSeconds
+		ifTrue: [ "rolled over"
+			MilliSecondOffset := MilliSecondOffset + (SmallInteger maxVal // 2) + 1 ].
+	LastMilliSeconds := msClock.
+	[ msm := msClock + MilliSecondOffset.
+	msm >= 86400000 ]
+		whileTrue: [ "next day"
+			LastTick := -1.
+			DaysSinceEpoch := DaysSinceEpoch + 1.
+			MilliSecondOffset := MilliSecondOffset - 86400000 ].	"day rolled over sanity check"
+	(LastTick = -1
+		and: [ (Duration
+				days: SqueakEpoch
+				hours: 0
+				minutes: 0
+				seconds: self clock totalSeconds) days ~= DaysSinceEpoch ])
+		ifTrue: [ self initializeOffsets.
+			^ self milliSecondsSinceMidnight ].
+	^ msm
 ]
 
-Metaclass DateAndTime >> millisecondClockValue
+DateAndTime class >> millisecondClockValue
 [
-^ self clock millisecondClockValue
+	^ self clock millisecondClockValue
 ]
 
-Metaclass DateAndTime >> new
+DateAndTime class >> new
 [
 	"Answer a DateAndTime representing the Squeak epoch: 1 January 1901"
-^ self epoch offset: self localOffset
+
+	^ self epoch offset: self localOffset
 ]
 
-Metaclass DateAndTime >> noon
+DateAndTime class >> noon
 [
-^ self now noon
+	^ self now noon
 ]
 
-Metaclass DateAndTime >> now
+DateAndTime class >> now
 [
-	" 	[ 10000 timesRepeat: [ self now. ] ] timeToRun / 10000.0 . 	If calls to DateAndTime-c-#now are within a single millisecond the semaphore code 	to ensure that (self now <= self now) slows things down considerably by a factor of about 20.	The actual speed of a single call to DateAndTime-now in milliseconds is 	demonstrated by the unguarded method below.	[ 100000 timesRepeat: [ self todayAtMilliSeconds: (self milliSecondsSinceMidnight) ] ] timeToRun / 100000.0 .  0.00494 0.00481 0.00492 0.00495	  	"
-| nanoTicks msm |nanoTicks := (msm := self milliSecondsSinceMidnight) * 1000000.LastTick < nanoTicks	ifTrue: [ 		LastTick := nanoTicks.		^ self todayAtMilliSeconds: msm ].LastTickSemaphore	critical: [ 		LastTick := LastTick + 1.		^ self todayAtNanoSeconds: LastTick ]
+	" 
+	[ 10000 timesRepeat: [ self now. ] ] timeToRun / 10000.0 . 
+
+	If calls to DateAndTime-c-#now are within a single millisecond the semaphore code 
+	to ensure that (self now <= self now) slows things down considerably by a factor of about 20.
+
+	The actual speed of a single call to DateAndTime-now in milliseconds is 
+	demonstrated by the unguarded method below.
+
+	[ 100000 timesRepeat: [ self todayAtMilliSeconds: (self milliSecondsSinceMidnight) ] ] timeToRun / 100000.0 .  0.00494 0.00481 0.00492 0.00495
+	  
+	"
+
+	| nanoTicks msm |
+	nanoTicks := (msm := self milliSecondsSinceMidnight) * 1000000.
+	LastTick < nanoTicks
+		ifTrue: [ LastTick := nanoTicks.
+			^ self todayAtMilliSeconds: msm ].
+	LastTickSemaphore critical: [ LastTick := LastTick + 1.
+			^ self todayAtNanoSeconds: LastTick ]
 ]
 
-Metaclass DateAndTime >> readFrom: aStream
+DateAndTime class >> readFrom: aStream
 [
-| offset date time ch |date := Date readFrom: aStream.[ aStream peek isDigit ] whileFalse: [ aStream next ].time := Time readFrom: aStream.aStream atEnd	ifTrue: [ offset := self localOffset ]	ifFalse: [ 		| upToEnd |		ch := aStream next.		ch = $+			ifTrue: [ ch := Character space ].		upToEnd := aStream upTo: Character space.		(upToEnd includes: $:)			ifFalse: [ upToEnd := (upToEnd first: 2) , ':' , (upToEnd allButFirst: 2) ].		offset := Duration fromString: ch asString , '0:' , upToEnd , ':0' ].^ self	year: date year	month: date monthIndex	day: date dayOfMonth	hour: time hour	minute: time minute	second: time second	nanoSecond: time nanoSecond	offset: offset	"	'-1199-01-05T20:33:14.321-05:00' asDateAndTime		' 2002-05-16T17:20:45.1+01:01' asDateAndTime		' 2002-05-16T17:20:45.02+01:01' asDateAndTime		' 2002-05-16T17:20:45.003+01:01' asDateAndTime		' 2002-05-16T17:20:45.0004+01:01' asDateAndTime  		' 2002-05-16T17:20:45.00005' asDateAndTime		' 2002-05-16T17:20:45.000006+01:01' asDateAndTime		' 2002-05-16T17:20:45.0000007+01:01' asDateAndTime		' 2002-05-16T17:20:45.00000008-01:01' asDateAndTime   		' 2002-05-16T17:20:45.000000009+01:01' asDateAndTime  		' 2002-05-16T17:20:45.0000000001+01:01' asDateAndTime   		' 2002-05-16T17:20' asDateAndTime		' 2002-05-16T17:20:45' asDateAndTime		' 2002-05-16T17:20:45+01:57' asDateAndTime 		' 2002-05-16T17:20:45-02:34' asDateAndTime 		' 2002-05-16T17:20:45+00:00' asDateAndTime		' 1997-04-26T01:02:03+01:02:3' asDateAndTime  	"
+	"Parse and return a new DateAndTime instance from stream, 
+	as a Date, a Time and a TimeZone offset."
+
+	"self readFrom: ' 2013-03-04T23:47:52.876+01:00' readStream"
+
+	| offset date time ch |
+	date := Date readFrom: aStream.
+	[ aStream peek isDigit ] whileFalse: [ aStream next ].
+	time := Time readFrom: aStream.
+	aStream skipSeparators.
+	offset := self readTimezoneOffsetFrom: aStream.
+	^ self
+		year: date year
+		month: date monthIndex
+		day: date dayOfMonth
+		hour: time hour
+		minute: time minute
+		second: time second
+		nanoSecond: time nanoSecond
+		offset: offset	"	'-1199-01-05T20:33:14.321-05:00' asDateAndTime		' 2002-05-16T17:20:45.1+01:01' asDateAndTime		' 2002-05-16T17:20:45.02+01:01' asDateAndTime		' 2002-05-16T17:20:45.003+01:01' asDateAndTime		' 2002-05-16T17:20:45.0004+01:01' asDateAndTime  		' 2002-05-16T17:20:45.00005' asDateAndTime		' 2002-05-16T17:20:45.000006+01:01' asDateAndTime		' 2002-05-16T17:20:45.0000007+01:01' asDateAndTime		' 2002-05-16T17:20:45.00000008-01:01' asDateAndTime   		' 2002-05-16T17:20:45.000000009+01:01' asDateAndTime  		' 2002-05-16T17:20:45.0000000001+01:01' asDateAndTime   		' 2002-05-16T17:20' asDateAndTime		' 2002-05-16T17:20:45' asDateAndTime		' 2002-05-16T17:20:45+01:57' asDateAndTime 		' 2002-05-16T17:20:45-02:34' asDateAndTime 		' 2002-05-16T17:20:45+00:00' asDateAndTime		' 1997-04-26T01:02:03+01:02:3' asDateAndTime  	"
 ]
 
-Metaclass DateAndTime >> startUp: resuming
+DateAndTime class >> readOptionalSeparatorFrom: stream
 [
-resuming	ifFalse: [ ^ self ].OffsetsAreValid := false.[ self initializeOffsets.OffsetsAreValid := true ] forkAt: Processor userInterruptPriority
+	"Read an optional separator (non decimal digit) from stream and return it.
+	Return nil if nothing was read"
+
+	^ (stream atEnd or: [ '0123456789' includes: stream peek ])
+		ifTrue: [ nil ]
+		ifFalse: [ stream next ]
 ]
 
-Metaclass DateAndTime >> today
+DateAndTime class >> readTimezoneOffsetFrom: stream
 [
-^ self midnight
+	"Read and return an optional timezone offset in the form of 
+	[+|-]hh[[separator]mm[[separator]ss]] or Z from stream as a duration.
+	If there is no offset, return the local offset."
+
+	| sign hour minute second |
+	(stream peekFor: $Z)
+		ifTrue: [ ^ Duration zero ].
+	hour := minute := second := 0.
+	^ ('+-' includes: stream peek)
+		ifTrue: [ sign := stream next = $-
+				ifTrue: [ -1 ]
+				ifFalse: [ 1 ].
+			hour := self readTwoDigitIntegerFrom: stream.
+			(self readOptionalSeparatorFrom: stream)
+				ifNotNil: [ minute := self readTwoDigitIntegerFrom: stream.
+					(self readOptionalSeparatorFrom: stream) ifNotNil: [ second := Integer readFrom: stream ] ].
+			Duration seconds: sign * (hour * 3600 + (minute * 60) + second) ]
+		ifFalse: [ self localOffset ]
 ]
 
-Metaclass DateAndTime >> todayAtMilliSeconds: milliSecondsSinceMidnight
+DateAndTime class >> readTwoDigitIntegerFrom: stream
 [
-	"This is usually only during system startup...		[ 100000 timesRepeat: [ self fromMilliSeconds: self milliSecondsSinceMidnight. ] ] timeToRun.	"
-| offset milliSecondsSinceMidnightUTC |self waitForOffsets.offset := self localOffset.milliSecondsSinceMidnightUTC := milliSecondsSinceMidnight - offset asMilliSeconds.^ self basicNew	setJdn: DaysSinceEpoch	seconds: milliSecondsSinceMidnightUTC // 1000	nano: milliSecondsSinceMidnightUTC \\ 1000 * 1000000	offset: offset
+	"Parse and return a decimal number of 2 digits from stream.
+	Fail if that is not possible"
+
+	| integer |
+	integer := 0.
+	2
+		timesRepeat: [ | char |
+			char := stream next.
+			('0123456789' includes: char)
+				ifFalse: [ self error: 'Decimal digit expected' ].
+			integer := integer * 10 + char digitValue ].
+	^ integer
 ]
 
-Metaclass DateAndTime >> todayAtNanoSeconds: nanoSecondsSinceMidnight
+DateAndTime class >> startUp: resuming
+[
+	resuming
+		ifFalse: [ ^ self ].
+	OffsetsAreValid := false.
+	[ self initializeOffsets.
+	OffsetsAreValid := true ] forkAt: Processor userInterruptPriority
+]
+
+DateAndTime class >> today
+[
+	^ self midnight
+]
+
+DateAndTime class >> todayAtMilliSeconds: milliSecondsSinceMidnight
+[
+	"This is usually only during system startup...
+		[ 100000 timesRepeat: [ self fromMilliSeconds: self milliSecondsSinceMidnight. ] ] timeToRun.
+	"
+
+	| offset milliSecondsSinceMidnightUTC |
+	self waitForOffsets.
+	offset := self localOffset.
+	milliSecondsSinceMidnightUTC := milliSecondsSinceMidnight - offset asMilliSeconds.
+	^ self basicNew
+		setJdn: DaysSinceEpoch
+		seconds: milliSecondsSinceMidnightUTC // 1000
+		nano: milliSecondsSinceMidnightUTC \\ 1000 * 1000000
+		offset: offset
+]
+
+DateAndTime class >> todayAtNanoSeconds: nanoSecondsSinceMidnight
 [
 	"This is usually only during system startup..."
-| offset nanoSecondsSinceMidnightUTC |self waitForOffsets.offset := self localOffset.nanoSecondsSinceMidnightUTC := nanoSecondsSinceMidnight - offset asNanoSeconds.^ self basicNew	setJdn: DaysSinceEpoch	seconds: nanoSecondsSinceMidnightUTC // 1000000000	nano: nanoSecondsSinceMidnightUTC \\ 1000000000	offset: offset
+
+	| offset nanoSecondsSinceMidnightUTC |
+	self waitForOffsets.
+	offset := self localOffset.
+	nanoSecondsSinceMidnightUTC := nanoSecondsSinceMidnight - offset asNanoSeconds.
+	^ self basicNew
+		setJdn: DaysSinceEpoch
+		seconds: nanoSecondsSinceMidnightUTC // 1000000000
+		nano: nanoSecondsSinceMidnightUTC \\ 1000000000
+		offset: offset
 ]
 
-Metaclass DateAndTime >> tomorrow
+DateAndTime class >> tomorrow
 [
-^ self today asDate next asDateAndTime
+	^ self today asDate next asDateAndTime
 ]
 
-Metaclass DateAndTime >> totalSeconds
+DateAndTime class >> totalSeconds
 [
-^ Time totalSeconds
+	"Answer the total seconds since the Squeak epoch: 1 January 1901 in UTC"
+
+	^ Time totalSeconds - self localOffset asSeconds
 ]
 
-Metaclass DateAndTime >> unixEpoch
+DateAndTime class >> unixEpoch
 [
 	"Answer a DateAndTime representing the Unix epoch (1 January 1970, midnight UTC)"
-^ self basicNew	ticks: #(2440588 0 0) offset: Duration zero;	yourself
+
+	^ self basicNew
+		ticks: #(2440588 0 0) offset: Duration zero;
+		yourself
 ]
 
-Metaclass DateAndTime >> waitForOffsets
+DateAndTime class >> waitForOffsets
 [
-OffsetsAreValid	ifFalse: [ 		[ 		(Delay forSeconds: 1) wait.		OffsetsAreValid ] whileFalse ]
+	OffsetsAreValid
+		ifFalse: [ [ (Delay forSeconds: 1) wait.
+			OffsetsAreValid ] whileFalse ]
 ]
 
-Metaclass DateAndTime >> year: year day: dayOfYear
+DateAndTime class >> year: year day: dayOfYear
 [
 	"Return a DateAndTime"
-^ self	year: year	day: dayOfYear	hour: 0	minute: 0	second: 0
+
+	^ self
+		year: year
+		day: dayOfYear
+		hour: 0
+		minute: 0
+		second: 0
 ]
 
-Metaclass DateAndTime >> year: year day: dayOfYear hour: hour minute: minute second: second
+DateAndTime class >> year: year day: dayOfYear hour: hour minute: minute second: second
 [
-^ self	year: year	day: dayOfYear	hour: hour	minute: minute	second: second	offset: self localOffset
+	^ self
+		year: year
+		day: dayOfYear
+		hour: hour
+		minute: minute
+		second: second
+		offset: self localOffset
 ]
 
-Metaclass DateAndTime >> year: year day: dayOfYear hour: hour minute: minute second: second offset: offset
+DateAndTime class >> year: year day: dayOfYear hour: hour minute: minute second: second offset: offset
 [
 	"Return a DataAndTime"
-| y d |y := self	year: year	month: 1	day: 1	hour: hour	minute: minute	second: second	nanoSecond: 0	offset: offset.d := Duration days: dayOfYear - 1.^ y + d
+
+	| y d |
+	y := self
+		year: year
+		month: 1
+		day: 1
+		hour: hour
+		minute: minute
+		second: second
+		nanoSecond: 0
+		offset: offset.
+	d := Duration days: dayOfYear - 1.
+	^ y + d
 ]
 
-Metaclass DateAndTime >> year: year month: month day: day
+DateAndTime class >> year: year month: month day: day
 [
 	"Return a DateAndTime, midnight local time"
-^ self	year: year	month: month	day: day	hour: 0	minute: 0
+
+	^ self
+		year: year
+		month: month
+		day: day
+		hour: 0
+		minute: 0
 ]
 
-Metaclass DateAndTime >> year: year month: month day: day hour: hour minute: minute
+DateAndTime class >> year: year month: month day: day hour: hour minute: minute
 [
 	"Return a DateAndTime"
-^ self	year: year	month: month	day: day	hour: hour	minute: minute	second: 0
+
+	^ self
+		year: year
+		month: month
+		day: day
+		hour: hour
+		minute: minute
+		second: 0
 ]
 
-Metaclass DateAndTime >> year: year month: month day: day hour: hour minute: minute offset: anOffset
+DateAndTime class >> year: year month: month day: day hour: hour minute: minute offset: anOffset
 [
 	"Return a DateAndTime"
-^ self	year: year	month: month	day: day	hour: hour	minute: minute	second: 0	offset: anOffset
+
+	^ self
+		year: year
+		month: month
+		day: day
+		hour: hour
+		minute: minute
+		second: 0
+		offset: anOffset
 ]
 
-Metaclass DateAndTime >> year: year month: month day: day hour: hour minute: minute second: second
+DateAndTime class >> year: year month: month day: day hour: hour minute: minute second: second
 [
 	"Return a DateAndTime"
-^ self	year: year	month: month	day: day	hour: hour	minute: minute	second: second	offset: self localOffset
+
+	^ self
+		year: year
+		month: month
+		day: day
+		hour: hour
+		minute: minute
+		second: second
+		offset: self localOffset
 ]
 
-Metaclass DateAndTime >> year: year month: month day: day hour: hour minute: minute second: second nanoSecond: nanoCount offset: utcOffset
+DateAndTime class >> year: year month: month day: day hour: hour minute: minute second: second nanoSecond: nanoCount offset: utcOffset
 [
 	"Return a DateAndTime with the values in the given TimeZone (UTCOffset)"
-| monthIndex daysInMonth p q r s julianDayNumber localSeconds utcSeconds |monthIndex := month isInteger	ifTrue: [ month ]	ifFalse: [ Month indexOfMonth: month ].daysInMonth := Month daysInMonth: monthIndex forYear: year.day < 1	ifTrue: [ self error: 'day may not be zero or negative' ].day > daysInMonth	ifTrue: [ self error: 'day is after month ends' ].p := monthIndex - 14 quo: 12.q := year + 4800 + p.r := monthIndex - 2 - (12 * p).s := year + 4900 + p quo: 100.julianDayNumber := (1461 * q quo: 4) + (367 * r quo: 12) - (3 * s quo: 4) + (day - 32075).localSeconds := (hour * 60 + minute) * 60 + second.utcSeconds := localSeconds - utcOffset asSeconds.^ self basicNew	setJdn: julianDayNumber		seconds: utcSeconds		nano: nanoCount		offset: utcOffset;	yourself
+
+	| monthIndex daysInMonth p q r s julianDayNumber localSeconds utcSeconds |
+	monthIndex := month isInteger
+		ifTrue: [ month ]
+		ifFalse: [ Month indexOfMonth: month ].
+	daysInMonth := Month daysInMonth: monthIndex forYear: year.
+	day < 1
+		ifTrue: [ self error: 'day may not be zero or negative' ].
+	day > daysInMonth
+		ifTrue: [ self error: 'day is after month ends' ].
+	p := monthIndex - 14 quo: 12.
+	q := year + 4800 + p.
+	r := monthIndex - 2 - (12 * p).
+	s := year + 4900 + p quo: 100.
+	julianDayNumber := (1461 * q quo: 4) + (367 * r quo: 12) - (3 * s quo: 4) + (day - 32075).
+	localSeconds := (hour * 60 + minute) * 60 + second.
+	utcSeconds := localSeconds - utcOffset asSeconds.
+	^ self basicNew
+		setJdn: julianDayNumber
+			seconds: utcSeconds
+			nano: nanoCount
+			offset: utcOffset;
+		yourself
 ]
 
-Metaclass DateAndTime >> year: year month: month day: day hour: hour minute: minute second: second offset: offset
+DateAndTime class >> year: year month: month day: day hour: hour minute: minute second: second offset: offset
 [
-^ self	year: year	month: month	day: day	hour: hour	minute: minute	second: second	nanoSecond: 0	offset: offset
+	^ self
+		year: year
+		month: month
+		day: day
+		hour: hour
+		minute: minute
+		second: second
+		nanoSecond: 0
+		offset: offset
 ]
 
-Metaclass DateAndTime >> year: year month: month day: day offset: anOffset
+DateAndTime class >> year: year month: month day: day offset: anOffset
 [
 	"Return a DateAndTime, midnight in the timezone with the given offset"
-^ self	year: year	month: month	day: day	hour: 0	minute: 0	offset: anOffset
+
+	^ self
+		year: year
+		month: month
+		day: day
+		hour: 0
+		minute: 0
+		offset: anOffset
 ]
 
-Metaclass DateAndTime >> yesterday
+DateAndTime class >> yesterday
 [
-^ self today asDate previous asDateAndTime
+	^ self today asDate previous asDateAndTime
 ]
 

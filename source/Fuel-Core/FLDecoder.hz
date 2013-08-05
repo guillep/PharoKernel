@@ -1,132 +1,183 @@
-Class
-	name: #FLDecoder;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #(#stream #objects #isBigEndian #indexStream #migrations #objectsWriteStream );
-	classVariables: #();
+FLDecoder
+	instanceVariables: #(#stream #objects #isBigEndian #indexStream #migrations #objectsWriteStream #globalEnvironment );
 	package: #'Fuel-Core'.
 
-Class FLDecoder >> classNamed: className
+FLDecoder >> classNamed: className
 [
-^ (migrations detect: [ :m | m sourceClassName = className ] ifNone: [ ^ self globalClassNamed: className ]) targetClass
+	^ (migrations detect: [ :m | m sourceClassName = className ] ifNone: [ ^ self globalClassNamed: className ])
+		targetClass
 ]
 
-Class FLDecoder >> decodeYourself
+FLDecoder >> decodeYourself
 [
-| objectCount |objectCount := self nextEncodedPositiveInteger.indexStream := FLIndexStream on: stream digits: objectCount digitLength.objects := Array new: objectCount.objectsWriteStream := WriteStream on: objects.isBigEndian := self nextEncodedPositiveInteger
+	| objectCount |
+	objectCount := self nextEncodedPositiveInteger.
+	indexStream := FLIndexStream on: stream digits: objectCount digitLength.
+	objects := Array new: objectCount.
+	objectsWriteStream := WriteStream on: objects.
+	isBigEndian := self nextEncodedPositiveInteger
 ]
 
-Class FLDecoder >> globalClassNamed: className
+FLDecoder >> globalClassNamed: className
 [
-^ Smalltalk globals at: className ifAbsent: [ FLClassNotFound signalWithName: className ]
+	^ globalEnvironment at: className ifAbsent: [ FLClassNotFound signalWithName: className ]
 ]
 
-Class FLDecoder >> initializeOn: aStream migrations: aCollection
+FLDecoder >> globalEnvironment
 [
-self initialize.stream := aStream.migrations := aCollection
+	"Answer a dictionary where the look up for global symbols will be done during materialization."
+
+	^ globalEnvironment
 ]
 
-Class FLDecoder >> isBigEndian
+FLDecoder >> initializeOn: aStream migrations: aCollection globalEnvironment: aDictionary
 [
-^ isBigEndian
+	self initialize.
+	stream := aStream.
+	migrations := aCollection.
+	globalEnvironment := aDictionary
 ]
 
-Class FLDecoder >> nextEncodedBitmap
+FLDecoder >> isBigEndian
 [
-^ Bitmap newFromStream: stream
+	^ isBigEndian
 ]
 
-Class FLDecoder >> nextEncodedByte
+FLDecoder >> nextEncodedBitmap
 [
-^ stream next
+	^ Bitmap newFromStream: stream
 ]
 
-Class FLDecoder >> nextEncodedBytesInto: aBytesObject
+FLDecoder >> nextEncodedByte
 [
-stream next: aBytesObject basicSize into: aBytesObject
+	^ stream next
 ]
 
-Class FLDecoder >> nextEncodedClusterClass
+FLDecoder >> nextEncodedBytesInto: aBytesObject
 [
-^ Smalltalk globals at: self nextEncodedString asSymbol
+	stream next: aBytesObject basicSize into: aBytesObject
 ]
 
-Class FLDecoder >> nextEncodedInt24
+FLDecoder >> nextEncodedClusterClass
 [
-| n firstDigit |n := firstDigit := stream next.n := (n bitShift: 8) + stream next.n := (n bitShift: 8) + stream next.firstDigit >= 128	ifTrue: [ n := -16r1000000 + n ].	"decode negative 24-bit integer"^ n
+	^ self class environment at: self nextEncodedString asSymbol
 ]
 
-Class FLDecoder >> nextEncodedInt32
+FLDecoder >> nextEncodedInt24
 [
-| n firstDigit |n := firstDigit := stream next.n := (n bitShift: 8) + stream next.n := (n bitShift: 8) + stream next.n := (n bitShift: 8) + stream next.firstDigit >= 128	ifTrue: [ n := -16r100000000 + n ].	"decode negative 32-bit integer"^ n
+	| n firstDigit |
+	n := firstDigit := stream next.
+	n := (n bitShift: 8) + stream next.
+	n := (n bitShift: 8) + stream next.
+	firstDigit >= 128
+		ifTrue: [ n := -16r1000000 + n ].	"decode negative 24-bit integer"
+	^ n
 ]
 
-Class FLDecoder >> nextEncodedPositiveInteger
+FLDecoder >> nextEncodedInt32
+[
+	| n firstDigit |
+	n := firstDigit := stream next.
+	n := (n bitShift: 8) + stream next.
+	n := (n bitShift: 8) + stream next.
+	n := (n bitShift: 8) + stream next.
+	firstDigit >= 128
+		ifTrue: [ n := -16r100000000 + n ].	"decode negative 32-bit integer"
+	^ n
+]
+
+FLDecoder >> nextEncodedPositiveInteger
 [
 	"Read a 32-bit signed integer from the next 4 bytes"
-| s |s := 0.1 to: 4 do: [ :i | s := (s bitShift: 8) + stream next ].^ s
+
+	| s |
+	s := 0.
+	1 to: 4 do: [ :i | s := (s bitShift: 8) + stream next ].
+	^ s
 ]
 
-Class FLDecoder >> nextEncodedReference
+FLDecoder >> nextEncodedReference
 [
-^ objects at: indexStream nextIndex
+	^ objects at: indexStream nextIndex
 ]
 
-Class FLDecoder >> nextEncodedString
+FLDecoder >> nextEncodedString
 [
-| length aByteArray |"read the length in binary mode"length := stream next.	"first byte."length >= 192	ifTrue: [ 		length := length - 192.		1 to: 3 do: [ :ii | length := length * 256 + stream next ] ].aByteArray := ByteArray new: length.stream nextInto: aByteArray.^ aByteArray asString
+	| length aByteArray |
+	"read the length in binary mode"
+	length := stream next.	"first byte."
+	length >= 192
+		ifTrue: [ length := length - 192.
+			1 to: 3 do: [ :ii | length := length * 256 + stream next ] ].
+	aByteArray := ByteArray new: length.
+	stream nextInto: aByteArray.
+	^ aByteArray asString
 ]
 
-Class FLDecoder >> nextEncodedUint16
+FLDecoder >> nextEncodedUint16
 [
 	"Answer the next unsigned, 16-bit integer from this (binary) stream."
-^ (stream next bitShift: 8) + stream next
+
+	^ (stream next bitShift: 8) + stream next
 ]
 
-Class FLDecoder >> nextEncodedUint24
+FLDecoder >> nextEncodedUint24
 [
 	"Answer the next unsigned, 24-bit integer from this (binary) stream."
-| n |n := stream next.n := (n bitShift: 8) + stream next.n := (n bitShift: 8) + stream next.^ n
+
+	| n |
+	n := stream next.
+	n := (n bitShift: 8) + stream next.
+	n := (n bitShift: 8) + stream next.
+	^ n
 ]
 
-Class FLDecoder >> nextEncodedUint32
+FLDecoder >> nextEncodedUint32
 [
 	"Answer the next unsigned, 32-bit integer from this (binary) stream."
-| n |n := stream next.n := (n bitShift: 8) + stream next.n := (n bitShift: 8) + stream next.n := (n bitShift: 8) + stream next.^ n
+
+	| n |
+	n := stream next.
+	n := (n bitShift: 8) + stream next.
+	n := (n bitShift: 8) + stream next.
+	n := (n bitShift: 8) + stream next.
+	^ n
 ]
 
-Class FLDecoder >> nextEncodedUint8
+FLDecoder >> nextEncodedUint8
 [
 	"Answer the next unsigned, 16-bit integer from this (binary) stream."
-^ stream next
+
+	^ stream next
 ]
 
-Class FLDecoder >> nextEncodedWordsInto: aWordsObject
+FLDecoder >> nextEncodedWordsInto: aWordsObject
 [
-stream fuelNextWordsInto: aWordsObject
+	stream fuelNextWordsInto: aWordsObject
 ]
 
-Class FLDecoder >> objects
+FLDecoder >> objects
 [
-^ objects
+	^ objects
 ]
 
-Class FLDecoder >> registerAll: someObjects
+FLDecoder >> registerAll: someObjects
 [
-objectsWriteStream nextPutAll: someObjects
+	objectsWriteStream nextPutAll: someObjects
 ]
 
-Class FLDecoder >> variablesMappingFor: aClass
+FLDecoder >> variablesMappingFor: aClass
 [
-| variables |variables := FLVariablesMapping materializing: aClass from: self.migrations select: [ :m | m targetClass == aClass ] thenDo: [ :m | m applyTo: variables ].^ variables
+	| variables |
+	variables := FLVariablesMapping materializing: aClass from: self.
+	migrations select: [ :m | m targetClass == aClass ] thenDo: [ :m | m applyTo: variables ].
+	^ variables
 ]
 
-Metaclass
-	name: #FLDecoder;
-	instanceVariables: #().
-
-Metaclass FLDecoder >> on: aStream migrations: aCollection
+FLDecoder class >> on: aStream migrations: aCollection globalEnvironment: aDictionary
 [
-^ self basicNew	initializeOn: aStream migrations: aCollection;	yourself
+	^ self basicNew
+		initializeOn: aStream migrations: aCollection globalEnvironment: aDictionary;
+		yourself
 ]
 

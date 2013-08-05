@@ -1,147 +1,163 @@
-Class
-	name: #FLLightGeneralMapper;
-	superclass: #ClassFLMapper;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #(#wellKnownObjectCluster #globalInstanceSideCluster );
-	classVariables: #();
+FLLightGeneralMapper
+	superclass: #FLMapper;
 	package: #'Fuel-Mappers'.
 
-Class FLLightGeneralMapper >> clusterClassForCharacter: aCharacter
+FLLightGeneralMapper >> clusterClassForCharacter: aCharacter
 [
-^ aCharacter isOctetCharacter	ifTrue: [ FLHookPrimitiveCluster ]	ifFalse: [ FLFixedObjectCluster ]
+	^ aCharacter isOctetCharacter
+		ifTrue: [ FLHookPrimitiveCluster ]
+		ifFalse: [ FLFixedObjectCluster ]
 ]
 
-Class FLLightGeneralMapper >> clusterClassForSmallInteger: aSmallInteger
+FLLightGeneralMapper >> clusterClassForSmallInteger: aSmallInteger
 [
-aSmallInteger >= 0	ifTrue: [ 		aSmallInteger <= 255			ifTrue: [ ^ FLPositive8SmallIntegerCluster ].		aSmallInteger <= 65535			ifTrue: [ ^ FLPositive16SmallIntegerCluster ].		aSmallInteger <= 16777215			ifTrue: [ ^ FLPositive24SmallIntegerCluster ].		aSmallInteger <= 4294967295			ifTrue: [ ^ FLPositive32SmallIntegerCluster ] ].aSmallInteger >= -128	ifTrue: [ ^ FLNegative8SmallIntegerCluster ].aSmallInteger >= -32768	ifTrue: [ ^ FLNegative16SmallIntegerCluster ].aSmallInteger >= -8388608	ifTrue: [ ^ FLNegative24SmallIntegerCluster ].aSmallInteger >= -2147483648	ifTrue: [ ^ FLNegative32SmallIntegerCluster ]
+	aSmallInteger >= 0
+		ifTrue: [ aSmallInteger <= 255
+				ifTrue: [ ^ FLPositive8SmallIntegerCluster ].
+			aSmallInteger <= 65535
+				ifTrue: [ ^ FLPositive16SmallIntegerCluster ].
+			aSmallInteger <= 16777215
+				ifTrue: [ ^ FLPositive24SmallIntegerCluster ].
+			aSmallInteger <= 4294967295
+				ifTrue: [ ^ FLPositive32SmallIntegerCluster ] ].
+	aSmallInteger >= -128
+		ifTrue: [ ^ FLNegative8SmallIntegerCluster ].
+	aSmallInteger >= -32768
+		ifTrue: [ ^ FLNegative16SmallIntegerCluster ].
+	aSmallInteger >= -8388608
+		ifTrue: [ ^ FLNegative24SmallIntegerCluster ].
+	aSmallInteger >= -2147483648
+		ifTrue: [ ^ FLNegative32SmallIntegerCluster ]
 ]
 
-Class FLLightGeneralMapper >> mapAndTrace: anObject
+FLLightGeneralMapper >> mapAndTrace: anObject
 [
-anObject fuelAccept: self
+	anObject fuelAccept: self
 ]
 
-Class FLLightGeneralMapper >> mapAndTraceInstanceSideGlobal: aClassOrTrait
+FLLightGeneralMapper >> mapAndTraceInstanceSideGlobal: aClassOrTrait
 [
-(globalInstanceSideCluster ifNil: [ globalInstanceSideCluster := self clusterKeyedByClusterName: FLGlobalClassCluster ])	add: aClassOrTrait	traceWith: analysis
+	(self clusterKeyedByClusterName: FLGlobalClassCluster) add: aClassOrTrait traceWith: analysis
 ]
 
-Class FLLightGeneralMapper >> visitBytesObject: anObject
+FLLightGeneralMapper >> visitBytesObject: anObject
 [
-self mapAndTraceByObjectClass: anObject to: FLByteObjectCluster
+	self mapAndTraceByObjectClass: anObject to: FLByteObjectCluster
 ]
 
-Class FLLightGeneralMapper >> visitCharacter: aCharacter
+FLLightGeneralMapper >> visitCharacter: aCharacter
 [
-self flag: #todo.	"confusing"self mapAndTraceByObjectClass: aCharacter to: (self clusterClassForCharacter: aCharacter)
+	self flag: #todo.	"confusing"
+	self mapAndTraceByObjectClass: aCharacter to: (self clusterClassForCharacter: aCharacter)
 ]
 
-Class FLLightGeneralMapper >> visitClass: aClass
+FLLightGeneralMapper >> visitClass: aClass
 [
-self mapAndTraceInstanceSideGlobal: aClass
+	self mapAndTraceInstanceSideGlobal: aClass
 ]
 
-Class FLLightGeneralMapper >> visitClassTrait: aClassTrait
+FLLightGeneralMapper >> visitClassTrait: aClassTrait
 [
-self mapAndTraceByClusterName: aClassTrait to: FLGlobalClassSideCluster
+	self mapAndTraceByClusterName: aClassTrait to: FLGlobalClassSideCluster
 ]
 
-Class FLLightGeneralMapper >> visitCompiledMethod: aCompiledMethod
+FLLightGeneralMapper >> visitCompiledMethod: aCompiledMethod
 [
-aCompiledMethod isInstalled	ifFalse: [ FLNotInstalledMethod signalWithSelector: aCompiledMethod selector ].self mapAndTraceByClusterName: aCompiledMethod to: FLGlobalCompiledMethodCluster
+	(aCompiledMethod isInstalled not or: [ aCompiledMethod isDoIt ])
+		ifTrue: [ self mapAndTraceByClusterName: aCompiledMethod to: FLCompiledMethodCluster ]
+		ifFalse: [ self mapAndTraceByClusterName: aCompiledMethod to: FLGlobalCompiledMethodCluster ]
 ]
 
-Class FLLightGeneralMapper >> visitDictionary: aDictionary
+FLLightGeneralMapper >> visitDictionary: aDictionary
 [
-self mapAndTraceByObjectClass: aDictionary to: FLDictionaryCollectionCluster
+	self mapAndTraceByObjectClass: aDictionary to: FLDictionaryCollectionCluster
 ]
 
-Class FLLightGeneralMapper >> visitFixedObject: anObject
+FLLightGeneralMapper >> visitFixedObject: anObject
 [
-self mapAndTraceByObjectClass: anObject to: FLFixedObjectCluster
+	self mapAndTraceByObjectClass: anObject to: FLFixedObjectCluster
 ]
 
-Class FLLightGeneralMapper >> visitGlobalSend: anObject name: globalName selector: aSymbol
+FLLightGeneralMapper >> visitGlobalSend: anObject name: globalName selector: aSymbol
 [
-(self clusterKeyedByClusterName: FLGlobalSendCluster)	add: anObject	name: globalName	selector: aSymbol	traceWith: analysis
+	(self clusterKeyedByClusterName: FLGlobalSendCluster)
+		add: anObject
+		name: globalName
+		selector: aSymbol
+		traceWith: analysis
 ]
 
-Class FLLightGeneralMapper >> visitHookPrimitive: anObject
+FLLightGeneralMapper >> visitHookPrimitive: anObject
 [
-self mapAndTraceByObjectClass: anObject to: FLHookPrimitiveCluster
+	self mapAndTraceByObjectClass: anObject to: FLHookPrimitiveCluster
 ]
 
-Class FLLightGeneralMapper >> visitMetaclass: aMetaclass
+FLLightGeneralMapper >> visitMetaclass: aMetaclass
 [
-self mapAndTraceByClusterName: aMetaclass to: FLGlobalClassSideCluster
+	self mapAndTraceByClusterName: aMetaclass to: FLGlobalClassSideCluster
 ]
 
-Class FLLightGeneralMapper >> visitMethodContext: aMethodContext
+FLLightGeneralMapper >> visitMethodContext: aMethodContext
 [
-self mapAndTraceByObjectClass: aMethodContext to: FLMethodContextCluster
+	self mapAndTraceByObjectClass: aMethodContext to: FLMethodContextCluster
 ]
 
-Class FLLightGeneralMapper >> visitNotSerializable: anObject
+FLLightGeneralMapper >> visitNotSerializable: anObject
 [
-FLNotSerializable signalWith: anObject
+	FLNotSerializable signalWith: anObject
 ]
 
-Class FLLightGeneralMapper >> visitPoint: aPoint
+FLLightGeneralMapper >> visitPoint: aPoint
 [
-self mapAndTraceByClusterName: aPoint to: FLPointCluster
+	self mapAndTraceByClusterName: aPoint to: FLPointCluster
 ]
 
-Class FLLightGeneralMapper >> visitRectangle: aRectangle
+FLLightGeneralMapper >> visitRectangle: aRectangle
 [
-self mapAndTraceByClusterName: aRectangle to: FLRectangleCluster
+	self mapAndTraceByClusterName: aRectangle to: FLRectangleCluster
 ]
 
-Class FLLightGeneralMapper >> visitSimpleCollection: aCollection
+FLLightGeneralMapper >> visitSimpleCollection: aCollection
 [
-self mapAndTraceByObjectClass: aCollection to: FLSimpleCollectionCluster
+	self mapAndTraceByObjectClass: aCollection to: FLSimpleCollectionCluster
 ]
 
-Class FLLightGeneralMapper >> visitSmallInteger: aSmallInteger
+FLLightGeneralMapper >> visitSmallInteger: aSmallInteger
 [
-self mapAndTraceByClusterName: aSmallInteger to: (self clusterClassForSmallInteger: aSmallInteger)
+	self mapAndTraceByClusterName: aSmallInteger to: (self clusterClassForSmallInteger: aSmallInteger)
 ]
 
-Class FLLightGeneralMapper >> visitSubstitution: anObject by: anotherObject
+FLLightGeneralMapper >> visitSubstitution: anObject by: anotherObject
 [
-(self clusterKeyedByClusterName: FLSubstitutionCluster) add: anObject substitutedBy: anotherObject traceWith: analysis
+	(self clusterKeyedByClusterName: FLSubstitutionCluster) add: anObject substitutedBy: anotherObject traceWith: analysis
 ]
 
-Class FLLightGeneralMapper >> visitSubstitution: anObject by: anotherObject onRecursionDo: aBlock
+FLLightGeneralMapper >> visitSubstitution: anObject by: anotherObject onRecursionDo: aBlock
 [
-| cluster |cluster := self clusterKeyedByClusterName: FLSubstitutionCluster.(cluster isSubstitute: anObject)	ifTrue: aBlock	ifFalse: [ cluster add: anObject substitutedBy: anotherObject traceWith: analysis ]
+	| cluster |
+	cluster := self clusterKeyedByClusterName: FLSubstitutionCluster.
+	(cluster isSubstitute: anObject)
+		ifTrue: aBlock
+		ifFalse: [ cluster add: anObject substitutedBy: anotherObject traceWith: analysis ]
 ]
 
-Class FLLightGeneralMapper >> visitTrait: aTrait
+FLLightGeneralMapper >> visitTrait: aTrait
 [
-self mapAndTraceInstanceSideGlobal: aTrait
+	self mapAndTraceInstanceSideGlobal: aTrait
 ]
 
-Class FLLightGeneralMapper >> visitVariableObject: anObject
+FLLightGeneralMapper >> visitVariableObject: anObject
 [
-self mapAndTraceByObjectClass: anObject to: FLVariableObjectCluster
+	self mapAndTraceByObjectClass: anObject to: FLVariableObjectCluster
 ]
 
-Class FLLightGeneralMapper >> visitWeakObject: anObject
+FLLightGeneralMapper >> visitWeakObject: anObject
 [
-self mapAndTraceByObjectClass: anObject to: FLWeakVariableObjectCluster
+	self mapAndTraceByObjectClass: anObject to: FLWeakVariableObjectCluster
 ]
 
-Class FLLightGeneralMapper >> visitWellKnownObject: anObject
+FLLightGeneralMapper >> visitWordsObject: anObject
 [
-wellKnownObjectCluster ifNil: [ wellKnownObjectCluster := self clusterKeyedByClusterName: FLWellKnownObjectsCluster ]	"Note: It is not necessary to explicitly add objects to this cluster"
+	self mapAndTraceByObjectClass: anObject to: FLWordObjectCluster
 ]
-
-Class FLLightGeneralMapper >> visitWordsObject: anObject
-[
-self mapAndTraceByObjectClass: anObject to: FLWordObjectCluster
-]
-
-Metaclass
-	name: #FLLightGeneralMapper;
-	instanceVariables: #().
 

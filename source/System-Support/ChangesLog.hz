@@ -1,76 +1,110 @@
-Class
-	name: #ChangesLog;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+ChangesLog
 	instanceVariables: #(#startupStamp );
 	classVariables: #(#DefaultInstance );
 	package: #'System-Support'.
 
-Class ChangesLog >> assureStartupStampLogged
+ChangesLog >> assureStartupStampLogged
 [
 	"If there is a startup stamp not yet actually logged to disk, do it now."
-| changesFile |startupStamp ifNil: [ ^ self ].(SourceFiles isNil or: [ (changesFile := SourceFiles at: 2) == nil ])	ifTrue: [ ^ self ].changesFile isReadOnly	ifTrue: [ ^ self ].changesFile	setToEnd;	cr;	cr.changesFile	nextChunkPut: startupStamp asString;	cr.startupStamp := nil.self forceChangesToDisk
+
+	| changesFile |
+	startupStamp ifNil: [ ^ self ].
+	(SourceFiles isNil or: [ (changesFile := SourceFiles at: 2) == nil ])
+		ifTrue: [ ^ self ].
+	changesFile isReadOnly
+		ifTrue: [ ^ self ].
+	changesFile
+		setToEnd;
+		cr;
+		cr.
+	changesFile
+		nextChunkPut: startupStamp asString;
+		cr.
+	startupStamp := nil.
+	self forceChangesToDisk
 ]
 
-Class ChangesLog >> forceChangesToDisk
+ChangesLog >> forceChangesToDisk
 [
 	"Ensure that the changes file has been fully written to disk by closing and re-opening it. This makes the system more robust in the face of a power failure or hard-reboot."
-| changesFile |changesFile := SourceFiles at: 2.(changesFile isKindOf: FileStream)	ifTrue: [ 		changesFile flush.		changesFile close.		changesFile open: changesFile name forWrite: true.		changesFile setToEnd ]
+
+	| changesFile |
+	changesFile := SourceFiles at: 2.
+	(changesFile isKindOf: FileStream)
+		ifTrue: [ changesFile flush.
+			changesFile close.
+			changesFile open: changesFile name forWrite: true.
+			changesFile setToEnd ]
 ]
 
-Class ChangesLog >> logAnnouncement: anAnnouncement
-[
-self logEvent: anAnnouncement event
-]
-
-Class ChangesLog >> logChange: aStringOrText
+ChangesLog >> logChange: aStringOrText
 [
 	"Write the argument, aString, onto the changes file."
-| aString changesFile |(SourceFiles isNil or: [ (SourceFiles at: 2) == nil ])	ifTrue: [ ^ self ].self assureStartupStampLogged.aString := aStringOrText asString.(aString findFirst: [ :char | char isSeparator not ]) = 0	ifTrue: [ ^ self ].	"null doits confuse replay"changesFile := SourceFiles at: 2.changesFile isReadOnly	ifTrue: [ ^ self ].changesFile	setToEnd;	cr;	cr.changesFile nextChunkPut: aString.	"If want style changes in DoIt, use nextChunkPutWithStyle:, and allow Texts to get here"self forceChangesToDisk
+
+	| aString changesFile |
+	(SourceFiles isNil or: [ (SourceFiles at: 2) == nil ])
+		ifTrue: [ ^ self ].
+	self assureStartupStampLogged.
+	aString := aStringOrText asString.
+	(aString findFirst: [ :char | char isSeparator not ]) = 0
+		ifTrue: [ ^ self ].	"null doits confuse replay"
+	changesFile := SourceFiles at: 2.
+	changesFile isReadOnly
+		ifTrue: [ ^ self ].
+	changesFile
+		setToEnd;
+		cr;
+		cr.
+	changesFile nextChunkPut: aString.	"If want style changes in DoIt, use nextChunkPutWithStyle:, and allow Texts to get here"
+	self forceChangesToDisk
 ]
 
-Class ChangesLog >> logClassRemoved: annoucement
+ChangesLog >> logClassRemoved: annoucement
 [
-annoucement classRemoved acceptsLoggingOfCompilation	ifTrue: [ self logChange: 'Smalltalk globals removeClassNamed: #' , annoucement classRemoved name ]
+	annoucement classRemoved acceptsLoggingOfCompilation
+		ifTrue: [ self logChange: 'Smalltalk globals removeClassNamed: #' , annoucement classRemoved name ]
 ]
 
-Class ChangesLog >> logEvent: anEvent
+ChangesLog >> logClassRenamed: annoucement
 [
-	"This method is used by the system event system to log all the changes performed in the image"
-(anEvent isRemoved and: [ anEvent itemKind = SystemChangeNotifier classKind ])	ifTrue: [ 		anEvent item acceptsLoggingOfCompilation			ifTrue: [ self logChange: 'Smalltalk globals removeClassNamed: #' , anEvent item name ] ].anEvent isDoIt	ifTrue: [ self logChange: anEvent item ].(anEvent isRemoved and: [ anEvent itemKind = SystemChangeNotifier methodKind ])	ifTrue: [ 		anEvent itemClass acceptsLoggingOfCompilation			ifTrue: [ self logChange: anEvent itemClass name , ' removeSelector: #' , anEvent itemSelector ] ]
+	annoucement classRenamed acceptsLoggingOfCompilation
+		ifTrue: [ self logChange: '(Smalltalk globals at: #' , annoucement oldName , ') rename: #' , annoucement newName ]
 ]
 
-Class ChangesLog >> logExpressionEvaluated: announcement
+ChangesLog >> logExpressionEvaluated: announcement
 [
-self logChange: announcement expressionEvaluated
+	self logChange: announcement expressionEvaluated
 ]
 
-Class ChangesLog >> logMethodRemoved: announcement
+ChangesLog >> logMethodRemoved: announcement
 [
-announcement methodClass acceptsLoggingOfCompilation	ifTrue: [ self logChange: announcement methodClass name , ' removeSelector: #' , announcement selector ]
+	announcement methodClass acceptsLoggingOfCompilation
+		ifTrue: [ self logChange: announcement methodClass name , ' removeSelector: #' , announcement selector ]
 ]
 
-Class ChangesLog >> recordStartupStamp
+ChangesLog >> recordStartupStamp
 [
-startupStamp := '----STARTUP----' , Time dateAndTimeNow printString , ' as ' , Smalltalk imagePath
+	startupStamp := '----STARTUP----' , Time dateAndTimeNow printString , ' as ' , Smalltalk imagePath
 ]
 
-Class ChangesLog >> registerToAnnouncements
+ChangesLog >> registerToAnnouncements
 [
-SystemAnnouncer uniqueInstance	on: ClassRemoved send: #logClassRemoved: to: self;	on: MethodRemoved send: #logMethodRemoved: to: self;	on: ExpressionEvaluated send: #logExpressionEvaluated: to: self
+	SystemAnnouncer uniqueInstance
+		on: ClassRemoved send: #logClassRemoved: to: self;
+		on: ClassRenamed send: #logClassRenamed: to: self;
+		on: MethodRemoved send: #logMethodRemoved: to: self;
+		on: ExpressionEvaluated send: #logExpressionEvaluated: to: self
 ]
 
-Metaclass
-	name: #ChangesLog;
-	instanceVariables: #().
-
-Metaclass ChangesLog >> default
+ChangesLog class >> default
 [
-^ DefaultInstance	ifNil: [ 		DefaultInstance := self new.		DefaultInstance registerToAnnouncements ]
+	^ DefaultInstance ifNil: [ DefaultInstance := self new.
+			DefaultInstance registerToAnnouncements ]
 ]
 
-Metaclass ChangesLog >> reset
+ChangesLog class >> reset
 [
-SystemAnnouncer uniqueInstance unsubscribe: DefaultInstance.DefaultInstance := nil
+	SystemAnnouncer uniqueInstance unsubscribe: DefaultInstance.
+	DefaultInstance := nil
 ]
 

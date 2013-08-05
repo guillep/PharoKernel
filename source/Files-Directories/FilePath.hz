@@ -1,68 +1,74 @@
-Class
-	name: #FilePath;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #(#squeakPathName #vmPathName #converter );
-	classVariables: #();
+FilePath
+	instanceVariables: #(#squeakPathName #vmPathName );
 	package: #'Files-Directories'.
 
-Class FilePath >> asSqueakPathName
+FilePath >> asSqueakPathName
 [
-^ self pathName
+	^ self pathName
 ]
 
-Class FilePath >> asString
+FilePath >> asString
 [
-^ self asSqueakPathName
+	^ self asSqueakPathName
 ]
 
-Class FilePath >> asVmPathName
+FilePath >> asVmPathName
 [
-^ vmPathName
+	^ vmPathName
 ]
 
-Class FilePath >> copySystemToVm
+FilePath >> copySystemToVm
 [
-(self class instVarNames includes: 'systemPathName')	ifTrue: [ vmPathName := self instVarNamed: 'systemPathName' ]
+	(self class instVarNames includes: 'systemPathName')
+		ifTrue: [ vmPathName := self instVarNamed: 'systemPathName' ]
 ]
 
-Class FilePath >> isNullPath
+FilePath >> isNullPath
 [
 	"an empty path is used to represent the root path(s) when calling the primitive to list directory entries. Some users need to check for this and this is cleaner than grabbing the pathname and assuming it is a plain String"
-^ self pathName isEmpty
+
+	^ self pathName isEmpty
 ]
 
-Class FilePath >> pathName
+FilePath >> pathName
 [
-^ squeakPathName
+	^ squeakPathName
 ]
 
-Class FilePath >> pathName: p isEncoded: isEncoded
+FilePath >> pathName: p isEncoded: isEncoded
 [
-converter := LanguageEnvironment defaultFileNameConverter.isEncoded	ifTrue: [ 		squeakPathName := p convertFromWithConverter: converter.		vmPathName := p ]	ifFalse: [ 		squeakPathName := p isOctetString			ifTrue: [ p asOctetString ]			ifFalse: [ p ].		vmPathName := squeakPathName convertToWithConverter: converter ]
+	| encodingConverter |
+	encodingConverter := LanguageEnvironment defaultFileNameConverter.
+	isEncoded
+		ifTrue: [ squeakPathName := p convertFromWithConverter: encodingConverter.
+			vmPathName := p ]
+		ifFalse: [ squeakPathName := p isOctetString
+				ifTrue: [ p asOctetString ]
+				ifFalse: [ p ].
+			vmPathName := squeakPathName convertToWithConverter: encodingConverter ]
 ]
 
-Class FilePath >> printOn: aStream
+FilePath >> printOn: aStream
 [
-aStream nextPutAll: 'FilePath('''.aStream nextPutAll: squeakPathName.aStream nextPutAll: ''')'
+	aStream nextPutAll: 'FilePath('''.
+	aStream nextPutAll: squeakPathName.
+	aStream nextPutAll: ''')'
 ]
 
-Metaclass
-	name: #FilePath;
-	instanceVariables: #().
-
-Metaclass FilePath >> classVersion
+FilePath class >> classVersion
 [
-^ 1
+	^ 1
 ]
 
-Metaclass FilePath >> pathName: pathName
+FilePath class >> pathName: pathName
 [
-^ self pathName: pathName isEncoded: false
+	^ self pathName: pathName isEncoded: false
 ]
 
-Metaclass FilePath >> pathName: pathName isEncoded: aBoolean
+FilePath class >> pathName: pathName isEncoded: aBoolean
 [
-^ self new	pathName: pathName isEncoded: aBoolean;	yourself
+	^ self new
+		pathName: pathName isEncoded: aBoolean;
+		yourself
 ]
 

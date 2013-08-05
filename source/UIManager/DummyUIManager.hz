@@ -1,158 +1,197 @@
-Class
-	name: #DummyUIManager;
-	superclass: #ClassUIManager;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
+DummyUIManager
+	superclass: #UIManager;
 	classVariables: #(#ProgressBarEnabled );
 	package: #UIManager.
 
-Class DummyUIManager >> checkForNewDisplaySize
+DummyUIManager >> checkForNewDisplaySize
 [
-Display extent = DisplayScreen actualScreenSize	ifTrue: [ ^ self ].DisplayScreen startUp
+	Display extent = DisplayScreen actualScreenSize
+		ifTrue: [ ^ self ].
+	DisplayScreen startUp
 ]
 
-Class DummyUIManager >> chooseDirectory: label from: dir
+DummyUIManager >> chooseDirectory: label from: dir
 [
-^ nil
+	^ nil
 ]
 
-Class DummyUIManager >> chooseFrom: aList lines: linesArray title: aString
+DummyUIManager >> chooseFrom: aList lines: linesArray title: aString
 [
-^ aList first
+	^ aList first
 ]
 
-Class DummyUIManager >> chooseFrom: labelList values: valueList lines: linesArray title: aString
+DummyUIManager >> chooseFrom: labelList values: valueList lines: linesArray title: aString
 [
-^ valueList first
+	^ valueList first
 ]
 
-Class DummyUIManager >> confirm: queryString
+DummyUIManager >> confirm: queryString
 [
-(ProvideAnswerNotification signal: queryString) ifNotNil: [ :answer | ^ answer ].self error: 'No user response possible'
+	(ProvideAnswerNotification signal: queryString) ifNotNil: [ :answer | ^ answer ].
+	self error: 'No user response possible'
 ]
 
-Class DummyUIManager >> confirm: aString orCancel: cancelBlock
+DummyUIManager >> confirm: aString orCancel: cancelBlock
 [
-(ProvideAnswerNotification signal: aString)	ifNotNil: [ :answer | 		^ answer == #cancel			ifTrue: [ cancelBlock value ]			ifFalse: [ answer ] ].self error: 'No user response possible'
+	(ProvideAnswerNotification signal: aString)
+		ifNotNil: [ :answer | ^ answer == #cancel
+				ifTrue: [ cancelBlock value ]
+				ifFalse: [ answer ] ].
+	self error: 'No user response possible'
 ]
 
-Class DummyUIManager >> displayProgress: titleString at: aPoint from: minVal to: maxVal during: workBlock
+DummyUIManager >> edit: aText label: labelString accept: anAction
 [
-^ ProgressBarEnabled	ifFalse: [ nil ]	ifTrue: [ 		ProgressInitiationException			display: titleString			at: aPoint			from: minVal			to: maxVal			during: workBlock ]
+	^ nil
 ]
 
-Class DummyUIManager >> displayProgress: titleString from: minVal to: maxVal during: workBlock
+DummyUIManager >> fileDoesNotExistsDefaultAction: anException
 [
-^ ProgressBarEnabled	ifFalse: [ nil ]	ifTrue: [ 		ProgressInitiationException			display: titleString			at: Display center			from: minVal			to: maxVal			during: workBlock ]
+	
 ]
 
-Class DummyUIManager >> edit: aText label: labelString accept: anAction
+DummyUIManager >> fileExistsDefaultAction: anException
 [
-^ nil
+	
 ]
 
-Class DummyUIManager >> fileDoesNotExistsDefaultAction: anException
+DummyUIManager >> fontFromUser: priorFont
 [
-
+	self error: 'No user response possible'
 ]
 
-Class DummyUIManager >> fileExistsDefaultAction: anException
+DummyUIManager >> inform: aString
 [
+	"Nothing to be done here"
 
+	
 ]
 
-Class DummyUIManager >> fontFromUser: priorFont
+DummyUIManager >> informUserDuring: aBlock
 [
-self error: 'No user response possible'
+	aBlock value: DummySystemProgressItem new
 ]
 
-Class DummyUIManager >> inform: aString
+DummyUIManager >> lowSpaceWatcherDefaultAction
 [
-
+	Transcript
+		show: '*** LOW SPACE ***';
+		cr
 ]
 
-Class DummyUIManager >> informUserDuring: aBlock
+DummyUIManager >> multiLineRequest: queryString initialAnswer: defaultAnswer answerHeight: answerHeight
 [
-aBlock value: DummySystemProgressItem new
+	
 ]
 
-Class DummyUIManager >> lowSpaceWatcherDefaultAction
-[
-Transcript	show: '*** LOW SPACE ***';	cr
-]
-
-Class DummyUIManager >> multiLineRequest: queryString initialAnswer: defaultAnswer answerHeight: answerHeight
-[
-
-]
-
-Class DummyUIManager >> newDisplayDepthNoRestore: pixelSize
+DummyUIManager >> newDisplayDepthNoRestore: pixelSize
 [
 	"Change depths.  Check if there is enough space!  , di"
-| area need |pixelSize = Display depth	ifTrue: [ ^ self	"no change" ].pixelSize abs < Display depth	ifFalse: [ 		"Make sure there is enough space"		area := Display boundingBox area.	"pixels"		need := area * (pixelSize abs - Display depth) // 8 + Smalltalk lowSpaceThreshold.	"new bytes needed"		(Smalltalk garbageCollectMost <= need and: [ Smalltalk garbageCollect <= need ])			ifTrue: [ self error: 'Insufficient free space' ] ].Display setExtent: Display extent depth: pixelSize.DisplayScreen startUp
+
+	| area need |
+	pixelSize = Display depth
+		ifTrue: [ ^ self	"no change" ].
+	pixelSize abs < Display depth
+		ifFalse: [ "Make sure there is enough space"
+			area := Display boundingBox area.	"pixels"
+			need := area * (pixelSize abs - Display depth) // 8 + Smalltalk lowSpaceThreshold.	"new bytes needed"
+			(Smalltalk garbageCollectMost <= need and: [ Smalltalk garbageCollect <= need ])
+				ifTrue: [ self error: 'Insufficient free space' ] ].
+	Display setExtent: Display extent depth: pixelSize.
+	DisplayScreen startUp
 ]
 
-Class DummyUIManager >> progressBarEnabled
+DummyUIManager >> progressBarEnabled
 [
-^ ProgressBarEnabled ifNil: [ ProgressBarEnabled := true ]
+	^ ProgressBarEnabled ifNil: [ ProgressBarEnabled := true ]
 ]
 
-Class DummyUIManager >> progressBarEnabled: aBoolean
+DummyUIManager >> progressBarEnabled: aBoolean
 [
-ProgressBarEnabled := aBoolean
+	ProgressBarEnabled := aBoolean
 ]
 
-Class DummyUIManager >> progressInitiationExceptionDefaultAction: anException
+DummyUIManager >> progressInitiationExceptionDefaultAction: anException
 [
-| result |result := anException workBlock value: DummySystemProgressItem new.anException resume: result
+	| result |
+	result := anException workBlock value: DummySystemProgressItem new.
+	anException resume: result
 ]
 
-Class DummyUIManager >> request: queryString initialAnswer: defaultAnswer
+DummyUIManager >> request: queryString initialAnswer: defaultAnswer
 [
-^ defaultAnswer
+	^ self
+		request: queryString
+		initialAnswer: defaultAnswer
+		title: 'Provide the following information'
+		entryCompletion: nil
 ]
 
-Class DummyUIManager >> request: queryString initialAnswer: defaultAnswer entryCompletion: anEntryCompletion
+DummyUIManager >> request: aStringOrText initialAnswer: defaultAnswer entryCompletion: anEntryCompletion
 [
-^ defaultAnswer
+	^ self
+		request: aStringOrText
+		initialAnswer: defaultAnswer
+		title: 'Information Required' translated
+		entryCompletion: anEntryCompletion
 ]
 
-Class DummyUIManager >> request: aStringOrText initialAnswer: defaultAnswer title: aTitle entryCompletion: anEntryCompletion
+DummyUIManager >> request: aStringOrText initialAnswer: defaultAnswer title: aTitle entryCompletion: anEntryCompletion
 [
-^ defaultAnswer
+	(ProvideAnswerNotification signal: aStringOrText)
+		ifNotNil: [ :answer | ^ answer == #default
+				ifTrue: [ defaultAnswer ]
+				ifFalse: [ answer ] ].
+	self error: 'No user response possible'
 ]
 
-Class DummyUIManager >> requestPassword: queryString
+DummyUIManager >> requestPassword: queryString
 [
-^ self request: queryString initialAnswer: ''
+	^ self request: queryString initialAnswer: ''
 ]
 
-Class DummyUIManager >> restoreDisplay
+DummyUIManager >> restoreDisplay
 [
-
+	
 ]
 
-Class DummyUIManager >> restoreDisplayAfter: aBlock
+DummyUIManager >> restoreDisplayAfter: aBlock
 [
-aBlock value.Sensor waitButton
+	aBlock value.
+	Sensor waitButton
 ]
 
-Class DummyUIManager >> syntaxErrorNotificationDefaultAction: anException
+DummyUIManager >> syntaxErrorNotificationDefaultAction: anException
 [
-Transcript	show: '*** SYNTAX ERROR ***';	cr.Transcript	show: anException;	cr.Transcript	show: (thisContext stack first: (20 min: thisContext stack size));	cr.anException return
+	Transcript
+		show: '*** SYNTAX ERROR ***';
+		cr.
+	Transcript
+		show: anException;
+		cr.
+	Transcript
+		show: (thisContext stack first: (20 min: thisContext stack size));
+		cr.
+	anException return
 ]
 
-Class DummyUIManager >> unhandledErrorDefaultAction: anException
+DummyUIManager >> unhandledErrorDefaultAction: anException
 [
-Transcript	show: '*** EXCEPTION ***';	cr.Transcript	show: anException;	cr.Transcript	show: (thisContext stack first: (20 min: thisContext stack size));	cr.anException isResumable	ifTrue: [ anException resume ]
+	Transcript
+		show: '*** EXCEPTION ***';
+		cr.
+	Transcript
+		show: anException;
+		cr.
+	Transcript
+		show: (thisContext stack first: (20 min: thisContext stack size));
+		cr.
+	anException isResumable
+		ifTrue: [ anException resume ]
 ]
 
-Class DummyUIManager >> warningDefaultAction: anException
+DummyUIManager >> warningDefaultAction: anException
 [
-^ self unhandledErrorDefaultAction: anException
+	^ self unhandledErrorDefaultAction: anException
 ]
-
-Metaclass
-	name: #DummyUIManager;
-	instanceVariables: #().
 

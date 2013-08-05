@@ -1,97 +1,143 @@
-Class
-	name: #DefaultCommandLineHandler;
-	superclass: #ClassCommandLineHandler;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+DefaultCommandLineHandler
+	superclass: #CommandLineHandler;
 	package: #'System-CommandLine'.
 
-Class DefaultCommandLineHandler >> activate
+DefaultCommandLineHandler >> activate
 [
-self arguments ifEmpty: [ ^ self ].^ self handleArgument: self arguments first
+	self arguments ifEmpty: [ ^ self ].
+	^ self handleArgument: self arguments first
 ]
 
-Class DefaultCommandLineHandler >> copyright
+DefaultCommandLineHandler >> copyright
 [
-self stdout	nextPutAll: Smalltalk licenseString;	cr.self quit
+	self stdout
+		nextPutAll: Smalltalk licenseString;
+		cr.
+	self quit
 ]
 
-Class DefaultCommandLineHandler >> error
+DefaultCommandLineHandler >> error
 [
-self arguments size = 1	ifTrue: [ 		(self arguments first beginsWith: '-')			ifTrue: [ self << 'Invalid option: ' ]			ifFalse: [ self << 'Invalid sub command: ' ] ]	ifFalse: [ self << 'Invalid arguments: "' ].(self << (' ' join: self arguments))	nextPutAll: '"';	cr.self printHelp.Smalltalk isInteractive	ifFalse: [ ^ self exitFailure ].Error signal: 'Invalid arguments'
+	self arguments size = 1
+		ifTrue: [ (self arguments first beginsWith: '-')
+				ifTrue: [ self << 'Invalid option: ' ]
+				ifFalse: [ self << 'Invalid sub command: ' ] ]
+		ifFalse: [ self << 'Invalid arguments: "' ].
+	(self << (' ' join: self arguments))
+		nextPutAll: '"';
+		cr.
+	self printHelp.
+	self exitFailure
 ]
 
-Class DefaultCommandLineHandler >> handleArgument: aString
+DefaultCommandLineHandler >> handleArgument: aString
 [
 	"give priority to subcommands"
-self handleSubcommand == self	ifFalse: [ ^ self ].	"check for default options"aString = '--version'	ifTrue: [ ^ self version ].aString = '--help'	ifTrue: [ ^ self help ].aString = '--list'	ifTrue: [ ^ self list ].aString = '--copyright'	ifTrue: [ ^ self copyright ].	"none of the previous options matched hence we output an error message"self error
+
+	self handleSubcommand == self
+		ifFalse: [ ^ self ].	"check for default options"
+	aString = '--version'
+		ifTrue: [ ^ self version ].
+	aString = '--help'
+		ifTrue: [ ^ self help ].
+	aString = '--list'
+		ifTrue: [ ^ self list ].
+	aString = '--copyright'
+		ifTrue: [ ^ self copyright ].	"none of the previous options matched hence we output an error message"
+	self error
 ]
 
-Class DefaultCommandLineHandler >> handleSubcommand
+DefaultCommandLineHandler >> handleSubcommand
 [
 	"check if there is an active subcommand"
-| handlers |handlers := self selectHandlers.	"ignore the default command line handler"handlers first = DefaultCommandLineHandler	ifTrue: [ ^ self ].^ handlers first activateWith: commandLine
+
+	| handlers |
+	handlers := self selectHandlers.	"ignore the default command line handler"
+	handlers first = DefaultCommandLineHandler
+		ifTrue: [ ^ self ].
+	^ handlers first activateWith: commandLine
 ]
 
-Class DefaultCommandLineHandler >> help
+DefaultCommandLineHandler >> initialize
 [
-self printHelp.self quit
+	super initialize.
+	commandLine := CommandLineArguments new
 ]
 
-Class DefaultCommandLineHandler >> initialize
+DefaultCommandLineHandler >> list
 [
-super initialize.commandLine := CommandLineArguments new
+	| handlers shortNames maxShortNameSize |
+	self stdout
+		nextPutAll: 'Currently installed Command Line Handlers:';
+		lf.
+	handlers := self allHandlers reject: [ :cls | cls = DefaultCommandLineHandler ].
+	shortNames := handlers collect: #commandName.
+	maxShortNameSize := (shortNames detectMax: [ :name | name size ]) size.
+	handlers
+		do: [ :handler | self stdout
+				nextPutAll: '    ';
+				nextPutAll: (handler commandName padRightTo: maxShortNameSize);
+				nextPutAll: '    ';
+				nextPutAll: (handler description ifNil: [ '--' ]);
+				lf ].
+	self quit
 ]
 
-Class DefaultCommandLineHandler >> list
+DefaultCommandLineHandler >> selectHandlers
 [
-| handlers shortNames maxShortNameSize |self stdout	nextPutAll: 'Currently installed Command Line Handlers:';	cr.handlers := self allHandlers reject: [ :cls | cls = DefaultCommandLineHandler ].shortNames := handlers collect: #commandName.maxShortNameSize := (shortNames detectMax: [ :name | name size ]) size.handlers	do: [ :handler | 		self stdout			nextPutAll: '    ';			nextPutAll: (handler commandName padRightTo: maxShortNameSize);			nextPutAll: '    ';			nextPutAll: (handler description ifNil: [ '--' ]);			cr ].self quit
+	| handlers |
+	handlers := CommandLineHandler selectHandlersFor: commandLine.
+	handlers := handlers sort: [ :a :b | a priority >= b priority ].
+	^ handlers
 ]
 
-Class DefaultCommandLineHandler >> printHelp
+DefaultCommandLineHandler >> version
 [
-self stdout	nextPutAll: 'Usage:';	cr;	nextPutAll: '    --help       print this help message';	cr;	nextPutAll: '    --copyright  print the copyrights';	cr;	nextPutAll: '    --version    print the version for the image and the vm';	cr;	nextPutAll: '    --list       list a description of all active command line handlers';	cr
+	self stdout
+		nextPutAll: 'Image: ';
+		print: SystemVersion current;
+		cr;
+		nextPutAll: 'VM:    ';
+		nextPutAll: Smalltalk vm version;
+		cr.
+	self quit
 ]
 
-Class DefaultCommandLineHandler >> selectHandlers
+DefaultCommandLineHandler class >> commandName
 [
-| handlers |handlers := CommandLineHandler selectHandlersFor: commandLine.handlers := handlers sort: [ :a :b | a priority >= b priority ].^ handlers
+	^ ''
 ]
 
-Class DefaultCommandLineHandler >> version
+DefaultCommandLineHandler class >> description
 [
-self stdout	nextPutAll: 'Image: ';	print: SystemVersion current;	cr;	nextPutAll: 'VM:    ';	nextPutAll: Smalltalk vm version;	cr.self quit
+	^ 'responsible for the default options and activating other commands'
 ]
 
-Metaclass
-	name: #DefaultCommandLineHandler;
-	instanceVariables: #().
-
-Metaclass DefaultCommandLineHandler >> description
-[
-^ 'responsible for the default options and activating other commands'
-]
-
-Metaclass DefaultCommandLineHandler >> initialize
+DefaultCommandLineHandler class >> initialize
 [
 	"hook into the startup list"
-Smalltalk addToStartUpList: self
+
+	Smalltalk addToStartUpList: self
 ]
 
-Metaclass DefaultCommandLineHandler >> isResponsibleFor: aCommandLine
+DefaultCommandLineHandler class >> isResponsibleFor: aCommandLine
 [
-^ true
+	^ true
 ]
 
-Metaclass DefaultCommandLineHandler >> priority
+DefaultCommandLineHandler class >> priority
 [
 	"low priority"
-^ Float infinity negated
+
+	^ Float infinity negated
 ]
 
-Metaclass DefaultCommandLineHandler >> startUp: resuming
+DefaultCommandLineHandler class >> startUp: resuming
 [
 	"only handle when lauching a new image"
-resuming	ifFalse: [ ^ self ].Smalltalk addDeferredStartupAction: [ self new activate ]
+
+	resuming
+		ifFalse: [ ^ self ].
+	Smalltalk addDeferredStartupAction: [ self new activate ]
 ]
 

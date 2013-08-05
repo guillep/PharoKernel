@@ -1,206 +1,325 @@
-Class
-	name: #MultiByteBinaryOrTextStream;
-	superclass: #ClassReadWriteStream;
-	instanceSpecification: #(#pointers #words );
+MultiByteBinaryOrTextStream
+	superclass: #ReadWriteStream;
 	instanceVariables: #(#isBinary #converter );
-	classVariables: #();
 	package: #'Collections-Streams'.
 
-Class MultiByteBinaryOrTextStream >> asBinaryOrTextStream
+MultiByteBinaryOrTextStream >> asBinaryOrTextStream
 [
-^ self
+	^ self
 ]
 
-Class MultiByteBinaryOrTextStream >> ascii
+MultiByteBinaryOrTextStream >> ascii
 [
-isBinary := false
+	isBinary := false
 ]
 
-Class MultiByteBinaryOrTextStream >> basicNext
+MultiByteBinaryOrTextStream >> basicNext
 [
-^ super next
+	^ super next
 ]
 
-Class MultiByteBinaryOrTextStream >> basicNext: anInteger
+MultiByteBinaryOrTextStream >> basicNext: anInteger
 [
-^ super next: anInteger
+	^ super next: anInteger
 ]
 
-Class MultiByteBinaryOrTextStream >> basicNext: n into: aString
+MultiByteBinaryOrTextStream >> basicNext: n into: aString
 [
-^ super next: n into: aString
+	^ super next: n into: aString
 ]
 
-Class MultiByteBinaryOrTextStream >> basicNextInto: aString
+MultiByteBinaryOrTextStream >> basicNext: anInteger putAll: aCollection startingAt: startIndex
 [
-^ super nextInto: aString
+	^ super next: anInteger putAll: aCollection startingAt: startIndex
 ]
 
-Class MultiByteBinaryOrTextStream >> basicNextPut: char
+MultiByteBinaryOrTextStream >> basicNextInto: aString
 [
-^ super nextPut: char
+	^ super nextInto: aString
 ]
 
-Class MultiByteBinaryOrTextStream >> basicNextPutAll: aString
+MultiByteBinaryOrTextStream >> basicNextPut: char
 [
-^ super nextPutAll: aString
+	^ super nextPut: char
 ]
 
-Class MultiByteBinaryOrTextStream >> basicPeek
+MultiByteBinaryOrTextStream >> basicNextPutAll: aString
 [
-^ super peek
+	^ super nextPutAll: aString
 ]
 
-Class MultiByteBinaryOrTextStream >> basicPosition
+MultiByteBinaryOrTextStream >> basicPeek
 [
-^ super position
+	^ super peek
 ]
 
-Class MultiByteBinaryOrTextStream >> basicPosition: pos
+MultiByteBinaryOrTextStream >> basicPosition
 [
-^ super position: pos
+	^ super position
 ]
 
-Class MultiByteBinaryOrTextStream >> binary
+MultiByteBinaryOrTextStream >> basicPosition: pos
 [
-isBinary := true
+	^ super position: pos
 ]
 
-Class MultiByteBinaryOrTextStream >> contents
+MultiByteBinaryOrTextStream >> binary
 [
-| ret state |state := converter saveStateOf: self.ret := self upToEnd.converter restoreStateOf: self with: state.^ ret
+	isBinary := true
 ]
 
-Class MultiByteBinaryOrTextStream >> converter
+MultiByteBinaryOrTextStream >> contents
 [
-converter ifNil: [ converter := self class defaultConverter ].^ converter
+	| ret state |
+	state := converter saveStateOf: self.
+	ret := self upToEnd.
+	converter restoreStateOf: self with: state.
+	^ ret
 ]
 
-Class MultiByteBinaryOrTextStream >> converter: aConverter
+MultiByteBinaryOrTextStream >> converter
 [
-converter := aConverter
+	converter ifNil: [ converter := self class defaultConverter ].
+	^ converter
 ]
 
-Class MultiByteBinaryOrTextStream >> guessConverter
+MultiByteBinaryOrTextStream >> converter: aConverter
 [
-^ (self originalContents includesSubString: #[27 36] asString)	ifTrue: [ CompoundTextConverter new ]	ifFalse: [ self class defaultConverter ]
+	converter := aConverter
 ]
 
-Class MultiByteBinaryOrTextStream >> isBinary
+MultiByteBinaryOrTextStream >> guessConverter
 [
-^ isBinary
+	^ (self originalContents includesSubstring: #[27 36] asString)
+		ifTrue: [ CompoundTextConverter new ]
+		ifFalse: [ self class defaultConverter ]
 ]
 
-Class MultiByteBinaryOrTextStream >> next
+MultiByteBinaryOrTextStream >> isBinary
 [
-| n |n := self converter nextFromStream: self.n ifNil: [ ^ nil ].isBinary	and: [ 		n isCharacter			ifTrue: [ ^ n asciiValue ] ].^ n
+	^ isBinary
 ]
 
-Class MultiByteBinaryOrTextStream >> next: anInteger
+MultiByteBinaryOrTextStream >> next
 [
-| multiString |"self halt."self isBinary	ifTrue: [ ^ (super next: anInteger) asByteArray ].multiString := WideString new: anInteger.1 to: anInteger do: [ :index | 	| character |	(character := self next)		ifNotNil: [ multiString at: index put: character ]		ifNil: [ 			multiString := multiString copyFrom: 1 to: index - 1.			^ multiString ] ].^ multiString
+	| n |
+	n := self converter nextFromStream: self.
+	n ifNil: [ ^ nil ].
+	isBinary and: [ n isCharacter
+				ifTrue: [ ^ n asciiValue ] ].
+	^ n
 ]
 
-Class MultiByteBinaryOrTextStream >> nextDelimited: terminator
+MultiByteBinaryOrTextStream >> next: anInteger
 [
-| out ch pos |out := (String new: 1000) writeStream.self atEnd	ifTrue: [ ^ '' ].pos := self position.self next = terminator	ifFalse: [ 		"absorb initial terminator"		self position: pos ].[ (ch := self next) == nil ]	whileFalse: [ 		ch = terminator			ifTrue: [ 				self peek = terminator					ifTrue: [ self next	"skip doubled terminator" ]					ifFalse: [ ^ out contents	"terminator is not doubled; we're done!" ] ].		out nextPut: ch ].^ out contents
+	| multiString |
+	"self halt."
+	self isBinary
+		ifTrue: [ ^ (super next: anInteger) asByteArray ].
+	multiString := WideString new: anInteger.
+	1 to: anInteger do: [ :index | | character |
+		(character := self next)
+			ifNotNil: [ multiString at: index put: character ]
+			ifNil: [ multiString := multiString copyFrom: 1 to: index - 1.
+				^ multiString ] ].
+	^ multiString
 ]
 
-Class MultiByteBinaryOrTextStream >> nextMatchAll: aColl
+MultiByteBinaryOrTextStream >> next: anInteger putAll: aCollection startingAt: startIndex
 [
-| save |save := converter saveStateOf: self.aColl	do: [ :each | 		self next = each			ifFalse: [ 				converter restoreStateOf: self with: save.				^ false ] ].^ true
+	(self isBinary or: [ aCollection class == ByteArray ])
+		ifTrue: [ ^ super next: anInteger putAll: aCollection startingAt: startIndex ].
+	^ self converter
+		next: anInteger
+		putAll: aCollection
+		startingAt: startIndex
+		toStream: self
 ]
 
-Class MultiByteBinaryOrTextStream >> nextPut: aCharacter
+MultiByteBinaryOrTextStream >> nextDelimited: terminator
 [
-^ aCharacter isInteger	ifTrue: [ super nextPut: aCharacter asCharacter ]	ifFalse: [ self converter nextPut: aCharacter toStream: self ]
+	| out ch pos |
+	out := (String new: 1000) writeStream.
+	self atEnd
+		ifTrue: [ ^ '' ].
+	pos := self position.
+	self next = terminator
+		ifFalse: [ "absorb initial terminator"
+			self position: pos ].
+	[ (ch := self next) == nil ]
+		whileFalse: [ ch = terminator
+				ifTrue: [ self peek = terminator
+						ifTrue: [ self next	"skip doubled terminator" ]
+						ifFalse: [ ^ out contents	"terminator is not doubled; we're done!" ] ].
+			out nextPut: ch ].
+	^ out contents
 ]
 
-Class MultiByteBinaryOrTextStream >> nextPutAll: aCollection
+MultiByteBinaryOrTextStream >> nextMatchAll: aColl
 [
-^ self isBinary	ifTrue: [ super nextPutAll: aCollection ]	ifFalse: [ aCollection do: [ :each | self nextPut: each ] ]
+	| save |
+	save := converter saveStateOf: self.
+	aColl do: [ :each | self next = each
+				ifFalse: [ converter restoreStateOf: self with: save.
+					^ false ] ].
+	^ true
 ]
 
-Class MultiByteBinaryOrTextStream >> padToEndWith: aChar
+MultiByteBinaryOrTextStream >> nextPut: aCharacter
+[
+	^ aCharacter isInteger
+		ifTrue: [ super nextPut: aCharacter asCharacter ]
+		ifFalse: [ self converter nextPut: aCharacter toStream: self ]
+]
+
+MultiByteBinaryOrTextStream >> nextPutAll: aCollection
+[
+	^ self isBinary
+		ifTrue: [ super nextPutAll: aCollection ]
+		ifFalse: [ aCollection do: [ :each | self nextPut: each ] ]
+]
+
+MultiByteBinaryOrTextStream >> padToEndWith: aChar
 [
 	"We don't have pages, so we are at the end, and don't need to pad."
 
+	
 ]
 
-Class MultiByteBinaryOrTextStream >> peek
+MultiByteBinaryOrTextStream >> peek
 [
 	"Answer what would be returned if the message next were sent to the receiver. If the receiver is at the end, answer nil.  "
-| next pos |self atEnd	ifTrue: [ ^ nil ].pos := self position.next := self next.self position: pos.^ next
+
+	| next pos |
+	self atEnd
+		ifTrue: [ ^ nil ].
+	pos := self position.
+	next := self next.
+	self position: pos.
+	^ next
 ]
 
-Class MultiByteBinaryOrTextStream >> peekFor: item
+MultiByteBinaryOrTextStream >> peekFor: item
 [
-| next state |"self atEnd ifTrue: [^ false]. -- SFStream will give nil"state := converter saveStateOf: self.(next := self next) == nil	ifTrue: [ ^ false ].item = next	ifTrue: [ ^ true ].converter restoreStateOf: self with: state.^ false
+	| next state |
+	"self atEnd ifTrue: [^ false]. -- SFStream will give nil"
+	state := converter saveStateOf: self.
+	(next := self next) == nil
+		ifTrue: [ ^ false ].
+	item = next
+		ifTrue: [ ^ true ].
+	converter restoreStateOf: self with: state.
+	^ false
 ]
 
-Class MultiByteBinaryOrTextStream >> reset
+MultiByteBinaryOrTextStream >> reset
 [
-super reset.isBinary ifNil: [ isBinary := false ].collection class == ByteArray	ifTrue: [ 		"Store as String and convert as needed."		collection := collection asString.		isBinary := true ].self converter	"ensure that we have a converter."
+	super reset.
+	isBinary ifNil: [ isBinary := false ].
+	collection class == ByteArray
+		ifTrue: [ "Store as String and convert as needed."
+			collection := collection asString.
+			isBinary := true ].
+	self converter	"ensure that we have a converter."
 ]
 
-Class MultiByteBinaryOrTextStream >> setConverterForCode
+MultiByteBinaryOrTextStream >> setConverterForCode
 [
-| current |current := converter saveStateOf: self.self position: 0.self binary.(self next: 3) = #[239 187 191]	ifTrue: [ self converter: UTF8TextConverter new ]	ifFalse: [ self converter: MacRomanTextConverter new ].converter restoreStateOf: self with: current.self text
+	| current |
+	current := converter saveStateOf: self.
+	self position: 0.
+	self binary.
+	(self next: 3) = #[239 187 191]
+		ifTrue: [ self converter: UTF8TextConverter new ]
+		ifFalse: [ self converter: MacRomanTextConverter new ].
+	converter restoreStateOf: self with: current.
+	self text
 ]
 
-Class MultiByteBinaryOrTextStream >> setEncoderForSourceCodeNamed: streamName
+MultiByteBinaryOrTextStream >> setEncoderForSourceCodeNamed: streamName
 [
-| l |l := streamName asLowercase.((l endsWith: 'cs') or: [ (l endsWith: 'st') or: [ (l endsWith: 'st.gz') or: [ l endsWith: 'st.gz' ] ] ])	ifTrue: [ 		self converter: MacRomanTextConverter new.		^ self ].self converter: UTF8TextConverter new
+	| l |
+	l := streamName asLowercase.
+	((l endsWith: 'cs') or: [ (l endsWith: 'st') or: [ (l endsWith: 'st.gz') or: [ l endsWith: 'st.gz' ] ] ])
+		ifTrue: [ self converter: MacRomanTextConverter new.
+			^ self ].
+	self converter: UTF8TextConverter new
 ]
 
-Class MultiByteBinaryOrTextStream >> setFileTypeToObject
+MultiByteBinaryOrTextStream >> setFileTypeToObject
 [
 	"do nothing.  We don't have a file type"
 
+	
 ]
 
-Class MultiByteBinaryOrTextStream >> skipSeparators
+MultiByteBinaryOrTextStream >> skipSeparators
 [
-[ self atEnd ]	whileFalse: [ 		self basicNext isSeparator			ifFalse: [ ^ self position: self position - 1 ] ]
+	[ self atEnd ] whileFalse: [ self basicNext isSeparator
+				ifFalse: [ ^ self position: self position - 1 ] ]
 ]
 
-Class MultiByteBinaryOrTextStream >> skipSeparatorsAndPeekNext
+MultiByteBinaryOrTextStream >> skipSeparatorsAndPeekNext
 [
 	"A special function to make nextChunk fast"
-| peek pos |[ self atEnd ]	whileFalse: [ 		pos := self position.		(peek := self next) isSeparator			ifFalse: [ 				self position: pos.				^ peek ] ]
+
+	| peek pos |
+	[ self atEnd ]
+		whileFalse: [ pos := self position.
+			(peek := self next) isSeparator
+				ifFalse: [ self position: pos.
+					^ peek ] ]
 ]
 
-Class MultiByteBinaryOrTextStream >> text
+MultiByteBinaryOrTextStream >> text
 [
-isBinary := false
+	isBinary := false
 ]
 
-Class MultiByteBinaryOrTextStream >> upTo: delim
+MultiByteBinaryOrTextStream >> upTo: delim
 [
-| out ch |out := (String new: 1000) writeStream.self atEnd	ifTrue: [ ^ '' ].[ (ch := self next) isNil ]	whileFalse: [ 		ch = delim			ifTrue: [ ^ out contents	"terminator is not doubled; we're done!" ].		out nextPut: ch ].^ out contents
+	| out ch |
+	out := (String new: 1000) writeStream.
+	self atEnd
+		ifTrue: [ ^ '' ].
+	[ (ch := self next) isNil ]
+		whileFalse: [ ch = delim
+				ifTrue: [ ^ out contents	"terminator is not doubled; we're done!" ].
+			out nextPut: ch ].
+	^ out contents
 ]
 
-Class MultiByteBinaryOrTextStream >> upToEnd
+MultiByteBinaryOrTextStream >> upToEnd
 [
-| newStream element newCollection |newCollection := self isBinary	ifTrue: [ ByteArray new: 100 ]	ifFalse: [ String new: 100 ].newStream := newCollection writeStream.[ (element := self next) notNil ] whileTrue: [ newStream nextPut: element ].^ newStream contents
+	| newStream element newCollection |
+	newCollection := self isBinary
+		ifTrue: [ ByteArray new: 100 ]
+		ifFalse: [ String new: 100 ].
+	newStream := newCollection writeStream.
+	[ (element := self next) notNil ] whileTrue: [ newStream nextPut: element ].
+	^ newStream contents
 ]
 
-Metaclass
-	name: #MultiByteBinaryOrTextStream;
-	instanceVariables: #().
-
-Metaclass MultiByteBinaryOrTextStream >> defaultConverter
+MultiByteBinaryOrTextStream class >> defaultConverter
 [
-^ Latin1TextConverter new
+	^ Latin1TextConverter new
 ]
 
-Metaclass MultiByteBinaryOrTextStream >> on: aCollection encoding: encodingName
+MultiByteBinaryOrTextStream class >> on: aCollection encoding: encodingName
 [
-| aTextConverter |encodingName isNil	ifTrue: [ aTextConverter := TextConverter default ]	ifFalse: [ aTextConverter := TextConverter newForEncoding: encodingName ].^ (self on: aCollection) converter: aTextConverter
+	| aTextConverter |
+	encodingName isNil
+		ifTrue: [ aTextConverter := TextConverter default ]
+		ifFalse: [ aTextConverter := TextConverter newForEncoding: encodingName ].
+	^ (self on: aCollection) converter: aTextConverter
 ]
 
-Metaclass MultiByteBinaryOrTextStream >> with: aCollection encoding: encodingName
+MultiByteBinaryOrTextStream class >> with: aCollection encoding: encodingName
 [
-| aTextConverter |encodingName isNil	ifTrue: [ aTextConverter := TextConverter default ]	ifFalse: [ aTextConverter := TextConverter newForEncoding: encodingName ].^ (self with: aCollection) converter: aTextConverter
+	| aTextConverter |
+	encodingName isNil
+		ifTrue: [ aTextConverter := TextConverter default ]
+		ifFalse: [ aTextConverter := TextConverter newForEncoding: encodingName ].
+	^ (self with: aCollection) converter: aTextConverter
 ]
 

@@ -1,634 +1,1087 @@
-Trait
-	name: #TPureBehavior;
-	package: #'Traits-Kernel-Traits'.
-
-Trait TPureBehavior >> >> selector
+Trait named: #TPureBehavior
+	package: #'Traits-Kernel-Traits'.TPureBehavior >> >> selector
 [
-	"Answer the compiled method associated with the argument, selector (a 	Symbol), a message selector in the receiver's method dictionary. If the 	selector is not in the dictionary, create an error notification."
-^ self compiledMethodAt: selector
+	"Answer the compiled method associated with the argument, selector (a 
+	Symbol), a message selector in the receiver's method dictionary. If the 
+	selector is not in the dictionary, create an error notification."
+
+	^ self compiledMethodAt: selector
 ]
 
-Trait TPureBehavior >> addExclusionOf: aSymbol to: aTrait
+TPureBehavior >> addCategory: newName before: aCategory
 [
-self setTraitComposition: (self traitComposition copyWithExclusionOf: aSymbol to: aTrait)
+	^ self organization addCategory: newName before: aCategory
 ]
 
-Trait TPureBehavior >> addSelector: selector withMethod: compiledMethod
+TPureBehavior >> addExclusionOf: aSymbol to: aTrait
 [
-^ self addSelector: selector withMethod: compiledMethod notifying: nil
+	self setTraitComposition: (self traitComposition copyWithExclusionOf: aSymbol to: aTrait)
 ]
 
-Trait TPureBehavior >> addSelector: selector withMethod: compiledMethod notifying: requestor
+TPureBehavior >> addSelector: selector withMethod: compiledMethod
 [
-^ self addSelectorSilently: selector withMethod: compiledMethod
+	^ self addSelector: selector withMethod: compiledMethod notifying: nil
 ]
 
-Trait TPureBehavior >> addSelectorSilently: selector withMethod: compiledMethod
+TPureBehavior >> addSelector: selector withMethod: compiledMethod notifying: requestor
 [
-self methodDictAddSelectorSilently: selector withMethod: compiledMethod.self registerLocalSelector: selector
+	^ self addSelectorSilently: selector withMethod: compiledMethod
 ]
 
-Trait TPureBehavior >> addToComposition: aTrait
+TPureBehavior >> addSelectorSilently: selector withMethod: compiledMethod
 [
-self	setTraitComposition:		(self traitComposition copyTraitExpression			add: aTrait;			yourself)
+	self methodDictAddSelectorSilently: selector withMethod: compiledMethod.
+	self registerLocalSelector: selector
 ]
 
-Trait TPureBehavior >> addTraitSelector: aSymbol withMethod: aCompiledMethod
+TPureBehavior >> addToComposition: aTrait
 [
-	"Add aMethod with selector aSymbol to my	methodDict. aMethod must not be defined locally."
-| source methodAndNode |[ (self includesLocalSelector: aSymbol) not ] assert.self ensureLocalSelectors.source := aCompiledMethod getSourceReplacingSelectorWith: aSymbol.methodAndNode := self	compile: source	classified: aCompiledMethod category	notifying: nil	trailer: self defaultMethodTrailer	ifFail: [ ^ nil ].methodAndNode method	putSource: source	fromParseNode: methodAndNode node	inFile: 2	withPreamble: [ :f | 		f			cr;			nextPut: $!;			nextChunkPut: 'Trait method';			cr ].self basicAddSelector: aSymbol withMethod: methodAndNode method
+	self setTraitComposition: (self traitComposition copyTraitExpression
+				add: aTrait;
+				yourself)
 ]
 
-Trait TPureBehavior >> allSelectors
+TPureBehavior >> addTraitSelector: aSymbol withMethod: aCompiledMethod
 [
-self explicitRequirement
+	"Add aMethod with selector aSymbol to my
+	methodDict. aMethod must not be defined locally."
+
+	| source methodAndNode |
+	[ (self includesLocalSelector: aSymbol) not ] assert.
+	self ensureLocalSelectors.
+	source := aCompiledMethod getSourceReplacingSelectorWith: aSymbol.
+	methodAndNode := self
+		compile: source
+		classified: aCompiledMethod category
+		notifying: nil
+		trailer: self defaultMethodTrailer
+		ifFail: [ ^ nil ].
+	methodAndNode method
+		putSource: source
+		fromParseNode: methodAndNode node
+		inFile: 2
+		withPreamble: [ :f | f
+				cr;
+				nextPut: $!;
+				nextChunkPut: 'Trait method';
+				cr ].
+	self basicAddSelector: aSymbol withMethod: methodAndNode method
 ]
 
-Trait TPureBehavior >> applyChangesOfNewTraitCompositionReplacing: oldComposition
+TPureBehavior >> allSelectors
 [
-| changedSelectors |changedSelectors := self traitComposition changedSelectorsComparedTo: oldComposition.changedSelectors isEmpty	ifFalse: [ self noteChangedSelectors: changedSelectors ].self traitComposition isEmpty	ifTrue: [ self purgeLocalSelectors ].^ changedSelectors
+	self explicitRequirement
 ]
 
-Trait TPureBehavior >> basicAddSelector: selector withMethod: compiledMethod
+TPureBehavior >> applyChangesOfNewTraitCompositionReplacing: oldComposition
 [
-	"Add the message selector with the corresponding compiled method to the 	receiver's method dictionary.	Do this without sending system change notifications"
-| oldMethodOrNil |oldMethodOrNil := self lookupSelector: selector.self methodDict at: selector put: compiledMethod.compiledMethod methodClass: self.compiledMethod selector: selector.	"Now flush the method cache, when we add a method"oldMethodOrNil ifNotNil: [ oldMethodOrNil flushCache ]
+	| changedSelectors |
+	changedSelectors := self traitComposition changedSelectorsComparedTo: oldComposition.
+	changedSelectors isEmpty
+		ifFalse: [ self noteChangedSelectors: changedSelectors ].
+	self traitComposition isEmpty
+		ifTrue: [ self purgeLocalSelectors ].
+	^ changedSelectors
 ]
 
-Trait TPureBehavior >> basicLocalSelectors
+TPureBehavior >> basicAddSelector: selector withMethod: compiledMethod
 [
-self explicitRequirement
+	"Add the message selector with the corresponding compiled method to the 
+	receiver's method dictionary.
+	Do this without sending system change notifications"
+
+	| oldMethodOrNil |
+	oldMethodOrNil := self lookupSelector: selector.
+	self methodDict at: selector put: compiledMethod.
+	compiledMethod methodClass: self.
+	compiledMethod selector: selector.	"Now flush the method cache, when we add a method"
+	oldMethodOrNil ifNotNil: [ oldMethodOrNil flushCache ]
 ]
 
-Trait TPureBehavior >> basicLocalSelectors: aSetOrNil
+TPureBehavior >> basicLocalSelectors
 [
-self explicitRequirement
+	self explicitRequirement
 ]
 
-Trait TPureBehavior >> basicRemoveSelector: selector
+TPureBehavior >> basicLocalSelectors: aSetOrNil
 [
-	"Assuming that the argument, selector (a Symbol), is a message selector 	in my method dictionary, remove it and its method."
-| oldMethod |oldMethod := self methodDict at: selector ifAbsent: [ ^ self ].self methodDict removeKey: selector.	"Now flush the method cache"oldMethod flushCache
+	self explicitRequirement
 ]
 
-Trait TPureBehavior >> binding
+TPureBehavior >> basicRemoveSelector: selector
 [
-^ nil -> self
+	"Assuming that the argument, selector (a Symbol), is a message selector 
+	in my method dictionary, remove it and its method."
+
+	| oldMethod |
+	oldMethod := self methodDict at: selector ifAbsent: [ ^ self ].
+	self methodDict removeKey: selector.	"Now flush the method cache"
+	oldMethod flushCache
 ]
 
-Trait TPureBehavior >> bindingOf: varName
+TPureBehavior >> binding
+[
+	^ nil -> self
+]
+
+TPureBehavior >> bindingOf: varName
 [
 	"Answer the binding of some variable resolved in the scope of the receiver"
-| aSymbol binding |aSymbol := varName asSymbol.	"Look in declared environment."binding := self environment bindingOf: aSymbol.^ binding
+
+	| aSymbol binding |
+	aSymbol := varName asSymbol.	"Look in declared environment."
+	binding := self environment bindingOf: aSymbol.
+	^ binding
 ]
 
-Trait TPureBehavior >> canUnderstand: selector
+TPureBehavior >> canUnderstand: selector
 [
-	"Answer whether the receiver can respond to the message whose selector 	is the argument."
-^ self classAndMethodFor: selector do: [ :c :m | m isProvided ] ifAbsent: [ false ]
+	"Answer whether the receiver can respond to the message whose selector 
+	is the argument."
+
+	^ self classAndMethodFor: selector do: [ :c :m | m isProvided ] ifAbsent: [ false ]
 ]
 
-Trait TPureBehavior >> canZapMethodDictionary
+TPureBehavior >> canZapMethodDictionary
 [
 	"Return true if it is safe to zap the method dictionary on #obsolete"
-^ true
+
+	^ true
 ]
 
-Trait TPureBehavior >> changeRecordsAt: selector
+TPureBehavior >> changeRecordsAt: selector
 [
 	"Return a list of ChangeRecords for all versions of the method at selector. Source code can be retrieved by sending string to any one.  Return nil if the method is absent."
+
 	"(Pen changeRecordsAt: #go:) collect: [:cRec | cRec string]"
-^ ChangeSet	scanVersionsOf: (self compiledMethodAt: selector ifAbsent: [ ^ nil ])	class: self	meta: self isMeta	category: (self whichCategoryIncludesSelector: selector)	selector: selector
+
+	^ ChangeSet
+		scanVersionsOf: (self compiledMethodAt: selector ifAbsent: [ ^ nil ])
+		class: self
+		meta: self isMeta
+		category: (self whichCategoryIncludesSelector: selector)
+		selector: selector
 ]
 
-Trait TPureBehavior >> classAndMethodFor: aSymbol do: binaryBlock ifAbsent: absentBlock
+TPureBehavior >> classAndMethodFor: aSymbol do: binaryBlock ifAbsent: absentBlock
 [
-	"Looks up the selector aSymbol in this class/trait. If it is found, binaryBlock is evaluated	with this class/trait and the associated method. Otherwise absentBlock is evaluated.	Note that this implementation is very simple because PureBehavior does not know	about inheritance (cf. implementation in Behavior)"
-^ binaryBlock value: self value: (self compiledMethodAt: aSymbol ifAbsent: [ ^ absentBlock value ])
+	"Looks up the selector aSymbol in this class/trait. If it is found, binaryBlock is evaluated
+	with this class/trait and the associated method. Otherwise absentBlock is evaluated.
+	Note that this implementation is very simple because PureBehavior does not know
+	about inheritance (cf. implementation in Behavior)"
+
+	^ binaryBlock value: self value: (self compiledMethodAt: aSymbol ifAbsent: [ ^ absentBlock value ])
 ]
 
-Trait TPureBehavior >> compile: code
+TPureBehavior >> compile: code
 [
-	"Compile the argument, code, as source code in the context of the 	receiver. Create an error notification if the code can not be compiled. 	The argument is either a string or an object that converts to a string or a 	PositionableStream on an object that converts to a string."
-^ self compile: code notifying: nil
+	"Compile the argument, code, as source code in the context of the 
+	receiver. Create an error notification if the code can not be compiled. 
+	The argument is either a string or an object that converts to a string or a 
+	PositionableStream on an object that converts to a string."
+
+	^ self compile: code notifying: nil
 ]
 
-Trait TPureBehavior >> compile: code classified: category notifying: requestor trailer: bytes ifFail: failBlock
+TPureBehavior >> compile: code classified: category notifying: requestor trailer: bytes ifFail: failBlock
 [
 	"Compile code without logging the source in the changes file"
-| methodNode |methodNode := self compilerClass new	compile: code	in: self	classified: category	notifying: requestor	ifFail: failBlock.^ CompiledMethodWithNode generateMethodFromNode: methodNode trailer: bytes
+
+	| methodNode |
+	methodNode := self compilerClass new
+		compile: code
+		in: self
+		classified: category
+		notifying: requestor
+		ifFail: failBlock.
+	^ CompiledMethodWithNode generateMethodFromNode: methodNode trailer: bytes
 ]
 
-Trait TPureBehavior >> compile: code notifying: requestor
+TPureBehavior >> compile: code notifying: requestor
 [
-	"Compile the argument, code, as source code in the context of the 	receiver and insEtall the result in the receiver's method dictionary. The 	second argument, requestor, is to be notified if an error occurs. The 	argument code is either a string or an object that converts to a string or 	a PositionableStream. This method also saves the source code."
-| methodAndNode |methodAndNode := self	compile: code	classified: nil	notifying: requestor	trailer: self defaultMethodTrailer	ifFail: [ ^ nil ].	"a Text"methodAndNode method	putSource: code	fromParseNode: methodAndNode node	inFile: 2	withPreamble: [ :f | 		f			cr;			nextPut: $!;			nextChunkPut: 'Behavior method';			cr ].self addSelector: methodAndNode selector withMethod: methodAndNode method notifying: requestor.^ methodAndNode selector
+	"Compile the argument, code, as source code in the context of the 
+	receiver and insEtall the result in the receiver's method dictionary. The 
+	second argument, requestor, is to be notified if an error occurs. The 
+	argument code is either a string or an object that converts to a string or 
+	a PositionableStream. This method also saves the source code."
+
+	| methodAndNode |
+	methodAndNode := self
+		compile: code
+		classified: nil
+		notifying: requestor
+		trailer: self defaultMethodTrailer
+		ifFail: [ ^ nil ].	"a Text"
+	methodAndNode method
+		putSource: code
+		fromParseNode: methodAndNode node
+		inFile: 2
+		withPreamble: [ :f | f
+				cr;
+				nextPut: $!;
+				nextChunkPut: 'Behavior method';
+				cr ].
+	self addSelector: methodAndNode selector withMethod: methodAndNode method notifying: requestor.
+	^ methodAndNode selector
 ]
 
-Trait TPureBehavior >> compileAll
+TPureBehavior >> compileAll
 [
-^ self compileAllFrom: self
+	^ self compileAllFrom: self
 ]
 
-Trait TPureBehavior >> compileAllFrom: oldClass
+TPureBehavior >> compileAllFrom: oldClass
 [
-	"Compile all the methods in the receiver's method dictionary.	This validates sourceCode and variable references and forces	all methods to use the current bytecode set"
-oldClass selectorsDo: [ :sel | self recompile: sel from: oldClass ]
+	"Compile all the methods in the receiver's method dictionary.
+	This validates sourceCode and variable references and forces
+	all methods to use the current bytecode set"
+
+	oldClass selectorsDo: [ :sel | self recompile: sel from: oldClass ]
 ]
 
-Trait TPureBehavior >> compiledMethodAt: selector
+TPureBehavior >> compiledMethodAt: selector
 [
-	"Answer the compiled method associated with the argument, selector (a 	Symbol), a message selector in the receiver's method dictionary. If the 	selector is not in the dictionary, create an error notification."
-^ self methodDict at: selector
+	"Answer the compiled method associated with the argument, selector (a 
+	Symbol), a message selector in the receiver's method dictionary. If the 
+	selector is not in the dictionary, create an error notification."
+
+	^ self methodDict at: selector
 ]
 
-Trait TPureBehavior >> compiledMethodAt: selector ifAbsent: aBlock
+TPureBehavior >> compiledMethodAt: selector ifAbsent: aBlock
 [
 	"Answer the compiled method associated with the argument, selector (a Symbol), a message selector in the receiver's method dictionary. If the selector is not in the dictionary, return the value of aBlock"
-^ self methodDict at: selector ifAbsent: [ aBlock value ]
+
+	^ self methodDict at: selector ifAbsent: [ aBlock value ]
 ]
 
-Trait TPureBehavior >> compilerClass
+TPureBehavior >> compilerClass
 [
 	"Answer a compiler class appropriate for source methods of this class."
-^ Compiler
+
+	^ Smalltalk compilerClass
 ]
 
-Trait TPureBehavior >> compress
+TPureBehavior >> compress
 [
 	"Compact the method dictionary of the receiver."
-self methodDict rehash
+
+	self methodDict rehash
 ]
 
-Trait TPureBehavior >> copyOfMethodDictionary
+TPureBehavior >> copyOfMethodDictionary
 [
 	"Return a copy of the receiver's method dictionary"
-^ self methodDict copy
+
+	^ self methodDict copy
 ]
 
-Trait TPureBehavior >> decompile: selector
+TPureBehavior >> decompile: selector
 [
-	"Find the compiled code associated with the argument, selector, as a 	message selector in the receiver's method dictionary and decompile it. 	Answer the resulting source code as a string. Create an error notification 	if the selector is not in the receiver's method dictionary."
-^ self decompilerClass new decompile: selector in: self
+	"Find the compiled code associated with the argument, selector, as a 
+	message selector in the receiver's method dictionary and decompile it. 
+	Answer the resulting source code as a string. Create an error notification 
+	if the selector is not in the receiver's method dictionary."
+
+	^ self decompilerClass new decompile: selector in: self
 ]
 
-Trait TPureBehavior >> decompilerClass
+TPureBehavior >> decompilerClass
 [
 	"Answer a decompiler class appropriate for compiled methods of this class."
-^ self compilerClass decompilerClass
+
+	^ self compilerClass decompilerClass
 ]
 
-Trait TPureBehavior >> deepCopy
+TPureBehavior >> deepCopy
 [
 	"Classes should only be shallowCopied or made anew."
-^ self shallowCopy
+
+	^ self shallowCopy
 ]
 
-Trait TPureBehavior >> defaultMethodTrailer
+TPureBehavior >> defaultMethodTrailer
 [
-^ CompiledMethodTrailer empty
+	^ CompiledMethodTrailer empty
 ]
 
-Trait TPureBehavior >> deregisterLocalSelector: aSymbol
+TPureBehavior >> deregisterLocalSelector: aSymbol
 [
-self basicLocalSelectors notNil	ifTrue: [ self basicLocalSelectors remove: aSymbol ifAbsent: [  ] ]
+	self basicLocalSelectors notNil
+		ifTrue: [ self basicLocalSelectors remove: aSymbol ifAbsent: [  ] ]
 ]
 
-Trait TPureBehavior >> emptyMethodDictionary
+TPureBehavior >> emptyMethodDictionary
 [
-^ MethodDictionary new
+	^ MethodDictionary new
 ]
 
-Trait TPureBehavior >> ensureLocalSelectors
+TPureBehavior >> ensureLocalSelectors
 [
-	"Ensures that the instance variable localSelectors is effectively used to maintain	the set of local selectors.	This method must be called before any non-local selectors are added to the	method dictionary!"
-self basicLocalSelectors isNil	ifTrue: [ self basicLocalSelectors: self selectors asSet ]
+	"Ensures that the instance variable localSelectors is effectively used to maintain
+	the set of local selectors.
+	This method must be called before any non-local selectors are added to the
+	method dictionary!"
+
+	self basicLocalSelectors isNil
+		ifTrue: [ self basicLocalSelectors: self selectors asSet ]
 ]
 
-Trait TPureBehavior >> environment
+TPureBehavior >> environment
 [
 	"Return the environment in which the receiver is visible"
-^ Smalltalk globals
+
+	^ Smalltalk globals
 ]
 
-Trait TPureBehavior >> evaluatorClass
+TPureBehavior >> evaluatorClass
 [
-	"Answer an evaluator class appropriate for evaluating expressions in the 	context of this class."
-^ Compiler
+	"Answer an evaluator class appropriate for evaluating expressions in the 
+	context of this class."
+
+	^ self compilerClass
 ]
 
-Trait TPureBehavior >> firstCommentAt: selector
+TPureBehavior >> firstCommentAt: selector
 [
 	"Answer a string representing the first comment in the method associated with selector.  Return an empty string if the relevant source file is not available, or if the method's source code does not contain a comment.  Not smart enough to bypass quotes in string constants, but does map doubled quote into a single quote."
-| someComments |someComments := self commentsAt: selector.^ someComments isEmpty	ifTrue: [ '' ]	ifFalse: [ someComments first ]	"Behavior firstCommentAt: #firstCommentAt:"
+
+	| someComments |
+	someComments := self commentsAt: selector.
+	^ someComments isEmpty
+		ifTrue: [ '' ]
+		ifFalse: [ someComments first ]	"Behavior firstCommentAt: #firstCommentAt:"
 ]
 
-Trait TPureBehavior >> firstPrecodeCommentFor: selector
+TPureBehavior >> firstPrecodeCommentFor: selector
 [
 	"If there is a comment in the source code at the given selector that preceeds the body of the method, return it here, else return nil"
-| parser source tree |"Behavior firstPrecodeCommentFor: #firstPrecodeCommentFor:"(#(#Comment #Definition #Hierarchy) includes: selector)	ifTrue: [ 		"Not really a selector"		^ nil ].source := self sourceCodeAt: selector asSymbol ifAbsent: [ ^ nil ].parser := self parserClass new.tree := parser	parse: source readStream	class: self	noPattern: false	context: nil	notifying: nil	ifFail: [ ^ nil ].^ (tree comment ifNil: [ ^ nil ]) first
+
+	| parser source tree |
+	"Behavior firstPrecodeCommentFor: #firstPrecodeCommentFor:"
+	(#(#Comment #Definition #Hierarchy) includes: selector)
+		ifTrue: [ "Not really a selector"
+			^ nil ].
+	source := self sourceCodeAt: selector asSymbol ifAbsent: [ ^ nil ].
+	parser := self parserClass new.
+	tree := parser
+		parse: source readStream
+		class: self
+		noPattern: false
+		context: nil
+		notifying: nil
+		ifFail: [ ^ nil ].
+	^ (tree comment ifNil: [ ^ nil ]) first
 ]
 
-Trait TPureBehavior >> flattenDown: aTrait
+TPureBehavior >> flattenDown: aTrait
 [
-| selectors |[ self hasTraitComposition and: [ self traitComposition allTraits includes: aTrait ] ] assert.selectors := (self traitComposition transformationOfTrait: aTrait) selectors.self basicLocalSelectors: self basicLocalSelectors , selectors.self removeFromComposition: aTrait
+	| selectors |
+	[ self hasTraitComposition and: [ self traitComposition allTraits includes: aTrait ] ] assert.
+	selectors := (self traitComposition transformationOfTrait: aTrait) selectors.
+	self basicLocalSelectors: self basicLocalSelectors , selectors.
+	self removeFromComposition: aTrait
 ]
 
-Trait TPureBehavior >> flattenDownAllTraits
+TPureBehavior >> flattenDownAllTraits
 [
-self traitComposition allTraits do: [ :each | self flattenDown: each ].[ self traitComposition isEmpty ] assert.self traitComposition: nil
+	self traitComposition allTraits do: [ :each | self flattenDown: each ].
+	[ self traitComposition isEmpty ] assert.
+	self traitComposition: nil
 ]
 
-Trait TPureBehavior >> formalHeaderPartsFor: aSelector
+TPureBehavior >> formalHeaderPartsFor: aSelector
 [
 	"popeye"
+
 	"olive oil"
-	"RELAX!  The warning you may have just seen about possibly having a bad source file does not apply here, because this method *intends* to have its source code start with a comment.	This method returns a collection giving the parts in the formal declaration for aSelector.  This parse is in support of schemes in which adjutant properties of a method can be declared via special comments secreted in the formal header	The result will have     	3 elements for a simple, argumentless selector.		5 elements for a single-argument selector		9 elements for a two-argument selector		13 elements for a three-argument, selector		etc...	The syntactic elements are:		1		comment preceding initial selector fragment		2		first selector fragment		3		comment following first selector fragment  (nil if selector has no arguments)        ----------------------  (ends here for, e.g., #copy)		4		first formal argument		5		comment following first formal argument (nil if selector has only one argument)        ----------------------  (ends here for, e.g., #copyFrom:)		6		second keyword		7		comment following second keyword		8		second formal argument		9		comment following second formal argument (nil if selector has only two arguments)         ----------------------  (ends here for, e.g., #copyFrom:to:)	Any nil element signifies an absent comment.	NOTE: The comment following the final formal argument is *not* successfully retrieved by this method in its current form, though it can be obtained, if needed, by other means (e.g. calling #firstPrecodeCommentFor:).  Thus, the *final* element in the structure returned by this method is always going to be nil."
-^ Scanner new scanMessageParts: (self methodHeaderFor: aSelector)	"	Behavior class formalHeaderPartsFor: #formalHeaderPartsFor:"
+
+	"RELAX!  The warning you may have just seen about possibly having a bad source file does not apply here, because this method *intends* to have its source code start with a comment.
+	This method returns a collection giving the parts in the formal declaration for aSelector.  This parse is in support of schemes in which adjutant properties of a method can be declared via special comments secreted in the formal header
+	The result will have
+     	3 elements for a simple, argumentless selector.
+		5 elements for a single-argument selector
+		9 elements for a two-argument selector
+		13 elements for a three-argument, selector
+		etc...
+
+	The syntactic elements are:
+
+		1		comment preceding initial selector fragment
+
+		2		first selector fragment
+		3		comment following first selector fragment  (nil if selector has no arguments)
+
+        ----------------------  (ends here for, e.g., #copy)
+
+		4		first formal argument
+		5		comment following first formal argument (nil if selector has only one argument)
+
+        ----------------------  (ends here for, e.g., #copyFrom:)
+
+		6		second keyword
+		7		comment following second keyword
+		8		second formal argument
+		9		comment following second formal argument (nil if selector has only two arguments)
+
+         ----------------------  (ends here for, e.g., #copyFrom:to:)
+
+	Any nil element signifies an absent comment.
+	NOTE: The comment following the final formal argument is *not* successfully retrieved by this method in its current form, though it can be obtained, if needed, by other means (e.g. calling #firstPrecodeCommentFor:).  Thus, the *final* element in the structure returned by this method is always going to be nil."
+
+	^ Scanner new scanMessageParts: (self methodHeaderFor: aSelector)	"	Behavior class formalHeaderPartsFor: #formalHeaderPartsFor:"
 ]
 
-Trait TPureBehavior >> formalParametersAt: aSelector
+TPureBehavior >> formalParametersAt: aSelector
 [
 	"Return the names of the arguments used in this method."
-| source |source := self sourceCodeAt: aSelector ifAbsent: [ ^ #() ].	"for now"^ self parserClass new parseParameterNames: source
+
+	| source |
+	source := self sourceCodeAt: aSelector ifAbsent: [ ^ #() ].	"for now"
+	^ self parserClass new parseParameterNames: source
 ]
 
-Trait TPureBehavior >> fuelInitializeTraitComposition
-[
-self traitComposition traits do: [ :each | each addUser: self ]
-]
-
-Trait TPureBehavior >> hasMethods
+TPureBehavior >> hasMethods
 [
 	"Answer whether the receiver has any methods in its method dictionary."
-^ self methodDict notEmpty
+
+	^ self methodDict notEmpty
 ]
 
-Trait TPureBehavior >> hasTraitComposition
+TPureBehavior >> hasTraitComposition
 [
-self explicitRequirement
+	self explicitRequirement
 ]
 
-Trait TPureBehavior >> includesBehavior: aBehavior
+TPureBehavior >> includesBehavior: aBehavior
 [
-^ self == aBehavior
+	^ self == aBehavior
 ]
 
-Trait TPureBehavior >> includesLocalSelector: aSymbol
+TPureBehavior >> includesLocalSelector: aSymbol
 [
-^ self basicLocalSelectors isNil	ifTrue: [ self includesSelector: aSymbol ]	ifFalse: [ self localSelectors includes: aSymbol ]
+	^ self basicLocalSelectors isNil
+		ifTrue: [ self includesSelector: aSymbol ]
+		ifFalse: [ self localSelectors includes: aSymbol ]
 ]
 
-Trait TPureBehavior >> includesSelector: aSymbol
+TPureBehavior >> includesSelector: aSymbol
 [
-	"Answer whether the message whose selector is the argument is in the 	method dictionary of the receiver's class."
-^ self methodDict includesKey: aSymbol
+	"Answer whether the message whose selector is the argument is in the 
+	method dictionary of the receiver's class."
+
+	^ self methodDict includesKey: aSymbol
 ]
 
-Trait TPureBehavior >> isAliasSelector: aSymbol
+TPureBehavior >> isAliasSelector: aSymbol
 [
-	"Return true if the selector aSymbol is an alias defined	in my or in another composition somewhere deeper in 	the tree of traits compositions."
-^ (self includesLocalSelector: aSymbol) not	and: [ self hasTraitComposition and: [ self traitComposition isAliasSelector: aSymbol ] ]
+	"Return true if the selector aSymbol is an alias defined
+	in my or in another composition somewhere deeper in 
+	the tree of traits compositions."
+
+	^ (self includesLocalSelector: aSymbol) not
+		and: [ self hasTraitComposition and: [ self traitComposition isAliasSelector: aSymbol ] ]
 ]
 
-Trait TPureBehavior >> isDisabledSelector: selector
+TPureBehavior >> isDisabledSelector: selector
 [
-^ self classAndMethodFor: selector do: [ :c :m | m isDisabled ] ifAbsent: [ false ]
+	^ self classAndMethodFor: selector do: [ :c :m | m isDisabled ] ifAbsent: [ false ]
 ]
 
-Trait TPureBehavior >> isLocalAliasSelector: aSymbol
+TPureBehavior >> isLocalAliasSelector: aSymbol
 [
-	"Return true if the selector aSymbol is an alias defined	in my trait composition."
-^ (self includesLocalSelector: aSymbol) not	and: [ self hasTraitComposition and: [ self traitComposition isLocalAliasSelector: aSymbol ] ]
+	"Return true if the selector aSymbol is an alias defined
+	in my trait composition."
+
+	^ (self includesLocalSelector: aSymbol) not
+		and: [ self hasTraitComposition and: [ self traitComposition isLocalAliasSelector: aSymbol ] ]
 ]
 
-Trait TPureBehavior >> literalScannedAs: scannedLiteral notifying: requestor
+TPureBehavior >> literalScannedAs: scannedLiteral notifying: requestor
 [
-	"Postprocesses a literal scanned by Scanner scanToken (esp. xLitQuote).	If scannedLiteral is not an association, answer it.	Else, if it is of the form:		nil->#NameOfMetaclass	answer nil->theMetaclass, if any has that name, else report an error.	Else, if it is of the form:		#NameOfGlobalVariable->anythiEng	answer the global, class, or pool association with that nameE, if any, else	add it to Undeclared a answer the new Association."
-| key value |scannedLiteral isVariableBinding	ifFalse: [ ^ scannedLiteral ].key := scannedLiteral key.value := scannedLiteral value.key isNil	ifTrue: [ 		"###<metaclass soleInstance name>"		(self bindingOf: value)			ifNotNil: [ :assoc | 				(assoc value isKindOf: Behavior)					ifTrue: [ ^ nil -> assoc value class ] ].		requestor notify: 'No such metaclass'.		^ false ].key isSymbol	ifTrue: [ 		"##<global var name>"		(self bindingOf: key) ifNotNil: [ :assoc | ^ assoc ].		Undeclared at: key put: nil.		^ Undeclared bindingOf: key ].requestor notify: '## must be followed by a non-local variable name'.^ false	"	Form literalScannedAs: 14 notifying: nil 14	Form literalScannedAs: #OneBitForm notiEfying: nil  OneBitForm	Form literalScannedAs: ##OneBitForm notifying: nil  OneBitForm->a Form	Form literalScannedAs: ##Form notifying: nil   Form->Form	Form literalScannedAs: ###Form notifying: nil   nilE->Form class"
+	"Postprocesses a literal scanned by Scanner scanToken (esp. xLitQuote).
+	If scannedLiteral is not an association, answer it.
+	Else, if it is of the form:
+		nil->#NameOfMetaclass
+	answer nil->theMetaclass, if any has that name, else report an error.
+	Else, if it is of the form:
+		#NameOfGlobalVariable->anythiEng
+	answer the global, class, or pool association with that nameE, if any, else
+	add it to Undeclared a answer the new Association."
+
+	| key value |
+	scannedLiteral isVariableBinding
+		ifFalse: [ ^ scannedLiteral ].
+	key := scannedLiteral key.
+	value := scannedLiteral value.
+	key isNil
+		ifTrue: [ "###<metaclass soleInstance name>"
+			(self bindingOf: value)
+				ifNotNil: [ :assoc | (assoc value isKindOf: Behavior)
+						ifTrue: [ ^ nil -> assoc value class ] ].
+			requestor notify: 'No such metaclass'.
+			^ false ].
+	key isSymbol
+		ifTrue: [ "##<global var name>"
+			(self bindingOf: key) ifNotNil: [ :assoc | ^ assoc ].
+			Undeclared at: key put: nil.
+			^ Undeclared bindingOf: key ].
+	requestor notify: '## must be followed by a non-local variable name'.
+	^ false	"	Form literalScannedAs: 14 notifying: nil 14	Form literalScannedAs: #OneBitForm notiEfying: nil  OneBitForm	Form literalScannedAs: ##OneBitForm notifying: nil  OneBitForm->a Form	Form literalScannedAs: ##Form notifying: nil   Form->Form	Form literalScannedAs: ###Form notifying: nil   nilE->Form class"
 ]
 
-Trait TPureBehavior >> localSelectors
+TPureBehavior >> localSelectors
 [
-	"Return a set of selectors defined locally.	The instance variable is lazily initialized. If it is nil then there	are no non-local selectors"
-^ self basicLocalSelectors isNil	ifTrue: [ self selectors asSet ]	ifFalse: [ self basicLocalSelectors ]
+	"Return a set of selectors defined locally.
+	The instance variable is lazily initialized. If it is nil then there
+	are no non-local selectors"
+
+	^ self basicLocalSelectors isNil
+		ifTrue: [ self selectors asSet ]
+		ifFalse: [ self basicLocalSelectors ]
 ]
 
-Trait TPureBehavior >> longPrintOn: aStream
+TPureBehavior >> longPrintOn: aStream
 [
 	"Append to the argument, aStream, the names and values of all of the receiver's instance variables.  But, not useful for a class with a method dictionary."
-aStream	nextPutAll: '<<too complex to show>>';	cr
+
+	aStream
+		nextPutAll: '<<too complex to show>>';
+		cr
 ]
 
-Trait TPureBehavior >> lookupSelector: selector
+TPureBehavior >> lookupSelector: selector
 [
-^ self explicitRequirement
+	^ self explicitRequirement
 ]
 
-Trait TPureBehavior >> methodDict
+TPureBehavior >> methodDict
 [
-^ self explicitRequirement
+	^ self explicitRequirement
 ]
 
-Trait TPureBehavior >> methodDict: aDictionary
+TPureBehavior >> methodDict: aDictionary
 [
-^ self explicitRequirement
+	^ self explicitRequirement
 ]
 
-Trait TPureBehavior >> methodDictAddSelectorSilently: selector withMethod: compiledMethod
+TPureBehavior >> methodDictAddSelectorSilently: selector withMethod: compiledMethod
 [
-self basicAddSelector: selector withMethod: compiledMethod
+	self basicAddSelector: selector withMethod: compiledMethod
 ]
 
-Trait TPureBehavior >> methodDictionary
+TPureBehavior >> methodDictionary
 [
 	"Convenience"
-^ self methodDict
+
+	^ self methodDict
 ]
 
-Trait TPureBehavior >> methodDictionary: aDictionary
+TPureBehavior >> methodDictionary: aDictionary
 [
-self methodDict: aDictionary
+	self methodDict: aDictionary
 ]
 
-Trait TPureBehavior >> methodHeaderFor: selector
+TPureBehavior >> methodHeaderFor: selector
 [
 	"Answer the string corresponding to the method header for the given selector"
-| sourceString parser |sourceString := self ultimateSourceCodeAt: selector ifAbsent: [ self standardMethodHeaderFor: selector ].(parser := self parserClass new) parseSelector: sourceString.^ sourceString asString copyFrom: 1 to: (parser endOfLastToken min: sourceString size)	"Behavior methodHeaderFor: #methodHeaderFor: "
+
+	| sourceString parser |
+	sourceString := self ultimateSourceCodeAt: selector ifAbsent: [ self standardMethodHeaderFor: selector ].
+	(parser := self parserClass new) parseSelector: sourceString.
+	^ sourceString asString copyFrom: 1 to: (parser endOfLastToken min: sourceString size)	"Behavior methodHeaderFor: #methodHeaderFor: "
 ]
 
-Trait TPureBehavior >> methodsDo: aBlock
+TPureBehavior >> methods
+[
+	^ self methodDict values
+]
+
+TPureBehavior >> methodsDo: aBlock
 [
 	"Evaluate aBlock for all the compiled methods in my method dictionary."
-^ self methodDict valuesDo: aBlock
+
+	^ self methodDict valuesDo: aBlock
 ]
 
-Trait TPureBehavior >> name
+TPureBehavior >> methodsInProtocol: aString
 [
-^ self explicitRequirement
+	^ (self organization listAtCategoryNamed: aString) collect: [ :each | self methodDict at: each ]
 ]
 
-Trait TPureBehavior >> noteChangedSelectors: aCollection
+TPureBehavior >> name
 [
-	"Start update of my methodDict (after changes to traits in traitComposition	or after a local method was removed from my methodDict). The argument 	is a collection of method selectors that may have been changed. Most of the time	aCollection only holds one selector. But when there are aliases involved 	there may be several method changes that have to be propagated to users."
-| affectedSelectors |affectedSelectors := IdentitySet new.aCollection do: [ :selector | affectedSelectors addAll: (self updateMethodDictionarySelector: selector) ].self notifyUsersOfChangedSelectors: affectedSelectors.^ affectedSelectors
+	^ self explicitRequirement
 ]
 
-Trait TPureBehavior >> notifyUsersOfChangedSelector: aSelector
+TPureBehavior >> noteChangedSelectors: aCollection
 [
-self notifyUsersOfChangedSelectors: (Array with: aSelector)
+	"Start update of my methodDict (after changes to traits in traitComposition
+	or after a local method was removed from my methodDict). The argument 
+	is a collection of method selectors that may have been changed. Most of the time
+	aCollection only holds one selector. But when there are aliases involved 
+	there may be several method changes that have to be propagated to users."
+
+	| affectedSelectors |
+	affectedSelectors := IdentitySet new.
+	aCollection do: [ :selector | affectedSelectors addAll: (self updateMethodDictionarySelector: selector) ].
+	self notifyUsersOfChangedSelectors: affectedSelectors.
+	^ affectedSelectors
 ]
 
-Trait TPureBehavior >> notifyUsersOfChangedSelectors: aCollection
+TPureBehavior >> notifyUsersOfChangedSelector: aSelector
 [
-
+	self notifyUsersOfChangedSelectors: (Array with: aSelector)
 ]
 
-Trait TPureBehavior >> obsolete
+TPureBehavior >> notifyUsersOfChangedSelectors: aCollection
 [
-	"Invalidate and recycle local methods,	e.g., zap the method dictionary if can be done safely."
-self canZapMethodDictionary	ifTrue: [ self methodDict: self emptyMethodDictionary ].self hasTraitComposition	ifTrue: [ self traitComposition traits do: [ :each | each removeUser: self ] ]
+	
 ]
 
-Trait TPureBehavior >> originalName
+TPureBehavior >> obsolete
 [
-^ self isObsolete	ifTrue: [ (self name copyFrom: 'AnObsolete' size + 1 to: self name size) asSymbol ]	ifFalse: [ self name asSymbol ]
+	"Invalidate and recycle local methods,
+	e.g., zap the method dictionary if can be done safely."
+
+	self canZapMethodDictionary
+		ifTrue: [ self methodDict: self emptyMethodDictionary ].
+	self hasTraitComposition
+		ifTrue: [ self traitComposition traits do: [ :each | each removeUser: self ] ]
 ]
 
-Trait TPureBehavior >> parseScope
+TPureBehavior >> originalName
 [
-^ OCClassScope for: self
+	^ self isObsolete
+		ifTrue: [ (self name copyFrom: 'AnObsolete' size + 1 to: self name size) asSymbol ]
+		ifFalse: [ self name asSymbol ]
 ]
 
-Trait TPureBehavior >> parserClass
+TPureBehavior >> parseScope
+[
+	^ OCClassScope for: self
+]
+
+TPureBehavior >> parserClass
 [
 	"Answer a parser class to use for parsing method headers."
-^ self compilerClass parserClass
+
+	^ self compilerClass parserClass
 ]
 
-Trait TPureBehavior >> postCopy
+TPureBehavior >> postCopy
 [
-super postCopy.self methodDictionary: self copyOfMethodDictionary
+	super postCopy.
+	self methodDictionary: self copyOfMethodDictionary
 ]
 
-Trait TPureBehavior >> prettyPrinterClass
+TPureBehavior >> prettyPrinterClass
 [
-^ PrettyPrinting prettyPrinterClassFor: self
+	^ self compilerClass
 ]
 
-Trait TPureBehavior >> purgeLocalSelectors
+TPureBehavior >> protocols
 [
-self basicLocalSelectors: nil
+	^ self organization categories copy
 ]
 
-Trait TPureBehavior >> recompile: selector
+TPureBehavior >> purgeLocalSelectors
+[
+	self basicLocalSelectors: nil
+]
+
+TPureBehavior >> recompile: selector
 [
 	"Compile the method associated with selector in the receiver's method dictionary."
-^ self recompile: selector from: self
+
+	^ self recompile: selector from: self
 ]
 
-Trait TPureBehavior >> recompile: selector from: oldClass
+TPureBehavior >> recompile: selector from: oldClass
 [
 	"Compile the method associated with selector in the receiver's method dictionary."
+
 	"ar 7/10/1999: Use oldClass compiledMethodAt: not self compiledMethodAt:"
-| method trailer methodNode |method := oldClass compiledMethodAt: selector.trailer := method trailer.methodNode := self compilerClass new	compile: (oldClass sourceCodeAt: selector)	in: self	notifying: nil	ifFail: [ ^ self ].	"Assume OK after proceed from SyntaxError"selector == methodNode selector	ifFalse: [ self error: 'selector changed!' ].self basicAddSelector: selector withMethod: (methodNode generate: trailer)
+
+	| method trailer methodNode |
+	method := oldClass compiledMethodAt: selector.
+	trailer := method trailer.
+	methodNode := self compilerClass new
+		compile: (oldClass sourceCodeAt: selector)
+		in: self
+		notifying: nil
+		ifFail: [ ^ self ].	"Assume OK after proceed from SyntaxError"
+	selector == methodNode selector
+		ifFalse: [ self error: 'selector changed!' ].
+	self basicAddSelector: selector withMethod: (methodNode generate: trailer)
 ]
 
-Trait TPureBehavior >> recompileChanges
+TPureBehavior >> recompileChanges
 [
-	"Compile all the methods that are in the changes file.	This validates sourceCode and variable references and forces	methods to use the current bytecode set"
-self	selectorsAndMethodsDo: [ :sel :meth | 		meth fileIndex > 1			ifTrue: [ self recompile: sel from: self ] ]
+	"Compile all the methods that are in the changes file.
+	This validates sourceCode and variable references and forces
+	methods to use the current bytecode set"
+
+	self selectorsAndMethodsDo: [ :sel :meth | meth fileIndex > 1
+				ifTrue: [ self recompile: sel from: self ] ]
 ]
 
-Trait TPureBehavior >> registerLocalSelector: aSymbol
+TPureBehavior >> registerLocalSelector: aSymbol
 [
-self basicLocalSelectors notNil	ifTrue: [ self basicLocalSelectors add: aSymbol ]
+	self basicLocalSelectors notNil
+		ifTrue: [ self basicLocalSelectors add: aSymbol ]
 ]
 
-Trait TPureBehavior >> removeAlias: aSymbol of: aTrait
+TPureBehavior >> removeAlias: aSymbol of: aTrait
 [
-self setTraitComposition: (self traitComposition copyWithoutAlias: aSymbol of: aTrait)
+	self setTraitComposition: (self traitComposition copyWithoutAlias: aSymbol of: aTrait)
 ]
 
-Trait TPureBehavior >> removeFromComposition: aTrait
+TPureBehavior >> removeFromComposition: aTrait
 [
-self setTraitComposition: (self traitComposition copyTraitExpression removeFromComposition: aTrait)
+	self setTraitComposition: (self traitComposition copyTraitExpression removeFromComposition: aTrait)
 ]
 
-Trait TPureBehavior >> removeSelector: aSelector
+TPureBehavior >> removeSelector: aSelector
 [
-	"Assuming that the argument, selector (a Symbol), is a message selector 	in my method dictionary, remove it and its method.		If the method to remove will be replaced by a method from my trait composition,	the current method does not have to be removed because we mark it as non-local.	If it is not identical to the actual method from the trait it will be replaced automatically	by #noteChangedSelectors:.		This is useful to avoid bootstrapping problems when moving methods to a trait	(e.g., from TPureBehavior to TMethodDictionaryBehavior). Manual moving (implementing	the method in the trait and then remove it from the class) does not work if the methods	themselves are used for this process (such as compiledMethodAt:, includesLocalSelector: or	addTraitSelector:withMethod:)"
-| changeFromLocalToTraitMethod |changeFromLocalToTraitMethod := (self includesLocalSelector: aSelector)	and: [ self hasTraitComposition and: [ self traitComposition includesMethod: aSelector ] ].changeFromLocalToTraitMethod	ifFalse: [ self basicRemoveSelector: aSelector ]	ifTrue: [ self ensureLocalSelectors ].self deregisterLocalSelector: aSelector.self noteChangedSelectors: (Array with: aSelector)
+	"Assuming that the argument, selector (a Symbol), is a message selector 
+	in my method dictionary, remove it and its method.
+	
+	If the method to remove will be replaced by a method from my trait composition,
+	the current method does not have to be removed because we mark it as non-local.
+	If it is not identical to the actual method from the trait it will be replaced automatically
+	by #noteChangedSelectors:.
+	
+	This is useful to avoid bootstrapping problems when moving methods to a trait
+	(e.g., from TPureBehavior to TMethodDictionaryBehavior). Manual moving (implementing
+	the method in the trait and then remove it from the class) does not work if the methods
+	themselves are used for this process (such as compiledMethodAt:, includesLocalSelector: or
+	addTraitSelector:withMethod:)"
+
+	| changeFromLocalToTraitMethod |
+	changeFromLocalToTraitMethod := (self includesLocalSelector: aSelector)
+		and: [ self hasTraitComposition and: [ self traitComposition includesMethod: aSelector ] ].
+	changeFromLocalToTraitMethod
+		ifFalse: [ self basicRemoveSelector: aSelector ]
+		ifTrue: [ self ensureLocalSelectors ].
+	self deregisterLocalSelector: aSelector.
+	self noteChangedSelectors: (Array with: aSelector)
 ]
 
-Trait TPureBehavior >> removeSelectorSilently: selector
+TPureBehavior >> removeSelectorSilently: selector
 [
 	"Remove selector without sending system change notifications"
-^ SystemAnnouncer uniqueInstance suspendAllWhile: [ self removeSelector: selector ]
+
+	^ SystemAnnouncer uniqueInstance suspendAllWhile: [ self removeSelector: selector ]
 ]
 
-Trait TPureBehavior >> removeTraitSelector: aSymbol
+TPureBehavior >> removeTraitSelector: aSymbol
 [
-[ (self includesLocalSelector: aSymbol) not ] assert.self basicRemoveSelector: aSymbol
+	[ (self includesLocalSelector: aSymbol) not ] assert.
+	self basicRemoveSelector: aSymbol
 ]
 
-Trait TPureBehavior >> selectors
+TPureBehavior >> selectors
 [
-	"Answer a Set of all the message selectors specified in the receiver's 	method dictionary."
-^ self methodDict keys
+	"Answer a Set of all the message selectors specified in the receiver's 
+	method dictionary."
+
+	^ self methodDict keys
 ]
 
-Trait TPureBehavior >> selectorsAndMethodsDo: selectorAndMethodBlock
+TPureBehavior >> selectorsAndMethodsDo: selectorAndMethodBlock
 [
 	"Evaluate selectorAndMethodBlock with two arguments for each selector/method pair in my method dictionary."
-^ self methodDict keysAndValuesDo: selectorAndMethodBlock
+
+	^ self methodDict keysAndValuesDo: selectorAndMethodBlock
 ]
 
-Trait TPureBehavior >> selectorsDo: selectorBlock
+TPureBehavior >> selectorsDo: selectorBlock
 [
 	"Evaluate selectorBlock for all the message selectors in my method dictionary."
-^ self methodDict keysDo: selectorBlock
+
+	^ self methodDict keysDo: selectorBlock
 ]
 
-Trait TPureBehavior >> selectorsWithArgs: numberOfArgs
+TPureBehavior >> selectorsWithArgs: numberOfArgs
 [
 	"Return all selectors defined in this class that take this number of arguments.  Could use String.keywords.  Could see how compiler does this."
-| list |list := OrderedCollection new.self	selectorsDo: [ :aSel | 		| num |		num := aSel count: [ :char | char == $: ].		num = 0			ifTrue: [ 				aSel last isLetter					ifFalse: [ num := 1 ] ].		num = numberOfArgs			ifTrue: [ list add: aSel ] ].^ list
+
+	| list |
+	list := OrderedCollection new.
+	self
+		selectorsDo: [ :aSel | | num |
+			num := aSel count: [ :char | char == $: ].
+			num = 0
+				ifTrue: [ aSel last isLetter
+						ifFalse: [ num := 1 ] ].
+			num = numberOfArgs
+				ifTrue: [ list add: aSel ] ].
+	^ list
 ]
 
-Trait TPureBehavior >> setTraitComposition: aTraitComposition
+TPureBehavior >> setTraitComposition: aTraitComposition
 [
-| oldComposition |(self hasTraitComposition not and: [ aTraitComposition isEmpty ])	ifTrue: [ ^ self ].aTraitComposition assertValidUser: self.oldComposition := self traitComposition.self traitComposition: aTraitComposition.self applyChangesOfNewTraitCompositionReplacing: oldComposition.oldComposition traits do: [ :each | each removeUser: self ].aTraitComposition traits do: [ :each | each addUser: self ]
+	| oldComposition |
+	(self hasTraitComposition not and: [ aTraitComposition isEmpty ])
+		ifTrue: [ ^ self ].
+	aTraitComposition assertValidUser: self.
+	oldComposition := self traitComposition.
+	self traitComposition: aTraitComposition.
+	self applyChangesOfNewTraitCompositionReplacing: oldComposition.
+	oldComposition traits do: [ :each | each removeUser: self ].
+	aTraitComposition traits do: [ :each | each addUser: self ]
 ]
 
-Trait TPureBehavior >> setTraitCompositionFrom: aTraitExpression
+TPureBehavior >> setTraitCompositionFrom: aTraitExpression
 [
-^ self setTraitComposition: aTraitExpression asTraitComposition
+	^ self setTraitComposition: aTraitExpression asTraitComposition
 ]
 
-Trait TPureBehavior >> sourceCodeAt: selector
+TPureBehavior >> sourceCodeAt: selector
 [
-^ (self methodDict at: selector) sourceCode
+	^ (self methodDict at: selector) sourceCode
 ]
 
-Trait TPureBehavior >> sourceCodeAt: selector ifAbsent: aBlock
+TPureBehavior >> sourceCodeAt: selector ifAbsent: aBlock
 [
-^ (self methodDict at: selector ifAbsent: [ ^ aBlock value ]) sourceCode
+	^ (self methodDict at: selector ifAbsent: [ ^ aBlock value ]) sourceCode
 ]
 
-Trait TPureBehavior >> sourceCodeTemplate
+TPureBehavior >> sourceCodeTemplate
 [
-	"Answer an expression to be edited and evaluated in order to define 	methods in this class or trait."
-^ 'message selector and argument names	"comment stating purpose of message"	| temporary variable names |	statements'
+	"Answer an expression to be edited and evaluated in order to define 
+	methods in this class or trait."
+
+	^ 'message selector and argument names	"comment stating purpose of message"	| temporary variable names |	statements'
 ]
 
-Trait TPureBehavior >> spaceUsed
+TPureBehavior >> spaceUsed
 [
 	"Answer a rough estimate of number of bytes used by this class and its metaclass. Does not include space used by class variables."
-| space |space := 0.self	methodsDo: [ :method | 		space := space + 16.	"dict and org'n space"		space := space + (method size + 6).	"hdr + avg pad"		method			literalsDo: [ :lit | 				(lit isMemberOf: Array)					ifTrue: [ space := space + ((lit size + 1) * 4) ].				(lit isMemberOf: Float)					ifTrue: [ space := space + 12 ].				(lit isMemberOf: ByteString)					ifTrue: [ space := space + (lit size + 6) ].				(lit isMemberOf: LargeNegativeInteger)					ifTrue: [ space := space + ((lit size + 1) * 4) ].				(lit isMemberOf: LargePositiveInteger)					ifTrue: [ space := space + ((lit size + 1) * 4) ] ] ].^ space
+
+	| space |
+	space := 0.
+	self
+		methodsDo: [ :method | space := space + 16.	"dict and org'n space"
+			space := space + (method size + 6).	"hdr + avg pad"
+			method
+				literalsDo: [ :lit | (lit isMemberOf: Array)
+						ifTrue: [ space := space + ((lit size + 1) * 4) ].
+					(lit isMemberOf: Float)
+						ifTrue: [ space := space + 12 ].
+					(lit isMemberOf: ByteString)
+						ifTrue: [ space := space + (lit size + 6) ].
+					(lit isMemberOf: LargeNegativeInteger)
+						ifTrue: [ space := space + ((lit size + 1) * 4) ].
+					(lit isMemberOf: LargePositiveInteger)
+						ifTrue: [ space := space + ((lit size + 1) * 4) ] ] ].
+	^ space
 ]
 
-Trait TPureBehavior >> standardMethodHeaderFor: aSelector
+TPureBehavior >> standardMethodHeaderFor: aSelector
 [
-| args |args := (1 to: aSelector numArgs) collect: [ :i | 'arg' , i printString ].args size = 0	ifTrue: [ ^ aSelector asString ].args size = 1	ifTrue: [ ^ aSelector , ' arg1' ].^ String	streamContents: [ :s | 		(aSelector findTokens: ':')			with: args			do: [ :tok :arg | 				s					nextPutAll: tok;					nextPutAll: ': ';					nextPutAll: arg;					nextPutAll: ' ' ] ]
+	| args |
+	args := (1 to: aSelector numArgs) collect: [ :i | 'arg' , i printString ].
+	args size = 0
+		ifTrue: [ ^ aSelector asString ].
+	args size = 1
+		ifTrue: [ ^ aSelector , ' arg1' ].
+	^ String
+		streamContents: [ :s | (aSelector findTokens: ':')
+				with: args
+				do: [ :tok :arg | s
+						nextPutAll: tok;
+						nextPutAll: ': ';
+						nextPutAll: arg;
+						nextPutAll: ' ' ] ]
 ]
 
-Trait TPureBehavior >> storeLiteral: aCodeLiteral on: aStream
+TPureBehavior >> storeLiteral: aCodeLiteral on: aStream
 [
-	"Store aCodeLiteral on aStream, changing an Association to ##GlobalName	 or ###MetaclassSoleInstanceName format if appropriate"
-| key value |aCodeLiteral isVariableBinding	ifFalse: [ 		aCodeLiteral storeOn: aStream.		^ self ].key := aCodeLiteral key.(key isNil and: [ (value := aCodeLiteral value) isMemberOf: Metaclass ])	ifTrue: [ 		aStream			nextPutAll: '###';			nextPutAll: value soleInstance name.		^ self ].(key isSymbol and: [ (self bindingOf: key) notNil ])	ifTrue: [ 		aStream			nextPutAll: '##';			nextPutAll: key.		^ self ].aCodeLiteral storeOn: aStream
+	"Store aCodeLiteral on aStream, changing an Association to ##GlobalName
+	 or ###MetaclassSoleInstanceName format if appropriate"
+
+	| key value |
+	aCodeLiteral isVariableBinding
+		ifFalse: [ aCodeLiteral storeOn: aStream.
+			^ self ].
+	key := aCodeLiteral key.
+	(key isNil and: [ (value := aCodeLiteral value) isMemberOf: Metaclass ])
+		ifTrue: [ aStream
+				nextPutAll: '###';
+				nextPutAll: value soleInstance name.
+			^ self ].
+	(key isSymbol and: [ (self bindingOf: key) notNil ])
+		ifTrue: [ aStream
+				nextPutAll: '##';
+				nextPutAll: key.
+			^ self ].
+	aCodeLiteral storeOn: aStream
 ]
 
-Trait TPureBehavior >> thoroughHasSelectorReferringTo: literal special: specialFlag byte: specialByte
+TPureBehavior >> thoroughHasSelectorReferringTo: literal special: specialFlag byte: specialByte
 [
-	"Answer true if any of my methods access the argument as a 	literal. Dives into the compact literal notation, making it slow but 	thorough "
-self	methodsDo: [ :method | 		((method hasLiteralThorough: literal) or: [ specialFlag and: [ method scanFor: specialByte ] ])			ifTrue: [ ^ true ] ].^ false
+	"Answer true if any of my methods access the argument as a 
+	literal. Dives into the compact literal notation, making it slow but 
+	thorough "
+
+	self
+		methodsDo: [ :method | ((method hasLiteralThorough: literal) or: [ specialFlag and: [ method scanFor: specialByte ] ])
+				ifTrue: [ ^ true ] ].
+	^ false
 ]
 
-Trait TPureBehavior >> thoroughWhichSelectorsReferTo: literal special: specialFlag byte: specialByte
+TPureBehavior >> thoroughWhichSelectorsReferTo: literal special: specialFlag byte: specialByte
 [
-	"Answer a set of selectors whose methods access the argument as a 	literal. Dives into the compact literal notation, making it slow but 	thorough "
-| selectors |selectors := IdentitySet new.self	selectorsAndMethodsDo: [ :sel :method | 		((method hasLiteralThorough: literal) or: [ specialFlag and: [ method scanFor: specialByte ] ])			ifTrue: [ selectors add: sel ] ].^ selectors
+	"Answer a set of selectors whose methods access the argument as a 
+	literal. Dives into the compact literal notation, making it slow but 
+	thorough "
+
+	| selectors |
+	selectors := IdentitySet new.
+	self
+		selectorsAndMethodsDo: [ :sel :method | ((method hasLiteralThorough: literal) or: [ specialFlag and: [ method scanFor: specialByte ] ])
+				ifTrue: [ selectors add: sel ] ].
+	^ selectors
 ]
 
-Trait TPureBehavior >> traitComposition
+TPureBehavior >> traitComposition
 [
-	"Return my trait composition. Manipulating the composition does not	effect changes automatically. Use #setTraitComposition: to do this but	note, that you have to make a copy of the old trait composition before	changing it because only the difference between the new and the old	composition is updated."
-^ self explicitRequirement
+	"Return my trait composition. Manipulating the composition does not
+	effect changes automatically. Use #setTraitComposition: to do this but
+	note, that you have to make a copy of the old trait composition before
+	changing it because only the difference between the new and the old
+	composition is updated."
+
+	^ self explicitRequirement
 ]
 
-Trait TPureBehavior >> traitComposition: aTraitComposition
+TPureBehavior >> traitComposition: aTraitComposition
 [
-^ self explicitRequirement
+	^ self explicitRequirement
 ]
 
-Trait TPureBehavior >> traitCompositionIncludes: aTrait
+TPureBehavior >> traitCompositionIncludes: aTrait
 [
-^ self == aTrait or: [ self hasTraitComposition and: [ self traitComposition allTraits includes: aTrait ] ]
+	^ self == aTrait or: [ self hasTraitComposition and: [ self traitComposition allTraits includes: aTrait ] ]
 ]
 
-Trait TPureBehavior >> traitCompositionString
+TPureBehavior >> traitCompositionString
 [
-^ self hasTraitComposition	ifTrue: [ self traitComposition asString ]	ifFalse: [ '{}' ]
+	^ self hasTraitComposition
+		ifTrue: [ self traitComposition asString ]
+		ifFalse: [ '{}' ]
 ]
 
-Trait TPureBehavior >> traitOrClassOfSelector: aSymbol
+TPureBehavior >> traitOrClassOfSelector: aSymbol
 [
-	"Return the trait or the class which originally defines the method aSymbol	or return self if locally defined or if it is a conflict marker method.	This is primarly used by Debugger to determin the behavior in which a recompiled	method should be put. If a conflict method is recompiled it should be put into	the class, thus return self. Also see TraitComposition>>traitProvidingSelector:"
-((self includesLocalSelector: aSymbol) or: [ self hasTraitComposition not ])	ifTrue: [ ^ self ].^ (self traitComposition traitProvidingSelector: aSymbol) ifNil: [ self ]
+	"Return the trait or the class which originally defines the method aSymbol
+	or return self if locally defined or if it is a conflict marker method.
+	This is primarly used by Debugger to determin the behavior in which a recompiled
+	method should be put. If a conflict method is recompiled it should be put into
+	the class, thus return self. Also see TraitComposition>>traitProvidingSelector:"
+
+	((self includesLocalSelector: aSymbol) or: [ self hasTraitComposition not ])
+		ifTrue: [ ^ self ].
+	^ (self traitComposition traitProvidingSelector: aSymbol) ifNil: [ self ]
 ]
 
-Trait TPureBehavior >> traitTransformations
+TPureBehavior >> traitTransformations
 [
-^ self traitComposition transformations
+	^ self traitComposition transformations
 ]
 
-Trait TPureBehavior >> traits
+TPureBehavior >> traits
 [
 	"Returns a collection of all traits used by the receiver"
-^ self traitComposition traits
+
+	^ self traitComposition traits
 ]
 
-Trait TPureBehavior >> traitsProvidingSelector: aSymbol
+TPureBehavior >> traitsProvidingSelector: aSymbol
 [
-| result |result := OrderedCollection new.self hasTraitComposition	ifFalse: [ ^ result ].(self traitComposition methodDescriptionsForSelector: aSymbol)	do: [ :methodDescription | 		methodDescription selector = aSymbol			ifTrue: [ result addAll: (methodDescription locatedMethods collect: [ :each | each methodClass ]) ] ].^ result
+	| result |
+	result := OrderedCollection new.
+	self hasTraitComposition
+		ifFalse: [ ^ result ].
+	(self traitComposition methodDescriptionsForSelector: aSymbol)
+		do: [ :methodDescription | methodDescription selector = aSymbol
+				ifTrue: [ result addAll: (methodDescription locatedMethods collect: [ :each | each methodClass ]) ] ].
+	^ result
 ]
 
-Trait TPureBehavior >> ultimateSourceCodeAt: selector ifAbsent: aBlock
+TPureBehavior >> ultimateSourceCodeAt: selector ifAbsent: aBlock
 [
 	"Return the source code at selector"
-^ self sourceCodeAt: selector ifAbsent: aBlock
+
+	^ self sourceCodeAt: selector ifAbsent: aBlock
 ]
 
-Trait TPureBehavior >> updateMethodDictionarySelector: aSymbol
+TPureBehavior >> updateMethodDictionarySelector: aSymbol
 [
-	"A method with selector aSymbol in myself or my traitComposition has been changed.	Do the appropriate update to my methodDict (remove or update method) and	return all affected selectors of me so that my useres get notified."
-| modifiedSelectors descriptions oldProtocol |modifiedSelectors := IdentitySet new.descriptions := self traitComposition methodDescriptionsForSelector: aSymbol.descriptions	do: [ :methodDescription | 		| effectiveMethod selector |		selector := methodDescription selector.		(self includesLocalSelector: selector)			ifFalse: [ 				methodDescription isEmpty					ifTrue: [ 						self removeTraitSelector: selector.						modifiedSelectors add: selector ]					ifFalse: [ 						effectiveMethod := methodDescription effectiveMethod.						self addTraitSelector: selector withMethod: effectiveMethod.	"If the method was not categorized yet, we categorize it "						oldProtocol := self organization categoryOfElement: selector.						(oldProtocol isNil or: [ oldProtocol = ClassOrganizer default ])							ifTrue: [ self organization classify: selector under: methodDescription effectiveMethodCategory ].						modifiedSelectors add: selector ] ] ].^ modifiedSelectors
+	"A method with selector aSymbol in myself or my traitComposition has been changed.
+	Do the appropriate update to my methodDict (remove or update method) and
+	return all affected selectors of me so that my useres get notified."
+
+	| modifiedSelectors descriptions oldProtocol |
+	modifiedSelectors := IdentitySet new.
+	descriptions := self traitComposition methodDescriptionsForSelector: aSymbol.
+	descriptions
+		do: [ :methodDescription | | effectiveMethod selector |
+			selector := methodDescription selector.
+			(self includesLocalSelector: selector)
+				ifFalse: [ methodDescription isEmpty
+						ifTrue: [ self removeTraitSelector: selector.
+							modifiedSelectors add: selector ]
+						ifFalse: [ effectiveMethod := methodDescription effectiveMethod.
+							self addTraitSelector: selector withMethod: effectiveMethod.	"If the method was not categorized yet, we categorize it "
+							oldProtocol := self organization categoryOfElement: selector.
+							(oldProtocol isNil or: [ oldProtocol = ClassOrganizer default ])
+								ifTrue: [ self organization classify: selector under: methodDescription effectiveMethodCategory ].
+							modifiedSelectors add: selector ] ] ].
+	^ modifiedSelectors
 ]
 
-Trait TPureBehavior >> whichSelectorsReferTo: literal
+TPureBehavior >> whichSelectorsReferTo: literal
 [
-	"Answer a Set of selectors whose methods access the argument as aliteral."
-| special byte |special := Smalltalk hasSpecialSelector: literal ifTrueSetByte: [ :b | byte := b ].^ self whichSelectorsReferTo: literal special: special byte: byte	"Rectangle whichSelectorsReferTo: #+."
+	"Answer a Set of selectors whose methods access the argument as a
+literal."
+
+	| special byte |
+	special := Smalltalk hasSpecialSelector: literal ifTrueSetByte: [ :b | byte := b ].
+	^ self whichSelectorsReferTo: literal special: special byte: byte	"Rectangle whichSelectorsReferTo: #+."
 ]
 
-Trait TPureBehavior >> whichSelectorsReferTo: literal special: specialFlag byte: specialByte
+TPureBehavior >> whichSelectorsReferTo: literal special: specialFlag byte: specialByte
 [
 	"Answer a set of selectors whose methods access the argument as a literal."
-| who |who := IdentitySet new.self	selectorsAndMethodsDo: [ :sel :method | 		((method hasLiteral: literal) or: [ specialFlag and: [ method scanFor: specialByte ] ])			ifTrue: [ 				(literal isVariableBinding not or: [ method literals allButLast includes: literal ])					ifTrue: [ who add: sel ] ] ].^ who
+
+	| who |
+	who := IdentitySet new.
+	self
+		selectorsAndMethodsDo: [ :sel :method | ((method hasLiteral: literal) or: [ specialFlag and: [ method scanFor: specialByte ] ])
+				ifTrue: [ (literal isVariableBinding not or: [ method literals allButLast includes: literal ])
+						ifTrue: [ who add: sel ] ] ].
+	^ who
 ]
 
-Trait TPureBehavior >> withAllSubclassesDo: aBlock
+TPureBehavior >> withAllSubclassesDo: aBlock
 [
-| temp |temp := self allSubclassesDo: aBlock.aBlock value: self
+	| temp |
+	temp := self allSubclassesDo: aBlock.
+	aBlock value: self
 ]
 
-Trait TPureBehavior >> withAllSuperclasses
+TPureBehavior >> withAllSuperclasses
 [
-	"Answer an OrderedCollection of the receiver and the receiver's 	superclasses. The first element is the receiver, 	followed by its superclass; the last element is Object."
-| temp |temp := self allSuperclasses.temp addFirst: self.^ temp
-]
+	"Answer an OrderedCollection of the receiver and the receiver's 
+	superclasses. The first element is the receiver, 
+	followed by its superclass; the last element is Object."
 
-ClassTrait
-	name: #TPureBehavior.
+	| temp |
+	temp := self allSuperclasses.
+	temp addFirst: self.
+	^ temp
+]
 

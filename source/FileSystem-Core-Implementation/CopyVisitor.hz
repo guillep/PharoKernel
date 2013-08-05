@@ -1,52 +1,59 @@
-Class
-	name: #CopyVisitor;
-	superclass: #ClassFileSystemVisitor;
-	instanceSpecification: #(#pointers #words );
+CopyVisitor
+	superclass: #FileSystemVisitor;
 	instanceVariables: #(#source #dest );
-	classVariables: #();
 	package: #'FileSystem-Core-Implementation'.
 
-Class CopyVisitor >> copyDirectory: aReference
+CopyVisitor >> copyDirectory: aReference
 [
-| directory |directory := dest resolve: (aReference relativeTo: source).directory createDirectory
+	| directory |
+	directory := dest resolve: (aReference relativeTo: source).
+	directory createDirectory
 ]
 
-Class CopyVisitor >> copyFile: aReference
+CopyVisitor >> copyFile: aReference
 [
-| copy |copy := dest resolve: (aReference relativeTo: source).aReference copyTo: copy
+	| copy |
+	copy := dest resolve: (aReference relativeTo: source).
+	aReference copyTo: copy
 ]
 
-Class CopyVisitor >> initializeWithSource: srcReference dest: dstReference
+CopyVisitor >> initializeWithSource: srcReference dest: dstReference
 [
-self initialize.source := srcReference.dest := dstReference
+	self initialize.
+	source := srcReference.
+	dest := dstReference
 ]
 
-Class CopyVisitor >> visit
+CopyVisitor >> visit
 [
-(PreorderGuide for: self) show: source
+	(PreorderGuide for: self) show: source
 ]
 
-Class CopyVisitor >> visitDirectory: anEntry
+CopyVisitor >> visitDirectory: anEntry
 [
-| reference |reference := anEntry reference.reference = source	ifTrue: [ dest ensureDirectory ]	ifFalse: [ self copyDirectory: reference ]
+	| reference |
+	reference := anEntry reference.
+	reference = source
+		ifTrue: [ dest ensureDirectory ]
+		ifFalse: [ self copyDirectory: reference ]
 ]
 
-Class CopyVisitor >> visitFile: anEntry
+CopyVisitor >> visitFile: anEntry
 [
-| reference |reference := anEntry reference.reference = source	ifTrue: [ source copyTo: dest ]	ifFalse: [ self copyFile: reference ]
+	| reference |
+	reference := anEntry reference.
+	reference = source
+		ifTrue: [ source copyTo: dest ]
+		ifFalse: [ self copyFile: reference ]
 ]
 
-Metaclass
-	name: #CopyVisitor;
-	instanceVariables: #().
-
-Metaclass CopyVisitor >> copy: source to: dest
+CopyVisitor class >> copy: source to: dest
 [
-(self from: source to: dest) visit
+	(self from: source to: dest) visit
 ]
 
-Metaclass CopyVisitor >> from: srcReference to: dstReference
+CopyVisitor class >> from: srcReference to: dstReference
 [
-^ self basicNew initializeWithSource: srcReference dest: dstReference
+	^ self basicNew initializeWithSource: srcReference dest: dstReference
 ]
 

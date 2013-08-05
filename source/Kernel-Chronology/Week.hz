@@ -1,58 +1,61 @@
-Class
-	name: #Week;
-	superclass: #ClassTimespan;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
+Week
+	superclass: #Timespan;
 	classVariables: #(#StartDay );
-	sharedPools: #(#ChronologyConstants );	package: #'Kernel-Chronology'.
+	sharedPools: #(#ChronologyConstants );
+	package: #'Kernel-Chronology'.
 
-Class Week >> asWeek
+Week >> asWeek
 [
-^ self
+	^ self
 ]
 
-Class Week >> index
+Week >> index
 [
-^ (self asMonth dayOfWeek + self dayOfMonth - 2) // 7 + 1
+	^ (self asMonth dayOfWeek + self dayOfMonth - 2) // 7 + 1
 ]
 
-Class Week >> printOn: aStream
+Week >> printOn: aStream
 [
-aStream nextPutAll: 'a Week starting: '.self start printOn: aStream
+	aStream nextPutAll: 'a Week starting: '.
+	self start printOn: aStream
 ]
 
-Metaclass
-	name: #Week;
-	instanceVariables: #().
-
-Metaclass Week >> dayNames
+Week class >> dayNames
 [
-^ DayNames
+	^ DayNames
 ]
 
-Metaclass Week >> indexOfDay: aSymbol
+Week class >> indexOfDay: aSymbol
 [
-^ DayNames indexOf: aSymbol
+	^ DayNames indexOf: aSymbol
 ]
 
-Metaclass Week >> nameOfDay: anIndex
+Week class >> nameOfDay: anIndex
 [
-^ DayNames at: anIndex
+	^ DayNames at: anIndex
 ]
 
-Metaclass Week >> startDay
+Week class >> startDay
 [
-^ StartDay ifNil: [ StartDay := DayNames first ]
+	^ StartDay ifNil: [ StartDay := DayNames first ]
 ]
 
-Metaclass Week >> startDay: aSymbol
+Week class >> startDay: aSymbol
 [
-(DayNames includes: aSymbol)	ifTrue: [ StartDay := aSymbol ]	ifFalse: [ self error: aSymbol , ' is not a recognised day name' ]
+	(DayNames includes: aSymbol)
+		ifTrue: [ StartDay := aSymbol ]
+		ifFalse: [ self error: aSymbol , ' is not a recognised day name' ]
 ]
 
-Metaclass Week >> starting: aDateAndTime duration: aDuration
+Week class >> starting: aDateAndTime duration: aDuration
 [
-	"Override - the duration is always one week.	 Week will start from the Week class>>startDay"
-| midnight delta adjusted |midnight := aDateAndTime asDateAndTime midnight.delta := (midnight dayOfWeek + 7 - (DayNames indexOf: self startDay) rem: 7) abs.adjusted := midnight - (Duration days: delta seconds: 0).^ super starting: adjusted duration: (Duration weeks: 1)
+	"Override - the duration is always one week.
+	 Week will start from the Week class>>startDay"
+
+	| midnight delta adjusted |
+	midnight := aDateAndTime asDateAndTime midnight.
+	delta := (midnight dayOfWeek + 7 - (DayNames indexOf: self startDay) rem: 7) abs.
+	adjusted := midnight - (Duration days: delta seconds: 0).
+	^ super starting: adjusted duration: (Duration weeks: 1)
 ]
 

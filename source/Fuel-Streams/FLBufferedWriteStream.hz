@@ -1,112 +1,161 @@
-Class
-	name: #FLBufferedWriteStream;
-	superclass: #ClassStream;
-	instanceSpecification: #(#pointers #words );
+FLBufferedWriteStream
+	superclass: #Stream;
 	instanceVariables: #(#stream #buffer #position #streamRespondsToNextPutAllStartingAt );
-	classVariables: #();
 	package: #'Fuel-Streams'.
 
-Class FLBufferedWriteStream >> buffer
+FLBufferedWriteStream >> buffer
 [
-buffer isNil	ifTrue: [ self sizeBuffer: self defaultBufferSize ].^ buffer
+	buffer ifNil: [ self sizeBuffer: self defaultBufferSize ].
+	^ buffer
 ]
 
-Class FLBufferedWriteStream >> bufferFreeSize
+FLBufferedWriteStream >> bufferFreeSize
 [
-^ buffer size - position
+	^ buffer size - position
 ]
 
-Class FLBufferedWriteStream >> close
+FLBufferedWriteStream >> close
 [
-self flushBuffer.stream close
+	self flushBuffer.
+	stream close
 ]
 
-Class FLBufferedWriteStream >> copyWordObjectToBuffer: aWordObject
+FLBufferedWriteStream >> copyWordObjectToBuffer: aWordObject
 [
-| blt |blt := (BitBlt current toForm: (Form new hackBits: self buffer)) sourceForm: (Form new hackBits: aWordObject).blt combinationRule: Form over.	"store"blt	sourceX: 0;	sourceY: 0;	height: aWordObject byteSize // 4;	width: 4.blt	destX: 0;	destY: position // 4.blt copyBits
+	| blt |
+	blt := (BitBlt current toForm: (Form new hackBits: self buffer)) sourceForm: (Form new hackBits: aWordObject).
+	blt combinationRule: Form over.	"store"
+	blt
+		sourceX: 0;
+		sourceY: 0;
+		height: aWordObject byteSize // 4;
+		width: 4.
+	blt
+		destX: 0;
+		destY: position // 4.
+	blt copyBits
 ]
 
-Class FLBufferedWriteStream >> defaultBufferSize
+FLBufferedWriteStream >> defaultBufferSize
 [
-^ 8192	"2 raisedTo: 13  "
+	^ 8192	"2 raisedTo: 13  "
 ]
 
-Class FLBufferedWriteStream >> flush
+FLBufferedWriteStream >> flush
 [
-self flushBuffer.stream flush
+	self flushBuffer.
+	stream flush
 ]
 
-Class FLBufferedWriteStream >> flushBuffer
+FLBufferedWriteStream >> flushBuffer
 [
-position = 0	ifTrue: [ ^ self ].position = buffer size	ifTrue: [ stream nextPutAll: buffer ]	ifFalse: [ 		streamRespondsToNextPutAllStartingAt			ifTrue: [ stream next: position putAll: buffer startingAt: 1 ]			ifFalse: [ stream nextPutAll: (buffer copyFrom: 1 to: position) ] ].position := 0
+	position = 0
+		ifTrue: [ ^ self ].
+	position = buffer size
+		ifTrue: [ stream nextPutAll: buffer ]
+		ifFalse: [ streamRespondsToNextPutAllStartingAt
+				ifTrue: [ stream next: position putAll: buffer startingAt: 1 ]
+				ifFalse: [ stream nextPutAll: (buffer copyFrom: 1 to: position) ] ].
+	position := 0
 ]
 
-Class FLBufferedWriteStream >> flushBufferIfFull
+FLBufferedWriteStream >> flushBufferIfFull
 [
-position = buffer size	ifTrue: [ self flushBuffer ]
+	position = buffer size
+		ifTrue: [ self flushBuffer ]
 ]
 
-Class FLBufferedWriteStream >> initializeOn: writeStream bufferSize: aSize
+FLBufferedWriteStream >> initializeOn: writeStream bufferSize: aSize
 [
-self initialize.self initializeStream: writeStream.self sizeBuffer: aSize.position := 0
+	self initialize.
+	self initializeStream: writeStream.
+	self sizeBuffer: aSize.
+	position := 0
 ]
 
-Class FLBufferedWriteStream >> initializeStream: aWriteStream
+FLBufferedWriteStream >> initializeStream: aWriteStream
 [
-stream := aWriteStream.	"This is ugly, but it is an optimization for #flushBuffer"streamRespondsToNextPutAllStartingAt := stream respondsTo: #next:putAll:startingAt:
+	stream := aWriteStream.	"This is ugly, but it is an optimization for #flushBuffer"
+	streamRespondsToNextPutAllStartingAt := stream respondsTo: #next:putAll:startingAt:
 ]
 
-Class FLBufferedWriteStream >> nextBytesPutAll: collection
+FLBufferedWriteStream >> nextBytesPutAll: collection
 [
-self flushBufferIfFull.collection size <= self bufferFreeSize	ifTrue: [ 		self buffer replaceFrom: position + 1 to: position + collection size with: collection.		position := position + collection size ]	ifFalse: [ 		self flushBuffer.		collection size > (self buffer size / 2)			ifTrue: [ stream nextBytesPutAll: collection ]			ifFalse: [ self nextBytesPutAll: collection ] ]
+	self flushBufferIfFull.
+	collection size <= self bufferFreeSize
+		ifTrue: [ self buffer replaceFrom: position + 1 to: position + collection size with: collection.
+			position := position + collection size ]
+		ifFalse: [ self flushBuffer.
+			collection size > (self buffer size / 2)
+				ifTrue: [ stream nextBytesPutAll: collection ]
+				ifFalse: [ self nextBytesPutAll: collection ] ]
 ]
 
-Class FLBufferedWriteStream >> nextPut: object
+FLBufferedWriteStream >> nextPut: object
 [
-self flushBufferIfFull.position := position + 1.self buffer at: position put: object
+	self flushBufferIfFull.
+	position := position + 1.
+	self buffer at: position put: object
 ]
 
-Class FLBufferedWriteStream >> nextPutAll: collection
+FLBufferedWriteStream >> nextPutAll: collection
 [
-self flushBufferIfFull.collection size <= self bufferFreeSize	ifTrue: [ 		self buffer replaceFrom: position + 1 to: position + collection size with: collection.		position := position + collection size ]	ifFalse: [ 		self flushBuffer.		collection size > (self buffer size / 2)			ifTrue: [ stream nextPutAll: collection ]			ifFalse: [ self nextPutAll: collection ] ]
+	self flushBufferIfFull.
+	collection size <= self bufferFreeSize
+		ifTrue: [ self buffer replaceFrom: position + 1 to: position + collection size with: collection.
+			position := position + collection size ]
+		ifFalse: [ self flushBuffer.
+			collection size > (self buffer size / 2)
+				ifTrue: [ stream nextPutAll: collection ]
+				ifFalse: [ self nextPutAll: collection ] ]
 ]
 
-Class FLBufferedWriteStream >> nextWordsPut: aWordObject
+FLBufferedWriteStream >> nextWordsPut: aWordObject
 [
-| byteSize |byteSize := aWordObject byteSize.	"Ensure we are at bigger than the words added, with size next power-of-two"byteSize > buffer size	ifTrue: [ self sizeBuffer: 1 << byteSize highBit ].	"BitBlt needs word-aligned access of object. Flushing the buffer is a very good idea because after the position will be zero, which is word aligned.  Word objects always have a full number of words of data to write. (otherwise they'd be variableByte objects or something :P) So as long as the size you write per instance also takes N words, the position will always be aligned (except when writing the first object of a cluster) . After that, we flush when an object larger than current buffer is encountered (statistically rare), or if the buffer is full (which we do anyways).	Finally, we also need enough free space in the buffer"((position bitAnd: 3) = 0 and: [ byteSize < self bufferFreeSize ])	ifFalse: [ self flushBuffer ].self copyWordObjectToBuffer: aWordObject.position := position + byteSize
+	| byteSize |
+	byteSize := aWordObject byteSize.	"Ensure we are at bigger than the words added, with size next power-of-two"
+	byteSize > buffer size
+		ifTrue: [ self sizeBuffer: 1 << byteSize highBit ].	"BitBlt needs word-aligned access of object. Flushing the buffer is a very good idea because after the position will be zero, which is word aligned.  Word objects always have a full number of words of data to write. (otherwise they'd be variableByte objects or something :P) So as long as the size you write per instance also takes N words, the position will always be aligned (except when writing the first object of a cluster) . After that, we flush when an object larger than current buffer is encountered (statistically rare), or if the buffer is full (which we do anyways).	Finally, we also need enough free space in the buffer"
+	((position bitAnd: 3) = 0 and: [ byteSize < self bufferFreeSize ])
+		ifFalse: [ self flushBuffer ].
+	self copyWordObjectToBuffer: aWordObject.
+	position := position + byteSize
 ]
 
-Class FLBufferedWriteStream >> position
+FLBufferedWriteStream >> position
 [
-^ position + stream position
+	^ position + stream position
 ]
 
-Class FLBufferedWriteStream >> printOn: aStream
+FLBufferedWriteStream >> printOn: aStream
 [
-aStream	nextPutAll: 'a ';	nextPutAll: self class name
+	aStream
+		nextPutAll: 'a ';
+		nextPutAll: self class name
 ]
 
-Class FLBufferedWriteStream >> sizeBuffer: size
+FLBufferedWriteStream >> sizeBuffer: size
 [
-buffer ifNotNil: [ self flushBuffer ].buffer := ByteArray new: size
+	buffer ifNotNil: [ self flushBuffer ].
+	buffer := (stream isBinary
+		ifTrue: [ ByteArray ]
+		ifFalse: [ String ]) new: size
 ]
 
-Metaclass
-	name: #FLBufferedWriteStream;
-	instanceVariables: #().
-
-Metaclass FLBufferedWriteStream >> defaultBufferSize
+FLBufferedWriteStream class >> defaultBufferSize
 [
-^ 4096
+	^ 4096
 ]
 
-Metaclass FLBufferedWriteStream >> on: writeStream
+FLBufferedWriteStream class >> on: writeStream
 [
-^ self on: writeStream bufferSize: self defaultBufferSize
+	^ self on: writeStream bufferSize: self defaultBufferSize
 ]
 
-Metaclass FLBufferedWriteStream >> on: writeStream bufferSize: aSize
+FLBufferedWriteStream class >> on: writeStream bufferSize: aSize
 [
-^ self basicNew	initializeOn: writeStream bufferSize: aSize;	yourself
+	^ self basicNew
+		initializeOn: writeStream bufferSize: aSize;
+		yourself
 ]
 

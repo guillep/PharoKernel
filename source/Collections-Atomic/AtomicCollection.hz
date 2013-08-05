@@ -1,64 +1,69 @@
-Class
-	name: #AtomicCollection;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+AtomicCollection
 	package: #'Collections-Atomic'.
 
-Class AtomicCollection >> copy
+AtomicCollection >> copy
 [
-^ self errorDontCopy
+	^ self errorDontCopy
 ]
 
-Class AtomicCollection >> deepCopy
+AtomicCollection >> deepCopy
 [
-^ self errorDontCopy
+	^ self errorDontCopy
 ]
 
-Class AtomicCollection >> errorDontCopy
+AtomicCollection >> errorDontCopy
 [
 	"copying a structure, involved in concurrent operations is a bad idea"
-^ self error: 'Copying not available'
+
+	^ self error: 'Copying not available'
 ]
 
-Class AtomicCollection >> interrupt
+AtomicCollection >> interrupt
 [
 	"simulate interrupt , for debugging purposes only"
-Processor yield
+
+	Processor yield
 ]
 
-Class AtomicCollection >> newItem
+AtomicCollection >> newItem
 [
 	"override in subclass, if you need to instantiate queue items of different class or initialize them in some specific way"
-^ AtomicQueueItem new
+
+	^ AtomicQueueItem new
 ]
 
-Class AtomicCollection >> signalAddedNewItem
+AtomicCollection >> signalAddedNewItem
 [
-	"Optional, override in subclass(es) to signal that new item available in queue.	Default implementation does nothing"
+	"Optional, override in subclass(es) to signal that new item available in queue.
+	Default implementation does nothing"
 
+	
 ]
 
-Class AtomicCollection >> signalNoMoreItems
+AtomicCollection >> signalNoMoreItems
 [
-	"Optional, override in subclass(es) to signal that queue is currently empty.	Default implementation does nothing"
+	"Optional, override in subclass(es) to signal that queue is currently empty.
+	Default implementation does nothing"
 
+	
 ]
 
-Class AtomicCollection >> waitForNewItems
+AtomicCollection >> waitForNewItems
 [
-	"Override in subclass. By default, yield current process.	If you run more than one process, which popping items from queue,	then there is no guarantee, that after wait, #next won't block the queue"
-^ self yield
+	"Override in subclass. By default, yield current process.
+	If you run more than one process, which popping items from queue,
+	then there is no guarantee, that after wait, #next won't block the queue"
+
+	^ self yield
 ]
 
-Class AtomicCollection >> yield
+AtomicCollection >> yield
 [
-	"Yield the current process.	Used internally by spin loops, once detected that 	current process can't make any progress	without some external event to happen"
-Processor yield
-]
+	"Yield the current process.
+	Used internally by spin loops, once detected that 
+	current process can't make any progress
+	without some external event to happen"
 
-Metaclass
-	name: #AtomicCollection;
-	instanceVariables: #().
+	Processor yield
+]
 

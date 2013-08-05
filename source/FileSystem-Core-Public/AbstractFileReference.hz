@@ -1,524 +1,641 @@
-Class
-	name: #AbstractFileReference;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+AbstractFileReference
 	package: #'FileSystem-Core-Public'.
 
-Class AbstractFileReference >> , extension
+AbstractFileReference >> , extension
 [
-^ self withPath: self path , extension
+	^ self withPath: self path , extension
 ]
 
-Class AbstractFileReference >> / aString
+AbstractFileReference >> / aString
 [
-^ self withPath: self path / aString
+	^ self withPath: self path / aString
 ]
 
-Class AbstractFileReference >> <= other
+AbstractFileReference >> <= other
 [
-^ self path <= self other path
+	^ self path <= self other path
 ]
 
-Class AbstractFileReference >> allChildren
+AbstractFileReference >> absolutePath
+[
+	"Returns the absolute path"
+
+	^ self subclassResponsibility
+]
+
+AbstractFileReference >> allChildren
 [
 	"Return all the files and folders recursively nested in the receiver"
-^ CollectVisitor breadthFirst: self resolve collect: [ :entry | entry reference ]
+
+	^ CollectVisitor breadthFirst: self resolve collect: [ :entry | entry reference ]
 ]
 
-Class AbstractFileReference >> allDirectories
+AbstractFileReference >> allDirectories
 [
 	"Return all the directories recursively nested in the receiver."
-^ (SelectVisitor breadthFirst: self resolve select: [ :entry | entry isDirectory ]) collect: [ :each | each reference ]
+
+	^ (SelectVisitor breadthFirst: self resolve select: [ :entry | entry isDirectory ]) collect: [ :each | each reference ]
 ]
 
-Class AbstractFileReference >> allEntries
+AbstractFileReference >> allEntries
 [
-^ CollectVisitor breadthFirst: self resolve
+	^ CollectVisitor breadthFirst: self resolve
 ]
 
-Class AbstractFileReference >> allFiles
+AbstractFileReference >> allFiles
 [
 	"Return all the files (not directories) recursively nested in the receiver."
-^ (SelectVisitor breadthFirst: self resolve select: [ :entry | entry isFile ]) collect: [ :each | each reference ]
+
+	^ (SelectVisitor breadthFirst: self resolve select: [ :entry | entry isFile ]) collect: [ :each | each reference ]
 ]
 
-Class AbstractFileReference >> asAbsolute
+AbstractFileReference >> asAbsolute
 [
-self subclassResponsability
+	self subclassResponsibility
 ]
 
-Class AbstractFileReference >> asFileReference
+AbstractFileReference >> asFileReference
 [
-self subclassResponsability
+	self subclassResponsibility
 ]
 
-Class AbstractFileReference >> asPathWith: anObject
+AbstractFileReference >> asPathWith: anObject
 [
-^ self resolve asPathWith: anObject
+	^ self resolve asPathWith: anObject
 ]
 
-Class AbstractFileReference >> asResolvedBy: anObject
+AbstractFileReference >> asResolvedBy: anObject
 [
-^ anObject resolveReference: self
+	^ anObject resolveReference: self
 ]
 
-Class AbstractFileReference >> asUrl
-[
-	"Convert my path into a file:// type url - a FileUrl."
-^ self path asUrl
-]
-
-Class AbstractFileReference >> base
+AbstractFileReference >> base
 [
 	"Returns the base of the basename, i.e. /foo/gloops.taz base is 'gloops'"
-^ self fullPath base
+
+	^ self fullPath base
 ]
 
-Class AbstractFileReference >> basename
+AbstractFileReference >> basename
 [
 	"Returns the basename, i.e. /foo/gloops.taz basename is 'gloops.taz'"
-^ self fullPath basename
+
+	^ self fullPath basename
 ]
 
-Class AbstractFileReference >> basenameWithIndicator
+AbstractFileReference >> basenameWithIndicator
 [
 	"Returns the basename with the indicator appended, i.e. /foo/gloops.taz basenameWithIndicator is 'gloops.taz', whereras /foo basenameWithIndicator is 'foo/'"
-^ self basename , self indicator
+
+	^ self basename , self indicator
 ]
 
-Class AbstractFileReference >> basenameWithoutExtension
+AbstractFileReference >> basenameWithoutExtension
 [
 	"Returns the basename, i.e. /foo/gloops.taz basenameWithoutExtension is 'gloops'"
-^ self fullPath basenameWithoutExtension
+
+	^ self fullPath basenameWithoutExtension
 ]
 
-Class AbstractFileReference >> childGeneratorBlock: doBlock matching: patterns
+AbstractFileReference >> childGeneratorBlock: doBlock matching: patterns
 [
-	"	FileDirectory default fileNamesMatching: '*'	FileDirectory default fileNamesMatching: '*.image;*.changes'	"
-| files reference |files := Set new.reference := self resolve.(patterns findTokens: ';' , String crlf)	do: [ :pattern | 		doBlock			value: reference			value: [ :basename | 				(pattern match: basename)					ifTrue: [ files add: self / basename ] ] ].^ files asOrderedCollection
+	"
+	FileDirectory default fileNamesMatching: '*'
+	FileDirectory default fileNamesMatching: '*.image;*.changes'
+	"
+
+	| files reference |
+	files := Set new.
+	reference := self resolve.
+	(patterns findTokens: ';' , String crlf)
+		do: [ :pattern | doBlock value: reference value: [ :basename | (pattern match: basename)
+						ifTrue: [ files add: self / basename ] ] ].
+	^ files asOrderedCollection
 ]
 
-Class AbstractFileReference >> children
+AbstractFileReference >> childNames
+[
+	^ self children collect: #basename
+]
+
+AbstractFileReference >> children
 [
 	"Answer an array containing references to the direct children of this reference."
-| reference |reference := self resolve.^ (reference fileSystem childNamesAt: reference path) collect: [ :aName | self / aName ]
+
+	| reference |
+	reference := self resolve.
+	^ (reference fileSystem childNamesAt: reference path) collect: [ :aName | self / aName ]
 ]
 
-Class AbstractFileReference >> childrenMatching: patterns
+AbstractFileReference >> childrenMatching: patterns
 [
-	"	FileSystem disk workingDirectory childrenMatching: '*'	FileSystem disk workingDirectory childrenMatching: '*.image;*.changes'	"
-^ self	childGeneratorBlock: [ :reference :aBlock | reference fileSystem childNamesAt: reference path do: aBlock ]	matching: patterns
+	"
+	FileSystem disk workingDirectory childrenMatching: '*'
+	FileSystem disk workingDirectory childrenMatching: '*.image;*.changes'
+	"
+
+	^ self
+		childGeneratorBlock: [ :reference :aBlock | reference fileSystem childNamesAt: reference path do: aBlock ]
+		matching: patterns
 ]
 
-Class AbstractFileReference >> contains: anObject
+AbstractFileReference >> contains: anObject
 [
-^ anObject isContainedBy: self resolve
+	"Return true if anObject is in a subfolder of me"
+
+	^ anObject isContainedBy: self resolve
 ]
 
-Class AbstractFileReference >> containsPath: aPath
+AbstractFileReference >> containsPath: aPath
 [
-^ self fullPath containsPath: aPath
+	^ self fullPath containsPath: aPath
 ]
 
-Class AbstractFileReference >> copyAllTo: aResolvable
+AbstractFileReference >> copyAllTo: aResolvable
 [
-CopyVisitor copy: self resolve asAbsolute to: aResolvable resolve
+	CopyVisitor copy: self resolve asAbsolute to: aResolvable resolve
 ]
 
-Class AbstractFileReference >> copyTo: aReference
+AbstractFileReference >> copyTo: aReference
 [
-^ self resolve copyTo: aReference resolve
+	^ self resolve copyTo: aReference resolve
 ]
 
-Class AbstractFileReference >> copyWithPath: newPath
+AbstractFileReference >> copyWithPath: newPath
 [
-self subclassResponsability
+	self subclassResponsibility
 ]
 
-Class AbstractFileReference >> createDirectory
+AbstractFileReference >> createDirectory
 [
-self resolve createDirectory
+	self resolve createDirectory
 ]
 
-Class AbstractFileReference >> creationTime
+AbstractFileReference >> creationTime
 [
-^ self resolve creationTime
+	^ self resolve creationTime
 ]
 
-Class AbstractFileReference >> delete
+AbstractFileReference >> delete
 [
-^ self resolve delete
+	^ self resolve delete
 ]
 
-Class AbstractFileReference >> deleteAll
+AbstractFileReference >> deleteAll
 [
 	"delete this directory and all children of it"
-DeleteVisitor delete: self resolve
+
+	DeleteVisitor delete: self resolve
 ]
 
-Class AbstractFileReference >> deleteAllChildren
+AbstractFileReference >> deleteAllChildren
 [
 	"delete all children of the receiver"
-self children do: [ :aReference | aReference deleteAll ]
+
+	self children do: [ :aReference | aReference deleteAll ]
 ]
 
-Class AbstractFileReference >> deleteIfAbsent: aBlock
+AbstractFileReference >> deleteIfAbsent: aBlock
 [
-self resolve deleteIfAbsent: aBlock
+	self resolve deleteIfAbsent: aBlock
 ]
 
-Class AbstractFileReference >> directories
+AbstractFileReference >> directories
 [
 	"Return all the directories (by opposition to files) contained in the receiver"
-| reference |reference := self resolve.^ (reference fileSystem directoryNamesAt: reference path) collect: [ :aName | self withPath: self path / aName ]
+
+	| reference |
+	reference := self resolve.
+	^ (reference fileSystem directoryNamesAt: reference path) collect: [ :aName | self withPath: self path / aName ]
 ]
 
-Class AbstractFileReference >> directoriesMatching: patterns
+AbstractFileReference >> directoriesMatching: patterns
 [
-	"	FileSystem disk workingDirectory directoriesMatching: '*'	FileSystem disk workingDirectory directoriesMatching: 'package-cache'	"
-^ self	childGeneratorBlock: [ :reference :aBlock | reference fileSystem directoryNamesAt: reference path do: aBlock ]	matching: patterns
+	"
+	FileSystem disk workingDirectory directoriesMatching: '*'
+	FileSystem disk workingDirectory directoriesMatching: 'package-cache'
+	"
+
+	^ self
+		childGeneratorBlock: [ :reference :aBlock | reference fileSystem directoryNamesAt: reference path do: aBlock ]
+		matching: patterns
 ]
 
-Class AbstractFileReference >> ensureDeleted
+AbstractFileReference >> directoryNames
 [
-self deleteIfAbsent: [  ]
+	^ self directories collect: #basename
 ]
 
-Class AbstractFileReference >> ensureDirectory
+AbstractFileReference >> ensureDeleted
 [
-^ self resolve ensureDirectory
+	self deleteIfAbsent: [  ]
 ]
 
-Class AbstractFileReference >> ensureFile
+AbstractFileReference >> ensureDirectory
+[
+	^ self resolve ensureDirectory
+]
+
+AbstractFileReference >> ensureFile
 [
 	"Create if necessary a file for the receiver."
-self writeStream close
+
+	self writeStream close
 ]
 
-Class AbstractFileReference >> entries
+AbstractFileReference >> entries
 [
-^ self resolve entries
+	^ self resolve entries
 ]
 
-Class AbstractFileReference >> entry
+AbstractFileReference >> entry
 [
-^ self resolve entry
+	^ self resolve entry
 ]
 
-Class AbstractFileReference >> exists
+AbstractFileReference >> exists
 [
-^ self resolve exists
+	^ self resolve exists
 ]
 
-Class AbstractFileReference >> extension
+AbstractFileReference >> extension
 [
-^ self fullPath extension
+	^ self fullPath extension
 ]
 
-Class AbstractFileReference >> extensions
+AbstractFileReference >> extensions
 [
 	"#('foo' 'foo.tar' 'foo.tar.gz' 'foo.1.tar' 'foo.1.tar.gz') collect: [:thing| thing extensions] => #(#() #('tar') #('tar' 'gz') #('1' 'tar') #('1' 'tar' 'gz'))"
-^ self fullPath extensions
+
+	^ self fullPath extensions
 ]
 
-Class AbstractFileReference >> fileNames
+AbstractFileReference >> fileNames
 [
-^ self files collect: #basename
+	^ self files collect: #basename
 ]
 
-Class AbstractFileReference >> fileSystem
+AbstractFileReference >> fileSystem
 [
-^ self resolve fileSystem
+	^ self resolve fileSystem
 ]
 
-Class AbstractFileReference >> files
+AbstractFileReference >> files
 [
 	"Return all the files (as opposed to folders) contained in the receiver"
-| reference |reference := self resolve.^ (reference fileSystem fileNamesAt: reference path) collect: [ :aName | self withPath: self path / aName ]
+
+	| reference |
+	reference := self resolve.
+	^ (reference fileSystem fileNamesAt: reference path) collect: [ :aName | self withPath: self path / aName ]
 ]
 
-Class AbstractFileReference >> filesMatching: patterns
+AbstractFileReference >> filesMatching: patterns
 [
-	"	FileSystem disk workingDirectory filesMatching: '*'	FileSystem disk workingDirectory filesMatching: '*.image;*.changes'	"
-^ self	childGeneratorBlock: [ :reference :aBlock | reference fileSystem fileNamesAt: reference path do: aBlock ]	matching: patterns
+	"
+	FileSystem disk workingDirectory filesMatching: '*'
+	FileSystem disk workingDirectory filesMatching: '*.image;*.changes'
+	"
+
+	^ self
+		childGeneratorBlock: [ :reference :aBlock | reference fileSystem fileNamesAt: reference path do: aBlock ]
+		matching: patterns
 ]
 
-Class AbstractFileReference >> filesystem
+AbstractFileReference >> filesystem
 [
-self deprecated: 'Use fileSystem' on: '3 April 2012' in: 'Pharo 1.4'.^ self fileSystem
+	self deprecated: 'Use fileSystem' on: '3 April 2012' in: 'Pharo 1.4'.
+	^ self fileSystem
 ]
 
-Class AbstractFileReference >> fullName
+AbstractFileReference >> fullName
 [
-^ self resolve fullName
+	^ self resolve fullName
 ]
 
-Class AbstractFileReference >> fullNameWithIndicator
+AbstractFileReference >> fullNameWithIndicator
 [
 	"Returns the basename with the indicator appended, i.e. /foo/gloops.taz basenameWithIndicator is '/foo/gloops.taz', whereras /foo basenameWithIndicator is '/foo/'"
-^ self fullName , self indicator
+
+	^ self fullName , self indicator
 ]
 
-Class AbstractFileReference >> fullPath
+AbstractFileReference >> fullPath
 [
-^ self subclassResponsability
+	"Returns the absolute path, better use absolutePath"
+
+	^ self subclassResponsibility
 ]
 
-Class AbstractFileReference >> glob: aBlock
+AbstractFileReference >> glob: aBlock
 [
-^ SelectVisitor breadthFirst: self resolve select: aBlock
+	^ SelectVisitor breadthFirst: self resolve select: aBlock
 ]
 
-Class AbstractFileReference >> hasChildren
+AbstractFileReference >> hasChildren
 [
-^ self resolve hasChildren
+	^ self resolve hasChildren
 ]
 
-Class AbstractFileReference >> hasDirectories
+AbstractFileReference >> hasDirectories
 [
-^ self resolve hasDirectories
+	^ self resolve hasDirectories
 ]
 
-Class AbstractFileReference >> hasFiles
+AbstractFileReference >> hasFiles
 [
-^ self resolve hasFiles
+	^ self resolve hasFiles
 ]
 
-Class AbstractFileReference >> humanReadableSize
+AbstractFileReference >> hash
 [
-^ self size humanReadableSIByteSize
+	"Hash is reimplemented because #= is reimplemented"
+
+	^ self path hash
 ]
 
-Class AbstractFileReference >> ifFile: fBlock ifDirectory: dBlock ifAbsent: aBlock
+AbstractFileReference >> humanReadableSize
 [
-^ self isFile	ifTrue: fBlock	ifFalse: [ 		self isDirectory			ifTrue: dBlock			ifFalse: aBlock ]
+	^ self size humanReadableSIByteSize
 ]
 
-Class AbstractFileReference >> indicator
+AbstractFileReference >> ifFile: fBlock ifDirectory: dBlock ifAbsent: aBlock
 [
-	"Returns a string indicating the type of reference:	- '?' for a non existing reference',	- '/' for a directory,	- the empty string for a file."
-	"When this framework gets more complete, it is possible to extend this behavior with the following indicators (taken from unix ls utility):	- '*' for a regular file that is executable	- '@' for a symbolic link	- '|' for FIFOs	- '=' for sockets	- '>' for doors"
-^ self exists	ifTrue: [ 		self isDirectory			ifTrue: [ '/' ]			ifFalse: [ '' ] ]	ifFalse: [ '?' ]
+	^ self isFile
+		ifTrue: fBlock
+		ifFalse: [ self isDirectory
+				ifTrue: dBlock
+				ifFalse: aBlock ]
 ]
 
-Class AbstractFileReference >> isAbsolute
+AbstractFileReference >> indicator
 [
-self subclassResponsability
+	"Returns a string indicating the type of reference:
+	- '?' for a non existing reference',
+	- '/' for a directory,
+	- the empty string for a file."
+
+	"When this framework gets more complete, it is possible to extend this behavior with the following indicators (taken from unix ls utility):
+	- '*' for a regular file that is executable
+	- '@' for a symbolic link
+	- '|' for FIFOs
+	- '=' for sockets
+	- '>' for doors"
+
+	^ self exists
+		ifTrue: [ self isDirectory
+				ifTrue: [ '/' ]
+				ifFalse: [ '' ] ]
+		ifFalse: [ '?' ]
 ]
 
-Class AbstractFileReference >> isChildOf: anObject
+AbstractFileReference >> isAbsolute
 [
-^ self parent = anObject
+	self subclassResponsibility
 ]
 
-Class AbstractFileReference >> isContainedBy: anObject
+AbstractFileReference >> isChildOf: anObject
 [
-^ anObject containsReference: self resolve
+	^ self parent = anObject
 ]
 
-Class AbstractFileReference >> isDirectory
+AbstractFileReference >> isContainedBy: anObject
 [
-^ self resolve isDirectory
+	"DoubleDispatch helper for #contains:"
+
+	^ anObject containsReference: self resolve
 ]
 
-Class AbstractFileReference >> isFile
+AbstractFileReference >> isDirectory
 [
-^ self resolve isFile
+	^ self resolve isDirectory
 ]
 
-Class AbstractFileReference >> isReadable
+AbstractFileReference >> isFile
 [
-^ self resolve isReadable
+	^ self resolve isFile
 ]
 
-Class AbstractFileReference >> isRelative
+AbstractFileReference >> isReadable
 [
-self subclassResponsability
+	^ self resolve isReadable
 ]
 
-Class AbstractFileReference >> isRoot
+AbstractFileReference >> isRelative
 [
-^ self resolve isRoot
+	self subclassResponsibility
 ]
 
-Class AbstractFileReference >> isWritable
+AbstractFileReference >> isRoot
 [
-^ self resolve isWritable
+	^ self resolve isRoot
 ]
 
-Class AbstractFileReference >> macTypeAndCreator
+AbstractFileReference >> isWritable
 [
-^ self resolve macTypeAndCreator
+	^ self resolve isWritable
 ]
 
-Class AbstractFileReference >> makeRelative: anObject
+AbstractFileReference >> macTypeAndCreator
 [
-^ anObject relativeToReference: self resolve
+	^ self resolve macTypeAndCreator
 ]
 
-Class AbstractFileReference >> mimeTypes
+AbstractFileReference >> makeRelative: anObject
 [
-^ self resolve mimeTypes
+	^ anObject relativeToReference: self resolve
 ]
 
-Class AbstractFileReference >> modificationTime
+AbstractFileReference >> mimeTypes
 [
-^ self resolve modificationTime
+	^ self resolve mimeTypes
 ]
 
-Class AbstractFileReference >> moveTo: aReference
+AbstractFileReference >> modificationTime
 [
-^ self resolve moveTo: aReference
+	^ self resolve modificationTime
 ]
 
-Class AbstractFileReference >> nextVersion
+AbstractFileReference >> moveTo: aReference
 [
-^ self resolve nextVersion
+	^ self resolve moveTo: aReference
 ]
 
-Class AbstractFileReference >> openWritable: aBoolean
+AbstractFileReference >> nextVersion
 [
-^ self resolve openWritable: aBoolean
+	^ self resolve nextVersion
 ]
 
-Class AbstractFileReference >> parent
+AbstractFileReference >> openWritable: aBoolean
 [
-^ self withPath: self path parent
+	^ self resolve openWritable: aBoolean
 ]
 
-Class AbstractFileReference >> pathSegments
+AbstractFileReference >> parent
 [
-^ self fullPath segments
+	^ self withPath: self path parent
 ]
 
-Class AbstractFileReference >> pathString
+AbstractFileReference >> pathSegments
 [
-^ self resolve pathString
+	^ self fullPath segments
 ]
 
-Class AbstractFileReference >> permissions
+AbstractFileReference >> pathString
+[
+	^ self resolve pathString
+]
+
+AbstractFileReference >> permissions
 [
 	"Return the FileSystemPermission for this node"
-^ self resolve permissions
+
+	^ self resolve permissions
 ]
 
-Class AbstractFileReference >> readStream
+AbstractFileReference >> readStream
 [
-self subclassResponsability
+	self subclassResponsibility
 ]
 
-Class AbstractFileReference >> readStreamDo: aBlock
+AbstractFileReference >> readStreamDo: aBlock
 [
-| stream |stream := self readStream.^ [ aBlock value: stream ]	ensure: [ stream close ]
+	| stream |
+	stream := self readStream.
+	^ [ aBlock value: stream ]
+		ensure: [ stream close ]
 ]
 
-Class AbstractFileReference >> readStreamDo: doBlock ifAbsent: absentBlock
+AbstractFileReference >> readStreamDo: doBlock ifAbsent: absentBlock
 [
-^ self isFile	ifTrue: [ self readStreamDo: doBlock ]	ifFalse: absentBlock
+	^ self isFile
+		ifTrue: [ self readStreamDo: doBlock ]
+		ifFalse: absentBlock
 ]
 
-Class AbstractFileReference >> readStreamIfAbsent: absentBlock
+AbstractFileReference >> readStreamIfAbsent: absentBlock
 [
-^ self isFile	ifTrue: [ self readStream ]	ifFalse: absentBlock
+	^ self isFile
+		ifTrue: [ self readStream ]
+		ifFalse: absentBlock
 ]
 
-Class AbstractFileReference >> relativeTo: landmark
+AbstractFileReference >> relativeTo: landmark
 [
 	"Answer a new path relative to landmark."
-	"parent/child/grandChild relativeTo: parent returns child/grandChild	(FSFilesystem disk / 'griffle' / 'plonk' / 'nurp') relativeTo: (FSFilesystem disk / 'griffle') 	returns plonk/nurp"
-^ landmark makeRelative: self resolve
+
+	"parent/child/grandChild relativeTo: parent returns child/grandChild
+	(Filesystem disk / 'griffle' / 'plonk' / 'nurp') relativeTo: (Filesystem disk / 'griffle') 
+	returns plonk/nurp"
+
+	^ landmark makeRelative: self resolve
 ]
 
-Class AbstractFileReference >> relativeToPath: landmarkPath
+AbstractFileReference >> relativeToPath: landmarkPath
 [
-^ self fullPath relativeTo: landmarkPath
+	^ self fullPath relativeTo: landmarkPath
 ]
 
-Class AbstractFileReference >> relativeToReference: landmarkReference
+AbstractFileReference >> relativeToReference: landmarkReference
 [
 	"Return the path of the receiver relative to landmarkReference."
-^ self fullPath relativeTo: landmarkReference path
+
+	^ self fullPath relativeTo: landmarkReference path
 ]
 
-Class AbstractFileReference >> renameTo: newBasename
+AbstractFileReference >> renameTo: newBasename
 [
-self subclassResponsability
+	self subclassResponsibility
 ]
 
-Class AbstractFileReference >> resolve
+AbstractFileReference >> resolve
 [
-^ self subclassResponsability
+	^ self subclassResponsibility
 ]
 
-Class AbstractFileReference >> resolve: anObject
+AbstractFileReference >> resolve: anObject
 [
-^ anObject asResolvedBy: self
+	^ anObject asResolvedBy: self
 ]
 
-Class AbstractFileReference >> resolvePath: aPath
+AbstractFileReference >> resolvePath: aPath
 [
-^ self withPath: (self path resolvePath: aPath)
+	^ self withPath: (self path resolvePath: aPath)
 ]
 
-Class AbstractFileReference >> resolveReference: aReference
+AbstractFileReference >> resolveReference: aReference
 [
-^ aReference isAbsolute	ifTrue: [ aReference ]	ifFalse: [ self withPath: aReference path ]
+	^ aReference isAbsolute
+		ifTrue: [ aReference ]
+		ifFalse: [ self withPath: aReference path ]
 ]
 
-Class AbstractFileReference >> resolveString: aString
+AbstractFileReference >> resolveString: aString
 [
-self subclassResponsability
+	self subclassResponsibility
 ]
 
-Class AbstractFileReference >> size
+AbstractFileReference >> size
 [
-^ self resolve size
+	^ self resolve size
 ]
 
-Class AbstractFileReference >> streamWritable: writable do: aBlock
+AbstractFileReference >> streamWritable: writable do: aBlock
 [
-^ writable	ifTrue: [ self writeStreamDo: aBlock ]	ifFalse: [ self readStreamDo: aBlock ]
+	^ writable
+		ifTrue: [ self writeStreamDo: aBlock ]
+		ifFalse: [ self readStreamDo: aBlock ]
 ]
 
-Class AbstractFileReference >> uri
+AbstractFileReference >> uri
 [
 	"Convert my path into a file:// type url. For odd characters use %20 notation."
-self flag: 'TODO: return a real URI object instead of a string'.^ (String	streamContents: [ :strm | 		strm nextPutAll: 'file:'.		self pathSegments			do: [ :each | 				strm					nextPut: $/;					nextPutAll: each encodeForHTTP ].		strm nextPut: $/ ]) asURI
+
+	self flag: 'TODO: return a real URI object instead of a string'.
+	^ (String
+		streamContents: [ :strm | strm nextPutAll: 'file:'.
+			self pathSegments do: [ :each | strm
+						nextPut: $/;
+						nextPutAll: each encodeForHTTP ].
+			strm nextPut: $/ ])
+		asURI
 ]
 
-Class AbstractFileReference >> withExtension: aString
+AbstractFileReference >> withExtension: aString
 [
-^ self withPath: (self path withExtension: aString)
+	^ self withPath: (self path withExtension: aString)
 ]
 
-Class AbstractFileReference >> withPath: newPath
+AbstractFileReference >> withPath: newPath
 [
-^ self path == newPath	ifTrue: [ self ]	ifFalse: [ self copyWithPath: newPath ]
+	^ self path == newPath
+		ifTrue: [ self ]
+		ifFalse: [ self copyWithPath: newPath ]
 ]
 
-Class AbstractFileReference >> writeStream
+AbstractFileReference >> writeStream
 [
-self subclassResponsability
+	self subclassResponsibility
 ]
 
-Class AbstractFileReference >> writeStreamDo: aBlock
+AbstractFileReference >> writeStreamDo: aBlock
 [
-| stream |stream := self writeStream.^ [ aBlock value: stream ]	ensure: [ stream close ]
+	| stream |
+	stream := self writeStream.
+	^ [ aBlock value: stream ]
+		ensure: [ stream close ]
 ]
 
-Class AbstractFileReference >> writeStreamDo: doBlock ifPresent: presentBlock
+AbstractFileReference >> writeStreamDo: doBlock ifPresent: presentBlock
 [
-^ self isFile	ifTrue: presentBlock	ifFalse: [ self writeStreamDo: doBlock ]
+	^ self isFile
+		ifTrue: presentBlock
+		ifFalse: [ self writeStreamDo: doBlock ]
 ]
 
-Class AbstractFileReference >> writeStreamIfPresent: presentBlock
+AbstractFileReference >> writeStreamIfPresent: presentBlock
 [
-^ self isFile	ifTrue: presentBlock	ifFalse: [ self writeStream ]
+	^ self isFile
+		ifTrue: presentBlock
+		ifFalse: [ self writeStream ]
 ]
-
-Metaclass
-	name: #AbstractFileReference;
-	instanceVariables: #().
 

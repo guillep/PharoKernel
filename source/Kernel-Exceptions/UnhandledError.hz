@@ -1,32 +1,27 @@
-Class
-	name: #UnhandledError;
-	superclass: #ClassException;
-	instanceSpecification: #(#pointers #words );
+UnhandledError
+	superclass: #Exception;
 	instanceVariables: #(#exception );
-	classVariables: #();
 	package: #'Kernel-Exceptions'.
 
-Class UnhandledError >> exception
+UnhandledError >> exception
 [
-^ exception
+	^ exception
 ]
 
-Class UnhandledError >> exception: anError
+UnhandledError >> exception: anError
 [
-exception := anError
+	exception := anError
 ]
 
-Class UnhandledError >> isResumable
+UnhandledError >> isResumable
 [
-^ false
+	^ false
 ]
 
-Metaclass
-	name: #UnhandledError;
-	instanceVariables: #().
-
-Metaclass UnhandledError >> signalForException: anError
+UnhandledError class >> signalForException: anError
 [
-^ self new	exception: anError;	signal
+	^ self new
+		exception: anError;
+		signal
 ]
 

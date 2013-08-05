@@ -1,22 +1,14 @@
-Class
-	name: #FLGlobalValueCluster;
-	superclass: #ClassFLGlobalCluster;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+FLGlobalValueCluster
+	superclass: #FLGlobalCluster;
 	package: #'Fuel-Clusters'.
 
-Class FLGlobalValueCluster >> materializeInstanceWith: aDecoder
+FLGlobalValueCluster >> materializeInstanceWith: aDecoder
 [
-^ (self materializeGlobalAssociationFrom: aDecoder) value
+	^ (self materializeGlobalAssociationFrom: aDecoder) value
 ]
 
-Class FLGlobalValueCluster >> serializeInstance: anObject with: anEncoder
+FLGlobalValueCluster >> serializeInstance: anObject with: anEncoder
 [
-self serializeGlobalAssociationKeyed: (Smalltalk keyAtValue: anObject) on: anEncoder
+	self serializeGlobalAssociationKeyed: (anEncoder globalEnvironment keyAtValue: anObject) on: anEncoder
 ]
-
-Metaclass
-	name: #FLGlobalValueCluster;
-	instanceVariables: #().
 

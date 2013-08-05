@@ -1,102 +1,127 @@
-Class
-	name: #MemoryFileSystemFile;
-	superclass: #ClassMemoryFileSystemEntry;
-	instanceSpecification: #(#pointers #words );
+MemoryFileSystemFile
+	superclass: #MemoryFileSystemEntry;
 	instanceVariables: #(#bytes #size );
-	classVariables: #();
 	package: #'FileSystem-Memory'.
 
-Class MemoryFileSystemFile >> at: index
+MemoryFileSystemFile >> at: index
 [
-self flag: #todo.	"out of bounds checks?"^ bytes at: index
+	self flag: #todo.	"out of bounds checks?"
+	^ bytes at: index
 ]
 
-Class MemoryFileSystemFile >> at: index put: anObject
+MemoryFileSystemFile >> at: index put: anObject
 [
-index > bytes size	ifTrue: [ self grow ].bytes	at: index	put:		(anObject isCharacter			ifTrue: [ anObject codePoint ]			ifFalse: [ anObject ]).size := size max: index
+	index > bytes size
+		ifTrue: [ self grow ].
+	bytes at: index put: (anObject isCharacter
+				ifTrue: [ anObject codePoint ]
+				ifFalse: [ anObject ]).
+	size := size max: index
 ]
 
-Class MemoryFileSystemFile >> at: index read: aCollection startingAt: start count: count
+MemoryFileSystemFile >> at: index read: aCollection startingAt: start count: count
 [
-| max stop |max := size - index + 1 min: count.stop := start + max - 1.aCollection	replaceFrom: start	to: stop	with: bytes	startingAt: index.^ stop - start + 1
+	| max stop |
+	max := size - index + 1 min: count.
+	stop := start + max - 1.
+	aCollection
+		replaceFrom: start
+		to: stop
+		with: bytes
+		startingAt: index.
+	^ stop - start + 1
 ]
 
-Class MemoryFileSystemFile >> at: first write: aCollection startingAt: start count: count
+MemoryFileSystemFile >> at: first write: aCollection startingAt: start count: count
 [
-| last |last := first + count - 1.last > bytes size	ifTrue: [ self grownBy: last - size ].bytes	replaceFrom: first	to: last	with: aCollection	startingAt: start.size := last
+	| last |
+	last := first + count - 1.
+	last > bytes size
+		ifTrue: [ self grownBy: last - size ].
+	bytes
+		replaceFrom: first
+		to: last
+		with: aCollection
+		startingAt: start.
+	size := last
 ]
 
-Class MemoryFileSystemFile >> bytes
+MemoryFileSystemFile >> bytes
 [
-^ bytes
+	^ bytes
 ]
 
-Class MemoryFileSystemFile >> copyFrom: from to: position
+MemoryFileSystemFile >> copyFrom: from to: position
 [
-^ bytes copyFrom: from to: position
+	^ bytes copyFrom: from to: position
 ]
 
-Class MemoryFileSystemFile >> fileSize
+MemoryFileSystemFile >> fileSize
 [
-^ size
+	^ size
 ]
 
-Class MemoryFileSystemFile >> grow
+MemoryFileSystemFile >> grow
 [
-self grownBy: self sizeIncrement
+	self grownBy: self sizeIncrement
 ]
 
-Class MemoryFileSystemFile >> grownBy: length
+MemoryFileSystemFile >> grownBy: length
 [
-bytes := bytes grownBy: length.self modified
+	bytes := bytes grownBy: length.
+	self modified
 ]
 
-Class MemoryFileSystemFile >> initialize
+MemoryFileSystemFile >> initialize
 [
-super initialize.bytes := #[].size := 0
+	super initialize.
+	bytes := #[].
+	size := 0
 ]
 
-Class MemoryFileSystemFile >> internalSize
+MemoryFileSystemFile >> internalSize
 [
-^ bytes size
+	^ bytes size
 ]
 
-Class MemoryFileSystemFile >> isDirectory
+MemoryFileSystemFile >> isDirectory
 [
-^ false
+	^ false
 ]
 
-Class MemoryFileSystemFile >> readStream
+MemoryFileSystemFile >> readStream
 [
-^ ReadStream on: bytes from: 1 to: size
+	^ ReadStream on: bytes from: 1 to: size
 ]
 
-Class MemoryFileSystemFile >> sizeIncrement
+MemoryFileSystemFile >> sizeIncrement
 [
-^ (bytes size min: 20) max: 1024
+	^ (bytes size min: 20) max: 1024
 ]
 
-Class MemoryFileSystemFile >> truncate
+MemoryFileSystemFile >> truncate
 [
-self truncateTo: size
+	self truncateTo: size
 ]
 
-Class MemoryFileSystemFile >> truncateTo: aSize
+MemoryFileSystemFile >> truncateTo: aSize
 [
-bytes size = aSize	ifTrue: [ ^ self ].bytes := bytes copyFrom: 1 to: aSize.size := bytes size.self modified
+	bytes size = aSize
+		ifTrue: [ ^ self ].
+	bytes := bytes copyFrom: 1 to: aSize.
+	size := bytes size.
+	self modified
 ]
 
-Class MemoryFileSystemFile >> updateSize: newSize
+MemoryFileSystemFile >> updateSize: newSize
 [
-size := newSize.modificationTime := nil
+	size := newSize.
+	modificationTime := nil
 ]
 
-Class MemoryFileSystemFile >> writeStream
+MemoryFileSystemFile >> writeStream
 [
-self flag: #todo.	"need a nicer abstraction here to keep a shared bytes without calling grownBy on every at:put:"^ WriteStream on: self from: 1 to: size
+	self flag: #todo.	"need a nicer abstraction here to keep a shared bytes without calling grownBy on every at:put:"
+	^ WriteStream on: self from: 1 to: size
 ]
-
-Metaclass
-	name: #MemoryFileSystemFile;
-	instanceVariables: #().
 

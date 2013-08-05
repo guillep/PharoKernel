@@ -1,83 +1,140 @@
-Class
-	name: #UTF16TextConverter;
-	superclass: #ClassTextConverter;
-	instanceSpecification: #(#pointers #words );
+UTF16TextConverter
+	superclass: #TextConverter;
 	instanceVariables: #(#useLittleEndian #useByteOrderMark #byteOrderMarkDone );
-	classVariables: #();
 	package: #'Multilingual-TextConversion'.
 
-Class UTF16TextConverter >> charFromStream: aStream withFirst: firstValue
+UTF16TextConverter >> charFromStream: aStream withFirst: firstValue
 [
-^ (firstValue < 16rD800 or: [ firstValue > 16rDBFF ])	ifTrue: [ Unicode value: firstValue ]	ifFalse: [ 		| character1 "We have a surrogate pair" character2 n secondValue |		character1 := aStream basicNext ifNil: [ ^ nil ].		character2 := aStream basicNext ifNil: [ ^ nil ].		self useLittleEndian			ifTrue: [ 				| tmp |				tmp := character1.				character1 := character2.				character2 := tmp ].		secondValue := (character1 charCode << 8) + character2 charCode.		Unicode value: (firstValue - 16rD800) * 16r400 + (secondValue - 16rDC00) + 16r10000 ]
+	^ (firstValue < 16rD800 or: [ firstValue > 16rDBFF ])
+		ifTrue: [ Unicode value: firstValue ]
+		ifFalse: [ | character1 "We have a surrogate pair" character2 n secondValue |
+			character1 := aStream basicNext ifNil: [ ^ nil ].
+			character2 := aStream basicNext ifNil: [ ^ nil ].
+			self useLittleEndian
+				ifTrue: [ | tmp |
+					tmp := character1.
+					character1 := character2.
+					character2 := tmp ].
+			secondValue := (character1 charCode << 8) + character2 charCode.
+			Unicode value: (firstValue - 16rD800) * 16r400 + (secondValue - 16rDC00) + 16r10000 ]
 ]
 
-Class UTF16TextConverter >> checkBOMOn: aStream
+UTF16TextConverter >> checkBOMOn: aStream
 [
 	"Write bom if applicable, and we are at beginning of stream"
-(self useByteOrderMark and: [ byteOrderMarkDone not ])	ifTrue: [ 		aStream position = 0			ifTrue: [ self next16BitValue: 16rFEFF toStream: aStream ].		byteOrderMarkDone := true ]
+
+	(self useByteOrderMark and: [ byteOrderMarkDone not ])
+		ifTrue: [ aStream position = 0
+				ifTrue: [ self next16BitValue: 16rFEFF toStream: aStream ].
+			byteOrderMarkDone := true ]
 ]
 
-Class UTF16TextConverter >> initialize
+UTF16TextConverter >> initialize
 [
-super initialize.byteOrderMarkDone := false.useByteOrderMark := false.useLittleEndian := false
+	super initialize.
+	byteOrderMarkDone := false.
+	useByteOrderMark := false.
+	useLittleEndian := false
 ]
 
-Class UTF16TextConverter >> next16BitValue: value toStream: aStream
+UTF16TextConverter >> next16BitValue: value toStream: aStream
 [
-| v1 v2 |v1 := value >> 8 bitAnd: 16rFF.v2 := value bitAnd: 16rFF.self useLittleEndian	ifTrue: [ 		aStream basicNextPut: (Character value: v2).		aStream basicNextPut: (Character value: v1) ]	ifFalse: [ 		aStream basicNextPut: (Character value: v1).		aStream basicNextPut: (Character value: v2) ]
+	| v1 v2 |
+	v1 := value >> 8 bitAnd: 16rFF.
+	v2 := value bitAnd: 16rFF.
+	self useLittleEndian
+		ifTrue: [ aStream basicNextPut: (Character value: v2).
+			aStream basicNextPut: (Character value: v1) ]
+		ifFalse: [ aStream basicNextPut: (Character value: v1).
+			aStream basicNextPut: (Character value: v2) ]
 ]
 
-Class UTF16TextConverter >> nextFromStream: aStream
+UTF16TextConverter >> nextFromStream: aStream
 [
-| character1 character2 readBOM charValue |aStream isBinary	ifTrue: [ ^ aStream basicNext ].character1 := aStream basicNext ifNil: [ ^ nil ].character2 := aStream basicNext ifNil: [ ^ nil ].readBOM := false.(character1 asciiValue = 16rFF and: [ character2 asciiValue = 16rFE ])	ifTrue: [ 		self useLittleEndian: true.		readBOM := true ].(character1 asciiValue = 16rFE and: [ character2 asciiValue = 16rFF ])	ifTrue: [ 		self useLittleEndian: false.		readBOM := true ].readBOM	ifTrue: [ 		self useByteOrderMark: true.		character1 := aStream basicNext ifNil: [ ^ nil ].		character2 := aStream basicNext ifNil: [ ^ nil ] ].charValue := self useLittleEndian	ifTrue: [ (character2 charCode bitShift: 8) + character1 charCode ]	ifFalse: [ (character1 charCode bitShift: 8) + character2 charCode ].^ self charFromStream: aStream withFirst: charValue
+	| character1 character2 readBOM charValue |
+	aStream isBinary
+		ifTrue: [ ^ aStream basicNext ].
+	character1 := aStream basicNext ifNil: [ ^ nil ].
+	character2 := aStream basicNext ifNil: [ ^ nil ].
+	readBOM := false.
+	(character1 asciiValue = 16rFF and: [ character2 asciiValue = 16rFE ])
+		ifTrue: [ self useLittleEndian: true.
+			readBOM := true ].
+	(character1 asciiValue = 16rFE and: [ character2 asciiValue = 16rFF ])
+		ifTrue: [ self useLittleEndian: false.
+			readBOM := true ].
+	readBOM
+		ifTrue: [ self useByteOrderMark: true.
+			character1 := aStream basicNext ifNil: [ ^ nil ].
+			character2 := aStream basicNext ifNil: [ ^ nil ] ].
+	charValue := self useLittleEndian
+		ifTrue: [ (character2 charCode bitShift: 8) + character1 charCode ]
+		ifFalse: [ (character1 charCode bitShift: 8) + character2 charCode ].
+	^ self charFromStream: aStream withFirst: charValue
 ]
 
-Class UTF16TextConverter >> nextPut: aCharacter toStream: aStream
+UTF16TextConverter >> nextPut: aCharacter toStream: aStream
 [
-| v low high |self checkBOMOn: aStream.v := aCharacter charCode.v > 16rFFFF	ifFalse: [ 		self next16BitValue: v toStream: aStream.		^ self ]	ifTrue: [ 		v := v - 16r10000.		low := v \\ 16r400 + 16rDC00.		high := v // 16r400 + 16rD800.		self next16BitValue: high toStream: aStream.		self next16BitValue: low toStream: aStream ]
+	| v low high |
+	self checkBOMOn: aStream.
+	v := aCharacter charCode.
+	v > 16rFFFF
+		ifFalse: [ self next16BitValue: v toStream: aStream.
+			^ self ]
+		ifTrue: [ v := v - 16r10000.
+			low := v \\ 16r400 + 16rDC00.
+			high := v // 16r400 + 16rD800.
+			self next16BitValue: high toStream: aStream.
+			self next16BitValue: low toStream: aStream ]
 ]
 
-Class UTF16TextConverter >> nextPutAll: aString toStream: aStream
+UTF16TextConverter >> nextPutAll: aString toStream: aStream
 [
-self checkBOMOn: aStream.^ super nextPutAll: aString toStream: aStream
+	self checkBOMOn: aStream.
+	^ super nextPutAll: aString toStream: aStream
 ]
 
-Class UTF16TextConverter >> nextPutByteString: aString toStream: aStream
+UTF16TextConverter >> nextPutByteString: aString toStream: aStream
 [
-| utf16Bytes start |"No bytestring character will be a surrogate pair, so simply write the 2x size string with the correct endianness"utf16Bytes := String new: aString size * 2.start := useLittleEndian	ifTrue: [ 1 ]	ifFalse: [ 2 ].start to: utf16Bytes size by: 2 do: [ :ix | utf16Bytes at: ix put: (aString at: (ix + 1) // 2) ].aStream basicNextPutAll: utf16Bytes
+	| utf16Bytes start |
+	"No bytestring character will be a surrogate pair, so simply write the 2x size string with the correct endianness"
+	utf16Bytes := String new: aString size * 2.
+	start := useLittleEndian
+		ifTrue: [ 1 ]
+		ifFalse: [ 2 ].
+	start to: utf16Bytes size by: 2 do: [ :ix | utf16Bytes at: ix put: (aString at: (ix + 1) // 2) ].
+	aStream basicNextPutAll: utf16Bytes
 ]
 
-Class UTF16TextConverter >> swapLatin1EncodingByteOrder
+UTF16TextConverter >> swapLatin1EncodingByteOrder
 [
-latin1Encodings := latin1Encodings collect: [ :each | each reverse ]
+	latin1Encodings := latin1Encodings collect: [ :each | each reverse ]
 ]
 
-Class UTF16TextConverter >> useByteOrderMark
+UTF16TextConverter >> useByteOrderMark
 [
-^ useByteOrderMark
+	^ useByteOrderMark
 ]
 
-Class UTF16TextConverter >> useByteOrderMark: aBoolean
+UTF16TextConverter >> useByteOrderMark: aBoolean
 [
-useByteOrderMark := aBoolean
+	useByteOrderMark := aBoolean
 ]
 
-Class UTF16TextConverter >> useLittleEndian
+UTF16TextConverter >> useLittleEndian
 [
-^ useLittleEndian
+	^ useLittleEndian
 ]
 
-Class UTF16TextConverter >> useLittleEndian: aBoolean
+UTF16TextConverter >> useLittleEndian: aBoolean
 [
-aBoolean = self useLittleEndian	ifFalse: [ self swapLatin1EncodingByteOrder ].useLittleEndian := aBoolean
+	aBoolean = self useLittleEndian
+		ifFalse: [ self swapLatin1EncodingByteOrder ].
+	useLittleEndian := aBoolean
 ]
 
-Metaclass
-	name: #UTF16TextConverter;
-	instanceVariables: #().
-
-Metaclass UTF16TextConverter >> encodingNames
+UTF16TextConverter class >> encodingNames
 [
-^ #('utf-16' 'utf16' 'utf-16-le' 'utf-16-be') copy
+	^ #('utf-16' 'utf16' 'utf-16-le' 'utf-16-be') copy
 ]
 

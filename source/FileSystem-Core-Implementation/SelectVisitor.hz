@@ -1,52 +1,45 @@
-Class
-	name: #SelectVisitor;
-	superclass: #ClassAbstractEnumerationVisitor;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+SelectVisitor
+	superclass: #AbstractEnumerationVisitor;
 	package: #'FileSystem-Core-Implementation'.
 
-Class SelectVisitor >> visitReference: anEntry
+SelectVisitor >> visitReference: anEntry
 [
-(block value: anEntry)	ifTrue: [ out nextPut: anEntry ]
+	(block value: anEntry)
+		ifTrue: [ out nextPut: anEntry ]
 ]
 
-Metaclass
-	name: #SelectVisitor;
-	instanceVariables: #().
-
-Metaclass SelectVisitor >> breadthFirst: aReference
+SelectVisitor class >> breadthFirst: aReference
 [
-^ self breadthFirst: aReference select: [ :entry | true ]
+	^ self breadthFirst: aReference select: [ :entry | true ]
 ]
 
-Metaclass SelectVisitor >> breadthFirst: aReference select: aBlock
+SelectVisitor class >> breadthFirst: aReference select: aBlock
 [
-^ (self select: aBlock) breadthFirst: aReference
+	^ (self select: aBlock) breadthFirst: aReference
 ]
 
-Metaclass SelectVisitor >> postorder: aReference
+SelectVisitor class >> postorder: aReference
 [
-^ self postorder: aReference select: [ :entry | true ]
+	^ self postorder: aReference select: [ :entry | true ]
 ]
 
-Metaclass SelectVisitor >> postorder: aReference select: aBlock
+SelectVisitor class >> postorder: aReference select: aBlock
 [
-^ (self select: aBlock) postorder: aReference
+	^ (self select: aBlock) postorder: aReference
 ]
 
-Metaclass SelectVisitor >> preorder: aReference
+SelectVisitor class >> preorder: aReference
 [
-^ self preorder: aReference select: [ :entry | true ]
+	^ self preorder: aReference select: [ :entry | true ]
 ]
 
-Metaclass SelectVisitor >> preorder: aReference select: aBlock
+SelectVisitor class >> preorder: aReference select: aBlock
 [
-^ (self select: aBlock) preorder: aReference
+	^ (self select: aBlock) preorder: aReference
 ]
 
-Metaclass SelectVisitor >> select: aBlock
+SelectVisitor class >> select: aBlock
 [
-^ self basicNew initializeWithBlock: aBlock
+	^ self basicNew initializeWithBlock: aBlock
 ]
 

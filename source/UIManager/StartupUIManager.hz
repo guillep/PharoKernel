@@ -1,17 +1,10 @@
-Class
-	name: #StartupUIManager;
-	superclass: #ClassNonInteractiveUIManager;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+StartupUIManager
+	superclass: #NonInteractiveUIManager;
 	package: #UIManager.
 
-Class StartupUIManager >> inform: aString
+StartupUIManager >> inform: aString
 [
-(ProvideAnswerNotification signal: aString) ifNotNil: [ :answer | ^ true ].Smalltalk addDeferredStartupAction: [ UIManager default inform: aString ]
+	(ProvideAnswerNotification signal: aString) ifNotNil: [ :answer | ^ true ].
+	Smalltalk addDeferredStartupAction: [ UIManager default inform: aString ]
 ]
-
-Metaclass
-	name: #StartupUIManager;
-	instanceVariables: #().
 

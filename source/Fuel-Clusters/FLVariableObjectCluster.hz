@@ -1,52 +1,74 @@
-Class
-	name: #FLVariableObjectCluster;
-	superclass: #ClassFLPointerObjectCluster;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+FLVariableObjectCluster
+	superclass: #FLPointerObjectCluster;
+	instanceVariables: #(#variableReferences );
 	package: #'Fuel-Clusters'.
 
-Class FLVariableObjectCluster >> materializeInstanceWith: aDecoder
+FLVariableObjectCluster >> add: anObject traceWith: aAnalysis
 [
-^ theClass basicNew: aDecoder nextEncodedPositiveInteger
+	"Add an object to the cluster and trace references."
+
+	objects addIfNotPresent: anObject ifPresentDo: [ ^ self ].
+	self
+		referencesOf: anObject
+		do: [ :aChild | | actual |
+			actual := aChild fuelReplacement.
+			self addReferenceFrom: anObject to: actual.
+			aAnalysis trace: actual ].
+	self
+		variablePartReferencesOf: anObject
+		do: [ :aChild | | actual |
+			actual := aChild fuelReplacement.
+			self addVariableReferenceFrom: anObject to: actual.
+			aAnalysis trace: actual ]
 ]
 
-Class FLVariableObjectCluster >> materializeReferencesOf: anObject with: aDecoder
+FLVariableObjectCluster >> addVariableReferenceFrom: anObject to: anotherObject
 [
-super materializeReferencesOf: anObject with: aDecoder.self materializeReferencesVariablePartOf: anObject with: aDecoder
+	| list |
+	list := self variableReferences at: anObject ifAbsent: [ nil ].
+	list ifNil: [ self variableReferences at: anObject put: (list := OrderedCollection new) ].
+	list add: anotherObject
 ]
 
-Class FLVariableObjectCluster >> materializeReferencesVariablePartOf: anObject with: aDecoder
+FLVariableObjectCluster >> materializeInstanceWith: aDecoder
 [
-1 to: anObject basicSize do: [ :index | anObject basicAt: index put: aDecoder nextEncodedReference ]
+	^ theClass fuelNew: aDecoder nextEncodedPositiveInteger
 ]
 
-Class FLVariableObjectCluster >> referencesOf: anObject do: aBlock
+FLVariableObjectCluster >> materializeReferencesOf: anObject with: aDecoder
 [
-super referencesOf: anObject do: aBlock.self variablePartReferencesOf: anObject do: aBlock
+	super materializeReferencesOf: anObject with: aDecoder.
+	self materializeReferencesVariablePartOf: anObject with: aDecoder
 ]
 
-Class FLVariableObjectCluster >> serializeInstance: anObject with: anEncoder
+FLVariableObjectCluster >> materializeReferencesVariablePartOf: anObject with: aDecoder
 [
-anEncoder encodePositiveInteger: anObject basicSize
+	1 to: anObject basicSize do: [ :index | anObject basicAt: index put: aDecoder nextEncodedReference ]
 ]
 
-Class FLVariableObjectCluster >> serializeReferencesOf: anObject with: anEncoder
+FLVariableObjectCluster >> serializeInstance: anObject with: anEncoder
 [
-super serializeReferencesOf: anObject with: anEncoder.self serializeReferencesVariablePartOf: anObject with: anEncoder
+	anEncoder encodePositiveInteger: anObject basicSize
 ]
 
-Class FLVariableObjectCluster >> serializeReferencesVariablePartOf: anObject with: anEncoder
+FLVariableObjectCluster >> serializeReferencesOf: anObject with: anEncoder
 [
-1 to: anObject basicSize do: [ :index | anEncoder encodeReferenceTo: (anObject basicAt: index) ]
+	super serializeReferencesOf: anObject with: anEncoder.
+	self serializeReferencesVariablePartOf: anObject with: anEncoder
 ]
 
-Class FLVariableObjectCluster >> variablePartReferencesOf: anObject do: aBlock
+FLVariableObjectCluster >> serializeReferencesVariablePartOf: anObject with: anEncoder
 [
-1 to: anObject basicSize do: [ :index | aBlock value: (anObject basicAt: index) ]
+	(self variableReferences at: anObject ifAbsent: [ ^ self ]) do: [ :value | anEncoder encodeReferenceTo: value ]
 ]
 
-Metaclass
-	name: #FLVariableObjectCluster;
-	instanceVariables: #().
+FLVariableObjectCluster >> variablePartReferencesOf: anObject do: aBlock
+[
+	1 to: anObject basicSize do: [ :index | aBlock value: (anObject basicAt: index) ]
+]
+
+FLVariableObjectCluster >> variableReferences
+[
+	^ variableReferences ifNil: [ variableReferences := FLLargeIdentityDictionary new ]
+]
 

@@ -1,55 +1,72 @@
-Class
-	name: #FLHeader;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+FLHeader
 	instanceVariables: #(#preMaterializationActions #additionalObjects #postMaterializationActions #materialization );
-	classVariables: #();
 	package: #'Fuel-Core'.
 
-Class FLHeader >> addPostMaterializationAction: aCleanBlockClosure
+FLHeader >> addPostMaterializationAction: aCleanBlockClosure
 [
 	"The closure may (or not) have one parameter and it will be the materialization."
-aCleanBlockClosure isClean	ifFalse: [ 		self			error: 'Post materializaton actions have to be clean closures. For more details see method BlocKClosure >> #isClean' ].postMaterializationActions add: aCleanBlockClosure
+
+	aCleanBlockClosure isClean
+		ifFalse: [ self
+				error: 'Post materializaton actions have to be clean closures. For more details see method BlocKClosure >> #isClean' ].
+	postMaterializationActions add: aCleanBlockClosure
 ]
 
-Class FLHeader >> addPreMaterializationAction: aCleanBlockClosure
+FLHeader >> addPreMaterializationAction: aCleanBlockClosure
 [
-aCleanBlockClosure isClean	ifFalse: [ self error: 'Pre materializaton actions have to be clean closures. For more details see method BlocKClosure >> #isClean' ].preMaterializationActions add: aCleanBlockClosure
+	aCleanBlockClosure isClean
+		ifFalse: [ self error: 'Pre materializaton actions have to be clean closures. For more details see method BlocKClosure >> #isClean' ].
+	preMaterializationActions add: aCleanBlockClosure
 ]
 
-Class FLHeader >> additionalObjectAt: key
+FLHeader >> additionalObjectAt: key
 [
-^ additionalObjects at: key
+	^ additionalObjects at: key
 ]
 
-Class FLHeader >> at: key putAdditionalObject: anObject
+FLHeader >> at: key putAdditionalObject: anObject
 [
 	"This is useful if we want to attach objects to a package that will also be serialized. The way they are stored is key-value."
-additionalObjects at: key put: anObject
+
+	additionalObjects at: key put: anObject
 ]
 
-Class FLHeader >> executePostMaterializationActions
+FLHeader >> executePostMaterializationActions
 [
-postMaterializationActions do: [ :each | each cull: materialization ]
+	postMaterializationActions do: [ :each | each cull: materialization ]
 ]
 
-Class FLHeader >> executePreMaterializationActions
+FLHeader >> executePreMaterializationActions
 [
-preMaterializationActions do: [ :each | each value ]
+	preMaterializationActions do: [ :each | each value ]
 ]
 
-Class FLHeader >> initialize
+FLHeader >> initialize
 [
-additionalObjects := IdentityDictionary new.preMaterializationActions := OrderedCollection new.postMaterializationActions := OrderedCollection new
+	additionalObjects := IdentityDictionary new.
+	preMaterializationActions := OrderedCollection new.
+	postMaterializationActions := OrderedCollection new
 ]
 
-Class FLHeader >> materialization: aMaterialization
+FLHeader >> isEmpty
+[
+	^ preMaterializationActions isEmpty and: [ postMaterializationActions isEmpty and: [ additionalObjects isEmpty ] ]
+]
+
+FLHeader >> materialization: aMaterialization
 [
 	"This is just set once the materialization had happened"
-materialization := aMaterialization
+
+	materialization := aMaterialization
 ]
 
-Metaclass
-	name: #FLHeader;
-	instanceVariables: #().
+FLHeader >> postMaterializationActions: listOfPostMaterializationActions
+[
+	postMaterializationActions := listOfPostMaterializationActions
+]
+
+FLHeader >> preMaterializationActions: listOfPreMaterializationActions
+[
+	preMaterializationActions := listOfPreMaterializationActions
+]
 

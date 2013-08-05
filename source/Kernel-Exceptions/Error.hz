@@ -1,24 +1,18 @@
-Class
-	name: #Error;
-	superclass: #ClassException;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+Error
+	superclass: #Exception;
 	package: #'Kernel-Exceptions'.
 
-Class Error >> defaultAction
+Error >> defaultAction
 [
 	"No one has handled this error, but now give them a chance to decide how to debug it.  If none handle this either then open debugger (see UnhandedError-defaultAction)"
-UnhandledError signalForException: self
+
+	UnhandledError signalForException: self
 ]
 
-Class Error >> isResumable
+Error >> isResumable
 [
 	"Determine whether an exception is resumable."
-^ false
-]
 
-Metaclass
-	name: #Error;
-	instanceVariables: #().
+	^ false
+]
 

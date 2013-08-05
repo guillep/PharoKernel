@@ -1,47 +1,60 @@
-Class
-	name: #IntegerArray;
-	superclass: #ClassArrayedCollection;
+IntegerArray
+	superclass: #ArrayedCollection;
 	instanceSpecification: #(#variable #words );
-	instanceVariables: #();
-	classVariables: #();
 	package: #'Collections-Native'.
 
-Class IntegerArray >> asIntegerArray
+IntegerArray >> asIntegerArray
 [
-^ self
+	^ self
 ]
 
-Class IntegerArray >> at: index
+IntegerArray >> at: index
 [
 	<primitive: 165>
-| word |word := self basicAt: index.word < 16r3FFFFFFF	ifTrue: [ ^ word ].	"Avoid LargeInteger computations"^ word >= 16r80000000	ifTrue: [ 		"word - 16r100000000"		(word bitInvert32 + 1) negated ]	ifFalse: [ word ]	"Negative?!"
+	| word |
+	word := self basicAt: index.
+	word < 16r3FFFFFFF
+		ifTrue: [ ^ word ].	"Avoid LargeInteger computations"
+	^ word >= 16r80000000
+		ifTrue: [ "word - 16r100000000"
+			(word bitInvert32 + 1) negated ]
+		ifFalse: [ word ]	"Negative?!"
 ]
 
-Class IntegerArray >> at: index put: anInteger
+IntegerArray >> at: index put: anInteger
 [
 	<primitive: 166>
-| word |anInteger < 0	ifTrue: [ 		"word := 16r100000000 + anInteger"		word := (anInteger + 1) negated bitInvert32 ]	ifFalse: [ word := anInteger ].self basicAt: index put: word.^ anInteger
+	| word |
+	anInteger < 0
+		ifTrue: [ "word := 16r100000000 + anInteger"
+			word := (anInteger + 1) negated bitInvert32 ]
+		ifFalse: [ word := anInteger ].
+	self basicAt: index put: word.
+	^ anInteger
 ]
 
-Class IntegerArray >> atAllPut: anInteger
+IntegerArray >> atAllPut: anInteger
 [
-| word |anInteger < 0	ifTrue: [ 		"word := 16r100000000 + anInteger"		word := (anInteger + 1) negated bitInvert32 ]	ifFalse: [ word := anInteger ].self primFill: word
+	| word |
+	anInteger < 0
+		ifTrue: [ "word := 16r100000000 + anInteger"
+			word := (anInteger + 1) negated bitInvert32 ]
+		ifFalse: [ word := anInteger ].
+	self primFill: word
 ]
 
-Class IntegerArray >> defaultElement
+IntegerArray >> defaultElement
 [
 	"Return the default element of the receiver"
-^ 0
+
+	^ 0
 ]
 
-Class IntegerArray >> primFill: aPositiveInteger
+IntegerArray >> primFill: aPositiveInteger
 [
 	"Fill the receiver, an indexable bytes or words object, with the given positive integer. The range of possible fill values is [0..255] for byte arrays and [0..(2^32 - 1)] for word arrays."
-	<primitive: 145>
-self errorImproperStore
-]
 
-Metaclass
-	name: #IntegerArray;
-	instanceVariables: #().
+	<primitive: 145>
+	self errorImproperStore
+]
 

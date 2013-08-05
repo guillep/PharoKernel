@@ -1,97 +1,119 @@
-Class
-	name: #FileSystemPermission;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+FileSystemPermission
 	instanceVariables: #(#posixPermission );
-	classVariables: #();
 	package: #'FileSystem-Core-Public'.
 
-Class FileSystemPermission >> < other
+FileSystemPermission >> < other
 [
-^ posixPermission < other posixPermission
+	^ posixPermission < other posixPermission
 ]
 
-Class FileSystemPermission >> groupExecute
+FileSystemPermission >> groupExecute
 [
-^ self permissionBitAt: 4
+	^ self permissionBitAt: 4
 ]
 
-Class FileSystemPermission >> groupRead
+FileSystemPermission >> groupRead
 [
-^ self permissionBitAt: 6
+	^ self permissionBitAt: 6
 ]
 
-Class FileSystemPermission >> groupWrite
+FileSystemPermission >> groupWrite
 [
-^ self permissionBitAt: 5
+	^ self permissionBitAt: 5
 ]
 
-Class FileSystemPermission >> initialize: aNumber
+FileSystemPermission >> initialize: aNumber
 [
-posixPermission := aNumber.self initialize
+	posixPermission := aNumber.
+	self initialize
 ]
 
-Class FileSystemPermission >> isReadable
+FileSystemPermission >> isReadable
 [
-^ self ownerRead
+	^ self ownerRead
 ]
 
-Class FileSystemPermission >> isWritable
+FileSystemPermission >> isWritable
 [
-^ self ownerWrite
+	^ self ownerWrite
 ]
 
-Class FileSystemPermission >> otherExecute
+FileSystemPermission >> otherExecute
 [
-^ self permissionBitAt: 1
+	^ self permissionBitAt: 1
 ]
 
-Class FileSystemPermission >> otherRead
+FileSystemPermission >> otherRead
 [
-^ self permissionBitAt: 3
+	^ self permissionBitAt: 3
 ]
 
-Class FileSystemPermission >> otherWrite
+FileSystemPermission >> otherWrite
 [
-^ self permissionBitAt: 2
+	^ self permissionBitAt: 2
 ]
 
-Class FileSystemPermission >> ownerExecute
+FileSystemPermission >> ownerExecute
 [
-^ self permissionBitAt: 7
+	^ self permissionBitAt: 7
 ]
 
-Class FileSystemPermission >> ownerRead
+FileSystemPermission >> ownerRead
 [
-^ self permissionBitAt: 9
+	^ self permissionBitAt: 9
 ]
 
-Class FileSystemPermission >> ownerWrite
+FileSystemPermission >> ownerWrite
 [
-^ self permissionBitAt: 8
+	^ self permissionBitAt: 8
 ]
 
-Class FileSystemPermission >> permissionBitAt: bitIndex
+FileSystemPermission >> permissionBitAt: bitIndex
 [
-^ (posixPermission bitAt: bitIndex) == 1
+	^ (posixPermission bitAt: bitIndex) == 1
 ]
 
-Class FileSystemPermission >> printOn: aStream
+FileSystemPermission >> printOn: aStream
 [
-aStream	nextPut:			(self ownerRead					ifTrue: [ $r ]					ifFalse: [ $- ]);	nextPut:			(self ownerWrite					ifTrue: [ $w ]					ifFalse: [ $- ]);	nextPut:			(self ownerExecute					ifTrue: [ $x ]					ifFalse: [ $- ]);	nextPut:			(self groupRead					ifTrue: [ $r ]					ifFalse: [ $- ]);	nextPut:			(self groupWrite					ifTrue: [ $w ]					ifFalse: [ $- ]);	nextPut:			(self groupExecute					ifTrue: [ $x ]					ifFalse: [ $- ]);	nextPut:			(self otherRead					ifTrue: [ $r ]					ifFalse: [ $- ]);	nextPut:			(self otherWrite					ifTrue: [ $w ]					ifFalse: [ $- ]);	nextPut:			(self otherExecute					ifTrue: [ $x ]					ifFalse: [ $- ])	"Owner"	"Group"	"Other"
+	aStream
+		nextPut: (self ownerRead
+						ifTrue: [ $r ]
+						ifFalse: [ $- ]);
+		nextPut: (self ownerWrite
+						ifTrue: [ $w ]
+						ifFalse: [ $- ]);
+		nextPut: (self ownerExecute
+						ifTrue: [ $x ]
+						ifFalse: [ $- ]);
+		nextPut: (self groupRead
+						ifTrue: [ $r ]
+						ifFalse: [ $- ]);
+		nextPut: (self groupWrite
+						ifTrue: [ $w ]
+						ifFalse: [ $- ]);
+		nextPut: (self groupExecute
+						ifTrue: [ $x ]
+						ifFalse: [ $- ]);
+		nextPut: (self otherRead
+						ifTrue: [ $r ]
+						ifFalse: [ $- ]);
+		nextPut: (self otherWrite
+						ifTrue: [ $w ]
+						ifFalse: [ $- ]);
+		nextPut: (self otherExecute
+						ifTrue: [ $x ]
+						ifFalse: [ $- ])	"Owner"	"Group"	"Other"
 ]
 
-Metaclass
-	name: #FileSystemPermission;
-	instanceVariables: #().
-
-Metaclass FileSystemPermission >> new
+FileSystemPermission class >> new
 [
-self error: 'Should not be called. Use #posixPermission: instead'
+	self error: 'Should not be called. Use #posixPermission: instead'
 ]
 
-Metaclass FileSystemPermission >> posixPermissions: aNumber
+FileSystemPermission class >> posixPermissions: aNumber
 [
-^ self basicNew	initialize: aNumber;	yourself
+	^ self basicNew
+		initialize: aNumber;
+		yourself
 ]
 

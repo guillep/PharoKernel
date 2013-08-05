@@ -1,22 +1,26 @@
-Class
-	name: #UTF8DecomposedTextConverter;
-	superclass: #ClassUTF8TextConverter;
-	instanceSpecification: #(#pointers #words );
+UTF8DecomposedTextConverter
+	superclass: #UTF8TextConverter;
 	instanceVariables: #(#combinedChar );
-	classVariables: #();
 	package: #'Multilingual-TextConversion'.
 
-Class UTF8DecomposedTextConverter >> nextFromStream: aStream
+UTF8DecomposedTextConverter >> nextFromStream: aStream
 [
-| char resultChar |char := super nextFromStream: aStream.(CombinedChar isCompositionCharacter: char charCode)	ifFalse: [ ^ char ].combinedChar	ifNil: [ 		combinedChar := CombinedChar new.		combinedChar simpleAdd: char ]	ifNotNil: [ 		[ combinedChar simpleAdd: char ] whileFalse: [ char := super nextFromStream: aStream ].		resultChar := combinedChar combined.		combinedChar := CombinedChar new.		combinedChar simpleAdd: char.		^ resultChar ]
+	| char resultChar |
+	char := super nextFromStream: aStream.
+	(CombinedChar isCompositionCharacter: char charCode)
+		ifFalse: [ ^ char ].
+	combinedChar
+		ifNil: [ combinedChar := CombinedChar new.
+			combinedChar simpleAdd: char ]
+		ifNotNil: [ [ combinedChar simpleAdd: char ] whileFalse: [ char := super nextFromStream: aStream ].
+			resultChar := combinedChar combined.
+			combinedChar := CombinedChar new.
+			combinedChar simpleAdd: char.
+			^ resultChar ]
 ]
 
-Metaclass
-	name: #UTF8DecomposedTextConverter;
-	instanceVariables: #().
-
-Metaclass UTF8DecomposedTextConverter >> encodingNames
+UTF8DecomposedTextConverter class >> encodingNames
 [
-^ Array new
+	^ Array new
 ]
 

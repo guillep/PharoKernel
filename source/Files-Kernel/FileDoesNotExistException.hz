@@ -1,34 +1,35 @@
-Class
-	name: #FileDoesNotExistException;
-	superclass: #ClassFileStreamException;
-	instanceSpecification: #(#pointers #words );
+FileDoesNotExistException
+	superclass: #FileStreamException;
 	instanceVariables: #(#readOnly );
-	classVariables: #();
 	package: #'Files-Kernel'.
 
-Class FileDoesNotExistException >> defaultAction
+FileDoesNotExistException >> defaultAction
 [
 	"The default action taken if the exception is signaled."
-^ UIManager default fileDoesNotExistsDefaultAction: self
+
+	^ UIManager default fileDoesNotExistsDefaultAction: self
 ]
 
-Class FileDoesNotExistException >> readOnly
+FileDoesNotExistException >> readOnly
 [
-^ readOnly == true
+	^ readOnly == true
 ]
 
-Class FileDoesNotExistException >> readOnly: aBoolean
+FileDoesNotExistException >> readOnly: aBoolean
 [
-readOnly := aBoolean
+	readOnly := aBoolean
 ]
 
-Metaclass
-	name: #FileDoesNotExistException;
-	instanceVariables: #().
-
-Metaclass FileDoesNotExistException >> example
+FileDoesNotExistException class >> example
 [
 	"FileDoesNotExistException example"
-| result |result := [ (StandardFileStream readOnlyFileNamed: 'error42.log') contentsOfEntireFile ]	on: FileDoesNotExistException	do: [ :ex | 'No error log' ].Transcript	show: result;	cr
+
+	| result |
+	result := [ (StandardFileStream readOnlyFileNamed: 'error42.log') contentsOfEntireFile ]
+		on: FileDoesNotExistException
+		do: [ :ex | 'No error log' ].
+	Transcript
+		show: result;
+		cr
 ]
 

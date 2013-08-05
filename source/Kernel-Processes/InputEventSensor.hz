@@ -1,346 +1,530 @@
-Class
-	name: #InputEventSensor;
-	superclass: #ClassInputEventHandler;
-	instanceSpecification: #(#pointers #words );
+InputEventSensor
+	superclass: #InputEventHandler;
 	instanceVariables: #(#eventQueue #modifiers #mouseButtons #mousePosition );
 	classVariables: #(#ButtonDecodeTable );
-	sharedPools: #(#EventSensorConstants );	package: #'Kernel-Processes'.
+	sharedPools: #(#EventSensorConstants );
+	package: #'Kernel-Processes'.
 
-Class InputEventSensor >> anyButtonPressed
+InputEventSensor >> anyButtonPressed
 [
 	"Answer whether at least one mouse button is currently being pressed."
-^ self mouseButtons anyMask: 7
+
+	^ self mouseButtons anyMask: 7
 ]
 
-Class InputEventSensor >> anyModifierKeyPressed
+InputEventSensor >> anyModifierKeyPressed
 [
 	"ignore, however, the shift keys 'cause that's not REALLY a command key"
-^ self modifiers anyMask: 16r0E	"cmd | opt | ctrl"
+
+	^ self modifiers anyMask: 16r0E	"cmd | opt | ctrl"
 ]
 
-Class InputEventSensor >> blueButtonPressed
+InputEventSensor >> blueButtonPressed
 [
-	"Answer whether only the blue mouse button is being pressed. 	This is the third mouse button or cmd+click on the Mac."
-^ (self mouseButtons bitAnd: 7) = 1
+	"Answer whether only the blue mouse button is being pressed. 
+	This is the third mouse button or cmd+click on the Mac."
+
+	^ (self mouseButtons bitAnd: 7) = 1
 ]
 
-Class InputEventSensor >> characterForEvent: evtBuf
+InputEventSensor >> characterForEvent: evtBuf
 [
-| keycode |evtBuf ifNil: [ ^ nil ].keycode := evtBuf sixth.^ keycode ifNotNil: [ Unicode value: keycode ]
+	| keycode |
+	evtBuf ifNil: [ ^ nil ].
+	keycode := evtBuf sixth.
+	^ keycode ifNotNil: [ Unicode value: keycode ]
 ]
 
-Class InputEventSensor >> commandKeyPressed
+InputEventSensor >> commandKeyPressed
 [
 	"Answer whether the command key on the keyboard is being held down."
-^ self modifiers anyMask: 16r08
+
+	^ self modifiers anyMask: 16r08
 ]
 
-Class InputEventSensor >> controlKeyPressed
+InputEventSensor >> controlKeyPressed
 [
 	"Answer whether the control key on the keyboard is being held down."
-^ self modifiers anyMask: 16r02
+
+	^ self modifiers anyMask: 16r02
 ]
 
-Class InputEventSensor >> cursorPoint
+InputEventSensor >> cursorPoint
 [
 	"Answer a Point indicating the cursor location."
-	"Fetch the next event if any to update state.	Makes sure that the old polling methods consume events	self nextEvent."
-^ mousePosition
+
+	"Fetch the next event if any to update state.
+	Makes sure that the old polling methods consume events
+	self nextEvent."
+
+	^ mousePosition
 ]
 
-Class InputEventSensor >> flushAllButDandDEvents
+InputEventSensor >> flushAllButDandDEvents
 [
-
+	
 ]
 
-Class InputEventSensor >> flushEvents
+InputEventSensor >> flushEvents
 [
-eventQueue ifNotNil: [ eventQueue flush ]
+	eventQueue ifNotNil: [ eventQueue flush ]
 ]
 
-Class InputEventSensor >> flushKeyboard
+InputEventSensor >> flushKeyboard
 [
 	"Remove all characters from the keyboard buffer."
-[ self keyboardPressed ] whileTrue: [ self keyboard ]
+
+	[ self keyboardPressed ] whileTrue: [ self keyboard ]
 ]
 
-Class InputEventSensor >> flushNonKbdEvents
+InputEventSensor >> flushNonKbdEvents
 [
-eventQueue ifNil: [ ^ self ].eventQueue flushAllSuchThat: [ :buf | (self isKbdEvent: buf) not ]
+	eventQueue ifNil: [ ^ self ].
+	eventQueue flushAllSuchThat: [ :buf | (self isKbdEvent: buf) not ]
 ]
 
-Class InputEventSensor >> handleEvent: evt
+InputEventSensor >> handleEvent: evt
 [
-self queueEvent: evt shallowCopy
+	self queueEvent: evt shallowCopy
 ]
 
-Class InputEventSensor >> hasTablet
+InputEventSensor >> hasTablet
 [
 	"Answer true if there is a pen tablet available on this computer."
-^ (self primTabletGetParameters: 1) notNil
+
+	^ (self primTabletGetParameters: 1) notNil
 ]
 
-Class InputEventSensor >> initialize
+InputEventSensor >> initialize
 [
 	"Initialize the receiver"
-super initialize.eventQueue := WaitfreeQueue new.mouseButtons := 0.mousePosition := 0 @ 0.modifiers := 0
+
+	super initialize.
+	eventQueue := WaitfreeQueue new.
+	mouseButtons := 0.
+	mousePosition := 0 @ 0.
+	modifiers := 0
 ]
 
-Class InputEventSensor >> isKbdEvent: buf
+InputEventSensor >> isKbdEvent: buf
 [
-^ (buf at: 1) = EventTypeKeyboard and: [ (buf at: 4) = EventKeyChar ]
+	^ (buf at: 1) = EventTypeKeyboard and: [ (buf at: 4) = EventKeyChar ]
 ]
 
-Class InputEventSensor >> joystickButtons: index
+InputEventSensor >> joystickButtons: index
 [
-^ ((self primReadJoystick: index) bitShift: -22) bitAnd: 16r71F
+	^ ((self primReadJoystick: index) bitShift: -22) bitAnd: 16r71F
 ]
 
-Class InputEventSensor >> joystickOn: index
+InputEventSensor >> joystickOn: index
 [
-^ (((self primReadJoystick: index) bitShift: -27) bitAnd: 1) ~= 0
+	^ (((self primReadJoystick: index) bitShift: -27) bitAnd: 1) ~= 0
 ]
 
-Class InputEventSensor >> joystickXY: index
+InputEventSensor >> joystickXY: index
 [
-| inputWord x y |inputWord := self primReadJoystick: index.x := (inputWord bitAnd: 16r7FF) - 16r400.y := ((inputWord bitShift: -11) bitAnd: 16r7FF) - 16r400.^ x @ y
+	| inputWord x y |
+	inputWord := self primReadJoystick: index.
+	x := (inputWord bitAnd: 16r7FF) - 16r400.
+	y := ((inputWord bitShift: -11) bitAnd: 16r7FF) - 16r400.
+	^ x @ y
 ]
 
-Class InputEventSensor >> keyboard
+InputEventSensor >> keyboard
 [
 	"Answer the next character from the keyboard."
-^ self characterForEvent: self nextKeyboardEvent
+
+	^ self characterForEvent: self nextKeyboardEvent
 ]
 
-Class InputEventSensor >> keyboardPeek
+InputEventSensor >> keyboardPeek
 [
 	"Answer the next character in the keyboard buffer without removing it, or nil if it is empty."
-^ self characterForEvent: self peekKeyboardEvent
+
+	^ self characterForEvent: self peekKeyboardEvent
 ]
 
-Class InputEventSensor >> keyboardPressed
+InputEventSensor >> keyboardPressed
 [
 	"Answer true if keystrokes are available."
-^ self peekKeyboardEvent notNil
+
+	^ self peekKeyboardEvent notNil
 ]
 
-Class InputEventSensor >> mapButtons: buttons modifiers: modifiers
+InputEventSensor >> mapButtons: buttons modifiers: modifiers
 [
-	"Map the buttons to yellow or blue based on the given modifiers.	If only the red button is pressed, then map		Ctrl-RedButton -> BlueButton.		Cmd-RedButton -> YellowButton.	"
-buttons = RedButtonBit	ifFalse: [ ^ buttons ].(modifiers allMask: CtrlKeyBit)	ifTrue: [ ^ BlueButtonBit ].(modifiers allMask: CommandKeyBit)	ifTrue: [ ^ YellowButtonBit ].^ buttons
+	"Map the buttons to yellow or blue based on the given modifiers.
+	If only the red button is pressed, then map
+		Ctrl-RedButton -> BlueButton.
+		Cmd-RedButton -> YellowButton.
+	"
+
+	buttons = RedButtonBit
+		ifFalse: [ ^ buttons ].
+	(modifiers allMask: CtrlKeyBit)
+		ifTrue: [ ^ BlueButtonBit ].
+	(modifiers allMask: CommandKeyBit)
+		ifTrue: [ ^ YellowButtonBit ].
+	^ buttons
 ]
 
-Class InputEventSensor >> modifiers
+InputEventSensor >> modifiers
 [
-	"modifier keys; bitfield with the following entries:		1	-	shift key		2	-	ctrl key		4	-	(Mac specific) option key		8	-	Cmd/Alt key"
-	"Fetch the next event if any to update state.	Makes sure that the old polling methods consume events"
+	"modifier keys; bitfield with the following entries:
+		1	-	shift key
+		2	-	ctrl key
+		4	-	(Mac specific) option key
+		8	-	Cmd/Alt key"
+
+	"Fetch the next event if any to update state.
+	Makes sure that the old polling methods consume events"
+
 	"	self nextEvent."
-^ modifiers
+
+	^ modifiers
 ]
 
-Class InputEventSensor >> mouseButtons
+InputEventSensor >> mouseButtons
 [
-	"button state; bitfield with the following entries:		1	-	yellow (e.g., right) button		2	-	blue (e.g., middle) button		4	-	red (e.g., left) button		[all other bits are currently undefined]"
-	"Fetch the next event if any to update state.	Makes sure that the old polling methods consume events"
-self nextEvent.^ mouseButtons
+	"button state; bitfield with the following entries:
+		1	-	yellow (e.g., right) button
+		2	-	blue (e.g., middle) button
+		4	-	red (e.g., left) button
+		[all other bits are currently undefined]"
+
+	"Fetch the next event if any to update state.
+	Makes sure that the old polling methods consume events"
+
+	self nextEvent.
+	^ mouseButtons
 ]
 
-Class InputEventSensor >> nextEvent
+InputEventSensor >> nextEvent
 [
 	"Return the next event from the receiver."
-| evt |evt := eventQueue nextOrNil.^ evt ifNotNil: [ self processEvent: evt ]
+
+	| evt |
+	evt := eventQueue nextOrNil.
+	^ evt ifNotNil: [ self processEvent: evt ]
 ]
 
-Class InputEventSensor >> nextKeyboardEvent
+InputEventSensor >> nextKeyboardEvent
 [
-	"Allows for use of old Sensor protocol to get at the keyboard,	as when running kbdTest or the InterpreterSimulator in Morphic"
-| evtBuf |evtBuf := eventQueue findFirst: [ :buf | self isKbdEvent: buf ].self flushNonKbdEvents.^ evtBuf
+	"Allows for use of old Sensor protocol to get at the keyboard,
+	as when running kbdTest or the InterpreterSimulator in Morphic"
+
+	| evtBuf |
+	evtBuf := eventQueue findFirst: [ :buf | self isKbdEvent: buf ].
+	self flushNonKbdEvents.
+	^ evtBuf
 ]
 
-Class InputEventSensor >> noButtonPressed
+InputEventSensor >> noButtonPressed
 [
 	"Answer whether any mouse button is not being pressed."
-^ self anyButtonPressed not
+
+	^ self anyButtonPressed not
 ]
 
-Class InputEventSensor >> peekEvent
+InputEventSensor >> peekEvent
 [
 	"Look ahead at the next event."
-| nextEvent |nextEvent := eventQueue peek.^ (nextEvent notNil and: [ (nextEvent at: 1) ~= EventTypeMenu ])	ifTrue: [ self processEvent: nextEvent ]
+
+	| nextEvent |
+	nextEvent := eventQueue peek.
+	^ (nextEvent notNil and: [ (nextEvent at: 1) ~= EventTypeMenu ])
+		ifTrue: [ self processEvent: nextEvent ]
 ]
 
-Class InputEventSensor >> peekKeyboardEvent
+InputEventSensor >> peekKeyboardEvent
 [
-	"Allows for use of old Sensor protocol to get at the keyboard,	as when running kbdTest or the InterpreterSimulator in Morphic"
-^ eventQueue findFirst: [ :buf | self isKbdEvent: buf ]
+	"Allows for use of old Sensor protocol to get at the keyboard,
+	as when running kbdTest or the InterpreterSimulator in Morphic"
+
+	^ eventQueue findFirst: [ :buf | self isKbdEvent: buf ]
 ]
 
-Class InputEventSensor >> primReadJoystick: index
+InputEventSensor >> primReadJoystick: index
 [
 	"Return the joystick input word for the joystick with the given index in the range [1..16]. Returns zero if the index does not correspond to a currently installed joystick."
+
 	<primitive: 'primitiveReadJoystick' module: 'JoystickTabletPlugin'>
-^ 0
+	^ 0
 ]
 
-Class InputEventSensor >> primTabletGetParameters: cursorIndex
+InputEventSensor >> primTabletGetParameters: cursorIndex
 [
-	"Answer the pen tablet parameters. For parameters that differ from cursor to cursor, answer those associated with the cursor having the given index. Answer nil if there is no pen tablet. The parameters are:	1. tablet width, in tablet units	2. tablet height, in tablet units	3. number of tablet units per inch	4. number of cursors (pens, pucks, etc; some tablets have more than one)	5. this cursor index	6. and 7. x scale and x offset for scaling tablet coordintes (e.g., to fit the screen)	8. and 9. y scale and y offset for scaling tablet coordintes  (e.g., to fit the screen)	10. number of pressure levels	11. presure threshold needed close pen tip switch 	12. number of pen tilt angles"
+	"Answer the pen tablet parameters. For parameters that differ from cursor to cursor, answer those associated with the cursor having the given index. Answer nil if there is no pen tablet. The parameters are:
+	1. tablet width, in tablet units
+	2. tablet height, in tablet units
+	3. number of tablet units per inch
+	4. number of cursors (pens, pucks, etc; some tablets have more than one)
+	5. this cursor index
+	6. and 7. x scale and x offset for scaling tablet coordintes (e.g., to fit the screen)
+	8. and 9. y scale and y offset for scaling tablet coordintes  (e.g., to fit the screen)
+	10. number of pressure levels
+	11. presure threshold needed close pen tip switch 
+	12. number of pen tilt angles"
+
 	<primitive: 'primitiveGetTabletParameters' module: 'JoystickTabletPlugin'>
-^ nil
+	^ nil
 ]
 
-Class InputEventSensor >> primTabletRead: cursorIndex
+InputEventSensor >> primTabletRead: cursorIndex
 [
-	"Answer the pen tablet data for the cursor having the given index. Answer nil if there is no pen tablet. The data is:	1. index of the cursor to which this data applies	2. timestamp of the last state chance for this cursor	3., 4., and 5. x, y, and z coordinates of the cursor (z is typically 0)	6. and 7. xTilt and yTilt of the cursor; (signed)	8. type of cursor (0 = unknown, 1 = pen, 2 = puck, 3 = eraser)	9. cursor buttons	10. cursor pressure, downward	11. cursor pressure, tangential	12. flags"
+	"Answer the pen tablet data for the cursor having the given index. Answer nil if there is no pen tablet. The data is:
+	1. index of the cursor to which this data applies
+	2. timestamp of the last state chance for this cursor
+	3., 4., and 5. x, y, and z coordinates of the cursor (z is typically 0)
+	6. and 7. xTilt and yTilt of the cursor; (signed)
+	8. type of cursor (0 = unknown, 1 = pen, 2 = puck, 3 = eraser)
+	9. cursor buttons
+	10. cursor pressure, downward
+	11. cursor pressure, tangential
+	12. flags"
+
 	<primitive: 'primitiveReadTablet' module: 'JoystickTabletPlugin'>
-self primitiveFailed
+	self primitiveFailed
 ]
 
-Class InputEventSensor >> processEvent: evt
+InputEventSensor >> processEvent: evt
 [
 	"Process a single event. This method is run at high priority."
-| type |type := evt at: 1.	"Treat menu events first"type = EventTypeMenu	ifTrue: [ 		self processMenuEvent: evt.		^ nil ].	"Tackle mouse events first"type = EventTypeMouse	ifTrue: [ 		"Transmogrify the button state according to the platform's button map definition"		evt at: 5 put: (ButtonDecodeTable at: (evt at: 5) + 1).	"Map the mouse buttons depending on modifiers"		evt at: 5 put: (self mapButtons: (evt at: 5) modifiers: (evt at: 6)).	"Update state for polling calls"		mousePosition := (evt at: 3) @ (evt at: 4).		modifiers := evt at: 6.		mouseButtons := evt at: 5.		^ evt ].	"Finally keyboard"type = EventTypeKeyboard	ifTrue: [ 		"Update state for polling calls"		modifiers := evt at: 5.		^ evt ].	"Handle all events other than Keyborad or Mouse."^ evt
+
+	| type |
+	type := evt at: 1.	"Treat menu events first"
+	type = EventTypeMenu
+		ifTrue: [ self processMenuEvent: evt.
+			^ nil ].	"Tackle mouse events first"
+	type = EventTypeMouse
+		ifTrue: [ "Transmogrify the button state according to the platform's button map definition"
+			evt at: 5 put: (ButtonDecodeTable at: (evt at: 5) + 1).	"Map the mouse buttons depending on modifiers"
+			evt at: 5 put: (self mapButtons: (evt at: 5) modifiers: (evt at: 6)).	"Update state for polling calls"
+			mousePosition := (evt at: 3) @ (evt at: 4).
+			modifiers := evt at: 6.
+			mouseButtons := evt at: 5.
+			^ evt ].	"Finally keyboard"
+	type = EventTypeKeyboard
+		ifTrue: [ "Update state for polling calls"
+			modifiers := evt at: 5.
+			^ evt ].	"Handle all events other than Keyborad or Mouse."
+	^ evt
 ]
 
-Class InputEventSensor >> processMenuEvent: evt
+InputEventSensor >> processMenuEvent: evt
 [
-| handler localCopyOfEvt |Smalltalk globals	at: #HostSystemMenus	ifPresent: [ :menus | 		localCopyOfEvt := evt shallowCopy.		handler := (menus defaultMenuBarForWindowIndex: (localCopyOfEvt at: 8))			getHandlerForMenu: (localCopyOfEvt at: 3)			item: (localCopyOfEvt at: 4).		handler handler value: localCopyOfEvt ]
+	| handler localCopyOfEvt |
+	Smalltalk globals
+		at: #HostSystemMenus
+		ifPresent: [ :menus | localCopyOfEvt := evt shallowCopy.
+			handler := (menus defaultMenuBarForWindowIndex: (localCopyOfEvt at: 8))
+				getHandlerForMenu: (localCopyOfEvt at: 3)
+				item: (localCopyOfEvt at: 4).
+			handler handler value: localCopyOfEvt ]
 ]
 
-Class InputEventSensor >> queueEvent: evt
+InputEventSensor >> queueEvent: evt
 [
 	"Queue the given event in the event queue"
-eventQueue nextPut: evt
+
+	eventQueue nextPut: evt
 ]
 
-Class InputEventSensor >> redButtonPressed
+InputEventSensor >> redButtonPressed
 [
-	"Answer true if only the red mouse button is being pressed.	This is the first mouse button, usually the left one."
-^ (self mouseButtons bitAnd: 7) = 4
+	"Answer true if only the red mouse button is being pressed.
+	This is the first mouse button, usually the left one."
+
+	^ (self mouseButtons bitAnd: 7) = 4
 ]
 
-Class InputEventSensor >> shiftPressed
+InputEventSensor >> shiftPressed
 [
 	"Answer whether the shift key on the keyboard is being held down."
-^ self modifiers anyMask: 16r01
+
+	^ self modifiers anyMask: 16r01
 ]
 
-Class InputEventSensor >> shutDown
+InputEventSensor >> shutDown
 [
-
+	
 ]
 
-Class InputEventSensor >> someEventInQueue
+InputEventSensor >> someEventInQueue
 [
-^ eventQueue isEmpty not
+	^ eventQueue isEmpty not
 ]
 
-Class InputEventSensor >> startUp
+InputEventSensor >> startUp
 [
-self initialize
+	self initialize
 ]
 
-Class InputEventSensor >> tabletExtent
+InputEventSensor >> tabletExtent
 [
 	"Answer the full tablet extent in tablet coordinates."
-| params |params := self primTabletGetParameters: 1.params ifNil: [ ^ self error: 'no tablet available' ].^ (params at: 1) @ (params at: 2)
+
+	| params |
+	params := self primTabletGetParameters: 1.
+	params ifNil: [ ^ self error: 'no tablet available' ].
+	^ (params at: 1) @ (params at: 2)
 ]
 
-Class InputEventSensor >> tabletPoint
+InputEventSensor >> tabletPoint
 [
 	"Answer the current position of the first tablet pointing device (pen, puck, or eraser) in tablet coordinates."
-| data |data := self primTabletRead: 1.	"state of first/primary pen"^ (data at: 3) @ (data at: 4)
+
+	| data |
+	data := self primTabletRead: 1.	"state of first/primary pen"
+	^ (data at: 3) @ (data at: 4)
 ]
 
-Class InputEventSensor >> tabletPressure
+InputEventSensor >> tabletPressure
 [
 	"Answer the current pressure of the first tablet pointing device (pen, puck, or eraser), a number between 0.0 (no pressure) and 1.0 (max pressure)"
-| params data |params := self primTabletGetParameters: 1.params ifNil: [ ^ self ].data := self primTabletRead: 1.	"state of first/primary pen"^ (data at: 10) asFloat / ((params at: 10) - 1)
+
+	| params data |
+	params := self primTabletGetParameters: 1.
+	params ifNil: [ ^ self ].
+	data := self primTabletRead: 1.	"state of first/primary pen"
+	^ (data at: 10) asFloat / ((params at: 10) - 1)
 ]
 
-Class InputEventSensor >> tabletTimestamp
+InputEventSensor >> tabletTimestamp
 [
 	"Answer the time (in tablet clock ticks) at which the tablet's primary pen last changed state. This can be used in polling loops; if this timestamp hasn't changed, then the pen state hasn't changed either."
-| data |data := self primTabletRead: 1.	"state of first/primary pen"^ data at: 2
+
+	| data |
+	data := self primTabletRead: 1.	"state of first/primary pen"
+	^ data at: 2
 ]
 
-Class InputEventSensor >> waitButton
+InputEventSensor >> waitButton
 [
-	"Wait for the user to press any mouse button and then answer with the 	current location of the cursor."
-| delay |delay := Delay forMilliseconds: 50.[ self anyButtonPressed ] whileFalse: [ delay wait ].^ self cursorPoint
+	"Wait for the user to press any mouse button and then answer with the 
+	current location of the cursor."
+
+	| delay |
+	delay := Delay forMilliseconds: 50.
+	[ self anyButtonPressed ] whileFalse: [ delay wait ].
+	^ self cursorPoint
 ]
 
-Class InputEventSensor >> waitButtonOrKeyboard
+InputEventSensor >> waitButtonOrKeyboard
 [
-	"Wait for the user to press either any mouse button or any key. 	Answer the current cursor location or nil if a keypress occured."
-| delay |delay := Delay forMilliseconds: 50.[ self anyButtonPressed ]	whileFalse: [ 		delay wait.		self keyboardPressed			ifTrue: [ ^ nil ] ].^ self cursorPoint
+	"Wait for the user to press either any mouse button or any key. 
+	Answer the current cursor location or nil if a keypress occured."
+
+	| delay |
+	delay := Delay forMilliseconds: 50.
+	[ self anyButtonPressed ] whileFalse: [ delay wait.
+			self keyboardPressed
+				ifTrue: [ ^ nil ] ].
+	^ self cursorPoint
 ]
 
-Class InputEventSensor >> waitClickButton
+InputEventSensor >> waitClickButton
 [
-	"Wait for the user to click (press and then release) any mouse button and 	then answer with the current location of the cursor."
-self waitButton.^ self waitNoButton
+	"Wait for the user to click (press and then release) any mouse button and 
+	then answer with the current location of the cursor."
+
+	self waitButton.
+	^ self waitNoButton
 ]
 
-Class InputEventSensor >> waitNoButton
+InputEventSensor >> waitNoButton
 [
 	"Wait for the user to release any mouse button and then answer the current location of the cursor."
-| delay |delay := Delay forMilliseconds: 50.[ self anyButtonPressed ] whileTrue: [ delay wait ].^ self cursorPoint
+
+	| delay |
+	delay := Delay forMilliseconds: 50.
+	[ self anyButtonPressed ] whileTrue: [ delay wait ].
+	^ self cursorPoint
 ]
 
-Class InputEventSensor >> yellowButtonPressed
+InputEventSensor >> yellowButtonPressed
 [
-	"Answer whether only the yellow mouse button is being pressed. 	This is the second mouse button or option+click on the Mac."
-^ (self mouseButtons bitAnd: 7) = 2
+	"Answer whether only the yellow mouse button is being pressed. 
+	This is the second mouse button or option+click on the Mac."
+
+	^ (self mouseButtons bitAnd: 7) = 2
 ]
 
-Metaclass
-	name: #InputEventSensor;
-	instanceVariables: #().
-
-Metaclass InputEventSensor >> default
+InputEventSensor class >> default
 [
 	"Answer the default system InputEventSensor, Sensor."
-^ Sensor
+
+	^ Sensor
 ]
 
-Metaclass InputEventSensor >> defaultCrossPlatformKeys
+InputEventSensor class >> defaultCrossPlatformKeys
 [
-	"Answer a list of key letters that are used for common editing operations	on different platforms."
-^ {$c.$x.$v.$a.$s.$f.$g.$z}
+	"Answer a list of key letters that are used for common editing operations
+	on different platforms."
+
+	^ {$c.
+	$x.
+	$v.
+	$a.
+	$s.
+	$f.
+	$g.
+	$z}
 ]
 
-Metaclass InputEventSensor >> installEventSensorFramework
+InputEventSensor class >> installEventSensorFramework
 [
 	"Installs the new sensor framework."
+
 	"InputEventSensor installEventSensorFramework"
-self installEventSensorFramework: InputEventFetcher
+
+	self installEventSensorFramework: InputEventFetcher
 ]
 
-Metaclass InputEventSensor >> installEventSensorFramework: fetcherClass
+InputEventSensor class >> installEventSensorFramework: fetcherClass
 [
 	"Installs the new sensor framework."
-| newSensor |"Do some extra cleanup"Smalltalk removeFromShutDownList: InputEventFetcher.Smalltalk removeFromStartUpList: InputEventFetcher.InputEventFetcher deinstall.newSensor := self new.fetcherClass install.newSensor registerIn: InputEventFetcher default.	"Shut down old sensor"Sensor shutDown.Smalltalk removeFromShutDownList: Sensor class.Smalltalk removeFromStartUpList: Sensor class.	"Note: We must use #become: here to replace all references to the old sensor with the new one, since Sensor is referenced from all the existing controllers."Sensor becomeForward: newSensor.	"done"	"Register the interrupt handler"UserInterruptHandler new registerIn: InputEventFetcher default.Smalltalk addToStartUpList: Sensor class after: fetcherClass.Smalltalk addToShutDownList: Sensor class after: Form	"Project spawnNewProcessAndTerminateOld: true"
+
+	| newSensor |
+	"Do some extra cleanup"
+	Smalltalk removeFromShutDownList: InputEventFetcher.
+	Smalltalk removeFromStartUpList: InputEventFetcher.
+	InputEventFetcher deinstall.
+	newSensor := self new.
+	fetcherClass install.
+	newSensor registerIn: InputEventFetcher default.	"Shut down old sensor"
+	Sensor shutDown.
+	Smalltalk removeFromShutDownList: Sensor class.
+	Smalltalk removeFromStartUpList: Sensor class.	"Note: We must use #become: here to replace all references to the old sensor with the new one, since Sensor is referenced from all the existing controllers."
+	Sensor becomeForward: newSensor.	"done"	"Register the interrupt handler"
+	UserInterruptHandler new registerIn: InputEventFetcher default.
+	Smalltalk addToStartUpList: Sensor class after: fetcherClass.
+	Smalltalk addToShutDownList: Sensor class after: Form	"Project spawnNewProcessAndTerminateOld: true"
 ]
 
-Metaclass InputEventSensor >> installMouseDecodeTable
+InputEventSensor class >> installMouseDecodeTable
 [
 	"Create a decode table that swaps the lowest-order 2 bits"
-ButtonDecodeTable := self swapMouseButtons	ifTrue: [ 		ByteArray			withAll: ((0 to: 255) collect: [ :ea | ((ea bitAnd: 1) << 1 bitOr: (ea bitAnd: 2) >> 1) bitOr: (ea bitAnd: 16rFC) ]) ]	ifFalse: [ ByteArray withAll: (0 to: 255) ]
+
+	ButtonDecodeTable := self swapMouseButtons
+		ifTrue: [ ByteArray
+				withAll: ((0 to: 255) collect: [ :ea | ((ea bitAnd: 1) << 1 bitOr: (ea bitAnd: 2) >> 1) bitOr: (ea bitAnd: 16rFC) ]) ]
+		ifFalse: [ ByteArray withAll: (0 to: 255) ]
 ]
 
-Metaclass InputEventSensor >> shutDown
+InputEventSensor class >> shutDown
 [
-self default shutDown
+	self default shutDown
 ]
 
-Metaclass InputEventSensor >> startUp
+InputEventSensor class >> startUp
 [
-self installMouseDecodeTable.self default startUp
+	self installMouseDecodeTable.
+	self default startUp
 ]
 
-Metaclass InputEventSensor >> swapMouseButtons
+InputEventSensor class >> swapMouseButtons
 [
-^ OSPlatform current platformFamily ~= #Windows
+	^ OSPlatform current platformFamily ~= #Windows
 ]
 

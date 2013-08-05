@@ -1,211 +1,294 @@
-Class
-	name: #TraitComposition;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+TraitComposition
 	instanceVariables: #(#transformations );
-	classVariables: #();
 	package: #'Traits-Composition'.
 
-Class TraitComposition >> + aTraitExpression
+TraitComposition >> + aTraitExpression
 [
-^ aTraitExpression addCompositionOnLeft: self
+	^ aTraitExpression addCompositionOnLeft: self
 ]
 
-Class TraitComposition >> - anArray
+TraitComposition >> - anArray
 [
-	"the modifier operators #@ and #- bind stronger than +.	Thus, #@ or #- sent to a sum will only affect the most right summand"
-self transformations addLast: self transformations removeLast - anArray
+	"the modifier operators #@ and #- bind stronger than +.
+	Thus, #@ or #- sent to a sum will only affect the most right summand"
+
+	self transformations addLast: self transformations removeLast - anArray
 ]
 
-Class TraitComposition >> @ anArrayOfAssociations
+TraitComposition >> @ anArrayOfAssociations
 [
-	"the modifier operators #@ and #- bind stronger than +.	Thus, #@ or #- sent to a sum will only affect the most right summand"
-self transformations addLast: self transformations removeLast @ anArrayOfAssociations
+	"the modifier operators #@ and #- bind stronger than +.
+	Thus, #@ or #- sent to a sum will only affect the most right summand"
+
+	self transformations addLast: self transformations removeLast @ anArrayOfAssociations
 ]
 
-Class TraitComposition >> add: aTraitTransformation
+TraitComposition >> add: aTraitTransformation
 [
-self errorIfNotAddable: aTraitTransformation.self transformations addLast: aTraitTransformation
+	self errorIfNotAddable: aTraitTransformation.
+	self transformations addLast: aTraitTransformation
 ]
 
-Class TraitComposition >> addCompositionOnLeft: aTraitComposition
+TraitComposition >> addCompositionOnLeft: aTraitComposition
 [
-self transformations do: [ :each | aTraitComposition add: each ].^ aTraitComposition
+	self transformations do: [ :each | aTraitComposition add: each ].
+	^ aTraitComposition
 ]
 
-Class TraitComposition >> addOnTheLeft: aTrait
+TraitComposition >> addOnTheLeft: aTrait
 [
-self errorIfNotAddable: aTrait.self transformations addFirst: aTrait
+	self errorIfNotAddable: aTrait.
+	self transformations addFirst: aTrait
 ]
 
-Class TraitComposition >> allTraits
+TraitComposition >> allTraits
 [
-^ self traits	gather: [ :trait | 		trait hasTraitComposition			ifTrue: [ trait traitComposition allTraits copyWith: trait ]			ifFalse: [ Array with: trait ] ]
+	^ self traits
+		gather: [ :trait | trait hasTraitComposition
+				ifTrue: [ trait traitComposition allTraits copyWith: trait ]
+				ifFalse: [ Array with: trait ] ]
 ]
 
-Class TraitComposition >> asTraitComposition
+TraitComposition >> asTraitComposition
 [
-^ self
+	^ self
 ]
 
-Class TraitComposition >> assertValidUser: aBehavior
+TraitComposition >> assertValidUser: aBehavior
 [
-	"Assert that this trait composition set for aBehavior	does not introduce a cycle."
-(self allTraits includes: aBehavior)	ifTrue: [ TraitCompositionException signal: 'Cycle in compositions:  The composition (in)directly includes this trait!' ]
+	"Assert that this trait composition set for aBehavior
+	does not introduce a cycle."
+
+	(self allTraits includes: aBehavior)
+		ifTrue: [ TraitCompositionException signal: 'Cycle in compositions:  The composition (in)directly includes this trait!' ]
 ]
 
-Class TraitComposition >> changedSelectorsComparedTo: oldComposition
+TraitComposition >> changedSelectorsComparedTo: oldComposition
 [
-| changedSelectors traits |changedSelectors := IdentitySet new.traits := self traits asIdentitySet	addAll: oldComposition traits asIdentitySet;	yourself.traits	do: [ :each | 		| oldTransformation newTransformation |		newTransformation := self transformationOfTrait: each.		oldTransformation := oldComposition transformationOfTrait: each.		(newTransformation isNil or: [ oldTransformation isNil ])			ifTrue: [ changedSelectors addAll: each selectors ]			ifFalse: [ changedSelectors addAll: (newTransformation changedSelectorsComparedTo: oldTransformation) ] ].^ changedSelectors
+	| changedSelectors traits |
+	changedSelectors := IdentitySet new.
+	traits := self traits asIdentitySet
+		addAll: oldComposition traits asIdentitySet;
+		yourself.
+	traits
+		do: [ :each | | oldTransformation newTransformation |
+			newTransformation := self transformationOfTrait: each.
+			oldTransformation := oldComposition transformationOfTrait: each.
+			(newTransformation isNil or: [ oldTransformation isNil ])
+				ifTrue: [ changedSelectors addAll: each selectors ]
+				ifFalse: [ changedSelectors addAll: (newTransformation changedSelectorsComparedTo: oldTransformation) ] ].
+	^ changedSelectors
 ]
 
-Class TraitComposition >> copy
+TraitComposition >> copy
 [
-self error: 'should not be called'.^ super copy
+	self error: 'should not be called'.
+	^ super copy
 ]
 
-Class TraitComposition >> copyTraitExpression
+TraitComposition >> copyTraitExpression
 [
-| newCopy |newCopy := self shallowCopy.newCopy transformations: (self transformations collect: [ :each | each copyTraitExpression ]).^ newCopy
+	| newCopy |
+	newCopy := self shallowCopy.
+	newCopy transformations: (self transformations collect: [ :each | each copyTraitExpression ]).
+	^ newCopy
 ]
 
-Class TraitComposition >> copyWithExclusionOf: aSymbol to: aTrait
+TraitComposition >> copyWithExclusionOf: aSymbol to: aTrait
 [
-| composition transformation |composition := self copyTraitExpression.transformation := composition transformationOfTrait: aTrait.^ composition	remove: transformation;	add: (transformation addExclusionOf: aSymbol);	yourself
+	| composition transformation |
+	composition := self copyTraitExpression.
+	transformation := composition transformationOfTrait: aTrait.
+	^ composition
+		remove: transformation;
+		add: (transformation addExclusionOf: aSymbol);
+		yourself
 ]
 
-Class TraitComposition >> copyWithoutAlias: aSymbol of: aTrait
+TraitComposition >> copyWithoutAlias: aSymbol of: aTrait
 [
-| composition transformation |composition := self copyTraitExpression.transformation := composition transformationOfTrait: aTrait.^ composition	remove: transformation;	add: (transformation removeAlias: aSymbol);	normalizeTransformations;	yourself
+	| composition transformation |
+	composition := self copyTraitExpression.
+	transformation := composition transformationOfTrait: aTrait.
+	^ composition
+		remove: transformation;
+		add: (transformation removeAlias: aSymbol);
+		normalizeTransformations;
+		yourself
 ]
 
-Class TraitComposition >> errorIfNotAddable: aTraitTransformation
+TraitComposition >> errorIfNotAddable: aTraitTransformation
 [
-(self includesTrait: aTraitTransformation trait)	ifTrue: [ ^ TraitCompositionException signal: 'Trait ' , aTraitTransformation trait asString , ' already in composition' ]
+	(self includesTrait: aTraitTransformation trait)
+		ifTrue: [ ^ TraitCompositionException signal: 'Trait ' , aTraitTransformation trait asString , ' already in composition' ]
 ]
 
-Class TraitComposition >> includesMethod: aSelector
+TraitComposition >> includesMethod: aSelector
 [
-^ (self methodDescriptionForSelector: aSelector) isEmpty not
+	^ (self methodDescriptionForSelector: aSelector) isEmpty not
 ]
 
-Class TraitComposition >> includesTrait: aTrait
+TraitComposition >> includesTrait: aTrait
 [
-^ self traits includes: aTrait
+	^ self traits includes: aTrait
 ]
 
-Class TraitComposition >> initialize
+TraitComposition >> initialize
 [
-super initialize.transformations := OrderedCollection new
+	super initialize.
+	transformations := OrderedCollection new
 ]
 
-Class TraitComposition >> isAliasSelector: aSymbol
+TraitComposition >> isAliasSelector: aSymbol
 [
-	"Return true if the selector aSymbol is an alias defined	in this or in another composition somewhere deeper in 	the tree of traits compositions."
-| methodDescription |methodDescription := (self methodDescriptionsForSelector: aSymbol) detect: [ :each | each selector = aSymbol ].^ methodDescription isAliasSelector
+	"Return true if the selector aSymbol is an alias defined
+	in this or in another composition somewhere deeper in 
+	the tree of traits compositions."
+
+	| methodDescription |
+	methodDescription := (self methodDescriptionsForSelector: aSymbol) detect: [ :each | each selector = aSymbol ].
+	^ methodDescription isAliasSelector
 ]
 
-Class TraitComposition >> isEmpty
+TraitComposition >> isEmpty
 [
-^ self transformations isEmpty
+	^ self transformations isEmpty
 ]
 
-Class TraitComposition >> isLocalAliasSelector: aSymbol
+TraitComposition >> isLocalAliasSelector: aSymbol
 [
-	"Return true if the selector aSymbol is an alias defined	in this composition."
-| methodDescription |methodDescription := (self methodDescriptionsForSelector: aSymbol) detect: [ :each | each selector = aSymbol ].^ methodDescription isLocalAliasSelector
+	"Return true if the selector aSymbol is an alias defined
+	in this composition."
+
+	| methodDescription |
+	methodDescription := (self methodDescriptionsForSelector: aSymbol) detect: [ :each | each selector = aSymbol ].
+	^ methodDescription isLocalAliasSelector
 ]
 
-Class TraitComposition >> methodDescriptionForSelector: aSymbol
+TraitComposition >> methodDescriptionForSelector: aSymbol
 [
 	"Return a TraitMethodDescription for the selector aSymbol."
-| description |description := TraitMethodDescription selector: aSymbol.self transformations do: [ :each | each collectMethodsFor: aSymbol into: description ].^ description
+
+	| description |
+	description := TraitMethodDescription selector: aSymbol.
+	self transformations do: [ :each | each collectMethodsFor: aSymbol into: description ].
+	^ description
 ]
 
-Class TraitComposition >> methodDescriptionsForSelector: aSymbol
+TraitComposition >> methodDescriptionsForSelector: aSymbol
 [
-	"Return a collection of TraitMethodDescriptions for aSymbol and all the 	aliases of aSymbol."
-| selectors collection |selectors := IdentitySet with: aSymbol.self transformations do: [ :each | selectors addAll: (each aliasesForSelector: aSymbol) ].collection := OrderedCollection new: selectors size.selectors do: [ :each | collection add: (self methodDescriptionForSelector: each) ].^ collection
+	"Return a collection of TraitMethodDescriptions for aSymbol and all the 
+	aliases of aSymbol."
+
+	| selectors collection |
+	selectors := IdentitySet with: aSymbol.
+	self transformations do: [ :each | selectors addAll: (each aliasesForSelector: aSymbol) ].
+	collection := OrderedCollection new: selectors size.
+	selectors do: [ :each | collection add: (self methodDescriptionForSelector: each) ].
+	^ collection
 ]
 
-Class TraitComposition >> normalizeTransformations
+TraitComposition >> normalizeTransformations
 [
-self transformations: (self transformations collect: [ :each | each normalized ])
+	self transformations: (self transformations collect: [ :each | each normalized ])
 ]
 
-Class TraitComposition >> notEmpty
+TraitComposition >> notEmpty
 [
-^ self isEmpty not
+	^ self isEmpty not
 ]
 
-Class TraitComposition >> postCopy
+TraitComposition >> originSelectorOf: aSelector
 [
-super postCopy.transformations := transformations collect: [ :each | each copy ]
+	self isEmpty
+		ifTrue: [ ^ aSelector ].
+	self transformations
+		do: [ :transformation | transformation allAliasesDict at: aSelector ifPresent: [ :value | ^ value ] ].
+	^ aSelector
 ]
 
-Class TraitComposition >> printOn: aStream
+TraitComposition >> postCopy
 [
-self transformations isEmptyOrNil	ifFalse: [ self transformations do: [ :each | aStream print: each ] separatedBy: [ aStream nextPutAll: ' + ' ] ]	ifTrue: [ aStream nextPutAll: '{}' ]
+	super postCopy.
+	transformations := transformations collect: [ :each | each copy ]
 ]
 
-Class TraitComposition >> printString
+TraitComposition >> printOn: aStream
 [
-^ String streamContents: [ :stream | self printOn: stream ]
+	self transformations isEmptyOrNil
+		ifFalse: [ self transformations do: [ :each | aStream print: each ] separatedBy: [ aStream nextPutAll: ' + ' ] ]
+		ifTrue: [ aStream nextPutAll: '{}' ]
 ]
 
-Class TraitComposition >> remove: aTransformation
+TraitComposition >> printString
 [
-self transformations remove: aTransformation
+	^ String streamContents: [ :stream | self printOn: stream ]
 ]
 
-Class TraitComposition >> removeFromComposition: aTrait
+TraitComposition >> remove: aTransformation
 [
-self remove: (self transformationOfTrait: aTrait)
+	self transformations remove: aTransformation
 ]
 
-Class TraitComposition >> size
+TraitComposition >> removeFromComposition: aTrait
 [
-^ transformations size
+	self remove: (self transformationOfTrait: aTrait)
 ]
 
-Class TraitComposition >> traitProvidingSelector: aSymbol
+TraitComposition >> size
 [
-	"Return the trait which originally provides the method aSymbol or return nil	if trait composition does not provide this selector or there is a conflict.	Take aliases into account. Return the trait which the aliased method is defined in."
-| methodDescription locatedMethod |methodDescription := self methodDescriptionForSelector: aSymbol.(methodDescription isProvided not or: [ methodDescription isConflict ])	ifTrue: [ ^ nil ].locatedMethod := methodDescription providedLocatedMethod.^ locatedMethod methodClass traitOrClassOfSelector: locatedMethod selector
+	^ transformations size
 ]
 
-Class TraitComposition >> traits
+TraitComposition >> traitProvidingSelector: aSymbol
 [
-^ self transformations collect: [ :each | each trait ]
+	"Return the trait which originally provides the method aSymbol or return nil
+	if trait composition does not provide this selector or there is a conflict.
+	Take aliases into account. Return the trait which the aliased method is defined in."
+
+	| methodDescription locatedMethod |
+	methodDescription := self methodDescriptionForSelector: aSymbol.
+	(methodDescription isProvided not or: [ methodDescription isConflict ])
+		ifTrue: [ ^ nil ].
+	locatedMethod := methodDescription providedLocatedMethod.
+	^ locatedMethod methodClass traitOrClassOfSelector: locatedMethod selector
 ]
 
-Class TraitComposition >> transformationOfTrait: aTrait
+TraitComposition >> traits
 [
-	"Return the transformation which holds aTrait	or nil if this composition doesn't include aTrait."
-^ self transformations detect: [ :each | each trait = aTrait ] ifNone: [ nil ]
+	^ self transformations collect: [ :each | each trait ]
 ]
 
-Class TraitComposition >> transformations
+TraitComposition >> transformationOfTrait: aTrait
 [
-^ transformations
+	"Return the transformation which holds aTrait
+	or nil if this composition doesn't include aTrait."
+
+	^ self transformations detect: [ :each | each trait = aTrait ] ifNone: [ nil ]
 ]
 
-Class TraitComposition >> transformations: aCollection
+TraitComposition >> transformations
 [
-transformations := aCollection
+	^ transformations
 ]
 
-Metaclass
-	name: #TraitComposition;
-	instanceVariables: #().
-
-Metaclass TraitComposition >> with: aTraitTransformation
+TraitComposition >> transformations: aCollection
 [
-^ self new	add: aTraitTransformation;	yourself
+	transformations := aCollection
 ]
 
-Metaclass TraitComposition >> with: aTraitTransformation with: anotherTraitTransformation
+TraitComposition class >> with: aTraitTransformation
 [
-^ self new	add: aTraitTransformation;	add: anotherTraitTransformation;	yourself
+	^ self new
+		add: aTraitTransformation;
+		yourself
+]
+
+TraitComposition class >> with: aTraitTransformation with: anotherTraitTransformation
+[
+	^ self new
+		add: aTraitTransformation;
+		add: anotherTraitTransformation;
+		yourself
 ]
 

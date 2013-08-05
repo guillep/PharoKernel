@@ -1,45 +1,52 @@
-Class
-	name: #RxsBranch;
-	superclass: #ClassRxsNode;
-	instanceSpecification: #(#pointers #words );
+RxsBranch
+	superclass: #RxsNode;
 	instanceVariables: #(#piece #branch );
-	classVariables: #();
 	package: #'Regex-Core'.
 
-Class RxsBranch >> branch
+RxsBranch >> branch
 [
-^ branch
+	^ branch
 ]
 
-Class RxsBranch >> dispatchTo: aMatcher
+RxsBranch >> dispatchTo: aMatcher
 [
-	"Inform the matcher of the kind of the node, and it	will do whatever it has to."
-^ aMatcher syntaxBranch: self
+	"Inform the matcher of the kind of the node, and it
+	will do whatever it has to."
+
+	^ aMatcher syntaxBranch: self
 ]
 
-Class RxsBranch >> initializePiece: aPiece branch: aBranch
+RxsBranch >> initializePiece: aPiece branch: aBranch
 [
 	"See class comment for instance variables description."
-piece := aPiece.branch := aBranch
+
+	piece := aPiece.
+	branch := aBranch
 ]
 
-Class RxsBranch >> isNullable
+RxsBranch >> isNullable
 [
-^ piece isNullable and: [ branch isNil or: [ branch isNullable ] ]
+	^ piece isNullable and: [ branch isNil or: [ branch isNullable ] ]
 ]
 
-Class RxsBranch >> piece
+RxsBranch >> piece
 [
-^ piece
+	^ piece
 ]
 
-Class RxsBranch >> tryMergingInto: aStream
+RxsBranch >> tryMergingInto: aStream
 [
-	"Concatenation of a few simple characters can be optimized	to be a plain substring match. Answer the node to resume	syntax tree traversal at. Epsilon node used to terminate the branch	will implement this to answer nil, thus indicating that the branch	has ended."
-piece isAtomic	ifFalse: [ ^ self ].aStream nextPut: piece character.^ branch isNil	ifTrue: [ branch ]	ifFalse: [ branch tryMergingInto: aStream ]
-]
+	"Concatenation of a few simple characters can be optimized
+	to be a plain substring match. Answer the node to resume
+	syntax tree traversal at. Epsilon node used to terminate the branch
+	will implement this to answer nil, thus indicating that the branch
+	has ended."
 
-Metaclass
-	name: #RxsBranch;
-	instanceVariables: #().
+	piece isAtomic
+		ifFalse: [ ^ self ].
+	aStream nextPut: piece character.
+	^ branch isNil
+		ifTrue: [ branch ]
+		ifFalse: [ branch tryMergingInto: aStream ]
+]
 

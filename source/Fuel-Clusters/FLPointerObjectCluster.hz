@@ -1,57 +1,53 @@
-Class
-	name: #FLPointerObjectCluster;
-	superclass: #ClassFLObjectCluster;
-	instanceSpecification: #(#pointers #words );
+FLPointerObjectCluster
+	superclass: #FLObjectCluster;
 	instanceVariables: #(#variablesMapping );
-	classVariables: #();
 	package: #'Fuel-Clusters'.
 
-Class FLPointerObjectCluster >> afterMaterializationStepWith: aDecoder
+FLPointerObjectCluster >> afterMaterializationStepWith: aDecoder
 [
-objects do: [ :anObject | anObject fuelAfterMaterialization ]
+	objects do: [ :anObject | anObject fuelAfterMaterialization ]
 ]
 
-Class FLPointerObjectCluster >> clusterMaterializeStepWith: aDecoder
+FLPointerObjectCluster >> clusterMaterializeStepWith: aMaterialization
 [
-super clusterMaterializeStepWith: aDecoder.variablesMapping := aDecoder variablesMappingFor: theClass
+	super clusterMaterializeStepWith: aMaterialization.
+	variablesMapping := aMaterialization decoder variablesMappingFor: theClass
 ]
 
-Class FLPointerObjectCluster >> clusterSerializeStepWith: anEncoder
+FLPointerObjectCluster >> clusterSerializeStepWith: aSerialization
 [
-super clusterSerializeStepWith: anEncoder.variablesMapping serializeOn: anEncoder
+	super clusterSerializeStepWith: aSerialization.
+	variablesMapping serializeOn: aSerialization encoder
 ]
 
-Class FLPointerObjectCluster >> initializeAnalyzing: aClass
+FLPointerObjectCluster >> initializeAnalyzing: aClass
 [
-super initializeAnalyzing: aClass.variablesMapping := FLVariablesMapping newAnalyzing: theClass
+	super initializeAnalyzing: aClass.
+	variablesMapping := FLVariablesMapping newAnalyzing: theClass references: self references
 ]
 
-Class FLPointerObjectCluster >> materializeReferencesOf: anObject with: aDecoder
+FLPointerObjectCluster >> materializeReferencesOf: anObject with: aDecoder
 [
-variablesMapping materializeReferencesOf: anObject with: aDecoder
+	variablesMapping materializeReferencesOf: anObject with: aDecoder
 ]
 
-Class FLPointerObjectCluster >> materializeReferencesStepWith: aDecoder
+FLPointerObjectCluster >> materializeReferencesStepWith: aDecoder
 [
-objects do: [ :anObject | self materializeReferencesOf: anObject with: aDecoder ]
+	objects do: [ :anObject | self materializeReferencesOf: anObject with: aDecoder ]
 ]
 
-Class FLPointerObjectCluster >> referencesOf: anObject do: aBlock
+FLPointerObjectCluster >> referencesOf: anObject do: aBlock
 [
-variablesMapping referencesOf: anObject do: aBlock
+	variablesMapping referencesOf: anObject do: aBlock
 ]
 
-Class FLPointerObjectCluster >> serializeReferencesOf: anObject with: anEncoder
+FLPointerObjectCluster >> serializeReferencesOf: anObject with: anEncoder
 [
-variablesMapping serializeReferencesOf: anObject with: anEncoder
+	variablesMapping serializeReferencesOf: anObject with: anEncoder
 ]
 
-Class FLPointerObjectCluster >> serializeReferencesStepWith: anEncoder
+FLPointerObjectCluster >> serializeReferencesStepWith: anEncoder
 [
-objects do: [ :anObject | self serializeReferencesOf: anObject with: anEncoder ]
+	objects do: [ :anObject | self serializeReferencesOf: anObject with: anEncoder ]
 ]
-
-Metaclass
-	name: #FLPointerObjectCluster;
-	instanceVariables: #().
 

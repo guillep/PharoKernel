@@ -1,115 +1,132 @@
-Class
-	name: #WeakAnnouncementSubscription;
-	superclass: #ClassObject;
+WeakAnnouncementSubscription
 	instanceSpecification: #(#variable #weak #pointers #words );
 	instanceVariables: #(#list #next #announcer #announcementClass #action );
 	classVariables: #(#FinalizationList );
 	package: #'Announcements-Core'.
 
-Class WeakAnnouncementSubscription >> action
+WeakAnnouncementSubscription >> action
 [
-^ action
+	^ action
 ]
 
-Class WeakAnnouncementSubscription >> action: anObject
+WeakAnnouncementSubscription >> action: anObject
 [
-action := anObject
+	action := anObject
 ]
 
-Class WeakAnnouncementSubscription >> announcementClass
+WeakAnnouncementSubscription >> announcementClass
 [
-^ announcementClass
+	^ announcementClass
 ]
 
-Class WeakAnnouncementSubscription >> announcementClass: anObject
+WeakAnnouncementSubscription >> announcementClass: anObject
 [
-announcementClass := anObject
+	announcementClass := anObject
 ]
 
-Class WeakAnnouncementSubscription >> announcer
+WeakAnnouncementSubscription >> announcer
 [
-^ announcer
+	^ announcer
 ]
 
-Class WeakAnnouncementSubscription >> announcer: anAnnouncer
+WeakAnnouncementSubscription >> announcer: anAnnouncer
 [
-announcer := anAnnouncer
+	announcer := anAnnouncer
 ]
 
-Class WeakAnnouncementSubscription >> deliver: anAnnouncement
+WeakAnnouncementSubscription >> deliver: anAnnouncement
 [
 	" deliver an announcement to receiver. In case of failure, it will be handled in separate process"
-^ (self handles: anAnnouncement class)	ifTrue: [ [ action cull: anAnnouncement cull: announcer ] on: UnhandledError fork: [ :ex | ex pass ] ]
+
+	^ (self handles: anAnnouncement class)
+		ifTrue: [ [ action cull: anAnnouncement cull: announcer ] on: UnhandledError fork: [ :ex | ex pass ] ]
 ]
 
-Class WeakAnnouncementSubscription >> finalize
+WeakAnnouncementSubscription >> finalize
 [
-announcer removeSubscription: self
+	announcer removeSubscription: self
 ]
 
-Class WeakAnnouncementSubscription >> handles: anAnnouncementClass
+WeakAnnouncementSubscription >> handles: anAnnouncementClass
 [
-^ announcementClass handles: anAnnouncementClass
+	^ announcementClass handles: anAnnouncementClass
 ]
 
-Class WeakAnnouncementSubscription >> initialize
+WeakAnnouncementSubscription >> initialize
 [
-list := self class finalizationList
+	list := self class finalizationList
 ]
 
-Class WeakAnnouncementSubscription >> makeStrong
+WeakAnnouncementSubscription >> makeStrong
 [
-| sub |sub := self subscriber.sub ifNil: [ ^ self error: 'Subscriber is nil, cannot make strong subscription' ].^ announcer	replace: self	with:		(AnnouncementSubscription new			announcer: announcer;			action: action asMessageSend;			subscriber: sub;			announcementClass: announcementClass)
+	| sub |
+	sub := self subscriber.
+	sub ifNil: [ ^ self error: 'Subscriber is nil, cannot make strong subscription' ].
+	^ announcer
+		replace: self
+		with:
+			(AnnouncementSubscription new
+				announcer: announcer;
+				action: action asMessageSend;
+				subscriber: sub;
+				announcementClass: announcementClass)
 ]
 
-Class WeakAnnouncementSubscription >> makeWeak
+WeakAnnouncementSubscription >> makeWeak
 [
-^ self
+	^ self
 ]
 
-Class WeakAnnouncementSubscription >> next
+WeakAnnouncementSubscription >> next
 [
-^ next
+	^ next
 ]
 
-Class WeakAnnouncementSubscription >> subscriber
+WeakAnnouncementSubscription >> subscriber
 [
-^ self basicAt: 1
+	^ self basicAt: 1
 ]
 
-Class WeakAnnouncementSubscription >> subscriber: anObject
+WeakAnnouncementSubscription >> subscriber: anObject
 [
-self subscriber ifNotNil: [ self error: 'subscriber already set' ].self basicAt: 1 put: anObject
+	self subscriber ifNotNil: [ self error: 'subscriber already set' ].
+	self basicAt: 1 put: anObject
 ]
 
-Class WeakAnnouncementSubscription >> valuable: aValuable
+WeakAnnouncementSubscription >> valuable: aValuable
 [
 	"Used when subscriber should be extracted from valuable object"
-self action: aValuable.self subscriber: aValuable receiver
+
+	self action: aValuable.
+	self subscriber: aValuable receiver
 ]
 
-Metaclass
-	name: #WeakAnnouncementSubscription;
-	instanceVariables: #().
-
-Metaclass WeakAnnouncementSubscription >> finalizationList
+WeakAnnouncementSubscription class >> finalizationList
 [
-^ FinalizationList ifNil: [ FinalizationList := WeakFinalizationList new ]
+	^ FinalizationList ifNil: [ FinalizationList := WeakFinalizationList new ]
 ]
 
-Metaclass WeakAnnouncementSubscription >> finalizeValues
+WeakAnnouncementSubscription class >> finalizeValues
 [
-| head |head := self finalizationList swapWithNil.[ head notNil ]	whileTrue: [ 		head finalize.		head := head next ]
+	| head |
+	head := self finalizationList swapWithNil.
+	[ head notNil ] whileTrue: [ head finalize.
+			head := head next ]
 ]
 
-Metaclass WeakAnnouncementSubscription >> initialize
+WeakAnnouncementSubscription class >> initialize
 [
 	"self initialize"
-WeakArray	removeWeakDependent: self;	addWeakDependent: self	"Make sure that it is not added twice."
+
+	WeakArray
+		removeWeakDependent: self;
+		addWeakDependent: self	"Make sure that it is not added twice."
 ]
 
-Metaclass WeakAnnouncementSubscription >> new
+WeakAnnouncementSubscription class >> new
 [
-^ ((WeakFinalizationList hasNewFinalization	ifTrue: [ self ]	ifFalse: [ LegacyWeakSubscription ]) basicNew: 1) initialize
+	^ ((WeakFinalizationList hasNewFinalization
+		ifTrue: [ self ]
+		ifFalse: [ LegacyWeakSubscription ]) basicNew: 1) initialize
 ]
 

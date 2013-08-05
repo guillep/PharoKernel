@@ -1,137 +1,186 @@
-Class
-	name: #MemoryStore;
-	superclass: #ClassFileSystemStore;
-	instanceSpecification: #(#pointers #words );
+MemoryStore
+	superclass: #FileSystemStore;
 	instanceVariables: #(#root );
-	classVariables: #();
 	package: #'FileSystem-Memory'.
 
-Class MemoryStore >> basenameFromEntry: aMemoryFileSystemEntry
+MemoryStore >> basenameFromEntry: aMemoryFileSystemEntry
 [
-^ aMemoryFileSystemEntry basename
+	^ aMemoryFileSystemEntry basename
 ]
 
-Class MemoryStore >> basicCreationTime: aMemoryFileSystemEntry
+MemoryStore >> basicCreationTime: aMemoryFileSystemEntry
 [
-^ aMemoryFileSystemEntry creationTime
+	^ aMemoryFileSystemEntry creationTime
 ]
 
-Class MemoryStore >> basicIsDirectory: aMemoryFileSystemEntry
+MemoryStore >> basicIsDirectory: aMemoryFileSystemEntry
 [
-^ aMemoryFileSystemEntry isDirectory
+	^ aMemoryFileSystemEntry isDirectory
 ]
 
-Class MemoryStore >> basicIsFile: aMemoryFileSystemEntry
+MemoryStore >> basicIsFile: aMemoryFileSystemEntry
 [
-^ aMemoryFileSystemEntry isFile
+	^ aMemoryFileSystemEntry isFile
 ]
 
-Class MemoryStore >> basicIsSymlink: aNode
+MemoryStore >> basicIsSymlink: aNode
 [
-^ false
+	^ false
 ]
 
-Class MemoryStore >> basicModificationTime: aMemoryFileSystemEntry
+MemoryStore >> basicModificationTime: aMemoryFileSystemEntry
 [
-^ aMemoryFileSystemEntry modificationTime
+	^ aMemoryFileSystemEntry modificationTime
 ]
 
-Class MemoryStore >> basicOpen: path writable: aBoolean
+MemoryStore >> basicOpen: path writable: aBoolean
 [
-^ self	nodeAt: path	ifPresent: [ :aMemoryFileSystemEntry | aMemoryFileSystemEntry ]	ifAbsent: [ 		aBoolean			ifFalse: [ self signalFileDoesNotExist: path ]			ifTrue: [ self createFile: path ] ]
+	^ self
+		nodeAt: path
+		ifPresent: [ :aMemoryFileSystemEntry | aMemoryFileSystemEntry ]
+		ifAbsent: [ aBoolean
+				ifFalse: [ self signalFileDoesNotExist: path ]
+				ifTrue: [ self createFile: path ] ]
 ]
 
-Class MemoryStore >> basicPosixPermissions: anEntry
+MemoryStore >> basicPosixPermissions: anEntry
 [
-^ 8r777
+	^ 8r777
 ]
 
-Class MemoryStore >> basicSize: aMemoryFileSystemEntry
+MemoryStore >> basicSize: aMemoryFileSystemEntry
 [
-^ aMemoryFileSystemEntry fileSize
+	^ aMemoryFileSystemEntry fileSize
 ]
 
-Class MemoryStore >> checkName: aString fixErrors: fixErrors
+MemoryStore >> checkName: aString fixErrors: fixErrors
 [
-aString ifEmpty: [ self error: 'zero length file name' ].^ aString
+	aString ifEmpty: [ self error: 'zero length file name' ].
+	^ aString
 ]
 
-Class MemoryStore >> copy: sourcePath ifAbsent: absentBlock to: destinationPath ifPresent: presentBlock fileSystem: aFilesystem
+MemoryStore >> copy: sourcePath ifAbsent: absentBlock to: destinationPath ifPresent: presentBlock fileSystem: aFilesystem
 [
-| sourceNode destinationNode |sourceNode := self nodeAt: sourcePath ifPresent: [ :source | source ] ifAbsent: [ ^ absentBlock value ].sourceNode isDirectory	ifTrue: [ ^ absentBlock value ].destinationNode := self	nodeAt: destinationPath parent	ifPresent: [ :destination | destination ]	ifAbsent: [ ^ self signalDirectoryDoesNotExist: destinationPath parent ].destinationNode isFile	ifTrue: [ self signalDirectoryDoesNotExist: destinationPath parent ].(destinationNode includes: destinationPath basename)	ifTrue: [ 		"cannot overwrite existing file"		^ presentBlock value ].destinationNode fileEntryAt: destinationPath basename put: sourceNode copy
+	| sourceNode destinationNode |
+	sourceNode := self nodeAt: sourcePath ifPresent: [ :source | source ] ifAbsent: [ ^ absentBlock value ].
+	sourceNode isDirectory
+		ifTrue: [ ^ absentBlock value ].
+	destinationNode := self
+		nodeAt: destinationPath parent
+		ifPresent: [ :destination | destination ]
+		ifAbsent: [ ^ self signalDirectoryDoesNotExist: destinationPath parent ].
+	destinationNode isFile
+		ifTrue: [ self signalDirectoryDoesNotExist: destinationPath parent ].
+	(destinationNode includes: destinationPath basename)
+		ifTrue: [ "cannot overwrite existing file"
+			^ presentBlock value ].
+	destinationNode fileEntryAt: destinationPath basename put: sourceNode copy
 ]
 
-Class MemoryStore >> createDirectory: path
+MemoryStore >> createDirectory: path
 [
-| parent |parent := path parent.^ self	nodeAt: parent	ifPresent: [ :entry | 		entry			fileEntryAt: path basename			ifPresent: [ :node | 				node isDirectory					ifTrue: [ self signalDirectoryExists: path ]					ifFalse: [ self signalFileExists: path ] ].		entry ensureDirectory: path basename ]	ifAbsent: [ self signalDirectoryDoesNotExist: parent ]
+	| parent |
+	parent := path parent.
+	^ self
+		nodeAt: parent
+		ifPresent: [ :entry | entry
+				fileEntryAt: path basename
+				ifPresent: [ :node | node isDirectory
+						ifTrue: [ self signalDirectoryExists: path ]
+						ifFalse: [ self signalFileExists: path ] ].
+			entry ensureDirectory: path basename ]
+		ifAbsent: [ self signalDirectoryDoesNotExist: parent ]
 ]
 
-Class MemoryStore >> createFile: aPath
+MemoryStore >> createFile: aPath
 [
-^ self	nodeAt: aPath parent	ifPresent: [ :entry | 		entry isDirectory			ifTrue: [ entry ensureFile: aPath basename ] ]	ifAbsent: [ self signalDirectoryDoesNotExist: aPath parent ]
+	^ self
+		nodeAt: aPath parent
+		ifPresent: [ :entry | entry isDirectory
+				ifTrue: [ entry ensureFile: aPath basename ] ]
+		ifAbsent: [ self signalDirectoryDoesNotExist: aPath parent ]
 ]
 
-Class MemoryStore >> delete: path
+MemoryStore >> delete: path
 [
-self nodeAt: path parent ifPresent: [ :dict | dict remove: path basename ] ifAbsent: [  ]
+	self nodeAt: path parent ifPresent: [ :dict | dict remove: path basename ] ifAbsent: [  ]
 ]
 
-Class MemoryStore >> directoryAt: aPath ifAbsent: absentBlock nodesDo: aBlock
+MemoryStore >> directoryAt: aPath ifAbsent: absentBlock nodesDo: aBlock
 [
-^ self	nodeAt: aPath	ifPresent: [ :entry | 		entry isDirectory			ifFalse: [ ^ absentBlock value ].		entry fileEntriesDo: aBlock ]	ifAbsent: absentBlock
+	^ self
+		nodeAt: aPath
+		ifPresent: [ :entry | entry isDirectory
+				ifFalse: [ ^ absentBlock value ].
+			entry fileEntriesDo: aBlock ]
+		ifAbsent: absentBlock
 ]
 
-Class MemoryStore >> forReferencePrintOn: aStream
+MemoryStore >> forReferencePrintOn: aStream
 [
-aStream nextPutAll: 'memory:'
+	aStream nextPutAll: 'memory://'
 ]
 
-Class MemoryStore >> handleClass
+MemoryStore >> handleClass
 [
-^ MemoryHandle
+	^ MemoryHandle
 ]
 
-Class MemoryStore >> initialize
+MemoryStore >> initialize
 [
-root := MemoryFileSystemDirectory new
+	root := MemoryFileSystemDirectory new
 ]
 
-Class MemoryStore >> nodeAt: aPath ifPresent: presentBlock ifAbsent: absentBlock
+MemoryStore >> nodeAt: aPath ifPresent: presentBlock ifAbsent: absentBlock
 [
-| current |current := self root.aPath	do: [ :segment | 		current isDirectory			ifTrue: [ current := current fileEntryAt: segment ifAbsent: [ ^ absentBlock value ] ]			ifFalse: [ ^ absentBlock value ] ].^ presentBlock value: current
+	| current |
+	current := self root.
+	aPath
+		do: [ :segment | current isDirectory
+				ifTrue: [ current := current fileEntryAt: segment ifAbsent: [ ^ absentBlock value ] ]
+				ifFalse: [ ^ absentBlock value ] ].
+	^ presentBlock value: current
 ]
 
-Class MemoryStore >> openFileStream: path writable: isWriteStream
+MemoryStore >> openFileStream: path writable: isWriteStream
 [
-| entry |entry := self basicOpen: path writable: isWriteStream.^ isWriteStream	ifTrue: [ entry writeStream ]	ifFalse: [ entry readStream ]
+	| entry |
+	entry := self basicOpen: path writable: isWriteStream.
+	^ isWriteStream
+		ifTrue: [ entry writeStream ]
+		ifFalse: [ entry readStream ]
 ]
 
-Class MemoryStore >> replaceFile: path in: aBlock
+MemoryStore >> replaceFile: path in: aBlock
 [
-^ self	nodeAt: path parent	ifPresent: [ :entry | 		| old new |		entry isDirectory			ifFalse: [ self signalFileDoesNotExist: path ].		old := entry fileEntryAt: path basename ifAbsent: [ self signalFileDoesNotExist: path ].		new := aBlock value: old.		entry fileEntryAt: path basename put: new ]	ifAbsent: [ self signalFileDoesNotExist: path ]
+	^ self
+		nodeAt: path parent
+		ifPresent: [ :entry | | old new |
+			entry isDirectory
+				ifFalse: [ self signalFileDoesNotExist: path ].
+			old := entry fileEntryAt: path basename ifAbsent: [ self signalFileDoesNotExist: path ].
+			new := aBlock value: old.
+			entry fileEntryAt: path basename put: new ]
+		ifAbsent: [ self signalFileDoesNotExist: path ]
 ]
 
-Class MemoryStore >> root
+MemoryStore >> root
 [
-^ root
+	^ root
 ]
 
-Metaclass
-	name: #MemoryStore;
-	instanceVariables: #().
-
-Metaclass MemoryStore >> delimiter
+MemoryStore class >> delimiter
 [
-^ $/
+	^ $/
 ]
 
-Metaclass MemoryStore >> isCaseSensitive
+MemoryStore class >> isCaseSensitive
 [
-^ true
+	^ true
 ]
 
-Metaclass MemoryStore >> separator
+MemoryStore class >> separator
 [
-^ $:
+	^ $:
 ]
 

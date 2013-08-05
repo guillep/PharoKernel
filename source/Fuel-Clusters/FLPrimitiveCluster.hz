@@ -1,34 +1,30 @@
-Class
-	name: #FLPrimitiveCluster;
-	superclass: #ClassFLIteratingCluster;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+FLPrimitiveCluster
+	superclass: #FLIteratingCluster;
 	package: #'Fuel-Clusters'.
 
-Class FLPrimitiveCluster >> add: anObject traceWith: anAnalysis
+FLPrimitiveCluster >> add: anObject traceWith: anAnalysis
 [
 	"Add an object to the cluster. We know the object doesn't have references."
-objects addLast: anObject
+
+	objects addLast: anObject
 ]
 
-Class FLPrimitiveCluster >> newAnalyzingCollection
+FLPrimitiveCluster >> newAnalyzingCollection
 [
 	"Answer a collection for the objects that correspond to this cluster."
-^ OrderedCollection new
+
+	^ OrderedCollection new
 ]
 
-Class FLPrimitiveCluster >> registerIndexesOn: aDictionary
+FLPrimitiveCluster >> registerIndexesOn: aDictionary
 [
-self flag: #todo.	"Converting objects collection here in this method is a bit confusing. This is because since this cluster is for primitives, they do not have pointers to other objects. Hence, instead of storing them in a IdentitySet we can use an OrderedCollection and then just convert them at the end. For more details see FLPrimitiveCluster >> #add: anObject traceWith: aAnalysis"objects := objects asIdentitySet.super registerIndexesOn: aDictionary
+	self flag: #todo.	"Converting objects collection here in this method is a bit confusing. This is because since this cluster is for primitives, they do not have pointers to other objects. Hence, instead of storing them in a IdentitySet we can use an OrderedCollection and then just convert them at the end. For more details see FLPrimitiveCluster >> #add: anObject traceWith: aAnalysis"
+	objects := objects asIdentitySet.
+	super registerIndexesOn: aDictionary
 ]
 
-Metaclass
-	name: #FLPrimitiveCluster;
-	instanceVariables: #().
-
-Metaclass FLPrimitiveCluster >> clusterBucketIn: aClusterization
+FLPrimitiveCluster class >> clusterBucketIn: aClusterization
 [
-^ aClusterization primitivesBucket
+	^ aClusterization primitivesBucket
 ]
 

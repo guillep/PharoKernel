@@ -1,28 +1,31 @@
-Class
-	name: #Model;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+Model
 	instanceVariables: #(#dependents );
-	classVariables: #();
 	package: #'System-Support'.
 
-Class Model >> myDependents
+Model >> myDependents
 [
-^ dependents
+	^ dependents
 ]
 
-Class Model >> myDependents: aCollectionOrNil
+Model >> myDependents: aCollectionOrNil
 [
-dependents := aCollectionOrNil
+	dependents := aCollectionOrNil
 ]
 
-Class Model >> veryDeepFixupWith: deepCopier
+Model >> veryDeepFixupWith: deepCopier
 [
-	"See if the dependents are being copied also.  If so, point at the new copies.  (The dependent has self as its model.)	Dependents handled in class Object, when the model is not a Model, are fixed up in Object veryDeepCopy."
-| originalDependents refs |super veryDeepFixupWith: deepCopier.originalDependents := dependents.originalDependents ifNil: [ ^ self ].dependents := nil.refs := deepCopier references.originalDependents	do: [ :originalDependent | 		| newDependent |		newDependent := refs at: originalDependent ifAbsent: [  ].		newDependent ifNotNil: [ self addDependent: newDependent ] ]
-]
+	"See if the dependents are being copied also.  If so, point at the new copies.  (The dependent has self as its model.)
+	Dependents handled in class Object, when the model is not a Model, are fixed up in Object veryDeepCopy."
 
-Metaclass
-	name: #Model;
-	instanceVariables: #().
+	| originalDependents refs |
+	super veryDeepFixupWith: deepCopier.
+	originalDependents := dependents.
+	originalDependents ifNil: [ ^ self ].
+	dependents := nil.
+	refs := deepCopier references.
+	originalDependents
+		do: [ :originalDependent | | newDependent |
+			newDependent := refs at: originalDependent ifAbsent: [  ].
+			newDependent ifNotNil: [ self addDependent: newDependent ] ]
+]
 

@@ -1,62 +1,60 @@
-Class
-	name: #FLMapper;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+FLMapper
 	instanceVariables: #(#next #analysis );
-	classVariables: #();
 	package: #'Fuel-Mappers'.
 
-Class FLMapper >> analysis: anAnalysis
+FLMapper >> analysis: anAnalysis
 [
-analysis := anAnalysis.next isNil	ifFalse: [ next analysis: anAnalysis ]
+	analysis := anAnalysis.
+	next isNil
+		ifFalse: [ next analysis: anAnalysis ]
 ]
 
-Class FLMapper >> clusterInstanceOf: aClusterClass keyInBucket: clusterKey factory: clusterFactory
+FLMapper >> clusterInstanceOf: aClusterClass keyInBucket: clusterKey factory: clusterFactory
 [
-| bucket |bucket := aClusterClass clusterBucketIn: analysis clusterization.^ bucket	at: clusterKey	ifAbsentPut: [ 		clusterFactory value			traceWith: analysis;			yourself ]
+	| bucket |
+	bucket := aClusterClass clusterBucketIn: analysis clusterization.
+	^ bucket at: clusterKey ifAbsentPut: [ clusterFactory value
+				traceWith: analysis;
+				yourself ]
 ]
 
-Class FLMapper >> clusterKeyedByClusterName: aClusterClass
+FLMapper >> clusterKeyedByClusterName: aClusterClass
 [
-^ self clusterKeyedByClusterName: aClusterClass factory: [ aClusterClass newAnalyzing ]
+	^ self clusterKeyedByClusterName: aClusterClass factory: [ aClusterClass newAnalyzing ]
 ]
 
-Class FLMapper >> clusterKeyedByClusterName: aClusterClass factory: clusterFactory
+FLMapper >> clusterKeyedByClusterName: aClusterClass factory: clusterFactory
 [
-^ self clusterInstanceOf: aClusterClass keyInBucket: aClusterClass name factory: clusterFactory
+	^ self clusterInstanceOf: aClusterClass keyInBucket: aClusterClass name factory: clusterFactory
 ]
 
-Class FLMapper >> clusterKeyedByObjectClass: clusterClass class: objectClass
+FLMapper >> clusterKeyedByObjectClass: clusterClass class: objectClass
 [
-^ self clusterInstanceOf: clusterClass keyInBucket: objectClass factory: [ clusterClass newAnalyzing: objectClass ]
+	^ self clusterInstanceOf: clusterClass keyInBucket: objectClass factory: [ clusterClass newAnalyzing: objectClass ]
 ]
 
-Class FLMapper >> fuelAccept: aGeneralMapper
+FLMapper >> fuelAccept: aGeneralMapper
 [
-^ aGeneralMapper visitSubstitution: self by: nil
+	^ aGeneralMapper visitSubstitution: self by: nil
 ]
 
-Class FLMapper >> mapAndTrace: anObject
+FLMapper >> mapAndTrace: anObject
 [
-self subclassResponsibility
+	self subclassResponsibility
 ]
 
-Class FLMapper >> mapAndTraceByClusterName: anObject to: aClusterClass
+FLMapper >> mapAndTraceByClusterName: anObject to: aClusterClass
 [
-(self clusterKeyedByClusterName: aClusterClass) add: anObject traceWith: analysis
+	(self clusterKeyedByClusterName: aClusterClass) add: anObject traceWith: analysis
 ]
 
-Class FLMapper >> mapAndTraceByObjectClass: anObject to: aClusterClass
+FLMapper >> mapAndTraceByObjectClass: anObject to: aClusterClass
 [
-(self clusterKeyedByObjectClass: aClusterClass class: anObject class) add: anObject traceWith: analysis
+	(self clusterKeyedByObjectClass: aClusterClass class: anObject class) add: anObject traceWith: analysis
 ]
 
-Class FLMapper >> next: anObject
+FLMapper >> next: anObject
 [
-next := anObject
+	next := anObject
 ]
-
-Metaclass
-	name: #FLMapper;
-	instanceVariables: #().
 

@@ -1,267 +1,478 @@
-Class
-	name: #Date;
-	superclass: #ClassTimespan;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
-	sharedPools: #(#ChronologyConstants );	package: #'Kernel-Chronology'.
+Date
+	superclass: #Timespan;
+	sharedPools: #(#ChronologyConstants );
+	package: #'Kernel-Chronology'.
 
-Class Date >> addDays: dayCount
+Date >> addDays: dayCount
 [
-^ (self asDateAndTime + dayCount days) asDate
+	^ (self asDateAndTime + dayCount days) asDate
 ]
 
-Class Date >> addMonths: monthCount
+Date >> addMonths: monthCount
 [
-| year month maxDaysInMonth day |year := self year + ((monthCount + self monthIndex - 1) // 12).month := (self monthIndex + monthCount - 1) \\ 12 + 1.maxDaysInMonth := Month daysInMonth: month forYear: year.day := self dayOfMonth > maxDaysInMonth	ifTrue: [ maxDaysInMonth ]	ifFalse: [ self dayOfMonth ].^ Date newDay: day month: month year: year
+	| year month maxDaysInMonth day |
+	year := self year + ((monthCount + self monthIndex - 1) // 12).
+	month := (self monthIndex + monthCount - 1) \\ 12 + 1.
+	maxDaysInMonth := Month daysInMonth: month forYear: year.
+	day := self dayOfMonth > maxDaysInMonth
+		ifTrue: [ maxDaysInMonth ]
+		ifFalse: [ self dayOfMonth ].
+	^ Date newDay: day month: month year: year
 ]
 
-Class Date >> asDate
+Date >> asDate
 [
-^ self
+	^ self
 ]
 
-Class Date >> dayMonthYearDo: aBlock
+Date >> dayMonthYearDo: aBlock
 [
 	"Supply integers for day, month and year to aBlock and return the result"
-^ start dayMonthYearDo: aBlock
+
+	^ start dayMonthYearDo: aBlock
 ]
 
-Class Date >> ddmmyyyy
+Date >> ddmmyyyy
 [
 	"Print the receiver  in standard French format dd/mm/yyyy."
-^ self printFormat: #(1 2 3 $/ 1 1)
+
+	^ self printFormat: #(1 2 3 $/ 1 1)
 ]
 
-Class Date >> leap
+Date >> leap
 [
 	"Answer whether the receiver's year is a leap year."
-^ start isLeapYear	ifTrue: [ 1 ]	ifFalse: [ 0 ]
+
+	^ start isLeapYear
+		ifTrue: [ 1 ]
+		ifFalse: [ 0 ]
 ]
 
-Class Date >> mmddyyyy
+Date >> mmddyyyy
 [
-	"Print the receiver in standard U.S.A format mm/dd/yyyy.	Note that the name here is slightly misleading -- the month and day numbers don't show leading zeros, 	so that for example February 1 1996 is 2/1/96"
-^ self printFormat: #(2 1 3 $/ 1 1)
+	"Print the receiver in standard U.S.A format mm/dd/yyyy.
+	Note that the name here is slightly misleading -- the month and day numbers don't show leading zeros, 
+	so that for example February 1 1996 is 2/1/96"
+
+	^ self printFormat: #(2 1 3 $/ 1 1)
 ]
 
-Class Date >> month
+Date >> month
 [
-^ self asMonth
+	^ self asMonth
 ]
 
-Class Date >> monthIndex
+Date >> monthIndex
 [
-^ super month
+	^ super month
 ]
 
-Class Date >> onNextMonth
+Date >> onNextMonth
 [
-^ self addMonths: 1
+	^ self addMonths: 1
 ]
 
-Class Date >> onPreviousMonth
+Date >> onPreviousMonth
 [
-^ self addMonths: -1
+	^ self addMonths: -1
 ]
 
-Class Date >> previous: dayName
+Date >> previous: dayName
 [
 	"Answer the previous date whose weekday name is dayName."
-| days |days := (7 + self weekdayIndex - (self class dayOfWeek: dayName)) \\ 7.days = 0	ifTrue: [ days := 7 ].^ self subtractDays: days
+
+	| days |
+	days := (7 + self weekdayIndex - (self class dayOfWeek: dayName)) \\ 7.
+	days = 0
+		ifTrue: [ days := 7 ].
+	^ self subtractDays: days
 ]
 
-Class Date >> printFormat: formatArray
+Date >> printFormat: formatArray
 [
 	"Answer a String describing the receiver using the argument formatArray."
-^ String new: 16 streamContents: [ :aStream | self printOn: aStream format: formatArray ]
+
+	^ String new: 16 streamContents: [ :aStream | self printOn: aStream format: formatArray ]
 ]
 
-Class Date >> printOn: aStream
+Date >> printOn: aStream
 [
-self printOn: aStream format: #(1 2 3 $  3 1)
+	self printOn: aStream format: #(1 2 3 $  3 1)
 ]
 
-Class Date >> printOn: aStream format: formatArray
+Date >> printOn: aStream format: formatArray
 [
-	"Print a description of the receiver on aStream using the format 	denoted the argument, formatArray: 			#(item item item sep monthfmt yearfmt twoDigits) 			items: 1=day 2=month 3=year will appear in the order given, 			separated by sep which is eaither an ascii code or character. 			monthFmt: 1=09 2=Sep 3=September 			yearFmt: 1=1996 2=96 			digits: (missing or)1=9 2=09. 		See the examples in printOn: and mmddyy"
-| day month year twoDigits element monthFormat |self	dayMonthYearDo: [ :d :m :y | 		day := d.		month := m.		year := y ].twoDigits := formatArray size > 6 and: [ (formatArray at: 7) > 1 ].1 to: 3 do: [ :i | 	element := formatArray at: i.	element = 1		ifTrue: [ 			twoDigits				ifTrue: [ 					day						printOn: aStream						base: 10						length: 2						padded: true ]				ifFalse: [ day printOn: aStream ] ].	element = 2		ifTrue: [ 			monthFormat := formatArray at: 5.			monthFormat = 1				ifTrue: [ 					twoDigits						ifTrue: [ 							month								printOn: aStream								base: 10								length: 2								padded: true ]						ifFalse: [ month printOn: aStream ] ].			monthFormat = 2				ifTrue: [ (Month nameOfMonth: month) from: 1 to: 3 do: [ :each | aStream nextPut: each ] ].			monthFormat = 3				ifTrue: [ aStream nextPutAll: (Month nameOfMonth: month) ] ].	element = 3		ifTrue: [ 			(formatArray at: 6) = 1				ifTrue: [ year printOn: aStream ]				ifFalse: [ 					year \\ 100						printOn: aStream						base: 10						length: 2						padded: true ] ].	i < 3		ifTrue: [ 			(formatArray at: 4) ~= 0				ifTrue: [ aStream nextPut: (formatArray at: 4) asCharacter ] ] ]
+	"Print a description of the receiver on aStream using the format 
+	denoted the argument, formatArray: 
+	
+		#(item item item sep monthfmt yearfmt twoDigits) 
+	
+		items: 1=day 2=month 3=year will appear in the order given, 
+	
+		separated by sep which is eaither an ascii code or character. 
+	
+		monthFmt: 1=09 2=Sep 3=September 
+	
+		yearFmt: 1=1996 2=96 
+	
+		digits: (missing or)1=9 2=09. 
+	
+	See the examples in printOn: and mmddyy"
+
+	| day month year twoDigits element monthFormat |
+	self dayMonthYearDo: [ :d :m :y | day := d.
+			month := m.
+			year := y ].
+	twoDigits := formatArray size > 6 and: [ (formatArray at: 7) > 1 ].
+	1 to: 3 do: [ :i | element := formatArray at: i.
+		element = 1
+			ifTrue: [ twoDigits
+					ifTrue: [ day
+							printOn: aStream
+							base: 10
+							length: 2
+							padded: true ]
+					ifFalse: [ day printOn: aStream ] ].
+		element = 2
+			ifTrue: [ monthFormat := formatArray at: 5.
+				monthFormat = 1
+					ifTrue: [ twoDigits
+							ifTrue: [ month
+									printOn: aStream
+									base: 10
+									length: 2
+									padded: true ]
+							ifFalse: [ month printOn: aStream ] ].
+				monthFormat = 2
+					ifTrue: [ (Month nameOfMonth: month) from: 1 to: 3 do: [ :each | aStream nextPut: each ] ].
+				monthFormat = 3
+					ifTrue: [ aStream nextPutAll: (Month nameOfMonth: month) ] ].
+		element = 3
+			ifTrue: [ (formatArray at: 6) = 1
+					ifTrue: [ year
+							printOn: aStream
+							base: 10
+							length: 4
+							padded: true ]
+					ifFalse: [ year \\ 100
+							printOn: aStream
+							base: 10
+							length: 2
+							padded: true ] ].
+		i < 3
+			ifTrue: [ (formatArray at: 4) ~= 0
+					ifTrue: [ aStream nextPut: (formatArray at: 4) asCharacter ] ] ]
 ]
 
-Class Date >> storeOn: aStream
+Date >> storeOn: aStream
 [
-aStream	print: self printString;	nextPutAll: ' asDate'
+	aStream
+		print: self printString;
+		nextPutAll: ' asDate'
 ]
 
-Class Date >> subtractDate: aDate
+Date >> subtractDate: aDate
 [
 	"Answer the number of days between self and aDate"
-^ (self start - aDate asDateAndTime) days
+
+	^ (self start - aDate asDateAndTime) days
 ]
 
-Class Date >> subtractDays: dayCount
+Date >> subtractDays: dayCount
 [
-^ (self asDateAndTime - dayCount days) asDate
+	^ (self asDateAndTime - dayCount days) asDate
 ]
 
-Class Date >> weekday
+Date >> weekday
 [
 	"Answer the name of the day of the week on which the receiver falls."
-^ self dayOfWeekName
+
+	^ self dayOfWeekName
 ]
 
-Class Date >> weekdayIndex
+Date >> weekdayIndex
 [
 	"Sunday=1, ... , Saturday=7"
-^ self dayOfWeek
+
+	^ self dayOfWeek
 ]
 
-Class Date >> yyyymmdd
+Date >> yyyymmdd
 [
-	"Format the date in ISO 8601 standard like '2002-10-22'	The result is of fixed size 10 characters long.."
-^ String new: 10 streamContents: [ :aStream | self printOn: aStream format: #(3 2 1 $- 1 1 2) ]
+	"Format the date in ISO 8601 standard like '2002-10-22'
+	The result is of fixed size 10 characters long.."
+
+	^ String new: 10 streamContents: [ :aStream | self printOn: aStream format: #(3 2 1 $- 1 1 2) ]
 ]
 
-Metaclass
-	name: #Date;
-	instanceVariables: #().
-
-Metaclass Date >> dateAndTimeNow
+Date class >> dateAndTimeNow
 [
 	"Answer an Array whose with Date today and Time now."
-^ Time dateAndTimeNow
+
+	^ Time dateAndTimeNow
 ]
 
-Metaclass Date >> dayOfWeek: dayName
+Date class >> dayOfWeek: dayName
 [
-^ Week indexOfDay: dayName
+	^ Week indexOfDay: dayName
 ]
 
-Metaclass Date >> daysInMonth: monthName forYear: yearInteger
+Date class >> daysInMonth: monthName forYear: yearInteger
 [
-^ Month daysInMonth: monthName forYear: yearInteger
+	^ Month daysInMonth: monthName forYear: yearInteger
 ]
 
-Metaclass Date >> daysInYear: yearInteger
+Date class >> daysInYear: yearInteger
 [
-^ Year daysInYear: yearInteger
+	^ Year daysInYear: yearInteger
 ]
 
-Metaclass Date >> easterDateFor: year
+Date class >> easterDateFor: year
 [
-	"  compute the easter date.    source: Physikalisch-Technische Bundesanstalt Braunschweig.    Lichtenberg, H.: Zur Interpretation der Gaussschen Osterformel                     und ihrer Ausnahmeregeln,                     Historia Mathematica 24 (1997), pp. 441-444      http://www.ptb.de/de/org/4/44/441/oste.htm  "
-| k m s a d r og sz oe day |k := year // 100.m := 15 + ((3 * k + 3) // 4) - ((8 * k + 13) // 25).s := 2 - ((3 * k + 3) // 4).a := year \\ 19.d := (19 * a + m) \\ 30.r := d // 29 + ((d // 28 - (d // 29)) * (a // 11)).og := 21 + d - r.sz := 7 - ((year // 4 + year + s) \\ 7).oe := 7 - ((og - sz) \\ 7).day := og + oe.^ day <= 31	ifTrue: [ Date newDay: day month: 3 year: year ]	ifFalse: [ Date newDay: day - 31 month: 4 year: year ]
+	"  compute the easter date.
+    source: Physikalisch-Technische Bundesanstalt Braunschweig.
+    Lichtenberg, H.: Zur Interpretation der Gaussschen Osterformel
+                     und ihrer Ausnahmeregeln,
+                     Historia Mathematica 24 (1997), pp. 441-444
+  
+    http://www.ptb.de/de/org/4/44/441/oste.htm
+  "
+
+	| k m s a d r og sz oe day |
+	k := year // 100.
+	m := 15 + ((3 * k + 3) // 4) - ((8 * k + 13) // 25).
+	s := 2 - ((3 * k + 3) // 4).
+	a := year \\ 19.
+	d := (19 * a + m) \\ 30.
+	r := d // 29 + ((d // 28 - (d // 29)) * (a // 11)).
+	og := 21 + d - r.
+	sz := 7 - ((year // 4 + year + s) \\ 7).
+	oe := 7 - ((og - sz) \\ 7).
+	day := og + oe.
+	^ day <= 31
+		ifTrue: [ Date newDay: day month: 3 year: year ]
+		ifFalse: [ Date newDay: day - 31 month: 4 year: year ]
 ]
 
-Metaclass Date >> firstWeekdayOfMonth: month year: year
+Date class >> firstWeekdayOfMonth: month year: year
 [
 	"Answer the weekday index of the first day in <month> in the <year>."
-^ (self newDay: 1 month: month year: year) weekdayIndex
+
+	^ (self newDay: 1 month: month year: year) weekdayIndex
 ]
 
-Metaclass Date >> fromDays: dayCount
+Date class >> fromDays: dayCount
 [
 	"Days since 1 January 1901"
-^ self julianDayNumber: SqueakEpoch + dayCount
+
+	^ self julianDayNumber: SqueakEpoch + dayCount
 ]
 
-Metaclass Date >> fromSeconds: seconds
+Date class >> fromSeconds: seconds
 [
 	"Answer an instance of me which is 'seconds' seconds after January 1, 1901."
-^ self starting: (DateAndTime fromSeconds: seconds)
+
+	^ self starting: (DateAndTime fromSeconds: seconds)
 ]
 
-Metaclass Date >> fromString: aString
+Date class >> fromString: aString
 [
 	"Answer an instance of created from a string with format mm.dd.yyyy."
-^ self readFrom: aString readStream
+
+	^ self readFrom: aString readStream
 ]
 
-Metaclass Date >> indexOfMonth: aMonthName
+Date class >> indexOfMonth: aMonthName
 [
-^ Month indexOfMonth: aMonthName
+	^ Month indexOfMonth: aMonthName
 ]
 
-Metaclass Date >> julianDayNumber: aJulianDayNumber
+Date class >> julianDayNumber: aJulianDayNumber
 [
-^ self starting: (DateAndTime julianDayNumber: aJulianDayNumber)
+	^ self starting: (DateAndTime julianDayNumber: aJulianDayNumber)
 ]
 
-Metaclass Date >> julianDayNumber: aJulianDayNumber offset: aTimeZoneOffset
+Date class >> julianDayNumber: aJulianDayNumber offset: aTimeZoneOffset
 [
-^ self starting: (DateAndTime julianDayNumber: aJulianDayNumber offset: aTimeZoneOffset)
+	^ self starting: (DateAndTime julianDayNumber: aJulianDayNumber offset: aTimeZoneOffset)
 ]
 
-Metaclass Date >> leapYear: yearInteger
+Date class >> leapYear: yearInteger
 [
-^ Year leapYear: yearInteger
+	^ Year leapYear: yearInteger
 ]
 
-Metaclass Date >> nameOfDay: dayIndex
+Date class >> nameOfDay: dayIndex
 [
-^ Week nameOfDay: dayIndex
+	^ Week nameOfDay: dayIndex
 ]
 
-Metaclass Date >> nameOfMonth: anIndex
+Date class >> nameOfMonth: anIndex
 [
-^ Month nameOfMonth: anIndex
+	^ Month nameOfMonth: anIndex
 ]
 
-Metaclass Date >> newDay: day month: month year: year
+Date class >> newDay: day month: month year: year
 [
-^ self year: year month: month day: day
+	^ self year: year month: month day: day
 ]
 
-Metaclass Date >> newDay: dayCount year: yearInteger
+Date class >> newDay: dayCount year: yearInteger
 [
-^ self year: yearInteger day: dayCount
+	^ self year: yearInteger day: dayCount
 ]
 
-Metaclass Date >> orthodoxEasterDateFor: year
+Date class >> orthodoxEasterDateFor: year
 [
-	"  compute the easter date according to the rules of the orthodox calendar.    source:     http://www.smart.net/~mmontes/ortheast.html   "
-| r1 r2 r3 r4 ra rb r5 rc date |r1 := year \\ 19.r2 := year \\ 4.r3 := year \\ 7.ra := 19 * r1 + 16.r4 := ra \\ 30.rb := r2 + r2 + (4 * r3) + (6 * r4).r5 := rb \\ 7.rc := r4 + r5.date := Date newDay: 3 month: 4 year: year.^ date addDays: rc
+	"  compute the easter date according to the rules of the orthodox calendar.
+    source: 
+    http://www.smart.net/~mmontes/ortheast.html 
+  "
+
+	| r1 r2 r3 r4 ra rb r5 rc date |
+	r1 := year \\ 19.
+	r2 := year \\ 4.
+	r3 := year \\ 7.
+	ra := 19 * r1 + 16.
+	r4 := ra \\ 30.
+	rb := r2 + r2 + (4 * r3) + (6 * r4).
+	r5 := rb \\ 7.
+	rc := r4 + r5.
+	date := Date newDay: 3 month: 4 year: year.
+	^ date addDays: rc
 ]
 
-Metaclass Date >> readFrom: aStream
+Date class >> readFrom: aStream
 [
-	"Read a Date from the stream in any of the forms:  		<day> <month> <year>		(15 April 1982; 15-APR-82; 15.4.82; 15APR82)  		<month> <day> <year>		(April 15, 1982; 4/15/82)		<year>-<month>-<day>			(1982-04-15) (ISO8601)"
-| day month year parsedNumber prefix |aStream peek = $-	ifTrue: [ prefix := -1 ]	ifFalse: [ prefix := 1 ].[ aStream peek isAlphaNumeric ] whileFalse: [ aStream skip: 1 ].aStream peek isDigit	ifTrue: [ 		parsedNumber := (Integer readFrom: aStream) * prefix.		(parsedNumber < 0 or: [ parsedNumber > 31 ])			ifTrue: [ year := parsedNumber ] ].[ aStream peek isAlphaNumeric ] whileFalse: [ aStream skip: 1 ].aStream peek isLetter	ifTrue: [ 		"MM-DD-YY or DD-MM-YY or YY-MM-DD"		month := (String new: 10) writeStream.		[ aStream peek isLetter ] whileTrue: [ month nextPut: aStream next ].		month := month contents.		[ aStream peek isAlphaNumeric ] whileFalse: [ aStream skip: 1 ].		parsedNumber isNil			ifTrue: [ 				"MM DD YY"				day := Integer readFrom: aStream ]			ifFalse: [ 				year isNil					ifTrue: [ 						"DD MM YY"						day := parsedNumber ] ] ]	ifFalse: [ 		"MM-DD-YY or DD-MM-YY or YY-MM-DD"		year isNil			ifTrue: [ 				"MM-DD-YY or DD-MM-YY"				parsedNumber > 12					ifTrue: [ 						"DD-MM-YY"						day := parsedNumber.						month := Month nameOfMonth: (Integer readFrom: aStream) ]					ifFalse: [ 						"MM-DD-YY"						month := Month nameOfMonth: parsedNumber.						day := Integer readFrom: aStream ] ]			ifFalse: [ 				"YY-MM-DD"				month := Month nameOfMonth: (Integer readFrom: aStream) ] ].[ aStream peek isAlphaNumeric ] whileFalse: [ aStream skip: 1 ].year isNil	ifTrue: [ year := Integer readFrom: aStream ]	ifFalse: [ day := Integer readFrom: aStream ].(year < 100 and: [ year >= 0 ])	ifTrue: [ 		year < 69			ifTrue: [ year := 2000 + year ]			ifFalse: [ year := 1900 + year ] ].^ self year: year month: month day: day
+	"Read a Date from the stream in any of the forms:  
+		<day> <month> <year>		(15 April 1982; 15-APR-82; 15.4.82; 15APR82)  
+		<month> <day> <year>		(April 15, 1982; 4/15/82)
+		<year>-<month>-<day>			(1982-04-15) (ISO8601)"
+
+	| day month year parsedNumber prefix |
+	aStream peek = $-
+		ifTrue: [ prefix := -1 ]
+		ifFalse: [ prefix := 1 ].
+	[ aStream peek isAlphaNumeric ] whileFalse: [ aStream skip: 1 ].
+	aStream peek isDigit
+		ifTrue: [ parsedNumber := (Integer readFrom: aStream) * prefix.
+			(parsedNumber < 0 or: [ parsedNumber > 31 ])
+				ifTrue: [ year := parsedNumber ] ].
+	[ aStream peek isAlphaNumeric ] whileFalse: [ aStream skip: 1 ].
+	aStream peek isLetter
+		ifTrue: [ "MM-DD-YY or DD-MM-YY or YY-MM-DD"
+			month := (String new: 10) writeStream.
+			[ aStream peek isLetter ] whileTrue: [ month nextPut: aStream next ].
+			month := month contents.
+			[ aStream peek isAlphaNumeric ] whileFalse: [ aStream skip: 1 ].
+			parsedNumber isNil
+				ifTrue: [ "MM DD YY"
+					day := Integer readFrom: aStream ]
+				ifFalse: [ year isNil
+						ifTrue: [ "DD MM YY"
+							day := parsedNumber ] ] ]
+		ifFalse: [ "MM-DD-YY or DD-MM-YY or YY-MM-DD"
+			year isNil
+				ifTrue: [ "MM-DD-YY or DD-MM-YY"
+					parsedNumber > 12
+						ifTrue: [ "DD-MM-YY"
+							day := parsedNumber.
+							month := Month nameOfMonth: (Integer readFrom: aStream) ]
+						ifFalse: [ "MM-DD-YY"
+							month := Month nameOfMonth: parsedNumber.
+							day := Integer readFrom: aStream ] ]
+				ifFalse: [ "YY-MM-DD"
+					month := Month nameOfMonth: (Integer readFrom: aStream) ] ].
+	[ aStream peek isAlphaNumeric ] whileFalse: [ aStream skip: 1 ].
+	year isNil
+		ifTrue: [ year := Integer readFrom: aStream ]
+		ifFalse: [ day := Integer readFrom: aStream ].
+	(year < 100 and: [ year >= 0 ])
+		ifTrue: [ year < 69
+				ifTrue: [ year := 2000 + year ]
+				ifFalse: [ year := 1900 + year ] ].
+	^ self year: year month: month day: day
 ]
 
-Metaclass Date >> readFrom: inputStream pattern: pattern
+Date class >> readFrom: inputStream pattern: pattern
 [
-	"Read a Date from the stream based on the pattern which can include the tokens:			y = A year with 1-n digits		yy = A year with 2 digits		yyyy = A year with 4 digits		m = A month with 1-n digits		mm = A month with 2 digits		d = A day with 1-n digits		dd = A day with 2 digits			...and any other Strings inbetween. Representing $y, $m and $d is done using	\y, \m and \d and slash itself with \\. Simple example patterns:		'yyyy-mm-dd'		'yyyymmdd'		'yy.mm.dd'		'y-m-d'	A year given using only two decimals is considered to be >2000."
-| day month year patternStream char |patternStream := pattern readStream.[ patternStream atEnd ]	whileFalse: [ 		inputStream atEnd			ifTrue: [ ^ nil ].		char := patternStream next.		char = $\			ifTrue: [ 				inputStream next = patternStream next					ifFalse: [ ^ nil ] ]			ifFalse: [ 				char = $y					ifTrue: [ 						(patternStream nextMatchAll: 'yyy')							ifTrue: [ year := (inputStream next: 4) asInteger ]							ifFalse: [ 								(patternStream peekFor: $y)									ifTrue: [ year := (inputStream next: 2) asInteger ]									ifFalse: [ year := Integer readFrom: inputStream ] ] ]					ifFalse: [ 						char = $m							ifTrue: [ 								(patternStream peekFor: $m)									ifTrue: [ month := (inputStream next: 2) asInteger ]									ifFalse: [ month := Integer readFrom: inputStream ] ]							ifFalse: [ 								char = $d									ifTrue: [ 										(patternStream peekFor: $d)											ifTrue: [ day := (inputStream next: 2) asInteger ]											ifFalse: [ day := Integer readFrom: inputStream ] ]									ifFalse: [ 										inputStream next = char											ifFalse: [ ^ nil ] ] ] ] ] ].year isNil | month isNil | day isNil	ifTrue: [ ^ nil ].^ self year: year month: month day: day
+	"Read a Date from the stream based on the pattern which can include the tokens:
+	
+		y = A year with 1-n digits
+		yy = A year with 2 digits
+		yyyy = A year with 4 digits
+		m = A month with 1-n digits
+		mm = A month with 2 digits
+		d = A day with 1-n digits
+		dd = A day with 2 digits
+		
+	...and any other Strings inbetween. Representing $y, $m and $d is done using
+	\y, \m and \d and slash itself with \\. Simple example patterns:
+
+		'yyyy-mm-dd'
+		'yyyymmdd'
+		'yy.mm.dd'
+		'y-m-d'
+
+	A year given using only two decimals is considered to be >2000."
+
+	| day month year patternStream char |
+	patternStream := pattern readStream.
+	[ patternStream atEnd ]
+		whileFalse: [ inputStream atEnd
+				ifTrue: [ ^ nil ].
+			char := patternStream next.
+			char = $\
+				ifTrue: [ inputStream next = patternStream next
+						ifFalse: [ ^ nil ] ]
+				ifFalse: [ char = $y
+						ifTrue: [ (patternStream nextMatchAll: 'yyy')
+								ifTrue: [ year := (inputStream next: 4) asInteger ]
+								ifFalse: [ (patternStream peekFor: $y)
+										ifTrue: [ year := (inputStream next: 2) asInteger ]
+										ifFalse: [ year := Integer readFrom: inputStream ] ] ]
+						ifFalse: [ char = $m
+								ifTrue: [ (patternStream peekFor: $m)
+										ifTrue: [ month := (inputStream next: 2) asInteger ]
+										ifFalse: [ month := Integer readFrom: inputStream ] ]
+								ifFalse: [ char = $d
+										ifTrue: [ (patternStream peekFor: $d)
+												ifTrue: [ day := (inputStream next: 2) asInteger ]
+												ifFalse: [ day := Integer readFrom: inputStream ] ]
+										ifFalse: [ inputStream next = char
+												ifFalse: [ ^ nil ] ] ] ] ] ].
+	year isNil | month isNil | day isNil
+		ifTrue: [ ^ nil ].
+	^ self year: year month: month day: day
 ]
 
-Metaclass Date >> starting: aDateAndTime
+Date class >> starting: aDateAndTime
 [
-^ super starting: aDateAndTime midnight duration: (Duration days: 1)
+	^ super starting: aDateAndTime midnight duration: (Duration days: 1)
 ]
 
-Metaclass Date >> today
+Date class >> today
 [
-^ self current
+	^ self current
 ]
 
-Metaclass Date >> tomorrow
+Date class >> tomorrow
 [
-^ self today next
+	^ self today next
 ]
 
-Metaclass Date >> year: year day: dayOfYear
+Date class >> year: year day: dayOfYear
 [
-^ self starting: (DateAndTime year: year day: dayOfYear)
+	^ self starting: (DateAndTime year: year day: dayOfYear)
 ]
 
-Metaclass Date >> year: year month: month day: day
+Date class >> year: year month: month day: day
 [
-^ self starting: (DateAndTime year: year month: month day: day)
+	^ self starting: (DateAndTime year: year month: month day: day)
 ]
 
-Metaclass Date >> yesterday
+Date class >> yesterday
 [
-^ self today previous
+	^ self today previous
 ]
 

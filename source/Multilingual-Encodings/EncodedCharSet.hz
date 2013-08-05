@@ -1,103 +1,157 @@
-Class
-	name: #EncodedCharSet;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
+EncodedCharSet
 	classVariables: #(#EncodedCharSets );
 	package: #'Multilingual-Encodings'.
 
-Metaclass
-	name: #EncodedCharSet;
+EncodedCharSet class
 	instanceVariables: #(#compoundTextSequence ).
 
-Metaclass EncodedCharSet >> canBeGlobalVarInitial: char
+EncodedCharSet class >> canBeGlobalVarInitial: char
 [
-| leadingChar |leadingChar := char leadingChar.leadingChar = 0	ifTrue: [ ^ self isUppercase: char ].^ self isLetter: char
+	| leadingChar |
+	leadingChar := char leadingChar.
+	leadingChar = 0
+		ifTrue: [ ^ self isUppercase: char ].
+	^ self isLetter: char
 ]
 
-Metaclass EncodedCharSet >> canBeNonGlobalVarInitial: char
+EncodedCharSet class >> canBeNonGlobalVarInitial: char
 [
-| leadingChar |leadingChar := char leadingChar.leadingChar = 0	ifTrue: [ ^ self isLowercase: char ].^ self isLetter: char
+	| leadingChar |
+	leadingChar := char leadingChar.
+	leadingChar = 0
+		ifTrue: [ ^ self isLowercase: char ].
+	^ self isLetter: char
 ]
 
-Metaclass EncodedCharSet >> charFromUnicode: unicode
+EncodedCharSet class >> charFromUnicode: unicode
 [
-| table index |unicode < 128	ifTrue: [ ^ Character value: unicode ].table := self ucsTable.index := table indexOf: unicode.index = 0	ifTrue: [ ^ nil ].^ Character leadingChar: self leadingChar code: index - 1
+	| table index |
+	unicode < 128
+		ifTrue: [ ^ Character value: unicode ].
+	table := self ucsTable.
+	index := table indexOf: unicode.
+	index = 0
+		ifTrue: [ ^ nil ].
+	^ Character leadingChar: self leadingChar code: index - 1
 ]
 
-Metaclass EncodedCharSet >> charsetAt: encoding
+EncodedCharSet class >> charsetAt: encoding
 [
-^ EncodedCharSets at: encoding + 1 ifAbsent: [ EncodedCharSets at: 1 ]
+	^ EncodedCharSets at: encoding + 1 ifAbsent: [ EncodedCharSets at: 1 ]
 ]
 
-Metaclass EncodedCharSet >> digitValueOf: char
+EncodedCharSet class >> digitValueOf: char
 [
-	"Answer 0-9 if the receiver is $0-$9, 10-35 if it is $A-$Z, and < 0 	otherwise. This is used to parse literal numbers of radix 2-36."
-| value |value := char charCode.value <= $9 asciiValue	ifTrue: [ ^ value - $0 asciiValue ].value >= $A asciiValue	ifTrue: [ 		value <= $Z asciiValue			ifTrue: [ ^ value - $A asciiValue + 10 ].		(value >= $a asciiValue and: [ value <= $z asciiValue ])			ifTrue: [ ^ value - $a asciiValue + 10 ] ].^ -1
+	"Answer 0-9 if the receiver is $0-$9, 10-35 if it is $A-$Z, and < 0 
+	otherwise. This is used to parse literal numbers of radix 2-36."
+
+	| value |
+	value := char charCode.
+	value <= $9 asciiValue
+		ifTrue: [ ^ value - $0 asciiValue ].
+	value >= $A asciiValue
+		ifTrue: [ value <= $Z asciiValue
+				ifTrue: [ ^ value - $A asciiValue + 10 ].
+			(value >= $a asciiValue and: [ value <= $z asciiValue ])
+				ifTrue: [ ^ value - $a asciiValue + 10 ] ].
+	^ -1
 ]
 
-Metaclass EncodedCharSet >> initialize
+EncodedCharSet class >> initialize
 [
-	"	self initialize"
-self allSubclassesDo: [ :each | each initialize ].EncodedCharSets := Array new: 256.EncodedCharSets at: 0 + 1 put: Unicode.	"Latin1Environment"EncodedCharSets at: 1 + 1 put: JISX0208.EncodedCharSets at: 2 + 1 put: GB2312.EncodedCharSets at: 3 + 1 put: KSX1001.EncodedCharSets at: 4 + 1 put: JISX0208.EncodedCharSets at: 5 + 1 put: JapaneseEnvironment.EncodedCharSets at: 6 + 1 put: SimplifiedChineseEnvironment.EncodedCharSets at: 7 + 1 put: KoreanEnvironment.EncodedCharSets at: 8 + 1 put: GB2312.	"EncodedCharSets at: 9+1 put: UnicodeTraditionalChinese."	"EncodedCharSets at: 10+1 put: UnicodeVietnamese."EncodedCharSets at: 12 + 1 put: KSX1001.EncodedCharSets at: 13 + 1 put: GreekEnvironment.EncodedCharSets at: 14 + 1 put: Latin2Environment.EncodedCharSets at: 15 + 1 put: RussianEnvironment.EncodedCharSets at: 17 + 1 put: Latin9Environment.EncodedCharSets at: 256 put: Unicode
+	"
+	self initialize
+"
+
+	self allSubclassesDo: [ :each | each initialize ].
+	EncodedCharSets := Array new: 256.
+	EncodedCharSets at: 0 + 1 put: Unicode.	"Latin1Environment"
+	EncodedCharSets at: 1 + 1 put: JISX0208.
+	EncodedCharSets at: 2 + 1 put: GB2312.
+	EncodedCharSets at: 3 + 1 put: KSX1001.
+	EncodedCharSets at: 4 + 1 put: JISX0208.
+	EncodedCharSets at: 5 + 1 put: JapaneseEnvironment.
+	EncodedCharSets at: 6 + 1 put: SimplifiedChineseEnvironment.
+	EncodedCharSets at: 7 + 1 put: KoreanEnvironment.
+	EncodedCharSets at: 8 + 1 put: GB2312.	"EncodedCharSets at: 9+1 put: UnicodeTraditionalChinese."	"EncodedCharSets at: 10+1 put: UnicodeVietnamese."
+	EncodedCharSets at: 12 + 1 put: KSX1001.
+	EncodedCharSets at: 13 + 1 put: GreekEnvironment.
+	EncodedCharSets at: 14 + 1 put: Latin2Environment.
+	EncodedCharSets at: 15 + 1 put: RussianEnvironment.
+	EncodedCharSets at: 17 + 1 put: Latin9Environment.
+	EncodedCharSets at: 256 put: Unicode
 ]
 
-Metaclass EncodedCharSet >> isBreakableAt: index in: text
+EncodedCharSet class >> isBreakableAt: index in: text
 [
-self subclassResponsibility
+	self subclassResponsibility
 ]
 
-Metaclass EncodedCharSet >> isCharset
+EncodedCharSet class >> isCharset
 [
-^ true
+	^ true
 ]
 
-Metaclass EncodedCharSet >> isDigit: char
+EncodedCharSet class >> isDigit: char
 [
 	"Answer whether the receiver is a digit."
-| value |value := char asciiValue.^ value >= 48 and: [ value <= 57 ]
+
+	| value |
+	value := char asciiValue.
+	^ value >= 48 and: [ value <= 57 ]
 ]
 
-Metaclass EncodedCharSet >> isLetter: char
+EncodedCharSet class >> isLetter: char
 [
 	"Answer whether the receiver is a letter."
-| value |value := char asciiValue.^ (8r141 <= value and: [ value <= 8r172 ]) or: [ 8r101 <= value and: [ value <= 8r132 ] ]
+
+	| value |
+	value := char asciiValue.
+	^ (8r141 <= value and: [ value <= 8r172 ]) or: [ 8r101 <= value and: [ value <= 8r132 ] ]
 ]
 
-Metaclass EncodedCharSet >> isLowercase: char
+EncodedCharSet class >> isLowercase: char
 [
-	"Answer whether the receiver is a lowercase letter.	(The old implementation answered whether the receiver is not an uppercase letter.)"
-| value |value := char asciiValue.^ 8r141 <= value and: [ value <= 8r172 ]
+	"Answer whether the receiver is a lowercase letter.
+	(The old implementation answered whether the receiver is not an uppercase letter.)"
+
+	| value |
+	value := char asciiValue.
+	^ 8r141 <= value and: [ value <= 8r172 ]
 ]
 
-Metaclass EncodedCharSet >> isUppercase: char
+EncodedCharSet class >> isUppercase: char
 [
-	"Answer whether the receiver is an uppercase letter.	(The old implementation answered whether the receiver is not a lowercase letter.)"
-| value |value := char asciiValue.^ 8r101 <= value and: [ value <= 8r132 ]
+	"Answer whether the receiver is an uppercase letter.
+	(The old implementation answered whether the receiver is not a lowercase letter.)"
+
+	| value |
+	value := char asciiValue.
+	^ 8r101 <= value and: [ value <= 8r132 ]
 ]
 
-Metaclass EncodedCharSet >> leadingChar
+EncodedCharSet class >> leadingChar
 [
-self subclassResponsibility
+	self subclassResponsibility
 ]
 
-Metaclass EncodedCharSet >> nextPutValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
+EncodedCharSet class >> nextPutValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
 [
-self subclassResponsibility
+	self subclassResponsibility
 ]
 
-Metaclass EncodedCharSet >> printingDirection
+EncodedCharSet class >> printingDirection
 [
-self subclassResponsibility
+	self subclassResponsibility
 ]
 
-Metaclass EncodedCharSet >> scanSelector
+EncodedCharSet class >> scanSelector
 [
-^ #scanMultiCharactersFrom:to:in:rightX:stopConditions:kern:
+	^ #scanMultiCharactersFrom:to:in:rightX:stopConditions:kern:
 ]
 
-Metaclass EncodedCharSet >> ucsTable
+EncodedCharSet class >> ucsTable
 [
-^ UCSTable latin1Table
+	^ UCSTable latin1Table
 ]
 

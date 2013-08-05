@@ -1,118 +1,146 @@
-Class
-	name: #FileHandle;
-	superclass: #ClassFileSystemHandle;
-	instanceSpecification: #(#pointers #words );
+FileHandle
+	superclass: #FileSystemHandle;
 	instanceVariables: #(#id );
 	classVariables: #(#Registry );
 	package: #'FileSystem-Disk'.
 
-Class FileHandle >> assureOpen
+FileHandle >> assureOpen
 [
 	"compatibility method to make the FileHandle Tests pass"
-self isOpen	ifFalse: [ id := self basicOpen ]
+
+	self isOpen
+		ifFalse: [ id := self basicOpen ]
 ]
 
-Class FileHandle >> at: index read: buffer startingAt: start count: count
+FileHandle >> at: index read: buffer startingAt: start count: count
 [
-self flag: 'TODO: remove once FileHandles are really used!'.self assureOpen.^ Primitives	setPosition: id to: index - 1;	read: id		into: buffer		startingAt: start		count: count
+	self flag: 'TODO: remove once FileHandles are really used!'.
+	self assureOpen.
+	^ Primitives
+		setPosition: id to: index - 1;
+		read: id
+			into: buffer
+			startingAt: start
+			count: count
 ]
 
-Class FileHandle >> at: index write: buffer startingAt: start count: count
+FileHandle >> at: index write: buffer startingAt: start count: count
 [
-self flag: 'TODO: remove once FileHandles are really used!'.self assureOpen.Primitives	setPosition: id to: index - 1;	write: id		from: buffer		startingAt: start		count: count
+	self flag: 'TODO: remove once FileHandles are really used!'.
+	self assureOpen.
+	Primitives
+		setPosition: id to: index - 1;
+		write: id
+			from: buffer
+			startingAt: start
+			count: count
 ]
 
-Class FileHandle >> close
+FileHandle >> close
 [
-Primitives close: id.id := nil
+	Primitives close: id.
+	id := nil
 ]
 
-Class FileHandle >> finalize
+FileHandle >> finalize
 [
-self primCloseNoError: id
+	self primCloseNoError: id
 ]
 
-Class FileHandle >> flush
+FileHandle >> flush
 [
-self flag: 'TODO: remove once FileHandles are really used!'.self assureOpen.Primitives flush: id
+	self flag: 'TODO: remove once FileHandles are really used!'.
+	self assureOpen.
+	Primitives flush: id
 ]
 
-Class FileHandle >> isOpen
+FileHandle >> isOpen
 [
-^ (Primitives sizeOrNil: id) notNil
+	^ (Primitives sizeOrNil: id) notNil
 ]
 
-Class FileHandle >> open
+FileHandle >> open
 [
-self flag: 'TODO: for now we solely rely on the old FileStreams'	"id := self basicOpen.	id ifNil: 	[		reference exists ifFalse: [FileDoesNotExist signalWith: reference].		self error: 'Unable to open file ' , reference printString]"
+	self flag: 'TODO: for now we solely rely on the old FileStreams'	"id := self basicOpen.	id ifNil: 	[		reference exists ifFalse: [FileDoesNotExist signalWith: reference].		self error: 'Unable to open file ' , reference printString]"
 ]
 
-Class FileHandle >> readStream
+FileHandle >> readStream
 [
-^ (FileStream onHandle: self) ifNil: [ self streamError ]
+	^ (FileStream onHandle: self) ifNil: [ self streamError ]
 ]
 
-Class FileHandle >> register
+FileHandle >> register
 [
 	"register the instance for proper clreanup on garbage collection"
-^ self class register: self
+
+	^ self class register: self
 ]
 
-Class FileHandle >> size
+FileHandle >> size
 [
-self flag: 'TODO: remove once FileHandles are really used!'.self assureOpen.^ Primitives size: id
+	self flag: 'TODO: remove once FileHandles are really used!'.
+	self assureOpen.
+	^ Primitives size: id
 ]
 
-Class FileHandle >> startUp
+FileHandle >> startUp
 [
-	"This functionality is disabled for now, to avoid doing lots of processing	on start up."
-	"We're starting up in a new OS process, so the file id will be invalid.	Try to reopen the file, but fail silently: just leave the id as nil. #isOpen will	answer false, and we'll raise an error if anyone tries to do IO."
-self basicOpen
+	"This functionality is disabled for now, to avoid doing lots of processing
+	on start up."
+
+	"We're starting up in a new OS process, so the file id will be invalid.
+	Try to reopen the file, but fail silently: just leave the id as nil. #isOpen will
+	answer false, and we'll raise an error if anyone tries to do IO."
+
+	self basicOpen
 ]
 
-Class FileHandle >> streamError
+FileHandle >> streamError
 [
-reference exists	ifFalse: [ FileDoesNotExist signalWith: reference ].self error: 'Unable to open file ' , reference printString
+	reference exists
+		ifFalse: [ FileDoesNotExist signalWith: reference ].
+	self error: 'Unable to open file ' , reference printString
 ]
 
-Class FileHandle >> truncateTo: anInteger
+FileHandle >> truncateTo: anInteger
 [
-Primitives truncate: id to: anInteger.self reopen
+	Primitives truncate: id to: anInteger.
+	self reopen
 ]
 
-Class FileHandle >> writeStream
+FileHandle >> writeStream
 [
-^ (FileStream onHandle: self) ifNil: [ self streamError ]
+	^ (FileStream onHandle: self) ifNil: [ self streamError ]
 ]
 
-Metaclass
-	name: #FileHandle;
-	instanceVariables: #().
-
-Metaclass FileHandle >> initialize
+FileHandle class >> initialize
 [
-self useFilePlugin
+	self useFilePlugin
 ]
 
-Metaclass FileHandle >> register: aFileHandle
+FileHandle class >> register: aFileHandle
 [
 	"properly register the given FileHandle for being closed on garbage collection"
-^ self registry add: aFileHandle
+
+	^ self registry add: aFileHandle
 ]
 
-Metaclass FileHandle >> registry
+FileHandle class >> registry
 [
-^ Registry ifNil: [ Registry := WeakRegistry new ]
+	^ Registry ifNil: [ Registry := WeakRegistry new ]
 ]
 
-Metaclass FileHandle >> startUp: resuming
+FileHandle class >> startUp: resuming
 [
-	"This functionality is disabled for now, to avoid doing a lot of processing at	image start up. To reenable, add this class to the start up list."
-resuming	ifTrue: [ self allInstancesDo: [ :ea | ea startUp ] ]
+	"This functionality is disabled for now, to avoid doing a lot of processing at
+	image start up. To reenable, add this class to the start up list."
+
+	resuming
+		ifTrue: [ self allInstancesDo: [ :ea | ea startUp ] ]
 ]
 
-Metaclass FileHandle >> useFilePlugin
+FileHandle class >> useFilePlugin
 [
-Primitives := FilePluginPrims new
+	Primitives := FilePluginPrims new
 ]
 

@@ -1,32 +1,33 @@
-Class
-	name: #FLGlobalSendCluster;
-	superclass: #ClassFLGlobalCluster;
-	instanceSpecification: #(#pointers #words );
+FLGlobalSendCluster
+	superclass: #FLGlobalCluster;
 	instanceVariables: #(#globalSends );
-	classVariables: #();
 	package: #'Fuel-Clusters'.
 
-Class FLGlobalSendCluster >> add: anObject name: globalName selector: selector traceWith: anAnalysis
+FLGlobalSendCluster >> add: anObject name: globalName selector: selector traceWith: anAnalysis
 [
-self add: anObject traceWith: anAnalysis.globalSends at: anObject ifAbsentPut: [ Association key: globalName value: selector ]
+	self add: anObject traceWith: anAnalysis.
+	globalSends at: anObject ifAbsentPut: [ Association key: globalName value: selector ]
 ]
 
-Class FLGlobalSendCluster >> initializeAnalyzing
+FLGlobalSendCluster >> initializeAnalyzing
 [
-super initializeAnalyzing.globalSends := IdentityDictionary new
+	super initializeAnalyzing.
+	globalSends := IdentityDictionary new
 ]
 
-Class FLGlobalSendCluster >> materializeInstanceWith: aDecoder
+FLGlobalSendCluster >> materializeInstanceWith: aDecoder
 [
-| global selector |global := (self materializeGlobalAssociationFrom: aDecoder) value.selector := aDecoder nextEncodedString asSymbol.^ global perform: selector
+	| global selector |
+	global := (self materializeGlobalAssociationFrom: aDecoder) value.
+	selector := aDecoder nextEncodedString asSymbol.
+	^ global perform: selector
 ]
 
-Class FLGlobalSendCluster >> serializeInstance: anObject with: anEncoder
+FLGlobalSendCluster >> serializeInstance: anObject with: anEncoder
 [
-| globalSend |globalSend := globalSends at: anObject.self serializeGlobalAssociationKeyed: globalSend key on: anEncoder.anEncoder encodeString: globalSend value
+	| globalSend |
+	globalSend := globalSends at: anObject.
+	self serializeGlobalAssociationKeyed: globalSend key on: anEncoder.
+	anEncoder encodeString: globalSend value
 ]
-
-Metaclass
-	name: #FLGlobalSendCluster;
-	instanceVariables: #().
 

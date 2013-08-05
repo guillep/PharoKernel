@@ -1,54 +1,75 @@
-Class
-	name: #Schedule;
-	superclass: #ClassTimespan;
-	instanceSpecification: #(#pointers #words );
+Schedule
+	superclass: #Timespan;
 	instanceVariables: #(#schedule );
-	classVariables: #();
 	package: #'Kernel-Chronology'.
 
-Class Schedule >> between: aStart and: anEnd do: aBlock
+Schedule >> between: aStart and: anEnd do: aBlock
 [
 	"from Cuis 99"
-| element end i startDate |end := self end min: anEnd.element := self start.	"Performance optimization. Avoid going through unnecesary days if easy."startDate := aStart asDate.(startDate > element asDate and: [ self everyDayAtSameTimes ])	ifTrue: [ element := DateAndTime date: startDate time: element asTime ].i := 1.[ element < aStart ]	whileTrue: [ 		element := element + (schedule at: i).		i := i + 1.		i > schedule size			ifTrue: [ i := 1 ] ].[ element <= end ]	whileTrue: [ 		aBlock value: element.		element := element + (schedule at: i).		i := i + 1.		i > schedule size			ifTrue: [ i := 1 ] ]
+
+	| element end i startDate |
+	end := self end min: anEnd.
+	element := self start.	"Performance optimization. Avoid going through unnecesary days if easy."
+	startDate := aStart asDate.
+	(startDate > element asDate and: [ self everyDayAtSameTimes ])
+		ifTrue: [ element := DateAndTime date: startDate time: element asTime ].
+	i := 1.
+	[ element < aStart ]
+		whileTrue: [ element := element + (schedule at: i).
+			i := i + 1.
+			i > schedule size
+				ifTrue: [ i := 1 ] ].
+	[ element <= end ]
+		whileTrue: [ aBlock value: element.
+			element := element + (schedule at: i).
+			i := i + 1.
+			i > schedule size
+				ifTrue: [ i := 1 ] ]
 ]
 
-Class Schedule >> dateAndTimes
+Schedule >> dateAndTimes
 [
-| dateAndTimes |dateAndTimes := OrderedCollection new.self scheduleDo: [ :e | dateAndTimes add: e ].^ dateAndTimes asArray
+	| dateAndTimes |
+	dateAndTimes := OrderedCollection new.
+	self scheduleDo: [ :e | dateAndTimes add: e ].
+	^ dateAndTimes asArray
 ]
 
-Class Schedule >> everyDayAtSameTimes
+Schedule >> everyDayAtSameTimes
 [
 	"Answer false if unknown"
-| count |count := (Duration days: 1) / self scheduleDuration.^ count >= 1 and: [ count isInteger ]
+
+	| count |
+	count := (Duration days: 1) / self scheduleDuration.
+	^ count >= 1 and: [ count isInteger ]
 ]
 
-Class Schedule >> includes: aDateAndTime
+Schedule >> includes: aDateAndTime
 [
-| dt |dt := aDateAndTime asDateAndTime.self	scheduleDo: [ :e | 		e = dt			ifTrue: [ ^ true ] ].^ false
+	| dt |
+	dt := aDateAndTime asDateAndTime.
+	self scheduleDo: [ :e | e = dt
+				ifTrue: [ ^ true ] ].
+	^ false
 ]
 
-Class Schedule >> schedule
+Schedule >> schedule
 [
-^ schedule
+	^ schedule
 ]
 
-Class Schedule >> schedule: anArrayOfDurations
+Schedule >> schedule: anArrayOfDurations
 [
-schedule := anArrayOfDurations
+	schedule := anArrayOfDurations
 ]
 
-Class Schedule >> scheduleDo: aBlock
+Schedule >> scheduleDo: aBlock
 [
-self between: self start and: self end do: aBlock
+	self between: self start and: self end do: aBlock
 ]
 
-Class Schedule >> scheduleDuration
+Schedule >> scheduleDuration
 [
-^ schedule sum
+	^ schedule sum
 ]
-
-Metaclass
-	name: #Schedule;
-	instanceVariables: #().
 

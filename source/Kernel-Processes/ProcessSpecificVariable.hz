@@ -1,56 +1,65 @@
-Class
-	name: #ProcessSpecificVariable;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+ProcessSpecificVariable
 	instanceVariables: #(#index );
-	classVariables: #();
 	package: #'Kernel-Processes'.
 
-Class ProcessSpecificVariable >> default
-[
-	"Answer the default value for the variable. The default for the default value is nil."
-^ nil
-]
-
-Class ProcessSpecificVariable >> index: anInteger
-[
-index := anInteger
-]
-
-Class ProcessSpecificVariable >> value
-[
-^ (Processor activeProcess psValueAt: index) ifNil: [ self default ]
-]
-
-Class ProcessSpecificVariable >> valueOrNil
-[
-	"a faster version, which doesn't using ifAbsent: to  avoid using block closure"
-^ Processor activeProcess psValueAt: index
-]
-
-Metaclass
-	name: #ProcessSpecificVariable;
+ProcessSpecificVariable class
 	instanceVariables: #(#hash #soleInstance ).
 
-Metaclass ProcessSpecificVariable >> initialize
+ProcessSpecificVariable >> default
+[
+	"Answer the default value for the variable. The default for the default value is nil."
+
+	^ nil
+]
+
+ProcessSpecificVariable >> index: anInteger
+[
+	index := anInteger
+]
+
+ProcessSpecificVariable >> value
+[
+	^ (Processor activeProcess psValueAt: index) ifNil: [ self default ]
+]
+
+ProcessSpecificVariable >> valueOrNil
+[
+	"a faster version, which doesn't using ifAbsent: to  avoid using block closure"
+
+	^ Processor activeProcess psValueAt: index
+]
+
+ProcessSpecificVariable class >> initialize
 [
 	"Add Process::env if it is missing"
-(Process instVarNames includes: 'env')	ifFalse: [ Process addInstVarNamed: 'env' ]
+
+	(Process instVarNames includes: 'env')
+		ifFalse: [ Process addInstVarNamed: 'env' ].
+	self resetSoleInstance
 ]
 
-Metaclass ProcessSpecificVariable >> new
+ProcessSpecificVariable class >> new
 [
-| instance |instance := super new.instance index: (Process allocatePSKey: instance).^ instance
+	| instance |
+	instance := super new.
+	instance index: (Process allocatePSKey: instance).
+	^ instance
 ]
 
-Metaclass ProcessSpecificVariable >> soleInstance
+ProcessSpecificVariable class >> resetSoleInstance
 [
-^ soleInstance ifNil: [ soleInstance := self new ]
+	soleInstance := nil
 ]
 
-Metaclass ProcessSpecificVariable >> value
+ProcessSpecificVariable class >> soleInstance
+[
+	^ soleInstance ifNil: [ soleInstance := self new ]
+]
+
+ProcessSpecificVariable class >> value
 [
 	"Answer the current value for this variable in the current context."
-^ self soleInstance value
+
+	^ self soleInstance value
 ]
 

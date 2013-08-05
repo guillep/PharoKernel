@@ -1,30 +1,27 @@
-Class
-	name: #RxmTerminator;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+RxmTerminator
 	package: #'Regex-Core'.
 
-Class RxmTerminator >> matchAgainst: aStream
+RxmTerminator >> matchAgainst: aStream
 [
 	"If got here, the match is successful."
-^ true
+
+	^ true
 ]
 
-Class RxmTerminator >> pointTailTo: anRxmLink
+RxmTerminator >> pointTailTo: anRxmLink
 [
-	"Branch tails are never redirected by the build algorithm.	Healthy terminators should never receive this."
-RxParser signalCompilationException: 'internal matcher build error - redirecting terminator tail'
+	"Branch tails are never redirected by the build algorithm.
+	Healthy terminators should never receive this."
+
+	RxParser signalCompilationException: 'internal matcher build error - redirecting terminator tail'
 ]
 
-Class RxmTerminator >> terminateWith: aTerminator
+RxmTerminator >> terminateWith: aTerminator
 [
-	"Branch terminators are never supposed to change.	Make sure this is the case."
-aTerminator ~~ self	ifTrue: [ RxParser signalCompilationException: 'internal matcher build error - wrong terminator' ]
-]
+	"Branch terminators are never supposed to change.
+	Make sure this is the case."
 
-Metaclass
-	name: #RxmTerminator;
-	instanceVariables: #().
+	aTerminator ~~ self
+		ifTrue: [ RxParser signalCompilationException: 'internal matcher build error - wrong terminator' ]
+]
 

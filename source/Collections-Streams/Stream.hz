@@ -1,169 +1,215 @@
-Class
-	name: #Stream;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+Stream
 	package: #'Collections-Streams'.
 
-Class Stream >> << items
+Stream >> << items
 [
-items putOn: self.^ self
+	items putOn: self.
+	^ self
 ]
 
-Class Stream >> atEnd
+Stream >> atEnd
 [
 	"Answer whether the receiver can access any more objects."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class Stream >> basicNext
+Stream >> basicNext
 [
-^ self next
+	^ self next
 ]
 
-Class Stream >> basicNextPut: anObject
+Stream >> basicNext: anAmount putAll: aCollection startingAt: startIndex
 [
-^ self nextPut: anObject
+	^ self next: anAmount putAll: aCollection startingAt: startIndex
 ]
 
-Class Stream >> basicNextPutAll: aCollection
+Stream >> basicNextPut: anObject
 [
-^ self nextPutAll: aCollection
+	^ self nextPut: anObject
 ]
 
-Class Stream >> binary
+Stream >> basicNextPutAll: aCollection
+[
+	^ self nextPutAll: aCollection
+]
+
+Stream >> binary
 [
 	"do nothing"
-^ self
+
+	^ self
 ]
 
-Class Stream >> close
+Stream >> close
 [
-	"Presumably sets the status of the receiver to be closed. This message does 	nothing at this level, but is included for FileStream compatibility."
-^ self
+	"Presumably sets the status of the receiver to be closed. This message does 
+	nothing at this level, but is included for FileStream compatibility."
+
+	^ self
 ]
 
-Class Stream >> closed
+Stream >> closed
 [
-^ false
+	^ false
 ]
 
-Class Stream >> contents
+Stream >> contents
 [
 	"Answer all of the contents of the receiver."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class Stream >> do: aBlock
+Stream >> do: aBlock
 [
 	"Evaluate aBlock for each of the objects accessible by receiver."
-[ self atEnd ] whileFalse: [ aBlock value: self next ]
+
+	[ self atEnd ] whileFalse: [ aBlock value: self next ]
 ]
 
-Class Stream >> flush
+Stream >> flush
 [
 	"Do nothing by default"
 
+	
 ]
 
-Class Stream >> isBinary
+Stream >> isBinary
 [
-^ false
+	^ false
 ]
 
-Class Stream >> isStream
+Stream >> isStream
 [
 	"Return true if the receiver responds to the stream protocol"
-^ true
+
+	^ true
 ]
 
-Class Stream >> localName
+Stream >> localName
 [
-^ 'a stream'
+	^ 'a stream'
 ]
 
-Class Stream >> next
+Stream >> next
 [
 	"Answer the next object accessible by the receiver."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class Stream >> next: anInteger
+Stream >> next: anInteger
 [
 	"Answer the next anInteger number of objects accessible by the receiver."
-| aCollection |aCollection := OrderedCollection new.anInteger timesRepeat: [ aCollection addLast: self next ].^ aCollection
+
+	| aCollection |
+	aCollection := OrderedCollection new.
+	anInteger timesRepeat: [ aCollection addLast: self next ].
+	^ aCollection
 ]
 
-Class Stream >> next: anInteger put: anObject
+Stream >> next: anInteger put: anObject
 [
-	"Make anObject be the next anInteger number of objects accessible by the 	receiver. Answer anObject."
-anInteger timesRepeat: [ self nextPut: anObject ].^ anObject
+	"Make anObject be the next anInteger number of objects accessible by the 
+	receiver. Answer anObject."
+
+	anInteger timesRepeat: [ self nextPut: anObject ].
+	^ anObject
 ]
 
-Class Stream >> nextMatchAll: aColl
+Stream >> next: anInteger putAll: aCollection startingAt: startIndex
 [
-	"Answer true if next N objects are the ones in aColl,     else false.  Advance stream of true, leave as was if false."
-| save |save := self position.aColl	do: [ :each | 		self next = each			ifFalse: [ 				self position: save.				^ false ] ].^ true
+	"Store the next anInteger elements from the given collection."
+
+	(startIndex = 1 and: [ anInteger = aCollection size ])
+		ifTrue: [ ^ self nextPutAll: aCollection ].
+	^ self nextPutAll: (aCollection copyFrom: startIndex to: startIndex + anInteger - 1)
 ]
 
-Class Stream >> nextMatchFor: anObject
+Stream >> nextMatchAll: aColl
 [
-	"Gobble the next object and answer whether it is equal to the argument, 	anObject."
-^ anObject = self next
+	"Answer true if next N objects are the ones in aColl,
+     else false.  Advance stream of true, leave as was if false."
+
+	| save |
+	save := self position.
+	aColl do: [ :each | self next = each
+				ifFalse: [ self position: save.
+					^ false ] ].
+	^ true
 ]
 
-Class Stream >> nextPut: anObject
+Stream >> nextMatchFor: anObject
 [
-	"Insert the argument, anObject, as the next object accessible by the 	receiver. Answer anObject."
-self subclassResponsibility
+	"Gobble the next object and answer whether it is equal to the argument, 
+	anObject."
+
+	^ anObject = self next
 ]
 
-Class Stream >> nextPutAll: aCollection
+Stream >> nextPut: anObject
 [
-	"Append the elements of aCollection to the sequence of objects accessible 	by the receiver. Answer aCollection."
-aCollection do: [ :v | self nextPut: v ].^ aCollection
+	"Insert the argument, anObject, as the next object accessible by the 
+	receiver. Answer anObject."
+
+	self subclassResponsibility
 ]
 
-Class Stream >> nextWordsPutAll: aCollection
+Stream >> nextPutAll: aCollection
 [
-	"Write the argument a word-like object in big endian format on the receiver.	May be used to write other than plain word-like objects (such as ColorArray)."
-aCollection class isPointers | aCollection class isWords not	ifTrue: [ ^ self error: aCollection class name , ' is not word-like' ].1 to: aCollection basicSize do: [ :i | self nextNumber: 4 put: (aCollection basicAt: i) ].^ aCollection
+	"Append the elements of aCollection to the sequence of objects accessible 
+	by the receiver. Answer aCollection."
+
+	aCollection do: [ :v | self nextPut: v ].
+	^ aCollection
 ]
 
-Class Stream >> openReadOnly
+Stream >> nextWordsPutAll: aCollection
 [
-^ self
+	"Write the argument a word-like object in big endian format on the receiver.
+	May be used to write other than plain word-like objects (such as ColorArray)."
+
+	aCollection class isPointers | aCollection class isWords not
+		ifTrue: [ ^ self error: aCollection class name , ' is not word-like' ].
+	1 to: aCollection basicSize do: [ :i | self nextNumber: 4 put: (aCollection basicAt: i) ].
+	^ aCollection
 ]
 
-Class Stream >> print: anObject
+Stream >> openReadOnly
+[
+	^ self
+]
+
+Stream >> print: anObject
 [
 	"Have anObject print itself on the receiver."
-anObject printOn: self
+
+	anObject printOn: self
 ]
 
-Class Stream >> readOnly
+Stream >> readOnly
 [
-^ self
+	^ self
 ]
 
-Class Stream >> upToEnd
+Stream >> upToEnd
 [
 	"answer the remaining elements in the string"
-| elements |elements := OrderedCollection new.[ self atEnd ] whileFalse: [ elements add: self next ].^ elements
+
+	| elements |
+	elements := OrderedCollection new.
+	[ self atEnd ] whileFalse: [ elements add: self next ].
+	^ elements
 ]
 
-Class Stream >> write: encodedObject
+Stream >> write: encodedObject
 [
-^ encodedObject putOn: self
+	^ encodedObject putOn: self
 ]
 
-Metaclass
-	name: #Stream;
-	instanceVariables: #().
-
-Metaclass Stream >> new
+Stream class >> new
 [
-self error: 'Streams are created with on: and with:'
+	self error: 'Streams are created with on: and with:'
 ]
 

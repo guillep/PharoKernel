@@ -1,39 +1,36 @@
-Class
-	name: #RxsRegex;
-	superclass: #ClassRxsNode;
-	instanceSpecification: #(#pointers #words );
+RxsRegex
+	superclass: #RxsNode;
 	instanceVariables: #(#branch #regex );
-	classVariables: #();
 	package: #'Regex-Core'.
 
-Class RxsRegex >> branch
+RxsRegex >> branch
 [
-^ branch
+	^ branch
 ]
 
-Class RxsRegex >> dispatchTo: aMatcher
+RxsRegex >> dispatchTo: aMatcher
 [
-	"Inform the matcher of the kind of the node, and it	will do whatever it has to."
-^ aMatcher syntaxRegex: self
+	"Inform the matcher of the kind of the node, and it
+	will do whatever it has to."
+
+	^ aMatcher syntaxRegex: self
 ]
 
-Class RxsRegex >> initializeBranch: aBranch regex: aRegex
+RxsRegex >> initializeBranch: aBranch regex: aRegex
 [
 	"See class comment for instance variable description."
-branch := aBranch.regex := aRegex
+
+	branch := aBranch.
+	regex := aRegex
 ]
 
-Class RxsRegex >> isNullable
+RxsRegex >> isNullable
 [
-^ branch isNullable or: [ regex notNil and: [ regex isNullable ] ]
+	^ branch isNullable or: [ regex notNil and: [ regex isNullable ] ]
 ]
 
-Class RxsRegex >> regex
+RxsRegex >> regex
 [
-^ regex
+	^ regex
 ]
-
-Metaclass
-	name: #RxsRegex;
-	instanceVariables: #().
 

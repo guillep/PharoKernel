@@ -1,38 +1,36 @@
-Class
-	name: #FLLargeIdentityHashedCollection;
-	superclass: #ClassCollection;
-	instanceSpecification: #(#pointers #words );
+FLLargeIdentityHashedCollection
+	superclass: #Collection;
 	instanceVariables: #(#tally #tallies );
 	classVariables: #(#PermutationMap );
 	package: #'Fuel-Collections'.
 
-Class FLLargeIdentityHashedCollection >> initialize
+FLLargeIdentityHashedCollection >> initialize
 [
-tally := 0.tallies := Array new: 4096 withAll: 0
+	tally := 0.
+	tallies := Array new: 4096 withAll: 0
 ]
 
-Class FLLargeIdentityHashedCollection >> postCopy
+FLLargeIdentityHashedCollection >> postCopy
 [
-tallies := tallies copy
+	tallies := tallies copy
 ]
 
-Class FLLargeIdentityHashedCollection >> size
+FLLargeIdentityHashedCollection >> size
 [
-^ tally
+	^ tally
 ]
 
-Metaclass
-	name: #FLLargeIdentityHashedCollection;
-	instanceVariables: #().
-
-Metaclass FLLargeIdentityHashedCollection >> initialize
+FLLargeIdentityHashedCollection class >> initialize
 [
-| rng |rng := Random seed: 664399324.PermutationMap := (0 to: 4095) asArray shuffleBy: rng
+	| rng |
+	rng := Random seed: 664399324.
+	PermutationMap := (0 to: 4095) asArray shuffleBy: rng
 ]
 
-Metaclass FLLargeIdentityHashedCollection >> permuteHash: anInteger
+FLLargeIdentityHashedCollection class >> permuteHash: anInteger
 [
 	"Return an integer between 1 and 4096 when the argument is between 1 and 4096."
-^ PermutationMap at: anInteger
+
+	^ PermutationMap at: anInteger
 ]
 

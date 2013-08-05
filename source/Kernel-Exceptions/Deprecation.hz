@@ -1,107 +1,131 @@
-Class
-	name: #Deprecation;
-	superclass: #ClassWarning;
-	instanceSpecification: #(#pointers #words );
+Deprecation
+	superclass: #Warning;
 	instanceVariables: #(#methodReference #explanationString #deprecationDate #versionString );
 	classVariables: #(#Log #RaiseWarning #ShowWarning );
 	package: #'Kernel-Exceptions'.
 
-Class Deprecation >> = anObject
+Deprecation >> = anObject
 [
-^ self class == anObject class	and: [ 		methodReference = anObject methodReference			and: [ methodReference ifNil: [ explanationString = anObject explanationString ] ifNotNil: [ true ] ] ]
+	^ self class == anObject class
+		and: [ methodReference = anObject methodReference
+				and: [ methodReference ifNil: [ explanationString = anObject explanationString ] ifNotNil: [ true ] ] ]
 ]
 
-Class Deprecation >> defaultAction
+Deprecation >> defaultAction
 [
-Log ifNotNil: [ :log | log add: self ].self showWarning	ifTrue: [ 		Transcript			nextPutAll: self messageText;			cr;			flush ].self raiseWarning	ifTrue: [ super defaultAction ]
+	Log ifNotNil: [ :log | log add: self ].
+	self showWarning
+		ifTrue: [ Transcript
+				nextPutAll: self messageText;
+				cr;
+				flush ].
+	self raiseWarning
+		ifTrue: [ super defaultAction ]
 ]
 
-Class Deprecation >> deprecationDate
+Deprecation >> deprecationDate
 [
 	"Answer the value of deprecationDate"
-^ deprecationDate
+
+	^ deprecationDate
 ]
 
-Class Deprecation >> explanationString
+Deprecation >> explanationString
 [
 	"Answer the value of explanationString"
-^ explanationString
+
+	^ explanationString
 ]
 
-Class Deprecation >> hash
+Deprecation >> hash
 [
-^ (methodReference ifNil: [ explanationString ]) hash
+	^ (methodReference ifNil: [ explanationString ]) hash
 ]
 
-Class Deprecation >> messageText
+Deprecation >> messageText
 [
 	"Return an exception's message text."
-^ 'The method ' , methodReference fullName	,		' has been deprecated.' , explanationString
+
+	^ 'The method ' , methodReference fullName
+		,
+			' has been deprecated.' , explanationString
 ]
 
-Class Deprecation >> method: aCompiledMethod explanation: anExplanationString on: dateString in: aVersionString
+Deprecation >> method: aCompiledMethod explanation: anExplanationString on: dateString in: aVersionString
 [
-methodReference := aCompiledMethod methodReference.explanationString := anExplanationString.deprecationDate := dateString.versionString := aVersionString
+	methodReference := aCompiledMethod methodReference.
+	explanationString := anExplanationString.
+	deprecationDate := dateString.
+	versionString := aVersionString
 ]
 
-Class Deprecation >> methodReference
+Deprecation >> methodReference
 [
 	"Answer the value of methodReference"
-^ methodReference
+
+	^ methodReference
 ]
 
-Class Deprecation >> raiseWarning
+Deprecation >> raiseWarning
 [
-^ self class raiseWarning
+	^ self class raiseWarning
 ]
 
-Class Deprecation >> showWarning
+Deprecation >> showWarning
 [
-^ self class showWarning
+	^ self class showWarning
 ]
 
-Class Deprecation >> versionString
+Deprecation >> versionString
 [
 	"Answer the value of versionString"
-^ versionString
+
+	^ versionString
 ]
 
-Metaclass
-	name: #Deprecation;
-	instanceVariables: #().
-
-Metaclass Deprecation >> deprecationsWhile: aBlock
+Deprecation class >> deprecationsWhile: aBlock
 [
-| oldLog result |oldLog := Log.Log := Set new.aBlock value.result := Log.oldLog ifNotNil: [ oldLog addAll: result ].Log := oldLog.^ result
+	| oldLog result |
+	oldLog := Log.
+	Log := Set new.
+	aBlock value.
+	result := Log.
+	oldLog ifNotNil: [ oldLog addAll: result ].
+	Log := oldLog.
+	^ result
 ]
 
-Metaclass Deprecation >> initialize
+Deprecation class >> initialize
 [
-Log := nil
+	Log := nil
 ]
 
-Metaclass Deprecation >> method: aCompiledMethod explanation: anExplanationString on: dateString in: aVersionString
+Deprecation class >> method: aCompiledMethod explanation: anExplanationString on: dateString in: aVersionString
 [
-^ self new	method: aCompiledMethod	explanation: anExplanationString	on: dateString	in: aVersionString
+	^ self new
+		method: aCompiledMethod
+		explanation: anExplanationString
+		on: dateString
+		in: aVersionString
 ]
 
-Metaclass Deprecation >> raiseWarning
+Deprecation class >> raiseWarning
 [
-^ RaiseWarning ifNil: [ RaiseWarning := true ]
+	^ RaiseWarning ifNil: [ RaiseWarning := true ]
 ]
 
-Metaclass Deprecation >> raiseWarning: aBoolean
+Deprecation class >> raiseWarning: aBoolean
 [
-RaiseWarning := aBoolean
+	RaiseWarning := aBoolean
 ]
 
-Metaclass Deprecation >> showWarning
+Deprecation class >> showWarning
 [
-^ ShowWarning ifNil: [ ShowWarning := true ]
+	^ ShowWarning ifNil: [ ShowWarning := true ]
 ]
 
-Metaclass Deprecation >> showWarning: aBoolean
+Deprecation class >> showWarning: aBoolean
 [
-ShowWarning := aBoolean
+	ShowWarning := aBoolean
 ]
 

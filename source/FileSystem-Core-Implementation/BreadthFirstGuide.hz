@@ -1,22 +1,18 @@
-Class
-	name: #BreadthFirstGuide;
-	superclass: #ClassFileSystemGuide;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+BreadthFirstGuide
+	superclass: #FileSystemGuide;
 	package: #'FileSystem-Core-Implementation'.
 
-Class BreadthFirstGuide >> show: aReference
+BreadthFirstGuide >> show: aReference
 [
-self push: aReference entry.self whileNotDoneDo: [ self visitNextEntry: self top ]
+	self push: aReference entry.
+	self whileNotDoneDo: [ self visitNextEntry: self top ]
 ]
 
-Class BreadthFirstGuide >> visitNextEntry: entry
+BreadthFirstGuide >> visitNextEntry: entry
 [
-entry isFile	ifTrue: [ ^ visitor visitFile: entry ].visitor visitDirectory: entry.self pushAll: entry reference entries
+	entry isFile
+		ifTrue: [ ^ visitor visitFile: entry ].
+	visitor visitDirectory: entry.
+	self pushAll: entry reference entries
 ]
-
-Metaclass
-	name: #BreadthFirstGuide;
-	instanceVariables: #().
 

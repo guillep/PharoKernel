@@ -1,27 +1,23 @@
-Class
-	name: #FLSimpleCollectionCluster;
-	superclass: #ClassFLAbstractCollectionCluster;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+FLSimpleCollectionCluster
+	superclass: #FLAbstractCollectionCluster;
 	package: #'Fuel-Clusters-Optionals'.
 
-Class FLSimpleCollectionCluster >> materializeReferencesOf: anObject with: aDecoder
+FLSimpleCollectionCluster >> materializeReferencesOf: anObject with: aDecoder
 [
-aDecoder nextEncodedPositiveInteger timesRepeat: [ anObject add: aDecoder nextEncodedReference ]	"anObject size"
+	aDecoder nextEncodedPositiveInteger timesRepeat: [ anObject add: aDecoder nextEncodedReference ]	"anObject size"
 ]
 
-Class FLSimpleCollectionCluster >> referencesOf: anObject do: aBlock
+FLSimpleCollectionCluster >> referencesOf: anObject do: aBlock
 [
-aBlock value: anObject size.anObject do: [ :each | aBlock value: each ]
+	aBlock value: anObject size.
+	anObject do: [ :each | aBlock value: each ]
 ]
 
-Class FLSimpleCollectionCluster >> serializeReferencesOf: anObject with: anEncoder
+FLSimpleCollectionCluster >> serializeReferencesOf: anObject with: anEncoder
 [
-anEncoder encodePositiveInteger: anObject size.anObject do: [ :each | anEncoder encodeReferenceTo: each ]
+	| refs |
+	refs := self references at: anObject ifAbsent: [ ^ self ].
+	anEncoder encodePositiveInteger: refs first.
+	refs allButFirst do: [ :each | anEncoder encodeReferenceTo: each ]
 ]
-
-Metaclass
-	name: #FLSimpleCollectionCluster;
-	instanceVariables: #().
 

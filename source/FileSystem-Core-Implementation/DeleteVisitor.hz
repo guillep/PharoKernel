@@ -1,27 +1,19 @@
-Class
-	name: #DeleteVisitor;
-	superclass: #ClassFileSystemVisitor;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+DeleteVisitor
+	superclass: #FileSystemVisitor;
 	package: #'FileSystem-Core-Implementation'.
 
-Class DeleteVisitor >> visit: aReference
+DeleteVisitor >> visit: aReference
 [
-PostorderGuide show: aReference to: self
+	PostorderGuide show: aReference to: self
 ]
 
-Class DeleteVisitor >> visitReference: anEntry
+DeleteVisitor >> visitReference: anEntry
 [
-anEntry reference delete
+	anEntry reference delete
 ]
 
-Metaclass
-	name: #DeleteVisitor;
-	instanceVariables: #().
-
-Metaclass DeleteVisitor >> delete: aReference
+DeleteVisitor class >> delete: aReference
 [
-^ self new visit: aReference
+	^ self new visit: aReference
 ]
 

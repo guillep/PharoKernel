@@ -1,48 +1,56 @@
-Class
-	name: #RxmBranch;
-	superclass: #ClassRxmLink;
-	instanceSpecification: #(#pointers #words );
+RxmBranch
+	superclass: #RxmLink;
 	instanceVariables: #(#loopback #alternative );
-	classVariables: #();
 	package: #'Regex-Core'.
 
-Class RxmBranch >> alternative: aBranch
+RxmBranch >> alternative: aBranch
 [
 	"See class comment for instance variable description."
-alternative := aBranch
+
+	alternative := aBranch
 ]
 
-Class RxmBranch >> beLoopback
+RxmBranch >> beLoopback
 [
 	"See class comment for instance variable description."
-loopback := true
+
+	loopback := true
 ]
 
-Class RxmBranch >> initialize
+RxmBranch >> initialize
 [
 	"See class comment for instance variable description."
-super initialize.loopback := false
+
+	super initialize.
+	loopback := false
 ]
 
-Class RxmBranch >> matchAgainst: aMatcher
+RxmBranch >> matchAgainst: aMatcher
 [
 	"Match either `next' or `alternative'. Fail if the alternative is nil."
-^ (next matchAgainst: aMatcher) or: [ alternative notNil and: [ alternative matchAgainst: aMatcher ] ]
+
+	^ (next matchAgainst: aMatcher) or: [ alternative notNil and: [ alternative matchAgainst: aMatcher ] ]
 ]
 
-Class RxmBranch >> pointTailTo: aNode
+RxmBranch >> pointTailTo: aNode
 [
 	"See superclass for explanations."
-loopback	ifTrue: [ 		alternative == nil			ifTrue: [ alternative := aNode ]			ifFalse: [ alternative pointTailTo: aNode ] ]	ifFalse: [ super pointTailTo: aNode ]
+
+	loopback
+		ifTrue: [ alternative == nil
+				ifTrue: [ alternative := aNode ]
+				ifFalse: [ alternative pointTailTo: aNode ] ]
+		ifFalse: [ super pointTailTo: aNode ]
 ]
 
-Class RxmBranch >> terminateWith: aNode
+RxmBranch >> terminateWith: aNode
 [
 	"See superclass for explanations."
-loopback	ifTrue: [ 		alternative == nil			ifTrue: [ alternative := aNode ]			ifFalse: [ alternative terminateWith: aNode ] ]	ifFalse: [ super terminateWith: aNode ]
-]
 
-Metaclass
-	name: #RxmBranch;
-	instanceVariables: #().
+	loopback
+		ifTrue: [ alternative == nil
+				ifTrue: [ alternative := aNode ]
+				ifFalse: [ alternative terminateWith: aNode ] ]
+		ifFalse: [ super terminateWith: aNode ]
+]
 

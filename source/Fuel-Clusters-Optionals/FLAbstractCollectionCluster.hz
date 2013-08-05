@@ -1,43 +1,48 @@
-Class
-	name: #FLAbstractCollectionCluster;
-	superclass: #ClassFLObjectCluster;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+FLAbstractCollectionCluster
+	superclass: #FLObjectCluster;
 	package: #'Fuel-Clusters-Optionals'.
 
-Class FLAbstractCollectionCluster >> afterMaterializationStepWith: aDecoder
+FLAbstractCollectionCluster >> afterMaterializationStepWith: aDecoder
 [
-objects do: [ :anObject | anObject fuelAfterMaterialization ]
+	objects do: [ :anObject | anObject fuelAfterMaterialization ]
 ]
 
-Class FLAbstractCollectionCluster >> materializeInstanceWith: aDecoder
+FLAbstractCollectionCluster >> materializeInstanceWith: aDecoder
 [
-^ theClass new: aDecoder nextEncodedPositiveInteger
+	^ theClass new: aDecoder nextEncodedPositiveInteger
 ]
 
-Class FLAbstractCollectionCluster >> materializeReferencesStepWith: aDecoder
+FLAbstractCollectionCluster >> materializeReferencesOf: anObject with: aDecoder
 [
-objects do: [ :anObject | self materializeReferencesOf: anObject with: aDecoder ]
+	"Hook method"
+
+	self subclassResponsibility
 ]
 
-Class FLAbstractCollectionCluster >> serializeInstance: anObject with: anEncoder
+FLAbstractCollectionCluster >> materializeReferencesStepWith: aDecoder
 [
-anEncoder encodePositiveInteger: anObject size
+	objects do: [ :anObject | self materializeReferencesOf: anObject with: aDecoder ]
 ]
 
-Class FLAbstractCollectionCluster >> serializeReferencesStepWith: anEncoder
+FLAbstractCollectionCluster >> serializeInstance: anObject with: anEncoder
 [
-objects do: [ :anObject | self serializeReferencesOf: anObject with: anEncoder ]
+	anEncoder encodePositiveInteger: anObject size
 ]
 
-Metaclass
-	name: #FLAbstractCollectionCluster;
-	instanceVariables: #().
+FLAbstractCollectionCluster >> serializeReferencesOf: anObject with: anEncoder
+[
+	^ self subclassResponsibility
+]
 
-Metaclass FLAbstractCollectionCluster >> clusterBucketIn: aClusterization
+FLAbstractCollectionCluster >> serializeReferencesStepWith: anEncoder
+[
+	objects do: [ :anObject | self serializeReferencesOf: anObject with: anEncoder ]
+]
+
+FLAbstractCollectionCluster class >> clusterBucketIn: aClusterization
 [
 	"During the materialization references step, we may send, for example, #hash to the newly materialized objects. #hash can be implemented delegating to OTHER objects which may not have been materialized yet (I mean, its references may not have been set yet). So in this case, we need to let these clusters at the end."
-^ aClusterization postBaselevelBucket
+
+	^ aClusterization postBaselevelBucket
 ]
 

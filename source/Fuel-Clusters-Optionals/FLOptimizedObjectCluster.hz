@@ -1,44 +1,38 @@
-Class
-	name: #FLOptimizedObjectCluster;
-	superclass: #ClassFLIteratingCluster;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+FLOptimizedObjectCluster
+	superclass: #FLIteratingCluster;
 	package: #'Fuel-Clusters-Optionals'.
 
-Class FLOptimizedObjectCluster >> materializeReferencesOf: anObject with: aDecoder
+FLOptimizedObjectCluster >> materializeReferencesOf: anObject with: aDecoder
 [
 	"Hook method"
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FLOptimizedObjectCluster >> materializeReferencesStepWith: aDecoder
+FLOptimizedObjectCluster >> materializeReferencesStepWith: aDecoder
 [
-objects do: [ :anObject | self materializeReferencesOf: anObject with: aDecoder ]
+	objects do: [ :anObject | self materializeReferencesOf: anObject with: aDecoder ]
 ]
 
-Class FLOptimizedObjectCluster >> serializeInstancesStepWith: anEncoder
+FLOptimizedObjectCluster >> serializeInstancesStepWith: anEncoder
 [
 	"Do nothing. I know my objects have nothing to serialize in this step."
 
+	
 ]
 
-Class FLOptimizedObjectCluster >> serializeReferencesOf: anObject with: anEncoder
+FLOptimizedObjectCluster >> serializeReferencesOf: anObject with: anEncoder
 [
-^ self subclassResponsibility
+	(self references at: anObject ifAbsent: [ ^ self ]) do: [ :value | anEncoder encodeReferenceTo: value ]
 ]
 
-Class FLOptimizedObjectCluster >> serializeReferencesStepWith: anEncoder
+FLOptimizedObjectCluster >> serializeReferencesStepWith: anEncoder
 [
-objects do: [ :anObject | self serializeReferencesOf: anObject with: anEncoder ]
+	objects do: [ :anObject | self serializeReferencesOf: anObject with: anEncoder ]
 ]
 
-Metaclass
-	name: #FLOptimizedObjectCluster;
-	instanceVariables: #().
-
-Metaclass FLOptimizedObjectCluster >> clusterBucketIn: aClusterization
+FLOptimizedObjectCluster class >> clusterBucketIn: aClusterization
 [
-^ aClusterization baselevelBucket
+	^ aClusterization baselevelBucket
 ]
 

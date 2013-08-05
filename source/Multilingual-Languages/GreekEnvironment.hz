@@ -1,28 +1,24 @@
-Class
-	name: #GreekEnvironment;
-	superclass: #ClassLanguageEnvironment;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+GreekEnvironment
+	superclass: #LanguageEnvironment;
 	package: #'Multilingual-Languages'.
 
-Metaclass
-	name: #GreekEnvironment;
-	instanceVariables: #().
-
-Metaclass GreekEnvironment >> leadingChar
+GreekEnvironment class >> leadingChar
 [
-^ 0
+	^ 0
 ]
 
-Metaclass GreekEnvironment >> supportedLanguages
+GreekEnvironment class >> supportedLanguages
 [
-	"Return the languages that this class supports. 	Any translations for those languages will use this class as their environment."
-^ #('el')
+	"Return the languages that this class supports. 
+	Any translations for those languages will use this class as their environment."
+
+	^ #('el')
 ]
 
-Metaclass GreekEnvironment >> systemConverterClass
+GreekEnvironment class >> systemConverterClass
 [
-OSPlatform isWin32	ifTrue: [ ^ CP1253TextConverter ].^ ISO88597TextConverter
+	OSPlatform isWin32
+		ifTrue: [ ^ CP1253TextConverter ].
+	^ ISO88597TextConverter
 ]
 

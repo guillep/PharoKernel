@@ -1,28 +1,31 @@
-Class
-	name: #MonitorDelay;
-	superclass: #ClassDelay;
-	instanceSpecification: #(#pointers #words );
+MonitorDelay
+	superclass: #Delay;
 	instanceVariables: #(#monitor #queue );
-	classVariables: #();
 	package: #'Kernel-Processes'.
 
-Class MonitorDelay >> setDelay: anInteger forSemaphore: aSemaphore monitor: aMonitor queue: anOrderedCollection
+MonitorDelay >> setDelay: anInteger forSemaphore: aSemaphore monitor: aMonitor queue: anOrderedCollection
 [
-monitor := aMonitor.queue := anOrderedCollection.self setDelay: anInteger forSemaphore: aSemaphore
+	monitor := aMonitor.
+	queue := anOrderedCollection.
+	self setDelay: anInteger forSemaphore: aSemaphore
 ]
 
-Class MonitorDelay >> signalWaitingProcess
+MonitorDelay >> signalWaitingProcess
 [
 	"The delay time has elapsed; signal the waiting process."
-beingWaitedOn := false.monitor signalLock: delaySemaphore inQueue: queue
+
+	beingWaitedOn := false.
+	monitor signalLock: delaySemaphore inQueue: queue
 ]
 
-Metaclass
-	name: #MonitorDelay;
-	instanceVariables: #().
-
-Metaclass MonitorDelay >> signalLock: aSemaphore afterMSecs: anInteger inMonitor: aMonitor queue: anOrderedCollection
+MonitorDelay class >> signalLock: aSemaphore afterMSecs: anInteger inMonitor: aMonitor queue: anOrderedCollection
 [
-anInteger < 0	ifTrue: [ self error: 'delay times cannot be negative' ].^ (self new	setDelay: anInteger	forSemaphore: aSemaphore	monitor: aMonitor	queue: anOrderedCollection) schedule
+	anInteger < 0
+		ifTrue: [ self error: 'delay times cannot be negative' ].
+	^ (self new
+		setDelay: anInteger
+		forSemaphore: aSemaphore
+		monitor: aMonitor
+		queue: anOrderedCollection) schedule
 ]
 

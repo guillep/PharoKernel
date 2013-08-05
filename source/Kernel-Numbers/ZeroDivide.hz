@@ -1,40 +1,38 @@
-Class
-	name: #ZeroDivide;
-	superclass: #ClassArithmeticError;
-	instanceSpecification: #(#pointers #words );
+ZeroDivide
+	superclass: #ArithmeticError;
 	instanceVariables: #(#dividend );
-	classVariables: #();
 	package: #'Kernel-Numbers'.
 
-Class ZeroDivide >> dividend
+ZeroDivide >> dividend
 [
 	"Answer the number that was being divided by zero."
-^ dividend
+
+	^ dividend
 ]
 
-Class ZeroDivide >> dividend: argument
+ZeroDivide >> dividend: argument
 [
 	"Specify the number that was being divided by zero."
-dividend := argument
+
+	dividend := argument
 ]
 
-Class ZeroDivide >> isResumable
+ZeroDivide >> isResumable
 [
 	"Determine whether an exception is resumable."
-^ true
+
+	^ true
 ]
 
-Metaclass
-	name: #ZeroDivide;
-	instanceVariables: #().
-
-Metaclass ZeroDivide >> dividend: argument
+ZeroDivide class >> dividend: argument
 [
-^ self new	dividend: argument;	yourself
+	^ self new
+		dividend: argument;
+		yourself
 ]
 
-Metaclass ZeroDivide >> signalWithDividend: aDividend
+ZeroDivide class >> signalWithDividend: aDividend
 [
-^ (self dividend: aDividend) signal
+	^ (self dividend: aDividend) signal
 ]
 

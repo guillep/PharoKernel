@@ -1,42 +1,68 @@
-Class
-	name: #ZipStore;
-	superclass: #ClassMemoryStore;
-	instanceSpecification: #(#pointers #words );
+ZipStore
+	superclass: #MemoryStore;
 	instanceVariables: #(#reference );
-	classVariables: #();
 	package: #'FileSystem-Zip'.
 
-Class ZipStore >> close
+ZipStore >> close
 [
-| archive fs stream |archive := ZipArchive new.fs := FileSystem store: self.fs root allChildren	do: [ :each | 		each isFile			ifTrue: [ each readStreamDo: [ :output | archive addString: output contents as: each path printString ] ] ].archive	writeTo: (stream := WriteStream on: ByteArray new);	close.self reference writeStreamDo: [ :output | output nextPutAll: stream contents ]
+	| archive fs stream |
+	archive := ZipArchive new.
+	fs := FileSystem store: self.
+	fs root allChildren
+		do: [ :each | each isFile
+				ifTrue: [ each readStreamDo: [ :output | archive addString: output contents as: each path printString ] ] ].
+	archive
+		writeTo: (stream := WriteStream on: ByteArray new);
+		close.
+	self reference writeStreamDo: [ :output | output nextPutAll: stream contents ]
 ]
 
-Class ZipStore >> initializeWithReference: aReference
+ZipStore >> initializeWithReference: aReference
 [
-self initialize.reference := aReference
+	self initialize.
+	reference := aReference
 ]
 
-Class ZipStore >> open
+ZipStore >> open
 [
-| archive output |self reference exists	ifFalse: [ ^ self ].archive := ZipArchive new.self reference	readStreamDo: [ :input | 		archive readFrom: input contents readStream.		archive members			do: [ :member | 				| path |				path := self pathFromMember: member.				member isDirectory					ifTrue: [ self ensureDirectory: path ]					ifFalse: [ 						self ensureDirectory: path parent.						self createFile: path.						self							replaceFile: path							in: [ :bytes | 								output := bytes writeStream.								member rewindData.								member copyRawDataTo: output.								output contents ] ] ] ].^ self
+	| archive output |
+	self reference exists
+		ifFalse: [ ^ self ].
+	archive := ZipArchive new.
+	self reference
+		readStreamDo: [ :input | archive readFrom: input contents readStream.
+			archive members
+				do: [ :member | | path |
+					path := self pathFromMember: member.
+					member isDirectory
+						ifTrue: [ self ensureDirectory: path ]
+						ifFalse: [ self ensureDirectory: path parent.
+							self createFile: path.
+							self
+								replaceFile: path
+								in: [ :bytes | output := bytes writeStream.
+									member rewindData.
+									member copyRawDataTo: output.
+									output contents ] ] ] ].
+	^ self
 ]
 
-Class ZipStore >> pathFromMember: anArchiveMember
+ZipStore >> pathFromMember: anArchiveMember
 [
-| path |path := Path root resolve: anArchiveMember fileName.^ path basename isEmpty	ifTrue: [ path parent ]	ifFalse: [ path ]
+	| path |
+	path := Path root resolve: anArchiveMember fileName.
+	^ path basename isEmpty
+		ifTrue: [ path parent ]
+		ifFalse: [ path ]
 ]
 
-Class ZipStore >> reference
+ZipStore >> reference
 [
-^ reference
+	^ reference
 ]
 
-Metaclass
-	name: #ZipStore;
-	instanceVariables: #().
-
-Metaclass ZipStore >> reference: aReference
+ZipStore class >> reference: aReference
 [
-^ self basicNew initializeWithReference: aReference yourself
+	^ self basicNew initializeWithReference: aReference yourself
 ]
 

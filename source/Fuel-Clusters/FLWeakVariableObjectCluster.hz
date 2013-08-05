@@ -1,29 +1,24 @@
-Class
-	name: #FLWeakVariableObjectCluster;
-	superclass: #ClassFLVariableObjectCluster;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+FLWeakVariableObjectCluster
+	superclass: #FLVariableObjectCluster;
 	package: #'Fuel-Clusters'.
 
-Class FLWeakVariableObjectCluster >> clusterReferencesDo: aBlock
+FLWeakVariableObjectCluster >> clusterReferencesDo: aBlock
 [
 	"Ensures that nil could be encoded, later in references step."
-super clusterReferencesDo: aBlock.aBlock value: nil
+
+	super clusterReferencesDo: aBlock.
+	aBlock value: nil
 ]
 
-Class FLWeakVariableObjectCluster >> serializeReferencesVariablePartOf: anObject with: anEncoder
+FLWeakVariableObjectCluster >> serializeReferencesVariablePartOf: anObject with: anEncoder
 [
-1 to: anObject basicSize do: [ :index | anEncoder encodeWeakReferenceTo: (anObject basicAt: index) ]
+	1 to: anObject basicSize do: [ :index | anEncoder encodeWeakReferenceTo: (anObject basicAt: index) ]
 ]
 
-Class FLWeakVariableObjectCluster >> variablePartReferencesOf: anObject do: aBlock
+FLWeakVariableObjectCluster >> variablePartReferencesOf: anObject do: aBlock
 [
 	"Since the variable part of Weak classes are weak references, we should not do nothing here."
 
+	
 ]
-
-Metaclass
-	name: #FLWeakVariableObjectCluster;
-	instanceVariables: #().
 

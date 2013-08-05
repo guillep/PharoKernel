@@ -1,61 +1,66 @@
-Class
-	name: #MessageNotUnderstood;
-	superclass: #ClassError;
-	instanceSpecification: #(#pointers #words );
+MessageNotUnderstood
+	superclass: #Error;
 	instanceVariables: #(#message #receiver #reachedDefaultHandler );
-	classVariables: #();
 	package: #'Kernel-Methods'.
 
-Class MessageNotUnderstood >> defaultAction
+MessageNotUnderstood >> defaultAction
 [
-reachedDefaultHandler := true.super defaultAction
+	reachedDefaultHandler := true.
+	super defaultAction
 ]
 
-Class MessageNotUnderstood >> initialize
+MessageNotUnderstood >> initialize
 [
-super initialize.reachedDefaultHandler := false
+	super initialize.
+	reachedDefaultHandler := false
 ]
 
-Class MessageNotUnderstood >> isResumable
+MessageNotUnderstood >> isResumable
 [
 	"Determine whether an exception is resumable."
-^ true
+
+	^ true
 ]
 
-Class MessageNotUnderstood >> message
+MessageNotUnderstood >> message
 [
 	"Answer the selector and arguments of the message that failed."
-^ message
+
+	^ message
 ]
 
-Class MessageNotUnderstood >> message: aMessage
+MessageNotUnderstood >> message: aMessage
 [
-message := aMessage
+	message := aMessage
 ]
 
-Class MessageNotUnderstood >> messageText
+MessageNotUnderstood >> messageText
 [
 	"Return an exception's message text."
-^ messageText == nil	ifTrue: [ 		message == nil			ifTrue: [ super messageText ]			ifFalse: [ 				message lookupClass == UndefinedObject					ifTrue: [ 'receiver of "{1}" is nil' translated format: {(message selector asString)} ]					ifFalse: [ message lookupClass printString , '>>' , message selector asString ] ] ]	ifFalse: [ messageText ]
+
+	^ messageText == nil
+		ifTrue: [ message == nil
+				ifTrue: [ super messageText ]
+				ifFalse: [ message lookupClass == UndefinedObject
+						ifTrue: [ 'receiver of "{1}" is nil' translated format: {(message selector asString)} ]
+						ifFalse: [ message lookupClass printString , '>>' , message selector asString ] ] ]
+		ifFalse: [ messageText ]
 ]
 
-Class MessageNotUnderstood >> reachedDefaultHandler
+MessageNotUnderstood >> reachedDefaultHandler
 [
-^ reachedDefaultHandler
+	^ reachedDefaultHandler
 ]
 
-Class MessageNotUnderstood >> receiver
+MessageNotUnderstood >> receiver
 [
 	"Answer the receiver that did not understand the message"
-^ receiver
+
+	^ receiver
 ]
 
-Class MessageNotUnderstood >> receiver: obj
+MessageNotUnderstood >> receiver: obj
 [
-receiver := obj
+	receiver := obj
 ]
-
-Metaclass
-	name: #MessageNotUnderstood;
-	instanceVariables: #().
 

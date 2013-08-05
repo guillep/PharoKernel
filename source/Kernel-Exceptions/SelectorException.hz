@@ -1,46 +1,52 @@
-Class
-	name: #SelectorException;
-	superclass: #ClassError;
-	instanceSpecification: #(#pointers #words );
+SelectorException
+	superclass: #Error;
 	instanceVariables: #(#selector );
-	classVariables: #();
 	package: #'Kernel-Exceptions'.
 
-Class SelectorException >> messageText
+SelectorException >> messageText
 [
 	"Overwritten to initialiaze the message text to a standard text if it has not yet been set"
-^ messageText ifNil: [ messageText := self standardMessageText ]
+
+	^ messageText ifNil: [ messageText := self standardMessageText ]
 ]
 
-Class SelectorException >> selector
+SelectorException >> selector
 [
-^ selector
+	^ selector
 ]
 
-Class SelectorException >> selector: aSelector
+SelectorException >> selector: aSelector
 [
-selector := aSelector
+	selector := aSelector
 ]
 
-Class SelectorException >> standardMessageText
+SelectorException >> standardMessageText
 [
 	"Generate a standard textual description"
-^ String	streamContents: [ :stream | 		stream << 'for '.		stream print: self selector.		stream << ' in '.		stream print: self signaler class ]
+
+	^ String
+		streamContents: [ :stream | stream << 'for '.
+			stream print: self selector.
+			stream << ' in '.
+			stream print: self signaler class ]
 ]
 
-Metaclass
-	name: #SelectorException;
-	instanceVariables: #().
-
-Metaclass SelectorException >> signalFor: aSelector
+SelectorException class >> signalFor: aSelector
 [
 	"Create and signal an exception for aSelector in the default receiver."
-^ self new	selector: aSelector;	signal
+
+	^ self new
+		selector: aSelector;
+		signal
 ]
 
-Metaclass SelectorException >> signalFor: aSelector in: aReceiver
+SelectorException class >> signalFor: aSelector in: aReceiver
 [
 	"Create and signal an exception for aSelector in aReceiver."
-^ self new	object: aSelector;	signaler: aReceiver;	signal
+
+	^ self new
+		object: aSelector;
+		signaler: aReceiver;
+		signal
 ]
 

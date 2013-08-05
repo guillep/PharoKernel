@@ -1,33 +1,35 @@
-Class
-	name: #ClassCategoryReader;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+ClassCategoryReader
 	instanceVariables: #(#class #category #changeStamp );
-	classVariables: #();
 	package: #'Kernel-Classes'.
 
-Class ClassCategoryReader >> scanFrom: aStream
+ClassCategoryReader >> scanFrom: aStream
 [
 	"File in methods from the stream, aStream."
-| methodText |[ methodText := aStream nextChunkText.methodText size > 0 ]	whileTrue: [ 		class			compile: methodText			classified: category			withStamp: changeStamp			notifying: nil ]
+
+	| methodText |
+	[ methodText := aStream nextChunkText.
+	methodText size > 0 ]
+		whileTrue: [ class
+				compile: methodText
+				classified: category
+				withStamp: changeStamp
+				notifying: nil ]
 ]
 
-Class ClassCategoryReader >> setClass: aClass category: aCategory
+ClassCategoryReader >> setClass: aClass category: aCategory
 [
-^ self setClass: aClass category: aCategory changeStamp: String new
+	^ self setClass: aClass category: aCategory changeStamp: String new
 ]
 
-Class ClassCategoryReader >> setClass: aClass category: aCategory changeStamp: aString
+ClassCategoryReader >> setClass: aClass category: aCategory changeStamp: aString
 [
-class := aClass.category := aCategory.changeStamp := aString
+	class := aClass.
+	category := aCategory.
+	changeStamp := aString
 ]
 
-Class ClassCategoryReader >> theClass
+ClassCategoryReader >> theClass
 [
-^ class
+	^ class
 ]
-
-Metaclass
-	name: #ClassCategoryReader;
-	instanceVariables: #().
 

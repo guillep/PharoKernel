@@ -1,298 +1,406 @@
-Class
-	name: #Locale;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+Locale
 	instanceVariables: #(#id #shortDate #longDate #time #decimalSymbol #digitGrouping #currencySymbol #currencyNotation #measurement #offsetLocalToUTC #offsetVMToUTC #dstActive );
 	classVariables: #(#LocaleChangeListeners #KnownLocales #PlatformEncodings #LanguageSymbols #CurrentPlatform #Current #Activated );
 	package: #'System-Localization'.
 
-Class Locale >> determineLocale
+Locale >> determineLocale
 [
-self localeID: self determineLocaleID
+	self localeID: self determineLocaleID
 ]
 
-Class Locale >> determineLocaleID
+Locale >> determineLocaleID
 [
 	"Locale current determineLocaleID"
-| langCode isoLang countryCode isoCountry |langCode := self fetchISO2Language.isoLang := langCode ifNil: [ ^ self localeID ] ifNotNil: [ langCode ].countryCode := self primCountry.isoCountry := countryCode ifNil: [ ^ LocaleID isoLanguage: isoLang ] ifNotNil: [ countryCode ].^ LocaleID isoLanguage: isoLang isoCountry: isoCountry
+
+	| langCode isoLang countryCode isoCountry |
+	langCode := self fetchISO2Language.
+	isoLang := langCode ifNil: [ ^ self localeID ] ifNotNil: [ langCode ].
+	countryCode := self primCountry.
+	isoCountry := countryCode ifNil: [ ^ LocaleID isoLanguage: isoLang ] ifNotNil: [ countryCode ].
+	^ LocaleID isoLanguage: isoLang isoCountry: isoCountry
 ]
 
-Class Locale >> fetchISO2Language
+Locale >> fetchISO2Language
 [
 	"Locale current fetchISO2Language"
-| lang isoLang |lang := self primLanguage.lang ifNil: [ ^ nil ].lang := lang copyUpTo: 0 asCharacter.lang size = 2	ifTrue: [ ^ lang ].isoLang := ISOLanguageDefinition iso3LanguageDefinition: lang.^ isoLang ifNil: [ nil ] ifNotNil: [ isoLang iso2 ]
+
+	| lang isoLang |
+	lang := self primLanguage.
+	lang ifNil: [ ^ nil ].
+	lang := lang copyUpTo: 0 asCharacter.
+	lang size = 2
+		ifTrue: [ ^ lang ].
+	isoLang := ISOLanguageDefinition iso3LanguageDefinition: lang.
+	^ isoLang ifNil: [ nil ] ifNotNil: [ isoLang iso2 ]
 ]
 
-Class Locale >> isoCountry
+Locale >> isoCountry
 [
-^ self localeID isoCountry
+	^ self localeID isoCountry
 ]
 
-Class Locale >> isoLanguage
+Locale >> isoLanguage
 [
-^ self localeID isoLanguage
+	^ self localeID isoLanguage
 ]
 
-Class Locale >> isoLocale
+Locale >> isoLocale
 [
 	"<language>-<country>"
-^ self isoCountry ifNil: [ self isoLanguage ] ifNotNil: [ self isoLanguage , '-' , self isoCountry ]
+
+	^ self isoCountry ifNil: [ self isoLanguage ] ifNotNil: [ self isoLanguage , '-' , self isoCountry ]
 ]
 
-Class Locale >> languageEnvironment
+Locale >> languageEnvironment
 [
-^ LanguageEnvironment localeID: self localeID
+	^ LanguageEnvironment localeID: self localeID
 ]
 
-Class Locale >> localeID
+Locale >> localeID
 [
-^ id
+	^ id
 ]
 
-Class Locale >> localeID: anID
+Locale >> localeID: anID
 [
-id := anID
+	id := anID
 ]
 
-Class Locale >> primCountry
+Locale >> primCountry
 [
 	"Returns string with country tag according to ISO 639"
+
 	<primitive: 'primitiveCountry' module: 'LocalePlugin'>
-^ 'FR'
+	^ 'FR'
 ]
 
-Class Locale >> primCurrencyNotation
+Locale >> primCurrencyNotation
 [
 	"Returns boolean if symbol is pre- (true) or post-fix (false)"
+
 	<primitive: 'primitiveCurrencyNotation' module: 'LocalePlugin'>
-^ true
+	^ true
 ]
 
-Class Locale >> primCurrencySymbol
+Locale >> primCurrencySymbol
 [
 	"Returns string with currency symbol"
+
 	<primitive: 'primitiveCurrencySymbol' module: 'LocalePlugin'>
-^ '$'
+	^ '$'
 ]
 
-Class Locale >> primDST
+Locale >> primDST
 [
 	"Returns boolean if DST  (daylight saving time) is active or not"
+
 	<primitive: 'primitiveDaylightSavings' module: 'LocalePlugin'>
-^ false
+	^ false
 ]
 
-Class Locale >> primDecimalSymbol
+Locale >> primDecimalSymbol
 [
 	"Returns string with e.g. '.' or ','"
+
 	<primitive: 'primitiveDecimalSymbol' module: 'LocalePlugin'>
-^ '.'
+	^ '.'
 ]
 
-Class Locale >> primDigitGrouping
+Locale >> primDigitGrouping
 [
 	"Returns string with e.g. '.' or ',' (thousands etc)"
+
 	<primitive: 'primitiveDigitGroupingSymbol' module: 'LocalePlugin'>
-^ ','
+	^ ','
 ]
 
-Class Locale >> primLanguage
+Locale >> primLanguage
 [
 	"returns string with language tag according to ISO 639"
+
 	<primitive: 'primitiveLanguage' module: 'LocalePlugin'>
-^ 'en'
+	^ 'en'
 ]
 
-Class Locale >> primLongDateFormat
+Locale >> primLongDateFormat
 [
-	"Returns the long date format	d day, m month, y year,	double symbol is null padded, single not padded (m=6, mm=06)	dddd weekday	mmmm month name"
+	"Returns the long date format
+	d day, m month, y year,
+	double symbol is null padded, single not padded (m=6, mm=06)
+	dddd weekday
+	mmmm month name"
+
 	<primitive: 'primitiveLongDateFormat' module: 'LocalePlugin'>
-^ 'dddd, mmmm d, yyyy'
+	^ 'dddd, mmmm d, yyyy'
 ]
 
-Class Locale >> primMeasurement
+Locale >> primMeasurement
 [
 	"Returns boolean denoting metric(true) or imperial(false)."
+
 	<primitive: 'primitiveMeasurementMetric' module: 'LocalePlugin'>
-^ true
+	^ true
 ]
 
-Class Locale >> primShortDateFormat
+Locale >> primShortDateFormat
 [
-	"Returns the short date format	d day, m month, y year,	double symbol is null padded, single not padded (m=6, mm=06)	dddd weekday	mmmm month name"
+	"Returns the short date format
+	d day, m month, y year,
+	double symbol is null padded, single not padded (m=6, mm=06)
+	dddd weekday
+	mmmm month name"
+
 	<primitive: 'primitiveShortDateFormat' module: 'LocalePlugin'>
-^ 'm/d/yy'
+	^ 'm/d/yy'
 ]
 
-Class Locale >> primTimeFormat
+Locale >> primTimeFormat
 [
-	"Returns string time format	Format is made up of 	h hour (h 12, H 24), m minute, s seconds, x (am/pm String)	double symbol is null padded, single not padded (h=6, hh=06)"
+	"Returns string time format
+	Format is made up of 
+	h hour (h 12, H 24), m minute, s seconds, x (am/pm String)
+	double symbol is null padded, single not padded (h=6, hh=06)"
+
 	<primitive: 'primitiveTimeFormat' module: 'LocalePlugin'>
-^ 'h:mmx'
+	^ 'h:mmx'
 ]
 
-Class Locale >> primTimezone
+Locale >> primTimezone
 [
-	"The offset from UTC in minutes, with positive offsets being towards the east.	(San Francisco is in UTC -07*60 and Paris is in UTC +02*60 (daylight savings is not in effect)."
+	"The offset from UTC in minutes, with positive offsets being towards the east.
+	(San Francisco is in UTC -07*60 and Paris is in UTC +02*60 (daylight savings is not in effect)."
+
 	<primitive: 'primitiveTimezoneOffset' module: 'LocalePlugin'>
-^ 0
+	^ 0
 ]
 
-Class Locale >> primVMOffsetToUTC
+Locale >> primVMOffsetToUTC
 [
-	"Returns the offset in minutes between the VM and UTC.	If the VM does not support UTC times, this is 0.	Also gives us backward compatibility with old VMs as the primitive will fail and we then can return 0."
+	"Returns the offset in minutes between the VM and UTC.
+	If the VM does not support UTC times, this is 0.
+	Also gives us backward compatibility with old VMs as the primitive will fail and we then can return 0."
+
 	<primitive: 'primitiveVMOffsetToUTC' module: 'LocalePlugin'>
-^ 0
+	^ 0
 ]
 
-Class Locale >> printOn: aStream
+Locale >> printOn: aStream
 [
-super printOn: aStream.aStream nextPutAll: '(' , id printString , ')'
+	super printOn: aStream.
+	aStream nextPutAll: '(' , id printString , ')'
 ]
 
-Metaclass
-	name: #Locale;
-	instanceVariables: #().
-
-Metaclass Locale >> activated
+Locale class >> activated
 [
-^ Activated ifNil: [ Activated := false ]
+	^ Activated ifNil: [ Activated := false ]
 ]
 
-Metaclass Locale >> activated: aBoolean
+Locale class >> activated: aBoolean
 [
-Activated := aBoolean
+	Activated := aBoolean
 ]
 
-Metaclass Locale >> addLocalChangedListener: anObjectOrClass
+Locale class >> addLocalChangedListener: anObjectOrClass
 [
-self localeChangedListeners add: anObjectOrClass
+	self localeChangedListeners add: anObjectOrClass
 ]
 
-Metaclass Locale >> current
+Locale class >> current
 [
 	"Current := nil"
-Current	ifNil: [ Current := self determineCurrentLocale	"Transcript show: 'Current locale: ' , Current localeID asString; cr" ].^ Current
+
+	Current
+		ifNil: [ Current := self determineCurrentLocale	"Transcript show: 'Current locale: ' , Current localeID asString; cr" ].
+	^ Current
 ]
 
-Metaclass Locale >> currentPlatform
+Locale class >> currentPlatform
 [
 	"CurrentPlatform := nil"
-CurrentPlatform ifNil: [ CurrentPlatform := self determineCurrentLocale ].^ CurrentPlatform
+
+	CurrentPlatform ifNil: [ CurrentPlatform := self determineCurrentLocale ].
+	^ CurrentPlatform
 ]
 
-Metaclass Locale >> currentPlatform: locale
+Locale class >> currentPlatform: locale
 [
-CurrentPlatform := locale.LanguageEnvironment startUp
+	CurrentPlatform := locale.
+	LanguageEnvironment startUp
 ]
 
-Metaclass Locale >> currentPlatform: locale during: aBlock
+Locale class >> currentPlatform: locale during: aBlock
 [
 	"Alter current language platform during a block"
-| backupPlatform |backupPlatform := self currentPlatform.[ self currentPlatform: locale.aBlock value ]	ensure: [ self currentPlatform: backupPlatform ]
+
+	| backupPlatform |
+	backupPlatform := self currentPlatform.
+	[ self currentPlatform: locale.
+	aBlock value ]
+		ensure: [ self currentPlatform: backupPlatform ]
 ]
 
-Metaclass Locale >> defaultEncodingName: languageSymbol
+Locale class >> defaultEncodingName: languageSymbol
 [
-| encodings platformName osVersion |platformName := OSPlatform platformName.osVersion := OSPlatform version.encodings := self platformEncodings at: languageSymbol ifAbsent: [ self platformEncodings at: #default ].encodings at: platformName ifPresent: [ :encoding | ^ encoding ].encodings at: platformName , ' ' , osVersion ifPresent: [ :encoding | ^ encoding ].^ encodings at: #default
+	| encodings platformName osVersion |
+	platformName := OSPlatform platformName.
+	osVersion := OSPlatform version.
+	encodings := self platformEncodings at: languageSymbol ifAbsent: [ self platformEncodings at: #default ].
+	encodings at: platformName ifPresent: [ :encoding | ^ encoding ].
+	encodings at: platformName , ' ' , osVersion ifPresent: [ :encoding | ^ encoding ].
+	^ encodings at: #default
 ]
 
-Metaclass Locale >> determineCurrentLocale
+Locale class >> determineCurrentLocale
 [
-	"For now just return the default locale.	A smarter way would be to determine the current platforms default locale."
+	"For now just return the default locale.
+	A smarter way would be to determine the current platforms default locale."
+
 	"Locale determineCurrentLocale"
-^ self new determineLocale
+
+	^ self new determineLocale
 ]
 
-Metaclass Locale >> initKnownLocales
+Locale class >> initKnownLocales
 [
-| locales |locales := Dictionary new.	"Init the locales for which we have translations"NaturalLanguageTranslator availableLanguageLocaleIDs do: [ :id | locales at: id put: (Locale new localeID: id) ].^ locales
+	| locales |
+	locales := Dictionary new.	"Init the locales for which we have translations"
+	NaturalLanguageTranslator availableLanguageLocaleIDs do: [ :id | locales at: id put: (Locale new localeID: id) ].
+	^ locales
 ]
 
-Metaclass Locale >> initialize
+Locale class >> initialize
 [
 	"Locale initialize"
-Smalltalk addToStartUpList: Locale
+
+	Smalltalk addToStartUpList: Locale
 ]
 
-Metaclass Locale >> initializePlatformEncodings
+Locale class >> initializePlatformEncodings
 [
 	"Locale initializePlatformEncodings"
-| platform |PlatformEncodings ifNil: [ PlatformEncodings := Dictionary new ].platform := PlatformEncodings at: 'default' ifAbsentPut: Dictionary new.platform	at: 'default' put: 'iso8859-1';	at: 'Win32 CE' put: 'utf-8'.platform := PlatformEncodings at: 'ja' ifAbsentPut: Dictionary new.platform	at: 'default' put: 'shift-jis';	at: 'unix' put: 'euc-jp';	at: 'Win32 CE' put: 'utf-8'.platform := PlatformEncodings at: 'ko' ifAbsentPut: Dictionary new.platform	at: 'default' put: 'euc-kr';	at: 'Win32 CE' put: 'utf-8'.platform := PlatformEncodings at: 'zh' ifAbsentPut: Dictionary new.platform	at: 'default' put: 'gb2312';	at: 'unix' put: 'euc-cn';	at: 'Win32 CE' put: 'utf-8'
+
+	| platform |
+	PlatformEncodings ifNil: [ PlatformEncodings := Dictionary new ].
+	platform := PlatformEncodings at: 'default' ifAbsentPut: Dictionary new.
+	platform
+		at: 'default' put: 'iso8859-1';
+		at: 'Win32 CE' put: 'utf-8'.
+	platform := PlatformEncodings at: 'ja' ifAbsentPut: Dictionary new.
+	platform
+		at: 'default' put: 'shift-jis';
+		at: 'unix' put: 'euc-jp';
+		at: 'Win32 CE' put: 'utf-8'.
+	platform := PlatformEncodings at: 'ko' ifAbsentPut: Dictionary new.
+	platform
+		at: 'default' put: 'euc-kr';
+		at: 'Win32 CE' put: 'utf-8'.
+	platform := PlatformEncodings at: 'zh' ifAbsentPut: Dictionary new.
+	platform
+		at: 'default' put: 'gb2312';
+		at: 'unix' put: 'euc-cn';
+		at: 'Win32 CE' put: 'utf-8'
 ]
 
-Metaclass Locale >> isoLanguage: isoLanguage
+Locale class >> isoLanguage: isoLanguage
 [
-^ self isoLanguage: isoLanguage isoCountry: nil
+	^ self isoLanguage: isoLanguage isoCountry: nil
 ]
 
-Metaclass Locale >> isoLanguage: isoLanguage isoCountry: isoCountry
+Locale class >> isoLanguage: isoLanguage isoCountry: isoCountry
 [
-^ self localeID: (LocaleID isoLanguage: isoLanguage isoCountry: isoCountry)
+	^ self localeID: (LocaleID isoLanguage: isoLanguage isoCountry: isoCountry)
 ]
 
-Metaclass Locale >> isoLocale: aString
+Locale class >> isoLocale: aString
 [
-
+	
 ]
 
-Metaclass Locale >> knownLocales
+Locale class >> knownLocales
 [
 	"KnownLocales := nil"
-^ KnownLocales ifNil: [ KnownLocales := self initKnownLocales ]
+
+	^ KnownLocales ifNil: [ KnownLocales := self initKnownLocales ]
 ]
 
-Metaclass Locale >> languageSymbol: languageSymbol
+Locale class >> languageSymbol: languageSymbol
 [
 	"Locale languageSymbol: #Deutsch"
-^ self isoLanguage: (LanguageSymbols at: languageSymbol)
+
+	^ self isoLanguage: (LanguageSymbols at: languageSymbol)
 ]
 
-Metaclass Locale >> localTimeZone
+Locale class >> localTimeZone
 [
-| offset abbreviation |offset := Duration minutes: self current primTimezone.abbreviation := String	streamContents: [ :s | 		s			nextPutAll: 'LT';			print: offset hours;			nextPut: $:.		s nextPutAll: (offset minutes printPaddedWith: $0 to: 2) ].^ TimeZone offset: offset name: 'Local Time' abbreviation: abbreviation
+	| offset abbreviation |
+	offset := Duration minutes: self current primTimezone.
+	abbreviation := String
+		streamContents: [ :s | s
+				nextPutAll: 'LT';
+				print: offset hours;
+				nextPut: $:.
+			s nextPutAll: (offset minutes printPaddedWith: $0 to: 2) ].
+	^ TimeZone offset: offset name: 'Local Time' abbreviation: abbreviation
 ]
 
-Metaclass Locale >> localeChanged
+Locale class >> localeChanged
 [
-
+	
 ]
 
-Metaclass Locale >> localeChangedListeners
+Locale class >> localeChangedListeners
 [
-^ LocaleChangeListeners ifNil: [ LocaleChangeListeners := OrderedCollection new ]
+	^ LocaleChangeListeners ifNil: [ LocaleChangeListeners := OrderedCollection new ]
 ]
 
-Metaclass Locale >> localeID: id
+Locale class >> localeID: id
 [
-^ self knownLocales at: id ifAbsentPut: [ Locale new localeID: id ]
+	^ self knownLocales at: id ifAbsentPut: [ Locale new localeID: id ]
 ]
 
-Metaclass Locale >> platformEncodings
+Locale class >> platformEncodings
 [
-PlatformEncodings isEmptyOrNil	ifTrue: [ self initializePlatformEncodings ].^ PlatformEncodings
+	PlatformEncodings isEmptyOrNil
+		ifTrue: [ self initializePlatformEncodings ].
+	^ PlatformEncodings
 ]
 
-Metaclass Locale >> startUp: resuming
+Locale class >> startUp: resuming
 [
-| newID |resuming	ifFalse: [ ^ self ].DateAndTime localTimeZone: self localTimeZone.self activated	ifTrue: [ 		newID := self current determineLocaleID.		newID ~= LocaleID current			ifTrue: [ self switchToID: newID ] ]
+	| newID |
+	resuming
+		ifFalse: [ ^ self ].
+	DateAndTime localTimeZone: self localTimeZone.
+	self activated
+		ifTrue: [ newID := self current determineLocaleID.
+			newID ~= LocaleID current
+				ifTrue: [ self switchToID: newID ] ]
 ]
 
-Metaclass Locale >> stringForLanguageNameIs: localeID
+Locale class >> stringForLanguageNameIs: localeID
 [
-	"Answer a string for a menu determining whether the given  	symbol is the project's natural language"
-^ (self current localeID = localeID	ifTrue: [ '<yes>' ]	ifFalse: [ '<no>' ]) , localeID displayLanguage
+	"Answer a string for a menu determining whether the given  
+	symbol is the project's natural language"
+
+	^ (self current localeID = localeID
+		ifTrue: [ '<yes>' ]
+		ifFalse: [ '<no>' ]) , localeID displayLanguage
 ]
 
-Metaclass Locale >> switchTo: locale
+Locale class >> switchTo: locale
 [
 	"Locale switchTo: Locale isoLanguage: 'de'"
-Current localeID = locale localeID	ifFalse: [ 		Current := locale.		CurrentPlatform := locale.		self localeChanged ]
+
+	Current localeID = locale localeID
+		ifFalse: [ Current := locale.
+			CurrentPlatform := locale.
+			self localeChanged ]
 ]
 
-Metaclass Locale >> switchToID: localeID
+Locale class >> switchToID: localeID
 [
 	"Locale switchToID: (LocaleID isoLanguage: 'de') "
-self switchTo: (Locale localeID: localeID)
+
+	self switchTo: (Locale localeID: localeID)
 ]
 

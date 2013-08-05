@@ -1,0 +1,50 @@
+OrderedIdentityDictionary
+	superclass: #IdentityDictionary;
+	instanceVariables: #(#keys );
+	package: #'Collections-Sequenceable'.
+
+OrderedIdentityDictionary >> add: anAssociation
+[
+	(self includesKey: anAssociation key)
+		ifFalse: [ keys add: anAssociation key ].
+	^ super add: anAssociation
+]
+
+OrderedIdentityDictionary >> associationsDo: aBlock
+[
+	keys do: [ :k | aBlock value: (self associationAt: k) ]
+]
+
+OrderedIdentityDictionary >> at: key put: anObject
+[
+	(self includesKey: key)
+		ifFalse: [ keys add: key ].
+	^ super at: key put: anObject
+]
+
+OrderedIdentityDictionary >> initialize
+[
+	"Initialization code for OrderedIdentityDictionary"
+
+	"This method is not used since new is overriden to use initalize:"
+
+	keys := OrderedCollection new.
+	super initialize
+]
+
+OrderedIdentityDictionary >> initialize: aNumber
+[
+	"Initialization code for OrderedIdentityDictionary"
+
+	keys := OrderedCollection new.
+	super initialize: aNumber
+]
+
+OrderedIdentityDictionary >> removeKey: key ifAbsent: aBlock
+[
+	"Here I do not do anything if absent not to perform the block twice"
+
+	keys remove: key ifAbsent: [  ].
+	^ super removeKey: key ifAbsent: aBlock
+]
+

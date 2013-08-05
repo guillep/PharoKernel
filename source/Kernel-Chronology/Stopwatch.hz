@@ -1,77 +1,94 @@
-Class
-	name: #Stopwatch;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+Stopwatch
 	instanceVariables: #(#timespans #state );
-	classVariables: #();
 	package: #'Kernel-Chronology'.
 
-Class Stopwatch >> activate
+Stopwatch >> activate
 [
-self isSuspended	ifTrue: [ 		self timespans add: (Timespan starting: DateAndTime now duration: Duration zero).		self state: #active ]
+	self isSuspended
+		ifTrue: [ self timespans add: (Timespan starting: DateAndTime now duration: Duration zero).
+			self state: #active ]
 ]
 
-Class Stopwatch >> duration
+Stopwatch >> duration
 [
-| ts last |self isSuspended	ifTrue: [ 		(ts := self timespans) isEmpty			ifTrue: [ ts := {(Timespan starting: DateAndTime now duration: Duration zero)} ] ]	ifFalse: [ 		last := self timespans last.		ts := self timespans allButLast			add:					(last							duration: DateAndTime now - last start;							yourself);			yourself ].^ (ts collect: [ :t | t duration ]) sum
+	| ts last |
+	self isSuspended
+		ifTrue: [ (ts := self timespans) isEmpty
+				ifTrue: [ ts := {(Timespan starting: DateAndTime now duration: Duration zero)} ] ]
+		ifFalse: [ last := self timespans last.
+			ts := self timespans allButLast
+				add: (last
+								duration: DateAndTime now - last start;
+								yourself);
+				yourself ].
+	^ (ts collect: [ :t | t duration ]) sum
 ]
 
-Class Stopwatch >> end
+Stopwatch >> end
 [
-^ self timespans last next
+	^ self timespans last next
 ]
 
-Class Stopwatch >> isActive
+Stopwatch >> isActive
 [
-^ self state = #active
+	^ self state = #active
 ]
 
-Class Stopwatch >> isSuspended
+Stopwatch >> isSuspended
 [
-^ self state = #suspended
+	^ self state = #suspended
 ]
 
-Class Stopwatch >> printOn: aStream
+Stopwatch >> printOn: aStream
 [
-super printOn: aStream.aStream	nextPut: $(;	nextPutAll: self state;	nextPut: $:;	print: self duration;	nextPut: $)
+	super printOn: aStream.
+	aStream
+		nextPut: $(;
+		nextPutAll: self state;
+		nextPut: $:;
+		print: self duration;
+		nextPut: $)
 ]
 
-Class Stopwatch >> reActivate
+Stopwatch >> reActivate
 [
-self	suspend;	activate
+	self
+		suspend;
+		activate
 ]
 
-Class Stopwatch >> reset
+Stopwatch >> reset
 [
-self suspend.timespans := nil
+	self suspend.
+	timespans := nil
 ]
 
-Class Stopwatch >> start
+Stopwatch >> start
 [
-^ self timespans first start
+	^ self timespans first start
 ]
 
-Class Stopwatch >> state
+Stopwatch >> state
 [
-^ state ifNil: [ state := #suspended ]
+	^ state ifNil: [ state := #suspended ]
 ]
 
-Class Stopwatch >> state: aSymbol
+Stopwatch >> state: aSymbol
 [
-state := aSymbol
+	state := aSymbol
 ]
 
-Class Stopwatch >> suspend
+Stopwatch >> suspend
 [
-| ts |self isActive	ifTrue: [ 		ts := self timespans last.		ts duration: DateAndTime now - ts start.		self state: #suspended ]
+	| ts |
+	self isActive
+		ifTrue: [ ts := self timespans last.
+			ts duration: DateAndTime now - ts start.
+			self state: #suspended ]
 ]
 
-Class Stopwatch >> timespans
+Stopwatch >> timespans
 [
-^ timespans ifNil: [ timespans := OrderedCollection new ]
+	^ timespans ifNil: [ timespans := OrderedCollection new ]
 ]
-
-Metaclass
-	name: #Stopwatch;
-	instanceVariables: #().
 

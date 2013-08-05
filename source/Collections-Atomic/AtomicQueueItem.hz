@@ -1,53 +1,58 @@
-Class
-	name: #AtomicQueueItem;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+AtomicQueueItem
 	instanceVariables: #(#next #object );
-	classVariables: #();
 	package: #'Collections-Atomic'.
 
-Class AtomicQueueItem >> initialize
+AtomicQueueItem >> initialize
 [
 	"make circular"
-super initialize.next := self
+
+	super initialize.
+	next := self
 ]
 
-Class AtomicQueueItem >> isCircular
+AtomicQueueItem >> isCircular
 [
-^ next == self
+	^ next == self
 ]
 
-Class AtomicQueueItem >> makeCircular
+AtomicQueueItem >> makeCircular
 [
-	"Make a receiver circular, i.e. point to itself,	answer the old value of next variable. 	Note, this operation should be atomic"
-| temp |" atomic swap here"temp := next.next := self.^ temp
+	"Make a receiver circular, i.e. point to itself,
+	answer the old value of next variable. 
+	Note, this operation should be atomic"
+
+	| temp |
+	" atomic swap here"
+	temp := next.
+	next := self.
+	^ temp
 ]
 
-Class AtomicQueueItem >> next
+AtomicQueueItem >> next
 [
 	"Answer the value of next"
-^ next
+
+	^ next
 ]
 
-Class AtomicQueueItem >> next: anObject
+AtomicQueueItem >> next: anObject
 [
 	"Set the value of next"
-next := anObject
+
+	next := anObject
 ]
 
-Class AtomicQueueItem >> object
+AtomicQueueItem >> object
 [
 	"Answer the value of object"
-^ object
+
+	^ object
 ]
 
-Class AtomicQueueItem >> object: anObject
+AtomicQueueItem >> object: anObject
 [
 	"Set the value of object"
-object := anObject
-]
 
-Metaclass
-	name: #AtomicQueueItem;
-	instanceVariables: #().
+	object := anObject
+]
 

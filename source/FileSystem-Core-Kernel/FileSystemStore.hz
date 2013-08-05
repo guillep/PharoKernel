@@ -1,290 +1,359 @@
-Class
-	name: #FileSystemStore;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+FileSystemStore
 	package: #'FileSystem-Core-Kernel'.
 
-Class FileSystemStore >> basenameFromEntry: aNode
+FileSystemStore >> basenameFromEntry: aNode
 [
 	"Used to extract the basename from the low-level representation (node / entry) from the store."
-self subclassResponsability
+
+	self subclassResponsibility
 ]
 
-Class FileSystemStore >> basicCreationTime: aNode
+FileSystemStore >> basicCreationTime: aNode
 [
-	"Used to decide whether the low-level representation (node / entry) from the store is a readable	file or a directory whose contents can be listed."
-self subclassResponsibility
+	"Used to decide whether the low-level representation (node / entry) from the store is a readable
+	file or a directory whose contents can be listed."
+
+	self subclassResponsibility
 ]
 
-Class FileSystemStore >> basicIsDirectory: aNode
+FileSystemStore >> basicIsDirectory: aNode
 [
-	"Used to decide whether the low-level representation (node / entry) from the store is a directory.	This private message should only be called form within the store."
-self subclassResponsibility
+	"Used to decide whether the low-level representation (node / entry) from the store is a directory.
+	This private message should only be called form within the store."
+
+	self subclassResponsibility
 ]
 
-Class FileSystemStore >> basicIsFile: aNode
+FileSystemStore >> basicIsFile: aNode
 [
-	"Used to decide whether the low-level representation (node / entry) from the store is a file.	This private message should only be called form within the store."
-self subclassResponsibility
+	"Used to decide whether the low-level representation (node / entry) from the store is a file.
+	This private message should only be called form within the store."
+
+	self subclassResponsibility
 ]
 
-Class FileSystemStore >> basicIsSymlink: aNode
+FileSystemStore >> basicIsSymlink: aNode
 [
-^ self subclassResponsibility
+	^ self subclassResponsibility
 ]
 
-Class FileSystemStore >> basicIsWritable: aNode
+FileSystemStore >> basicIsWritable: aNode
 [
-	"Used to decide whether the low-level representation (node / entry) from the store is 	a writable file or can be changed."
-self subclassResponsibility
+	"Used to decide whether the low-level representation (node / entry) from the store is 
+	a writable file or can be changed."
+
+	self subclassResponsibility
 ]
 
-Class FileSystemStore >> basicModificationTime: aNode
+FileSystemStore >> basicModificationTime: aNode
 [
-	"Used to decide whether the low-level representation (node / entry) from the store is a readable	file or a directory whose contents can be listed."
-self subclassResponsibility
+	"Used to decide whether the low-level representation (node / entry) from the store is a readable
+	file or a directory whose contents can be listed."
+
+	self subclassResponsibility
 ]
 
-Class FileSystemStore >> basicOpen: aPath writable: aBoolean
+FileSystemStore >> basicOpen: aPath writable: aBoolean
 [
 	"open the file at the given path and return an identifier"
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FileSystemStore >> basicPosixPermissions: aNode
+FileSystemStore >> basicPosixPermissions: aNode
 [
 	"Used to get the posix permissions from a low-level filesystem entry / node"
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FileSystemStore >> basicSize: aNode
+FileSystemStore >> basicSize: aNode
 [
 	"Used to get the size of the low-level representation (node / entry) "
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class FileSystemStore >> checkName: aString fixErrors: fixErrors
+FileSystemStore >> checkName: aString fixErrors: fixErrors
 [
-^ self subclassResponsibility
+	^ self subclassResponsibility
 ]
 
-Class FileSystemStore >> close
+FileSystemStore >> close
 [
 	"Some kinds of filesystems need to open connections to external resources"
 
+	
 ]
 
-Class FileSystemStore >> copy: sourcePath ifAbsent: absentBlock to: destinationPath ifPresent: presentBlock fileSystem: aFilesystem
+FileSystemStore >> copy: sourcePath ifAbsent: absentBlock to: destinationPath ifPresent: presentBlock fileSystem: aFilesystem
 [
-| buffer out in |in := nil.out := nil.buffer := nil.[ in := aFilesystem readStreamOn: sourcePath.in ifNil: [ ^ absentBlock value ].(self exists: destinationPath)	ifTrue: [ 		"cannot overwrite destination"		^ presentBlock value ].out := aFilesystem writeStreamOn: destinationPath.buffer := ByteArray new: 1024.[ in atEnd ]	whileFalse: [ 		buffer := in nextInto: buffer.		out nextPutAll: buffer ] ]	ensure: [ 		in ifNotNil: [ in close ].		out ifNotNil: [ out close ] ]
+	| buffer out in |
+	in := nil.
+	out := nil.
+	buffer := nil.
+	[ in := aFilesystem readStreamOn: sourcePath.
+	in ifNil: [ ^ absentBlock value ].
+	(self exists: destinationPath)
+		ifTrue: [ "cannot overwrite destination"
+			^ presentBlock value ].
+	out := aFilesystem writeStreamOn: destinationPath.
+	buffer := ByteArray new: 1024.
+	[ in atEnd ] whileFalse: [ buffer := in nextInto: buffer.
+			out nextPutAll: buffer ] ]
+		ensure: [ in ifNotNil: [ in close ].
+			out ifNotNil: [ out close ] ]
 ]
 
-Class FileSystemStore >> copy: sourcePath ifAbsent: absentBlock to: destinationPath ifPresent: presentBlock filesystem: aFilesystem
+FileSystemStore >> copy: sourcePath ifAbsent: absentBlock to: destinationPath ifPresent: presentBlock filesystem: aFilesystem
 [
-self deprecated: 'Use #copy:ifAbsent:to:ifPresent:fileSystem:' on: '3 April 2012' in: 'Pharo 1.4'.^ self	copy: sourcePath	ifAbsent: absentBlock	to: destinationPath	ifPresent: presentBlock	fileSystem: aFilesystem
+	self deprecated: 'Use #copy:ifAbsent:to:ifPresent:fileSystem:' on: '3 April 2012' in: 'Pharo 1.4'.
+	^ self
+		copy: sourcePath
+		ifAbsent: absentBlock
+		to: destinationPath
+		ifPresent: presentBlock
+		fileSystem: aFilesystem
 ]
 
-Class FileSystemStore >> createDirectory: aPath
+FileSystemStore >> createDirectory: aPath
 [
-self subclassResponsibility
+	self subclassResponsibility
 ]
 
-Class FileSystemStore >> creationTime: aPath
+FileSystemStore >> creationTime: aPath
 [
-self nodeAt: aPath ifPresent: [ :entry | ^ self basicCreationTime: entry ] ifAbsent: [ ^ false ]
+	self nodeAt: aPath ifPresent: [ :entry | ^ self basicCreationTime: entry ] ifAbsent: [ ^ false ]
 ]
 
-Class FileSystemStore >> defaultWorkingDirectory
+FileSystemStore >> defaultWorkingDirectory
 [
-^ Path root
+	^ Path root
 ]
 
-Class FileSystemStore >> delete: aPath
+FileSystemStore >> delete: aPath
 [
-self subclassResponsibility
+	self subclassResponsibility
 ]
 
-Class FileSystemStore >> delimiter
+FileSystemStore >> delimiter
 [
-^ self class delimiter
+	^ self class delimiter
 ]
 
-Class FileSystemStore >> directoryAt: aPath ifAbsent: absentBlock directoryNodesDo: aBlock
+FileSystemStore >> directoryAt: aPath ifAbsent: absentBlock directoryNodesDo: aBlock
 [
-^ self	directoryAt: aPath	ifAbsent: absentBlock	nodesDo: [ :entry | 		(self basicIsDirectory: entry)			ifTrue: [ aBlock value: entry ] ]
+	^ self
+		directoryAt: aPath
+		ifAbsent: absentBlock
+		nodesDo: [ :entry | (self basicIsDirectory: entry)
+				ifTrue: [ aBlock value: entry ] ]
 ]
 
-Class FileSystemStore >> directoryAt: aPath ifAbsent: absentBlock fileNodesDo: aBlock
+FileSystemStore >> directoryAt: aPath ifAbsent: absentBlock fileNodesDo: aBlock
 [
-^ self	directoryAt: aPath	ifAbsent: absentBlock	nodesDo: [ :entry | 		(self basicIsDirectory: entry)			ifFalse: [ aBlock value: entry ] ]
+	^ self
+		directoryAt: aPath
+		ifAbsent: absentBlock
+		nodesDo: [ :entry | (self basicIsDirectory: entry)
+				ifFalse: [ aBlock value: entry ] ]
 ]
 
-Class FileSystemStore >> directoryAt: aPath ifAbsent: absentBlock nodesDo: aBlock
+FileSystemStore >> directoryAt: aPath ifAbsent: absentBlock nodesDo: aBlock
 [
-self subclassResponsibility
+	self subclassResponsibility
 ]
 
-Class FileSystemStore >> ensureDirectory: aPath
+FileSystemStore >> ensureDirectory: aPath
 [
-(self isDirectory: aPath)	ifTrue: [ ^ self ].self ensureDirectory: aPath parent.self createDirectory: aPath
+	(self isDirectory: aPath)
+		ifTrue: [ ^ self ].
+	self ensureDirectory: aPath parent.
+	self createDirectory: aPath
 ]
 
-Class FileSystemStore >> entryFromNode: aNode fileSystem: aFilesystem path: aPath
+FileSystemStore >> entryFromNode: aNode fileSystem: aFilesystem path: aPath
 [
-^ FileSystemDirectoryEntry	fileSystem: aFilesystem	path: aPath	creation: (self basicCreationTime: aNode)	modification: (self basicModificationTime: aNode)	isDir: (self basicIsDirectory: aNode)	size: (self basicSize: aNode)	posixPermissions: (self basicPosixPermissions: aNode)	isSymlink: (self basicIsSymlink: aNode)
+	^ FileSystemDirectoryEntry
+		fileSystem: aFilesystem
+		path: aPath
+		creation: (self basicCreationTime: aNode)
+		modification: (self basicModificationTime: aNode)
+		isDir: (self basicIsDirectory: aNode)
+		size: (self basicSize: aNode)
+		posixPermissions: (self basicPosixPermissions: aNode)
+		isSymlink: (self basicIsSymlink: aNode)
 ]
 
-Class FileSystemStore >> entryFromNode: node path: path for: aFileystem
+FileSystemStore >> entryFromNode: node path: path for: aFileystem
 [
-| entryPath |entryPath := path / (self basenameFromEntry: node).^ self entryFromNode: node fileSystem: aFileystem path: entryPath
+	| entryPath |
+	entryPath := path / (self basenameFromEntry: node).
+	^ self entryFromNode: node fileSystem: aFileystem path: entryPath
 ]
 
-Class FileSystemStore >> exists: aPath
+FileSystemStore >> exists: aPath
 [
-self nodeAt: aPath ifPresent: [ :entry | ^ true ] ifAbsent: [ ^ false ]
+	self nodeAt: aPath ifPresent: [ :entry | ^ true ] ifAbsent: [ ^ false ]
 ]
 
-Class FileSystemStore >> filename: aByteString matches: aByteString2
+FileSystemStore >> filename: aByteString matches: aByteString2
 [
-^ aByteString = aByteString2
+	^ aByteString = aByteString2
 ]
 
-Class FileSystemStore >> isCaseSensitive
+FileSystemStore >> isCaseSensitive
 [
-^ self class isCaseSensitive
+	^ self class isCaseSensitive
 ]
 
-Class FileSystemStore >> isDirectory: aPath
+FileSystemStore >> isDirectory: aPath
 [
-aPath isRoot	ifTrue: [ ^ true ].self nodeAt: aPath ifPresent: [ :entry | ^ self basicIsDirectory: entry ] ifAbsent: [ ^ false ]
+	aPath isRoot
+		ifTrue: [ ^ true ].
+	self nodeAt: aPath ifPresent: [ :entry | ^ self basicIsDirectory: entry ] ifAbsent: [ ^ false ]
 ]
 
-Class FileSystemStore >> isFile: aPath
+FileSystemStore >> isFile: aPath
 [
 	"slow solution for big directories! "
-^ self nodeAt: aPath ifPresent: [ :entry | ^ self basicIsFile: entry ] ifAbsent: [ ^ false ]
+
+	^ self nodeAt: aPath ifPresent: [ :entry | ^ self basicIsFile: entry ] ifAbsent: [ ^ false ]
 ]
 
-Class FileSystemStore >> isSymlink: aPath
+FileSystemStore >> isSymlink: aPath
 [
-aPath isRoot	ifTrue: [ ^ true ].self nodeAt: aPath ifPresent: [ :entry | ^ self basicIsSymlink: entry ] ifAbsent: [ ^ false ]
+	aPath isRoot
+		ifTrue: [ ^ true ].
+	self nodeAt: aPath ifPresent: [ :entry | ^ self basicIsSymlink: entry ] ifAbsent: [ ^ false ]
 ]
 
-Class FileSystemStore >> isWritable: aPath
+FileSystemStore >> isWritable: aPath
 [
-self nodeAt: aPath ifPresent: [ :entry | ^ self basicIsWritable: entry ] ifAbsent: [ ^ false ]
+	self nodeAt: aPath ifPresent: [ :entry | ^ self basicIsWritable: entry ] ifAbsent: [ ^ false ]
 ]
 
-Class FileSystemStore >> mimeTypesAt: aPath
+FileSystemStore >> mimeTypesAt: aPath
 [
-^ MIMEType forExtensionReturnMimeTypesOrNil: aPath extension
+	^ MIMEType forExtensionReturnMimeTypesOrNil: aPath extension
 ]
 
-Class FileSystemStore >> modificationTime: aPath
+FileSystemStore >> modificationTime: aPath
 [
-self nodeAt: aPath ifPresent: [ :entry | ^ self basicModificationTime: entry ] ifAbsent: [ ^ false ]
+	self nodeAt: aPath ifPresent: [ :entry | ^ self basicModificationTime: entry ] ifAbsent: [ ^ false ]
 ]
 
-Class FileSystemStore >> nodeAt: aPath ifPresent: presentBlock ifAbsent: absentBlock
+FileSystemStore >> nodeAt: aPath ifPresent: presentBlock ifAbsent: absentBlock
 [
-self subclassResponsibility
+	self subclassResponsibility
 ]
 
-Class FileSystemStore >> open
+FileSystemStore >> open
 [
 	"Some kinds of filesystems need to open connections to external resources"
 
+	
 ]
 
-Class FileSystemStore >> openFileStream: path writable: writable
+FileSystemStore >> openFileStream: path writable: writable
 [
-self subclassResponsability
+	self subclassResponsibility
 ]
 
-Class FileSystemStore >> pathFromString: aString
+FileSystemStore >> pathFromString: aString
 [
 	"Use the unix convention by default, since many filesystems are based on it."
-^ Path from: aString delimiter: self delimiter
+
+	^ Path from: aString delimiter: self delimiter
 ]
 
-Class FileSystemStore >> permissions: aPath
+FileSystemStore >> permissions: aPath
 [
-self	nodeAt: aPath	ifPresent: [ :entry | ^ FileSystemPermission posixPermissions: (self basicPosixPermissions: entry) ]	ifAbsent: [ ^ false ]
+	self
+		nodeAt: aPath
+		ifPresent: [ :entry | ^ FileSystemPermission posixPermissions: (self basicPosixPermissions: entry) ]
+		ifAbsent: [ ^ false ]
 ]
 
-Class FileSystemStore >> printPath: aPath on: out
+FileSystemStore >> printPath: aPath on: out
 [
 	"Use the unix convention by default, since it's the most common."
-aPath isAbsolute	ifTrue: [ out nextPut: $/ ].^ aPath printOn: out delimiter: self delimiter
+
+	aPath isAbsolute
+		ifTrue: [ out nextPut: $/ ].
+	^ aPath printOn: out delimiter: self delimiter
 ]
 
-Class FileSystemStore >> rename: sourcePath ifAbsent: absentBlock to: destinationPath ifPresent: presentBlock fileSystem: anFSFilesystem
+FileSystemStore >> rename: sourcePath ifAbsent: absentBlock to: destinationPath ifPresent: presentBlock fileSystem: anFSFilesystem
 [
-| result |result := self rename: sourcePath to: destinationPath.result	ifNil: [ 		(self exists: destinationPath)			ifTrue: [ ^ presentBlock value ].		(self exists: sourcePath)			ifFalse: [ ^ absentBlock value ].		self primitiveFailed ].^ self
+	| result |
+	(self exists: destinationPath)
+		ifTrue: [ ^ presentBlock value ].
+	(self exists: sourcePath)
+		ifFalse: [ ^ absentBlock value ].
+	result := self rename: sourcePath to: destinationPath.
+	result ifNil: [ self primitiveFailed ].
+	^ self
 ]
 
-Class FileSystemStore >> rename: sourcePath ifAbsent: absentBlock to: destinationPath ifPresent: presentBlock filesystem: anFSFilesystem
+FileSystemStore >> rename: sourcePath ifAbsent: absentBlock to: destinationPath ifPresent: presentBlock filesystem: anFSFilesystem
 [
-self deprecated: 'Use #rename:ifAbsent:to:ifPresent:filesystem:' on: '3 April 2012' in: 'Pharo 1.4'.^ self	rename: sourcePath	ifAbsent: absentBlock	to: destinationPath	ifPresent: presentBlock	fileSystem: anFSFilesystem
+	self deprecated: 'Use #rename:ifAbsent:to:ifPresent:filesystem:' on: '3 April 2012' in: 'Pharo 1.4'.
+	^ self
+		rename: sourcePath
+		ifAbsent: absentBlock
+		to: destinationPath
+		ifPresent: presentBlock
+		fileSystem: anFSFilesystem
 ]
 
-Class FileSystemStore >> separator
+FileSystemStore >> separator
 [
-^ self class separator
+	^ self class separator
 ]
 
-Class FileSystemStore >> signalDirectoryDoesNotExist: aPath
+FileSystemStore >> signalDirectoryDoesNotExist: aPath
 [
-	"Raise FSDirectoryDoesNotExist exception"
-^ DirectoryDoesNotExist signalWith: aPath
+	^ DirectoryDoesNotExist signalWith: aPath
 ]
 
-Class FileSystemStore >> signalDirectoryExists: aPath
+FileSystemStore >> signalDirectoryExists: aPath
 [
-	"Raise FSDirectoryExists exception"
-^ DirectoryExists signalWith: aPath
+	^ DirectoryExists signalWith: aPath
 ]
 
-Class FileSystemStore >> signalFileDoesNotExist: aPath
+FileSystemStore >> signalFileDoesNotExist: aPath
 [
-	"Raise FSFileDoesNotExist exception"
-^ FileDoesNotExist signalWith: aPath
+	^ FileDoesNotExist signalWith: aPath
 ]
 
-Class FileSystemStore >> signalFileExists: aPath
+FileSystemStore >> signalFileExists: aPath
 [
-	"Raise FSFileExist exception"
-^ FileExists signalWith: aPath
+	^ FileExists signalWith: aPath
 ]
 
-Class FileSystemStore >> size: aPath
+FileSystemStore >> size: aPath
 [
-^ self nodeAt: aPath ifPresent: [ :entry | ^ self basicSize: entry ] ifAbsent: [ ^ false ]
+	^ self nodeAt: aPath ifPresent: [ :entry | ^ self basicSize: entry ] ifAbsent: [ ^ false ]
 ]
 
-Class FileSystemStore >> stringFromPath: aPath
+FileSystemStore >> stringFromPath: aPath
 [
-^ String streamContents: [ :out | self printPath: aPath on: out ]
+	^ String streamContents: [ :out | self printPath: aPath on: out ]
 ]
 
-Metaclass
-	name: #FileSystemStore;
-	instanceVariables: #().
-
-Metaclass FileSystemStore >> delimiter
+FileSystemStore class >> delimiter
 [
-self shouldBeImplemented
+	self shouldBeImplemented
 ]
 
-Metaclass FileSystemStore >> isCaseSensitive
+FileSystemStore class >> isCaseSensitive
 [
-^ self shouldBeImplemented
+	^ self shouldBeImplemented
 ]
 
-Metaclass FileSystemStore >> separator
+FileSystemStore class >> separator
 [
-self shouldBeImplemented
+	self shouldBeImplemented
 ]
 

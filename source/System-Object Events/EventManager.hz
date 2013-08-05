@@ -1,103 +1,120 @@
-Class
-	name: #EventManager;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+EventManager
 	instanceVariables: #(#actionMap );
 	classVariables: #(#ActionMaps );
 	package: #'System-Object Events'.
 
-Class EventManager >> actionMap
+EventManager >> actionMap
 [
-^ actionMap == nil	ifTrue: [ self createActionMap ]	ifFalse: [ actionMap ]
+	^ actionMap == nil
+		ifTrue: [ self createActionMap ]
+		ifFalse: [ actionMap ]
 ]
 
-Class EventManager >> addDependent: anObject
+EventManager >> addDependent: anObject
 [
 	"Make the given object one of the receiver's dependents."
-self when: self changedEventSelector send: self updateEventSelector to: anObject.^ anObject
+
+	self when: self changedEventSelector send: self updateEventSelector to: anObject.
+	^ anObject
 ]
 
-Class EventManager >> breakDependents
+EventManager >> breakDependents
 [
 	"Remove all of the receiver's dependents."
-self removeActionsForEvent: self changedEventSelector
+
+	self removeActionsForEvent: self changedEventSelector
 ]
 
-Class EventManager >> changed: aParameter
+EventManager >> changed: aParameter
 [
-	"Receiver changed. The change is denoted by the argument aParameter. 	Usually the argument is a Symbol that is part of the dependent's change 	protocol. Inform all of the dependents."
-self triggerEvent: self changedEventSelector with: aParameter
+	"Receiver changed. The change is denoted by the argument aParameter. 
+	Usually the argument is a Symbol that is part of the dependent's change 
+	protocol. Inform all of the dependents."
+
+	self triggerEvent: self changedEventSelector with: aParameter
 ]
 
-Class EventManager >> changedEventSelector
+EventManager >> changedEventSelector
 [
-^ #changed:
+	^ #changed:
 ]
 
-Class EventManager >> dependents
+EventManager >> dependents
 [
-^ (self actionSequenceForEvent: self changedEventSelector) asSet collect: [ :each | each receiver ]
+	^ (self actionSequenceForEvent: self changedEventSelector) asSet collect: [ :each | each receiver ]
 ]
 
-Class EventManager >> postCopy
+EventManager >> postCopy
 [
-super postCopy.self release
+	super postCopy.
+	self release
 ]
 
-Class EventManager >> releaseActionMap
+EventManager >> releaseActionMap
 [
-actionMap := nil
+	actionMap := nil
 ]
 
-Class EventManager >> removeDependent: anObject
+EventManager >> removeDependent: anObject
 [
 	"Remove the given object as one of the receiver's dependents."
-self removeActionsWithReceiver: anObject forEvent: self changedEventSelector.^ anObject
+
+	self removeActionsWithReceiver: anObject forEvent: self changedEventSelector.
+	^ anObject
 ]
 
-Class EventManager >> updateEventSelector
+EventManager >> updateEventSelector
 [
-^ #update:
+	^ #update:
 ]
 
-Class EventManager >> updateableActionMap
+EventManager >> updateableActionMap
 [
-actionMap == nil	ifTrue: [ actionMap := self createActionMap ].^ actionMap
+	actionMap == nil
+		ifTrue: [ actionMap := self createActionMap ].
+	^ actionMap
 ]
 
-Metaclass
-	name: #EventManager;
-	instanceVariables: #().
-
-Metaclass EventManager >> actionMapFor: anObject
+EventManager class >> actionMapFor: anObject
 [
-^ self actionMaps at: anObject ifAbsent: [ self createActionMap ]
+	^ self actionMaps at: anObject ifAbsent: [ self createActionMap ]
 ]
 
-Metaclass EventManager >> actionMaps
+EventManager class >> actionMaps
 [
-^ ActionMaps ifNil: [ ActionMaps := WeakIdentityKeyDictionary new ]
+	^ ActionMaps ifNil: [ ActionMaps := WeakIdentityKeyDictionary new ]
 ]
 
-Metaclass EventManager >> cleanUp: aggressive
+EventManager class >> cleanUp: aggressive
 [
 	"Dump all ActionMaps but only when we're aggressively cleaning"
-aggressive	ifTrue: [ ActionMaps := nil ]
+
+	aggressive
+		ifTrue: [ ActionMaps := nil ]
 ]
 
-Metaclass EventManager >> flushEvents
+EventManager class >> flushEvents
 [
 	"Object flushEvents"
-self actionMaps	keysAndValuesDo: [ :rcvr :evtDict | 		rcvr			ifNotNil: [ 				"make sure we don't modify evtDict while enumerating"				evtDict keys					do: [ :evtName | 						| msgSet |						msgSet := evtDict at: evtName ifAbsent: [ nil ].						msgSet == nil							ifTrue: [ rcvr removeActionsForEvent: evtName ] ] ] ].EventManager actionMaps finalizeValues
+
+	self actionMaps
+		keysAndValuesDo: [ :rcvr :evtDict | rcvr
+				ifNotNil: [ "make sure we don't modify evtDict while enumerating"
+					evtDict keys
+						do: [ :evtName | | msgSet |
+							msgSet := evtDict at: evtName ifAbsent: [ nil ].
+							msgSet == nil
+								ifTrue: [ rcvr removeActionsForEvent: evtName ] ] ] ].
+	EventManager actionMaps finalizeValues
 ]
 
-Metaclass EventManager >> releaseActionMapFor: anObject
+EventManager class >> releaseActionMapFor: anObject
 [
-self actionMaps removeKey: anObject ifAbsent: [  ]
+	self actionMaps removeKey: anObject ifAbsent: [  ]
 ]
 
-Metaclass EventManager >> updateableActionMapFor: anObject
+EventManager class >> updateableActionMapFor: anObject
 [
-^ self actionMaps at: anObject ifAbsentPut: [ self createActionMap ]
+	^ self actionMaps at: anObject ifAbsentPut: [ self createActionMap ]
 ]
 

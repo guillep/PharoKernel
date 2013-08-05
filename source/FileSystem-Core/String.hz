@@ -1,27 +1,34 @@
-Class String >> asFileReference
+String >> asFileReference
 [
-^ FileSystem disk referenceTo: self
+	^ FileSystem disk referenceTo: self
 ]
 
-Class String >> asPath
+String >> asPath
 [
 	"convert myself to a path"
-	"Examples:		'.' asPath		'~/Desktop' asPath		'/home/foo' asPath		'../../foo.bar' asPath"
-^ FileSystem disk resolve: self
+
+	"Examples:
+		'.' asPath
+		'~/Desktop' asPath
+		'/home/foo' asPath
+		'../../foo.bar' asPath"
+
+	^ FileSystem disk resolve: self
 ]
 
-Class String >> asPathWith: anObject
+String >> asPathWith: anObject
 [
-^ anObject pathFromString: self
+	^ anObject pathFromString: self
 ]
 
-Class String >> asReference
+String >> asReference
 [
-self deprecated: 'Use #asFileReference instead' on: '12 April 2012' in: 'Pharo 1.4'.^ self asFileReference
+	self deprecated: 'Use #asFileReference instead' on: '12 April 2012' in: 'Pharo 1.4'.
+	^ self asFileReference
 ]
 
-Class String >> asResolvedBy: aFileSystem
+String >> asResolvedBy: aFileSystem
 [
-^ aFileSystem resolveString: self
+	^ aFileSystem resolveString: self
 ]
 

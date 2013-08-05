@@ -1,47 +1,39 @@
-Class
-	name: #MacOSResolver;
-	superclass: #ClassPlatformResolver;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+MacOSResolver
+	superclass: #PlatformResolver;
 	package: #'FileSystem-Core-Implementation'.
 
-Class MacOSResolver >> desktop
+MacOSResolver >> desktop
 [
-^ self home / 'Desktop'
+	^ self home / 'Desktop'
 ]
 
-Class MacOSResolver >> documents
+MacOSResolver >> documents
 [
-^ self home / 'Documents'
+	^ self home / 'Documents'
 ]
 
-Class MacOSResolver >> home
+MacOSResolver >> home
 [
-^ (self resolveString: self class primitiveGetUntrustedUserDirectory) parent parent parent parent parent
+	^ (self resolveString: self class primitiveGetUntrustedUserDirectory) parent parent parent parent parent
 ]
 
-Class MacOSResolver >> library
+MacOSResolver >> library
 [
-^ self home / 'Library'
+	^ self home / 'Library'
 ]
 
-Class MacOSResolver >> preferences
+MacOSResolver >> preferences
 [
-^ self library / 'Preferences'
+	^ self library / 'Preferences'
 ]
 
-Class MacOSResolver >> supportedOrigins
+MacOSResolver >> supportedOrigins
 [
-^ super supportedOrigins , #(#library)
+	^ super supportedOrigins , #(#library)
 ]
 
-Metaclass
-	name: #MacOSResolver;
-	instanceVariables: #().
-
-Metaclass MacOSResolver >> platformName
+MacOSResolver class >> platformName
 [
-^ 'Mac OS'
+	^ 'Mac OS'
 ]
 

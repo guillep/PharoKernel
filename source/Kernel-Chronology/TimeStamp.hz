@@ -1,97 +1,120 @@
-Class
-	name: #TimeStamp;
-	superclass: #ClassDateAndTime;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+TimeStamp
+	superclass: #DateAndTime;
 	package: #'Kernel-Chronology'.
 
-Class TimeStamp >> asTimeStamp
+TimeStamp >> asTimeStamp
 [
 	"Answer the receiver as an instance of TimeStamp."
-^ self
+
+	^ self
 ]
 
-Class TimeStamp >> date
+TimeStamp >> date
 [
 	"Answer the date of the receiver."
-^ self asDate
+
+	^ self asDate
 ]
 
-Class TimeStamp >> dateAndTime
+TimeStamp >> dateAndTime
 [
 	"Answer a two element Array containing the receiver's date and time."
-^ Array with: self date with: self time
+
+	^ Array with: self date with: self time
 ]
 
-Class TimeStamp >> minusDays: anInteger
+TimeStamp >> minusDays: anInteger
 [
 	"Answer a TimeStamp which is anInteger days before the receiver."
-^ self - anInteger days
+
+	^ self - anInteger days
 ]
 
-Class TimeStamp >> minusSeconds: anInteger
+TimeStamp >> minusSeconds: anInteger
 [
 	"Answer a TimeStamp which is anInteger number of seconds before the receiver."
-^ self - anInteger seconds
+
+	^ self - anInteger seconds
 ]
 
-Class TimeStamp >> plusDays: anInteger
+TimeStamp >> plusDays: anInteger
 [
 	"Answer a TimeStamp which is anInteger days after the receiver."
-^ self + anInteger days
+
+	^ self + anInteger days
 ]
 
-Class TimeStamp >> plusSeconds: anInteger
+TimeStamp >> plusSeconds: anInteger
 [
 	"Answer a TimeStamp which is anInteger number of seconds after the receiver."
-^ self + anInteger seconds
+
+	^ self + anInteger seconds
 ]
 
-Class TimeStamp >> printOn: aStream
+TimeStamp >> printOn: aStream
 [
 	"Print receiver's date and time on aStream."
-aStream	nextPutAll: self date printString;	space;	nextPutAll: self time printString
+
+	aStream
+		nextPutAll: self date printString;
+		space;
+		nextPutAll: self time printString
 ]
 
-Class TimeStamp >> species
+TimeStamp >> species
 [
-^ DateAndTime
+	^ DateAndTime
 ]
 
-Class TimeStamp >> storeOn: aStream
+TimeStamp >> storeOn: aStream
 [
-aStream	nextPut: $';	print: self;	nextPut: $';	nextPutAll: ' asTimeStamp'
+	aStream
+		nextPut: $';
+		print: self;
+		nextPut: $';
+		nextPutAll: ' asTimeStamp'
 ]
 
-Class TimeStamp >> time
+TimeStamp >> time
 [
 	"Answer the time of the receiver."
-^ self asTime
+
+	^ self asTime
 ]
 
-Metaclass
-	name: #TimeStamp;
-	instanceVariables: #().
-
-Metaclass TimeStamp >> current
+TimeStamp class >> current
 [
-| ts ticks |ts := super now.ticks := ts ticks.ticks at: 3 put: 0.ts ticks: ticks offset: ts offset.^ ts
+	| ts ticks |
+	ts := super now.
+	ticks := ts ticks.
+	ticks at: 3 put: 0.
+	ts ticks: ticks offset: ts offset.
+	^ ts
 ]
 
-Metaclass TimeStamp >> fromMethodTimeStamp: aString
+TimeStamp class >> fromMethodTimeStamp: aString
 [
-| stream |(stream := aString readStream)	skipSeparators;	skipTo: Character space.^ self readFrom: stream
+	| stream |
+	(stream := aString readStream)
+		skipSeparators;
+		skipTo: Character space.
+	^ self readFrom: stream
 ]
 
-Metaclass TimeStamp >> now
+TimeStamp class >> now
 [
 	"Answer the current date and time as a TimeStamp."
-^ self current
+
+	^ self current
 ]
 
-Metaclass TimeStamp >> readFrom: stream
+TimeStamp class >> readFrom: stream
 [
-| date time |stream skipSeparators.date := Date readFrom: stream.stream skipSeparators.time := Time readFrom: stream.^ self date: date time: time
+	| date time |
+	stream skipSeparators.
+	date := Date readFrom: stream.
+	stream skipSeparators.
+	time := Time readFrom: stream.
+	^ self date: date time: time
 ]
 

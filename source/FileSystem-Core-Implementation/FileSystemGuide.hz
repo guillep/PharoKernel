@@ -1,62 +1,56 @@
-Class
-	name: #FileSystemGuide;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+FileSystemGuide
 	instanceVariables: #(#visitor #work );
-	classVariables: #();
 	package: #'FileSystem-Core-Implementation'.
 
-Class FileSystemGuide >> initialize
+FileSystemGuide >> initialize
 [
-super initialize.work := OrderedCollection new
+	super initialize.
+	work := OrderedCollection new
 ]
 
-Class FileSystemGuide >> initializeWithVisitor: aVisitor
+FileSystemGuide >> initializeWithVisitor: aVisitor
 [
-self initialize.visitor := aVisitor
+	self initialize.
+	visitor := aVisitor
 ]
 
-Class FileSystemGuide >> pop
+FileSystemGuide >> pop
 [
-^ work removeLast
+	^ work removeLast
 ]
 
-Class FileSystemGuide >> push: anObject
+FileSystemGuide >> push: anObject
 [
-work add: anObject
+	work add: anObject
 ]
 
-Class FileSystemGuide >> pushAll: aCollection
+FileSystemGuide >> pushAll: aCollection
 [
-aCollection do: [ :ea | self push: ea ]
+	aCollection do: [ :ea | self push: ea ]
 ]
 
-Class FileSystemGuide >> show: aReference
+FileSystemGuide >> show: aReference
 [
-self subclassResponsibility
+	self subclassResponsibility
 ]
 
-Class FileSystemGuide >> top
+FileSystemGuide >> top
 [
-^ work removeFirst
+	^ work removeFirst
 ]
 
-Class FileSystemGuide >> whileNotDoneDo: aBlock
+FileSystemGuide >> whileNotDoneDo: aBlock
 [
-[ work isEmpty ] whileFalse: [ aBlock value ]
+	[ work isEmpty ] whileFalse: [ aBlock value ]
 ]
 
-Metaclass
-	name: #FileSystemGuide;
-	instanceVariables: #().
-
-Metaclass FileSystemGuide >> for: aVisitor
+FileSystemGuide class >> for: aVisitor
 [
-^ self basicNew initializeWithVisitor: aVisitor
+	^ self basicNew initializeWithVisitor: aVisitor
 ]
 
-Metaclass FileSystemGuide >> show: aReference to: aVisitor
+FileSystemGuide class >> show: aReference to: aVisitor
 [
-^ (self for: aVisitor) show: aReference
+	^ (self for: aVisitor) show: aReference
 ]
 

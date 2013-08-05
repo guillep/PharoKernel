@@ -1,34 +1,38 @@
-Class
-	name: #FLLightGlobalMapper;
-	superclass: #ClassFLMapper;
-	instanceSpecification: #(#pointers #words );
+FLLightGlobalMapper
+	superclass: #FLMapper;
 	instanceVariables: #(#globals );
-	classVariables: #();
 	package: #'Fuel-Mappers'.
 
-Class FLLightGlobalMapper >> initializeWith: someObjects
+FLLightGlobalMapper >> initializeWith: someObjects
 [
-self initialize.globals := someObjects
+	self initialize.
+	globals := someObjects
 ]
 
-Class FLLightGlobalMapper >> mapAndTrace: anObject
+FLLightGlobalMapper >> mapAndTrace: anObject
 [
 	"Uses the Chain of Responsibility pattern to answer the cluster which maps with the received object."
-(globals includes: anObject)	ifTrue: [ self mapAndTraceByClusterName: anObject to: FLGlobalValueCluster ]	ifFalse: [ next mapAndTrace: anObject ]
+
+	(globals includes: anObject)
+		ifTrue: [ self mapAndTraceByClusterName: anObject to: FLGlobalValueCluster ]
+		ifFalse: [ next mapAndTrace: anObject ]
 ]
 
-Metaclass
-	name: #FLLightGlobalMapper;
-	instanceVariables: #().
-
-Metaclass FLLightGlobalMapper >> for: globalSymbols
+FLLightGlobalMapper class >> for: globalSymbols in: globalEnvironment
 [
-^ self basicNew	initializeWith: (self valuesFor: globalSymbols);	yourself
+	^ self basicNew
+		initializeWith: (self valuesFor: globalSymbols in: globalEnvironment);
+		yourself
 ]
 
-Metaclass FLLightGlobalMapper >> valuesFor: globalSymbols
+FLLightGlobalMapper class >> valuesFor: globalSymbols in: globalEnvironment
 [
 	"Some globals, like ActiveHand have a nil value in the Smalltalk globals. Therefore, we cannot map nil to globalCluster. We could filter before in #defaultGlobalSymbols but that means that not even the Association will be consider global."
-^ (globalSymbols select: [ :each | (Smalltalk globals at: each) isNil not ])	collect: [ :aSymbol | Smalltalk globals at: aSymbol ]	as: IdentitySet
+
+	| values |
+	values := IdentitySet new: globalSymbols size.	"todo: optimized ugly code"
+	globalSymbols
+		do: [ :aSymbol | globalEnvironment at: aSymbol ifPresent: [ :value | value ifNotNil: [ values add: value ] ] ].
+	^ values
 ]
 

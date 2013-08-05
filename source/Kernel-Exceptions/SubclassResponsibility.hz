@@ -1,18 +1,14 @@
-Class
-	name: #SubclassResponsibility;
-	superclass: #ClassSelectorException;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+SubclassResponsibility
+	superclass: #SelectorException;
 	package: #'Kernel-Exceptions'.
 
-Class SubclassResponsibility >> standardMessageText
+SubclassResponsibility >> standardMessageText
 [
 	"Generate a standard textual description"
-^ String	streamContents: [ :stream | 		stream print: self signaler class.		stream << ' had the subclass responsibility to implement '.		stream print: self selector ]
-]
 
-Metaclass
-	name: #SubclassResponsibility;
-	instanceVariables: #().
+	^ String
+		streamContents: [ :stream | stream print: self signaler class.
+			stream << ' had the subclass responsibility to implement '.
+			stream print: self selector ]
+]
 

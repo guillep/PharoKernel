@@ -1,0 +1,33 @@
+PrintVersionCommandLineHandler
+	superclass: #CommandLineHandler;
+	package: #'System-CommandLine'.
+
+PrintVersionCommandLineHandler >> activate
+[
+	self activateHelp.
+	self printVersion.
+	self quit
+]
+
+PrintVersionCommandLineHandler >> printVersion
+[
+	FileStream stdout
+		nextPutAll: '[version] ';
+		nextPutAll: SystemVersion current major asString;
+		nextPutAll: '.';
+		nextPutAll: SystemVersion current minor asString;
+		nextPutAll: ' #';
+		nextPutAll: SystemVersion current highestUpdate asString;
+		cr
+]
+
+PrintVersionCommandLineHandler class >> commandName
+[
+	^ 'printVersion'
+]
+
+PrintVersionCommandLineHandler class >> description
+[
+	^ 'Print image version'
+]
+

@@ -1,484 +1,659 @@
-Class
-	name: #Character;
-	superclass: #ClassMagnitude;
-	instanceSpecification: #(#pointers #words );
+Character
+	superclass: #Magnitude;
 	instanceVariables: #(#value );
 	classVariables: #(#DigitValues #CharacterTable );
 	package: #'Kernel-BasicObjects'.
 
-Class Character >> < aCharacter
+Character >> < aCharacter
 [
 	"Answer true if the receiver's value < aCharacter's value."
-^ self asciiValue < aCharacter asciiValue
+
+	^ self asciiValue < aCharacter asciiValue
 ]
 
-Class Character >> = aCharacter
+Character >> = aCharacter
 [
-	"Primitive. Answer true if the receiver and the argument are the same	object (have the same object pointer) and false otherwise. Optional. See	Object documentation whatIsAPrimitive."
-^ self == aCharacter or: [ aCharacter isCharacter and: [ self asciiValue = aCharacter asciiValue ] ]
+	"Primitive. Answer true if the receiver and the argument are the same
+	object (have the same object pointer) and false otherwise. Optional. See
+	Object documentation whatIsAPrimitive."
+
+	^ self == aCharacter or: [ aCharacter isCharacter and: [ self asciiValue = aCharacter asciiValue ] ]
 ]
 
-Class Character >> > aCharacter
+Character >> > aCharacter
 [
 	"Answer true if the receiver's value > aCharacter's value."
-^ self asciiValue > aCharacter asciiValue
+
+	^ self asciiValue > aCharacter asciiValue
 ]
 
-Class Character >> asCharacter
+Character >> asCharacter
 [
 	"Answer the receiver itself."
-^ self
+
+	^ self
 ]
 
-Class Character >> asHTMLString
+Character >> asHTMLString
 [
 	"substitute the < & > into HTML compliant elements"
-#($< '&lt;' $> '&gt;' $& '&amp;')	pairsDo: [ :k :v | 		self = k			ifTrue: [ ^ v ] ].^ String with: self
+
+	#($< '&lt;' $> '&gt;' $& '&amp;') pairsDo: [ :k :v | self = k
+				ifTrue: [ ^ v ] ].
+	^ String with: self
 ]
 
-Class Character >> asInteger
+Character >> asInteger
 [
 	"Answer the value of the receiver."
-^ value
+
+	^ value
 ]
 
-Class Character >> asLowercase
+Character >> asLowercase
 [
 	"If the receiver is uppercase, answer its matching lowercase Character."
-	"A tentative implementation.  Eventually this should consult the Unicode table."
-| v |v := self charCode.(((8r101 <= v and: [ v <= 8r132 ]) or: [ 16rC0 <= v and: [ v <= 16rD6 ] ]) or: [ 16rD8 <= v and: [ v <= 16rDE ] ])	ifTrue: [ ^ Character value: value + 8r40 ]	ifFalse: [ ^ self ]
+
+	^ self characterSet toLowercase: self
 ]
 
-Class Character >> asString
+Character >> asString
 [
-^ String with: self
+	^ String with: self
 ]
 
-Class Character >> asSymbol
+Character >> asSymbol
 [
 	"Answer a Symbol consisting of the receiver as the only element."
-^ Symbol internCharacter: self
+
+	^ Symbol internCharacter: self
 ]
 
-Class Character >> asUnicode
+Character >> asUnicode
 [
-| table charset v |self leadingChar = 0	ifTrue: [ ^ value ].charset := EncodedCharSet charsetAt: self leadingChar.charset isCharset	ifFalse: [ ^ self charCode ].table := charset ucsTable.table isNil	ifTrue: [ ^ 16rFFFD ].v := table at: self charCode + 1.v = -1	ifTrue: [ ^ 16rFFFD ].^ v
+	| table charset v |
+	self leadingChar = 0
+		ifTrue: [ ^ value ].
+	charset := self characterSet.
+	charset isCharset
+		ifFalse: [ ^ self charCode ].
+	table := charset ucsTable.
+	table isNil
+		ifTrue: [ ^ 16rFFFD ].
+	v := table at: self charCode + 1.
+	v = -1
+		ifTrue: [ ^ 16rFFFD ].
+	^ v
 ]
 
-Class Character >> asUppercase
+Character >> asUppercase
 [
 	"If the receiver is lowercase, answer its matching uppercase Character."
-	"A tentative implementation.  Eventually this should consult the Unicode table."
-| v |v := self charCode.(((8r141 <= v and: [ v <= 8r172 ]) or: [ 16rE0 <= v and: [ v <= 16rF6 ] ]) or: [ 16rF8 <= v and: [ v <= 16rFE ] ])	ifTrue: [ ^ Character value: value - 8r40 ]	ifFalse: [ ^ self ]
+
+	^ self characterSet toUppercase: self
 ]
 
-Class Character >> asciiValue
+Character >> asciiValue
 [
 	"Answer the value of the receiver that represents its ascii encoding."
-^ value
+
+	^ value
 ]
 
-Class Character >> basicSqueakToIso
+Character >> basicSqueakToIso
 [
-| asciiValue |value < 128	ifTrue: [ ^ self ].value > 255	ifTrue: [ ^ self ].asciiValue := #(196 197 199 201 209 214 220 225 224 226 228 227 229 231 233 232 234 235 237 236 238 239 241 243 242 244 246 245 250 249 251 252 134 176 162 163 167 149 182 223 174 169 153 180 168 128 198 216 129 177 138 141 165 181 142 143 144 154 157 170 186 158 230 248 191 161 172 166 131 173 178 171 187 133 160 192 195 213 140 156 150 151 147 148 145 146 247 179 253 159 185 164 139 155 188 189 135 183 130 132 137 194 202 193 203 200 205 206 207 204 211 212 190 210 218 219 217 208 136 152 175 215 221 222 184 240 254 255 256)	at: self asciiValue - 127.^ Character value: asciiValue
+	| asciiValue |
+	value < 128
+		ifTrue: [ ^ self ].
+	value > 255
+		ifTrue: [ ^ self ].
+	asciiValue := #(196 197 199 201 209 214 220 225 224 226 228 227 229 231 233 232 234 235 237 236 238 239 241 243 242 244 246 245 250 249 251 252 134 176 162 163 167 149 182 223 174 169 153 180 168 128 198 216 129 177 138 141 165 181 142 143 144 154 157 170 186 158 230 248 191 161 172 166 131 173 178 171 187 133 160 192 195 213 140 156 150 151 147 148 145 146 247 179 253 159 185 164 139 155 188 189 135 183 130 132 137 194 202 193 203 200 205 206 207 204 211 212 190 210 218 219 217 208 136 152 175 215 221 222 184 240 254 255 256)
+		at: self asciiValue - 127.
+	^ Character value: asciiValue
 ]
 
-Class Character >> canBeGlobalVarInitial
+Character >> canBeGlobalVarInitial
 [
-^ (EncodedCharSet charsetAt: self leadingChar) canBeGlobalVarInitial: self
+	^ self characterSet canBeGlobalVarInitial: self
 ]
 
-Class Character >> canBeNonGlobalVarInitial
+Character >> canBeNonGlobalVarInitial
 [
-^ (EncodedCharSet charsetAt: self leadingChar) canBeNonGlobalVarInitial: self
+	^ self characterSet canBeNonGlobalVarInitial: self
 ]
 
-Class Character >> charCode
+Character >> charCode
 [
-^ value bitAnd: 16r3FFFFF
+	^ value bitAnd: 16r3FFFFF
 ]
 
-Class Character >> codePoint
+Character >> characterSet
 [
-^ value
+	^ EncodedCharSet charsetAt: self leadingChar
 ]
 
-Class Character >> copy
+Character >> codePoint
+[
+	"Just for ANSI Compliance"
+
+	^ value
+]
+
+Character >> copy
 [
 	"Characters from 0 to 255 are unique, copy only the rest."
-value < 256	ifTrue: [ ^ self ].^ super copy
+
+	value < 256
+		ifTrue: [ ^ self ].
+	^ super copy
 ]
 
-Class Character >> deepCopy
+Character >> deepCopy
 [
 	"Characters from 0 to 255 are unique, copy only the rest."
-value < 256	ifTrue: [ ^ self ].^ super deepCopy
+
+	value < 256
+		ifTrue: [ ^ self ].
+	^ super deepCopy
 ]
 
-Class Character >> digitValue
+Character >> digitValue
 [
-	"Answer 0-9 if the receiver is $0-$9, 10-35 if it is $A-$Z, and < 0	otherwise. This is used to parse literal numbers of radix 2-36."
-	"slow version	| digitValue |	(digitValue := ('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ' indexOf: self) - 1) >= 0		ifTrue: [ ^digitValue ].	^ (EncodedCharSet charsetAt: self leadingChar) digitValueOf: self. "
-value > 16rFF	ifTrue: [ ^ (EncodedCharSet charsetAt: self leadingChar) digitValueOf: self ].^ DigitValues at: 1 + value
+	"Answer 0-9 if the receiver is $0-$9, 10-35 if it is $A-$Z, and < 0
+	otherwise. This is used to parse literal numbers of radix 2-36."
+
+	"slow version
+	| digitValue |
+	(digitValue := ('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ' indexOf: self) - 1) >= 0
+		ifTrue: [ ^digitValue ].
+	^ (EncodedCharSet charsetAt: self leadingChar) digitValueOf: self. "
+
+	value > 16rFF
+		ifTrue: [ ^ self characterSet digitValueOf: self ].
+	^ DigitValues at: 1 + value
 ]
 
-Class Character >> digitValue2
+Character >> digitValue2
 [
-	"Answer 0-9 if the receiver is $0-$9, 10-35 if it is $A-$Z, and < 0	otherwise. This is used to parse literal numbers of radix 2-36."
-| digitValue |(digitValue := ('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ' indexOf: self) - 1) >= 0	ifTrue: [ ^ digitValue ].^ (EncodedCharSet charsetAt: self leadingChar) digitValueOf: self
+	"Answer 0-9 if the receiver is $0-$9, 10-35 if it is $A-$Z, and < 0
+	otherwise. This is used to parse literal numbers of radix 2-36."
+
+	| digitValue |
+	(digitValue := ('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ' indexOf: self) - 1) >= 0
+		ifTrue: [ ^ digitValue ].
+	^ (EncodedCharSet charsetAt: self leadingChar) digitValueOf: self
 ]
 
-Class Character >> hash
+Character >> hash
 [
 	"Hash is reimplemented because = is implemented."
-^ value
+
+	^ value
 ]
 
-Class Character >> hex
+Character >> hex
 [
 	"return an headecimal representation of the receiver in the form 16rXX.."
-^ value hex
+
+	^ value hex
 ]
 
-Class Character >> isAlphaNumeric
+Character >> isAlphaNumeric
 [
 	"Answer whether the receiver is a letter or a digit."
-^ self isLetter or: [ self isDigit ]
+
+	^ self isLetter or: [ self isDigit ]
 ]
 
-Class Character >> isCharacter
+Character >> isCharacter
 [
-^ true
+	^ true
 ]
 
-Class Character >> isDigit
+Character >> isDigit
 [
-^ (EncodedCharSet charsetAt: self leadingChar) isDigit: self
+	^ self characterSet isDigit: self
 ]
 
-Class Character >> isLetter
+Character >> isLetter
 [
-^ (EncodedCharSet charsetAt: self leadingChar) isLetter: self
+	^ self characterSet isLetter: self
 ]
 
-Class Character >> isLiteral
+Character >> isLiteral
 [
-^ true
+	^ true
 ]
 
-Class Character >> isLowercase
+Character >> isLowercase
 [
-^ (EncodedCharSet charsetAt: self leadingChar) isLowercase: self
+	^ self characterSet isLowercase: self
 ]
 
-Class Character >> isOctetCharacter
+Character >> isOctetCharacter
 [
-^ value < 256
+	^ value < 256
 ]
 
-Class Character >> isSafeForHTTP
+Character >> isSafeForHTTP
 [
 	"whether a character is 'safe', or needs to be escaped when used, eg, in a URL"
+
 	"[GG]  See http://www.faqs.org/rfcs/rfc1738.html. ~ is unsafe and has been removed"
-^ self charCode < 128 and: [ self isAlphaNumeric or: [ '.-_' includes: (Character value: self charCode) ] ]
+
+	^ self charCode < 128 and: [ self isAlphaNumeric or: [ '.-_' includes: (Character value: self charCode) ] ]
 ]
 
-Class Character >> isSeparator
+Character >> isSeparator
 [
-	"Answer whether the receiver is one of the separator characters--space, 	cr, tab, line feed, or form feed."
-value = 32	ifTrue: [ ^ true ].	"space"value = 13	ifTrue: [ ^ true ].	"cr"value = 9	ifTrue: [ ^ true ].	"tab"value = 10	ifTrue: [ ^ true ].	"line feed"value = 12	ifTrue: [ ^ true ].	"form feed"^ false
+	"Answer whether the receiver is one of the separator characters--space, 
+	cr, tab, line feed, or form feed."
+
+	value = 32
+		ifTrue: [ ^ true ].	"space"
+	value = 13
+		ifTrue: [ ^ true ].	"cr"
+	value = 9
+		ifTrue: [ ^ true ].	"tab"
+	value = 10
+		ifTrue: [ ^ true ].	"line feed"
+	value = 12
+		ifTrue: [ ^ true ].	"form feed"
+	^ false
 ]
 
-Class Character >> isSpecial
+Character >> isSpecial
 [
 	"Answer whether the receiver is one of the special characters"
-^ '+-/\*~<>=@,%|&?!' includes: self
+
+	^ '+-/\*~<>=@,%|&?!' includes: self
 ]
 
-Class Character >> isUppercase
+Character >> isUppercase
 [
-^ (EncodedCharSet charsetAt: self leadingChar) isUppercase: self
+	^ self characterSet isUppercase: self
 ]
 
-Class Character >> isVowel
+Character >> isVowel
 [
-	"Answer whether the receiver is one of the vowels, AEIOU, in upper or 	lower case."
-^ 'AEIOU' includes: self asUppercase
+	"Answer whether the receiver is one of the vowels, AEIOU, in upper or 
+	lower case."
+
+	^ 'AEIOU' includes: self asUppercase
 ]
 
-Class Character >> join: aSequenceableCollection
+Character >> leadingChar
 [
-^ self asString join: aSequenceableCollection
+	^ (value bitAnd: 16r3FC00000) bitShift: -22
 ]
 
-Class Character >> leadingChar
+Character >> lowercase
 [
-^ (value bitAnd: 16r3FC00000) bitShift: -22
+	^ self asLowercase
 ]
 
-Class Character >> printOn: aStream
+Character >> printOn: aStream
 [
-| name |(value > 32 and: [ value ~= 127 ])	ifTrue: [ 		aStream			nextPut: $$;			nextPut: self ]	ifFalse: [ 		name := self class constantNameFor: self.		name notNil			ifTrue: [ 				aStream					nextPutAll: self class name;					space;					nextPutAll: name ]			ifFalse: [ 				aStream					nextPutAll: self class name;					nextPutAll: ' value: ';					print: value ] ]
+	| name |
+	(value > 32 and: [ value ~= 127 ])
+		ifTrue: [ aStream
+				nextPut: $$;
+				nextPut: self ]
+		ifFalse: [ name := self class constantNameFor: self.
+			aStream nextPutAll: self class name.
+			name notNil
+				ifTrue: [ aStream
+						space;
+						nextPutAll: name ]
+				ifFalse: [ aStream
+						nextPutAll: ' value: ';
+						print: value ] ]
 ]
 
-Class Character >> printStringHex
+Character >> printStringHex
 [
-	"returns the hex digit part of the character value	$A printStringHex		 '41' 	$A hex		 '16r41' "
-^ value printStringBase: 16
+	"returns the hex digit part of the character value
+	$A printStringHex
+		 '41' 
+	$A hex
+		 '16r41' "
+
+	^ value printStringBase: 16
 ]
 
-Class Character >> sameAs: aCharacter
+Character >> sameAs: aCharacter
 [
 	"Answer whether the receiver is equal to aCharacter, ignoring case"
-^ self asLowercase = aCharacter asLowercase
+
+	^ self asLowercase = aCharacter asLowercase
 ]
 
-Class Character >> setValue: newValue
+Character >> setValue: newValue
 [
-value ifNotNil: [ ^ self error: 'Characters are immutable' ].value := newValue
+	value ifNotNil: [ ^ self error: 'Characters are immutable' ].
+	value := newValue
 ]
 
-Class Character >> shallowCopy
+Character >> shallowCopy
 [
 	"Characters from 0 to 255 are unique, copy only the rest."
-value < 256	ifTrue: [ ^ self ].^ super shallowCopy
+
+	value < 256
+		ifTrue: [ ^ self ].
+	^ super shallowCopy
 ]
 
-Class Character >> shouldBePrintedAsLiteral
+Character >> shouldBePrintedAsLiteral
 [
-^ value between: 33 and: 255
+	^ value between: 33 and: 255
 ]
 
-Class Character >> storeBinaryOn: aStream
+Character >> storeBinaryOn: aStream
 [
 	"Store the receiver on a binary (file) stream"
-value < 256	ifTrue: [ aStream basicNextPut: value ]	ifFalse: [ aStream nextInt32Put: value ]
+
+	value < 256
+		ifTrue: [ aStream basicNextPut: value ]
+		ifFalse: [ aStream nextInt32Put: value ]
 ]
 
-Class Character >> storeOn: aStream
+Character >> storeOn: aStream
 [
 	"Common character literals are preceded by '$', however special need to be encoded differently: for some this might be done by using one of the shortcut constructor methods for the rest we have to create them by ascii-value."
-| name |self shouldBePrintedAsLiteral	ifTrue: [ 		aStream			nextPut: $$;			nextPut: self ]	ifFalse: [ 		name := self class constantNameFor: self.		name notNil			ifTrue: [ 				aStream					nextPutAll: self class name;					space;					nextPutAll: name ]			ifFalse: [ 				aStream					nextPut: $(;					nextPutAll: self class name;					nextPutAll: ' value: ';					print: value;					nextPut: $) ] ]
+
+	| name |
+	self shouldBePrintedAsLiteral
+		ifTrue: [ aStream
+				nextPut: $$;
+				nextPut: self ]
+		ifFalse: [ name := self class constantNameFor: self.
+			name notNil
+				ifTrue: [ aStream
+						nextPutAll: self class name;
+						space;
+						nextPutAll: name ]
+				ifFalse: [ aStream
+						nextPut: $(;
+						nextPutAll: self class name;
+						nextPutAll: ' value: ';
+						print: value;
+						nextPut: $) ] ]
 ]
 
-Class Character >> to: other
+Character >> to: other
 [
 	"Answer with a collection in ascii order -- $a to: $z"
-^ (self asciiValue to: other asciiValue) collect: [ :ascii | Character value: ascii ]
+
+	^ (self asciiValue to: other asciiValue) collect: [ :ascii | Character value: ascii ]
 ]
 
-Class Character >> tokenish
+Character >> tokenish
 [
 	"Answer whether the receiver is a valid token-character -- letter, digit, underscore, or colon."
-^ self isLetter or: [ self isDigit or: [ self = $_ or: [ self = $: ] ] ]
+
+	^ self isLetter or: [ self isDigit or: [ self = $_ or: [ self = $: ] ] ]
 ]
 
-Class Character >> veryDeepCopyWith: deepCopier
+Character >> uppercase
+[
+	^ self asUppercase
+]
+
+Character >> veryDeepCopyWith: deepCopier
 [
 	"Return self.  I can't be copied."
 
+	
 ]
 
-Metaclass
-	name: #Character;
-	instanceVariables: #().
-
-Metaclass Character >> allByteCharacters
+Character class >> allByteCharacters
 [
 	"Answer all the characters that can be encoded in a byte"
-^ (0 to: 255) collect: [ :v | Character value: v ] as: String
+
+	^ (0 to: 255) collect: [ :v | Character value: v ] as: String
 ]
 
-Metaclass Character >> allCharacters
+Character class >> allCharacters
 [
 	"This name is obsolete since only the characters that will fit in a byte can be queried"
-^ self allByteCharacters
+
+	^ self allByteCharacters
 ]
 
-Metaclass Character >> alphabet
+Character class >> alphabet
 [
 	"($a to: $z) as: String"
-^ 'abcdefghijklmnopqrstuvwxyz' copy
+
+	^ 'abcdefghijklmnopqrstuvwxyz' copy
 ]
 
-Metaclass Character >> arrowDown
+Character class >> arrowDown
 [
-^ self value: 31
+	^ self value: 31
 ]
 
-Metaclass Character >> arrowLeft
+Character class >> arrowLeft
 [
-^ self value: 28
+	^ self value: 28
 ]
 
-Metaclass Character >> arrowRight
+Character class >> arrowRight
 [
-^ self value: 29
+	^ self value: 29
 ]
 
-Metaclass Character >> arrowUp
+Character class >> arrowUp
 [
-^ self value: 30
+	^ self value: 30
 ]
 
-Metaclass Character >> backspace
+Character class >> backspace
 [
 	"Answer the Character representing a backspace."
-^ self value: 8
+
+	^ self value: 8
 ]
 
-Metaclass Character >> characterTable
+Character class >> characterTable
 [
 	"Answer the class variable in which unique Characters are stored."
-^ CharacterTable
+
+	^ CharacterTable
 ]
 
-Metaclass Character >> codePoint: anInteger
+Character class >> codePoint: anInteger
 [
 	"Just for ANSI Compliance"
-^ self value: anInteger
+
+	^ self value: anInteger
 ]
 
-Metaclass Character >> constantNameFor: aCharacter
+Character class >> constantNameFor: aCharacter
 [
-^ self constantNames detect: [ :each | (self perform: each) = aCharacter ] ifNone: [ nil ]
+	^ self constantNames detect: [ :each | (self perform: each) = aCharacter ] ifNone: [ nil ]
 ]
 
-Metaclass Character >> constantNames
+Character class >> constantNames
 [
 	"Added the rest of them!"
-^ #(#backspace #cr #delete #escape #lf #newPage #space #tab #arrowDown #arrowLeft #arrowRight #arrowUp #enter #end #home #insert #nbsp #pageDown #pageUp)
+
+	^ #(#backspace #cr #delete #escape #lf #newPage #space #tab #arrowDown #arrowLeft #arrowRight #arrowUp #enter #end #home #insert #nbsp #pageDown #pageUp #null)
 ]
 
-Metaclass Character >> cr
+Character class >> cr
 [
 	"Answer the Character representing a carriage return."
-^ self value: 13
+
+	^ self value: 13
 ]
 
-Metaclass Character >> delete
+Character class >> delete
 [
-^ self value: 127
+	^ self value: 127
 ]
 
-Metaclass Character >> digitValue: x
+Character class >> digitValue: x
 [
-	"Answer the Character whose digit value is x. For example, answer $9 for 	x=9, $0 for x=0, $A for x=10, $Z for x=35."
-| index |index := x asInteger.^ CharacterTable	at:		(index < 10			ifTrue: [ 48 + index ]			ifFalse: [ 55 + index ]) + 1
+	"Answer the Character whose digit value is x. For example, answer $9 for 
+	x=9, $0 for x=0, $A for x=10, $Z for x=35."
+
+	| index |
+	index := x asInteger.
+	^ CharacterTable at: (index < 10
+				ifTrue: [ 48 + index ]
+				ifFalse: [ 55 + index ]) + 1
 ]
 
-Metaclass Character >> end
+Character class >> end
 [
-^ self value: 4
+	^ self value: 4
 ]
 
-Metaclass Character >> enter
+Character class >> enter
 [
 	"Answer the Character representing enter."
-^ self value: 3
+
+	^ self value: 3
 ]
 
-Metaclass Character >> escape
+Character class >> escape
 [
 	"Answer the ASCII ESC character"
-^ self value: 27
+
+	^ self value: 27
 ]
 
-Metaclass Character >> euro
+Character class >> euro
 [
 	"The Euro currency sign, that E with two dashes. The code point is a official unicode ISO/IEC-10646-1"
-^ Unicode value: 16r20AC
+
+	^ Unicode value: 16r20AC
 ]
 
-Metaclass Character >> home
+Character class >> home
 [
-^ self value: 1
+	^ self value: 1
 ]
 
-Metaclass Character >> initialize
+Character class >> initialize
 [
 	"Create the table of DigitsValues."
+
 	"self initialize"
-CharacterTable	ifNil: [ 		"Initialize only once to ensure that byte characters are unique"		CharacterTable := Array new: 256.		1 to: 256 do: [ :i | CharacterTable at: i put: (self basicNew setValue: i - 1) ] ].self initializeDigitValues
+
+	CharacterTable
+		ifNil: [ "Initialize only once to ensure that byte characters are unique"
+			CharacterTable := Array new: 256.
+			1 to: 256 do: [ :i | CharacterTable at: i put: (self basicNew setValue: i - 1) ] ].
+	self initializeDigitValues
 ]
 
-Metaclass Character >> initializeDigitValues
+Character class >> initializeDigitValues
 [
-	"Initialize the well known digit value of ascii characters.	Note that the DigitValues table is 1-based while ascii values are 0-based, thus the offset+1."
-DigitValues := Array new: 256 withAll: -1.	"the digits"0 to: 9 do: [ :i | DigitValues at: 48 + i + 1 put: i ].	"the uppercase letters"10 to: 35 do: [ :i | DigitValues at: 55 + i + 1 put: i ].	"the lowercase letters"10 to: 35 do: [ :i | DigitValues at: 87 + i + 1 put: i ]
+	"Initialize the well known digit value of ascii characters.
+	Note that the DigitValues table is 1-based while ascii values are 0-based, thus the offset+1."
+
+	DigitValues := Array new: 256 withAll: -1.	"the digits"
+	0 to: 9 do: [ :i | DigitValues at: 48 + i + 1 put: i ].	"the uppercase letters"
+	10 to: 35 do: [ :i | DigitValues at: 55 + i + 1 put: i ].	"the lowercase letters"
+	10 to: 35 do: [ :i | DigitValues at: 87 + i + 1 put: i ]
 ]
 
-Metaclass Character >> insert
+Character class >> insert
 [
-^ self value: 5
+	^ self value: 5
 ]
 
-Metaclass Character >> leadingChar: leadChar code: code
+Character class >> leadingChar: leadChar code: code
 [
-code >= 16r400000	ifTrue: [ self error: 'code is out of range' ].leadChar >= 256	ifTrue: [ self error: 'lead is out of range' ].code < 256	ifTrue: [ ^ self value: code ].^ self value: (leadChar bitShift: 22) + code
+	code >= 16r400000
+		ifTrue: [ self error: 'code is out of range' ].
+	leadChar >= 256
+		ifTrue: [ self error: 'lead is out of range' ].
+	code < 256
+		ifTrue: [ ^ self value: code ].
+	^ self value: (leadChar bitShift: 22) + code
 ]
 
-Metaclass Character >> lf
+Character class >> lf
 [
 	"Answer the Character representing a linefeed."
-^ self value: 10
+
+	^ self value: 10
 ]
 
-Metaclass Character >> linefeed
+Character class >> linefeed
 [
 	"Answer the Character representing a linefeed."
-^ self value: 10
+
+	^ self value: 10
 ]
 
-Metaclass Character >> nbsp
+Character class >> nbsp
 [
 	"non-breakable space. Latin1 encoding common usage."
-^ Character value: 160
+
+	^ Character value: 160
 ]
 
-Metaclass Character >> new
+Character class >> new
 [
 	"Creating new characters is not allowed."
-self error: 'cannot create new characters'
+
+	self error: 'cannot create new characters'
 ]
 
-Metaclass Character >> newPage
+Character class >> newPage
 [
 	"Answer the Character representing a form feed."
-^ self value: 12
+
+	^ self value: 12
 ]
 
-Metaclass Character >> pageDown
+Character class >> null
 [
-^ self value: 12
+	^ self value: 0
 ]
 
-Metaclass Character >> pageUp
+Character class >> pageDown
 [
-^ self value: 11
+	^ self value: 12
 ]
 
-Metaclass Character >> separators
+Character class >> pageUp
+[
+	^ self value: 11
+]
+
+Character class >> separators
 [
 	"Answer a collection of the standard ASCII separator characters."
-^ #(32 13 9 10 12) collect: [ :v | Character value: v ] as: String	"space"	"cr"	"tab"	"line feed"	"form feed"
+
+	^ #(32 13 9 10 12) collect: [ :v | Character value: v ] as: String	"space"	"cr"	"tab"	"line feed"	"form feed"
 ]
 
-Metaclass Character >> space
+Character class >> space
 [
 	"Answer the Character representing a space."
-^ self value: 32
+
+	^ self value: 32
 ]
 
-Metaclass Character >> tab
+Character class >> tab
 [
 	"Answer the Character representing a tab."
-^ self value: 9
+
+	^ self value: 9
 ]
 
-Metaclass Character >> value: anInteger
+Character class >> value: anInteger
 [
 	"Answer the Character whose value is anInteger."
-anInteger negative	ifTrue: [ self error: 'Characters expects a positive value.' ].anInteger > 255	ifTrue: [ ^ self basicNew setValue: anInteger ].^ CharacterTable at: anInteger + 1
+
+	anInteger negative
+		ifTrue: [ self error: 'Characters expects a positive value.' ].
+	anInteger > 255
+		ifTrue: [ ^ self basicNew setValue: anInteger ].
+	^ CharacterTable at: anInteger + 1
 ]
 

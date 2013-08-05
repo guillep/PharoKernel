@@ -1,52 +1,44 @@
-Class
-	name: #CollectVisitor;
-	superclass: #ClassAbstractEnumerationVisitor;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+CollectVisitor
+	superclass: #AbstractEnumerationVisitor;
 	package: #'FileSystem-Core-Implementation'.
 
-Class CollectVisitor >> visitReference: anEntry
+CollectVisitor >> visitReference: anEntry
 [
-out nextPut: (block value: anEntry)
+	out nextPut: (block value: anEntry)
 ]
 
-Metaclass
-	name: #CollectVisitor;
-	instanceVariables: #().
-
-Metaclass CollectVisitor >> breadthFirst: aReference
+CollectVisitor class >> breadthFirst: aReference
 [
-^ self breadthFirst: aReference collect: [ :entry | entry ]
+	^ self breadthFirst: aReference collect: [ :entry | entry ]
 ]
 
-Metaclass CollectVisitor >> breadthFirst: aReference collect: aBlock
+CollectVisitor class >> breadthFirst: aReference collect: aBlock
 [
-^ (self collect: aBlock) breadthFirst: aReference
+	^ (self collect: aBlock) breadthFirst: aReference
 ]
 
-Metaclass CollectVisitor >> collect: aBlock
+CollectVisitor class >> collect: aBlock
 [
-^ self basicNew initializeWithBlock: aBlock
+	^ self basicNew initializeWithBlock: aBlock
 ]
 
-Metaclass CollectVisitor >> postorder: aReference
+CollectVisitor class >> postorder: aReference
 [
-^ self postorder: aReference collect: [ :entry | entry ]
+	^ self postorder: aReference collect: [ :entry | entry ]
 ]
 
-Metaclass CollectVisitor >> postorder: aReference collect: aBlock
+CollectVisitor class >> postorder: aReference collect: aBlock
 [
-^ (self collect: aBlock) postorder: aReference
+	^ (self collect: aBlock) postorder: aReference
 ]
 
-Metaclass CollectVisitor >> preorder: aReference
+CollectVisitor class >> preorder: aReference
 [
-^ self preorder: aReference collect: [ :entry | entry ]
+	^ self preorder: aReference collect: [ :entry | entry ]
 ]
 
-Metaclass CollectVisitor >> preorder: aReference collect: aBlock
+CollectVisitor class >> preorder: aReference collect: aBlock
 [
-^ (self collect: aBlock) preorder: aReference
+	^ (self collect: aBlock) preorder: aReference
 ]
 

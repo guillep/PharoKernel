@@ -1,63 +1,72 @@
-Class
-	name: #Association;
-	superclass: #ClassLookupKey;
-	instanceSpecification: #(#pointers #words );
+Association
+	superclass: #LookupKey;
 	instanceVariables: #(#value );
-	classVariables: #();
 	package: #'Collections-Support'.
 
-Class Association >> = anAssociation
+Association >> = anAssociation
 [
-^ super = anAssociation and: [ value = anAssociation value ]
+	^ super = anAssociation and: [ value = anAssociation value ]
 ]
 
-Class Association >> isSelfEvaluating
+Association >> isSelfEvaluating
 [
-^ self class == Association and: [ self key isSelfEvaluating and: [ self value isSelfEvaluating ] ]
+	^ self class == Association and: [ self key isSelfEvaluating and: [ self value isSelfEvaluating ] ]
 ]
 
-Class Association >> key: aKey value: anObject
+Association >> key: aKey value: anObject
 [
 	"Store the arguments as the variables of the receiver."
-key := aKey.value := anObject
+
+	key := aKey.
+	value := anObject
 ]
 
-Class Association >> literalEqual: otherLiteral
+Association >> literalEqual: otherLiteral
 [
-	"Answer true if the receiver and otherLiteral represent the same literal.	Variable bindings are literally equals only if identical.	This is how variable sharing works, by preserving identity and changing only the value."
-^ self == otherLiteral
+	"Answer true if the receiver and otherLiteral represent the same literal.
+	Variable bindings are literally equals only if identical.
+	This is how variable sharing works, by preserving identity and changing only the value."
+
+	^ self == otherLiteral
 ]
 
-Class Association >> printOn: aStream
+Association >> printOn: aStream
 [
-super printOn: aStream.aStream nextPutAll: '->'.value printOn: aStream
+	super printOn: aStream.
+	aStream nextPutAll: '->'.
+	value printOn: aStream
 ]
 
-Class Association >> storeOn: aStream
+Association >> storeOn: aStream
 [
 	"Store in the format (key->value)"
-aStream nextPut: $(.key storeOn: aStream.aStream nextPutAll: '->'.value storeOn: aStream.aStream nextPut: $)
+
+	aStream nextPut: $(.
+	key storeOn: aStream.
+	aStream nextPutAll: '->'.
+	value storeOn: aStream.
+	aStream nextPut: $)
 ]
 
-Class Association >> value
+Association >> value
 [
 	"Answer the value of the receiver."
-^ value
+
+	^ value
 ]
 
-Class Association >> value: anObject
+Association >> value: anObject
 [
 	"Store the argument, anObject, as the value of the receiver."
-value := anObject
+
+	value := anObject
 ]
 
-Metaclass
-	name: #Association;
-	instanceVariables: #().
-
-Metaclass Association >> key: newKey value: newValue
+Association class >> key: newKey value: newValue
 [
-	"Answer an instance of me with the arguments as the key and value of 	the association."
-^ (super key: newKey) value: newValue
+	"Answer an instance of me with the arguments as the key and value of 
+	the association."
+
+	^ (super key: newKey) value: newValue
 ]
 

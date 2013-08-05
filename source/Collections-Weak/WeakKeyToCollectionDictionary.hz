@@ -1,28 +1,33 @@
-Class
-	name: #WeakKeyToCollectionDictionary;
-	superclass: #ClassWeakIdentityKeyDictionary;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+WeakKeyToCollectionDictionary
+	superclass: #WeakIdentityKeyDictionary;
 	package: #'Collections-Weak'.
 
-Class WeakKeyToCollectionDictionary >> finalizeValues
+WeakKeyToCollectionDictionary >> finalizeValues
 [
-self rehash
+	self rehash
 ]
 
-Class WeakKeyToCollectionDictionary >> noCheckAddForRehash: anAssociation
+WeakKeyToCollectionDictionary >> noCheckAddForRehash: anAssociation
 [
-| cleanedValue |anAssociation key ifNil: [ ^ self ].cleanedValue := anAssociation value copyWithout: nil.cleanedValue notEmpty	ifTrue: [ 		anAssociation value: cleanedValue.		super noCheckAddForRehash: anAssociation ]
+	| cleanedValue |
+	anAssociation key ifNil: [ ^ self ].
+	cleanedValue := anAssociation value copyWithout: nil.
+	cleanedValue notEmpty
+		ifTrue: [ anAssociation value: cleanedValue.
+			super noCheckAddForRehash: anAssociation ]
 ]
 
-Class WeakKeyToCollectionDictionary >> noCheckNoGrowFillFrom: anArray
+WeakKeyToCollectionDictionary >> noCheckNoGrowFillFrom: anArray
 [
 	"Add the elements of anArray except nils and associations with empty collections (or with only nils) to me assuming that I don't contain any of them, they are unique and I have more free space than they require."
-tally := 0.1 to: anArray size do: [ :index | 	(anArray at: index)		ifNotNil: [ :association | 			association key				ifNotNil: [ :key | 					| cleanedValue "Don't let the key go away" |					(cleanedValue := association value copyWithout: nil) isEmpty						ifFalse: [ 							association value: cleanedValue.							array at: (self scanForEmptySlotFor: key) put: association.							tally := tally + 1 ] ] ] ]
-]
 
-Metaclass
-	name: #WeakKeyToCollectionDictionary;
-	instanceVariables: #().
+	tally := 0.
+	1 to: anArray size do: [ :index | (anArray at: index)
+			ifNotNil: [ :association | association key
+					ifNotNil: [ :key | | cleanedValue "Don't let the key go away" |
+						(cleanedValue := association value copyWithout: nil) isEmpty
+							ifFalse: [ association value: cleanedValue.
+								array at: (self scanForEmptySlotFor: key) put: association.
+								tally := tally + 1 ] ] ] ]
+]
 

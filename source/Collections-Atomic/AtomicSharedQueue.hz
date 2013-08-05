@@ -1,39 +1,41 @@
-Class
-	name: #AtomicSharedQueue;
-	superclass: #ClassWaitfreeQueue;
-	instanceSpecification: #(#pointers #words );
+AtomicSharedQueue
+	superclass: #WaitfreeQueue;
 	instanceVariables: #(#availSema );
-	classVariables: #();
 	package: #'Collections-Atomic'.
 
-Class AtomicSharedQueue >> initialize
+AtomicSharedQueue >> initialize
 [
-super initialize.availSema := Semaphore new
+	super initialize.
+	availSema := Semaphore new
 ]
 
-Class AtomicSharedQueue >> next
+AtomicSharedQueue >> next
 [
 	"Fetch the next item from queue. If queue is locked or empty, block the sender until operation can complete"
-| result |[ | keepWaiting |keepWaiting := false.result := self nextIfNone: [ keepWaiting := true ].keepWaiting ] whileTrue: [ self waitForNewItems ].^ result
+
+	| result |
+	[ | keepWaiting |
+	keepWaiting := false.
+	result := self nextIfNone: [ keepWaiting := true ].
+	keepWaiting ]
+		whileTrue: [ self waitForNewItems ].
+	^ result
 ]
 
-Class AtomicSharedQueue >> signalAddedNewItem
+AtomicSharedQueue >> signalAddedNewItem
 [
-availSema signal
+	availSema signal
 ]
 
-Class AtomicSharedQueue >> signalNoMoreItems
+AtomicSharedQueue >> signalNoMoreItems
 [
 	"queue is empty, reset sema signals"
-availSema initSignals
+
+	availSema initSignals
 ]
 
-Class AtomicSharedQueue >> waitForNewItems
+AtomicSharedQueue >> waitForNewItems
 [
-availSema wait
+	availSema wait
 ]
-
-Metaclass
-	name: #AtomicSharedQueue;
-	instanceVariables: #().
 

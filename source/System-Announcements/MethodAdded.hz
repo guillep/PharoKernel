@@ -1,72 +1,82 @@
-Class
-	name: #MethodAdded;
-	superclass: #ClassSystemAnnouncement;
-	instanceSpecification: #(#pointers #words );
+MethodAdded
+	superclass: #SystemAnnouncement;
 	instanceVariables: #(#method #methodClass #protocol #selector );
-	classVariables: #();
 	package: #'System-Announcements'.
 
-Class MethodAdded >> method
+MethodAdded >> method
 [
-^ method
+	^ method
 ]
 
-Class MethodAdded >> method: aCompiledMethod
+MethodAdded >> method: aCompiledMethod
 [
-method := aCompiledMethod
+	method := aCompiledMethod
 ]
 
-Class MethodAdded >> methodAffected
+MethodAdded >> methodAffected
 [
-^ self method
+	^ self method
 ]
 
-Class MethodAdded >> methodClass
+MethodAdded >> methodClass
 [
-^ methodClass
+	^ methodClass
 ]
 
-Class MethodAdded >> methodClass: aClass
+MethodAdded >> methodClass: aClass
 [
-methodClass := aClass
+	methodClass := aClass
 ]
 
-Class MethodAdded >> protocol
+MethodAdded >> protocol
 [
-^ protocol
+	^ protocol
 ]
 
-Class MethodAdded >> protocol: aProtocolName
+MethodAdded >> protocol: aProtocolName
 [
-protocol := aProtocolName
+	protocol := aProtocolName
 ]
 
-Class MethodAdded >> selector
+MethodAdded >> selector
 [
-^ selector
+	^ selector
 ]
 
-Class MethodAdded >> selector: aSelector
+MethodAdded >> selector: aSelector
 [
-selector := aSelector
+	selector := aSelector
 ]
 
-Metaclass
-	name: #MethodAdded;
-	instanceVariables: #().
-
-Metaclass MethodAdded >> method: aCompiledMethod selector: aSelector class: aClass
+MethodAdded class >> method: aCompiledMethod selector: aSelector class: aClass
 [
-self flag: #look.	"Is it ok to send an event with no protocol?"^ self	method: aCompiledMethod	selector: aSelector	protocol: nil	class: aClass	requestor: nil
+	self flag: #look.	"Is it ok to send an event with no protocol?"
+	^ self
+		method: aCompiledMethod
+		selector: aSelector
+		protocol: nil
+		class: aClass
+		requestor: nil
 ]
 
-Metaclass MethodAdded >> method: aCompiledMethod selector: aSelector protocol: aProtocolName class: aClass
+MethodAdded class >> method: aCompiledMethod selector: aSelector protocol: aProtocolName class: aClass
 [
-self flag: #look.	"Is it ok to send an event with no requestor?"^ self	method: aCompiledMethod	selector: aSelector	protocol: aProtocolName	class: aClass	requestor: nil
+	self flag: #look.	"Is it ok to send an event with no requestor?"
+	^ self
+		method: aCompiledMethod
+		selector: aSelector
+		protocol: aProtocolName
+		class: aClass
+		requestor: nil
 ]
 
-Metaclass MethodAdded >> method: aCompiledMethod selector: aSelector protocol: aProtocolName class: aClass requestor: aRequestor
+MethodAdded class >> method: aCompiledMethod selector: aSelector protocol: aProtocolName class: aClass requestor: aRequestor
 [
-^ self new	method: aCompiledMethod;	selector: aSelector;	protocol: aProtocolName;	methodClass: aClass;	yourself
+	^ self new
+		method: aCompiledMethod;
+		selector: aSelector;
+		protocol: aProtocolName;
+		methodClass: aClass;
+		yourself
 ]
 

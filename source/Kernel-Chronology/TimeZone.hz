@@ -1,80 +1,95 @@
-Class
-	name: #TimeZone;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+TimeZone
 	instanceVariables: #(#offset #abbreviation #name );
-	classVariables: #();
-	sharedPools: #(#ChronologyConstants );	package: #'Kernel-Chronology'.
+	sharedPools: #(#ChronologyConstants );
+	package: #'Kernel-Chronology'.
 
-Class TimeZone >> abbreviation
+TimeZone >> abbreviation
 [
-^ abbreviation
+	^ abbreviation
 ]
 
-Class TimeZone >> abbreviation: aString
+TimeZone >> abbreviation: aString
 [
-abbreviation := aString
+	abbreviation := aString
 ]
 
-Class TimeZone >> name
+TimeZone >> name
 [
-^ name
+	^ name
 ]
 
-Class TimeZone >> name: aString
+TimeZone >> name: aString
 [
-name := aString
+	name := aString
 ]
 
-Class TimeZone >> offset
+TimeZone >> offset
 [
-^ offset
+	^ offset
 ]
 
-Class TimeZone >> offset: aDuration
+TimeZone >> offset: aDuration
 [
-offset := aDuration
+	offset := aDuration
 ]
 
-Class TimeZone >> printOn: aStream
+TimeZone >> printOn: aStream
 [
-super printOn: aStream.aStream	nextPut: $(;	nextPutAll: self abbreviation;	nextPut: $)
+	super printOn: aStream.
+	aStream
+		nextPut: $(;
+		nextPutAll: self abbreviation;
+		nextPut: $)
 ]
 
-Metaclass
-	name: #TimeZone;
-	instanceVariables: #().
-
-Metaclass TimeZone >> abbreviated: aString
+TimeZone class >> abbreviated: aString
 [
 	"Return the timezone whose abbreviation is aString."
-^ self timeZones detect: [ :tz | tz abbreviation = aString ]
+
+	^ self timeZones detect: [ :tz | tz abbreviation = aString ]
 ]
 
-Metaclass TimeZone >> default
+TimeZone class >> default
 [
 	"Answer the default time zone - GMT"
-^ self timeZones detect: [ :tz | tz offset = Duration zero ]
+
+	^ self timeZones detect: [ :tz | tz offset = Duration zero ]
 ]
 
-Metaclass TimeZone >> local
+TimeZone class >> local
 [
-^ Locale localTimeZone
+	^ Locale localTimeZone
 ]
 
-Metaclass TimeZone >> offset: anOffset
+TimeZone class >> offset: anOffset
 [
 	"Return the timezone with the given offset"
-^ self timeZones detect: [ :tz | tz offset = anOffset ] ifNone: [ self new offset: anOffset ]
+
+	^ self timeZones detect: [ :tz | tz offset = anOffset ] ifNone: [ self new offset: anOffset ]
 ]
 
-Metaclass TimeZone >> offset: aDuration name: aName abbreviation: anAbbreviation
+TimeZone class >> offset: aDuration name: aName abbreviation: anAbbreviation
 [
-^ self new	offset: aDuration;	name: aName;	abbreviation: anAbbreviation;	yourself
+	^ self new
+		offset: aDuration;
+		name: aName;
+		abbreviation: anAbbreviation;
+		yourself
 ]
 
-Metaclass TimeZone >> timeZones
+TimeZone class >> timeZones
 [
-^ {(self offset: 0 hours name: 'Universal Time' abbreviation: 'UTC').(self offset: 0 hours name: 'Greenwich Mean Time' abbreviation: 'GMT').(self offset: 1 hours name: 'British Summer Time' abbreviation: 'BST').(self offset: 2 hours name: 'South African Standard Time' abbreviation: 'SAST').(self offset: -8 hours name: 'Pacific Standard Time' abbreviation: 'PST').(self offset: -7 hours name: 'Pacific Daylight Time' abbreviation: 'PDT').(self offset: -7 hours name: 'Mountain Standard Time' abbreviation: 'MST').(self offset: -6 hours name: 'Mountain Daylight Time' abbreviation: 'MDT').(self offset: -6 hours name: 'Central Standard Time' abbreviation: 'CST').(self offset: -5 hours name: 'Central Daylight Time' abbreviation: 'CDT').(self offset: -5 hours name: 'Eastern Standard Time' abbreviation: 'EST').(self offset: -4 hours name: 'Eastern Daylight Time' abbreviation: 'EDT')}
+	^ {(self offset: 0 hours name: 'Universal Time' abbreviation: 'UTC').
+	(self offset: 0 hours name: 'Greenwich Mean Time' abbreviation: 'GMT').
+	(self offset: 1 hours name: 'British Summer Time' abbreviation: 'BST').
+	(self offset: 2 hours name: 'South African Standard Time' abbreviation: 'SAST').
+	(self offset: -8 hours name: 'Pacific Standard Time' abbreviation: 'PST').
+	(self offset: -7 hours name: 'Pacific Daylight Time' abbreviation: 'PDT').
+	(self offset: -7 hours name: 'Mountain Standard Time' abbreviation: 'MST').
+	(self offset: -6 hours name: 'Mountain Daylight Time' abbreviation: 'MDT').
+	(self offset: -6 hours name: 'Central Standard Time' abbreviation: 'CST').
+	(self offset: -5 hours name: 'Central Daylight Time' abbreviation: 'CDT').
+	(self offset: -5 hours name: 'Eastern Standard Time' abbreviation: 'EST').
+	(self offset: -4 hours name: 'Eastern Daylight Time' abbreviation: 'EDT')}
 ]
 

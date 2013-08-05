@@ -1,75 +1,129 @@
-Class
-	name: #Random;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+Random
 	instanceVariables: #(#seed #a #m #q #r );
-	classVariables: #();
 	package: #'Kernel-Numbers'.
 
-Class Random >> initialize
+Random >> initialize
 [
 	" Set a reasonable Park-Miller starting seed "
-super initialize.[ seed := (Time millisecondClockValue bitAnd: 16r3FFFFFFF) bitXor: self hash.seed = 0 ]	whileTrue: [ 		"Try again if ever get a seed = 0"		 ].a := 16r000041A7 asFloat.	" magic constant =      16807 "m := 16r7FFFFFFF asFloat.	" magic constant = 2147483647 "q := (m quo: a) asFloat.r := (m \\ a) asFloat
+
+	super initialize.
+	[ seed := (Time millisecondClockValue bitAnd: 16r3FFFFFFF) bitXor: self hash.
+	seed = 0 ]
+		whileTrue: [ "Try again if ever get a seed = 0"
+			 ].
+	a := 16r000041A7 asFloat.	" magic constant =      16807 "
+	m := 16r7FFFFFFF asFloat.	" magic constant = 2147483647 "
+	q := (m quo: a) asFloat.
+	r := (m \\ a) asFloat
 ]
 
-Class Random >> next
+Random >> next
 [
 	"Answer a random Float in the interval [0 to 1)."
-^ (seed := self nextValue) / m
+
+	^ (seed := self nextValue) / m
 ]
 
-Class Random >> next: anInteger
+Random >> next: anInteger
 [
-^ self next: anInteger into: (Array new: anInteger)
+	^ self next: anInteger into: (Array new: anInteger)
 ]
 
-Class Random >> next: anInteger into: anArray
+Random >> next: anInteger into: anArray
 [
-1 to: anInteger do: [ :index | anArray at: index put: self next ].^ anArray
+	1 to: anInteger do: [ :index | anArray at: index put: self next ].
+	^ anArray
 ]
 
-Class Random >> nextInt: anInteger
+Random >> nextInt: anInteger
 [
-	"Answer a random integer in the interval [1, anInteger].	Handle large numbers too (for cryptography)."
-anInteger strictlyPositive	ifFalse: [ self error: 'Range must be positive' ].anInteger asFloat isInfinite	ifTrue: [ ^ (self next asFraction * anInteger) truncated + 1 ].^ (self next * anInteger) truncated + 1
+	"Answer a random integer in the interval [1, anInteger].
+	Handle large numbers too (for cryptography)."
+
+	anInteger strictlyPositive
+		ifFalse: [ self error: 'Range must be positive' ].
+	anInteger asFloat isInfinite
+		ifTrue: [ ^ (self next asFraction * anInteger) truncated + 1 ].
+	^ (self next * anInteger) truncated + 1
 ]
 
-Class Random >> nextValue
+Random >> nextValue
 [
-	"This method generates random instances of Integer 	in the interval	0 to 16r7FFFFFFF. This method does NOT update the seed; repeated sends	answer the same value.	The algorithm is described in detail in 'Random Number Generators: 	Good Ones Are Hard to Find' by Stephen K. Park and Keith W. Miller 	(Comm. Asso. Comp. Mach., 31(10):1192--1201, 1988)."
-| lo hi aLoRHi answer |hi := (seed quo: q) asFloat.lo := seed - (hi * q).	" = seed rem: q"aLoRHi := a * lo - (r * hi).answer := aLoRHi > 0.0	ifTrue: [ aLoRHi ]	ifFalse: [ aLoRHi + m ].^ answer
+	"This method generates random instances of Integer 	in the interval
+	0 to 16r7FFFFFFF. This method does NOT update the seed; repeated sends
+	answer the same value.
+	The algorithm is described in detail in 'Random Number Generators: 
+	Good Ones Are Hard to Find' by Stephen K. Park and Keith W. Miller 
+	(Comm. Asso. Comp. Mach., 31(10):1192--1201, 1988)."
+
+	| lo hi aLoRHi answer |
+	hi := (seed quo: q) asFloat.
+	lo := seed - (hi * q).	" = seed rem: q"
+	aLoRHi := a * lo - (r * hi).
+	answer := aLoRHi > 0.0
+		ifTrue: [ aLoRHi ]
+		ifFalse: [ aLoRHi + m ].
+	^ answer
 ]
 
-Class Random >> seed
+Random >> seed
 [
-^ seed
+	^ seed
 ]
 
-Class Random >> seed: anInteger
+Random >> seed: anInteger
 [
-seed := anInteger
+	seed := anInteger
 ]
 
-Metaclass
-	name: #Random;
-	instanceVariables: #().
-
-Metaclass Random >> bucketTest: randy
+Random class >> bucketTest: randy
 [
 	"Execute this:   Random bucketTest: Random new"
-	" A quick-and-dirty bucket test. Prints nbuckets values on theTranscript.	  Each should be 'near' the value of ntries. Any run with any value'far' from ntries	  indicates something is very wrong. Each run generates differentvalues.	  For a slightly better test, try values of nbuckets of 200-1000 ormore; go get coffee.	  This is a poor test; see Knuth.   Some 'OK' runs:		1000 1023 998 969 997 1018 1030 1019 1054 985 1003		1011 987 982 980 982 974 968 1044 976		1029 1011 1025 1016 997 1019 991 954 968 999 991		978 1035 995 988 1038 1009 988 993 976"
-| nbuckets buckets ntrys |nbuckets := 20.buckets := Array new: nbuckets.buckets atAllPut: 0.ntrys := 100.ntrys * nbuckets	timesRepeat: [ 		| slot |		slot := (randy next * nbuckets) floor + 1.		buckets at: slot put: (buckets at: slot) + 1 ].Transcript cr.1 to: nbuckets do: [ :nb | Transcript show: (buckets at: nb) printString , ' ' ]
+
+	" A quick-and-dirty bucket test. Prints nbuckets values on the
+Transcript.
+	  Each should be 'near' the value of ntries. Any run with any value
+'far' from ntries
+	  indicates something is very wrong. Each run generates different
+values.
+	  For a slightly better test, try values of nbuckets of 200-1000 or
+more; go get coffee.
+	  This is a poor test; see Knuth.   Some 'OK' runs:
+		1000 1023 998 969 997 1018 1030 1019 1054 985 1003
+		1011 987 982 980 982 974 968 1044 976
+		1029 1011 1025 1016 997 1019 991 954 968 999 991
+		978 1035 995 988 1038 1009 988 993 976
+"
+
+	| nbuckets buckets ntrys |
+	nbuckets := 20.
+	buckets := Array new: nbuckets.
+	buckets atAllPut: 0.
+	ntrys := 100.
+	ntrys * nbuckets
+		timesRepeat: [ | slot |
+			slot := (randy next * nbuckets) floor + 1.
+			buckets at: slot put: (buckets at: slot) + 1 ].
+	Transcript cr.
+	1 to: nbuckets do: [ :nb | Transcript show: (buckets at: nb) printString , ' ' ]
 ]
 
-Metaclass Random >> seed: anInteger
+Random class >> seed: anInteger
 [
-^ self new seed: anInteger
+	^ self new seed: anInteger
 ]
 
-Metaclass Random >> theItsCompletelyBrokenTest
+Random class >> theItsCompletelyBrokenTest
 [
 	"Random theItsCompletelyBrokenTest"
-	"The above should print as...	(0.149243269650845 0.331633021743797 0.75619644800024 0.393701540023881 0.941783181364547 0.549929193942775 0.659962596213428 0.991354559078512 0.696074432551896 0.922987899707159 )	If they are not these values (accounting for precision of printing) then something is horribly wrong: DO NOT USE THIS CODE FOR ANYTHING. "
-| rng |rng := Random new.rng seed: 2345678901.^ (1 to: 10) collect: [ :i | rng next ]
+
+	"The above should print as...
+	(0.149243269650845 0.331633021743797 0.75619644800024 0.393701540023881 0.941783181364547 0.549929193942775 0.659962596213428 0.991354559078512 0.696074432551896 0.922987899707159 )
+	If they are not these values (accounting for precision of printing) then something is horribly wrong: DO NOT USE THIS CODE FOR ANYTHING. "
+
+	| rng |
+	rng := Random new.
+	rng seed: 2345678901.
+	^ (1 to: 10) collect: [ :i | rng next ]
 ]
 

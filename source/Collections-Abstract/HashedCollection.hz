@@ -1,198 +1,258 @@
-Class
-	name: #HashedCollection;
-	superclass: #ClassCollection;
-	instanceSpecification: #(#pointers #words );
+HashedCollection
+	superclass: #Collection;
 	instanceVariables: #(#tally #array );
-	classVariables: #();
 	package: #'Collections-Abstract'.
 
-Class HashedCollection >> add: newObject withOccurrences: anInteger
+HashedCollection >> add: newObject withOccurrences: anInteger
 [
 	"Add newObject anInteger times to the receiver. Do nothing if anInteger is less than one. Answer newObject."
-anInteger < 1	ifTrue: [ ^ newObject ].	"I can only store an object once."^ self add: newObject
+
+	anInteger < 1
+		ifTrue: [ ^ newObject ].	"I can only store an object once."
+	^ self add: newObject
 ]
 
-Class HashedCollection >> array
+HashedCollection >> array
 [
-^ array
+	^ array
 ]
 
-Class HashedCollection >> atNewIndex: index put: anObject
+HashedCollection >> atNewIndex: index put: anObject
 [
-array at: index put: anObject.tally := tally + 1.self fullCheck
+	array at: index put: anObject.
+	tally := tally + 1.
+	self fullCheck
 ]
 
-Class HashedCollection >> capacity
+HashedCollection >> capacity
 [
 	"Answer the current capacity of the receiver."
-^ array size
+
+	^ array size
 ]
 
-Class HashedCollection >> compact
+HashedCollection >> compact
 [
 	"Reduce the size of array so that the load factor will be ~75%."
-| newCapacity |newCapacity := HashTableSizes atLeast: tally * 4 // 3.self growTo: newCapacity
+
+	| newCapacity |
+	newCapacity := HashTableSizes atLeast: tally * 4 // 3.
+	self growTo: newCapacity
 ]
 
-Class HashedCollection >> copyEmpty
+HashedCollection >> copyEmpty
 [
 	"Answer an empty copy of this collection"
+
 	"Note: this code could be moved to super"
-^ self species new
+
+	^ self species new
 ]
 
-Class HashedCollection >> doWithIndex: aBlock2
+HashedCollection >> doWithIndex: aBlock2
 [
 	"Support Set enumeration with a counter, even though not ordered"
-| index |index := 0.self do: [ :item | aBlock2 value: item value: (index := index + 1) ]
+
+	| index |
+	index := 0.
+	self do: [ :item | aBlock2 value: item value: (index := index + 1) ]
 ]
 
-Class HashedCollection >> errorNoFreeSpace
+HashedCollection >> errorNoFreeSpace
 [
-self error: 'There is no free space in this collection!'
+	self error: 'There is no free space in this collection!'
 ]
 
-Class HashedCollection >> findElementOrNil: anObject
+HashedCollection >> findElementOrNil: anObject
 [
 	"Answer the index of a first slot containing either a nil (indicating an empty slot) or an element that matches the given object. Answer the index of that slot or zero. Fail if neither a match nor an empty slot is found."
-| index |index := self scanFor: anObject.index > 0	ifTrue: [ ^ index ].	"Bad scene.  Neither have we found a matching element	nor even an empty slot.  No hashed set is ever supposed to get	completely full."self error: 'There is no free space in this set!'
+
+	| index |
+	index := self scanFor: anObject.
+	index > 0
+		ifTrue: [ ^ index ].	"Bad scene.  Neither have we found a matching element	nor even an empty slot.  No hashed set is ever supposed to get	completely full."
+	self error: 'There is no free space in this set!'
 ]
 
-Class HashedCollection >> fixCollisionsFrom: start
+HashedCollection >> fixCollisionsFrom: start
 [
-	"The element at start has been removed and replaced by nil.	This method moves forward from there, relocating any entries	that had been placed below due to collisions with this one."
-self subclassResponsibility
+	"The element at start has been removed and replaced by nil.
+	This method moves forward from there, relocating any entries
+	that had been placed below due to collisions with this one."
+
+	self subclassResponsibility
 ]
 
-Class HashedCollection >> fullCheck
+HashedCollection >> fullCheck
 [
 	"Keep array at least 1/4 free for decent hash behavior"
-array size - tally < (array size // 4 max: 1)	ifTrue: [ self grow ]
+
+	array size - tally < (array size // 4 max: 1)
+		ifTrue: [ self grow ]
 ]
 
-Class HashedCollection >> grow
+HashedCollection >> grow
 [
 	"Grow the elements array and reinsert the old elements"
-| oldElements |oldElements := array.array := Array new: (HashTableSizes atLeast: oldElements size * 2).tally := 0.oldElements	do: [ :each | 		each == nil			ifFalse: [ self noCheckAdd: each ] ]
+
+	| oldElements |
+	oldElements := array.
+	array := Array new: (HashTableSizes atLeast: oldElements size * 2).
+	tally := 0.
+	oldElements do: [ :each | each == nil
+				ifFalse: [ self noCheckAdd: each ] ]
 ]
 
-Class HashedCollection >> growSize
+HashedCollection >> growSize
 [
 	"Answer what my next higher table size should be"
-^ HashTableSizes atLeast: self capacity * 3 // 2 + 2
+
+	^ HashTableSizes atLeast: self capacity * 3 // 2 + 2
 ]
 
-Class HashedCollection >> growTo: anInteger
+HashedCollection >> growTo: anInteger
 [
 	"Grow the elements array and reinsert the old elements"
-| oldElements |oldElements := array.array := Array new: anInteger.self noCheckNoGrowFillFrom: oldElements
+
+	| oldElements |
+	oldElements := array.
+	array := Array new: anInteger.
+	self noCheckNoGrowFillFrom: oldElements
 ]
 
-Class HashedCollection >> hasContentsInExplorer
+HashedCollection >> hasContentsInExplorer
 [
-^ self notEmpty
+	^ self notEmpty
 ]
 
-Class HashedCollection >> initialize: n
+HashedCollection >> initialize: n
 [
 	"Initialize array to an array size of n"
-array := Array new: n.tally := 0
+
+	array := Array new: n.
+	tally := 0
 ]
 
-Class HashedCollection >> noCheckNoGrowFillFrom: anArray
+HashedCollection >> noCheckNoGrowFillFrom: anArray
 [
 	"Add the elements of anArray except nils to me assuming that I don't contain any of them, they are unique and I have more free space than they require."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class HashedCollection >> rehash
+HashedCollection >> rehash
 [
-self growTo: self capacity
+	self growTo: self capacity
 ]
 
-Class HashedCollection >> removeAll
+HashedCollection >> removeAll
 [
-	"remove all elements from this collection.	Preserve the capacity"
-self initialize: self capacity
+	"remove all elements from this collection.
+	Preserve the capacity"
+
+	self initialize: self capacity
 ]
 
-Class HashedCollection >> scanFor: anObject
+HashedCollection >> scanFor: anObject
 [
 	"Scan the key array for the first slot containing either a nil (indicating an empty slot) or an element that matches anObject. Answer the index of that slot or raise an error if no slot is found. This method will be overridden in various subclasses that have different interpretations for matching elements."
-self subclassResponsibility
+
+	self subclassResponsibility
 ]
 
-Class HashedCollection >> scanForEmptySlotFor: aKey
+HashedCollection >> scanForEmptySlotFor: aKey
 [
 	"Scan the key array for the first slot containing an empty slot (indicated by a nil). Answer the index of that slot. This method will be overridden in various subclasses that have different interpretations for matching elements."
-| index start |index := start := aKey hash \\ array size + 1.[ (array at: index) ifNil: [ ^ index ].(index := index \\ array size + 1) = start ] whileFalse.self errorNoFreeSpace
+
+	| index start |
+	index := start := aKey hash \\ array size + 1.
+	[ (array at: index) ifNil: [ ^ index ].
+	(index := index \\ array size + 1) = start ] whileFalse.
+	self errorNoFreeSpace
 ]
 
-Class HashedCollection >> size
+HashedCollection >> size
 [
-^ tally
+	^ tally
 ]
 
-Class HashedCollection >> someElement
+HashedCollection >> someElement
 [
 	"Deprecated. Use anyOne."
-^ self anyOne
+
+	^ self anyOne
 ]
 
-Metaclass
-	name: #HashedCollection;
-	instanceVariables: #().
+HashedCollection >> union: aCollection
+[
+	"Answer the set theoretic union of the receiver and aCollection, using the receiver's notion of equality and not side effecting the receiver at all."
 
-Metaclass HashedCollection >> cleanUp: aggressive
+	^ self copy
+		addAll: aCollection;
+		yourself
+]
+
+HashedCollection class >> cleanUp: aggressive
 [
 	"Rehash all instances when cleaning aggressively"
-aggressive	ifTrue: [ self compactAll ]
+
+	aggressive
+		ifTrue: [ self compactAll ]
 ]
 
-Metaclass HashedCollection >> compactAll
+HashedCollection class >> compactAll
 [
 	"HashedCollection rehashAll"
-self allSubclassesDo: #compactAllInstances
+
+	self allSubclassesDo: #compactAllInstances
 ]
 
-Metaclass HashedCollection >> compactAllInstances
+HashedCollection class >> compactAllInstances
 [
 	"Do not use #allInstancesDo: because rehash may create new instances."
-self allInstances do: [ :each | each compact ]
+
+	self allInstances do: [ :each | each compact ]
 ]
 
-Metaclass HashedCollection >> new
+HashedCollection class >> new
 [
-^ self basicNew initialize: 5
+	^ self basicNew initialize: 5
 ]
 
-Metaclass HashedCollection >> new: nElements
+HashedCollection class >> new: nElements
 [
 	"Create a Set large enough to hold nElements without growing"
-^ self basicNew initialize: (self sizeFor: nElements)
+
+	^ self basicNew initialize: (self sizeFor: nElements)
 ]
 
-Metaclass HashedCollection >> newFrom: aCollection
+HashedCollection class >> newFrom: aCollection
 [
 	"Answer an instance of me containing the same elements as aCollection."
-^ self subclassResponsibility
+
+	^ self subclassResponsibility
 ]
 
-Metaclass HashedCollection >> rehashAll
+HashedCollection class >> rehashAll
 [
 	"HashedCollection rehashAll"
-self allSubclassesDo: #rehashAllInstances
+
+	self allSubclassesDo: #rehashAllInstances
 ]
 
-Metaclass HashedCollection >> rehashAllInstances
+HashedCollection class >> rehashAllInstances
 [
 	"Do not use #allInstancesDo: because rehash may create new instances."
-self allInstances do: [ :each | each rehash ]
+
+	self allInstances do: [ :each | each rehash ]
 ]
 
-Metaclass HashedCollection >> sizeFor: nElements
+HashedCollection class >> sizeFor: nElements
 [
 	"Large enough size to hold nElements with some slop (see fullCheck)"
-nElements < 4	ifTrue: [ ^ 5 ].^ HashTableSizes atLeast: (nElements + 1) * 4 // 3
+
+	nElements < 4
+		ifTrue: [ ^ 5 ].
+	^ HashTableSizes atLeast: (nElements + 1) * 4 // 3
 ]
 

@@ -1,61 +1,89 @@
-Class
-	name: #Beeper;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+Beeper
 	package: #'System-Support'.
 
-Class Beeper >> play
-[
-	"This is how the default Beeper makes a beep,	by sending beep to the default sound service.	The sound system will check if sounds are enabled."
-SoundService default new beep
-]
-
-Metaclass
-	name: #Beeper;
+Beeper class
 	instanceVariables: #(#default ).
 
-Metaclass Beeper >> beep
+Beeper >> play
 [
-	"The preferred way of producing an audible feedback.	The default playable entity (an instance of Beeper)	also uses the pluggable SoundService	mechanism, so it will use the primitive beep only	if there is no other sound mechanism available."
-self default ifNil: [ self beepPrimitive ] ifNotNil: [ self default play ]
+	"This is how the default Beeper makes a beep,
+	by sending beep to the default sound service.
+	The sound system will check if sounds are enabled."
+
+	Smalltalk globals at: #SoundService ifPresent: [ :soundService | soundService default new beep ]
 ]
 
-Metaclass Beeper >> beepPrimitive
+Beeper class >> beep
 [
-	"Make a primitive beep. Only use this if	you want to force this to be a primitive beep.	Otherwise use Beeper class>>beep	since this method bypasses the current	registered playable entity."
-SoundService soundEnabled	ifTrue: [ self primitiveBeep ]
+	"The preferred way of producing an audible feedback.
+	The default playable entity (an instance of Beeper)
+	also uses the pluggable SoundService
+	mechanism, so it will use the primitive beep only
+	if there is no other sound mechanism available."
+
+	self default ifNil: [ self beepPrimitive ] ifNotNil: [ self default play ]
 ]
 
-Metaclass Beeper >> clearDefault
+Beeper class >> beepPrimitive
 [
-	"Clear the default playable.	Will be lazily initialized in Beeper class >>default."
-default := nil
+	"Make a primitive beep. Only use this if
+	you want to force this to be a primitive beep.
+	Otherwise use Beeper class>>beep
+	since this method bypasses the current
+	registered playable entity."
+
+	Smalltalk globals
+		at: #SoundService
+		ifPresent: [ :soundService | soundService soundEnabled
+				ifTrue: [ self primitiveBeep ] ]
+		ifAbsent: [ self primitiveBeep ]
 ]
 
-Metaclass Beeper >> default
+Beeper class >> clearDefault
 [
-	"When the default is not defined it is	initialized using #newDefault."
-default isNil	ifTrue: [ default := self newDefault ].^ default
+	"Clear the default playable.
+	Will be lazily initialized in Beeper class >>default."
+
+	default := nil
 ]
 
-Metaclass Beeper >> newDefault
+Beeper class >> default
 [
-	"Subclasses may override me to provide a default beep.	This base implementation returns an instance of Beeper	which uses the pluggable sound service."
-^ self new
+	"When the default is not defined it is
+	initialized using #newDefault."
+
+	default isNil
+		ifTrue: [ default := self newDefault ].
+	^ default
 ]
 
-Metaclass Beeper >> primitiveBeep
+Beeper class >> newDefault
 [
-	"Make a primitive beep. Not to be called directly.	It is much better to use Beeper class>>beep	or Beeper class>>beepPrimitive	since this method bypasses the current	registered playable entity and does not	check SoundSettings class>>soundEnabled."
+	"Subclasses may override me to provide a default beep.
+	This base implementation returns an instance of Beeper
+	which uses the pluggable sound service."
+
+	^ self new
+]
+
+Beeper class >> primitiveBeep
+[
+	"Make a primitive beep. Not to be called directly.
+	It is much better to use Beeper class>>beep
+	or Beeper class>>beepPrimitive
+	since this method bypasses the current
+	registered playable entity and does not
+	check SoundSettings class>>soundEnabled."
+
 	<primitive: 140>
-self primitiveFailed
+	self primitiveFailed
 ]
 
-Metaclass Beeper >> setDefault: aPlayableEntity
+Beeper class >> setDefault: aPlayableEntity
 [
-	"Set the playable entity used when making a beep.	The playable entity should implement the message #play."
-default := aPlayableEntity
+	"Set the playable entity used when making a beep.
+	The playable entity should implement the message #play."
+
+	default := aPlayableEntity
 ]
 

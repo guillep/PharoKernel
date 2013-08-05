@@ -1,55 +1,56 @@
-Class
-	name: #RxsCharacter;
-	superclass: #ClassRxsNode;
-	instanceSpecification: #(#pointers #words );
+RxsCharacter
+	superclass: #RxsNode;
 	instanceVariables: #(#character );
-	classVariables: #();
 	package: #'Regex-Core'.
 
-Class RxsCharacter >> character
+RxsCharacter >> character
 [
-^ character
+	^ character
 ]
 
-Class RxsCharacter >> dispatchTo: aMatcher
+RxsCharacter >> dispatchTo: aMatcher
 [
-	"Inform the matcher of the kind of the node, and it	will do whatever it has to."
-^ aMatcher syntaxCharacter: self
+	"Inform the matcher of the kind of the node, and it
+	will do whatever it has to."
+
+	^ aMatcher syntaxCharacter: self
 ]
 
-Class RxsCharacter >> enumerateTo: aSet ignoringCase: aBoolean
+RxsCharacter >> enumerateTo: aSet ignoringCase: aBoolean
 [
-aBoolean	ifTrue: [ 		aSet			add: character asUppercase;			add: character asLowercase ]	ifFalse: [ aSet add: character ]
+	aBoolean
+		ifTrue: [ aSet
+				add: character asUppercase;
+				add: character asLowercase ]
+		ifFalse: [ aSet add: character ]
 ]
 
-Class RxsCharacter >> initializeCharacter: aCharacter
+RxsCharacter >> initializeCharacter: aCharacter
 [
 	"See class comment for instance variable description."
-character := aCharacter
+
+	character := aCharacter
 ]
 
-Class RxsCharacter >> isAtomic
+RxsCharacter >> isAtomic
 [
 	"A character is always atomic."
-^ true
+
+	^ true
 ]
 
-Class RxsCharacter >> isEnumerable
+RxsCharacter >> isEnumerable
 [
-^ true
+	^ true
 ]
 
-Class RxsCharacter >> isNullable
+RxsCharacter >> isNullable
 [
-^ false
+	^ false
 ]
 
-Metaclass
-	name: #RxsCharacter;
-	instanceVariables: #().
-
-Metaclass RxsCharacter >> with: aCharacter
+RxsCharacter class >> with: aCharacter
 [
-^ self new initializeCharacter: aCharacter
+	^ self new initializeCharacter: aCharacter
 ]
 

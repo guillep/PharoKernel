@@ -1,27 +1,25 @@
-Class
-	name: #ResolutionRequest;
-	superclass: #ClassNotification;
-	instanceSpecification: #(#pointers #words );
+ResolutionRequest
+	superclass: #Notification;
 	instanceVariables: #(#origin );
-	classVariables: #();
 	package: #'FileSystem-Core-Implementation'.
 
-Class ResolutionRequest >> defaultAction
+ResolutionRequest >> defaultAction
 [
-| filedir ref |filedir := UIManager default chooseDirectory: 'Where is ' , origin asString , '?'.ref := filedir ifNotNil: [ FileSystem disk referenceTo: filedir fullName ].self resume: ref
+	| filedir ref |
+	filedir := UIManager default chooseDirectory: 'Where is ' , origin asString , '?'.
+	ref := filedir ifNotNil: [ FileSystem disk referenceTo: filedir fullName ].
+	self resume: ref
 ]
 
-Class ResolutionRequest >> origin: aSymbol
+ResolutionRequest >> origin: aSymbol
 [
-origin := aSymbol
+	origin := aSymbol
 ]
 
-Metaclass
-	name: #ResolutionRequest;
-	instanceVariables: #().
-
-Metaclass ResolutionRequest >> for: origin
+ResolutionRequest class >> for: origin
 [
-^ self new	origin: origin;	signal
+	^ self new
+		origin: origin;
+		signal
 ]
 

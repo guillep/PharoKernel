@@ -1,37 +1,35 @@
-Class
-	name: #FLGlobalCluster;
-	superclass: #ClassFLPrimitiveCluster;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+FLGlobalCluster
+	superclass: #FLPrimitiveCluster;
 	package: #'Fuel-Clusters'.
 
-Class FLGlobalCluster >> materializeGlobalAssociationFrom: aDecoder
+FLGlobalCluster >> materializeGlobalAssociationFrom: aDecoder
 [
-| globalName |globalName := aDecoder nextEncodedString asSymbol.^ Smalltalk globals associationAt: globalName ifAbsent: [ FLGlobalNotFound signalWithName: globalName ]
+	| globalName |
+	globalName := aDecoder nextEncodedString asSymbol.
+	^ aDecoder globalEnvironment associationAt: globalName ifAbsent: [ FLGlobalNotFound signalWithName: globalName ]
 ]
 
-Class FLGlobalCluster >> materializeGlobalClassFrom: aDecoder
+FLGlobalCluster >> materializeGlobalClassFrom: aDecoder
 [
-| className |className := aDecoder nextEncodedString asSymbol.^ aDecoder classNamed: className
+	| className |
+	className := aDecoder nextEncodedString asSymbol.
+	^ aDecoder classNamed: className
 ]
 
-Class FLGlobalCluster >> serializeGlobalAssociationKeyed: aSymbol on: anEncoder
+FLGlobalCluster >> serializeGlobalAssociationKeyed: aSymbol on: anEncoder
 [
-anEncoder encodeString: aSymbol
+	anEncoder encodeString: aSymbol
 ]
 
-Class FLGlobalCluster >> serializeGlobalClass: aClass on: anEncoder
+FLGlobalCluster >> serializeGlobalClass: aClass on: anEncoder
 [
-aClass isObsolete	ifTrue: [ FLObsolete signalWithName: aClass name ].anEncoder encodeString: aClass name
+	aClass isObsolete
+		ifTrue: [ FLObsolete signalWithName: aClass name ].
+	anEncoder encodeString: aClass name
 ]
 
-Metaclass
-	name: #FLGlobalCluster;
-	instanceVariables: #().
-
-Metaclass FLGlobalCluster >> clusterBucketIn: aClusterization
+FLGlobalCluster class >> clusterBucketIn: aClusterization
 [
-^ aClusterization globalsBucket
+	^ aClusterization globalsBucket
 ]
 

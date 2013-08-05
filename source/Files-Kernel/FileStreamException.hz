@@ -1,39 +1,36 @@
-Class
-	name: #FileStreamException;
-	superclass: #ClassError;
-	instanceSpecification: #(#pointers #words );
+FileStreamException
+	superclass: #Error;
 	instanceVariables: #(#fileName );
-	classVariables: #();
 	package: #'Files-Kernel'.
 
-Class FileStreamException >> fileName
+FileStreamException >> fileName
 [
-^ fileName
+	^ fileName
 ]
 
-Class FileStreamException >> fileName: aFileName
+FileStreamException >> fileName: aFileName
 [
-fileName := aFileName
+	fileName := aFileName
 ]
 
-Class FileStreamException >> isResumable
+FileStreamException >> isResumable
 [
 	"Determine whether an exception is resumable."
-^ true
+
+	^ true
 ]
 
-Class FileStreamException >> messageText
+FileStreamException >> messageText
 [
 	"Return an exception's message text."
-^ messageText == nil	ifTrue: [ fileName printString ]	ifFalse: [ messageText ]
+
+	^ messageText == nil
+		ifTrue: [ fileName printString ]
+		ifFalse: [ messageText ]
 ]
 
-Metaclass
-	name: #FileStreamException;
-	instanceVariables: #().
-
-Metaclass FileStreamException >> fileName: aFileName
+FileStreamException class >> fileName: aFileName
 [
-^ self new fileName: aFileName
+	^ self new fileName: aFileName
 ]
 

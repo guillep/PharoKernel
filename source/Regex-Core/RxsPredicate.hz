@@ -1,161 +1,209 @@
-Class
-	name: #RxsPredicate;
-	superclass: #ClassRxsNode;
-	instanceSpecification: #(#pointers #words );
+RxsPredicate
+	superclass: #RxsNode;
 	instanceVariables: #(#predicate #negation );
 	classVariables: #(#EscapedLetterSelectors #NamedClassSelectors );
 	package: #'Regex-Core'.
 
-Class RxsPredicate >> beAlphaNumeric
+RxsPredicate >> beAlphaNumeric
 [
-predicate := [ :char | char isAlphaNumeric ].negation := [ :char | char isAlphaNumeric not ]
+	predicate := [ :char | char isAlphaNumeric ].
+	negation := [ :char | char isAlphaNumeric not ]
 ]
 
-Class RxsPredicate >> beAlphabetic
+RxsPredicate >> beAlphabetic
 [
-predicate := [ :char | char isLetter ].negation := [ :char | char isLetter not ]
+	predicate := [ :char | char isLetter ].
+	negation := [ :char | char isLetter not ]
 ]
 
-Class RxsPredicate >> beBackslash
+RxsPredicate >> beBackslash
 [
-predicate := [ :char | char == $\ ].negation := [ :char | char ~~ $\ ]
+	predicate := [ :char | char == $\ ].
+	negation := [ :char | char ~~ $\ ]
 ]
 
-Class RxsPredicate >> beControl
+RxsPredicate >> beControl
 [
-predicate := [ :char | char asInteger < 32 ].negation := [ :char | char asInteger >= 32 ]
+	predicate := [ :char | char asInteger < 32 ].
+	negation := [ :char | char asInteger >= 32 ]
 ]
 
-Class RxsPredicate >> beDigit
+RxsPredicate >> beDigit
 [
-predicate := [ :char | char isDigit ].negation := [ :char | char isDigit not ]
+	predicate := [ :char | char isDigit ].
+	negation := [ :char | char isDigit not ]
 ]
 
-Class RxsPredicate >> beGraphics
+RxsPredicate >> beGraphics
 [
-self	beControl;	negate
+	self
+		beControl;
+		negate
 ]
 
-Class RxsPredicate >> beHexDigit
+RxsPredicate >> beHexDigit
 [
-| hexLetters |hexLetters := 'abcdefABCDEF'.predicate := [ :char | char isDigit or: [ hexLetters includes: char ] ].negation := [ :char | char isDigit not and: [ (hexLetters includes: char) not ] ]
+	| hexLetters |
+	hexLetters := 'abcdefABCDEF'.
+	predicate := [ :char | char isDigit or: [ hexLetters includes: char ] ].
+	negation := [ :char | char isDigit not and: [ (hexLetters includes: char) not ] ]
 ]
 
-Class RxsPredicate >> beLowercase
+RxsPredicate >> beLowercase
 [
-predicate := [ :char | char isLowercase ].negation := [ :char | char isLowercase not ]
+	predicate := [ :char | char isLowercase ].
+	negation := [ :char | char isLowercase not ]
 ]
 
-Class RxsPredicate >> beNotDigit
+RxsPredicate >> beNotDigit
 [
-self	beDigit;	negate
+	self
+		beDigit;
+		negate
 ]
 
-Class RxsPredicate >> beNotSpace
+RxsPredicate >> beNotSpace
 [
-self	beSpace;	negate
+	self
+		beSpace;
+		negate
 ]
 
-Class RxsPredicate >> beNotWordConstituent
+RxsPredicate >> beNotWordConstituent
 [
-self	beWordConstituent;	negate
+	self
+		beWordConstituent;
+		negate
 ]
 
-Class RxsPredicate >> bePrintable
+RxsPredicate >> bePrintable
 [
-self	beControl;	negate
+	self
+		beControl;
+		negate
 ]
 
-Class RxsPredicate >> bePunctuation
+RxsPredicate >> bePunctuation
 [
-| punctuationChars |punctuationChars := #($. $, $! $? $; $: $" $' $- $( $) $`).predicate := [ :char | punctuationChars includes: char ].negation := [ :char | (punctuationChars includes: char) not ]
+	| punctuationChars |
+	punctuationChars := #($. $, $! $? $; $: $" $' $- $( $) $`).
+	predicate := [ :char | punctuationChars includes: char ].
+	negation := [ :char | (punctuationChars includes: char) not ]
 ]
 
-Class RxsPredicate >> beSpace
+RxsPredicate >> beSpace
 [
-predicate := [ :char | char isSeparator ].negation := [ :char | char isSeparator not ]
+	predicate := [ :char | char isSeparator ].
+	negation := [ :char | char isSeparator not ]
 ]
 
-Class RxsPredicate >> beUppercase
+RxsPredicate >> beUppercase
 [
-predicate := [ :char | char isUppercase ].negation := [ :char | char isUppercase not ]
+	predicate := [ :char | char isUppercase ].
+	negation := [ :char | char isUppercase not ]
 ]
 
-Class RxsPredicate >> beWordConstituent
+RxsPredicate >> beWordConstituent
 [
-predicate := [ :char | char isAlphaNumeric or: [ char == $_ ] ].negation := [ :char | char isAlphaNumeric not and: [ char ~~ $_ ] ]
+	predicate := [ :char | char isAlphaNumeric or: [ char == $_ ] ].
+	negation := [ :char | char isAlphaNumeric not and: [ char ~~ $_ ] ]
 ]
 
-Class RxsPredicate >> dispatchTo: anObject
+RxsPredicate >> dispatchTo: anObject
 [
-^ anObject syntaxPredicate: self
+	^ anObject syntaxPredicate: self
 ]
 
-Class RxsPredicate >> isAtomic
+RxsPredicate >> isAtomic
 [
 	"A predicate is a single character but the character is not known in advance."
-^ false
+
+	^ false
 ]
 
-Class RxsPredicate >> isEnumerable
+RxsPredicate >> isEnumerable
 [
-^ false
+	^ false
 ]
 
-Class RxsPredicate >> negate
+RxsPredicate >> negate
 [
-| tmp |tmp := predicate.predicate := negation.negation := tmp
+	| tmp |
+	tmp := predicate.
+	predicate := negation.
+	negation := tmp
 ]
 
-Class RxsPredicate >> negated
+RxsPredicate >> negated
 [
-^ self copy negate
+	^ self copy negate
 ]
 
-Class RxsPredicate >> predicate
+RxsPredicate >> predicate
 [
-^ predicate
+	^ predicate
 ]
 
-Class RxsPredicate >> predicateNegation
+RxsPredicate >> predicateNegation
 [
-^ negation
+	^ negation
 ]
 
-Class RxsPredicate >> value: aCharacter
+RxsPredicate >> value: aCharacter
 [
-^ predicate value: aCharacter
+	^ predicate value: aCharacter
 ]
 
-Metaclass
-	name: #RxsPredicate;
-	instanceVariables: #().
-
-Metaclass RxsPredicate >> forEscapedLetter: aCharacter
+RxsPredicate class >> forEscapedLetter: aCharacter
 [
-^ self new	perform: (EscapedLetterSelectors at: aCharacter ifAbsent: [ RxParser signalSyntaxException: 'bad backslash escape' ])
+	^ self new
+		perform: (EscapedLetterSelectors at: aCharacter ifAbsent: [ RxParser signalSyntaxException: 'bad backslash escape' ])
 ]
 
-Metaclass RxsPredicate >> forNamedClass: aString
+RxsPredicate class >> forNamedClass: aString
 [
-^ self new	perform: (NamedClassSelectors at: aString ifAbsent: [ RxParser signalSyntaxException: 'bad character class name' ])
+	^ self new
+		perform: (NamedClassSelectors at: aString ifAbsent: [ RxParser signalSyntaxException: 'bad character class name' ])
 ]
 
-Metaclass RxsPredicate >> initialize
+RxsPredicate class >> initialize
 [
 	"self initialize"
-self	initializeNamedClassSelectors;	initializeEscapedLetterSelectors
+
+	self
+		initializeNamedClassSelectors;
+		initializeEscapedLetterSelectors
 ]
 
-Metaclass RxsPredicate >> initializeEscapedLetterSelectors
+RxsPredicate class >> initializeEscapedLetterSelectors
 [
 	"self initializeEscapedLetterSelectors"
-(EscapedLetterSelectors := Dictionary new)	at: $w put: #beWordConstituent;	at: $W put: #beNotWordConstituent;	at: $d put: #beDigit;	at: $D put: #beNotDigit;	at: $s put: #beSpace;	at: $S put: #beNotSpace;	at: $\ put: #beBackslash
+
+	(EscapedLetterSelectors := Dictionary new)
+		at: $w put: #beWordConstituent;
+		at: $W put: #beNotWordConstituent;
+		at: $d put: #beDigit;
+		at: $D put: #beNotDigit;
+		at: $s put: #beSpace;
+		at: $S put: #beNotSpace;
+		at: $\ put: #beBackslash
 ]
 
-Metaclass RxsPredicate >> initializeNamedClassSelectors
+RxsPredicate class >> initializeNamedClassSelectors
 [
 	"self initializeNamedClassSelectors"
-(NamedClassSelectors := Dictionary new)	at: 'alnum' put: #beAlphaNumeric;	at: 'alpha' put: #beAlphabetic;	at: 'cntrl' put: #beControl;	at: 'digit' put: #beDigit;	at: 'graph' put: #beGraphics;	at: 'lower' put: #beLowercase;	at: 'print' put: #bePrintable;	at: 'punct' put: #bePunctuation;	at: 'space' put: #beSpace;	at: 'upper' put: #beUppercase;	at: 'xdigit' put: #beHexDigit
+
+	(NamedClassSelectors := Dictionary new)
+		at: 'alnum' put: #beAlphaNumeric;
+		at: 'alpha' put: #beAlphabetic;
+		at: 'cntrl' put: #beControl;
+		at: 'digit' put: #beDigit;
+		at: 'graph' put: #beGraphics;
+		at: 'lower' put: #beLowercase;
+		at: 'print' put: #bePrintable;
+		at: 'punct' put: #bePunctuation;
+		at: 'space' put: #beSpace;
+		at: 'upper' put: #beUppercase;
+		at: 'xdigit' put: #beHexDigit
 ]
 

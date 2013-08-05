@@ -1,37 +1,34 @@
-Class
-	name: #FLMigration;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+FLMigration
 	instanceVariables: #(#sourceClassName #variables #targetClass );
-	classVariables: #();
 	package: #'Fuel-Core'.
 
-Class FLMigration >> applyTo: aVariablesMapping
+FLMigration >> applyTo: aVariablesMapping
 [
-variables do: [ :link | aVariablesMapping map: link key to: link value ]
+	variables do: [ :link | aVariablesMapping map: link key to: link value ]
 ]
 
-Class FLMigration >> initializeClassNamed: aSymbol toClass: aClass variables: anArray
+FLMigration >> initializeClassNamed: aSymbol toClass: aClass variables: anArray
 [
-self initialize.sourceClassName := aSymbol.targetClass := aClass.variables := anArray
+	self initialize.
+	sourceClassName := aSymbol.
+	targetClass := aClass.
+	variables := anArray
 ]
 
-Class FLMigration >> sourceClassName
+FLMigration >> sourceClassName
 [
-^ sourceClassName
+	^ sourceClassName
 ]
 
-Class FLMigration >> targetClass
+FLMigration >> targetClass
 [
-^ targetClass
+	^ targetClass
 ]
 
-Metaclass
-	name: #FLMigration;
-	instanceVariables: #().
-
-Metaclass FLMigration >> fromClassNamed: aSymbol toClass: aClass variables: anArray
+FLMigration class >> fromClassNamed: aSymbol toClass: aClass variables: anArray
 [
-^ self basicNew	initializeClassNamed: aSymbol toClass: aClass variables: anArray;	yourself
+	^ self basicNew
+		initializeClassNamed: aSymbol toClass: aClass variables: anArray;
+		yourself
 ]
 

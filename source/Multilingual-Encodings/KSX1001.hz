@@ -1,43 +1,58 @@
-Class
-	name: #KSX1001;
-	superclass: #ClassEncodedCharSet;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+KSX1001
+	superclass: #EncodedCharSet;
 	package: #'Multilingual-Encodings'.
 
-Metaclass
-	name: #KSX1001;
-	instanceVariables: #().
-
-Metaclass KSX1001 >> compoundTextSequence
+KSX1001 class >> compoundTextSequence
 [
-^ compoundTextSequence
+	^ compoundTextSequence
 ]
 
-Metaclass KSX1001 >> initialize
+KSX1001 class >> initialize
 [
-	"	KSX1001 initialize"
-compoundTextSequence := String	streamContents: [ :stream | 		stream nextPut: Character escape.		stream nextPut: $$.		stream nextPut: $(.		stream nextPut: $C ]
+	"
+	KSX1001 initialize
+"
+
+	compoundTextSequence := String
+		streamContents: [ :stream | stream nextPut: Character escape.
+			stream nextPut: $$.
+			stream nextPut: $(.
+			stream nextPut: $C ]
 ]
 
-Metaclass KSX1001 >> isLetter: char
+KSX1001 class >> isLetter: char
 [
-| value leading |leading := char leadingChar.value := char charCode.leading = 0	ifTrue: [ ^ super isLetter: char ].value := value // 94 + 1.^ 1 <= value and: [ value < 84 ]
+	| value leading |
+	leading := char leadingChar.
+	value := char charCode.
+	leading = 0
+		ifTrue: [ ^ super isLetter: char ].
+	value := value // 94 + 1.
+	^ 1 <= value and: [ value < 84 ]
 ]
 
-Metaclass KSX1001 >> leadingChar
+KSX1001 class >> leadingChar
 [
-^ 3
+	^ 3
 ]
 
-Metaclass KSX1001 >> nextPutValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
+KSX1001 class >> nextPutValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
 [
-| c1 c2 |state charSize: 2.state g0Leading ~= self leadingChar	ifTrue: [ 		state g0Leading: self leadingChar.		state g0Size: 2.		aStream basicNextPutAll: compoundTextSequence ].c1 := ascii // 94 + 33.c2 := ascii \\ 94 + 33.^ aStream	basicNextPut: (Character value: c1);	basicNextPut: (Character value: c2)
+	| c1 c2 |
+	state charSize: 2.
+	state g0Leading ~= self leadingChar
+		ifTrue: [ state g0Leading: self leadingChar.
+			state g0Size: 2.
+			aStream basicNextPutAll: compoundTextSequence ].
+	c1 := ascii // 94 + 33.
+	c2 := ascii \\ 94 + 33.
+	^ aStream
+		basicNextPut: (Character value: c1);
+		basicNextPut: (Character value: c2)
 ]
 
-Metaclass KSX1001 >> ucsTable
+KSX1001 class >> ucsTable
 [
-^ UCSTable ksx1001Table
+	^ UCSTable ksx1001Table
 ]
 

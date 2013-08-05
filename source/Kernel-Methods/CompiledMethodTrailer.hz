@@ -1,270 +1,567 @@
-Class
-	name: #CompiledMethodTrailer;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+CompiledMethodTrailer
 	instanceVariables: #(#data #encodedData #kind #size #method );
-	classVariables: #();
 	package: #'Kernel-Methods'.
 
-Class CompiledMethodTrailer >> clear
+CompiledMethodTrailer >> clear
 [
-kind := #NoTrailer.size := 1.data := encodedData := method := nil
+	kind := #NoTrailer.
+	size := 1.
+	data := encodedData := method := nil
 ]
 
-Class CompiledMethodTrailer >> createMethod: numberOfBytesForAllButTrailer class: aCompiledMethodClass header: headerWord
+CompiledMethodTrailer >> createMethod: numberOfBytesForAllButTrailer class: aCompiledMethodClass header: headerWord
 [
-| meth |encodedData ifNil: [ self encode ].meth := aCompiledMethodClass newMethod: numberOfBytesForAllButTrailer + size header: headerWord.	"copy the encoded trailer data"1 to: size do: [ :i | meth at: meth size - size + i put: (encodedData at: i) ].^ meth
+	| meth |
+	encodedData ifNil: [ self encode ].
+	meth := aCompiledMethodClass newMethod: numberOfBytesForAllButTrailer + size header: headerWord.	"copy the encoded trailer data"
+	1 to: size do: [ :i | meth at: meth size - size + i put: (encodedData at: i) ].
+	^ meth
 ]
 
-Class CompiledMethodTrailer >> createMethod: numberOfBytesForAllButTrailer header: headerWord methodClass: aCompiledMethodClass
+CompiledMethodTrailer >> createMethod: numberOfBytesForAllButTrailer header: headerWord methodClass: aCompiledMethodClass
 [
-| meth |encodedData ifNil: [ self encode ].meth := aCompiledMethodClass newMethod: numberOfBytesForAllButTrailer + size header: headerWord.	"copy the encoded trailer data"1 to: size do: [ :i | meth at: meth size - size + i put: (encodedData at: i) ].^ meth
+	| meth |
+	encodedData ifNil: [ self encode ].
+	meth := aCompiledMethodClass newMethod: numberOfBytesForAllButTrailer + size header: headerWord.	"copy the encoded trailer data"
+	1 to: size do: [ :i | meth at: meth size - size + i put: (encodedData at: i) ].
+	^ meth
 ]
 
-Class CompiledMethodTrailer >> decodeClearedTrailer
+CompiledMethodTrailer >> decodeClearedTrailer
 [
 	"Size is set in #decodeLengthField"
-self decodeLengthField
+
+	self decodeLengthField
 ]
 
-Class CompiledMethodTrailer >> decodeEmbeddedSourceQCompress
+CompiledMethodTrailer >> decodeEmbeddedSourceQCompress
 [
 	"data is string with method's source code, encoded using qCompress method"
-self qDecompress
+
+	self qDecompress
 ]
 
-Class CompiledMethodTrailer >> decodeExtendedKind
+CompiledMethodTrailer >> decodeExtendedKind
 [
 	"reserved for future use"
-self shouldBeImplemented
+
+	self shouldBeImplemented
 ]
 
-Class CompiledMethodTrailer >> decodeLengthField
+CompiledMethodTrailer >> decodeLengthField
 [
-	"used in various encodings, where length field is preceeding the last trailer byte.	Two least significant bits in last byte denoting the number of bytes for length field"
-| numBytes pos length |pos := method size.numBytes := ((method at: pos) bitAnd: 3) + 1.length := 0.1 to: numBytes do: [ :i | length := (length << 8) + (method at: pos - i) ].size := 1 + numBytes + length.^ length
+	"used in various encodings, where length field is preceeding the last trailer byte.
+	Two least significant bits in last byte denoting the number of bytes for length field"
+
+	| numBytes pos length |
+	pos := method size.
+	numBytes := ((method at: pos) bitAnd: 3) + 1.
+	length := 0.
+	1 to: numBytes do: [ :i | length := (length << 8) + (method at: pos - i) ].
+	size := 1 + numBytes + length.
+	^ length
 ]
 
-Class CompiledMethodTrailer >> decodeNoTrailer
+CompiledMethodTrailer >> decodeNativeCodeTrailer
+[
+	| bytes platformId msz pos shift srcPtr |
+	msz := method size.
+	platformId := (method at: msz - 1) + ((method at: msz - 2) << 8).
+	size := (method at: msz - 3) + ((method at: msz - 4) << 8).
+	pos := method size - 5.
+	shift := srcPtr := 0.
+	[ | value |
+	value := method at: pos.
+	srcPtr := ((value bitAnd: 16r7F) << shift) + srcPtr.
+	pos := pos - 1.
+	shift := shift + 7.
+	value > 127 ]
+		whileTrue.
+	bytes := ByteArray new: size - (msz - pos).
+	1 to: bytes size do: [ :i | bytes at: i put: (method at: msz - size + i) ].
+	data := Array with: platformId with: bytes with: srcPtr
+]
+
+CompiledMethodTrailer >> decodeNoTrailer
 [
 	"Not much to decode here"
-size := 1
+
+	size := 1
 ]
 
-Class CompiledMethodTrailer >> decodeSourceBySelector
+CompiledMethodTrailer >> decodeSourceBySelector
 [
 	"no data, size = 1"
-size := 1
+
+	size := 1
 ]
 
-Class CompiledMethodTrailer >> decodeSourceByStringIdentifier
+CompiledMethodTrailer >> decodeSourceByStringIdentifier
 [
 	"A method source is determined by a class + string identifier"
-| len |len := self decodeLengthField.data := (ReadStream on: method from: method size - size + 1 to: method size - size + len) contents asString	convertFromEncoding: 'utf8'
+
+	| len |
+	len := self decodeLengthField.
+	data := (ReadStream on: method from: method size - size + 1 to: method size - size + len) contents asString
+		convertFromEncoding: 'utf8'
 ]
 
-Class CompiledMethodTrailer >> decodeSourcePointer
+CompiledMethodTrailer >> decodeSourcePointer
 [
 	"Trailer is a source pointer"
-| msz |size := 4.msz := method size.data := ((((method at: msz) - 251 << 8) + (method at: msz - 1) << 8) + (method at: msz - 2) << 8) + (method at: msz - 3)
+
+	| msz |
+	size := 4.
+	msz := method size.
+	data := ((((method at: msz) - 251 << 8) + (method at: msz - 1) << 8) + (method at: msz - 2) << 8)
+		+ (method at: msz - 3)
 ]
 
-Class CompiledMethodTrailer >> decodeUndefined
+CompiledMethodTrailer >> decodeUndefined
 [
-self error: 'undefined method encoding'
+	self error: 'undefined method encoding'
 ]
 
-Class CompiledMethodTrailer >> decodeVarLengthSourcePointer
+CompiledMethodTrailer >> decodeVarLengthSourcePointer
 [
-| pos shift |pos := method size - 1.shift := data := 0.[ | value |value := method at: pos.data := ((value bitAnd: 16r7F) << shift) + data.pos := pos - 1.shift := shift + 7.value > 127 ] whileTrue.size := method size - pos
+	| pos shift |
+	pos := method size - 1.
+	shift := data := 0.
+	[ | value |
+	value := method at: pos.
+	data := ((value bitAnd: 16r7F) << shift) + data.
+	pos := pos - 1.
+	shift := shift + 7.
+	value > 127 ]
+		whileTrue.
+	size := method size - pos
 ]
 
-Class CompiledMethodTrailer >> encode
+CompiledMethodTrailer >> encode
 [
-encodedData := nil.	"encode the trailer into byte array"self perform: ('encode' , kind) asSymbol.[ encodedData notNil and: [ encodedData size > 0 ] ] assert.	"set the size"size := encodedData size
+	encodedData := nil.	"encode the trailer into byte array"
+	self perform: ('encode' , kind) asSymbol.
+	[ encodedData notNil and: [ encodedData size > 0 ] ] assert.	"set the size"
+	size := encodedData size
 ]
 
-Class CompiledMethodTrailer >> encodeClearedTrailer
+CompiledMethodTrailer >> encodeClearedTrailer
 [
 	"A cleared trailer is replaced by #NoTrailer, when used for encoding"
-self clear.kind := #NoTrailer.^ self encode
+
+	self clear.
+	kind := #NoTrailer.
+	^ self encode
 ]
 
-Class CompiledMethodTrailer >> encodeEmbeddedSourceQCompress
+CompiledMethodTrailer >> encodeEmbeddedSourceQCompress
 [
 	"data is string with method's source code, encode it using qCompress method"
-self encodeUsingQCompress
+
+	self encodeUsingQCompress
 ]
 
-Class CompiledMethodTrailer >> encodeExtendedKind
+CompiledMethodTrailer >> encodeExtendedKind
 [
 	"reserved for future use"
-self error: 'Not yet implemented'
+
+	self error: 'Not yet implemented'
 ]
 
-Class CompiledMethodTrailer >> encodeLengthField: integer
+CompiledMethodTrailer >> encodeLengthField: integer
 [
-| bytes value |[ integer > 0 ] assert.value := integer.bytes := ByteArray	streamContents: [ :str | 		[ value > 0 ]			whileTrue: [ 				str nextPut: (value bitAnd: 255).				value := value >> 8 ] ].	"no more than 4 bytes for length field"[ bytes size <= 4 ] assert.^ bytes
+	| bytes value |
+	[ integer > 0 ] assert.
+	value := integer.
+	bytes := ByteArray
+		streamContents: [ :str | [ value > 0 ] whileTrue: [ str nextPut: (value bitAnd: 255).
+					value := value >> 8 ] ].	"no more than 4 bytes for length field"
+	[ bytes size <= 4 ] assert.
+	^ bytes
 ]
 
-Class CompiledMethodTrailer >> encodeNoTrailer
+CompiledMethodTrailer >> encodeNativeCodeTrailer
 [
-encodedData := ByteArray with: self kindAsByte
+	" encode trailer in a form:
+ <native code>
+<variable length source pointer>
+<trailer size>
+<platform id>
+<kind byte>
+"
+
+	| bytes platformId sourcePointer ptrBytes |
+	platformId := data at: 1.
+	bytes := data at: 2.
+	sourcePointer := data at: 3.
+	ptrBytes := ByteArray
+		streamContents: [ :str | | value |
+			value := sourcePointer.
+			[ value > 0 ]
+				whileTrue: [ value > 127
+						ifTrue: [ str nextPut: 128 + (value bitAnd: 16r7F) ]
+						ifFalse: [ str nextPut: value ].
+					value := value >> 7 ] ].
+	ptrBytes := ptrBytes reversed.
+	size := bytes size + ptrBytes size + 2 + 2 + 1.
+	self assert: size < 65536.
+	self assert: platformId < 65536.
+	encodedData := ByteArray
+		streamContents: [ :str | str
+				nextPutAll: bytes;
+				nextPutAll: ptrBytes;
+				nextPut: size >> 8;
+				nextPut: (size bitAnd: 255);
+				nextPut: platformId >> 8;
+				nextPut: (platformId bitAnd: 255);
+				nextPut: self kindAsByte ]
 ]
 
-Class CompiledMethodTrailer >> encodeSourceBySelector
+CompiledMethodTrailer >> encodeNoTrailer
+[
+	encodedData := ByteArray with: self kindAsByte
+]
+
+CompiledMethodTrailer >> encodeSourceBySelector
 [
 	"A method source is determined by a class + selector where it is installed to"
-encodedData := ByteArray with: self kindAsByte
+
+	encodedData := ByteArray with: self kindAsByte
 ]
 
-Class CompiledMethodTrailer >> encodeSourceByStringIdentifier
+CompiledMethodTrailer >> encodeSourceByStringIdentifier
 [
 	"A method source is determined by a class + string identifier"
-[ data isString ] assert.encodedData := ByteArray	streamContents: [ :str | 		| utf8str len |		utf8str := (data convertToEncoding: 'utf8') asByteArray.		str nextPutAll: utf8str.		len := self encodeLengthField: utf8str size.		str nextPutAll: len.		str nextPut: self kindAsByte + (len size - 1) ]
+
+	[ data isString ] assert.
+	encodedData := ByteArray
+		streamContents: [ :str | | utf8str len |
+			utf8str := (data convertToEncoding: 'utf8') asByteArray.
+			str nextPutAll: utf8str.
+			len := self encodeLengthField: utf8str size.
+			str nextPutAll: len.
+			str nextPut: self kindAsByte + (len size - 1) ]
 ]
 
-Class CompiledMethodTrailer >> encodeSourcePointer
+CompiledMethodTrailer >> encodeSourcePointer
 [
-encodedData := ByteArray new: 4.encodedData at: 4 put: (data >> 24) + 251.1 to: 3 do: [ :i | encodedData at: 4 - i put: ((data bitShift: (i - 3) * 8) bitAnd: 16rFF) ]
+	encodedData := ByteArray new: 4.
+	encodedData at: 4 put: (data >> 24) + 251.
+	1 to: 3 do: [ :i | encodedData at: 4 - i put: ((data bitShift: (i - 3) * 8) bitAnd: 16rFF) ]
 ]
 
-Class CompiledMethodTrailer >> encodeUndefined
+CompiledMethodTrailer >> encodeUndefined
 [
-self error: 'use of an undefined kind of trailer encoding'
+	self error: 'use of an undefined kind of trailer encoding'
 ]
 
-Class CompiledMethodTrailer >> encodeUsingQCompress
+CompiledMethodTrailer >> encodeUsingQCompress
 [
 	"data is string, encode it using qCompress method"
-| str length encodedLength |[ data isString ] assert.str := self qCompress: data.length := str position.encodedLength := self encodeLengthField: length.str nextPutAll: encodedLength.	"trailing byte"str nextPut: self kindAsByte + encodedLength size - 1.encodedData := str contents
+
+	| str length encodedLength |
+	[ data isString ] assert.
+	str := self qCompress: data.
+	length := str position.
+	encodedLength := self encodeLengthField: length.
+	str nextPutAll: encodedLength.	"trailing byte"
+	str nextPut: self kindAsByte + encodedLength size - 1.
+	encodedData := str contents
 ]
 
-Class CompiledMethodTrailer >> encodeVarLengthSourcePointer
+CompiledMethodTrailer >> encodeVarLengthSourcePointer
 [
 	"source pointer must be >=0"
-[ data >= 0 ] assert.encodedData := data = 0	ifTrue: [ #[0] ]	ifFalse: [ 		ByteArray			streamContents: [ :str | 				| value |				value := data.				[ value > 0 ]					whileTrue: [ 						value > 127							ifTrue: [ str nextPut: 128 + (value bitAnd: 16r7F) ]							ifFalse: [ str nextPut: value ].						value := value >> 7 ] ] ].encodedData := encodedData reversed copyWith: self kindAsByte
+
+	[ data >= 0 ] assert.
+	encodedData := data = 0
+		ifTrue: [ #[0] ]
+		ifFalse: [ ByteArray
+				streamContents: [ :str | | value |
+					value := data.
+					[ value > 0 ]
+						whileTrue: [ value > 127
+								ifTrue: [ str nextPut: 128 + (value bitAnd: 16r7F) ]
+								ifFalse: [ str nextPut: value ].
+							value := value >> 7 ] ] ].
+	encodedData := encodedData reversed copyWith: self kindAsByte
 ]
 
-Class CompiledMethodTrailer >> endPC
+CompiledMethodTrailer >> endPC
 [
 	"Answer the index of the last bytecode."
-method ifNil: [ self error: 'Cannot determine the endPC without compiled method' ].	"if method set, then size should be set as well"^ method size - size
+
+	method ifNil: [ self error: 'Cannot determine the endPC without compiled method' ].	"if method set, then size should be set as well"
+	^ method size - size
 ]
 
-Class CompiledMethodTrailer >> hasSource
+CompiledMethodTrailer >> hasSource
 [
-^ kind == #EmbeddedSourceQCompress or: [ kind == #EmbeddedSourceZip ]
+	^ kind == #EmbeddedSourceQCompress or: [ kind == #EmbeddedSourceZip ]
 ]
 
-Class CompiledMethodTrailer >> hasSourcePointer
+CompiledMethodTrailer >> hasSourcePointer
 [
-^ kind == #SourcePointer or: [ kind == #VarLengthSourcePointer ]
+	^ kind == #SourcePointer or: [ kind == #VarLengthSourcePointer or: [ kind == #NativeCodeTrailer ] ]
 ]
 
-Class CompiledMethodTrailer >> initialize
+CompiledMethodTrailer >> initialize
 [
-self clear
+	self clear
 ]
 
-Class CompiledMethodTrailer >> isEmpty
+CompiledMethodTrailer >> isEmpty
 [
-^ kind == #NoTrailer or: [ kind == #ClearedTrailer ]
+	^ kind == #NoTrailer or: [ kind == #ClearedTrailer ]
 ]
 
-Class CompiledMethodTrailer >> kind
+CompiledMethodTrailer >> kind
 [
-	"Answer a symbolic name of trailer kind.	See #trailerKinds on class side and class comment for details"
-^ kind
+	"Answer a symbolic name of trailer kind.
+	See #trailerKinds on class side and class comment for details"
+
+	^ kind
 ]
 
-Class CompiledMethodTrailer >> kindAsByte
+CompiledMethodTrailer >> kindAsByte
 [
-| index |index := self class trailerKinds indexOf: kind.[ index ~~ 0 ] assert.^ index - 1 << 2
+	| index |
+	index := self class trailerKinds indexOf: kind.
+	[ index ~~ 0 ] assert.
+	^ index - 1 << 2
 ]
 
-Class CompiledMethodTrailer >> method: aMethod
+CompiledMethodTrailer >> method: aMethod
 [
-| flagByte |data := size := nil.method := aMethod.flagByte := method at: method size.	"trailer kind encoded in 6 high bits of last byte"kind := self class trailerKinds at: 1 + (flagByte >> 2).	"decode the trailer bytes"self perform: ('decode' , kind) asSymbol.	"after decoding the trailer, size must be set"[ size notNil ] assert
+	| flagByte |
+	data := size := nil.
+	method := aMethod.
+	flagByte := method at: method size.	"trailer kind encoded in 6 high bits of last byte"
+	kind := self class trailerKinds at: 1 + (flagByte >> 2).	"decode the trailer bytes, inline some common types to speed up decoding"
+	kind = 'SourcePointer'
+		ifTrue: [ self decodeSourcePointer ]
+		ifFalse: [ kind = 'VarLengthSourcePointer'
+				ifTrue: [ self decodeVarLengthSourcePointer ]
+				ifFalse: [ kind = 'NoTrailer'
+						ifTrue: [ self decodeNoTrailer ]
+						ifFalse: [ "slow but general decoding using perform"
+							self perform: ('decode' , kind) asSymbol ] ] ].	"after decoding the trailer, size must be set"
+	[ size notNil ] assert
 ]
 
-Class CompiledMethodTrailer >> qCompress: string
+CompiledMethodTrailer >> nativeCode
 [
-	"A very simple text compression routine designed for method temp names.	 Most common 11 chars get values 1-11 packed in one 4-bit nibble;	 the next most common get values 12-15 (2 bits) * 16 plus next nibble;	 unusual ones get three nibbles, the first being the escape nibble 0.	Answer the write stream with compressed data inside"
-| utf8str stream oddNibble |string isEmpty	ifTrue: [ ^ self qCompress: ' ' ].utf8str := string convertToEncoding: 'utf8'.stream := WriteStream on: (ByteArray new: utf8str size).oddNibble := nil.utf8str	do: [ :char | 		| ix |		ix := 'ear tonsilcmbdfghjkpquvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ012345[]()' indexOf: char ifAbsent: 0.		(ix = 0			ifTrue: [ 				{0.				(char asInteger // 16).				(char asInteger \\ 16)} ]			ifFalse: [ 				ix <= 11					ifTrue: [ {ix} ]					ifFalse: [ 						{(ix // 16 + 12).						(ix \\ 16)} ] ])			do: [ :nibble | 				oddNibble					ifNotNil: [ 						stream nextPut: oddNibble * 16 + nibble.						oddNibble := nil ]					ifNil: [ oddNibble := nibble ] ] ].oddNibble	ifNotNil: [ 		"4 = 'ear tonsil' indexOf: Character space"		stream nextPut: oddNibble * 16 + 4 ].^ stream
+	kind = #NativeCodeTrailer
+		ifFalse: [ ^ nil ].
+	^ data at: 2
 ]
 
-Class CompiledMethodTrailer >> qDecompress
+CompiledMethodTrailer >> nativeCode: aByteArray platformId: aPlatformCode sourcePointer: srcPtr
 [
-	"Trailer is compressed string using qCompress method + length field + 1 byte		Decompress strings compressed by qCompress:.	Most common 11 chars get values 0-10 packed in one 4-bit nibble;	next most common 52 get values 12-15 (2 bits) * 16 plus next nibble;	escaped chars get three nibbles"
-| len str input |len := self decodeLengthField.input := ReadStream on: method from: method size - size + 1 to: method size - size + len.str := String	streamContents: [ :strm | 		| nextNibble nibble peek charTable |		charTable := 'ear tonsilcmbdfghjkpquvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ012345[]()'.	"Character encoding table must match qCompress:"		peek := true.		nextNibble := [ 		peek			ifTrue: [ 				peek := false.				input peek ifNil: [ 0 ] ifNotNil: [ :b | b // 16 ] ]			ifFalse: [ 				peek := true.				input next ifNil: [ 0 ] ifNotNil: [ :b | b \\ 16 ] ] ].		[ input atEnd ]			whileFalse: [ 				(nibble := nextNibble value) = 0					ifTrue: [ 						input atEnd							ifFalse: [ strm nextPut: (Character value: nextNibble value * 16 + nextNibble value) ] ]					ifFalse: [ 						nibble <= 11							ifTrue: [ strm nextPut: (charTable at: nibble) ]							ifFalse: [ strm nextPut: (charTable at: (nibble - 12) * 16 + nextNibble value) ] ] ] ].data := str convertFromEncoding: 'utf8'
+	"Embed the native code into compiled method trailer.
+	The resulting trailer format is following:
+	<native code
+	....
+	>
+	<code offset - 2 bytes (also equals to trailer size)>
+	<platform id code - 2 bytes>
+	<trailer byte>	
+	"
+
+	self clear.
+	kind := #NativeCodeTrailer.
+	data := Array with: aPlatformCode with: aByteArray with: srcPtr.
+	self encode
 ]
 
-Class CompiledMethodTrailer >> setSourceBySelector
+CompiledMethodTrailer >> platformId
 [
-	"Trailer is used to indicate that method's source code can be retrieved by 	sending #getSourceCodeBySelector: message to method's class"
-self clear.kind := #SourceBySelector
+	kind = #NativeCodeTrailer
+		ifFalse: [ ^ nil ].
+	^ data at: 1
 ]
 
-Class CompiledMethodTrailer >> size
+CompiledMethodTrailer >> qCompress: string
+[
+	"A very simple text compression routine designed for method temp names.
+	 Most common 11 chars get values 1-11 packed in one 4-bit nibble;
+	 the next most common get values 12-15 (2 bits) * 16 plus next nibble;
+	 unusual ones get three nibbles, the first being the escape nibble 0.
+
+	Answer the write stream with compressed data inside"
+
+	| utf8str stream oddNibble |
+	string isEmpty
+		ifTrue: [ ^ self qCompress: ' ' ].
+	utf8str := string convertToEncoding: 'utf8'.
+	stream := WriteStream on: (ByteArray new: utf8str size).
+	oddNibble := nil.
+	utf8str
+		do: [ :char | | ix |
+			ix := 'ear tonsilcmbdfghjkpquvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ012345[]()' indexOf: char ifAbsent: 0.
+			(ix = 0
+				ifTrue: [ {0.
+					(char asInteger // 16).
+					(char asInteger \\ 16)} ]
+				ifFalse: [ ix <= 11
+						ifTrue: [ {ix} ]
+						ifFalse: [ {(ix // 16 + 12).
+							(ix \\ 16)} ] ])
+				do: [ :nibble | oddNibble ifNotNil: [ stream nextPut: oddNibble * 16 + nibble.
+							oddNibble := nil ] ifNil: [ oddNibble := nibble ] ] ].
+	oddNibble ifNotNil: [ "4 = 'ear tonsil' indexOf: Character space"
+			stream nextPut: oddNibble * 16 + 4 ].
+	^ stream
+]
+
+CompiledMethodTrailer >> qDecompress
+[
+	"Trailer is compressed string using qCompress method + length field + 1 byte
+	
+	Decompress strings compressed by qCompress:.
+	Most common 11 chars get values 0-10 packed in one 4-bit nibble;
+	next most common 52 get values 12-15 (2 bits) * 16 plus next nibble;
+	escaped chars get three nibbles"
+
+	| len str input |
+	len := self decodeLengthField.
+	input := ReadStream on: method from: method size - size + 1 to: method size - size + len.
+	str := String
+		streamContents: [ :strm | | nextNibble nibble peek charTable |
+			charTable := 'ear tonsilcmbdfghjkpquvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ012345[]()'.	"Character encoding table must match qCompress:"
+			peek := true.
+			nextNibble := [ peek
+				ifTrue: [ peek := false.
+					input peek ifNil: [ 0 ] ifNotNil: [ :b | b // 16 ] ]
+				ifFalse: [ peek := true.
+					input next ifNil: [ 0 ] ifNotNil: [ :b | b \\ 16 ] ] ].
+			[ input atEnd ]
+				whileFalse: [ (nibble := nextNibble value) = 0
+						ifTrue: [ input atEnd
+								ifFalse: [ strm nextPut: (Character value: nextNibble value * 16 + nextNibble value) ] ]
+						ifFalse: [ nibble <= 11
+								ifTrue: [ strm nextPut: (charTable at: nibble) ]
+								ifFalse: [ strm nextPut: (charTable at: (nibble - 12) * 16 + nextNibble value) ] ] ] ].
+	data := str convertFromEncoding: 'utf8'
+]
+
+CompiledMethodTrailer >> setSourceBySelector
+[
+	"Trailer is used to indicate that method's source code can be retrieved by 
+	sending #getSourceCodeBySelector: message to method's class"
+
+	self clear.
+	kind := #SourceBySelector
+]
+
+CompiledMethodTrailer >> size
 [
 	"Answer the size of method's trailer , in bytes"
-^ size
+
+	^ size
 ]
 
-Class CompiledMethodTrailer >> sourceCode
+CompiledMethodTrailer >> sourceCode
 [
-	"Answer the source code of compiled method.	Note: it does not attempts to read from source files using sourcePointer,	nor reconstruct the source code using temp names"
-(kind == #EmbeddedSourceQCompress or: [ kind == #EmbeddedSourceZip ])	ifTrue: [ ^ data ].kind == #SourceBySelector	ifTrue: [ ^ method methodClass getSourceCodeBySelector: method selector ].kind == #SourceByStringIdentifier	ifTrue: [ ^ method methodClass getSourceCodeByIdentifier: data ].^ nil
+	"Answer the source code of compiled method.
+	Note: it does not attempts to read from source files using sourcePointer,
+	nor reconstruct the source code using temp names"
+
+	(kind == #EmbeddedSourceQCompress or: [ kind == #EmbeddedSourceZip ])
+		ifTrue: [ ^ data ].
+	kind == #SourceBySelector
+		ifTrue: [ ^ method methodClass getSourceCodeBySelector: method selector ].
+	kind == #SourceByStringIdentifier
+		ifTrue: [ ^ method methodClass getSourceCodeByIdentifier: data ].
+	^ nil
 ]
 
-Class CompiledMethodTrailer >> sourceCode: aString
+CompiledMethodTrailer >> sourceCode: aString
 [
-	"Embed the source code into compiled method trailer, 	pick best compression method"
-| temp |self clear.kind := #EmbeddedSourceQCompress.data := aString asString.	"add Text support in future?"self encode.temp := encodedData.kind := #EmbeddedSourceZip.self encode.encodedData size > temp size	ifTrue: [ 		encodedData := temp.		kind := #EmbeddedSourceQCompress.		size := encodedData size ]
+	"Embed the source code into compiled method trailer, 
+	pick best compression method"
+
+	| temp |
+	self clear.
+	kind := #EmbeddedSourceQCompress.
+	data := aString asString.	"add Text support in future?"
+	self encode.
+	temp := encodedData.
+	kind := #EmbeddedSourceZip.
+	self encode.
+	encodedData size > temp size
+		ifTrue: [ encodedData := temp.
+			kind := #EmbeddedSourceQCompress.
+			size := encodedData size ]
 ]
 
-Class CompiledMethodTrailer >> sourceIdentifier
+CompiledMethodTrailer >> sourceIdentifier
 [
-	"Trailer is used to indicate that method's source code can be retrieved by 	sending #getSourceCodeByIdentifier: message to method's class"
-^ kind == #SourceByStringIdentifier	ifTrue: [ data ]	ifFalse: [ nil ]
+	"Trailer is used to indicate that method's source code can be retrieved by 
+	sending #getSourceCodeByIdentifier: message to method's class"
+
+	^ kind == #SourceByStringIdentifier
+		ifTrue: [ data ]
+		ifFalse: [ nil ]
 ]
 
-Class CompiledMethodTrailer >> sourceIdentifier: aString
+CompiledMethodTrailer >> sourceIdentifier: aString
 [
-	"Trailer is used to indicate that method's source code can be retrieved by 	sending #getSourceCodeByIdentifier: message to method's class"
-self clear.data := aString.kind := #SourceByStringIdentifier.self encode
+	"Trailer is used to indicate that method's source code can be retrieved by 
+	sending #getSourceCodeByIdentifier: message to method's class"
+
+	self clear.
+	data := aString.
+	kind := #SourceByStringIdentifier.
+	self encode
 ]
 
-Class CompiledMethodTrailer >> sourcePointer
+CompiledMethodTrailer >> sourcePointer
 [
-^ (kind == #SourcePointer or: [ kind == #VarLengthSourcePointer ])	ifTrue: [ data ]	ifFalse: [ 0 ]
+	kind == #NativeCodeTrailer
+		ifTrue: [ ^ data at: 3 ].
+	^ (kind == #SourcePointer or: [ kind == #VarLengthSourcePointer ])
+		ifTrue: [ data ]
+		ifFalse: [ 0 ]
 ]
 
-Class CompiledMethodTrailer >> sourcePointer: ptr
+CompiledMethodTrailer >> sourcePointer: ptr
 [
-self clear.data := ptr.	"see if we can encode pointer using 4-byte trailer"kind := (ptr between: 16r1000000 and: 16r4FFFFFF)	ifTrue: [ #SourcePointer ]	ifFalse: [ #VarLengthSourcePointer ]
+	self clear.
+	data := ptr.	"see if we can encode pointer using 4-byte trailer"
+	kind := (ptr between: 16r1000000 and: 16r4FFFFFF)
+		ifTrue: [ #SourcePointer ]
+		ifFalse: [ #VarLengthSourcePointer ]
 ]
 
-Class CompiledMethodTrailer >> testEncoding
+CompiledMethodTrailer >> testEncoding
 [
-	"Since we are using basic protocol (#at:, #at:put: , #size) for accessing compiled method data,	we can pass the ByteArray instance into #method: accessor and check if encoding/decoding 	operations	is symmetrical.	Use this method only for unit-testing purposes"
-encodedData ifNil: [ self encode ].^ CompiledMethodTrailer new method: encodedData
+	"Since we are using basic protocol (#at:, #at:put: , #size) for accessing compiled method data,
+	we can pass the ByteArray instance into #method: accessor and check if encoding/decoding 
+	operations	is symmetrical.
+	Use this method only for unit-testing purposes"
+
+	encodedData ifNil: [ self encode ].
+	^ CompiledMethodTrailer new method: encodedData
 ]
 
-Metaclass
-	name: #CompiledMethodTrailer;
-	instanceVariables: #().
-
-Metaclass CompiledMethodTrailer >> empty
+CompiledMethodTrailer class >> empty
 [
 	"answer the empty trailer"
-^ self new
+
+	^ self new
 ]
 
-Metaclass CompiledMethodTrailer >> trailerKinds
+CompiledMethodTrailer class >> trailerKindDecoders
 [
-	" see class comment for description"
-^ #(#NoTrailer #ClearedTrailer #TempsNamesQCompress #TempsNamesZip #SourceBySelector #SourceByStringIdentifier #EmbeddedSourceQCompress #EmbeddedSourceZip #VarLengthSourcePointer #ExtendedKind #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #SourcePointer)	"000000"	"000001"	"000010"	"not used"	"000011"	"not used"	"000100"	"000101"	"000110"	"000111"	"001000"	"001001"	"001010"	"001011"	"001100"	"001101"	"001110"	"001111"	"010000"	"010001"	"010010"	"010011"	"010100"	"010101"	"010110"	"010111"	"011000"	"011001"	"011010"	"011011"	"011100"	"011101"	"011110"	"011111"	"100000"	"100001"	"100010"	"100011"	"100100"	"100101"	"100110"	"100111"	"101000"	"101001"	"101010"	"101011"	"101100"	"101101"	"101110"	"101111"	"110000"	"110001"	"110010"	"110011"	"110100"	"110101"	"110110"	"110111"	"111000"	"111001"	"111010"	"111011"	"111100"	"111101"	"111110"	"111111"
+	^ #(#decodeNoTrailer #decodeClearedTrailer #decodeTempsNamesQCompress #decodeTempsNamesZip #decodeSourceBySelector #decodeSourceByStringIdentifier #decodeEmbeddedSourceQCompress #decodeEmbeddedSourceZip #decodeVarLengthSourcePointer #decodeExtendedKind #decodeNativeCodeTrailer #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeUndefined #decodeSourcePointer)
+]
+
+CompiledMethodTrailer class >> trailerKinds
+[
+	" see class comment for description. If you change this method, evaluate this:
+	self generateTrailerKindDecoders"
+
+	^ #(#NoTrailer #ClearedTrailer #TempsNamesQCompress #TempsNamesZip #SourceBySelector #SourceByStringIdentifier #EmbeddedSourceQCompress #EmbeddedSourceZip #VarLengthSourcePointer #ExtendedKind #NativeCodeTrailer #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #Undefined #SourcePointer)	"000000"	"000001"	"000010"	"000011"	"000100"	"000101"	"000110"	"000111"	"001000"	"001001"	"001010"	"this number is hardcoded in VM"	"001011"	"001100"	"001101"	"001110"	"001111"	"010000"	"010001"	"010010"	"010011"	"010100"	"010101"	"010110"	"010111"	"011000"	"011001"	"011010"	"011011"	"011100"	"011101"	"011110"	"011111"	"100000"	"100001"	"100010"	"100011"	"100100"	"100101"	"100110"	"100111"	"101000"	"101001"	"101010"	"101011"	"101100"	"101101"	"101110"	"101111"	"110000"	"110001"	"110010"	"110011"	"110100"	"110101"	"110110"	"110111"	"111000"	"111001"	"111010"	"111011"	"111100"	"111101"	"111110"	"111111"
 ]
 

@@ -1,42 +1,38 @@
-Class
-	name: #AbstractEnumerationVisitor;
-	superclass: #ClassFileSystemVisitor;
-	instanceSpecification: #(#pointers #words );
+AbstractEnumerationVisitor
+	superclass: #FileSystemVisitor;
 	instanceVariables: #(#out #block );
-	classVariables: #();
 	package: #'FileSystem-Core-Implementation'.
 
-Class AbstractEnumerationVisitor >> breadthFirst: aReference
+AbstractEnumerationVisitor >> breadthFirst: aReference
 [
-^ self visit: aReference with: (BreadthFirstGuide for: self)
+	^ self visit: aReference with: (BreadthFirstGuide for: self)
 ]
 
-Class AbstractEnumerationVisitor >> initializeWithBlock: aBlock
+AbstractEnumerationVisitor >> initializeWithBlock: aBlock
 [
-self initialize.block := aBlock
+	self initialize.
+	block := aBlock
 ]
 
-Class AbstractEnumerationVisitor >> postorder: aReference
+AbstractEnumerationVisitor >> postorder: aReference
 [
-^ self visit: aReference with: (PostorderGuide for: self)
+	^ self visit: aReference with: (PostorderGuide for: self)
 ]
 
-Class AbstractEnumerationVisitor >> preorder: aReference
+AbstractEnumerationVisitor >> preorder: aReference
 [
-^ self visit: aReference with: (PreorderGuide for: self)
+	^ self visit: aReference with: (PreorderGuide for: self)
 ]
 
-Class AbstractEnumerationVisitor >> visit: aReference with: aGuide
+AbstractEnumerationVisitor >> visit: aReference with: aGuide
 [
-out := (Array new: 10) writeStream.aGuide show: aReference.^ out contents
+	out := (Array new: 10) writeStream.
+	aGuide show: aReference.
+	^ out contents
 ]
 
-Class AbstractEnumerationVisitor >> visitReference: anEntry
+AbstractEnumerationVisitor >> visitReference: anEntry
 [
-self subclassResponsibility
+	self subclassResponsibility
 ]
-
-Metaclass
-	name: #AbstractEnumerationVisitor;
-	instanceVariables: #().
 

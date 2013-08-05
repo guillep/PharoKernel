@@ -1,42 +1,45 @@
-Class
-	name: #AbsolutePath;
-	superclass: #ClassPath;
+AbsolutePath
+	superclass: #Path;
 	instanceSpecification: #(#variable #pointers #words );
-	instanceVariables: #();
-	classVariables: #();
 	package: #'FileSystem-Core-Kernel'.
 
-Class AbsolutePath >> isAbsolute
+AbsolutePath >> isAbsolute
 [
-^ true
+	^ true
 ]
 
-Class AbsolutePath >> isRoot
+AbsolutePath >> isRoot
 [
-^ self size = 0
+	^ self size = 0
 ]
 
-Class AbsolutePath >> printOn: aStream
+AbsolutePath >> printOn: aStream
 [
-aStream nextPutAll: 'Path'.self isRoot	ifTrue: [ aStream nextPutAll: ' root' ]	ifFalse: [ 		1 to: self size do: [ :i | 			aStream				nextPutAll: ' / ''';				nextPutAll: (self at: i);				nextPut: $' ] ]
+	aStream nextPutAll: 'Path'.
+	self isRoot
+		ifTrue: [ aStream nextPutAll: ' root' ]
+		ifFalse: [ 1 to: self size do: [ :i | aStream
+					nextPutAll: ' / ''';
+					nextPutAll: (self at: i);
+					nextPut: $' ] ]
 ]
 
-Class AbsolutePath >> withParents
+AbsolutePath >> withParents
 [
-^ super withParents	addFirst: Path root;	yourself
+	^ super withParents
+		addFirst: Path root;
+		yourself
 ]
 
-Metaclass
-	name: #AbsolutePath;
-	instanceVariables: #().
-
-Metaclass AbsolutePath >> addEmptyElementTo: result
+AbsolutePath class >> addEmptyElementTo: result
 [
-
+	
 ]
 
-Metaclass AbsolutePath >> from: aString delimiter: aDelimiterCharater
+AbsolutePath class >> from: aString delimiter: aDelimiterCharater
 [
-aString = '/'	ifTrue: [ ^ self root ].^ super from: aString delimiter: aDelimiterCharater
+	aString = '/'
+		ifTrue: [ ^ self root ].
+	^ super from: aString delimiter: aDelimiterCharater
 ]
 

@@ -1,28 +1,24 @@
-Class
-	name: #Latin2Environment;
-	superclass: #ClassLanguageEnvironment;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+Latin2Environment
+	superclass: #LanguageEnvironment;
 	package: #'Multilingual-Languages'.
 
-Metaclass
-	name: #Latin2Environment;
-	instanceVariables: #().
-
-Metaclass Latin2Environment >> leadingChar
+Latin2Environment class >> leadingChar
 [
-^ 0
+	^ 0
 ]
 
-Metaclass Latin2Environment >> supportedLanguages
+Latin2Environment class >> supportedLanguages
 [
-	"Return the languages that this class supports. 	Any translations for those languages will use this class as their environment."
-^ #('cs' 'hu' 'ro' 'hr' 'sk' 'sl')	"Sorbian languages don't have two char code?"
+	"Return the languages that this class supports. 
+	Any translations for those languages will use this class as their environment."
+
+	^ #('cs' 'hu' 'ro' 'hr' 'sk' 'sl')	"Sorbian languages don't have two char code?"
 ]
 
-Metaclass Latin2Environment >> systemConverterClass
+Latin2Environment class >> systemConverterClass
 [
-OSPlatform isWin32	ifTrue: [ ^ CP1250TextConverter ].^ ISO88592TextConverter
+	OSPlatform isWin32
+		ifTrue: [ ^ CP1250TextConverter ].
+	^ ISO88592TextConverter
 ]
 

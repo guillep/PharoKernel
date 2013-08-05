@@ -1,32 +1,38 @@
-Class
-	name: #RelativePath;
-	superclass: #ClassPath;
+RelativePath
+	superclass: #Path;
 	instanceSpecification: #(#variable #pointers #words );
-	instanceVariables: #();
-	classVariables: #();
 	package: #'FileSystem-Core-Kernel'.
 
-Class RelativePath >> isAbsolute
+RelativePath >> isAbsolute
 [
-^ false
+	^ false
 ]
 
-Class RelativePath >> isRoot
+RelativePath >> isRoot
 [
-^ false
+	^ false
 ]
 
-Class RelativePath >> printOn: aStream
+RelativePath >> printOn: aStream
 [
-aStream nextPutAll: 'Path '.self isWorkingDirectory	ifTrue: [ aStream nextPutAll: 'workingDirectory' ]	ifFalse: [ 		aStream			nextPutAll: '* ''';			nextPutAll: (self at: 1) asString;			nextPut: $'.		2 to: self size do: [ :i | 			aStream				nextPutAll: ' / ''';				nextPutAll: (self at: i);				nextPut: $' ] ]
+	aStream nextPutAll: 'Path '.
+	self isWorkingDirectory
+		ifTrue: [ aStream nextPutAll: 'workingDirectory' ]
+		ifFalse: [ aStream
+				nextPutAll: '* ''';
+				nextPutAll: (self at: 1) asString;
+				nextPut: $'.
+			2 to: self size do: [ :i | aStream
+					nextPutAll: ' / ''';
+					nextPutAll: (self at: i);
+					nextPut: $' ] ]
 ]
 
-Class RelativePath >> printOn: aStream delimiter: aCharacter
+RelativePath >> printOn: aStream delimiter: aCharacter
 [
-self isWorkingDirectory	ifTrue: [ 		aStream nextPut: $..		^ self ].super printOn: aStream delimiter: aCharacter
+	self isWorkingDirectory
+		ifTrue: [ aStream nextPut: $..
+			^ self ].
+	super printOn: aStream delimiter: aCharacter
 ]
-
-Metaclass
-	name: #RelativePath;
-	instanceVariables: #().
 

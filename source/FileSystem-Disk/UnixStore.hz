@@ -1,44 +1,44 @@
-Class
-	name: #UnixStore;
-	superclass: #ClassDiskStore;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+UnixStore
+	superclass: #DiskStore;
 	package: #'FileSystem-Disk'.
 
-Class UnixStore >> checkName: aFileName fixErrors: fixing
+UnixStore >> checkName: aFileName fixErrors: fixing
 [
 	"Check if the file name contains any invalid characters"
-| fName |fName := super checkName: aFileName fixErrors: fixing.(fName includes: self delimiter)	ifFalse: [ ^ fName ].fixing	ifFalse: [ self error: 'Invalid file name' ].^ fName copyReplaceAll: self delimiter asString with: '#'
+
+	| fName |
+	fName := super checkName: aFileName fixErrors: fixing.
+	(fName includes: self delimiter)
+		ifFalse: [ ^ fName ].
+	fixing
+		ifFalse: [ self error: 'Invalid file name' ].
+	^ fName copyReplaceAll: self delimiter asString with: '#'
 ]
 
-Metaclass
-	name: #UnixStore;
-	instanceVariables: #().
-
-Metaclass UnixStore >> delimiter
+UnixStore class >> delimiter
 [
-^ $/
+	^ $/
 ]
 
-Metaclass UnixStore >> isActiveClass
+UnixStore class >> isActiveClass
 [
-^ Smalltalk os isUnix and: [ super isActiveClass ]
+	^ Smalltalk os isUnix and: [ super isActiveClass ]
 ]
 
-Metaclass UnixStore >> isCaseSensitive
+UnixStore class >> isCaseSensitive
 [
 	"except for OSX the default is case sensitive"
-^ OSPlatform isMacOSX not
+
+	^ OSPlatform isMacOSX not
 ]
 
-Metaclass UnixStore >> maxFileNameLength
+UnixStore class >> maxFileNameLength
 [
-^ 255
+	^ 255
 ]
 
-Metaclass UnixStore >> separator
+UnixStore class >> separator
 [
-^ $:
+	^ $:
 ]
 

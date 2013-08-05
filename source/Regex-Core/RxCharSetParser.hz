@@ -1,62 +1,96 @@
-Class
-	name: #RxCharSetParser;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+RxCharSetParser
 	instanceVariables: #(#source #lookahead #elements );
-	classVariables: #();
 	package: #'Regex-Core'.
 
-Class RxCharSetParser >> addChar: aChar
+RxCharSetParser >> addChar: aChar
 [
-elements add: (RxsCharacter with: aChar)
+	elements add: (RxsCharacter with: aChar)
 ]
 
-Class RxCharSetParser >> addRangeFrom: firstChar to: lastChar
+RxCharSetParser >> addRangeFrom: firstChar to: lastChar
 [
-firstChar asInteger > lastChar asInteger	ifTrue: [ RxParser signalSyntaxException: ' bad character range' ].elements add: (RxsRange from: firstChar to: lastChar)
+	firstChar asInteger > lastChar asInteger
+		ifTrue: [ RxParser signalSyntaxException: ' bad character range' at: source position ].
+	elements add: (RxsRange from: firstChar to: lastChar)
 ]
 
-Class RxCharSetParser >> initialize: aStream
+RxCharSetParser >> initialize: aStream
 [
-source := aStream.lookahead := aStream next.elements := OrderedCollection new
+	source := aStream.
+	lookahead := aStream next.
+	elements := OrderedCollection new
 ]
 
-Class RxCharSetParser >> match: aCharacter
+RxCharSetParser >> match: aCharacter
 [
-aCharacter = lookahead	ifFalse: [ RxParser signalSyntaxException: 'unexpected character: ' , (String with: lookahead) ].^ source atEnd	ifTrue: [ lookahead := nil ]	ifFalse: [ lookahead := source next ]
+	aCharacter = lookahead
+		ifFalse: [ RxParser signalSyntaxException: 'unexpected character: ' , (String with: lookahead) at: source position ].
+	^ source atEnd
+		ifTrue: [ lookahead := nil ]
+		ifFalse: [ lookahead := source next ]
 ]
 
-Class RxCharSetParser >> parse
+RxCharSetParser >> parse
 [
-lookahead = $-	ifTrue: [ 		self addChar: $-.		self match: $- ].[ lookahead isNil ] whileFalse: [ self parseStep ].^ elements
+	lookahead = $-
+		ifTrue: [ self addChar: $-.
+			self match: $- ].
+	[ lookahead isNil ] whileFalse: [ self parseStep ].
+	^ elements
 ]
 
-Class RxCharSetParser >> parseCharOrRange
+RxCharSetParser >> parseCharOrRange
 [
-| firstChar |firstChar := lookahead.self match: firstChar.lookahead = $-	ifTrue: [ 		self match: $-.		lookahead isNil			ifTrue: [ 				^ self					addChar: firstChar;					addChar: $- ]			ifFalse: [ 				self addRangeFrom: firstChar to: lookahead.				^ self match: lookahead ] ].self addChar: firstChar
+	| firstChar |
+	firstChar := lookahead.
+	self match: firstChar.
+	lookahead = $-
+		ifTrue: [ self match: $-.
+			lookahead isNil
+				ifTrue: [ ^ self
+						addChar: firstChar;
+						addChar: $- ]
+				ifFalse: [ self addRangeFrom: firstChar to: lookahead.
+					^ self match: lookahead ] ].
+	self addChar: firstChar
 ]
 
-Class RxCharSetParser >> parseEscapeChar
+RxCharSetParser >> parseEscapeChar
 [
-self match: $\.$- = lookahead	ifTrue: [ elements add: (RxsCharacter with: $-) ]	ifFalse: [ elements add: (RxsPredicate forEscapedLetter: lookahead) ].self match: lookahead
+	self match: $\.
+	$- = lookahead
+		ifTrue: [ elements add: (RxsCharacter with: $-) ]
+		ifFalse: [ elements add: (RxsPredicate forEscapedLetter: lookahead) ].
+	self match: lookahead
 ]
 
-Class RxCharSetParser >> parseNamedSet
+RxCharSetParser >> parseNamedSet
 [
-| name |self	match: $[;	match: $:.name := (String with: lookahead) , (source upTo: $:).lookahead := source next.self match: $].elements add: (RxsPredicate forNamedClass: name)
+	| name |
+	self
+		match: $[;
+		match: $:.
+	name := (String with: lookahead) , (source upTo: $:).
+	lookahead := source next.
+	self match: $].
+	elements add: (RxsPredicate forNamedClass: name)
 ]
 
-Class RxCharSetParser >> parseStep
+RxCharSetParser >> parseStep
 [
-lookahead = $[	ifTrue: [ 		source peek = $:			ifTrue: [ ^ self parseNamedSet ]			ifFalse: [ ^ self parseCharOrRange ] ].lookahead = $\	ifTrue: [ ^ self parseEscapeChar ].lookahead = $-	ifTrue: [ RxParser signalSyntaxException: 'invalid range' ].self parseCharOrRange
+	lookahead = $[
+		ifTrue: [ source peek = $:
+				ifTrue: [ ^ self parseNamedSet ]
+				ifFalse: [ ^ self parseCharOrRange ] ].
+	lookahead = $\
+		ifTrue: [ ^ self parseEscapeChar ].
+	lookahead = $-
+		ifTrue: [ RxParser signalSyntaxException: 'invalid range' at: source position ].
+	self parseCharOrRange
 ]
 
-Metaclass
-	name: #RxCharSetParser;
-	instanceVariables: #().
-
-Metaclass RxCharSetParser >> on: aStream
+RxCharSetParser class >> on: aStream
 [
-^ self new initialize: aStream
+	^ self new initialize: aStream
 ]
 

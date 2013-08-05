@@ -1,37 +1,44 @@
-Class
-	name: #LegacyWeakSubscription;
-	superclass: #ClassWeakAnnouncementSubscription;
+LegacyWeakSubscription
+	superclass: #WeakAnnouncementSubscription;
 	instanceSpecification: #(#variable #weak #pointers #words );
-	instanceVariables: #();
-	classVariables: #();
 	package: #'Announcements-Core'.
 
-Class LegacyWeakSubscription >> makeStrong
+LegacyWeakSubscription >> makeStrong
 [
-| sub |sub := self subscriber.sub ifNil: [ ^ self error: 'Subscriber is nil, cannot make strong subscription' ].self unregister.^ self	becomeForward:		(AnnouncementSubscription new			announcer: announcer;			action: action asMessageSend;			subscriber: sub;			announcementClass: announcementClass)
+	| sub |
+	sub := self subscriber.
+	sub ifNil: [ ^ self error: 'Subscriber is nil, cannot make strong subscription' ].
+	self unregister.
+	^ self
+		becomeForward:
+			(AnnouncementSubscription new
+				announcer: announcer;
+				action: action asMessageSend;
+				subscriber: sub;
+				announcementClass: announcementClass)
 ]
 
-Class LegacyWeakSubscription >> register
+LegacyWeakSubscription >> register
 [
-self weakRegistry add: self subscriber executor: self
+	self weakRegistry add: self subscriber executor: self
 ]
 
-Class LegacyWeakSubscription >> subscriber: anObject
+LegacyWeakSubscription >> subscriber: anObject
 [
-self subscriber ifNotNil: [ self error: 'subscriber already set' ].self basicAt: 1 put: anObject.self register
+	self subscriber ifNotNil: [ self error: 'subscriber already set' ].
+	self basicAt: 1 put: anObject.
+	self register
 ]
 
-Class LegacyWeakSubscription >> unregister
+LegacyWeakSubscription >> unregister
 [
-| sub |sub := self subscriber.sub ifNotNil: [ self weakRegistry remove: sub ]
+	| sub |
+	sub := self subscriber.
+	sub ifNotNil: [ self weakRegistry remove: sub ]
 ]
 
-Class LegacyWeakSubscription >> weakRegistry
+LegacyWeakSubscription >> weakRegistry
 [
-^ WeakRegistry default
+	^ WeakRegistry default
 ]
-
-Metaclass
-	name: #LegacyWeakSubscription;
-	instanceVariables: #().
 

@@ -1,44 +1,51 @@
-Class
-	name: #WeakActionSequence;
-	superclass: #ClassArray;
+WeakActionSequence
+	superclass: #Array;
 	instanceSpecification: #(#variable #pointers #words );
-	instanceVariables: #();
-	classVariables: #();
 	package: #'Kernel-Objects'.
 
-Class WeakActionSequence >> asActionSequence
+WeakActionSequence >> asActionSequence
 [
-^ self
+	^ self
 ]
 
-Class WeakActionSequence >> asActionSequenceTrappingErrors
+WeakActionSequence >> asMinimalRepresentation
 [
-^ WeakActionSequenceTrappingErrors withAll: self
+	| valid |
+	valid := self select: [ :e | e isValid ].
+	valid size = 0
+		ifTrue: [ ^ nil ].
+	valid size = 1
+		ifTrue: [ ^ valid first ].
+	^ valid
 ]
 
-Class WeakActionSequence >> asMinimalRepresentation
+WeakActionSequence >> printOn: aStream
 [
-| valid |valid := self select: [ :e | e isValid ].valid size = 0	ifTrue: [ ^ nil ].valid size = 1	ifTrue: [ ^ valid first ].^ valid
+	self size < 2
+		ifTrue: [ ^ super printOn: aStream ].
+	aStream nextPutAll: '#('.
+	self do: [ :each | each printOn: aStream ] separatedBy: [ aStream cr ].
+	aStream nextPut: $)
 ]
 
-Class WeakActionSequence >> printOn: aStream
+WeakActionSequence >> value
 [
-self size < 2	ifTrue: [ ^ super printOn: aStream ].aStream nextPutAll: '#('.self do: [ :each | each printOn: aStream ] separatedBy: [ aStream cr ].aStream nextPut: $)
+	"Answer the result of evaluating the elements of the receiver.
+	Actually, return just the last result."
+
+	| answer |
+	self do: [ :each | each isValid
+				ifTrue: [ answer := each value ] ].
+	^ answer
 ]
 
-Class WeakActionSequence >> value
-[
-	"Answer the result of evaluating the elements of the receiver.	Actually, return just the last result."
-| answer |self	do: [ :each | 		each isValid			ifTrue: [ answer := each value ] ].^ answer
-]
-
-Class WeakActionSequence >> valueWithArguments: anArray
+WeakActionSequence >> valueWithArguments: anArray
 [
 	"Return the last result"
-| answer |self	do: [ :each | 		each isValid			ifTrue: [ answer := each valueWithArguments: anArray ] ].^ answer
-]
 
-Metaclass
-	name: #WeakActionSequence;
-	instanceVariables: #().
+	| answer |
+	self do: [ :each | each isValid
+				ifTrue: [ answer := each valueWithArguments: anArray ] ].
+	^ answer
+]
 

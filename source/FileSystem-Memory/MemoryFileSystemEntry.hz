@@ -1,67 +1,62 @@
-Class
-	name: #MemoryFileSystemEntry;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+MemoryFileSystemEntry
 	instanceVariables: #(#creationTime #modificationTime #basename );
-	classVariables: #();
 	package: #'FileSystem-Memory'.
 
-Class MemoryFileSystemEntry >> basename
+MemoryFileSystemEntry >> basename
 [
-^ basename
+	^ basename
 ]
 
-Class MemoryFileSystemEntry >> basename: aString
+MemoryFileSystemEntry >> basename: aString
 [
-basename := aString
+	basename := aString
 ]
 
-Class MemoryFileSystemEntry >> creationTime
+MemoryFileSystemEntry >> creationTime
 [
-^ creationTime
+	^ creationTime
 ]
 
-Class MemoryFileSystemEntry >> fileSize
+MemoryFileSystemEntry >> fileSize
 [
-self subclassResponsability
+	self subclassResponsibility
 ]
 
-Class MemoryFileSystemEntry >> initialize
+MemoryFileSystemEntry >> initialize
 [
-creationTime := modificationTime := DateAndTime now.super initialize
+	creationTime := modificationTime := DateAndTime now.
+	super initialize
 ]
 
-Class MemoryFileSystemEntry >> isDirectory
+MemoryFileSystemEntry >> isDirectory
 [
-self subclassResponsability
+	self subclassResponsibility
 ]
 
-Class MemoryFileSystemEntry >> isFile
+MemoryFileSystemEntry >> isFile
 [
-^ self isDirectory not
+	^ self isDirectory not
 ]
 
-Class MemoryFileSystemEntry >> modificationTime
+MemoryFileSystemEntry >> modificationTime
 [
-^ modificationTime
+	^ modificationTime
 ]
 
-Class MemoryFileSystemEntry >> modificationTime: anObject
+MemoryFileSystemEntry >> modificationTime: anObject
 [
-modificationTime := anObject
+	modificationTime := anObject
 ]
 
-Class MemoryFileSystemEntry >> modified
+MemoryFileSystemEntry >> modified
 [
-modificationTime := DateAndTime now
+	modificationTime := DateAndTime now
 ]
 
-Metaclass
-	name: #MemoryFileSystemEntry;
-	instanceVariables: #().
-
-Metaclass MemoryFileSystemEntry >> named: aFileName
+MemoryFileSystemEntry class >> named: aFileName
 [
-^ self new	basename: aFileName;	yourself
+	^ self new
+		basename: aFileName;
+		yourself
 ]
 

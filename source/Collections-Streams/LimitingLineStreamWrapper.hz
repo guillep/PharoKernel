@@ -1,111 +1,159 @@
-Class
-	name: #LimitingLineStreamWrapper;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
+LimitingLineStreamWrapper
 	instanceVariables: #(#stream #line #limitingBlock #position );
-	classVariables: #();
 	package: #'Collections-Streams'.
 
-Class LimitingLineStreamWrapper >> atEnd
+LimitingLineStreamWrapper >> atEnd
 [
-^ line isNil or: [ limitingBlock value: line ]
+	^ line isNil or: [ limitingBlock value: line ]
 ]
 
-Class LimitingLineStreamWrapper >> close
+LimitingLineStreamWrapper >> close
 [
-^ stream close
+	^ stream close
 ]
 
-Class LimitingLineStreamWrapper >> delimiter: aString
+LimitingLineStreamWrapper >> delimiter: aString
 [
 	"Set limitBlock to check for a delimiting string. Be unlimiting if nil"
-self	limitingBlock:		(aString			caseOf:				{([ nil ] -> [ [ :aLine | false ] ]).				([ '' ] -> [ [ :aLine | aLine size = 0 ] ])}			otherwise: [ [ :aLine | aLine beginsWith: aString ] ])
+
+	self
+		limitingBlock:
+			(aString
+				caseOf: {([ nil ] -> [ [ :aLine | false ] ]).
+					([ '' ] -> [ [ :aLine | aLine size = 0 ] ])}
+				otherwise: [ [ :aLine | aLine beginsWith: aString ] ])
 ]
 
-Class LimitingLineStreamWrapper >> lastLineRead
+LimitingLineStreamWrapper >> lastLineRead
 [
 	"Return line last read. At stream end, this is the boundary line or nil"
-^ line
+
+	^ line
 ]
 
-Class LimitingLineStreamWrapper >> limitingBlock: aBlock
+LimitingLineStreamWrapper >> limitingBlock: aBlock
 [
 	"The limitingBlock is evaluated with a line to check if this line terminates the stream"
-limitingBlock := aBlock.self updatePosition
+
+	limitingBlock := aBlock.
+	self updatePosition
 ]
 
-Class LimitingLineStreamWrapper >> linesUpToEnd
+LimitingLineStreamWrapper >> linesUpToEnd
 [
-| elements ln |elements := OrderedCollection new.[ (ln := self nextLine) isNil ] whileFalse: [ elements add: ln ].^ elements
+	| elements ln |
+	elements := OrderedCollection new.
+	[ (ln := self nextLine) isNil ] whileFalse: [ elements add: ln ].
+	^ elements
 ]
 
-Class LimitingLineStreamWrapper >> next
+LimitingLineStreamWrapper >> next
 [
 	"Provide character-based access"
-position isNil	ifTrue: [ ^ nil ].position < line size	ifTrue: [ ^ line at: (position := position + 1) ].line := stream nextLine.self updatePosition.^ Character cr
+
+	position isNil
+		ifTrue: [ ^ nil ].
+	position < line size
+		ifTrue: [ ^ line at: (position := position + 1) ].
+	line := stream nextLine.
+	self updatePosition.
+	^ Character cr
 ]
 
-Class LimitingLineStreamWrapper >> nextLine
+LimitingLineStreamWrapper >> nextLine
 [
-| thisLine |self atEnd	ifTrue: [ ^ nil ].thisLine := line.line := stream nextLine.^ thisLine
+	| thisLine |
+	self atEnd
+		ifTrue: [ ^ nil ].
+	thisLine := line.
+	line := stream nextLine.
+	^ thisLine
 ]
 
-Class LimitingLineStreamWrapper >> peekLine
+LimitingLineStreamWrapper >> peekLine
 [
-self atEnd	ifTrue: [ ^ nil ].^ line
+	self atEnd
+		ifTrue: [ ^ nil ].
+	^ line
 ]
 
-Class LimitingLineStreamWrapper >> printOn: aStream
+LimitingLineStreamWrapper >> printOn: aStream
 [
-super printOn: aStream.aStream nextPutAll: ' on '.stream printOn: aStream
+	super printOn: aStream.
+	aStream nextPutAll: ' on '.
+	stream printOn: aStream
 ]
 
-Class LimitingLineStreamWrapper >> setStream: aStream delimiter: aString
+LimitingLineStreamWrapper >> setStream: aStream delimiter: aString
 [
-stream := aStream.line := stream nextLine.self delimiter: aString	"sets position"
+	stream := aStream.
+	line := stream nextLine.
+	self delimiter: aString	"sets position"
 ]
 
-Class LimitingLineStreamWrapper >> skipThisLine
+LimitingLineStreamWrapper >> skipThisLine
 [
-line := stream nextLine.self updatePosition
+	line := stream nextLine.
+	self updatePosition
 ]
 
-Class LimitingLineStreamWrapper >> upToEnd
+LimitingLineStreamWrapper >> upToEnd
 [
-^ String	streamContents: [ :strm | 		| ln |		[ (ln := self nextLine) isNil ]			whileFalse: [ 				strm					nextPutAll: ln;					cr ] ]
+	^ String
+		streamContents: [ :strm | | ln |
+			[ (ln := self nextLine) isNil ] whileFalse: [ strm
+						nextPutAll: ln;
+						cr ] ]
 ]
 
-Class LimitingLineStreamWrapper >> updatePosition
+LimitingLineStreamWrapper >> updatePosition
 [
 	"Call this before doing character-based access"
-position := self atEnd	ifFalse: [ 0 ]
+
+	position := self atEnd
+		ifFalse: [ 0 ]
 ]
 
-Metaclass
-	name: #LimitingLineStreamWrapper;
-	instanceVariables: #().
-
-Metaclass LimitingLineStreamWrapper >> example1
+LimitingLineStreamWrapper class >> example1
 [
 	"LimitingLineStreamWrapper example1"
+
 	"Separate chunks of text delimited by a special string"
-| inStream msgStream messages |inStream := self exampleStream.msgStream := LimitingLineStreamWrapper on: inStream delimiter: 'From '.messages := OrderedCollection new.[ inStream atEnd ]	whileFalse: [ 		msgStream skipThisLine.		messages add: msgStream upToEnd ].^ messages
+
+	| inStream msgStream messages |
+	inStream := self exampleStream.
+	msgStream := LimitingLineStreamWrapper on: inStream delimiter: 'From '.
+	messages := OrderedCollection new.
+	[ inStream atEnd ] whileFalse: [ msgStream skipThisLine.
+			messages add: msgStream upToEnd ].
+	^ messages
 ]
 
-Metaclass LimitingLineStreamWrapper >> example2
+LimitingLineStreamWrapper class >> example2
 [
 	"LimitingLineStreamWrapper example2"
+
 	"Demo nesting wrappers - get header lines from some messages"
-| inStream msgStream headers headerStream |inStream := self exampleStream.msgStream := LimitingLineStreamWrapper on: inStream delimiter: 'From '.headers := OrderedCollection new.[ inStream atEnd ]	whileFalse: [ 		msgStream skipThisLine.	"Skip From"		headerStream := LimitingLineStreamWrapper on: msgStream delimiter: ''.		headers add: headerStream linesUpToEnd.		[ msgStream nextLine isNil ] whileFalse	"Skip Body" ].^ headers
+
+	| inStream msgStream headers headerStream |
+	inStream := self exampleStream.
+	msgStream := LimitingLineStreamWrapper on: inStream delimiter: 'From '.
+	headers := OrderedCollection new.
+	[ inStream atEnd ]
+		whileFalse: [ msgStream skipThisLine.	"Skip From"
+			headerStream := LimitingLineStreamWrapper on: msgStream delimiter: ''.
+			headers add: headerStream linesUpToEnd.
+			[ msgStream nextLine isNil ] whileFalse	"Skip Body" ].
+	^ headers
 ]
 
-Metaclass LimitingLineStreamWrapper >> exampleStream
+LimitingLineStreamWrapper class >> exampleStream
 [
-^ 'From me@somewhereFrom: meTo: youSubject: TestTestFrom you@elsewhereFrom: youTo: meSubject: Re: testokay' readStream
+	^ 'From me@somewhereFrom: meTo: youSubject: TestTestFrom you@elsewhereFrom: youTo: meSubject: Re: testokay' readStream
 ]
 
-Metaclass LimitingLineStreamWrapper >> on: aStream delimiter: aString
+LimitingLineStreamWrapper class >> on: aStream delimiter: aString
 [
-^ self new setStream: aStream delimiter: aString
+	^ self new setStream: aStream delimiter: aString
 ]
 

@@ -1,77 +1,73 @@
-Class
-	name: #MemoryFileSystemDirectory;
-	superclass: #ClassMemoryFileSystemEntry;
-	instanceSpecification: #(#pointers #words );
+MemoryFileSystemDirectory
+	superclass: #MemoryFileSystemEntry;
 	instanceVariables: #(#entries );
-	classVariables: #();
 	package: #'FileSystem-Memory'.
 
-Class MemoryFileSystemDirectory >> ensureDirectory: aDirectoryName
+MemoryFileSystemDirectory >> ensureDirectory: aDirectoryName
 [
-^ self fileEntryAt: aDirectoryName put: (MemoryFileSystemDirectory named: aDirectoryName)
+	^ self fileEntryAt: aDirectoryName put: (MemoryFileSystemDirectory named: aDirectoryName)
 ]
 
-Class MemoryFileSystemDirectory >> ensureFile: aFileName
+MemoryFileSystemDirectory >> ensureFile: aFileName
 [
-^ self fileEntryAt: aFileName put: (MemoryFileSystemFile named: aFileName)
+	^ self fileEntryAt: aFileName put: (MemoryFileSystemFile named: aFileName)
 ]
 
-Class MemoryFileSystemDirectory >> entries
+MemoryFileSystemDirectory >> entries
 [
-^ entries
+	^ entries
 ]
 
-Class MemoryFileSystemDirectory >> fileEntriesDo: aBlock
+MemoryFileSystemDirectory >> fileEntriesDo: aBlock
 [
-entries keys sorted do: [ :fileName | aBlock value: (entries at: fileName) ]
+	entries keys sorted do: [ :fileName | aBlock value: (entries at: fileName) ]
 ]
 
-Class MemoryFileSystemDirectory >> fileEntryAt: aFIleName
+MemoryFileSystemDirectory >> fileEntryAt: aFIleName
 [
-^ entries at: aFIleName
+	^ entries at: aFIleName
 ]
 
-Class MemoryFileSystemDirectory >> fileEntryAt: aFileName ifAbsent: aBlock
+MemoryFileSystemDirectory >> fileEntryAt: aFileName ifAbsent: aBlock
 [
-^ entries at: aFileName ifAbsent: aBlock
+	^ entries at: aFileName ifAbsent: aBlock
 ]
 
-Class MemoryFileSystemDirectory >> fileEntryAt: aFileName ifPresent: aBlock
+MemoryFileSystemDirectory >> fileEntryAt: aFileName ifPresent: aBlock
 [
-^ entries at: aFileName ifPresent: aBlock
+	^ entries at: aFileName ifPresent: aBlock
 ]
 
-Class MemoryFileSystemDirectory >> fileEntryAt: aFIleName put: anEntry
+MemoryFileSystemDirectory >> fileEntryAt: aFIleName put: anEntry
 [
-^ entries	at: aFIleName	ifAbsentPut: [ 		self modified.		anEntry ]
+	^ entries at: aFIleName ifAbsentPut: [ self modified.
+			anEntry ]
 ]
 
-Class MemoryFileSystemDirectory >> fileSize
+MemoryFileSystemDirectory >> fileSize
 [
-^ 0
+	^ 0
 ]
 
-Class MemoryFileSystemDirectory >> includes: aFIleName
+MemoryFileSystemDirectory >> includes: aFIleName
 [
-^ entries includesKey: aFIleName
+	^ entries includesKey: aFIleName
 ]
 
-Class MemoryFileSystemDirectory >> initialize
+MemoryFileSystemDirectory >> initialize
 [
-super initialize.entries := Dictionary new
+	super initialize.
+	entries := Dictionary new
 ]
 
-Class MemoryFileSystemDirectory >> isDirectory
+MemoryFileSystemDirectory >> isDirectory
 [
-^ true
+	^ true
 ]
 
-Class MemoryFileSystemDirectory >> remove: aFileName
+MemoryFileSystemDirectory >> remove: aFileName
 [
-modificationTime := DateAndTime now.^ entries removeKey: aFileName
+	modificationTime := DateAndTime now.
+	^ entries removeKey: aFileName
 ]
-
-Metaclass
-	name: #MemoryFileSystemDirectory;
-	instanceVariables: #().
 

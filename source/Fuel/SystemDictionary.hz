@@ -1,5 +1,23 @@
-Class SystemDictionary >> fuelAccept: aGeneralMapper
+SystemDictionary >> fuelAccept: aGeneralMapper
 [
-^ aGeneralMapper visitWellKnownObject: self
+	"serialize all instances except for <Smalltalk globals>"
+
+	^ self == Smalltalk globals
+		ifFalse: [ super fuelAccept: aGeneralMapper ]
+		ifTrue: [ aGeneralMapper visitHookPrimitive: self ]
+]
+
+SystemDictionary >> serializeOn: anEncoder
+[
+	"Do nothing"
+
+	
+]
+
+SystemDictionary class >> materializeFrom: aDecoder
+[
+	"Answer my well-known instance"
+
+	^ Smalltalk globals
 ]
 

@@ -1,22 +1,21 @@
-Class
-	name: #PreorderGuide;
-	superclass: #ClassFileSystemGuide;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
+PreorderGuide
+	superclass: #FileSystemGuide;
 	package: #'FileSystem-Core-Implementation'.
 
-Class PreorderGuide >> pushAll: aCollection
+PreorderGuide >> pushAll: aCollection
 [
-aCollection reverseDo: [ :ea | work add: ea ]
+	aCollection reverseDo: [ :ea | work add: ea ]
 ]
 
-Class PreorderGuide >> show: aReference
+PreorderGuide >> show: aReference
 [
-self push: aReference entry.self	whileNotDoneDo: [ 		| entry |		entry := self pop.		entry isFile			ifTrue: [ visitor visitFile: entry ]			ifFalse: [ 				visitor visitDirectory: entry.				self pushAll: entry reference entries ] ]
+	self push: aReference entry.
+	self
+		whileNotDoneDo: [ | entry |
+			entry := self pop.
+			entry isFile
+				ifTrue: [ visitor visitFile: entry ]
+				ifFalse: [ visitor visitDirectory: entry.
+					self pushAll: entry reference entries ] ]
 ]
-
-Metaclass
-	name: #PreorderGuide;
-	instanceVariables: #().
 
