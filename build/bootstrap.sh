@@ -49,6 +49,7 @@ objectSpace interpreter: (AtASTEvaluator new codeProvider: seed; yourself).
 
 \"Create a builder, and tell it to bootstrap. Voilá, the objectSpace will be full\"
 builder := Pharo20Builder new.
+builder kernelSpec: seed.
 builder objectSpace: objectSpace.
 builder	buildKernel.
 
