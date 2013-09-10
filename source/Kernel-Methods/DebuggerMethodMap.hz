@@ -1,162 +1,0 @@
-Class
-	name: #DebuggerMethodMap;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #(#timestamp #methodReference #methodNode #abstractSourceRanges #sortedSourceMap #blockExtentsToTempRefs #startpcsToTempRefs );
-	classVariables: #(#MapCacheEntries #MapCache );
-	package: #'Kernel-Methods'.
-
-Class DebuggerMethodMap >> abstractPCFor: concretePC when: contextIsActive
-[
-	"If the context is the actve context (is at the hot end of the stack)	 then its pc is the current pc.  But if the context isn't, because it is	suspended sending a message, then its current pc is the previous pc"
-^ self method	abstractPCForConcretePC:		(contextIsActive			ifTrue: [ concretePC ]			ifFalse: [ (self method pcPreviousTo: concretePC) ifNil: [ concretePC ] ])
-]
-
-Class DebuggerMethodMap >> abstractSourceMap
-[
-	"Answer with a Dictionary of abstractPC <Integer> to sourceRange <Interval>."
-| theMethodToScan rawSourceRanges concreteSourceRanges abstractPC scanner client |abstractSourceRanges ifNotNil: [ ^ abstractSourceRanges ].	"If the methodNode hasn't had a method generated it doesn't have pcs set in its	 nodes so we must generate a new method and might as well use it for scanning."methodNode	rawSourceRangesAndMethodDo: [ :ranges :method | 		rawSourceRanges := ranges.		theMethodToScan := method ].concreteSourceRanges := Dictionary new.rawSourceRanges	keysAndValuesDo: [ :node :range | 		node pc ~= 0			ifTrue: [ concreteSourceRanges at: node pc put: range ] ].abstractPC := 1.abstractSourceRanges := Dictionary new.scanner := InstructionStream on: theMethodToScan.client := InstructionClient new.[ (concreteSourceRanges includesKey: scanner pc)	ifTrue: [ abstractSourceRanges at: abstractPC put: (concreteSourceRanges at: scanner pc) ].abstractPC := abstractPC + 1.scanner interpretNextInstructionFor: client.scanner atEnd ] whileFalse.^ abstractSourceRanges
-]
-
-Class DebuggerMethodMap >> forMethod: aMethod methodNode: theMethodNode
-[
-	"<CompiledMethod>"
-	"<MethodNode>"
-methodReference := WeakArray with: aMethod.methodNode := theMethodNode.self markRecentlyUsed
-]
-
-Class DebuggerMethodMap >> markRecentlyUsed
-[
-timestamp := Time totalSeconds
-]
-
-Class DebuggerMethodMap >> method
-[
-^ methodReference at: 1
-]
-
-Class DebuggerMethodMap >> namedTempAt: index in: aContext
-[
-	"Answer the value of the temp at index in aContext where index is relative	 to the array of temp names answered by tempNamesForContext:"
-^ self privateTempAt: index in: aContext startpcsToBlockExtents: aContext method startpcsToBlockExtents
-]
-
-Class DebuggerMethodMap >> namedTempAt: index put: aValue in: aContext
-[
-	"Assign the value of the temp at index in aContext where index is relative	 to the array of temp names answered by tempNamesForContext:.	 If the value is a copied value we also need to set it along the lexical chain."
-^ self	privateTempAt: index	in: aContext	put: aValue	startpcsToBlockExtents: aContext method startpcsToBlockExtents
-]
-
-Class DebuggerMethodMap >> privateDereference: tempReference in: aContext
-[
-	"Fetch the temporary with reference tempReference in aContext.	 tempReference can be		integer - direct temp reference		#( indirectionVectorIndex tempIndex ) - remote temp in indirectionVector at index		#( outer. temp reference ) - a temp reference in an outer context."
-^ tempReference isInteger	ifTrue: [ aContext tempAt: tempReference ]	ifFalse: [ 		tempReference first == #outer			ifTrue: [ self privateDereference: tempReference last in: aContext outerContext ]			ifFalse: [ (aContext tempAt: tempReference first) at: tempReference second ] ]
-]
-
-Class DebuggerMethodMap >> privateDereference: tempReference in: aContext put: aValue
-[
-	"Assign the temporary with reference tempReference in aContext.	 tempReference can be		integer - direct temp reference		#( indirectionVectorIndex tempIndex ) - remote temp in indirectionVector at index		#( outer. temp reference ) - a temp reference in an outer context."
-^ tempReference isInteger	ifTrue: [ aContext tempAt: tempReference put: aValue ]	ifFalse: [ 		tempReference first == #outer			ifTrue: [ self privateDereference: tempReference last in: aContext outerContext put: aValue ]			ifFalse: [ (aContext tempAt: tempReference first) at: tempReference second put: aValue ] ]
-]
-
-Class DebuggerMethodMap >> privateIsOuter: anObject
-[
-^ anObject last isArray and: [ anObject last first == #outer ]
-]
-
-Class DebuggerMethodMap >> privateTempAt: index in: aContext put: aValue startpcsToBlockExtents: theContextsStartpcsToBlockExtents
-[
-| nameRefPair |nameRefPair := (self privateTempRefsForContext: aContext startpcsToBlockExtents: theContextsStartpcsToBlockExtents)	at: index	ifAbsent: [ aContext errorSubscriptBounds: index ].^ self privateDereference: nameRefPair last in: aContext put: aValue
-]
-
-Class DebuggerMethodMap >> privateTempAt: index in: aContext startpcsToBlockExtents: theContextsStartpcsToBlockExtents
-[
-| nameRefPair |nameRefPair := (self privateTempRefsForContext: aContext startpcsToBlockExtents: theContextsStartpcsToBlockExtents)	at: index	ifAbsent: [ aContext errorSubscriptBounds: index ].^ self privateDereference: nameRefPair last in: aContext
-]
-
-Class DebuggerMethodMap >> privateTempRefsForContext: aContext startpcsToBlockExtents: theContextsStartpcsToBlockExtents
-[
-	"Answer the sequence of temps in scope in aContext in the natural order,	 outermost arguments and temporaries first, innermost last.  Each temp is	 a pair of the temp's name followed by a reference.  The reference can be		integer - index of temp in aContext		#( indirectionVectorIndex tempIndex ) - remote temp in indirectionVector at index in aContext		#( outer. temp reference ) - a temp reference in an outer context."
-blockExtentsToTempRefs	ifNil: [ 		blockExtentsToTempRefs := methodNode blockExtentsToTempsMap.		startpcsToTempRefs := Dictionary new ].^ startpcsToTempRefs	at: aContext startpc	ifAbsentPut: [ 		| localRefs |		localRefs := blockExtentsToTempRefs at: (theContextsStartpcsToBlockExtents at: aContext startpc).		aContext outerContext			ifNil: [ localRefs ]			ifNotNil: [ :outer | 				| outerTemps |				"Present temps in the order outermost to innermost left-to-right, but replace					 copied outermost temps with their innermost copies"				outerTemps := (self privateTempRefsForContext: outer startpcsToBlockExtents: theContextsStartpcsToBlockExtents)					collect: [ :outerPair | 						localRefs							detect: [ :localPair | outerPair first = localPair first ]							ifNone: [ 								{(outerPair first).								{#outer.								(outerPair last)}} ] ].				outerTemps					, (localRefs reject: [ :localPair | outerTemps anySatisfy: [ :outerPair | localPair first = outerPair first ] ]) ] ]
-]
-
-Class DebuggerMethodMap >> rangeForPC: concretePC contextIsActiveContext: contextIsActive
-[
-	"Answer the indices in the source code for the supplied pc."
-| pc |pc := self abstractPCFor: concretePC when: contextIsActive.self sortedSourceMap first key > pc	ifTrue: [ ^ self sortedSourceMap first value ].^ self abstractSourceMap	at: pc	ifAbsent: [ 		(self sortedSourceMap			findBinary: [ :assoc | pc - assoc key ]			ifNone: [ 				| end |				end := self sortedSourceMap last value last.				nil -> (end + 1 to: end) ]) value ]
-]
-
-Class DebuggerMethodMap >> sortedSourceMap
-[
-	"Answer a sorted collection of associations, pcRangeStart -> pcRangeInterval "
-^ sortedSourceMap ifNil: [ sortedSourceMap := self abstractSourceMap associations sorted ]
-]
-
-Class DebuggerMethodMap >> sourceText
-[
-^ methodNode sourceText
-]
-
-Class DebuggerMethodMap >> tempNamesForContext: aContext
-[
-	"Answer an Array of all the temp names in scope in aContext starting with	 the home's first local (the first argument or first temporary if no arguments)."
-^ (self privateTempRefsForContext: aContext startpcsToBlockExtents: aContext method startpcsToBlockExtents)	collect: [ :pair | pair first ]
-]
-
-Class DebuggerMethodMap >> tempNamesScopedForContext: aContext
-[
-	"Answer an Array of all the temp names in scope in aContext starting with	 the home's first local (the first argument or first temporary if no arguments)."
-^ ((self privateTempRefsForContext: aContext startpcsToBlockExtents: aContext method startpcsToBlockExtents)	reject: [ :pair | self privateIsOuter: pair ]) collect: [ :pair | pair first ]
-]
-
-Class DebuggerMethodMap >> tempsAndValuesForContext: aContext
-[
-	"Return a string of the temporary variabls and their current values"
-| aStream |aStream := (String new: 100) writeStream.(self tempNamesForContext: aContext)	doWithIndex: [ :title :index | 		aStream			nextPutAll: title;			nextPut: $:;			space;			tab.		aContext print: (self namedTempAt: index in: aContext) on: aStream.		aStream cr ].^ aStream contents
-]
-
-Class DebuggerMethodMap >> timestamp
-[
-^ timestamp
-]
-
-Metaclass
-	name: #DebuggerMethodMap;
-	instanceVariables: #().
-
-Metaclass DebuggerMethodMap >> cacheDebugMap: aDebuggerMethodMap forMethod: aCompiledMethod
-[
-MapCache finalizeValues.[ MapCache size >= MapCacheEntries ]	whileTrue: [ 		| mapsByAge |		mapsByAge := MapCache keys asSortedCollection: [ :m1 :m2 | (MapCache at: m1) timestamp < (MapCache at: m2) timestamp ].		mapsByAge notEmpty			ifTrue: [ 				"There be race conditions and reentrancy issues here"				MapCache removeKey: mapsByAge last ] ].^ MapCache at: aCompiledMethod put: aDebuggerMethodMap
-]
-
-Metaclass DebuggerMethodMap >> cleanUp
-[
-	"DebuggerMethodMap cleanUp"
-self voidMapCache
-]
-
-Metaclass DebuggerMethodMap >> forMethod: aMethod
-[
-	"<CompiledMethod>"
-	"Answer a DebuggerMethodMap suitable for debugging activations of aMethod.	 Answer an existing instance from the cache if it exists, cacheing a new one if required."
-^ MapCache	at: aMethod	ifAbsent: [ self cacheDebugMap: (self forMethod: aMethod methodNode: aMethod methodNode) forMethod: aMethod ]
-]
-
-Metaclass DebuggerMethodMap >> forMethod: aMethod methodNode: methodNode
-[
-	"<CompiledMethod>"
-	"<MethodNode>"
-	"Uncached instance creation method for private use or for tests.	 Please consider using forMethod: instead."
-^ self new forMethod: aMethod methodNode: methodNode
-]
-
-Metaclass DebuggerMethodMap >> initialize
-[
-self cleanUp
-]
-
-Metaclass DebuggerMethodMap >> voidMapCache
-[
-MapCache := WeakIdentityKeyDictionary new.MapCacheEntries := 16
-]
-

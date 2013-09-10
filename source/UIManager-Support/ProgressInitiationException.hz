@@ -1,80 +1,0 @@
-Class
-	name: #ProgressInitiationException;
-	superclass: #ClassException;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #(#workBlock #maxVal #minVal #aPoint #progressTitle );
-	classVariables: #();
-	package: #'UIManager-Support'.
-
-Class ProgressInitiationException >> defaultAction
-[
-^ UIManager default progressInitiationExceptionDefaultAction: self
-]
-
-Class ProgressInitiationException >> display: argString at: argPoint from: argMinVal to: argMaxVal during: argWorkBlock
-[
-progressTitle := argString.aPoint := argPoint.minVal := argMinVal.maxVal := argMaxVal.workBlock := argWorkBlock.^ self signal
-]
-
-Class ProgressInitiationException >> maxVal
-[
-^ maxVal
-]
-
-Class ProgressInitiationException >> minVal
-[
-^ minVal
-]
-
-Class ProgressInitiationException >> point
-[
-^ aPoint
-]
-
-Class ProgressInitiationException >> progressTitle
-[
-^ progressTitle
-]
-
-Class ProgressInitiationException >> sendNotificationsTo: anObject
-[
-self	resume:		(workBlock			value:				(anObject					start: minVal;					end: maxVal))
-]
-
-Class ProgressInitiationException >> workBlock
-[
-^ workBlock
-]
-
-Metaclass
-	name: #ProgressInitiationException;
-	instanceVariables: #().
-
-Metaclass ProgressInitiationException >> display: aString at: aPoint from: minVal to: maxVal during: workBlock
-[
-^ self new	display: aString	at: aPoint	from: minVal	to: maxVal	during: workBlock
-]
-
-Metaclass ProgressInitiationException >> testInnermost
-[
-	"test the progress code WITHOUT special handling"
-^ 'Now here''s some Real Progress'	displayProgressFrom: 0	to: 10	during: [ :bar | 		1 to: 10 do: [ :x | 			bar current: x.			(Delay forMilliseconds: 500) wait.			x = 5				ifTrue: [ 1 / 0 ]	"just to make life interesting" ].		'done' ]
-]
-
-Metaclass ProgressInitiationException >> testWith
-[
-	"test progress code WITH special handling of progress notifications"
-^ [ self testWithAdditionalInfo ]	on: ProgressInitiationException	do: [ :ex | ex sendNotificationsTo: LoggingSystemProgressItemMorph new ]
-]
-
-Metaclass ProgressInitiationException >> testWithAdditionalInfo
-[
-^ {'starting'.(self testWithout).'really!'}
-]
-
-Metaclass ProgressInitiationException >> testWithout
-[
-	"test the progress code WITHOUT special handling"
-^ [ self testInnermost ]	on: ZeroDivide	do: [ :ex | ex resume ]
-]
-

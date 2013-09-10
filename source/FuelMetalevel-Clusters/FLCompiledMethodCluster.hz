@@ -1,77 +1,0 @@
-Class
-	name: #FLCompiledMethodCluster;
-	superclass: #ClassFLIteratingCluster;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #(#TrailerEncoder );
-	package: #'FuelMetalevel-Clusters'.
-
-Class FLCompiledMethodCluster >> materializeInstanceWith: aDecoder
-[
-| compiledMethod header bytecodesPlusTrailerSize |header := aDecoder nextEncodedUint32.bytecodesPlusTrailerSize := aDecoder nextEncodedUint16.compiledMethod := CompiledMethod newMethod: bytecodesPlusTrailerSize header: header.compiledMethod initialPC to: compiledMethod size do: [ :index | compiledMethod at: index put: aDecoder nextEncodedByte ].^ compiledMethod
-]
-
-Class FLCompiledMethodCluster >> materializeLiteralsTo: compiledMethod with: aDecoder
-[
-1 to: compiledMethod numLiterals do: [ :index | compiledMethod literalAt: index put: aDecoder nextEncodedReference ]
-]
-
-Class FLCompiledMethodCluster >> materializeReferencesStepWith: aDecoder
-[
-objects do: [ :aCompiledMethod | self materializeLiteralsTo: aCompiledMethod with: aDecoder ]
-]
-
-Class FLCompiledMethodCluster >> referencesOf: aCompiledMethod do: aBlock
-[
-aCompiledMethod fuelPrepare.1 to: aCompiledMethod numLiterals do: [ :index | aBlock value: (aCompiledMethod literalAt: index) ]
-]
-
-Class FLCompiledMethodCluster >> serializeInstance: aCompiledMethodToSerialize with: anEncoder
-[
-| header bytecodesPlusTrailerSize cmSize cmInitialPC aCompiledMethod |aCompiledMethod := self class trailerEncoder compiledMethodToSerialize: aCompiledMethodToSerialize.header := aCompiledMethod header.cmSize := aCompiledMethod size.cmInitialPC := aCompiledMethod initialPC.bytecodesPlusTrailerSize := cmSize - cmInitialPC + 1.anEncoder	encodeUint32: header;	encodeUint16: bytecodesPlusTrailerSize.cmInitialPC to: cmSize do: [ :index | anEncoder encodeByte: (aCompiledMethod at: index) ]
-]
-
-Class FLCompiledMethodCluster >> serializeLiteralsOf: aCompiledMethod with: anEncoder
-[
-aCompiledMethod fuelPrepare.1 to: aCompiledMethod numLiterals do: [ :index | anEncoder encodeReferenceTo: (aCompiledMethod literalAt: index) ]
-]
-
-Class FLCompiledMethodCluster >> serializeReferencesStepWith: anEncoder
-[
-objects do: [ :aCompiledMethod | self serializeLiteralsOf: aCompiledMethod with: anEncoder ]
-]
-
-Metaclass
-	name: #FLCompiledMethodCluster;
-	instanceVariables: #().
-
-Metaclass FLCompiledMethodCluster >> clusterBucketIn: aClusterization
-[
-^ aClusterization primitivesBucket
-]
-
-Metaclass FLCompiledMethodCluster >> setTrailerWithNoChange
-[
-^ self trailerEncoder: FLCompiledMethodTrailerEncoderNoChange new
-]
-
-Metaclass FLCompiledMethodCluster >> setTrailerWithNoSource
-[
-^ self trailerEncoder: FLCompiledMethodTrailerEncoderNoSource new
-]
-
-Metaclass FLCompiledMethodCluster >> setTrailerWithSourceCode
-[
-^ self trailerEncoder: FLCompiledMethodTrailerEncoderWithSource new
-]
-
-Metaclass FLCompiledMethodCluster >> trailerEncoder
-[
-TrailerEncoder isNil	ifTrue: [ TrailerEncoder := FLCompiledMethodTrailerEncoderNoSource new ].^ TrailerEncoder
-]
-
-Metaclass FLCompiledMethodCluster >> trailerEncoder: aTrailerEncoder
-[
-TrailerEncoder := aTrailerEncoder
-]
-

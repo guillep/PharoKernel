@@ -1,30 +1,0 @@
-Class
-	name: #HazelZygote;
-	superclass: #ClassObject;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #();
-	classVariables: #();
-	package: #'Seed-HazelBuilder'.
-
-Metaclass
-	name: #HazelZygote;
-	instanceVariables: #(#quitSemaphore ).
-
-Metaclass HazelZygote >> freshProcessDoing: something
-[
-^ Process	forContext:		[ 		| f |		Symbol initialize.		HashedCollection rehashAll.		FileStream shutDown.		quitSemaphore := Semaphore new.		1 to: 5 do: [ :i | Smalltalk garbageCollect ].		[ 		f := StandardFileStream fileNamed: 'fileok.txt'.		Smalltalk sourceFileVersionString: 'PharoV10'.		[ 		LanguageEnvironment resetKnownEnvironments.		Smalltalk startupImage: true snapshotWorked: true.		self perform: something with: f ]			on: Error			do: [ :ex | self writeStackTraceFor: ex in: f ] ]			ensure: [ 				[ f close ]					on: Error					do: [  ].				Smalltalk quitPrimitive ] ] asContext	priority: 40
-]
-
-Metaclass HazelZygote >> freshProcessQuitting
-[
-^ self freshProcessDoing: #justQuit:
-]
-
-Metaclass HazelZygote >> justQuit: aStream
-[
-Smalltalk snapshot: false andQuit: true
-]
-
-Metaclass HazelZygote >> writeStackTraceFor: exception in: strm
-[| cnt startPos aContext |strm nextPutAll: exception printString; cr.strm nextPutAll: '=-=-=-=-=-=-=-BEGIN STACK TRACE -=-=-=-=-=-=-=-=';cr.aContext := exception signalerContext.cnt := 0.  startPos := strm position.	[aContext notNil and: [(cnt := cnt + 1) < 40]] 		whileTrue: [aContext printDetails: strm.	"variable values"					strm cr.					aContext := aContext sender].		strm cr; nextPutAll: '--- The full stack ---'; cr.		aContext := exception signalerContext.	cnt := 0.	[aContext == nil] whileFalse:			[cnt := cnt + 1.			cnt = 40 ifTrue: [strm nextPutAll: ' - - - - - - - - - - - - - - -  			- - - - - - - - - - - - - - - - - -'; cr].		strm print: aContext; cr.  "just class>>selector"					strm position > (startPos+150000) 			ifTrue: [strm nextPutAll:  '...etc...'.								^ self]. 	"exit early"			cnt > 200 ifTrue: [strm nextPutAll: '-- and more not shown --'.  ^  self].		aContext := aContext sender].	strm nextPutAll: '=-=-=-=-=-=-=-END STACK TRACE -=-=-=-=-=-=-=-=';cr.
-]

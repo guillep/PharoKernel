@@ -1,57 +1,0 @@
-Class
-	name: #FLGlobalClassPoolAssociationCluster;
-	superclass: #ClassFLIteratingCluster;
-	instanceSpecification: #(#pointers #words );
-	instanceVariables: #(#classOwnerByAssociation );
-	classVariables: #();
-	package: #'FuelMetalevel-Clusters'.
-
-Class FLGlobalClassPoolAssociationCluster >> classOwnerByAssociation
-[
-^ classOwnerByAssociation
-]
-
-Class FLGlobalClassPoolAssociationCluster >> classOwnerByAssociation: anObject
-[
-classOwnerByAssociation := anObject
-]
-
-Class FLGlobalClassPoolAssociationCluster >> declare: anAssociation belongsTo: ownerClass
-[
-classOwnerByAssociation at: anAssociation put: ownerClass
-]
-
-Class FLGlobalClassPoolAssociationCluster >> initializeAnalyzing
-[
-super initializeAnalyzing.classOwnerByAssociation := IdentityDictionary new
-]
-
-Class FLGlobalClassPoolAssociationCluster >> materializeInstanceWith: aDecoder
-[
-| keyName ownerClass |ownerClass := aDecoder nextEncodedReference.keyName := aDecoder nextEncodedReference.^ ownerClass classPool associationAt: keyName
-]
-
-Class FLGlobalClassPoolAssociationCluster >> referencesOf: anAssociation do: aBlock
-[
-aBlock	value: (classOwnerByAssociation at: anAssociation);	value: anAssociation key
-]
-
-Class FLGlobalClassPoolAssociationCluster >> reinitialize
-[
-super initializeAnalyzing
-]
-
-Class FLGlobalClassPoolAssociationCluster >> serializeInstance: anAssociation with: anEncoder
-[
-anEncoder	encodeReferenceTo: (classOwnerByAssociation at: anAssociation);	encodeReferenceTo: anAssociation key
-]
-
-Metaclass
-	name: #FLGlobalClassPoolAssociationCluster;
-	instanceVariables: #().
-
-Metaclass FLGlobalClassPoolAssociationCluster >> clusterBucketIn: aClusterization
-[
-^ aClusterization baselevelBucket
-]
-
