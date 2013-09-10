@@ -38,7 +38,7 @@ echo -e "
 skipped := #('FloatArrayTest.hz' 'MatrixTest.hz' 'ArrayTest.hz' 'AppRegistry class.hz' 'MIMEDocument.hz' 'Color.hz' 'CodeImporter.hz').
 \"Load a seed from the folder of the downloaded sources\"
 seed := PharoSeed new
-	fromDirectoryNamed: (FileSystem workingDirectory parent parent/ 'PharoKernel' / 'source');
+	fromDirectoryNamed: 'source';
 	except: [ :a | skipped includes: a basename ];
 	buildSeed.
 
