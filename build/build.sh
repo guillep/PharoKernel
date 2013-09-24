@@ -33,12 +33,12 @@ REPO=http://smalltalkhub.com/mc/Guille/Seed/main
 echo "Configuration Loaded. Opening script..."
 
 echo -e "
-\"I am a builder for a Pharo Candle system. I bootstrap the system using an object space. You configure myself by providing mi a kernelSpec, and sending me the message #buildKernel.\"
+Workspace openContents: '\"I am a builder for a Pharo Candle system. I bootstrap the system using an object space. You configure myself by providing mi a kernelSpec, and sending me the message #buildKernel.\"
 
-skipped := #('FloatArrayTest.hz' 'MatrixTest.hz' 'ArrayTest.hz' 'AppRegistry class.hz' 'MIMEDocument.hz' 'Color.hz' 'CodeImporter.hz').
+skipped := #(''FloatArrayTest.hz'' ''MatrixTest.hz'' ''ArrayTest.hz'' ''AppRegistry class.hz'' ''MIMEDocument.hz'' ''Color.hz'' ''CodeImporter.hz'').
 \"Load a seed from the folder of the downloaded sources\"
 seed := PharoSeed new
-	fromDirectoryNamed: '../source';
+	fromDirectoryNamed: ''../source'';
 	except: [ :a | skipped includes: a basename ];
 	buildSeed.
 
@@ -53,8 +53,8 @@ builder kernelSpec: seed.
 builder objectSpace: objectSpace.
 builder	buildKernel.
 
-objectSpace serializeInFileNamed: 'PharoKernel.image'.
-Smalltalk snapshot: false andQuit: true.
+objectSpace serializeInFileNamed: ''PharoKernel.image''.'.
+Smalltalk snapshot: true andQuit: true.
 " > ./script.st
 
 ./pharo PharoBootstrap.image script.st
