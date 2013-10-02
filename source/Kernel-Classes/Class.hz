@@ -1,6 +1,6 @@
 Class
 	superclass: #ClassDescription;
-	traitComposition: #TBehaviorCategorization;
+	traitComposition: TBehaviorCategorization;
 	instanceVariables: #(#subclasses #name #classPool #sharedPools #environment #category #traitComposition #localSelectors );
 	package: #'Kernel-Classes'.
 
@@ -168,34 +168,6 @@ Class >> canFindWithoutEnvironment: varName
 	superclass == nil
 		ifTrue: [ ^ false ]
 		ifFalse: [ ^ (superclass bindingOf: varName) notNil ]
-]
-
-Class >> category
-[
-	"Answer the system organization category for the receiver. First check whether the
-	category name stored in the ivar is still correct and only if this fails look it up
-	(latter is much more expensive)"
-
-	| result |
-	self basicCategory
-		ifNotNil: [ :symbol | ((self environment organization listAtCategoryNamed: symbol) includes: self name)
-				ifTrue: [ ^ symbol ] ].
-	self basicCategory: (result := self environment organization categoryOfElement: self name).
-	^ result
-]
-
-Class >> category: aString
-[
-	"Categorize the receiver under the system category, aString, removing it from 
-	any previous categorization."
-
-	| oldCategory |
-	oldCategory := self basicCategory.
-	aString isString
-		ifTrue: [ self basicCategory: aString asSymbol.
-			self environment organization classify: self name under: self basicCategory ]
-		ifFalse: [ self errorCategoryName ].
-	SystemAnnouncer uniqueInstance class: self recategorizedFrom: oldCategory to: self basicCategory
 ]
 
 Class >> classPool

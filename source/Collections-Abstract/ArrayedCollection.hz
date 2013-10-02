@@ -1,6 +1,6 @@
 ArrayedCollection
 	superclass: #SequenceableCollection;
-	traitComposition: #TSortable;
+	traitComposition: TSortable;
 	package: #'Collections-Abstract'.
 
 ArrayedCollection >> add: newObject
@@ -38,37 +38,6 @@ ArrayedCollection >> fillFrom: aCollection with: aBlock
 	| index |
 	index := 0.
 	aCollection do: [ :each | self at: (index := index + 1) put: (aBlock value: each) ]
-]
-
-ArrayedCollection >> isSorted
-[
-	"Return true if the receiver is sorted by the given criterion.
-	Optimization for isSortedBy: [:a :b | a <= b]."
-
-	| lastElm elm |
-	self isEmpty
-		ifTrue: [ ^ true ].
-	lastElm := self first.
-	2 to: self size do: [ :index | elm := self at: index.
-		lastElm <= elm
-			ifFalse: [ ^ false ].
-		lastElm := elm ].
-	^ true
-]
-
-ArrayedCollection >> isSortedBy: aBlock
-[
-	"Return true if the receiver is sorted by the given criterion."
-
-	| lastElm elm |
-	self isEmpty
-		ifTrue: [ ^ true ].
-	lastElm := self first.
-	2 to: self size do: [ :index | elm := self at: index.
-		(aBlock value: lastElm value: elm)
-			ifFalse: [ ^ false ].
-		lastElm := elm ].
-	^ true
 ]
 
 ArrayedCollection >> mergeFirst: first middle: middle last: last into: dst by: aBlock
@@ -130,35 +99,6 @@ ArrayedCollection >> mergeSortFrom: startIndex to: stopIndex by: aBlock
 		by: aBlock
 ]
 
-ArrayedCollection >> mergeSortFrom: first to: last src: src dst: dst by: aBlock
-[
-	"Private. Split the range to be sorted in half, sort each half, and 
-	merge the two half-ranges into dst."
-
-	| middle |
-	first = last
-		ifTrue: [ ^ self ].
-	middle := (first + last) // 2.
-	self
-		mergeSortFrom: first
-		to: middle
-		src: dst
-		dst: src
-		by: aBlock.
-	self
-		mergeSortFrom: middle + 1
-		to: last
-		src: dst
-		dst: src
-		by: aBlock.
-	src
-		mergeFirst: first
-		middle: middle
-		last: last
-		into: dst
-		by: aBlock
-]
-
 ArrayedCollection >> removeAll
 [
 	self shouldNotImplement
@@ -181,21 +121,6 @@ ArrayedCollection >> size
 
 	<primitive: 62>
 	^ self basicSize
-]
-
-ArrayedCollection >> sort
-[
-	"Sort this collection into ascending order using the '<=' operator."
-
-	self sort: [ :a :b | a <= b ]
-]
-
-ArrayedCollection >> sort: aSortBlock
-[
-	"Sort this array using aSortBlock. The block should take two arguments
-	and return true if the first element should preceed the second one."
-
-	self mergeSortFrom: 1 to: self size by: aSortBlock
 ]
 
 ArrayedCollection >> storeElementsFrom: firstIndex to: lastIndex on: aStream

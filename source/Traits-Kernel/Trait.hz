@@ -1,6 +1,6 @@
 Trait
 	superclass: #TraitDescription;
-	traitComposition: #TBehaviorCategorization;
+	traitComposition: TBehaviorCategorization;
 	instanceVariables: #(#name #environment #classTrait #category );
 	package: #'Traits-Kernel'.
 
@@ -41,34 +41,6 @@ Trait >> basicCategory: aSymbol
 Trait >> binding
 [
 	^ self environment associationAt: name ifAbsent: [ nil -> self ]
-]
-
-Trait >> category
-[
-	"Answer the system organization category for the receiver. First check whether the
-	category name stored in the ivar is still correct and only if this fails look it up
-	(latter is much more expensive)"
-
-	| result |
-	self basicCategory
-		ifNotNil: [ :symbol | ((self environment organization listAtCategoryNamed: symbol) includes: self name)
-				ifTrue: [ ^ symbol ] ].
-	self basicCategory: (result := self environment organization categoryOfElement: self name).
-	^ result
-]
-
-Trait >> category: aString
-[
-	"Categorize the receiver under the system category, aString, removing it from 
-	any previous categorization."
-
-	| oldCategory |
-	oldCategory := self basicCategory.
-	aString isString
-		ifTrue: [ self basicCategory: aString asSymbol.
-			self environment organization classify: self name under: self basicCategory ]
-		ifFalse: [ self errorCategoryName ].
-	SystemAnnouncer uniqueInstance class: self recategorizedFrom: oldCategory to: self basicCategory
 ]
 
 Trait >> classTrait

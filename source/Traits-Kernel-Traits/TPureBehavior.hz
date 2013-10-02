@@ -8,11 +8,6 @@ Trait named: #TPureBehavior
 	^ self compiledMethodAt: selector
 ]
 
-TPureBehavior >> addCategory: newName before: aCategory
-[
-	^ self organization addCategory: newName before: aCategory
-]
-
 TPureBehavior >> addExclusionOf: aSymbol to: aTrait
 [
 	self setTraitComposition: (self traitComposition copyWithExclusionOf: aSymbol to: aTrait)
@@ -119,21 +114,6 @@ TPureBehavior >> basicRemoveSelector: selector
 	oldMethod flushCache
 ]
 
-TPureBehavior >> binding
-[
-	^ nil -> self
-]
-
-TPureBehavior >> bindingOf: varName
-[
-	"Answer the binding of some variable resolved in the scope of the receiver"
-
-	| aSymbol binding |
-	aSymbol := varName asSymbol.	"Look in declared environment."
-	binding := self environment bindingOf: aSymbol.
-	^ binding
-]
-
 TPureBehavior >> canUnderstand: selector
 [
 	"Answer whether the receiver can respond to the message whose selector 
@@ -173,72 +153,6 @@ TPureBehavior >> classAndMethodFor: aSymbol do: binaryBlock ifAbsent: absentBloc
 	^ binaryBlock value: self value: (self compiledMethodAt: aSymbol ifAbsent: [ ^ absentBlock value ])
 ]
 
-TPureBehavior >> compile: code
-[
-	"Compile the argument, code, as source code in the context of the 
-	receiver. Create an error notification if the code can not be compiled. 
-	The argument is either a string or an object that converts to a string or a 
-	PositionableStream on an object that converts to a string."
-
-	^ self compile: code notifying: nil
-]
-
-TPureBehavior >> compile: code classified: category notifying: requestor trailer: bytes ifFail: failBlock
-[
-	"Compile code without logging the source in the changes file"
-
-	| methodNode |
-	methodNode := self compilerClass new
-		compile: code
-		in: self
-		classified: category
-		notifying: requestor
-		ifFail: failBlock.
-	^ CompiledMethodWithNode generateMethodFromNode: methodNode trailer: bytes
-]
-
-TPureBehavior >> compile: code notifying: requestor
-[
-	"Compile the argument, code, as source code in the context of the 
-	receiver and insEtall the result in the receiver's method dictionary. The 
-	second argument, requestor, is to be notified if an error occurs. The 
-	argument code is either a string or an object that converts to a string or 
-	a PositionableStream. This method also saves the source code."
-
-	| methodAndNode |
-	methodAndNode := self
-		compile: code
-		classified: nil
-		notifying: requestor
-		trailer: self defaultMethodTrailer
-		ifFail: [ ^ nil ].	"a Text"
-	methodAndNode method
-		putSource: code
-		fromParseNode: methodAndNode node
-		inFile: 2
-		withPreamble: [ :f | f
-				cr;
-				nextPut: $!;
-				nextChunkPut: 'Behavior method';
-				cr ].
-	self addSelector: methodAndNode selector withMethod: methodAndNode method notifying: requestor.
-	^ methodAndNode selector
-]
-
-TPureBehavior >> compileAll
-[
-	^ self compileAllFrom: self
-]
-
-TPureBehavior >> compileAllFrom: oldClass
-[
-	"Compile all the methods in the receiver's method dictionary.
-	This validates sourceCode and variable references and forces
-	all methods to use the current bytecode set"
-
-	oldClass selectorsDo: [ :sel | self recompile: sel from: oldClass ]
-]
-
 TPureBehavior >> compiledMethodAt: selector
 [
 	"Answer the compiled method associated with the argument, selector (a 
@@ -255,13 +169,6 @@ TPureBehavior >> compiledMethodAt: selector ifAbsent: aBlock
 	^ self methodDict at: selector ifAbsent: [ aBlock value ]
 ]
 
-TPureBehavior >> compilerClass
-[
-	"Answer a compiler class appropriate for source methods of this class."
-
-	^ Smalltalk compilerClass
-]
-
 TPureBehavior >> compress
 [
 	"Compact the method dictionary of the receiver."
@@ -276,33 +183,11 @@ TPureBehavior >> copyOfMethodDictionary
 	^ self methodDict copy
 ]
 
-TPureBehavior >> decompile: selector
-[
-	"Find the compiled code associated with the argument, selector, as a 
-	message selector in the receiver's method dictionary and decompile it. 
-	Answer the resulting source code as a string. Create an error notification 
-	if the selector is not in the receiver's method dictionary."
-
-	^ self decompilerClass new decompile: selector in: self
-]
-
-TPureBehavior >> decompilerClass
-[
-	"Answer a decompiler class appropriate for compiled methods of this class."
-
-	^ self compilerClass decompilerClass
-]
-
 TPureBehavior >> deepCopy
 [
 	"Classes should only be shallowCopied or made anew."
 
 	^ self shallowCopy
-]
-
-TPureBehavior >> defaultMethodTrailer
-[
-	^ CompiledMethodTrailer empty
 ]
 
 TPureBehavior >> deregisterLocalSelector: aSymbol
@@ -332,14 +217,6 @@ TPureBehavior >> environment
 	"Return the environment in which the receiver is visible"
 
 	^ Smalltalk globals
-]
-
-TPureBehavior >> evaluatorClass
-[
-	"Answer an evaluator class appropriate for evaluating expressions in the 
-	context of this class."
-
-	^ self compilerClass
 ]
 
 TPureBehavior >> firstCommentAt: selector
@@ -592,21 +469,11 @@ TPureBehavior >> methodHeaderFor: selector
 	^ sourceString asString copyFrom: 1 to: (parser endOfLastToken min: sourceString size)	"Behavior methodHeaderFor: #methodHeaderFor: "
 ]
 
-TPureBehavior >> methods
-[
-	^ self methodDict values
-]
-
 TPureBehavior >> methodsDo: aBlock
 [
 	"Evaluate aBlock for all the compiled methods in my method dictionary."
 
 	^ self methodDict valuesDo: aBlock
-]
-
-TPureBehavior >> methodsInProtocol: aString
-[
-	^ (self organization listAtCategoryNamed: aString) collect: [ :each | self methodDict at: each ]
 ]
 
 TPureBehavior >> name
@@ -650,75 +517,15 @@ TPureBehavior >> obsolete
 		ifTrue: [ self traitComposition traits do: [ :each | each removeUser: self ] ]
 ]
 
-TPureBehavior >> originalName
-[
-	^ self isObsolete
-		ifTrue: [ (self name copyFrom: 'AnObsolete' size + 1 to: self name size) asSymbol ]
-		ifFalse: [ self name asSymbol ]
-]
-
-TPureBehavior >> parserClass
-[
-	"Answer a parser class to use for parsing method headers."
-
-	^ self compilerClass parserClass
-]
-
 TPureBehavior >> postCopy
 [
 	super postCopy.
 	self methodDictionary: self copyOfMethodDictionary
 ]
 
-TPureBehavior >> prettyPrinterClass
-[
-	^ self compilerClass
-]
-
-TPureBehavior >> protocols
-[
-	^ self organization categories copy
-]
-
 TPureBehavior >> purgeLocalSelectors
 [
 	self basicLocalSelectors: nil
-]
-
-TPureBehavior >> recompile: selector
-[
-	"Compile the method associated with selector in the receiver's method dictionary."
-
-	^ self recompile: selector from: self
-]
-
-TPureBehavior >> recompile: selector from: oldClass
-[
-	"Compile the method associated with selector in the receiver's method dictionary."
-
-	"ar 7/10/1999: Use oldClass compiledMethodAt: not self compiledMethodAt:"
-
-	| method trailer methodNode |
-	method := oldClass compiledMethodAt: selector.
-	trailer := method trailer.
-	methodNode := self compilerClass new
-		compile: (oldClass sourceCodeAt: selector)
-		in: self
-		notifying: nil
-		ifFail: [ ^ self ].	"Assume OK after proceed from SyntaxError"
-	selector == methodNode selector
-		ifFalse: [ self error: 'selector changed!' ].
-	self basicAddSelector: selector withMethod: (methodNode generate: trailer)
-]
-
-TPureBehavior >> recompileChanges
-[
-	"Compile all the methods that are in the changes file.
-	This validates sourceCode and variable references and forces
-	methods to use the current bytecode set"
-
-	self selectorsAndMethodsDo: [ :sel :meth | meth fileIndex > 1
-				ifTrue: [ self recompile: sel from: self ] ]
 ]
 
 TPureBehavior >> registerLocalSelector: aSymbol
@@ -841,14 +648,6 @@ TPureBehavior >> sourceCodeAt: selector
 TPureBehavior >> sourceCodeAt: selector ifAbsent: aBlock
 [
 	^ (self methodDict at: selector ifAbsent: [ ^ aBlock value ]) sourceCode
-]
-
-TPureBehavior >> sourceCodeTemplate
-[
-	"Answer an expression to be edited and evaluated in order to define 
-	methods in this class or trait."
-
-	^ 'message selector and argument names	"comment stating purpose of message"	| temporary variable names |	statements'
 ]
 
 TPureBehavior >> spaceUsed

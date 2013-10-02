@@ -1,15 +1,7 @@
 TraitTransformation
-	traitComposition: #TComposingDescription;
+	traitComposition: TComposingDescription;
 	instanceVariables: #(#subject );
 	package: #'Traits-Composition'.
-
-TraitTransformation >> + aTraitOrTraitComposition
-[
-	"Use double dispatch to avoid having nested composition in cases where
-	parenthesis are used, such as T1 + (T2 + T3)"
-
-	^ aTraitOrTraitComposition addOnTheLeft: self
-]
 
 TraitTransformation >> - anArray
 [
@@ -21,19 +13,9 @@ TraitTransformation >> @ anArrayOfAssociations
 	TraitCompositionException signal: 'Invalid trait exclusion. Aliases have to be specified before exclusions.'
 ]
 
-TraitTransformation >> addCompositionOnLeft: aTraitComposition
-[
-	^ aTraitComposition add: self
-]
-
 TraitTransformation >> addExclusionOf: aSymbol
 [
 	^ self - {aSymbol}
-]
-
-TraitTransformation >> addOnTheLeft: aTraitExpression
-[
-	^ TraitComposition with: aTraitExpression with: self
 ]
 
 TraitTransformation >> aliasesForSelector: aSymbol
@@ -53,11 +35,6 @@ TraitTransformation >> allAliasesDict
 TraitTransformation >> allSelectors
 [
 	^ self subclassResponsibility
-]
-
-TraitTransformation >> asTraitComposition
-[
-	^ TraitComposition with: self
 ]
 
 TraitTransformation >> changedSelectorsComparedTo: aTraitTransformation

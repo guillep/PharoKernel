@@ -330,18 +330,6 @@ TClassAndTraitDescription >> copyMethodDictionaryFrom: donorClass
 	self organization: donorClass organization deepCopy
 ]
 
-TClassAndTraitDescription >> correspondingForTest
-[
-	"Return the unit test that correspond to me. If it does not exist, it returns myself. 
-	 Return the tested class if sent to a class"
-
-	| className |
-	className := (self inheritsFrom: TestCase)
-		ifTrue: [ self name copyReplaceAll: 'Test' with: '' ]
-		ifFalse: [ self name , 'Test' ].
-	^ Smalltalk at: className asSymbol ifAbsent: [ self ]
-]
-
 TClassAndTraitDescription >> definition
 [
 	"Answer a String that defines the receiver"
@@ -370,32 +358,6 @@ TClassAndTraitDescription >> doneCompiling
 	cleanup / reinitialization after it has been recompiled."
 
 	
-]
-
-TClassAndTraitDescription >> duringTestCompileSilently: code
-[
-	^ Author
-		useAuthor: 'TestsAuthor'
-		during: [ [ self
-				compile: code
-				classified: ''
-				withStamp: nil
-				notifying: nil
-				logSource: true ]
-				fuelValueWithoutNotifications ]
-]
-
-TClassAndTraitDescription >> duringTestCompileSilently: code classified: aCategory
-[
-	^ Author
-		useAuthor: 'TestsAuthor'
-		during: [ SystemAnnouncer uniqueInstance
-				suspendAllWhile: [ self
-						compile: code
-						classified: aCategory
-						withStamp: nil
-						notifying: nil
-						logSource: true ] ]
 ]
 
 TClassAndTraitDescription >> errorCategoryName
