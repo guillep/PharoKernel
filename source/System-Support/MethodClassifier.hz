@@ -3,7 +3,7 @@ MethodClassifier
 	package: #'System-Support'.
 
 MethodClassifier >> buildPrefixDictionary
-[buildPrefixDictionary
+[
 	prefixMapping := Dictionary new.
 	prefixMapping
 		at: 'test' put: 'tests';
@@ -21,7 +21,7 @@ MethodClassifier >> buildPrefixDictionary
 ]
 
 MethodClassifier >> classify: aMethod
-[classify: aMethod
+[
 	(self classifyAccessor: aMethod)
 		ifTrue: [ ^ aMethod category ].
 	(self classifyInSuperclassProtocol: aMethod)
@@ -33,7 +33,7 @@ MethodClassifier >> classify: aMethod
 ]
 
 MethodClassifier >> classifyAccessor: aMethod
-[classifyAccessor: aMethod
+[
 	" If the method is a setter or getter for a  "
 
 	| names selector |
@@ -49,12 +49,12 @@ MethodClassifier >> classifyAccessor: aMethod
 ]
 
 MethodClassifier >> classifyAll: aCollectionOfMethods
-[classifyAll: aCollectionOfMethods
+[
 	aCollectionOfMethods do: [ :method | self classify: method ]
 ]
 
 MethodClassifier >> classifyByKnownPrefix: aMethod
-[classifyByKnownPrefix: aMethod
+[
 	prefixMapping
 		keysAndValuesDo: [ :prefix :protocol | (aMethod selector beginsWith: prefix)
 				ifTrue: [ aMethod protocol: protocol.
@@ -63,7 +63,7 @@ MethodClassifier >> classifyByKnownPrefix: aMethod
 ]
 
 MethodClassifier >> classifyByOtherImplementors: aMethod
-[classifyByOtherImplementors: aMethod
+[
 	| protocolBag |
 	protocolBag := Bag new.
 	aMethod implementors
@@ -79,7 +79,7 @@ MethodClassifier >> classifyByOtherImplementors: aMethod
 ]
 
 MethodClassifier >> classifyInSuperclassProtocol: aMethod
-[classifyInSuperclassProtocol: aMethod
+[
 	| currentClass |
 	currentClass := aMethod methodClass.
 	[ currentClass superclass isNil ]
@@ -91,8 +91,21 @@ MethodClassifier >> classifyInSuperclassProtocol: aMethod
 ]
 
 MethodClassifier >> initialize
-[initialize
+[
 	self buildPrefixDictionary
+]
+
+MethodClassifier class >> classify: aMethod
+[
+	^ self new classify: aMethod
+]
+
+MethodClassifier class >> classifyAll: aCollectionOfMethods
+[
+	^ self new classifyAll: aCollectionOfMethods
+]
+
+refixDictionary
 ]
 
 MethodClassifier class >> classify: aMethod

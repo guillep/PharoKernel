@@ -3,7 +3,7 @@ LRUCache
 	package: #'System-Support'.
 
 LRUCache >> at: aKey
-[at: aKey
+[
 	"answer the object for aKey, if not present in the cache creates it.
 	Clone the factory block before calling in case of multiple processes!"
 
@@ -26,7 +26,7 @@ LRUCache >> at: aKey
 ]
 
 LRUCache >> initializeSize: aNumber factory: aBlock
-[initializeSize: aNumber factory: aBlock
+[
 	"initialize the receiver's size and factory"
 
 	size := aNumber.
@@ -39,7 +39,7 @@ LRUCache >> initializeSize: aNumber factory: aBlock
 ]
 
 LRUCache >> printOn: aStream
-[printOn: aStream
+[
 	"Append to the argument, aStream, a sequence of characters 
 	that identifies the receiver."
 
@@ -58,14 +58,14 @@ LRUCache >> printOn: aStream
 ]
 
 LRUCache class >> size: aNumber factory: aBlock
-[size: aNumber factory: aBlock
+[
 	"answer an instance of the receiver"
 
 	^ self new initializeSize: aNumber factory: aBlock
 ]
 
 LRUCache class >> test
-[test
+[
 	" 
 	LRUCache test 
 	"
@@ -86,7 +86,7 @@ LRUCache class >> test
 ]
 
 LRUCache class >> test2
-[test2
+[
 	" 
 	LRUCache test2.  
 	Time millisecondsToRun:[LRUCache test2]. 
@@ -95,6 +95,11 @@ LRUCache class >> test2
 
 	| c |
 	c := LRUCache size: 600 factory: [ :key | key * 2 ].
+	1 to: 6000 do: [ :each | c at: each ].
+	^ c
+]
+
+c := LRUCache size: 600 factory: [ :key | key * 2 ].
 	1 to: 6000 do: [ :each | c at: each ].
 	^ c
 ]

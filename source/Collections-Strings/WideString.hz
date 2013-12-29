@@ -4,7 +4,7 @@ WideString
 	package: #'Collections-Strings'.
 
 WideString >> asFourCode
-[asFourCode
+[
 	| result |
 	self size = 1
 		ifFalse: [ ^ Error signal: 'must be exactly four octets' ].
@@ -17,7 +17,7 @@ WideString >> asFourCode
 ]
 
 WideString >> asLowercase
-[asLowercase
+[
 	"Answer a copy of self with all characters in a lower case.
 	This might be a difficult task, ask Unicode."
 
@@ -25,7 +25,7 @@ WideString >> asLowercase
 ]
 
 WideString >> asUppercase
-[asUppercase
+[
 	"Answer a copy of self with all characters in an upper case.
 	This might be a difficult task, ask Unicode."
 
@@ -33,19 +33,19 @@ WideString >> asUppercase
 ]
 
 WideString >> asWideString
-[asWideString
+[
 	^ self
 ]
 
 WideString >> at: index
-[at: index
+[
 	"Answer the Character stored in the field of the receiver indexed by the argument."
 
 	^ Character value: (self wordAt: index)
 ]
 
 WideString >> at: index put: aCharacter
-[at: index put: aCharacter
+[
 	"Store the Character in the field of the receiver indicated by the index."
 
 	aCharacter isCharacter
@@ -55,7 +55,7 @@ WideString >> at: index put: aCharacter
 ]
 
 WideString >> byteAt: index
-[byteAt: index
+[
 	| d r |
 	d := (index + 3) // 4.
 	r := (index - 1) \\ 4 + 1.
@@ -63,7 +63,7 @@ WideString >> byteAt: index
 ]
 
 WideString >> byteAt: index put: aByte
-[byteAt: index put: aByte
+[
 	| d r w |
 	d := (index + 3) // 4.
 	r := (index - 1) \\ 4 + 1.
@@ -74,12 +74,12 @@ WideString >> byteAt: index put: aByte
 ]
 
 WideString >> byteSize
-[byteSize
+[
 	^ self size * 4
 ]
 
 WideString >> copyFrom: start to: stop
-[copyFrom: start to: stop
+[
 	| n |
 	n := super copyFrom: start to: stop.
 	n isOctetString
@@ -88,7 +88,7 @@ WideString >> copyFrom: start to: stop
 ]
 
 WideString >> findIn: body startingAt: start matchTable: matchTable
-[findIn: body startingAt: start matchTable: matchTable
+[
 	^ self
 		findSubstring: self
 		in: body
@@ -97,24 +97,24 @@ WideString >> findIn: body startingAt: start matchTable: matchTable
 ]
 
 WideString >> includesUnifiedCharacter
-[includesUnifiedCharacter
+[
 	^ self isUnicodeStringWithCJK
 ]
 
 WideString >> isUnicodeStringWithCJK
-[isUnicodeStringWithCJK
+[
 	^ self anySatisfy: [ :char | Unicode isUnifiedKanji: char charCode ]
 ]
 
 WideString >> isWideString
-[isWideString
+[
 	"Answer whether the receiver is a WideString"
 
 	^ true
 ]
 
 WideString >> replaceFrom: start to: stop with: replacement startingAt: repStart
-[replaceFrom: start to: stop with: replacement startingAt: repStart
+[
 	<primitive: 105>
 	replacement class == String
 		ifTrue: [ ^ self
@@ -130,19 +130,19 @@ WideString >> replaceFrom: start to: stop with: replacement startingAt: repStart
 ]
 
 WideString >> wordAt: index
-[wordAt: index
+[
 	<primitive: 60>
 	^ self basicAt: index
 ]
 
 WideString >> wordAt: index put: anInteger
-[wordAt: index put: anInteger
+[
 	<primitive: 61>
 	self basicAt: index put: anInteger
 ]
 
 WideString class >> from: aString
-[from: aString
+[
 	| newString |
 	(aString isMemberOf: self)
 		ifTrue: [ ^ aString copy ].
@@ -152,7 +152,7 @@ WideString class >> from: aString
 ]
 
 WideString class >> fromByteArray: aByteArray
-[fromByteArray: aByteArray
+[
 	| inst |
 	aByteArray size \\ 4 = 0
 		ifFalse: [ ^ ByteString fromByteArray: aByteArray ].
@@ -161,6 +161,22 @@ WideString class >> fromByteArray: aByteArray
 			basicAt: i // 4
 			put:
 				((aByteArray at: i - 3) << 24) + ((aByteArray at: i - 2) << 16) + ((aByteArray at: i - 1) << 8) + (aByteArray at: i) ].
+	^ inst
+]
+
+WideString class >> fromString: aString
+[
+	"Answer an instance of me that is a copy of the argument, aString."
+
+	| inst |
+	(aString isMemberOf: self)
+		ifTrue: [ ^ aString copy ].
+	inst := self new: aString size.
+	1 to: aString size do: [ :pos | inst basicAt: pos put: (aString basicAt: pos) ].
+	^ inst
+]
+
+(aByteArray at: i - 2) << 16) + ((aByteArray at: i - 1) << 8) + (aByteArray at: i) ].
 	^ inst
 ]
 

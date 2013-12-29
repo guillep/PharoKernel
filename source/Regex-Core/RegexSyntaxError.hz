@@ -4,19 +4,24 @@ RegexSyntaxError
 	package: #'Regex-Core'.
 
 RegexSyntaxError >> position
-[position
+[
 	"return the parsing error location"
 
 	^ position
 ]
 
 RegexSyntaxError >> position: anInteger
-[position: anInteger
+[
 	position := anInteger
 ]
 
 RegexSyntaxError class >> signal: anErrorMessage at: errorPosition
-[signal: anErrorMessage at: errorPosition
+[
+	^ self new
+		position: errorPosition;
+		signal: anErrorMessage
+]
+
 	^ self new
 		position: errorPosition;
 		signal: anErrorMessage

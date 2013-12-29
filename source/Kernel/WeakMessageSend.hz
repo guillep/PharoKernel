@@ -4,7 +4,7 @@ WeakMessageSend
 	package: #Kernel.
 
 WeakMessageSend >> = anObject
-[= anObject
+[
 	"Compare equal to equivalent MessageSend"
 
 	^ anObject isMessageSend
@@ -13,30 +13,30 @@ WeakMessageSend >> = anObject
 ]
 
 WeakMessageSend >> arguments
-[arguments
+[
 	^ arguments ifNil: [ Array new ]
 ]
 
 WeakMessageSend >> arguments: anArray
-[arguments: anArray
+[
 	arguments := WeakArray withAll: anArray.	"no reason this should be a WeakArray"
 	shouldBeNil := Array withAll: (anArray collect: [ :ea | ea isNil ])
 ]
 
 WeakMessageSend >> asMessageSend
-[asMessageSend
+[
 	^ MessageSend receiver: self receiver selector: selector arguments: (Array withAll: self arguments)
 ]
 
 WeakMessageSend >> asMinimalRepresentation
-[asMinimalRepresentation
+[
 	self isReceiverOrAnyArgumentGarbage
 		ifTrue: [ ^ nil ]
 		ifFalse: [ ^ self ]
 ]
 
 WeakMessageSend >> collectArguments: anArgArray
-[collectArguments: anArgArray
+[
 	"Private"
 
 	| staticArgs |
@@ -53,28 +53,28 @@ WeakMessageSend >> collectArguments: anArgArray
 ]
 
 WeakMessageSend >> cull: arg
-[cull: arg
+[
 	^ selector numArgs = 0
 		ifTrue: [ self value ]
 		ifFalse: [ self value: arg ]
 ]
 
 WeakMessageSend >> cull: arg1 cull: arg2
-[cull: arg1 cull: arg2
+[
 	^ selector numArgs < 2
 		ifTrue: [ self cull: arg1 ]
 		ifFalse: [ self value: arg1 value: arg2 ]
 ]
 
 WeakMessageSend >> cull: arg1 cull: arg2 cull: arg3
-[cull: arg1 cull: arg2 cull: arg3
+[
 	^ selector numArgs < 3
 		ifTrue: [ self cull: arg1 cull: arg2 ]
 		ifFalse: [ self value: arg1 value: arg2 value: arg3 ]
 ]
 
 WeakMessageSend >> ensureArguments
-[ensureArguments
+[
 	"Return true if my arguments haven't gone away"
 
 	arguments
@@ -84,7 +84,7 @@ WeakMessageSend >> ensureArguments
 ]
 
 WeakMessageSend >> ensureReceiver
-[ensureReceiver
+[
 	"Return true if my receiver hasn't gone away"
 
 	self receiver ifNil: [ ^ false ].
@@ -96,7 +96,7 @@ WeakMessageSend >> ensureReceiver
 ]
 
 WeakMessageSend >> ensureReceiverAndArguments
-[ensureReceiverAndArguments
+[
 	"Return true if my receiver hasn't gone away"
 
 	self receiver ifNil: [ ^ false ].
@@ -111,14 +111,14 @@ WeakMessageSend >> ensureReceiverAndArguments
 ]
 
 WeakMessageSend >> hash
-[hash
+[
 	"work like MessageSend>>hash"
 
 	^ self receiver hash bitXor: selector hash
 ]
 
 WeakMessageSend >> isAnyArgumentGarbage
-[isAnyArgumentGarbage
+[
 	"Make sure that my arguments haven't gone away"
 
 	arguments
@@ -128,31 +128,31 @@ WeakMessageSend >> isAnyArgumentGarbage
 ]
 
 WeakMessageSend >> isMessageSend
-[isMessageSend
+[
 	^ true
 ]
 
 WeakMessageSend >> isReceiverGarbage
-[isReceiverGarbage
+[
 	"Make sure that my receiver hasn't gone away"
 
 	^ self receiver isNil
 ]
 
 WeakMessageSend >> isReceiverOrAnyArgumentGarbage
-[isReceiverOrAnyArgumentGarbage
+[
 	"Make sure that my receiver hasn't gone away"
 
 	^ self isReceiverGarbage or: [ self isAnyArgumentGarbage ]
 ]
 
 WeakMessageSend >> isValid
-[isValid
+[
 	^ self isReceiverOrAnyArgumentGarbage not
 ]
 
 WeakMessageSend >> printOn: aStream
-[printOn: aStream
+[
 	aStream
 		nextPutAll: self class name;
 		nextPut: $(.
@@ -163,27 +163,27 @@ WeakMessageSend >> printOn: aStream
 ]
 
 WeakMessageSend >> receiver
-[receiver
+[
 	^ self at: 1
 ]
 
 WeakMessageSend >> receiver: anObject
-[receiver: anObject
+[
 	self at: 1 put: anObject
 ]
 
 WeakMessageSend >> selector
-[selector
+[
 	^ selector
 ]
 
 WeakMessageSend >> selector: aSymbol
-[selector: aSymbol
+[
 	selector := aSymbol
 ]
 
 WeakMessageSend >> value
-[value
+[
 	^ arguments isNil
 		ifTrue: [ self ensureReceiver
 				ifTrue: [ self receiver perform: selector ]
@@ -194,21 +194,21 @@ WeakMessageSend >> value
 ]
 
 WeakMessageSend >> value: anObject
-[value: anObject
+[
 	self ensureReceiver
 		ifFalse: [ ^ nil ].
 	^ self receiver perform: selector with: anObject
 ]
 
 WeakMessageSend >> value: anObject1 value: anObject2
-[value: anObject1 value: anObject2
+[
 	self ensureReceiver
 		ifFalse: [ ^ nil ].
 	^ self receiver perform: selector with: anObject1 with: anObject2
 ]
 
 WeakMessageSend >> value: anObject1 value: anObject2 value: anObject3
-[value: anObject1 value: anObject2 value: anObject3
+[
 	self ensureReceiver
 		ifFalse: [ ^ nil ].
 	^ self receiver
@@ -219,14 +219,14 @@ WeakMessageSend >> value: anObject1 value: anObject2 value: anObject3
 ]
 
 WeakMessageSend >> valueWithArguments: anArray
-[valueWithArguments: anArray
+[
 	self ensureReceiverAndArguments
 		ifFalse: [ ^ nil ].
 	^ self receiver perform: selector withArguments: (self collectArguments: anArray)
 ]
 
 WeakMessageSend >> valueWithEnoughArguments: anArray
-[valueWithEnoughArguments: anArray
+[
 	"call the selector with enough arguments from arguments and anArray"
 
 	| args |
@@ -245,6 +245,32 @@ WeakMessageSend >> valueWithEnoughArguments: anArray
 				with: anArray
 				startingAt: 1 ].
 	^ self receiver perform: selector withArguments: args
+]
+
+WeakMessageSend class >> new
+[
+	^ self new: 1
+]
+
+WeakMessageSend class >> receiver: anObject selector: aSymbol
+[
+	^ self receiver: anObject selector: aSymbol arguments: #()
+]
+
+WeakMessageSend class >> receiver: anObject selector: aSymbol argument: aParameter
+[
+	^ self receiver: anObject selector: aSymbol arguments: (Array with: aParameter)
+]
+
+WeakMessageSend class >> receiver: anObject selector: aSymbol arguments: anArray
+[
+	^ self new
+		receiver: anObject;
+		selector: aSymbol;
+		arguments: anArray
+]
+
+selector withArguments: args
 ]
 
 WeakMessageSend class >> new

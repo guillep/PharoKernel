@@ -4,12 +4,12 @@ RxsPiece
 	package: #'Regex-Core'.
 
 RxsPiece >> atom
-[atom
+[
 	^ atom
 ]
 
 RxsPiece >> character
-[character
+[
 	"If this node is atomic, answer the character it
 	represents. It is the caller's responsibility to make sure this
 	node is indeed atomic before using this."
@@ -18,7 +18,7 @@ RxsPiece >> character
 ]
 
 RxsPiece >> dispatchTo: aMatcher
-[dispatchTo: aMatcher
+[
 	"Inform the matcher of the kind of the node, and it
 	will do whatever it has to."
 
@@ -26,14 +26,14 @@ RxsPiece >> dispatchTo: aMatcher
 ]
 
 RxsPiece >> initializeAtom: anAtom
-[initializeAtom: anAtom
+[
 	"This piece is exactly one occurrence of the specified RxsAtom."
 
 	self initializeAtom: anAtom min: 1 max: 1
 ]
 
 RxsPiece >> initializeAtom: anAtom min: minOccurrences max: maxOccurrences
-[initializeAtom: anAtom min: minOccurrences max: maxOccurrences
+[
 	"This piece is from <minOccurrences> to <maxOccurrences> 
 	occurrences of the specified RxsAtom."
 
@@ -43,28 +43,28 @@ RxsPiece >> initializeAtom: anAtom min: minOccurrences max: maxOccurrences
 ]
 
 RxsPiece >> initializeOptionalAtom: anAtom
-[initializeOptionalAtom: anAtom
+[
 	"This piece is 0 or 1 occurrences of the specified RxsAtom."
 
 	self initializeAtom: anAtom min: 0 max: 1
 ]
 
 RxsPiece >> initializePlusAtom: anAtom
-[initializePlusAtom: anAtom
+[
 	"This piece is one or more occurrences of the specified RxsAtom."
 
 	self initializeAtom: anAtom min: 1 max: nil
 ]
 
 RxsPiece >> initializeStarAtom: anAtom
-[initializeStarAtom: anAtom
+[
 	"This piece is any number of occurrences of the atom."
 
 	self initializeAtom: anAtom min: 0 max: nil
 ]
 
 RxsPiece >> isAtomic
-[isAtomic
+[
 	"A piece is atomic if only it contains exactly one atom
 	which is atomic (sic)."
 
@@ -72,7 +72,7 @@ RxsPiece >> isAtomic
 ]
 
 RxsPiece >> isNullable
-[isNullable
+[
 	"A piece is nullable if it allows 0 matches. 
 	This is often handy to know for optimization."
 
@@ -80,18 +80,41 @@ RxsPiece >> isNullable
 ]
 
 RxsPiece >> isOptional
-[isOptional
+[
 	^ min = 0 and: [ max = 1 ]
 ]
 
 RxsPiece >> isPlus
-[isPlus
+[
 	^ min = 1 and: [ max == nil ]
 ]
 
 RxsPiece >> isSingular
-[isSingular
+[
 	"A piece with a range is 1 to 1 needs can be compiled
+	as a simple match."
+
+	^ min = 1 and: [ max = 1 ]
+]
+
+RxsPiece >> isStar
+[
+	^ min = 0 and: [ max == nil ]
+]
+
+RxsPiece >> max
+[
+	"The value answered may be nil, indicating infinity."
+
+	^ max
+]
+
+RxsPiece >> min
+[
+	^ min
+]
+
+ needs can be compiled
 	as a simple match."
 
 	^ min = 1 and: [ max = 1 ]

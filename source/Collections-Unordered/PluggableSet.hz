@@ -4,42 +4,42 @@ PluggableSet
 	package: #'Collections-Unordered'.
 
 PluggableSet >> copyEmpty
-[copyEmpty
+[
 	^ super copyEmpty
 		hashBlock: hashBlock;
 		equalBlock: equalBlock
 ]
 
 PluggableSet >> equalBlock
-[equalBlock
+[
 	"Return the block used for comparing the elements in the receiver."
 
 	^ equalBlock
 ]
 
 PluggableSet >> equalBlock: aBlock
-[equalBlock: aBlock
+[
 	"Set a new equality block. The block must accept two arguments and return true if the argumets are considered equal, false otherwise"
 
 	equalBlock := aBlock
 ]
 
 PluggableSet >> hashBlock
-[hashBlock
+[
 	"Return the block used for hashing the elements in the receiver."
 
 	^ hashBlock
 ]
 
 PluggableSet >> hashBlock: aBlock
-[hashBlock: aBlock
+[
 	"Set a new hash block. The block must accept one argument and return the hash value of the given argument."
 
 	hashBlock := aBlock
 ]
 
 PluggableSet >> scanFor: anObject
-[scanFor: anObject
+[
 	"Scan the key array for the first slot containing either a nil (indicating an empty slot) or an element that matches anObject. Answer the index of that slot or raise an error if no slot is found. This method will be overridden in various subclasses that have different interpretations for matching elements."
 
 	| index start |
@@ -56,7 +56,7 @@ PluggableSet >> scanFor: anObject
 ]
 
 PluggableSet >> scanForEmptySlotFor: aKey
-[scanForEmptySlotFor: aKey
+[
 	"Scan the key array for the first slot containing an empty slot (indicated by a nil). Answer the index of that slot. This method will be overridden in various subclasses that have different interpretations for matching elements."
 
 	| index start |
@@ -67,6 +67,11 @@ PluggableSet >> scanForEmptySlotFor: aKey
 ]
 
 PluggableSet class >> integerSet
+[
+	^ self new hashBlock: [ :integer | integer hash \\ 1064164 * 1009 ]
+]
+
+uggableSet class >> integerSet
 [integerSet
 	^ self new hashBlock: [ :integer | integer hash \\ 1064164 * 1009 ]
 ]

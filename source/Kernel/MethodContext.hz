@@ -5,7 +5,7 @@ MethodContext
 	package: #Kernel.
 
 MethodContext >> aboutToReturn: result through: firstUnwindContext
-[aboutToReturn: result through: firstUnwindContext
+[
 	"Called from VM when an unwindBlock is found between self and its home.
 	 Return to home's sender, executing unwind blocks on the way."
 
@@ -13,7 +13,7 @@ MethodContext >> aboutToReturn: result through: firstUnwindContext
 ]
 
 MethodContext >> activeHome
-[activeHome
+[
 	"If executing closure, search senders for the activation of the original
 	 (outermost) method that (indirectly) created my closure (the closureHome).
 	 If the closureHome is not found on the sender chain answer nil."
@@ -27,7 +27,7 @@ MethodContext >> activeHome
 ]
 
 MethodContext >> activeOuterContext
-[activeOuterContext
+[
 	"If executing closure, search senders for the activation in which the receiver's
 	 closure was created (the receiver's outerContext).  If the outerContext is not
 	 found on the sender chain answer nil."
@@ -41,12 +41,12 @@ MethodContext >> activeOuterContext
 ]
 
 MethodContext >> asContext
-[asContext
+[
 	^ self
 ]
 
 MethodContext >> blockReturnTop
-[blockReturnTop
+[
 	"Simulate the interpreter's action when a ReturnTopOfStackToCaller bytecode is 
 	 encountered in the receiver.  This should only happen in a closure activation."
 
@@ -55,7 +55,7 @@ MethodContext >> blockReturnTop
 ]
 
 MethodContext >> callChainAnySatisfy: aBlock
-[callChainAnySatisfy: aBlock
+[
 	(aBlock value: self)
 		ifTrue: [ ^ true ].
 	self sender ifNil: [ ^ false ].
@@ -63,50 +63,50 @@ MethodContext >> callChainAnySatisfy: aBlock
 ]
 
 MethodContext >> cannotReturn: result
-[cannotReturn: result
+[
 	closureOrNil notNil
 		ifTrue: [ ^ self cannotReturn: result to: self home sender ].
 	Smalltalk tools debugger openContext: thisContext label: 'computation has been terminated' contents: nil
 ]
 
 MethodContext >> closure
-[closure
+[
 	^ closureOrNil
 ]
 
 MethodContext >> contextClass
-[contextClass
+[
 	"The context class of a message send should be the one of the method to be evaluated, because if that method has some super sends, the method lookup won't work as expected'"
 
 	^ self method methodClass
 ]
 
 MethodContext >> contextTag
-[contextTag
+[
 	"Context tags may be used for referring to contexts instead of contexts themselves as they can be copied and will continue to work in other processes (continuations). By default, we use the context itself to as its tag."
 
 	^ self
 ]
 
 MethodContext >> endPC
-[endPC
+[
 	^ closureOrNil ifNil: [ self method endPC ] ifNotNil: [ closureOrNil endPC ]
 ]
 
 MethodContext >> hasInstVarRef
-[hasInstVarRef
+[
 	"Answer whether the receiver references an instance variable."
 
 	^ self method hasInstVarRef
 ]
 
 MethodContext >> hasMethodReturn
-[hasMethodReturn
+[
 	^ closureOrNil hasMethodReturn
 ]
 
 MethodContext >> home
-[home
+[
 	"Answer the context in which the receiver was defined."
 
 	closureOrNil == nil
@@ -115,7 +115,7 @@ MethodContext >> home
 ]
 
 MethodContext >> instVarAt: index put: value
-[instVarAt: index put: value
+[
 	index = 3
 		ifTrue: [ self stackp: value.
 			^ value ].
@@ -123,7 +123,7 @@ MethodContext >> instVarAt: index put: value
 ]
 
 MethodContext >> isBlockContext
-[isBlockContext
+[
 	"Is this executing a block versus a method?  In the new closure
 	 implemetation this is true if closureOrNil is not nil, in which case
 	 it should be holding a BlockClosure."
@@ -132,33 +132,33 @@ MethodContext >> isBlockContext
 ]
 
 MethodContext >> isExecutingBlock
-[isExecutingBlock
+[
 	"for compatibility"
 
 	^ self isBlockContext
 ]
 
 MethodContext >> isHandlerContext
-[isHandlerContext
+[
 	"is this context for  method that is marked?"
 
 	^ method primitive = 199
 ]
 
 MethodContext >> isUnwindContext
-[isUnwindContext
+[
 	"is this context for  method that is marked?"
 
 	^ method primitive = 198
 ]
 
 MethodContext >> method
-[method
+[
 	^ method
 ]
 
 MethodContext >> methodReturnContext
-[methodReturnContext
+[
 	"Answer the context from which an ^-return should return from."
 
 	closureOrNil == nil
@@ -167,14 +167,14 @@ MethodContext >> methodReturnContext
 ]
 
 MethodContext >> numArgs
-[numArgs
+[
 	"Answer the number of arguments for this activation."
 
 	^ closureOrNil ifNil: [ method numArgs ] ifNotNil: [ closureOrNil numArgs ]
 ]
 
 MethodContext >> numTemps
-[numTemps
+[
 	"Answer the number of temporaries for this activation; this includes
 	 the number of arguments, and for blocks, the number of copied values."
 
@@ -182,14 +182,14 @@ MethodContext >> numTemps
 ]
 
 MethodContext >> outerContext
-[outerContext
+[
 	"Answer the context within which the receiver is nested."
 
 	^ closureOrNil ifNotNil: [ closureOrNil outerContext ]
 ]
 
 MethodContext >> printDebugOn: aStream
-[printDebugOn: aStream
+[
 	"print a condensed for of the stack.
 		For methods simply print Class >> selector
 		For blocks only print the first line"
@@ -207,7 +207,7 @@ MethodContext >> printDebugOn: aStream
 ]
 
 MethodContext >> printDetails: stream
-[printDetails: stream
+[
 	"Put my class>>selector and instance variables and arguments and temporaries on the stream.  Protect against errors during printing."
 
 	| errorMessage string position |
@@ -240,7 +240,7 @@ MethodContext >> printDetails: stream
 ]
 
 MethodContext >> printOn: aStream
-[printOn: aStream
+[
 	self outerContext
 		ifNil: [ super printOn: aStream ]
 		ifNotNil: [ :outerContext | aStream nextPutAll: closureOrNil printString , ' in '.
@@ -248,7 +248,7 @@ MethodContext >> printOn: aStream
 ]
 
 MethodContext >> privRefresh
-[privRefresh
+[
 	"Reinitialize the receiver so that it is in the state it was at its creation."
 
 	closureOrNil
@@ -261,7 +261,7 @@ MethodContext >> privRefresh
 ]
 
 MethodContext >> privRefreshWith: aCompiledMethod
-[privRefreshWith: aCompiledMethod
+[
 	"Reinitialize the receiver as though it had been for a different method. 
 	 Used by a Debugger when one of the methods to which it refers is 
 	 recompiled."
@@ -274,7 +274,7 @@ MethodContext >> privRefreshWith: aCompiledMethod
 ]
 
 MethodContext >> pushArgs: arguments from: senderContext
-[pushArgs: arguments from: senderContext
+[
 	"Helps simulate action of the value primitive for closures.
 	 This is used by ContextPart>>runSimulated:contextAtEachStep:"
 
@@ -288,7 +288,7 @@ MethodContext >> pushArgs: arguments from: senderContext
 ]
 
 MethodContext >> pushConsArrayWithElements: numElements
-[pushConsArrayWithElements: numElements
+[
 	| array |
 	array := Array new: numElements.
 	numElements to: 1 by: -1 do: [ :i | array at: i put: self pop ].
@@ -296,19 +296,19 @@ MethodContext >> pushConsArrayWithElements: numElements
 ]
 
 MethodContext >> receiver
-[receiver
+[
 	"Refer to the comment in ContextPart|receiver."
 
 	^ receiver
 ]
 
 MethodContext >> receiver: anObject
-[receiver: anObject
+[
 	receiver := anObject
 ]
 
 MethodContext >> removeSelf
-[removeSelf
+[
 	"Nil the receiver pointer and answer its former value."
 
 	| tempSelf |
@@ -318,7 +318,7 @@ MethodContext >> removeSelf
 ]
 
 MethodContext >> respondsToUnknownBytecode
-[respondsToUnknownBytecode
+[
 	"This method is triggerred by the VM when the interpreter tries to execute an unknown bytecode"
 
 	| unknownBytecode |
@@ -327,14 +327,14 @@ MethodContext >> respondsToUnknownBytecode
 ]
 
 MethodContext >> restartWithNewReceiver: obj
-[restartWithNewReceiver: obj
+[
 	self
 		swapReceiver: obj;
 		restart
 ]
 
 MethodContext >> setSender: newSender receiver: newReceiver method: newMethod arguments: arguments
-[setSender: newSender receiver: newReceiver method: newMethod arguments: arguments
+[
 	"Create the receiver's initial state."
 
 	sender := newSender.
@@ -347,7 +347,7 @@ MethodContext >> setSender: newSender receiver: newReceiver method: newMethod ar
 ]
 
 MethodContext >> setSender: newSender receiver: newReceiver method: newMethod closure: newClosure startpc: startpc
-[setSender: newSender receiver: newReceiver method: newMethod closure: newClosure startpc: startpc
+[
 	"Create the receiver's initial state."
 
 	sender := newSender.
@@ -359,17 +359,17 @@ MethodContext >> setSender: newSender receiver: newReceiver method: newMethod cl
 ]
 
 MethodContext >> startpc
-[startpc
+[
 	^ closureOrNil ifNil: [ self method initialPC ] ifNotNil: [ closureOrNil startpc ]
 ]
 
 MethodContext >> swapReceiver: newReceiver
-[swapReceiver: newReceiver
+[
 	receiver := newReceiver
 ]
 
 MethodContext >> tempAt: index
-[tempAt: index
+[
 	"Answer the value of the temporary variable whose index is the 
 	 argument, index.  Primitive. Assumes receiver is indexable. Answer the
 	 value of an indexable element in the receiver. Fail if the argument index
@@ -382,7 +382,7 @@ MethodContext >> tempAt: index
 ]
 
 MethodContext >> tempAt: index put: value
-[tempAt: index put: value
+[
 	"Store the argument, value, as the temporary variable whose index is the 
 	 argument, index.  Primitive. Assumes receiver is indexable. Answer the
 	 value of an indexable element in the receiver. Fail if the argument index
@@ -395,7 +395,7 @@ MethodContext >> tempAt: index put: value
 ]
 
 MethodContext >> tempNamed: aName
-[tempNamed: aName
+[
 	"Returns the value of the temporaries, aName."
 
 	"Implementation notes: temporary initialization in blocks simply uses pushNil to allocate and initialize each temp.  So if one inspects [|a|a:=2] and sends it self method symbolic you get:
@@ -408,6 +408,42 @@ MethodContext >> tempNamed: aName
 	22 <7C> returnTop
 
 	And when we check self asContext pc we get 17, which is *before* the nil is pushed. Therefore we should pay attention when querying a temporary if the temporary allocation was executed."
+
+	| index |
+	index := self tempNames indexOf: aName.
+	^ index > stackp
+		ifTrue: [ nil ]
+		ifFalse: [ self namedTempAt: index ]
+]
+
+MethodContext >> tempNamed: aName put: anObject
+[
+	^ self namedTempAt: (self tempNames indexOf: aName) put: anObject
+]
+
+MethodContext class >> allInstancesDo: aBlock
+[
+	"Only count until thisContext"
+
+	| inst next |
+	inst := self someInstance.
+	[ inst == thisContext ] whileFalse: [ next := inst nextInstance.
+			aBlock value: inst.
+			inst := next ]
+]
+
+MethodContext class >> sender: s receiver: r method: m arguments: args
+[
+	"Answer an instance of me with attributes set to the arguments."
+
+	^ (self newForMethod: m)
+		setSender: s
+		receiver: r
+		method: m
+		arguments: args
+]
+
+elf asContext pc we get 17, which is *before* the nil is pushed. Therefore we should pay attention when querying a temporary if the temporary allocation was executed."
 
 	| index |
 	index := self tempNames indexOf: aName.

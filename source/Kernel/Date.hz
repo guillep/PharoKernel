@@ -4,12 +4,12 @@ Date
 	package: #Kernel.
 
 Date >> addDays: dayCount
-[addDays: dayCount
+[
 	^ (self asDateAndTime + dayCount days) asDate
 ]
 
 Date >> addMonths: monthCount
-[addMonths: monthCount
+[
 	| year month maxDaysInMonth day |
 	year := self year + ((monthCount + self monthIndex - 1) // 12).
 	month := (self monthIndex + monthCount - 1) \\ 12 + 1.
@@ -21,26 +21,26 @@ Date >> addMonths: monthCount
 ]
 
 Date >> asDate
-[asDate
+[
 	^ self
 ]
 
 Date >> dayMonthYearDo: aBlock
-[dayMonthYearDo: aBlock
+[
 	"Supply integers for day, month and year to aBlock and return the result"
 
 	^ start dayMonthYearDo: aBlock
 ]
 
 Date >> ddmmyyyy
-[ddmmyyyy
+[
 	"Print the receiver  in standard French format dd/mm/yyyy."
 
 	^ self printFormat: #(1 2 3 $/ 1 1)
 ]
 
 Date >> leap
-[leap
+[
 	"Answer whether the receiver's year is a leap year."
 
 	^ start isLeapYear
@@ -49,7 +49,7 @@ Date >> leap
 ]
 
 Date >> mmddyyyy
-[mmddyyyy
+[
 	"Print the receiver in standard U.S.A format mm/dd/yyyy.
 	Note that the name here is slightly misleading -- the month and day numbers don't show leading zeros, 
 	so that for example February 1 1996 is 2/1/96"
@@ -58,27 +58,27 @@ Date >> mmddyyyy
 ]
 
 Date >> month
-[month
+[
 	^ self asMonth
 ]
 
 Date >> monthIndex
-[monthIndex
+[
 	^ super month
 ]
 
 Date >> onNextMonth
-[onNextMonth
+[
 	^ self addMonths: 1
 ]
 
 Date >> onPreviousMonth
-[onPreviousMonth
+[
 	^ self addMonths: -1
 ]
 
 Date >> previous: dayName
-[previous: dayName
+[
 	"Answer the previous date whose weekday name is dayName."
 
 	| days |
@@ -89,19 +89,19 @@ Date >> previous: dayName
 ]
 
 Date >> printFormat: formatArray
-[printFormat: formatArray
+[
 	"Answer a String describing the receiver using the argument formatArray."
 
 	^ String new: 16 streamContents: [ :aStream | self printOn: aStream format: formatArray ]
 ]
 
 Date >> printOn: aStream
-[printOn: aStream
+[
 	self printOn: aStream format: #(1 2 3 $  3 1)
 ]
 
 Date >> printOn: aStream format: formatArray
-[printOn: aStream format: formatArray
+[
 	"Print a description of the receiver on aStream using the format 
 	denoted the argument, formatArray: 
 	
@@ -165,40 +165,40 @@ Date >> printOn: aStream format: formatArray
 ]
 
 Date >> storeOn: aStream
-[storeOn: aStream
+[
 	aStream
 		print: self printString;
 		nextPutAll: ' asDate'
 ]
 
 Date >> subtractDate: aDate
-[subtractDate: aDate
+[
 	"Answer the number of days between self and aDate"
 
 	^ (self start - aDate asDateAndTime) days
 ]
 
 Date >> subtractDays: dayCount
-[subtractDays: dayCount
+[
 	^ (self asDateAndTime - dayCount days) asDate
 ]
 
 Date >> weekday
-[weekday
+[
 	"Answer the name of the day of the week on which the receiver falls."
 
 	^ self dayOfWeekName
 ]
 
 Date >> weekdayIndex
-[weekdayIndex
+[
 	"Sunday=1, ... , Saturday=7"
 
 	^ self dayOfWeek
 ]
 
 Date >> yyyymmdd
-[yyyymmdd
+[
 	"Format the date in ISO 8601 standard like '2002-10-22'
 	The result is of fixed size 10 characters long.."
 
@@ -206,22 +206,22 @@ Date >> yyyymmdd
 ]
 
 Date class >> dayOfWeek: dayName
-[dayOfWeek: dayName
+[
 	^ Week indexOfDay: dayName
 ]
 
 Date class >> daysInMonth: monthName forYear: yearInteger
-[daysInMonth: monthName forYear: yearInteger
+[
 	^ Month daysInMonth: monthName forYear: yearInteger
 ]
 
 Date class >> daysInYear: yearInteger
-[daysInYear: yearInteger
+[
 	^ Year daysInYear: yearInteger
 ]
 
 Date class >> easterDateFor: year
-[easterDateFor: year
+[
 	"  compute the easter date.
     source: Physikalisch-Technische Bundesanstalt Braunschweig.
     Lichtenberg, H.: Zur Interpretation der Gaussschen Osterformel
@@ -248,70 +248,70 @@ Date class >> easterDateFor: year
 ]
 
 Date class >> firstWeekdayOfMonth: month year: year
-[firstWeekdayOfMonth: month year: year
+[
 	"Answer the weekday index of the first day in <month> in the <year>."
 
 	^ (self year: year month: month day: 1) weekdayIndex
 ]
 
 Date class >> fromDays: dayCount
-[fromDays: dayCount
+[
 	"Days since 1 January 1901"
 
 	^ self julianDayNumber: SqueakEpoch + dayCount
 ]
 
 Date class >> fromSeconds: seconds
-[fromSeconds: seconds
+[
 	"Answer an instance of me which is 'seconds' seconds after January 1, 1901."
 
 	^ self starting: (DateAndTime fromSeconds: seconds)
 ]
 
 Date class >> fromString: aString
-[fromString: aString
+[
 	"Answer an instance of created from a string with format mm.dd.yyyy."
 
 	^ self readFrom: aString readStream
 ]
 
 Date class >> indexOfMonth: aMonthName
-[indexOfMonth: aMonthName
+[
 	^ Month indexOfMonth: aMonthName
 ]
 
 Date class >> julianDayNumber: aJulianDayNumber
-[julianDayNumber: aJulianDayNumber
+[
 	^ self starting: (DateAndTime julianDayNumber: aJulianDayNumber)
 ]
 
 Date class >> julianDayNumber: aJulianDayNumber offset: aTimeZoneOffset
-[julianDayNumber: aJulianDayNumber offset: aTimeZoneOffset
+[
 	^ self starting: (DateAndTime julianDayNumber: aJulianDayNumber offset: aTimeZoneOffset)
 ]
 
 Date class >> nameOfDay: dayIndex
-[nameOfDay: dayIndex
+[
 	^ Week nameOfDay: dayIndex
 ]
 
 Date class >> nameOfMonth: anIndex
-[nameOfMonth: anIndex
+[
 	^ Month nameOfMonth: anIndex
 ]
 
 Date class >> newDay: day month: month year: year
-[newDay: day month: month year: year
+[
 	^ self year: year month: month day: day
 ]
 
 Date class >> newDay: dayCount year: yearInteger
-[newDay: dayCount year: yearInteger
+[
 	^ self year: yearInteger day: dayCount
 ]
 
 Date class >> orthodoxEasterDateFor: year
-[orthodoxEasterDateFor: year
+[
 	"  compute the easter date according to the rules of the orthodox calendar.
     source: 
     http://www.smart.net/~mmontes/ortheast.html 
@@ -331,7 +331,7 @@ Date class >> orthodoxEasterDateFor: year
 ]
 
 Date class >> readFrom: aStream
-[readFrom: aStream
+[
 	"Read a Date from the stream in any of the forms:  
 		<day> <month> <year>		(15 April 1982; 15-APR-82; 15.4.82; 15APR82)  
 		<month> <day> <year>		(April 15, 1982; 4/15/82)
@@ -381,8 +381,54 @@ Date class >> readFrom: aStream
 ]
 
 Date class >> readFrom: inputStream pattern: pattern
-[readFrom: inputStream pattern: pattern
+[
 	"See 
+	DateParser comment"
+
+	^ (DateParser readingFrom: inputStream pattern: pattern) parse
+]
+
+Date class >> starting: aDateAndTime
+[
+	^ super starting: aDateAndTime midnight duration: (Duration days: 1)
+]
+
+Date class >> today
+[
+	^ self current
+]
+
+Date class >> tomorrow
+[
+	^ self today next
+]
+
+Date class >> week: week day: dayOfWeek
+[
+	^ self starting: (Week week: week) start + (dayOfWeek - 1) days
+]
+
+Date class >> year: year day: dayOfYear
+[
+	^ self starting: (DateAndTime year: year day: dayOfYear)
+]
+
+Date class >> year: year month: month day: day
+[
+	^ self starting: (DateAndTime year: year month: month day: day)
+]
+
+Date class >> year: year week: week day: dayOfWeek
+[
+	^ self starting: (Week year: year week: week) start + (dayOfWeek - 1) days
+]
+
+Date class >> yesterday
+[
+	^ self today previous
+]
+
+ 
 	DateParser comment"
 
 	^ (DateParser readingFrom: inputStream pattern: pattern) parse

@@ -5,39 +5,39 @@ Trait
 	package: #Traits.
 
 Trait >> baseTrait
-[baseTrait
+[
 	^ self
 ]
 
 Trait >> basicCategory
-[basicCategory
+[
 	^ category
 ]
 
 Trait >> basicCategory: aSymbol
-[basicCategory: aSymbol
+[
 	category := aSymbol
 ]
 
 Trait >> classPool
-[classPool
+[
 	^ Dictionary new
 ]
 
 Trait >> classPool: aDictionary
-[classPool: aDictionary
+[
 	"Compatibility purposes"
 
 	
 ]
 
 Trait >> classTrait
-[classTrait
+[
 	^ classTrait
 ]
 
 Trait >> classTrait: aTrait
-[classTrait: aTrait
+[
 	"Assigns the class trait associated with the receiver."
 
 	[ aTrait isClassTrait ] assert.
@@ -45,7 +45,7 @@ Trait >> classTrait: aTrait
 ]
 
 Trait >> copy
-[copy
+[
 	| newTrait |
 	newTrait := self class basicNew initialize
 		name: self name
@@ -59,17 +59,17 @@ Trait >> copy
 ]
 
 Trait >> environment
-[environment
+[
 	^ environment
 ]
 
 Trait >> environment: anObject
-[environment: anObject
+[
 	environment := anObject
 ]
 
 Trait >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex initializing: aBool
-[fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex initializing: aBool
+[
 	"File a description of the receiver on aFileStream. If the boolean argument,
 	moveSource, is true, then set the trailing bytes to the position of aFileStream and
 	to fileIndex in order to indicate where to find the source code."
@@ -86,78 +86,78 @@ Trait >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex initial
 ]
 
 Trait >> initialize
-[initialize
+[
 	super initialize.
 	classTrait := ClassTrait for: self
 ]
 
 Trait >> isBaseTrait
-[isBaseTrait
+[
 	^ true
 ]
 
 Trait >> isClassTrait
-[isClassTrait
+[
 	^ false
 ]
 
 Trait >> name
-[name
+[
 	^ name
 ]
 
 Trait >> name: aSymbol
-[name: aSymbol
+[
 	name := aSymbol
 ]
 
 Trait >> sharedPools
-[sharedPools
+[
 	"Answer an ordered collection of  the shared pools that the receiver shares"
 
 	^ OrderedCollection new
 ]
 
 Trait >> sharedPools: aCollection
-[sharedPools: aCollection
+[
 	"Compatibilty purposes"
 
 	
 ]
 
 Trait >> subclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
-[subclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+[
 	"Compatibility purposes"
 
 	^ self error: 'Traits cannot have subclasses'
 ]
 
 Trait >> subclasses
-[subclasses
+[
 	"for compatibility with classes"
 
 	^ #()
 ]
 
 Trait >> subclasses: aCollection
-[subclasses: aCollection
+[
 	"Compatibility purposes"
 
 	
 ]
 
 Trait class >> defaultEnvironment
-[defaultEnvironment
+[
 	^ Smalltalk
 ]
 
 Trait class >> named: aSymbol
-[named: aSymbol
+[
 	^ self named: aSymbol uses: {} category: 'Unclassified'
 ]
 
 Trait class >> named: aSymbol uses: aTraitCompositionOrCollection category: aString
-[named: aSymbol uses: aTraitCompositionOrCollection category: aString
+[
 	| env |
 	env := self environment.
 	^ self
@@ -168,7 +168,7 @@ Trait class >> named: aSymbol uses: aTraitCompositionOrCollection category: aStr
 ]
 
 Trait class >> named: aSymbol uses: aTraitCompositionOrCollection category: aString env: anEnvironment
-[named: aSymbol uses: aTraitCompositionOrCollection category: aString env: anEnvironment
+[
 	| trait oldTrait systemCategory oldCategory |
 	systemCategory := aString asSymbol.
 	trait := anEnvironment at: aSymbol ifAbsent: [ nil ].
@@ -180,6 +180,36 @@ Trait class >> named: aSymbol uses: aTraitCompositionOrCollection category: aStr
 	trait setName: aSymbol andRegisterInCategory: systemCategory environment: anEnvironment.
 	trait setTraitComposition: aTraitCompositionOrCollection asTraitComposition.	"... notify interested clients ..."
 	oldTrait ifNil: [ SystemAnnouncer uniqueInstance classAdded: trait inCategory: systemCategory.
+			^ trait ].
+	SystemAnnouncer uniqueInstance traitDefinitionChangedFrom: oldTrait to: trait.
+	systemCategory ~= oldCategory
+		ifTrue: [ SystemAnnouncer uniqueInstance class: trait recategorizedFrom: oldCategory to: systemCategory ].
+	^ trait
+]
+
+Trait class >> new
+[
+	self shouldNotImplement
+]
+
+Trait class >> newTemplateIn: categoryString
+[
+	^ String
+		streamContents: [ :stream | stream
+				nextPutAll: self name;
+				nextPutAll: ' named: #NameOfTrait';
+				cr;
+				tab;
+				nextPutAll: 'uses: {}';
+				cr;
+				tab;
+				nextPutAll: 'category: ';
+				nextPut: $';
+				nextPutAll: categoryString;
+				nextPut: $' ]
+]
+
+
 			^ trait ].
 	SystemAnnouncer uniqueInstance traitDefinitionChangedFrom: oldTrait to: trait.
 	systemCategory ~= oldCategory

@@ -3,29 +3,29 @@ PlatformResolver
 	package: #'FileSystem-Core'.
 
 PlatformResolver >> cache
-[cache
+[
 	"Operating Systems often define standard locations for a personal cache directory. The cache directory is a user-specific non-essential (cached) place where data should be written."
 
 	self subclassResponsibility
 ]
 
 PlatformResolver >> cantFindOriginError
-[cantFindOriginError
+[
 	^ Error signal: 'Can''t find the requested origin'
 ]
 
 PlatformResolver >> desktop
-[desktop
+[
 	^ self subclassResponsibility
 ]
 
 PlatformResolver >> directoryFromEnvVariableNamed: aString
-[directoryFromEnvVariableNamed: aString
+[
 	^ self directoryFromEnvVariableNamed: aString or: [ self cantFindOriginError ]
 ]
 
 PlatformResolver >> directoryFromEnvVariableNamed: aString or: aBlock
-[directoryFromEnvVariableNamed: aString or: aBlock
+[
 	| envValue |
 	envValue := [ Smalltalk os environment at: aString ]
 		on: Error
@@ -36,38 +36,45 @@ PlatformResolver >> directoryFromEnvVariableNamed: aString or: aBlock
 ]
 
 PlatformResolver >> documents
-[documents
+[
 	^ self subclassResponsibility
 ]
 
 PlatformResolver >> home
-[home
+[
 	^ self subclassResponsibility
 ]
 
 PlatformResolver >> preferences
-[preferences
+[
 	^ self subclassResponsibility
 ]
 
 PlatformResolver >> supportedOrigins
-[supportedOrigins
+[
 	^ #(#home #desktop #documents #preferences #cache)
 ]
 
 PlatformResolver class >> forCurrentPlatform
-[forCurrentPlatform
+[
 	| platformName |
 	platformName := Smalltalk os platformName.
 	^ (self allSubclasses detect: [ :ea | ea platformName = platformName ]) new
 ]
 
 PlatformResolver class >> platformName
-[platformName
+[
 	^ nil
 ]
 
 PlatformResolver class >> primitiveGetUntrustedUserDirectory
+[
+	<primitive: 'primitiveGetUntrustedUserDirectory' module: 'SecurityPlugin'>
+	self primitiveFailed.
+	self flag: 'use a more decent way to get a path in the users home directory'
+]
+
+ctory
 [primitiveGetUntrustedUserDirectory
 	<primitive: 'primitiveGetUntrustedUserDirectory' module: 'SecurityPlugin'>
 	self primitiveFailed.

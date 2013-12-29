@@ -4,38 +4,38 @@ InstructionPrinter
 	package: #Kernel.
 
 InstructionPrinter >> blockReturnTop
-[blockReturnTop
+[
 	"Print the Return Top Of Stack bytecode."
 
 	self print: 'blockReturn'
 ]
 
 InstructionPrinter >> doDup
-[doDup
+[
 	"Print the Duplicate Top Of Stack bytecode."
 
 	self print: 'dup'
 ]
 
 InstructionPrinter >> doPop
-[doPop
+[
 	"Print the Remove Top Of Stack bytecode."
 
 	self print: 'pop'
 ]
 
 InstructionPrinter >> indent
-[indent
+[
 	^ indent ifNil: [ 0 ]
 ]
 
 InstructionPrinter >> indent: numTabs
-[indent: numTabs
+[
 	indent := numTabs
 ]
 
 InstructionPrinter >> jump: offset
-[jump: offset
+[
 	"Print the Unconditional Jump bytecode."
 
 	self print: 'jumpTo: ' , (scanner pc + offset) printString.
@@ -45,7 +45,7 @@ InstructionPrinter >> jump: offset
 ]
 
 InstructionPrinter >> jump: offset if: condition
-[jump: offset if: condition
+[
 	"Print the Conditional Jump bytecode."
 
 	self print: (condition
@@ -54,47 +54,47 @@ InstructionPrinter >> jump: offset if: condition
 ]
 
 InstructionPrinter >> method
-[method
+[
 	^ method
 ]
 
 InstructionPrinter >> method: aMethod
-[method: aMethod
+[
 	method := aMethod.
 	printPC := true.
 	indentSpanOfFollowingJump := false
 ]
 
 InstructionPrinter >> methodReturnConstant: value
-[methodReturnConstant: value
+[
 	"Print the Return Constant bytecode."
 
 	self print: 'return: ' , value printString
 ]
 
 InstructionPrinter >> methodReturnReceiver
-[methodReturnReceiver
+[
 	"Print the Return Self bytecode."
 
 	self print: 'returnSelf'
 ]
 
 InstructionPrinter >> methodReturnTop
-[methodReturnTop
+[
 	"Print the Return Top Of Stack bytecode."
 
 	self print: 'returnTop'
 ]
 
 InstructionPrinter >> popIntoLiteralVariable: anAssociation
-[popIntoLiteralVariable: anAssociation
+[
 	"Print the Remove Top Of Stack And Store Into Literal Variable bytecode."
 
 	self print: 'popIntoLit: ' , anAssociation key
 ]
 
 InstructionPrinter >> popIntoReceiverVariable: offset
-[popIntoReceiverVariable: offset
+[
 	"Print the Remove Top Of Stack And Store Into Instance Variable 
 	bytecode."
 
@@ -102,12 +102,12 @@ InstructionPrinter >> popIntoReceiverVariable: offset
 ]
 
 InstructionPrinter >> popIntoRemoteTemp: remoteTempIndex inVectorAt: tempVectorIndex
-[popIntoRemoteTemp: remoteTempIndex inVectorAt: tempVectorIndex
+[
 	self print: 'popIntoTemp: ' , remoteTempIndex printString , ' inVectorAt: ' , tempVectorIndex printString
 ]
 
 InstructionPrinter >> popIntoTemporaryVariable: offset
-[popIntoTemporaryVariable: offset
+[
 	"Print the Remove Top Of Stack And Store Into Temporary Variable 
 	bytecode."
 
@@ -115,7 +115,7 @@ InstructionPrinter >> popIntoTemporaryVariable: offset
 ]
 
 InstructionPrinter >> print: instruction
-[print: instruction
+[
 	"Append to the receiver a description of the bytecode, instruction."
 
 	| code |
@@ -142,7 +142,7 @@ InstructionPrinter >> print: instruction
 ]
 
 InstructionPrinter >> printInstructionsOn: aStream
-[printInstructionsOn: aStream
+[
 	"Append to the stream, aStream, a description of each bytecode in the
 	 instruction stream."
 
@@ -156,7 +156,7 @@ InstructionPrinter >> printInstructionsOn: aStream
 ]
 
 InstructionPrinter >> printInstructionsOn: aStream do: aBlock
-[printInstructionsOn: aStream do: aBlock
+[
 	"Append to the stream, aStream, a description of each bytecode in the
 	 instruction stream. Evaluate aBlock with the receiver, the scanner and
 	 the stream after each instruction."
@@ -173,24 +173,24 @@ InstructionPrinter >> printInstructionsOn: aStream do: aBlock
 ]
 
 InstructionPrinter >> printPC
-[printPC
+[
 	^ printPC
 ]
 
 InstructionPrinter >> printPC: aBoolean
-[printPC: aBoolean
+[
 	printPC := aBoolean
 ]
 
 InstructionPrinter >> pushActiveContext
-[pushActiveContext
+[
 	"Print the Push Active Context On Top Of Its Own Stack bytecode."
 
 	self print: 'pushThisContext: '
 ]
 
 InstructionPrinter >> pushClosureCopyNumCopiedValues: numCopied numArgs: numArgs blockSize: blockSize
-[pushClosureCopyNumCopiedValues: numCopied numArgs: numArgs blockSize: blockSize
+[
 	self
 		print:
 			'closureNumCopied: ' , numCopied printString , ' numArgs: ' , numArgs printString , ' bytes ' , scanner pc printString
@@ -199,12 +199,12 @@ InstructionPrinter >> pushClosureCopyNumCopiedValues: numCopied numArgs: numArgs
 ]
 
 InstructionPrinter >> pushConsArrayWithElements: numElements
-[pushConsArrayWithElements: numElements
+[
 	self print: 'pop ' , numElements printString , ' into (Array new: ' , numElements printString , ')'
 ]
 
 InstructionPrinter >> pushConstant: obj
-[pushConstant: obj
+[
 	"Print the Push Constant, obj, on Top Of Stack bytecode."
 
 	self
@@ -226,26 +226,26 @@ InstructionPrinter >> pushConstant: obj
 ]
 
 InstructionPrinter >> pushLiteralVariable: anAssociation
-[pushLiteralVariable: anAssociation
+[
 	"Print the Push Contents Of anAssociation On Top Of Stack bytecode."
 
 	self print: 'pushLit: ' , anAssociation key
 ]
 
 InstructionPrinter >> pushNewArrayOfSize: numElements
-[pushNewArrayOfSize: numElements
+[
 	self print: 'push: (Array new: ' , numElements printString , ')'
 ]
 
 InstructionPrinter >> pushReceiver
-[pushReceiver
+[
 	"Print the Push Active Context's Receiver on Top Of Stack bytecode."
 
 	self print: 'self'
 ]
 
 InstructionPrinter >> pushReceiverVariable: offset
-[pushReceiverVariable: offset
+[
 	"Print the Push Contents Of the Receiver's Instance Variable Whose Index 
 	is the argument, offset, On Top Of Stack bytecode."
 
@@ -253,12 +253,12 @@ InstructionPrinter >> pushReceiverVariable: offset
 ]
 
 InstructionPrinter >> pushRemoteTemp: remoteTempIndex inVectorAt: tempVectorIndex
-[pushRemoteTemp: remoteTempIndex inVectorAt: tempVectorIndex
+[
 	self print: 'pushTemp: ' , remoteTempIndex printString , ' inVectorAt: ' , tempVectorIndex printString
 ]
 
 InstructionPrinter >> pushTemporaryVariable: offset
-[pushTemporaryVariable: offset
+[
 	"Print the Push Contents Of Temporary Variable Whose Index Is the 
 	argument, offset, On Top Of Stack bytecode."
 
@@ -266,7 +266,7 @@ InstructionPrinter >> pushTemporaryVariable: offset
 ]
 
 InstructionPrinter >> send: selector super: supered numArgs: numberArguments
-[send: selector super: supered numArgs: numberArguments
+[
 	"Print the Send Message With Selector, selector, bytecode. The argument, 
 	supered, indicates whether the receiver of the message is specified with 
 	'super' in the source method. The arguments of the message are found in 
@@ -280,20 +280,54 @@ InstructionPrinter >> send: selector super: supered numArgs: numberArguments
 ]
 
 InstructionPrinter >> storeIntoLiteralVariable: anAssociation
-[storeIntoLiteralVariable: anAssociation
+[
 	"Print the Store Top Of Stack Into Literal Variable Of Method bytecode."
 
 	self print: 'storeIntoLit: ' , anAssociation key
 ]
 
 InstructionPrinter >> storeIntoReceiverVariable: offset
-[storeIntoReceiverVariable: offset
+[
 	"Print the Store Top Of Stack Into Instance Variable Of Method bytecode."
 
 	self print: 'storeIntoRcvr: ' , offset printString
 ]
 
 InstructionPrinter >> storeIntoRemoteTemp: remoteTempIndex inVectorAt: tempVectorIndex
+[
+	self print: 'storeIntoTemp: ' , remoteTempIndex printString , ' inVectorAt: ' , tempVectorIndex printString
+]
+
+InstructionPrinter >> storeIntoTemporaryVariable: offset
+[
+	"Print the Store Top Of Stack Into Temporary Variable Of Method 
+	bytecode."
+
+	self print: 'storeIntoTemp: ' , offset printString
+]
+
+InstructionPrinter class >> on: aMethod
+[
+	^ self new method: aMethod
+]
+
+InstructionPrinter class >> printClass: class
+[
+	"Create a file whose name is the argument followed by '.bytes'. Store on 
+	the file the symbolic form of the compiled methods of the class."
+
+	| file |
+	file := FileStream newFileNamed: class name , '.bytes'.
+	class
+		selectorsAndMethodsDo: [ :sel :meth | file
+				cr;
+				nextPutAll: sel;
+				cr.
+			(self on: meth) printInstructionsOn: file ].
+	file close	"InstructionPrinter printClass: Parser."
+]
+
+Printer >> storeIntoRemoteTemp: remoteTempIndex inVectorAt: tempVectorIndex
 [storeIntoRemoteTemp: remoteTempIndex inVectorAt: tempVectorIndex
 	self print: 'storeIntoTemp: ' , remoteTempIndex printString , ' inVectorAt: ' , tempVectorIndex printString
 ]

@@ -7,7 +7,7 @@ TextConverter class
 	instanceVariables: #(#latin1Map #latin1Encodings ).
 
 TextConverter >> convertFromSystemString: aString
-[convertFromSystemString: aString
+[
 	| readStream writeStream |
 	readStream := aString readStream.
 	writeStream := String new writeStream.
@@ -16,7 +16,7 @@ TextConverter >> convertFromSystemString: aString
 ]
 
 TextConverter >> convertToSystemString: aString
-[convertToSystemString: aString
+[
 	| writeStream |
 	writeStream := String new writeStream.
 	self nextPutAll: aString toStream: writeStream.
@@ -25,18 +25,18 @@ TextConverter >> convertToSystemString: aString
 ]
 
 TextConverter >> emitSequenceToResetStateIfNeededOn: aStream
-[emitSequenceToResetStateIfNeededOn: aStream
+[
 	
 ]
 
 TextConverter >> initialize
-[initialize
+[
 	latin1Map := self class latin1Map.
 	latin1Encodings := self class latin1Encodings
 ]
 
 TextConverter >> installLineEndConvention: lineEndStringOrNil
-[installLineEndConvention: lineEndStringOrNil
+[
 	lineEndStringOrNil
 		ifNotNil: [ latin1Encodings := latin1Encodings copy.
 			latin1Encodings at: Character cr asciiValue + 1 put: (self convertFromSystemString: lineEndStringOrNil).
@@ -45,7 +45,7 @@ TextConverter >> installLineEndConvention: lineEndStringOrNil
 ]
 
 TextConverter >> next: anInteger putAll: aString startingAt: startIndex toStream: aStream
-[next: anInteger putAll: aString startingAt: startIndex toStream: aStream
+[
 	"Handle fast conversion if ByteString"
 
 	| lastIndex nextIndex |
@@ -63,7 +63,7 @@ TextConverter >> next: anInteger putAll: aString startingAt: startIndex toStream
 ]
 
 TextConverter >> next: anAmount putByteString: aString startingAt: startIndex toStream: aStream
-[next: anAmount putByteString: aString startingAt: startIndex toStream: aStream
+[
 	"This is a reasonable default which speeds up conversion of encodings which have a partial match with latin1 encoding (for instance ascii supersets)"
 
 	| lastIndex nextIndex |
@@ -77,17 +77,17 @@ TextConverter >> next: anAmount putByteString: aString startingAt: startIndex to
 ]
 
 TextConverter >> nextFromStream: aStream
-[nextFromStream: aStream
+[
 	self subclassResponsibility
 ]
 
 TextConverter >> nextPut: aCharacter toStream: aStream
-[nextPut: aCharacter toStream: aStream
+[
 	self subclassResponsibility
 ]
 
 TextConverter >> nextPutAll: aString toStream: aStream
-[nextPutAll: aString toStream: aStream
+[
 	"Handle fast conversion if ByteString"
 
 	| lastIndex nextIndex |
@@ -102,7 +102,7 @@ TextConverter >> nextPutAll: aString toStream: aStream
 ]
 
 TextConverter >> nextPutByteString: aString toStream: aStream
-[nextPutByteString: aString toStream: aStream
+[
 	"This is a reasonable default which speeds up conversion of encodings which have a partial match with latin1 encoding (for instance ascii supersets)"
 
 	| lastIndex nextIndex |
@@ -116,17 +116,17 @@ TextConverter >> nextPutByteString: aString toStream: aStream
 ]
 
 TextConverter >> restoreStateOf: aStream with: aConverterState
-[restoreStateOf: aStream with: aConverterState
+[
 	aStream position: aConverterState
 ]
 
 TextConverter >> saveStateOf: aStream
-[saveStateOf: aStream
+[
 	^ aStream position
 ]
 
 TextConverter class >> allEncodingNames
-[allEncodingNames
+[
 	"TextConverter allEncodingNames"
 
 	| encodingNames |
@@ -140,29 +140,29 @@ TextConverter class >> allEncodingNames
 ]
 
 TextConverter class >> default
-[default
+[
 	^ UTF8TextConverter new
 ]
 
 TextConverter class >> defaultConverterClassForEncoding: encodingName
-[defaultConverterClassForEncoding: encodingName
+[
 	"TextConverter defaultConverterClassForEncoding: 'shift-jis'"
 
 	^ self allSubclasses detect: [ :class | class encodingNames includes: encodingName ] ifNone: [  ]
 ]
 
 TextConverter class >> defaultSystemConverter
-[defaultSystemConverter
+[
 	^ LanguageEnvironment defaultSystemConverter
 ]
 
 TextConverter class >> encodingNames
-[encodingNames
+[
 	^ #() copy
 ]
 
 TextConverter class >> initializeLatin1MapAndEncodings
-[initializeLatin1MapAndEncodings
+[
 	"Initialize the latin1Map and latin1Encodings.
 	These variables ensure that conversions from latin1 ByteString is reasonably fast"
 
@@ -180,6 +180,33 @@ TextConverter class >> initializeLatin1MapAndEncodings
 ]
 
 TextConverter class >> latin1Encodings
+[
+	"Answer an Array mapping latin1 characters to conversion string"
+
+	^ latin1Encodings ifNil: [ self initializeLatin1MapAndEncodings.
+			latin1Encodings ]
+]
+
+TextConverter class >> latin1Map
+[
+	"Answer a ByteArray map telling if latin1 characters needs conversion or not"
+
+	^ latin1Map ifNil: [ self initializeLatin1MapAndEncodings.
+			latin1Map ]
+]
+
+TextConverter class >> newForEncoding: aString
+[
+	| encoding |
+	aString ifNil: [ ^ Latin1TextConverter new ].
+	encoding := aString asLowercase.
+	^ self allSubclasses
+		detect: [ :each | each encodingNames includes: encoding ]
+		ifFound: [ :class | class new ]
+		ifNone: [ nil ]
+]
+
+ latin1Encodings
 [latin1Encodings
 	"Answer an Array mapping latin1 characters to conversion string"
 

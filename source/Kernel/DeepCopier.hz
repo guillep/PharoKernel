@@ -3,7 +3,7 @@ DeepCopier
 	package: #Kernel.
 
 DeepCopier >> checkBasicClasses
-[checkBasicClasses
+[
 	"Check that no indexes of instance vars have changed in certain classes.  If you get an error in this method, an implementation of veryDeepCopyWith: needs to be updated.  The idea is to catch a change while it is still in the system of the programmer who made it.  
 	DeepCopier new checkVariables	"
 
@@ -14,7 +14,7 @@ DeepCopier >> checkBasicClasses
 ]
 
 DeepCopier >> checkClass: aClass
-[checkClass: aClass
+[
 	| meth |
 	"Check that no indexes of instance vars have changed in certain classes.  If you get an error in this method, an implementation of veryDeepCopyWith: needs to be updated.  The idea is to catch a change while it is still in the system of the programmer who made it."
 	self checkBasicClasses.	"Unlikely, but important to catch when it does happen."	"Every class that implements veryDeepInner: must copy all its inst vars.  Danger is that a user will add a new instance variable and forget to copy it.  So check that the last one is mentioned in the copy method."
@@ -30,7 +30,7 @@ DeepCopier >> checkClass: aClass
 ]
 
 DeepCopier >> checkDeep
-[checkDeep
+[
 	"Write exceptions in the Transcript.  Every class that implements veryDeepInner: must copy all its inst vars.  Danger is that a user will add a new instance variable and forget to copy it.  This check is only run by hand once in a while to make sure nothing was forgotten.  
 (Please do not remove this method.)
 	DeepCopier new checkDeep 	"
@@ -50,7 +50,7 @@ DeepCopier >> checkDeep
 ]
 
 DeepCopier >> checkVariables
-[checkVariables
+[
 	"Check that no indexes of instance vars have changed in certain classes.  If you get an error in this method, an implementation of veryDeepCopyWith: needs to be updated.  The idea is to catch a change while it is still in the system of the programmer who made it.  
 	DeepCopier new checkVariables	"
 
@@ -68,7 +68,7 @@ DeepCopier >> checkVariables
 ]
 
 DeepCopier >> fixDependents
-[fixDependents
+[
 	"They are not used much, but need to be right"
 
 	DependentsFields
@@ -80,29 +80,34 @@ DeepCopier >> fixDependents
 ]
 
 DeepCopier >> initialize
-[initialize
+[
 	super initialize.
 	self initialize: 4096
 ]
 
 DeepCopier >> initialize: size
-[initialize: size
+[
 	references := IdentityDictionary new: size
 ]
 
 DeepCopier >> references
-[references
+[
 	^ references
 ]
 
 DeepCopier >> warnInstanceVariableNotCopiedIn: aClass selector: aSelector
-[warnInstanceVariableNotCopiedIn: aClass selector: aSelector
+[
 	"Warn the user to update veryDeepCopyWith: or veryDeepInner:"
 
 	self
 		inform:
 			('An instance variable was added to to class ' , aClass name , ',\and it is not copied in the method ' , aSelector
 				, '.\Please rewrite it to handle all instance variables.\See DeepCopier class comment.') withCRs.
+	(Smalltalk respondsTo: #tools)
+		ifTrue: [ Smalltalk tools browser fullOnClass: aClass selector: aSelector ]
+]
+
+ variables.\See DeepCopier class comment.') withCRs.
 	(Smalltalk respondsTo: #tools)
 		ifTrue: [ Smalltalk tools browser fullOnClass: aClass selector: aSelector ]
 ]

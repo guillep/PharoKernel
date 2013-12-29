@@ -3,14 +3,14 @@ MutexSet
 	package: #Kernel.
 
 MutexSet >> critical: aBlock
-[critical: aBlock
+[
 	"Evaluate aBlock aquiring all mutexes"
 
 	^ self pvtCritical: aBlock startingAt: 1
 ]
 
 MutexSet >> pvtCritical: aBlock startingAt: index
-[pvtCritical: aBlock startingAt: index
+[
 	| mutex |
 	index > array size
 		ifTrue: [ ^ aBlock value ].
@@ -19,11 +19,16 @@ MutexSet >> pvtCritical: aBlock startingAt: index
 ]
 
 MutexSet >> withAll: mutexList
-[withAll: mutexList
+[
 	array := mutexList
 ]
 
 MutexSet class >> withAll: mutexList
+[
+	^ self new withAll: mutexList
+]
+
+texSet class >> withAll: mutexList
 [withAll: mutexList
 	^ self new withAll: mutexList
 ]

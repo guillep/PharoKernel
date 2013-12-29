@@ -4,7 +4,7 @@ WaitfreeQueue
 	package: #'Collections-Atomic'.
 
 WaitfreeQueue >> findFirst: aBlock
-[findFirst: aBlock
+[
 	"Note, this method only for backward compatibility. It duplicating the semantics of #nextOrNilSuchThat: completely.
 	Use #nextOrNilSuchThat: instead "
 
@@ -12,12 +12,12 @@ WaitfreeQueue >> findFirst: aBlock
 ]
 
 WaitfreeQueue >> flush
-[flush
+[
 	self flush: [ :ea |  ]
 ]
 
 WaitfreeQueue >> flush: aFlushBlock
-[flush: aFlushBlock
+[
 	"Process all currently available items, passing each item to a flush block.
 	If there is another process, which currently fetching items from queue, or queue is empty,
 	return immediately"
@@ -43,7 +43,7 @@ WaitfreeQueue >> flush: aFlushBlock
 ]
 
 WaitfreeQueue >> flushAllSuchThat: aBlock
-[flushAllSuchThat: aBlock
+[
 	"Remove from the queue all objects that satisfy aBlock.
 	Note, the operation is no-op, if queue is currently in the middle of extraction by other process"
 
@@ -66,14 +66,14 @@ WaitfreeQueue >> flushAllSuchThat: aBlock
 ]
 
 WaitfreeQueue >> initialize
-[initialize
+[
 	dummy := AtomicQueueItem new.
 	dummy object: dummy.
 	tail := dummy
 ]
 
 WaitfreeQueue >> isEmpty
-[isEmpty
+[
 	"Answer true if queue contains at least one element.
 	Note, that answer is non-deterministic, because sender could be interrupted at any moment,
 	means that even if message answers true, there is no any guarantees that consequent #nextXX messages could 
@@ -92,7 +92,7 @@ WaitfreeQueue >> isEmpty
 ]
 
 WaitfreeQueue >> nextIfNone: aBlock
-[nextIfNone: aBlock
+[
 	"Attempt to fetch the next item from queue. Evaluate a block if attempt is failed i.e. there is no items available or queue is locked by another process"
 
 	| item result |
@@ -112,7 +112,7 @@ WaitfreeQueue >> nextIfNone: aBlock
 ]
 
 WaitfreeQueue >> nextOrNil
-[nextOrNil
+[
 	"Fetch next item from queue, or nil if queue is either empty or in the middle of extraction by other process.
 	If queue can contain a nil as element, use #nextIfNone: instead "
 
@@ -120,7 +120,7 @@ WaitfreeQueue >> nextOrNil
 ]
 
 WaitfreeQueue >> nextOrNilSuchThat: aBlock
-[nextOrNilSuchThat: aBlock
+[
 	"Fetch an object from queue that satisfies aBlock, skipping (but not removing) any intermediate objects.
 	If no object has been found, answer <nil> and leave me intact.
 	
@@ -150,7 +150,7 @@ WaitfreeQueue >> nextOrNilSuchThat: aBlock
 ]
 
 WaitfreeQueue >> nextPut: value
-[nextPut: value
+[
 	" Add new item to queue "
 
 	| item oldTail |
@@ -164,7 +164,7 @@ WaitfreeQueue >> nextPut: value
 ]
 
 WaitfreeQueue >> peek
-[peek
+[
 	"Answer the object that was sent through the receiver first and has not 
 	yet been received by anyone but do not remove it from the receiver. 
 	If queue is empty or there are other process currently fetching object from queue, answer nil.
@@ -185,7 +185,7 @@ WaitfreeQueue >> peek
 ]
 
 WaitfreeQueue >> printOn: aStream
-[printOn: aStream
+[
 	aStream
 		nextPutAll: self class name;
 		nextPutAll: ' with ';
@@ -194,7 +194,7 @@ WaitfreeQueue >> printOn: aStream
 ]
 
 WaitfreeQueue >> removeAll
-[removeAll
+[
 	"
 	This message makes no sense in concurrent environment. There is no way to guarantee that when this method returns to sender, the queue will remain empty,
 	because at any moment other process may interrupt current process and put new item(s) to queue.
@@ -205,7 +205,7 @@ WaitfreeQueue >> removeAll
 ]
 
 WaitfreeQueue >> size
-[size
+[
 	"Answer the size of queue. 
 	If queue is currently in the middle of extraction by other process, give a (very) approximate answer.
 	
@@ -221,6 +221,20 @@ WaitfreeQueue >> size
 	item isCircular ] whileFalse.
 	count = 0
 		ifTrue: [ "if queue is locked by other process, check the tail and give a (very) approximate answer."
+			^ tail object == dummy
+				ifTrue: [ 0 ]
+				ifFalse: [ 1 ] ].
+	^ count
+]
+
+WaitfreeQueue class >> new: anInteger
+[
+	"Just to match SharedQueue protocol"
+
+	^ self new
+]
+
+nswer."
 			^ tail object == dummy
 				ifTrue: [ 0 ]
 				ifFalse: [ 1 ] ].

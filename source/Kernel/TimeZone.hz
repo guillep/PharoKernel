@@ -5,63 +5,63 @@ TimeZone
 	package: #Kernel.
 
 TimeZone >> abbreviation
-[abbreviation
+[
 	^ abbreviation
 ]
 
 TimeZone >> abbreviation: aString
-[abbreviation: aString
+[
 	abbreviation := aString
 ]
 
 TimeZone >> name
-[name
+[
 	^ name
 ]
 
 TimeZone >> name: aString
-[name: aString
+[
 	name := aString
 ]
 
 TimeZone >> offset
-[offset
+[
 	^ offset
 ]
 
 TimeZone >> offset: aDuration
-[offset: aDuration
+[
 	offset := aDuration
 ]
 
 TimeZone class >> abbreviated: aString
-[abbreviated: aString
+[
 	"Return the timezone whose abbreviation is aString."
 
 	^ self timeZones detect: [ :timeZone | timeZone abbreviation = aString ]
 ]
 
 TimeZone class >> default
-[default
+[
 	"Answer the default time zone - GMT"
 
 	^ self timeZones detect: [ :timeZone | timeZone offset = Duration zero ]
 ]
 
 TimeZone class >> local
-[local
+[
 	^ Locale localTimeZone
 ]
 
 TimeZone class >> offset: anOffset
-[offset: anOffset
+[
 	"Return the timezone with the given offset"
 
 	^ self timeZones detect: [ :timeZone | timeZone offset = anOffset ] ifNone: [ self new offset: anOffset ]
 ]
 
 TimeZone class >> offset: aDuration name: aName abbreviation: anAbbreviation
-[offset: aDuration name: aName abbreviation: anAbbreviation
+[
 	^ self new
 		offset: aDuration;
 		name: aName;
@@ -70,7 +70,7 @@ TimeZone class >> offset: aDuration name: aName abbreviation: anAbbreviation
 ]
 
 TimeZone class >> timeZones
-[timeZones
+[
 	^ {(self offset: 0 hours name: 'Universal Time' abbreviation: 'UTC').
 	(self offset: 0 hours name: 'Greenwich Mean Time' abbreviation: 'GMT').
 	(self offset: 1 hours name: 'British Summer Time' abbreviation: 'BST').
@@ -81,6 +81,11 @@ TimeZone class >> timeZones
 	(self offset: -6 hours name: 'Mountain Daylight Time' abbreviation: 'MDT').
 	(self offset: -6 hours name: 'Central Standard Time' abbreviation: 'CST').
 	(self offset: -5 hours name: 'Central Daylight Time' abbreviation: 'CDT').
+	(self offset: -5 hours name: 'Eastern Standard Time' abbreviation: 'EST').
+	(self offset: -4 hours name: 'Eastern Daylight Time' abbreviation: 'EDT')}
+]
+
+ight Time' abbreviation: 'CDT').
 	(self offset: -5 hours name: 'Eastern Standard Time' abbreviation: 'EST').
 	(self offset: -4 hours name: 'Eastern Daylight Time' abbreviation: 'EDT')}
 ]

@@ -6,12 +6,12 @@ Path class
 	instanceVariables: #(#absoluteWindowsPathRegex ).
 
 Path >> , extension
-[, extension
+[
 	^ self withName: self basename extension: extension
 ]
 
 Path >> / aString
-[/ aString
+[
 	| path |
 	aString isEmptyOrNil
 		ifTrue: [ Error signal: 'Path element cannot be empty or nil' ].
@@ -22,40 +22,40 @@ Path >> / aString
 ]
 
 Path >> <= other
-[<= other
+[
 	^ self fullName <= other fullName
 ]
 
 Path >> = other
-[= other
+[
 	^ self species = other species
 		and: [ self size = other size and: [ (1 to: self size) allSatisfy: [ :i | (self at: i) = (other at: i) ] ] ]
 ]
 
 Path >> asFileReference
-[asFileReference
+[
 	^ FileSystem disk referenceTo: self
 ]
 
 Path >> asPathWith: anObject
-[asPathWith: anObject
+[
 	^ self
 ]
 
 Path >> asResolvedBy: anObject
-[asResolvedBy: anObject
+[
 	^ anObject resolvePath: self
 ]
 
 Path >> base
-[base
+[
 	"Returns the base of the basename, i.e. /foo/gloops.taz basename is 'gloops'"
 
 	^ self basename copyUpTo: self extensionDelimiter
 ]
 
 Path >> basename
-[basename
+[
 	"Returns the base of the basename, 
 		i.e. 
 		/foo/gloops.taz basename is 'gloops.taz'
@@ -67,7 +67,7 @@ Path >> basename
 ]
 
 Path >> basename: newBasename
-[basename: newBasename
+[
 	"change the basename"
 
 	self size == 0
@@ -76,7 +76,7 @@ Path >> basename: newBasename
 ]
 
 Path >> basenameWithoutExtension
-[basenameWithoutExtension
+[
 	"Returns the base of the basename but without its extension, 
 		i.e. 
 		/foo/gloops.taz basenameWithoutExtension is 'gloops'
@@ -86,14 +86,14 @@ Path >> basenameWithoutExtension
 ]
 
 Path >> contains: anObject
-[contains: anObject
+[
 	"Return true if anObject is in a subfolder of me"
 
 	^ anObject isContainedBy: self
 ]
 
 Path >> containsPath: aPath
-[containsPath: aPath
+[
 	self size < aPath size
 		ifFalse: [ ^ false ].
 	1 to: self size do: [ :i | (self at: i) = (aPath at: i)
@@ -102,24 +102,24 @@ Path >> containsPath: aPath
 ]
 
 Path >> containsReference: aReference
-[containsReference: aReference
+[
 	^ false
 ]
 
 Path >> copyFrom: aPath
-[copyFrom: aPath
+[
 	| size |
 	size := aPath size min: self size.
 	1 to: size do: [ :i | self at: i put: (aPath at: i) ]
 ]
 
 Path >> delimiter
-[delimiter
+[
 	^ $/
 ]
 
 Path >> do: aBlock
-[do: aBlock
+[
 	1 to: self size do: [ :index | | segment |
 		segment := self at: index.
 		segment isEmpty
@@ -127,19 +127,19 @@ Path >> do: aBlock
 ]
 
 Path >> extension
-[extension
+[
 	"Return the extension of path basename i.e., /foo/gloops.taz extension is 'taz'"
 
 	^ self basename copyAfterLast: self extensionDelimiter
 ]
 
 Path >> extensionDelimiter
-[extensionDelimiter
+[
 	^ self class extensionDelimiter
 ]
 
 Path >> extensions
-[extensions
+[
 	"Return the extensions of the receiver in order of appearance"
 
 	"(Path from: '/foo/bar.tar.gz') extensions"
@@ -148,14 +148,14 @@ Path >> extensions
 ]
 
 Path >> fullName
-[fullName
+[
 	"Return the fullName of the receiver."
 
 	^ self printString
 ]
 
 Path >> hash
-[hash
+[
 	| hash |
 	hash := self class identityHash.
 	1 to: self size do: [ :i | hash := String stringHash: (self at: i) initialHash: hash ].
@@ -163,51 +163,51 @@ Path >> hash
 ]
 
 Path >> isAbsolute
-[isAbsolute
+[
 	self subclassResponsibility
 ]
 
 Path >> isAllParents
-[isAllParents
+[
 	1 to: self size do: [ :i | (self at: i) = '..'
 			ifFalse: [ ^ false ] ].
 	^ true
 ]
 
 Path >> isChildOf: anObject
-[isChildOf: anObject
+[
 	^ self parent = anObject
 ]
 
 Path >> isContainedBy: anObject
-[isContainedBy: anObject
+[
 	"DoubleDispatch helper for #contains:"
 
 	^ anObject containsPath: self
 ]
 
 Path >> isEmpty
-[isEmpty
+[
 	^ self size = 0
 ]
 
 Path >> isRelative
-[isRelative
+[
 	^ self isAbsolute not
 ]
 
 Path >> isRoot
-[isRoot
+[
 	self subclassResponsibility
 ]
 
 Path >> isWorkingDirectory
-[isWorkingDirectory
+[
 	^ self size = 0
 ]
 
 Path >> lengthOfStemWith: aPath
-[lengthOfStemWith: aPath
+[
 	| limit index |
 	limit := self size min: aPath size.
 	index := 1.
@@ -216,12 +216,12 @@ Path >> lengthOfStemWith: aPath
 ]
 
 Path >> makeRelative: anObject
-[makeRelative: anObject
+[
 	^ anObject relativeToPath: self
 ]
 
 Path >> parent
-[parent
+[
 	| size parent |
 	self isRoot
 		ifTrue: [ ^ self ].
@@ -234,27 +234,27 @@ Path >> parent
 ]
 
 Path >> printOn: aStream
-[printOn: aStream
+[
 	self printOn: aStream delimiter: self delimiter
 ]
 
 Path >> printOn: aStream delimiter: aCharacter
-[printOn: aStream delimiter: aCharacter
+[
 	(1 to: self size) do: [ :index | aStream nextPutAll: (self at: index) ] separatedBy: [ aStream nextPut: aCharacter ]
 ]
 
 Path >> printWithDelimiter: aCharacter
-[printWithDelimiter: aCharacter
+[
 	^ String streamContents: [ :out | self printOn: out delimiter: aCharacter ]
 ]
 
 Path >> relativeTo: anObject
-[relativeTo: anObject
+[
 	^ anObject makeRelative: self
 ]
 
 Path >> relativeToPath: aPath
-[relativeToPath: aPath
+[
 	"Return the receiver as relative to the argument aPath"
 
 	"(Path / 'griffle' / 'plonk' / 'nurp') 
@@ -271,17 +271,17 @@ Path >> relativeToPath: aPath
 ]
 
 Path >> relativeToReference: aReference
-[relativeToReference: aReference
+[
 	^ self relativeToPath: aReference path
 ]
 
 Path >> resolve
-[resolve
+[
 	^ self
 ]
 
 Path >> resolve: anObject
-[resolve: anObject
+[
 	"Return a path in which the argument has been interpreted in the context of the receiver. Different 
 	argument types have different resolution semantics, so we use double dispatch to resolve them correctly."
 
@@ -289,7 +289,7 @@ Path >> resolve: anObject
 ]
 
 Path >> resolvePath: aPath
-[resolvePath: aPath
+[
 	"Answers an absolute path created by resolving the argument against the receiver.
 	If the argument is abolute answer the argument itself. Otherwise, concatenate the
 	two paths, then process all parent references '..', and create a path with the remaining
@@ -305,19 +305,19 @@ Path >> resolvePath: aPath
 ]
 
 Path >> resolveReference: aReference
-[resolveReference: aReference
+[
 	^ aReference
 ]
 
 Path >> resolveString: aString
-[resolveString: aString
+[
 	"Treat strings as relative paths with a single element."
 
 	^ self / aString
 ]
 
 Path >> segments
-[segments
+[
 	"return an array with all the path segements separated"
 
 	| segments index |
@@ -329,7 +329,7 @@ Path >> segments
 ]
 
 Path >> withExtension: extension
-[withExtension: extension
+[
 	| basename name |
 	basename := self basename.
 	^ (basename endsWith: extension)
@@ -339,7 +339,7 @@ Path >> withExtension: extension
 ]
 
 Path >> withName: name extension: extension
-[withName: name extension: extension
+[
 	| basename |
 	basename := String
 		streamContents: [ :out | out nextPutAll: name.
@@ -351,7 +351,7 @@ Path >> withName: name extension: extension
 ]
 
 Path >> withParents
-[withParents
+[
 	| paths |
 	paths := OrderedCollection new.
 	1 to: self size - 1 do: [ :index | paths add: ((self class new: index) copyFrom: self) ].
@@ -360,7 +360,7 @@ Path >> withParents
 ]
 
 Path class >> * aString
-[* aString
+[
 	"Answer a relative path with aString as its sole segment. For example,
 	Path * 'griffle' will produce the same result as ./griffle in a unix shell.
 	The selector #* was chosen for it's visual similarity to $."
@@ -372,7 +372,7 @@ Path class >> * aString
 ]
 
 Path class >> / aString
-[/ aString
+[
 	"Answer an absolute path with aString as it's sole segment. The selector
 	was chosen to allow path construction with Smalltalk syntax, which 
 	neverthelesss resembles paths as they appear in a unix shell. Eg.
@@ -384,12 +384,12 @@ Path class >> / aString
 ]
 
 Path class >> absoluteWindowsPathRegex
-[absoluteWindowsPathRegex
+[
 	^ absoluteWindowsPathRegex ifNil: [ absoluteWindowsPathRegex := '[a-zA-Z]\:\\.*' asRegex ]
 ]
 
 Path class >> addElement: element to: result
-[addElement: element to: result
+[
 	element = '..'
 		ifTrue: [ ^ self addParentElementTo: result ].
 	element = ''
@@ -399,20 +399,20 @@ Path class >> addElement: element to: result
 ]
 
 Path class >> addEmptyElementTo: result
-[addEmptyElementTo: result
+[
 	result isEmpty
 		ifTrue: [ result add: '' ]
 ]
 
 Path class >> addParentElementTo: result
-[addParentElementTo: result
+[
 	result isEmpty
 		ifTrue: [ result add: '..' ]
 		ifFalse: [ result removeLast ]
 ]
 
 Path class >> canonicalizeElements: aCollection
-[canonicalizeElements: aCollection
+[
 	| result |
 	result := OrderedCollection new.
 	aCollection do: [ :element | self addElement: element to: result ].
@@ -420,24 +420,24 @@ Path class >> canonicalizeElements: aCollection
 ]
 
 Path class >> cleanUp
-[cleanUp
+[
 	absoluteWindowsPathRegex := nil
 ]
 
 Path class >> extensionDelimiter
-[extensionDelimiter
+[
 	"Return the extension delimiter character."
 
 	^ $.
 ]
 
 Path class >> from: aString
-[from: aString
+[
 	^ self from: aString delimiter: $/
 ]
 
 Path class >> from: aString delimiter: aDelimiterCharacter
-[from: aString delimiter: aDelimiterCharacter
+[
 	"Answer a path composed of several elements delimited by aCharacter"
 
 	| pathCls |
@@ -450,19 +450,71 @@ Path class >> from: aString delimiter: aDelimiterCharacter
 ]
 
 Path class >> isAbsoluteUnixPath: aString
-[isAbsoluteUnixPath: aString
+[
 	^ aString first = $/
 ]
 
 Path class >> isAbsoluteWindowsPath: aString
-[isAbsoluteWindowsPath: aString
+[
 	^ self absoluteWindowsPathRegex matches: aString
 ]
 
 Path class >> parent
-[parent
+[
 	"Answer a path that resolves to the parent of the current
 	working directory. This is similar to .. in unix, but doesn't
+	rely on actual hardlinks being present in the filesystem."
+
+	^ RelativePath with: '..'
+]
+
+Path class >> parents: anInteger
+[
+	| path |
+	path := self new: anInteger.
+	1 to: anInteger do: [ :i | path at: i put: '..' ].
+	^ path
+]
+
+Path class >> root
+[
+	"Answer the root path - ie, / on unix"
+
+	^ AbsolutePath new
+]
+
+Path class >> with: aString
+[
+	"Answer a relative path of the given string. N.B. that the argument is not parsed; 
+	it is the name of a single path element, and path separators in it do not have 
+	special meaning."
+
+	"(Path with: '/parent/child/') isRelative
+	answers true because this is a relative path to a file or directory named 
+	'/parent/child/'. In bash: \/parent\/child\/"
+
+	| inst |
+	inst := self new: 1.
+	inst at: 1 put: aString.
+	^ inst
+]
+
+Path class >> withAll: aCollection
+[
+	| inst |
+	inst := self new: aCollection size.
+	aCollection withIndexDo: [ :segment :index | inst at: index put: segment ].
+	^ inst
+]
+
+Path class >> workingDirectory
+[
+	"Answer a path that will always resolve to the current working directory."
+
+	^ RelativePath new
+]
+
+t doesn't
 	rely on actual hardlinks being present in the filesystem."
 
 	^ RelativePath with: '..'

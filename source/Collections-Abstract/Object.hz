@@ -1,24 +1,24 @@
 Object >> appendTo: aCollection
-[appendTo: aCollection
+[
 	"double dispatch for join:"
 
 	^ aCollection addLast: self
 ]
 
 Object >> join: aSequenceableCollection
-[join: aSequenceableCollection
+[
 	^ (Array with: self) join: aSequenceableCollection
 ]
 
 Object >> joinTo: stream
-[joinTo: stream
+[
 	"double dispatch for join:"
 
 	^ stream nextPut: self
 ]
 
 Object >> split: aSequenceableCollection
-[split: aSequenceableCollection
+[
 	"optimized version for single delimiters:
 	Example:
 		$/ split: '/foo/bar'"
@@ -30,7 +30,7 @@ Object >> split: aSequenceableCollection
 ]
 
 Object >> split: aSequenceableCollection do: aBlock
-[split: aSequenceableCollection do: aBlock
+[
 	"optimized version for single delimiters:
 	Example:
 		$/ split: '/foo/bar' indicesDo: [ :item | ]"
@@ -41,7 +41,7 @@ Object >> split: aSequenceableCollection do: aBlock
 ]
 
 Object >> split: aSequenceableCollection indicesDo: aBlock
-[split: aSequenceableCollection indicesDo: aBlock
+[
 	"optimized version for single delimiters:
 	Example:
 		$/ split: '/foo/bar' indicesDo: [ :start :end | ]"
@@ -53,6 +53,12 @@ Object >> split: aSequenceableCollection indicesDo: aBlock
 	[ position > 0 ]
 		whileTrue: [ aBlock value: oldPosition value: position - 1.
 			position := position + 1.
+			oldPosition := position.
+			position := aSequenceableCollection indexOf: self startingAt: position ].
+	aBlock value: oldPosition value: aSequenceableCollection size
+]
+
+sition + 1.
 			oldPosition := position.
 			position := aSequenceableCollection indexOf: self startingAt: position ].
 	aBlock value: oldPosition value: aSequenceableCollection size

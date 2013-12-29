@@ -4,7 +4,7 @@ HashedCollection
 	package: #'Collections-Abstract'.
 
 HashedCollection >> add: newObject withOccurrences: anInteger
-[add: newObject withOccurrences: anInteger
+[
 	"Add newObject anInteger times to the receiver. Do nothing if anInteger is less than one. Answer newObject."
 
 	anInteger < 1
@@ -13,26 +13,26 @@ HashedCollection >> add: newObject withOccurrences: anInteger
 ]
 
 HashedCollection >> array
-[array
+[
 	^ array
 ]
 
 HashedCollection >> atNewIndex: index put: anObject
-[atNewIndex: index put: anObject
+[
 	array at: index put: anObject.
 	tally := tally + 1.
 	self fullCheck
 ]
 
 HashedCollection >> capacity
-[capacity
+[
 	"Answer the current capacity of the receiver."
 
 	^ array size
 ]
 
 HashedCollection >> compact
-[compact
+[
 	"Reduce the size of array so that the load factor will be ~75%."
 
 	| newCapacity |
@@ -41,7 +41,7 @@ HashedCollection >> compact
 ]
 
 HashedCollection >> doWithIndex: aBlock2
-[doWithIndex: aBlock2
+[
 	"Support Set enumeration with a counter, even though not ordered"
 
 	| index |
@@ -50,12 +50,12 @@ HashedCollection >> doWithIndex: aBlock2
 ]
 
 HashedCollection >> errorNoFreeSpace
-[errorNoFreeSpace
+[
 	self error: 'There is no free space in this collection!'
 ]
 
 HashedCollection >> findElementOrNil: anObject
-[findElementOrNil: anObject
+[
 	"Answer the index of a first slot containing either a nil (indicating an empty slot) or an element that matches the given object. Answer the index of that slot or zero. Fail if neither a match nor an empty slot is found."
 
 	| index |
@@ -66,7 +66,7 @@ HashedCollection >> findElementOrNil: anObject
 ]
 
 HashedCollection >> fixCollisionsFrom: start
-[fixCollisionsFrom: start
+[
 	"The element at start has been removed and replaced by nil.
 	This method moves forward from there, relocating any entries
 	that had been placed below due to collisions with this one."
@@ -75,7 +75,7 @@ HashedCollection >> fixCollisionsFrom: start
 ]
 
 HashedCollection >> fullCheck
-[fullCheck
+[
 	"Keep array at least 1/4 free for decent hash behavior"
 
 	array size - tally < (array size // 4 max: 1)
@@ -83,7 +83,7 @@ HashedCollection >> fullCheck
 ]
 
 HashedCollection >> grow
-[grow
+[
 	"Grow the elements array and reinsert the old elements"
 
 	| oldElements |
@@ -95,14 +95,14 @@ HashedCollection >> grow
 ]
 
 HashedCollection >> growSize
-[growSize
+[
 	"Answer what my next higher table size should be"
 
 	^ HashTableSizes atLeast: self capacity * 3 // 2 + 2
 ]
 
 HashedCollection >> growTo: anInteger
-[growTo: anInteger
+[
 	"Grow the elements array and reinsert the old elements"
 
 	| oldElements |
@@ -112,12 +112,12 @@ HashedCollection >> growTo: anInteger
 ]
 
 HashedCollection >> hasContentsInExplorer
-[hasContentsInExplorer
+[
 	^ self notEmpty
 ]
 
 HashedCollection >> initialize: n
-[initialize: n
+[
 	"Initialize array to an array size of n"
 
 	array := Array new: n.
@@ -125,24 +125,24 @@ HashedCollection >> initialize: n
 ]
 
 HashedCollection >> noCheckAdd: anObject
-[noCheckAdd: anObject
+[
 	self subclassResponsibility
 ]
 
 HashedCollection >> noCheckNoGrowFillFrom: anArray
-[noCheckNoGrowFillFrom: anArray
+[
 	"Add the elements of anArray except nils to me assuming that I don't contain any of them, they are unique and I have more free space than they require."
 
 	self subclassResponsibility
 ]
 
 HashedCollection >> rehash
-[rehash
+[
 	self growTo: self capacity
 ]
 
 HashedCollection >> removeAll
-[removeAll
+[
 	"remove all elements from this collection.
 	Preserve the capacity"
 
@@ -150,14 +150,14 @@ HashedCollection >> removeAll
 ]
 
 HashedCollection >> scanFor: anObject
-[scanFor: anObject
+[
 	"Scan the key array for the first slot containing either a nil (indicating an empty slot) or an element that matches anObject. Answer the index of that slot or raise an error if no slot is found. This method will be overridden in various subclasses that have different interpretations for matching elements."
 
 	self subclassResponsibility
 ]
 
 HashedCollection >> scanForEmptySlotFor: aKey
-[scanForEmptySlotFor: aKey
+[
 	"Scan the key array for the first slot containing an empty slot (indicated by a nil). Answer the index of that slot. This method will be overridden in various subclasses that have different interpretations for matching elements."
 
 	| index start |
@@ -168,19 +168,19 @@ HashedCollection >> scanForEmptySlotFor: aKey
 ]
 
 HashedCollection >> size
-[size
+[
 	^ tally
 ]
 
 HashedCollection >> someElement
-[someElement
+[
 	"Deprecated. Use anyOne."
 
 	^ self anyOne
 ]
 
 HashedCollection >> union: aCollection
-[union: aCollection
+[
 	"Answer the set theoretic union of the receiver and aCollection, using the receiver's notion of equality and not side effecting the receiver at all."
 
 	^ self copy
@@ -189,7 +189,7 @@ HashedCollection >> union: aCollection
 ]
 
 HashedCollection >> veryDeepCopyWith: deepCopier
-[veryDeepCopyWith: deepCopier
+[
 	| copyOfSelf |
 	copyOfSelf := super veryDeepCopyWith: deepCopier.	"force Sets and Dictionaries to rehash"
 	copyOfSelf rehash.
@@ -197,7 +197,7 @@ HashedCollection >> veryDeepCopyWith: deepCopier
 ]
 
 HashedCollection class >> cleanUp: aggressive
-[cleanUp: aggressive
+[
 	"Rehash all instances when cleaning aggressively"
 
 	aggressive
@@ -205,36 +205,62 @@ HashedCollection class >> cleanUp: aggressive
 ]
 
 HashedCollection class >> compactAll
-[compactAll
+[
 	"HashedCollection rehashAll"
 
 	self allSubclassesDo: #compactAllInstances
 ]
 
 HashedCollection class >> compactAllInstances
-[compactAllInstances
+[
 	"Do not use #allInstancesDo: because rehash may create new instances."
 
 	self allInstances do: [ :each | each compact ]
 ]
 
 HashedCollection class >> new
-[new
+[
 	^ self basicNew initialize: 5
 ]
 
 HashedCollection class >> new: nElements
-[new: nElements
+[
 	"Create a Set large enough to hold nElements without growing"
 
 	^ self basicNew initialize: (self sizeFor: nElements)
 ]
 
 HashedCollection class >> newFrom: aCollection
-[newFrom: aCollection
+[
 	"Answer an instance of me containing the same elements as aCollection."
 
 	^ self subclassResponsibility
+]
+
+HashedCollection class >> rehashAll
+[
+	"HashedCollection rehashAll"
+
+	self allSubclassesDo: #rehashAllInstances
+]
+
+HashedCollection class >> rehashAllInstances
+[
+	"Do not use #allInstancesDo: because rehash may create new instances."
+
+	self allInstances do: [ :each | each rehash ]
+]
+
+HashedCollection class >> sizeFor: nElements
+[
+	"Large enough size to hold nElements with some slop (see fullCheck)"
+
+	nElements < 4
+		ifTrue: [ ^ 5 ].
+	^ HashTableSizes atLeast: (nElements + 1) * 4 // 3
+]
+
+ibility
 ]
 
 HashedCollection class >> rehashAll

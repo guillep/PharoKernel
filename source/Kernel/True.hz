@@ -3,14 +3,14 @@ True
 	package: #Kernel.
 
 True >> & aBoolean
-[& aBoolean
+[
 	"Evaluating conjunction -- answer aBoolean since receiver is true."
 
 	^ aBoolean
 ]
 
 True >> and: alternativeBlock
-[and: alternativeBlock
+[
 	"Nonevaluating conjunction -- answer the value of alternativeBlock since
 	the receiver is true."
 
@@ -18,12 +18,12 @@ True >> and: alternativeBlock
 ]
 
 True >> asBit
-[asBit
+[
 	^ 1
 ]
 
 True >> ifFalse: alternativeBlock
-[ifFalse: alternativeBlock
+[
 	"Since the condition is true, the value is the true alternative, which is nil. 
 	Execution does not actually reach here because the expression is compiled 
 	in-line."
@@ -32,7 +32,7 @@ True >> ifFalse: alternativeBlock
 ]
 
 True >> ifFalse: falseAlternativeBlock ifTrue: trueAlternativeBlock
-[ifFalse: falseAlternativeBlock ifTrue: trueAlternativeBlock
+[
 	"Answer the value of trueAlternativeBlock. Execution does not 
 	actually reach here because the expression is compiled in-line."
 
@@ -40,7 +40,7 @@ True >> ifFalse: falseAlternativeBlock ifTrue: trueAlternativeBlock
 ]
 
 True >> ifTrue: alternativeBlock
-[ifTrue: alternativeBlock
+[
 	"Answer the value of alternativeBlock. Execution does not actually 
 	reach here because the expression is compiled in-line."
 
@@ -48,7 +48,7 @@ True >> ifTrue: alternativeBlock
 ]
 
 True >> ifTrue: trueAlternativeBlock ifFalse: falseAlternativeBlock
-[ifTrue: trueAlternativeBlock ifFalse: falseAlternativeBlock
+[
 	"Answer with the value of trueAlternativeBlock. Execution does not 
 	actually reach here because the expression is compiled in-line."
 
@@ -56,15 +56,36 @@ True >> ifTrue: trueAlternativeBlock ifFalse: falseAlternativeBlock
 ]
 
 True >> not
-[not
+[
 	"Negation--answer false since the receiver is true."
 
 	^ false
 ]
 
 True >> or: alternativeBlock
-[or: alternativeBlock
+[
 	"Nonevaluating disjunction -- answer true since the receiver is true."
+
+	^ self
+]
+
+True >> printOn: aStream
+[
+	aStream nextPutAll: 'true'
+]
+
+True >> xor: aBoolean
+[
+	^ aBoolean value not
+]
+
+True >> | aBoolean
+[
+	"Evaluating disjunction (OR) -- answer true since the receiver is true."
+
+	^ self
+]
+
 
 	^ self
 ]

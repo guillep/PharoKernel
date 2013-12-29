@@ -2,7 +2,7 @@ FilePluginPrims
 	package: #'FileSystem-Disk'.
 
 FilePluginPrims >> atEnd: id
-[atEnd: id
+[
 	"Answer true if the file position is at the end of the file."
 
 	<primitive: 'primitiveFileAtEnd' module: 'FilePlugin'>
@@ -10,7 +10,7 @@ FilePluginPrims >> atEnd: id
 ]
 
 FilePluginPrims >> close: id
-[close: id
+[
 	"Close this file."
 
 	<primitive: 'primitiveFileClose' module: 'FilePlugin'>
@@ -18,7 +18,7 @@ FilePluginPrims >> close: id
 ]
 
 FilePluginPrims >> createDirectory: fullPath
-[createDirectory: fullPath
+[
 	"Create a directory named by the given path. 
 	Fail if the path is bad or if a file or directory by that name already exists."
 
@@ -27,12 +27,12 @@ FilePluginPrims >> createDirectory: fullPath
 ]
 
 FilePluginPrims >> decode: aString
-[decode: aString
+[
 	^ aString convertFromWithConverter: LanguageEnvironment defaultFileNameConverter
 ]
 
 FilePluginPrims >> deleteDirectory: fullPath
-[deleteDirectory: fullPath
+[
 	"Delete the directory named by the given path. 
 	Fail if the path is bad or if a directory by that name does not exist."
 
@@ -41,7 +41,7 @@ FilePluginPrims >> deleteDirectory: fullPath
 ]
 
 FilePluginPrims >> deleteFile: aFileName
-[deleteFile: aFileName
+[
 	"Delete the file of the given name. 
 	Return self if the primitive succeeds, nil otherwise."
 
@@ -50,7 +50,7 @@ FilePluginPrims >> deleteFile: aFileName
 ]
 
 FilePluginPrims >> delimiter
-[delimiter
+[
 	"Return the path delimiter for the underlying platform's file system."
 
 	<primitive: 'primitiveDirectoryDelimitor' module: 'FilePlugin'>
@@ -58,12 +58,12 @@ FilePluginPrims >> delimiter
 ]
 
 FilePluginPrims >> encode: aString
-[encode: aString
+[
 	^ aString convertToWithConverter: LanguageEnvironment defaultFileNameConverter
 ]
 
 FilePluginPrims >> flush: id
-[flush: id
+[
 	"Flush pending changes to the disk"
 
 	<primitive: 'primitiveFileFlush' module: 'FilePlugin'>
@@ -75,7 +75,7 @@ FilePluginPrims >> flush: id
 ]
 
 FilePluginPrims >> getMacFile: fileName type: typeString creator: creatorString
-[getMacFile: fileName type: typeString creator: creatorString
+[
 	"Get the Macintosh file type and creator info for the file with the given name. Fails if the file does not exist or if the type and creator type arguments are not strings of length 4. This primitive is Mac specific; it is a noop on other platforms."
 
 	<primitive: 'primitiveDirectoryGetMacTypeAndCreator' module: 'FilePlugin'>
@@ -83,7 +83,7 @@ FilePluginPrims >> getMacFile: fileName type: typeString creator: creatorString
 ]
 
 FilePluginPrims >> getPosition: id
-[getPosition: id
+[
 	"Get this files current position."
 
 	<primitive: 'primitiveFileGetPosition' module: 'FilePlugin'>
@@ -91,7 +91,7 @@ FilePluginPrims >> getPosition: id
 ]
 
 FilePluginPrims >> imageFile
-[imageFile
+[
 	"Answer the full path name for the current image."
 
 	<primitive: 121>
@@ -99,13 +99,13 @@ FilePluginPrims >> imageFile
 ]
 
 FilePluginPrims >> lookupDirectory: fullPath filename: fileName
-[lookupDirectory: fullPath filename: fileName
+[
 	<primitive: 'primitiveDirectoryEntry' module: 'FilePlugin'>
 	^ #badDirectoryPath
 ]
 
 FilePluginPrims >> lookupEntryIn: fullPath index: index
-[lookupEntryIn: fullPath index: index
+[
 	"Look up the index-th entry of the directory with the given fully-qualified path 
 	(i.e., starting from the root of the file hierarchy) and return an array containing:
 
@@ -124,7 +124,7 @@ FilePluginPrims >> lookupEntryIn: fullPath index: index
 ]
 
 FilePluginPrims >> open: fileName writable: writableFlag
-[open: fileName writable: writableFlag
+[
 	"Open a file of the given name, and return the file ID obtained.
 	If writableFlag is true, then
 		if there is none with this name, then create one
@@ -138,7 +138,7 @@ FilePluginPrims >> open: fileName writable: writableFlag
 ]
 
 FilePluginPrims >> read: id into: byteArray startingAt: startIndex count: count
-[read: id into: byteArray startingAt: startIndex count: count
+[
 	"Read up to count bytes of data from this file into the given string or byte array starting at the given index. Answer the number of bytes actually read."
 
 	<primitive: 'primitiveFileRead' module: 'FilePlugin'>
@@ -146,7 +146,7 @@ FilePluginPrims >> read: id into: byteArray startingAt: startIndex count: count
 ]
 
 FilePluginPrims >> rename: oldFileFullName to: newFileFullName
-[rename: oldFileFullName to: newFileFullName
+[
 	"Rename the file of the given name to the new name. Fail if there is no file of the old name 
 	or if there is an existing file with the new name."
 
@@ -155,7 +155,7 @@ FilePluginPrims >> rename: oldFileFullName to: newFileFullName
 ]
 
 FilePluginPrims >> setMacFileNamed: fileName type: typeString creator: creatorString
-[setMacFileNamed: fileName type: typeString creator: creatorString
+[
 	"Set the Macintosh file type and creator info for the file with the given name. Fails if the 
 	file does not exist or if the type and creator type arguments are not strings of length 4. This
 	primitive is Mac specific; it is a noop on other platforms."
@@ -165,7 +165,7 @@ FilePluginPrims >> setMacFileNamed: fileName type: typeString creator: creatorSt
 ]
 
 FilePluginPrims >> setPosition: id to: anInteger
-[setPosition: id to: anInteger
+[
 	"Set this file to the given position."
 
 	<primitive: 'primitiveFileSetPosition' module: 'FilePlugin'>
@@ -173,7 +173,7 @@ FilePluginPrims >> setPosition: id to: anInteger
 ]
 
 FilePluginPrims >> size: id
-[size: id
+[
 	"Answer the size of this file."
 
 	<primitive: 'primitiveFileSize' module: 'FilePlugin'>
@@ -181,8 +181,30 @@ FilePluginPrims >> size: id
 ]
 
 FilePluginPrims >> sizeOrNil: id
-[sizeOrNil: id
+[
 	"Answer the size of this file."
+
+	<primitive: 'primitiveFileSize' module: 'FilePlugin'>
+	^ nil
+]
+
+FilePluginPrims >> truncate: id to: anInteger
+[
+	"Truncate this file to the given position."
+
+	<primitive: 'primitiveFileTruncate' module: 'FilePlugin'>
+	self primitiveFailed
+]
+
+FilePluginPrims >> write: id from: stringOrByteArray startingAt: startIndex count: count
+[
+	"Write count bytes onto this file from the given string or byte array starting at the given index. 	Answer the number of bytes written."
+
+	<primitive: 'primitiveFileWrite' module: 'FilePlugin'>
+	self primitiveFailed
+]
+
+
 
 	<primitive: 'primitiveFileSize' module: 'FilePlugin'>
 	^ nil

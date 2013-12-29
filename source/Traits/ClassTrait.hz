@@ -5,33 +5,33 @@ ClassTrait
 	package: #Traits.
 
 ClassTrait >> adoptInstance: oldInstance from: oldMetaClass
-[adoptInstance: oldInstance from: oldMetaClass
+[
 	^ self error: 'Traits cannot adopt instances'
 ]
 
 ClassTrait >> baseTrait
-[baseTrait
+[
 	^ baseTrait
 ]
 
 ClassTrait >> baseTrait: aTrait
-[baseTrait: aTrait
+[
 	[ aTrait isBaseTrait ] assert.
 	baseTrait := aTrait
 ]
 
 ClassTrait >> classTrait
-[classTrait
+[
 	^ self
 ]
 
 ClassTrait >> classTrait: aClassTrait
-[classTrait: aClassTrait
+[
 	self error: 'Trait is already a class trait!'
 ]
 
 ClassTrait >> compile: text classified: category withStamp: changeStamp notifying: requestor logSource: logSource
-[compile: text classified: category withStamp: changeStamp notifying: requestor logSource: logSource
+[
 	| classSideUsersOfBaseTrait message |
 	classSideUsersOfBaseTrait := self baseTrait users select: [ :each | each isClassSide ].
 	classSideUsersOfBaseTrait isEmpty
@@ -53,7 +53,7 @@ ClassTrait >> compile: text classified: category withStamp: changeStamp notifyin
 ]
 
 ClassTrait >> copy
-[copy
+[
 	"Make a copy of the receiver. Share the 
 	reference to the base trait."
 
@@ -64,7 +64,7 @@ ClassTrait >> copy
 ]
 
 ClassTrait >> definition
-[definition
+[
 	^ String
 		streamContents: [ :stream | stream
 				nextPutAll: self name;
@@ -74,20 +74,47 @@ ClassTrait >> definition
 ]
 
 ClassTrait >> initializeWithBaseTrait: aTrait
-[initializeWithBaseTrait: aTrait
+[
 	self baseTrait: aTrait.
 	self noteNewBaseTraitCompositionApplied: aTrait traitComposition.
 	aTrait users do: [ :each | self addUser: each classSide ]
 ]
 
 ClassTrait >> instanceVariableNames: instVarString
-[instanceVariableNames: instVarString
+[
 	"Compatibility purposes"
 
 	
 ]
 
 ClassTrait >> isBaseTrait
+[
+	^ false
+]
+
+ClassTrait >> isClassTrait
+[
+	^ true
+]
+
+ClassTrait >> name
+[
+	^ self baseTrait name , ' classTrait'
+]
+
+ClassTrait >> new
+[
+	self error: 'Traits have no instances'
+]
+
+ClassTrait class >> for: aTrait
+[
+	^ self new
+		initializeWithBaseTrait: aTrait;
+		yourself
+]
+
+aseTrait
 [isBaseTrait
 	^ false
 ]

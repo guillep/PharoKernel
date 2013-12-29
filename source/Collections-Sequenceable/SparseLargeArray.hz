@@ -5,7 +5,7 @@ SparseLargeArray
 	package: #'Collections-Sequenceable'.
 
 SparseLargeArray >> analyzeSpaceSaving
-[analyzeSpaceSaving
+[
 	| elems tablesTotal nonNilTables lastPage lastChunkSize |
 	elems := 0.
 	tablesTotal := self basicSize.
@@ -36,7 +36,7 @@ SparseLargeArray >> analyzeSpaceSaving
 ]
 
 SparseLargeArray >> atAllPut: anObject
-[atAllPut: anObject
+[
 	"Put anObject at every one of the receiver's indices."
 
 	1 to: self basicSize do: [ :i | self basicAt: i put: nil ].
@@ -44,7 +44,7 @@ SparseLargeArray >> atAllPut: anObject
 ]
 
 SparseLargeArray >> initChunkSize: aChunkSize size: aSize arrayClass: aClass base: b defaultValue: d
-[initChunkSize: aChunkSize size: aSize arrayClass: aClass base: b defaultValue: d
+[
 	chunkSize := aChunkSize.
 	size := aSize.
 	base := b.
@@ -53,14 +53,14 @@ SparseLargeArray >> initChunkSize: aChunkSize size: aSize arrayClass: aClass bas
 ]
 
 SparseLargeArray >> noCheckAt: index
-[noCheckAt: index
+[
 	^ (self basicAt: (index - base) // chunkSize + 1)
 		ifNil: [ defaultValue ]
 		ifNotNil: [ :chunk | chunk at: (index - base) \\ chunkSize + 1 ]
 ]
 
 SparseLargeArray >> noCheckAt: index put: value
-[noCheckAt: index put: value
+[
 	| chunkIndex chunk lastChunkSize |
 	chunkIndex := (index - base) // chunkSize + 1.
 	(chunk := self basicAt: chunkIndex)
@@ -70,6 +70,13 @@ SparseLargeArray >> noCheckAt: index put: value
 				new:
 					((chunkIndex == self basicSize and: [ (lastChunkSize := size \\ chunkSize) > 0 ])
 						ifTrue: [ lastChunkSize ]
+						ifFalse: [ chunkSize ])
+				withAll: defaultValue.
+			self basicAt: chunkIndex put: chunk ].
+	^ chunk at: (index - base) \\ chunkSize + 1 put: value
+]
+
+
 						ifFalse: [ chunkSize ])
 				withAll: defaultValue.
 			self basicAt: chunkIndex put: chunk ].

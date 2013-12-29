@@ -3,22 +3,22 @@ Year
 	package: #Kernel.
 
 Year >> asYear
-[asYear
+[
 	^ self
 ]
 
 Year >> daysInMonth
-[daysInMonth
+[
 	self shouldNotImplement
 ]
 
 Year >> daysInYear
-[daysInYear
+[
 	^ self duration days
 ]
 
 Year >> firstThursday
-[firstThursday
+[
 	"Return the years first Thursday.
 	According to the ISO 8601 definition, the first week starts with the years first Thursday (week day number 5)"
 
@@ -26,28 +26,28 @@ Year >> firstThursday
 ]
 
 Year >> previous
-[previous
+[
 	"This implementation handles leap years correctly"
 
 	^ self class year: self year - 1
 ]
 
 Year >> printOn: aStream
-[printOn: aStream
+[
 	aStream nextPutAll: 'a Year ('.
 	self start year printOn: aStream.
 	aStream nextPutAll: ')'
 ]
 
 Year class >> daysInYear: yearInteger
-[daysInYear: yearInteger
+[
 	^ 365 + ((self isLeapYear: yearInteger)
 				ifTrue: [ 1 ]
 				ifFalse: [ 0 ])
 ]
 
 Year class >> isLeapYear: aYearInteger
-[isLeapYear: aYearInteger
+[
 	| adjustedYear |
 	adjustedYear := aYearInteger > 0
 		ifTrue: [ aYearInteger ]
@@ -56,12 +56,20 @@ Year class >> isLeapYear: aYearInteger
 ]
 
 Year class >> starting: aDateAndTime duration: aDuration
-[starting: aDateAndTime duration: aDuration
+[
 	"Return a new year, starting from the beginning the year the given DateAndTime is in."
 
 	| aYear |
 	aYear := aDateAndTime asDateAndTime year.
 	^ super starting: (DateAndTime year: aYear month: 1 day: 1) duration: (Duration days: (self daysInYear: aYear))
+]
+
+Year class >> year: aYear
+[
+	^ self starting: (DateAndTime year: aYear month: 1 day: 1)
+]
+
+ay: 1) duration: (Duration days: (self daysInYear: aYear))
 ]
 
 Year class >> year: aYear

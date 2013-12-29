@@ -4,27 +4,32 @@ FileSystemError
 	package: #'FileSystem-Core'.
 
 FileSystemError >> initializeWithReference: aReference
-[initializeWithReference: aReference
+[
 	reference := aReference.
 	messageText := aReference printString
 ]
 
 FileSystemError >> isResumable
-[isResumable
+[
 	^ true
 ]
 
 FileSystemError >> reference
-[reference
+[
 	^ reference
 ]
 
 FileSystemError class >> reference: aReference
-[reference: aReference
+[
 	^ self basicNew initializeWithReference: aReference
 ]
 
 FileSystemError class >> signalWith: aReference
+[
+	^ (self reference: aReference) signal
+]
+
+class >> signalWith: aReference
 [signalWith: aReference
 	^ (self reference: aReference) signal
 ]

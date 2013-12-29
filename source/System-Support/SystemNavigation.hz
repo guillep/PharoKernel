@@ -3,7 +3,7 @@ SystemNavigation
 	package: #'System-Support'.
 
 SystemNavigation >> allAccessesTo: instVarName from: aClass
-[allAccessesTo: instVarName from: aClass
+[
 	| coll |
 	coll := OrderedCollection new.
 	aClass
@@ -12,12 +12,12 @@ SystemNavigation >> allAccessesTo: instVarName from: aClass
 ]
 
 SystemNavigation >> allBehaviors
-[allBehaviors
+[
 	^ self environment allBehaviors
 ]
 
 SystemNavigation >> allBehaviorsDo: aBlock
-[allBehaviorsDo: aBlock
+[
 	"Execute a block on each class, metaclass, trait and trait class"
 
 	self environment allClassesDo: [ :aClass | aBlock
@@ -29,7 +29,7 @@ SystemNavigation >> allBehaviorsDo: aBlock
 ]
 
 SystemNavigation >> allCallsOn: aSymbol
-[allCallsOn: aSymbol
+[
 	"Answer a Collection of all the methods that call on the provided symbol even deeply embedded in literal array."
 
 	"self new allCallsOn: #allCallsOn:"
@@ -38,7 +38,7 @@ SystemNavigation >> allCallsOn: aSymbol
 ]
 
 SystemNavigation >> allCallsOn: aSymbol from: aClass
-[allCallsOn: aSymbol from: aClass
+[
 	"Answer a SortedCollection of all the methods that call on aSymbol."
 
 	| collection special byte |
@@ -51,14 +51,14 @@ SystemNavigation >> allCallsOn: aSymbol from: aClass
 ]
 
 SystemNavigation >> allClasses
-[allClasses
+[
 	"currently returns all the classes in the current environment"
 
 	^ self environment allClasses
 ]
 
 SystemNavigation >> allClassesAndTraits
-[allClassesAndTraits
+[
 	"Answer all the classes and traits present in the image"
 
 	"Note that metaclasses are not part of the answer"
@@ -67,7 +67,7 @@ SystemNavigation >> allClassesAndTraits
 ]
 
 SystemNavigation >> allClassesDefiningClassVarNamed: aString
-[allClassesDefiningClassVarNamed: aString
+[
 	"Answer an Array of all classes that define the class variables named aString."
 
 	| aCollection |
@@ -78,12 +78,12 @@ SystemNavigation >> allClassesDefiningClassVarNamed: aString
 ]
 
 SystemNavigation >> allClassesDo: aBlock
-[allClassesDo: aBlock
+[
 	^ self environment allClassesDo: aBlock
 ]
 
 SystemNavigation >> allClassesImplementing: aSelector
-[allClassesImplementing: aSelector
+[
 	"Answer an Array of all classes that implement the message aSelector."
 
 	| aCollection |
@@ -94,7 +94,7 @@ SystemNavigation >> allClassesImplementing: aSelector
 ]
 
 SystemNavigation >> allClassesInPackageNamed: packageName
-[allClassesInPackageNamed: packageName
+[
 	"Returns the list of classes that belongs to a Monticello package."
 
 	"It would be probably better to delegate that query to the package itself"
@@ -108,7 +108,7 @@ SystemNavigation >> allClassesInPackageNamed: packageName
 ]
 
 SystemNavigation >> allClassesUsingSharedPool: aString
-[allClassesUsingSharedPool: aString
+[
 	"Answer an Array of all classes that uses the shared pool named aString."
 
 	| aCollection |
@@ -119,7 +119,7 @@ SystemNavigation >> allClassesUsingSharedPool: aString
 ]
 
 SystemNavigation >> allImplementedMessages
-[allImplementedMessages
+[
 	"Answer a Collection of all the messages that are implemented in the system."
 
 	| messages |
@@ -129,7 +129,7 @@ SystemNavigation >> allImplementedMessages
 ]
 
 SystemNavigation >> allImplementorsOf: aSelector
-[allImplementorsOf: aSelector
+[
 	"Answer all the methods that implement the message aSelector."
 
 	| aCollection |
@@ -141,7 +141,7 @@ SystemNavigation >> allImplementorsOf: aSelector
 ]
 
 SystemNavigation >> allImplementorsOf: aSelector localTo: aClass
-[allImplementorsOf: aSelector localTo: aClass
+[
 	"Answer a SortedCollection of all the methods that implement the message  
 	aSelector in, above, or below the given class."
 
@@ -158,7 +158,7 @@ SystemNavigation >> allImplementorsOf: aSelector localTo: aClass
 ]
 
 SystemNavigation >> allLocalCallsOn: aSymbol ofClass: aClass
-[allLocalCallsOn: aSymbol ofClass: aClass
+[
 	"Answer a SortedCollection of all the methods that call on aSymbol, anywhere in my class hierarchy."
 
 	| aSet special byte cls |
@@ -175,12 +175,12 @@ SystemNavigation >> allLocalCallsOn: aSymbol ofClass: aClass
 ]
 
 SystemNavigation >> allMethods
-[allMethods
+[
 	^ self allBehaviors flatCollect: [ :behavior | behavior methods ]
 ]
 
 SystemNavigation >> allMethodsSelect: aBlock
-[allMethodsSelect: aBlock
+[
 	"Answer a SortedCollection of each method that, when used as the block  
 	argument to aBlock, gives a true result."
 
@@ -194,7 +194,7 @@ SystemNavigation >> allMethodsSelect: aBlock
 ]
 
 SystemNavigation >> allMethodsWithSourceString: aString matchCase: caseSensitive
-[allMethodsWithSourceString: aString matchCase: caseSensitive
+[
 	"Answer a SortedCollection of all the methods that contain, in source code, aString as a substring.  Search the class comments also"
 
 	| list addMethod addComment |
@@ -217,7 +217,7 @@ SystemNavigation >> allMethodsWithSourceString: aString matchCase: caseSensitive
 ]
 
 SystemNavigation >> allObjectsDo: aBlock
-[allObjectsDo: aBlock
+[
 	"Evaluate the argument, aBlock, for each object in the system 
 	excluding SmallIntegers."
 
@@ -229,7 +229,7 @@ SystemNavigation >> allObjectsDo: aBlock
 ]
 
 SystemNavigation >> allPrimitiveMethods
-[allPrimitiveMethods
+[
 	"Answer an OrderedCollection of all the methods that are implemented by primitives."
 
 	| aColl |
@@ -242,7 +242,7 @@ SystemNavigation >> allPrimitiveMethods
 ]
 
 SystemNavigation >> allReferencesTo: aLiteral
-[allReferencesTo: aLiteral
+[
 	"Answer a Collection of all the methods that refer to aLiteral even deeply embedded in literal array."
 
 	"SystemNavigation new allReferencesTo: #+"
@@ -263,7 +263,7 @@ SystemNavigation >> allReferencesTo: aLiteral
 ]
 
 SystemNavigation >> allReferencesToPool: aPool
-[allReferencesToPool: aPool
+[
 	"Answer all the references to variable aPool"
 
 	| list |
@@ -277,7 +277,7 @@ SystemNavigation >> allReferencesToPool: aPool
 ]
 
 SystemNavigation >> allReferencesToPool: aPool from: aClass
-[allReferencesToPool: aPool from: aClass
+[
 	"Answer all the references to variables from aPool"
 
 	| list |
@@ -291,7 +291,7 @@ SystemNavigation >> allReferencesToPool: aPool from: aClass
 ]
 
 SystemNavigation >> allSendersOf: selector
-[allSendersOf: selector
+[
 	| senders special byte |
 	senders := OrderedCollection new.
 	special := Smalltalk hasSpecialSelector: selector ifTrueSetByte: [ :b | byte := b ].
@@ -302,7 +302,7 @@ SystemNavigation >> allSendersOf: selector
 ]
 
 SystemNavigation >> allSentMessages
-[allSentMessages
+[
 	"Answer the set of selectors which are sent somewhere in the system."
 
 	| sent |
@@ -325,7 +325,7 @@ SystemNavigation >> allSentMessages
 ]
 
 SystemNavigation >> allStoresInto: instVarName of: aClass
-[allStoresInto: instVarName of: aClass
+[
 	| coll |
 	coll := OrderedCollection new.
 	aClass
@@ -334,7 +334,7 @@ SystemNavigation >> allStoresInto: instVarName of: aClass
 ]
 
 SystemNavigation >> allUnimplementedCalls
-[allUnimplementedCalls
+[
 	"Answer an Array of each message that is sent by an expression in a  
 	method but is not implemented by any object in the system."
 
@@ -356,7 +356,7 @@ SystemNavigation >> allUnimplementedCalls
 ]
 
 SystemNavigation >> allUnreferencedClassVariablesOf: aClass
-[allUnreferencedClassVariablesOf: aClass
+[
 	"Answer a list of the names of all the receiver's unreferenced class  
 	vars, including those defined in superclasses"
 
@@ -370,7 +370,7 @@ SystemNavigation >> allUnreferencedClassVariablesOf: aClass
 ]
 
 SystemNavigation >> allUnsentMessages
-[allUnsentMessages
+[
 	"SystemNavigation new allUnSentMessages"
 
 	"Answer the set of selectors that are implemented by some object in the  
@@ -380,7 +380,7 @@ SystemNavigation >> allUnsentMessages
 ]
 
 SystemNavigation >> allUnsentMessagesIn: selectorSet
-[allUnsentMessagesIn: selectorSet
+[
 	"Answer the subset of selectorSet which are not sent anywhere in the 
 	system. As allSentMessages does not recurse into nested Arrays, filter
 	with #allCallsOn, which does"
@@ -389,30 +389,30 @@ SystemNavigation >> allUnsentMessagesIn: selectorSet
 ]
 
 SystemNavigation >> categoriesInPackageNamed: packageName
-[categoriesInPackageNamed: packageName
+[
 	^ (self environment organization categoriesMatching: packageName)
 		, (self environment organization categoriesMatching: packageName , '-*')
 ]
 
 SystemNavigation >> createMethodNamed: aSelector realParent: class
-[createMethodNamed: aSelector realParent: class
+[
 	^ (RGMethodDefinition realClass: class selector: aSelector)
 		package: (class >> aSelector) package asRingDefinition;
 		yourself
 ]
 
 SystemNavigation >> environment
-[environment
+[
 	^ environment
 ]
 
 SystemNavigation >> environment: aSystemDictionary
-[environment: aSystemDictionary
+[
 	^ environment := aSystemDictionary
 ]
 
 SystemNavigation >> headingAndAutoselectForLiteral: aLiteral do: binaryBlock
-[headingAndAutoselectForLiteral: aLiteral do: binaryBlock
+[
 	"Evaluate aBlock with either Users of ... or Senders of ... plus the auto-select string
 	 for the given literal.  aLiteral can be a Symbol, a VariableBinding or an arbitrary object."
 
@@ -426,19 +426,19 @@ SystemNavigation >> headingAndAutoselectForLiteral: aLiteral do: binaryBlock
 ]
 
 SystemNavigation >> initialize
-[initialize
+[
 	super initialize.
 	self environment: Smalltalk globals
 ]
 
 SystemNavigation >> installedMethodsWithIncorrectTrailerKind
-[installedMethodsWithIncorrectTrailerKind
+[
 	^ self
 		allMethodsSelect: [ :each | (#(#SourcePointer #VarLengthSourcePointer #NativeCodeTrailer) includes: each trailer kind) not and: [ each isInstalled ] ]
 ]
 
 SystemNavigation >> instanceSideMethodsWithNilKeyInLastLiteral
-[instanceSideMethodsWithNilKeyInLastLiteral
+[
 	"This answers all the instance side methods that has NIL as the key in their last literal. There should be none (only class side methods have this)"
 
 	^ self
@@ -447,7 +447,7 @@ SystemNavigation >> instanceSideMethodsWithNilKeyInLastLiteral
 ]
 
 SystemNavigation >> isUnsentMessage: selector
-[isUnsentMessage: selector
+[
 	| special byte |
 	special := Smalltalk hasSpecialSelector: selector ifTrueSetByte: [ :b | byte := b ].
 	self
@@ -457,7 +457,7 @@ SystemNavigation >> isUnsentMessage: selector
 ]
 
 SystemNavigation >> methodsWithUnboundGlobals
-[methodsWithUnboundGlobals
+[
 	"This says that for any global, it should match either the class's notion of what bindingOf: the key is, or bindingOf: should be nil and the binding should be in Undeclared. If the class answers a different binding through bindingOf: or answers no binding and the binding is not in Undeclared then the variable in the method is wrong.
 	For a clean image the result should be empty. If it is not empty, evaluating Compiler recompileAll probably solves the problem. However, we should investigate why the method gets an incorrect state."
 
@@ -473,7 +473,7 @@ SystemNavigation >> methodsWithUnboundGlobals
 ]
 
 SystemNavigation >> numberOfImplementorsOf: aSelector
-[numberOfImplementorsOf: aSelector
+[
 	"Answer a count of the implementors of the given selector found in the  
 	system"
 
@@ -489,7 +489,7 @@ SystemNavigation >> numberOfImplementorsOf: aSelector
 ]
 
 SystemNavigation >> obsoleteBehaviors
-[obsoleteBehaviors
+[
 	"SystemNavigation new obsoleteBehaviors inspect"
 
 	"Find all obsolete behaviors including meta classes"
@@ -503,7 +503,7 @@ SystemNavigation >> obsoleteBehaviors
 ]
 
 SystemNavigation >> obsoleteClasses
-[obsoleteClasses
+[
 	"SystemNavigation new obsoleteClasses inspect"
 
 	"NOTE:  Also try inspecting comments below"
@@ -520,7 +520,7 @@ SystemNavigation >> obsoleteClasses
 ]
 
 SystemNavigation >> obsoleteMethodReferences
-[obsoleteMethodReferences
+[
 	"SystemNavigation new obsoleteMethodReferences"
 
 	"Open a browser on all referenced behaviors that are obsolete"
@@ -545,7 +545,7 @@ SystemNavigation >> obsoleteMethodReferences
 ]
 
 SystemNavigation >> removeAllButPackages: packagesList
-[removeAllButPackages: packagesList
+[
 	"Remove all classes and methods that do not belong to some of listed packages. Skip #unload. Do not use this method if you can use Monticello! This method is used by some low-level shrinking process. Do not use it. This is quite hackish"
 
 	| keep remove oldRemove extensionCategories |
@@ -586,6 +586,41 @@ SystemNavigation >> removeAllButPackages: packagesList
 			class isTrait
 				ifFalse: [ extensionCategories := (class class organization ownCategories select: [ :category | category first = $* ])
 						asOrderedCollection.
+					extensionCategories
+						removeAllSuchThat: [ :category | packagesList
+								anySatisfy: [ :package | category asLowercase allButFirst = package asLowercase
+										or: [ package asLowercase , '-*' match: category asLowercase allButFirst ] ] ].
+					extensionCategories
+						do: [ :category | | protocol |
+							protocol := class class organization protocolOrganizer protocolNamed: category.
+							(protocol methods intersection: class class localSelectors) do: [ :sel | class class removeSelector: sel ]	"class class removeProtocol: category" ] ] ]
+]
+
+SystemNavigation >> unimplemented
+[
+	"Answer an Array of each message that is sent by an expression in a method but is not implemented by any object in the system."
+
+	| all unimplemented |
+	all := IdentitySet new.
+	self allBehaviorsDo: [ :cl | cl selectorsDo: [ :aSelector | all add: aSelector ] ].
+	unimplemented := IdentityDictionary new.
+	self
+		allBehaviorsDo: [ :cl | cl
+				selectorsAndMethodsDo: [ :sel :meth | meth messages
+						do: [ :m | | entry |
+							(all includes: m)
+								ifFalse: [ entry := unimplemented at: m ifAbsent: [ Array new ].
+									entry := entry copyWith: cl name , '>' , sel.
+									unimplemented at: m put: entry ] ] ] ].
+	^ unimplemented
+]
+
+SystemNavigation class >> default
+[
+	^ self new
+]
+
+on.
 					extensionCategories
 						removeAllSuchThat: [ :category | packagesList
 								anySatisfy: [ :package | category asLowercase allButFirst = package asLowercase

@@ -3,17 +3,17 @@ LimitingLineStreamWrapper
 	package: #'Collections-Streams'.
 
 LimitingLineStreamWrapper >> atEnd
-[atEnd
+[
 	^ line isNil or: [ limitingBlock value: line ]
 ]
 
 LimitingLineStreamWrapper >> close
-[close
+[
 	^ stream close
 ]
 
 LimitingLineStreamWrapper >> delimiter: aString
-[delimiter: aString
+[
 	"Set limitBlock to check for a delimiting string. Be unlimiting if nil"
 
 	self
@@ -25,14 +25,14 @@ LimitingLineStreamWrapper >> delimiter: aString
 ]
 
 LimitingLineStreamWrapper >> lastLineRead
-[lastLineRead
+[
 	"Return line last read. At stream end, this is the boundary line or nil"
 
 	^ line
 ]
 
 LimitingLineStreamWrapper >> limitingBlock: aBlock
-[limitingBlock: aBlock
+[
 	"The limitingBlock is evaluated with a line to check if this line terminates the stream"
 
 	limitingBlock := aBlock.
@@ -40,7 +40,7 @@ LimitingLineStreamWrapper >> limitingBlock: aBlock
 ]
 
 LimitingLineStreamWrapper >> linesUpToEnd
-[linesUpToEnd
+[
 	| elements ln |
 	elements := OrderedCollection new.
 	[ (ln := self nextLine) isNil ] whileFalse: [ elements add: ln ].
@@ -48,7 +48,7 @@ LimitingLineStreamWrapper >> linesUpToEnd
 ]
 
 LimitingLineStreamWrapper >> next
-[next
+[
 	"Provide character-based access"
 
 	position ifNil: [ ^ nil ].
@@ -60,7 +60,7 @@ LimitingLineStreamWrapper >> next
 ]
 
 LimitingLineStreamWrapper >> nextLine
-[nextLine
+[
 	| thisLine |
 	self atEnd
 		ifTrue: [ ^ nil ].
@@ -70,34 +70,34 @@ LimitingLineStreamWrapper >> nextLine
 ]
 
 LimitingLineStreamWrapper >> peekLine
-[peekLine
+[
 	self atEnd
 		ifTrue: [ ^ nil ].
 	^ line
 ]
 
 LimitingLineStreamWrapper >> printOn: aStream
-[printOn: aStream
+[
 	super printOn: aStream.
 	aStream nextPutAll: ' on '.
 	stream printOn: aStream
 ]
 
 LimitingLineStreamWrapper >> setStream: aStream delimiter: aString
-[setStream: aStream delimiter: aString
+[
 	stream := aStream.
 	line := stream nextLine.
 	self delimiter: aString	"sets position"
 ]
 
 LimitingLineStreamWrapper >> skipThisLine
-[skipThisLine
+[
 	line := stream nextLine.
 	self updatePosition
 ]
 
 LimitingLineStreamWrapper >> upToEnd
-[upToEnd
+[
 	^ String
 		streamContents: [ :strm | | ln |
 			[ (ln := self nextLine) isNil ] whileFalse: [ strm
@@ -106,7 +106,7 @@ LimitingLineStreamWrapper >> upToEnd
 ]
 
 LimitingLineStreamWrapper >> updatePosition
-[updatePosition
+[
 	"Call this before doing character-based access"
 
 	position := self atEnd
@@ -114,7 +114,7 @@ LimitingLineStreamWrapper >> updatePosition
 ]
 
 LimitingLineStreamWrapper class >> example1
-[example1
+[
 	"LimitingLineStreamWrapper example1"
 
 	"Separate chunks of text delimited by a special string"
@@ -129,7 +129,7 @@ LimitingLineStreamWrapper class >> example1
 ]
 
 LimitingLineStreamWrapper class >> example2
-[example2
+[
 	"LimitingLineStreamWrapper example2"
 
 	"Demo nesting wrappers - get header lines from some messages"
@@ -147,8 +147,16 @@ LimitingLineStreamWrapper class >> example2
 ]
 
 LimitingLineStreamWrapper class >> exampleStream
-[exampleStream
+[
 	^ 'From me@somewhereFrom: meTo: youSubject: TestTestFrom you@elsewhereFrom: youTo: meSubject: Re: testokay' readStream
+]
+
+LimitingLineStreamWrapper class >> on: aStream delimiter: aString
+[
+	^ self new setStream: aStream delimiter: aString
+]
+
+estTestFrom you@elsewhereFrom: youTo: meSubject: Re: testokay' readStream
 ]
 
 LimitingLineStreamWrapper class >> on: aStream delimiter: aString

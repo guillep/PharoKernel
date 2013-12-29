@@ -4,12 +4,12 @@ MethodDictionary
 	package: #Kernel.
 
 MethodDictionary >> add: anAssociation
-[add: anAssociation
+[
 	^ self at: anAssociation key put: anAssociation value
 ]
 
 MethodDictionary >> associationAt: key ifAbsent: aBlock
-[associationAt: key ifAbsent: aBlock
+[
 	"Answer the association with the given key.
        If key is not found, return the result of evaluating aBlock."
 
@@ -17,14 +17,14 @@ MethodDictionary >> associationAt: key ifAbsent: aBlock
 ]
 
 MethodDictionary >> associationsDo: aBlock
-[associationsDo: aBlock
+[
 	tally = 0
 		ifTrue: [ ^ self ].
 	1 to: self basicSize do: [ :i | (self basicAt: i) ifNotNil: [ :key | aBlock value: (Association key: key value: (array at: i)) ] ]
 ]
 
 MethodDictionary >> at: key ifAbsent: aBlock
-[at: key ifAbsent: aBlock
+[
 	| index |
 	index := self findElementOrNil: key.
 	(self basicAt: index) ifNil: [ ^ aBlock value ].
@@ -32,12 +32,12 @@ MethodDictionary >> at: key ifAbsent: aBlock
 ]
 
 MethodDictionary >> at: key ifPresent: aBlock
-[at: key ifPresent: aBlock
+[
 	^ (array at: (self findElementOrNil: key)) ifNotNil: [ :value | aBlock cull: value ]
 ]
 
 MethodDictionary >> at: key put: value
-[at: key put: value
+[
 	"Set the value at key to be value."
 
 	| index |
@@ -52,7 +52,7 @@ MethodDictionary >> at: key put: value
 ]
 
 MethodDictionary >> compact
-[compact
+[
 	"Make sure that I have the highest possible load factor (between 37.5% and 75%)."
 
 	| newInstance |
@@ -63,7 +63,7 @@ MethodDictionary >> compact
 ]
 
 MethodDictionary >> compactWithoutBecome
-[compactWithoutBecome
+[
 	"Return a copy of self which has the highest possible load factor (between 37.5% and 75%)."
 
 	| newInstance |
@@ -73,7 +73,7 @@ MethodDictionary >> compactWithoutBecome
 ]
 
 MethodDictionary >> fixCollisionsFrom: start
-[fixCollisionsFrom: start
+[
 	"The element at start has been removed and replaced by nil.
 	This method moves forward from there, relocating any entries
 	that had been placed below due to collisions with this one."
@@ -87,7 +87,7 @@ MethodDictionary >> fixCollisionsFrom: start
 ]
 
 MethodDictionary >> grow
-[grow
+[
 	| newSelf |
 	newSelf := self species newForCapacity: self basicSize * 2.
 	1 to: self basicSize do: [ :i | (self basicAt: i) ifNotNil: [ :key | newSelf at: key put: (array at: i) ] ].
@@ -95,7 +95,7 @@ MethodDictionary >> grow
 ]
 
 MethodDictionary >> isHealthy
-[isHealthy
+[
 	"Test that selector hashes match their positions stored in dictionary,
 	answer true if everything ok, false otherwise
 	
@@ -112,7 +112,7 @@ MethodDictionary >> isHealthy
 ]
 
 MethodDictionary >> keyAtIdentityValue: value ifAbsent: exceptionBlock
-[keyAtIdentityValue: value ifAbsent: exceptionBlock
+[
 	"Answer the key whose value equals the argument, value. If there is
 	none, answer the result of evaluating exceptionBlock."
 
@@ -122,7 +122,7 @@ MethodDictionary >> keyAtIdentityValue: value ifAbsent: exceptionBlock
 ]
 
 MethodDictionary >> keyAtValue: value ifAbsent: exceptionBlock
-[keyAtValue: value ifAbsent: exceptionBlock
+[
 	"Answer the key whose value equals the argument, value. If there is
 	none, answer the result of evaluating exceptionBlock."
 
@@ -132,7 +132,7 @@ MethodDictionary >> keyAtValue: value ifAbsent: exceptionBlock
 ]
 
 MethodDictionary >> keysAndValuesDo: aBlock
-[keysAndValuesDo: aBlock
+[
 	"Enumerate the receiver with all the keys and values passed to the block"
 
 	tally = 0
@@ -141,19 +141,19 @@ MethodDictionary >> keysAndValuesDo: aBlock
 ]
 
 MethodDictionary >> keysDo: aBlock
-[keysDo: aBlock
+[
 	tally = 0
 		ifTrue: [ ^ self ].
 	1 to: self basicSize do: [ :i | (self basicAt: i) ifNotNil: [ :key | aBlock value: key ] ]
 ]
 
 MethodDictionary >> postCopy
-[postCopy
+[
 	array := array copy
 ]
 
 MethodDictionary >> rehash
-[rehash
+[
 	| newInstance |
 	newInstance := self species newForCapacity: self basicSize.
 	1 to: self basicSize do: [ :index | (self basicAt: index) ifNotNil: [ :key | newInstance at: key put: (array at: index) ] ].
@@ -161,7 +161,7 @@ MethodDictionary >> rehash
 ]
 
 MethodDictionary >> removeAll
-[removeAll
+[
 	"Remove all elements from this collection. Preserve the capacity"
 
 	| newSelf |
@@ -172,7 +172,7 @@ MethodDictionary >> removeAll
 ]
 
 MethodDictionary >> removeDangerouslyKey: key ifAbsent: aBlock
-[removeDangerouslyKey: key ifAbsent: aBlock
+[
 	"This is not really dangerous.  But if normal removal
 	were done WHILE a MethodDict were being used, the
 	system might crash.  So instead we make a copy, then do
@@ -191,7 +191,7 @@ MethodDictionary >> removeDangerouslyKey: key ifAbsent: aBlock
 ]
 
 MethodDictionary >> removeKey: key ifAbsent: errorBlock
-[removeKey: key ifAbsent: errorBlock
+[
 	"The interpreter might be using this MethodDictionary while
 	this method is running! Therefore we perform the removal
 	in a copy, and then atomically copy that copy"
@@ -204,7 +204,7 @@ MethodDictionary >> removeKey: key ifAbsent: errorBlock
 ]
 
 MethodDictionary >> scanFor: anObject
-[scanFor: anObject
+[
 	"Scan the key array for the first slot containing either a nil (indicating an empty slot) or an element that matches anObject. Answer the index of that slot or zero if no slot is found. This method will be overridden in various subclasses that have different interpretations for matching elements."
 
 	| element start finish |
@@ -218,7 +218,7 @@ MethodDictionary >> scanFor: anObject
 ]
 
 MethodDictionary >> swap: oneIndex with: otherIndex
-[swap: oneIndex with: otherIndex
+[
 	| element |
 	element := self basicAt: oneIndex.
 	self basicAt: oneIndex put: (self basicAt: otherIndex).
@@ -227,14 +227,14 @@ MethodDictionary >> swap: oneIndex with: otherIndex
 ]
 
 MethodDictionary >> valuesDo: aBlock
-[valuesDo: aBlock
+[
 	tally = 0
 		ifTrue: [ ^ self ].
 	1 to: self basicSize do: [ :i | (array at: i) ifNotNil: [ :value | aBlock value: value ] ]
 ]
 
 MethodDictionary class >> compactAllInstances
-[compactAllInstances
+[
 	| instancesToExchange newInstances |
 	instancesToExchange := Array
 		streamContents: [ :oldStream | newInstances := Array
@@ -249,22 +249,34 @@ MethodDictionary class >> compactAllInstances
 ]
 
 MethodDictionary class >> new
-[new
+[
 	"Create a new instance with 32 slots, which can hold at most 24 methods before growing is necessary."
 
 	^ self newForCapacity: 32
 ]
 
 MethodDictionary class >> new: numberOfElements
-[new: numberOfElements
+[
 	"Create an instance large enough to hold numberOfElements methods without growing."
 
 	^ self newForCapacity: (self sizeFor: numberOfElements)
 ]
 
 MethodDictionary class >> newForCapacity: capacity
-[newForCapacity: capacity
+[
 	"Create an instance with the given capacity which must be a power of two."
+
+	^ (self basicNew: capacity) initialize: capacity
+]
+
+MethodDictionary class >> sizeFor: numberOfElements
+[
+	"Return the minimum capacity of a dictionary that can hold numberOfElements elements. At least 25% of the array must be empty and the return value must be a nonnegative power of 2. Notice that the max: 1 is because a MethodDictionaries can never be entirely empty, as the #grow method requires it not to be (since it does self basicSize * 2)"
+
+	^ (numberOfElements * 4 // 3 max: 1) asLargerPowerOfTwo
+]
+
+th the given capacity which must be a power of two."
 
 	^ (self basicNew: capacity) initialize: capacity
 ]

@@ -5,7 +5,7 @@ WindowsStore
 	package: #'FileSystem-Disk'.
 
 WindowsStore >> checkName: aFileName fixErrors: fixing
-[checkName: aFileName fixErrors: fixing
+[
 	"Check if the file name contains any invalid characters"
 
 	| fName badChars hasBadChars |
@@ -21,7 +21,7 @@ WindowsStore >> checkName: aFileName fixErrors: fixing
 ]
 
 WindowsStore >> pathFromString: aString
-[pathFromString: aString
+[
 	| normalized pathClass |
 	normalized := aString copy replaceAll: UnixStore delimiter with: self delimiter.
 	pathClass := (Path isAbsoluteWindowsPath: normalized)
@@ -31,21 +31,32 @@ WindowsStore >> pathFromString: aString
 ]
 
 WindowsStore >> printPath: aPath on: aStream
-[printPath: aPath on: aStream
+[
 	aPath printOn: aStream delimiter: self delimiter
 ]
 
 WindowsStore class >> delimiter
-[delimiter
+[
 	^ $\
 ]
 
 WindowsStore class >> isCaseSensitive
-[isCaseSensitive
+[
 	^ false
 ]
 
 WindowsStore class >> maxFileNameLength
+[
+	self flag: 'TODO: more tests needed here!'.
+	^ 255
+]
+
+WindowsStore class >> separator
+[
+	^ $\
+]
+
+leNameLength
 [maxFileNameLength
 	self flag: 'TODO: more tests needed here!'.
 	^ 255

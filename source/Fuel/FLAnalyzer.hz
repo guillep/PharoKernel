@@ -3,56 +3,56 @@ FLAnalyzer
 	package: #Fuel.
 
 FLAnalyzer >> analysisFor: anObject
-[analysisFor: anObject
+[
 	^ analysisFactory value: anObject
 ]
 
 FLAnalyzer >> considerGlobal: aSymbol
-[considerGlobal: aSymbol
+[
 	globalSymbols add: aSymbol
 ]
 
 FLAnalyzer >> firstInMapperChain
-[firstInMapperChain
+[
 	^ self mappers first
 ]
 
 FLAnalyzer >> fuelAccept: aGeneralMapper
-[fuelAccept: aGeneralMapper
+[
 	^ aGeneralMapper visitSubstitution: self by: nil
 ]
 
 FLAnalyzer >> generalMapper
-[generalMapper
+[
 	^ generalMapperFactory value
 ]
 
 FLAnalyzer >> globalEnvironment
-[globalEnvironment
+[
 	"Answer a dictionary where the look up for global symbols will be done during serialization."
 
 	^ globalEnvironment
 ]
 
 FLAnalyzer >> globalEnvironment: aDictionary
-[globalEnvironment: aDictionary
+[
 	globalEnvironment := aDictionary
 ]
 
 FLAnalyzer >> globalMappers
-[globalMappers
+[
 	^ globalMappersFactory value
 ]
 
 FLAnalyzer >> globalSymbols
-[globalSymbols
+[
 	"Answer the collection of symbols whose associations and values in Smalltalk globals will be considered as globals by Fuel."
 
 	^ globalSymbols
 ]
 
 FLAnalyzer >> initialize
-[initialize
+[
 	super initialize.
 	self setDefaultAnalysis.
 	self useLightMappers.
@@ -64,14 +64,14 @@ FLAnalyzer >> initialize
 ]
 
 FLAnalyzer >> lightGlobalMappers
-[lightGlobalMappers
+[
 	^ globalSymbols isEmpty
 		ifTrue: [ #() ]
 		ifFalse: [ Array with: (FLLightGlobalMapper for: globalSymbols in: self globalEnvironment) ]
 ]
 
 FLAnalyzer >> mappers
-[mappers
+[
 	^ OrderedCollection new
 		addAll: self pluggableSubstitutionMappers;
 		addAll: self globalMappers;
@@ -81,17 +81,17 @@ FLAnalyzer >> mappers
 ]
 
 FLAnalyzer >> pluggableSubstitutionMappers
-[pluggableSubstitutionMappers
+[
 	^ pluggableSubstitutions collect: [ :aLink | FLPluggableSubstitutionMapper when: aLink key substituteBy: aLink value ]
 ]
 
 FLAnalyzer >> privateFirstInMapperChain
-[privateFirstInMapperChain
+[
 	^ self privateMappers first
 ]
 
 FLAnalyzer >> privateMappers
-[privateMappers
+[
 	^ OrderedCollection new
 		addAll: self globalMappers;
 		add: self generalMapper;
@@ -100,24 +100,37 @@ FLAnalyzer >> privateMappers
 ]
 
 FLAnalyzer >> setDefaultAnalysis
-[setDefaultAnalysis
+[
 	analysisFactory := [ :anObject | (FLAnalysis newWith: self firstInMapperChain private: self privateFirstInMapperChain root: anObject)
 		run;
 		yourself ]
 ]
 
 FLAnalyzer >> useLightMappers
-[useLightMappers
+[
 	globalMappersFactory := [ self lightGlobalMappers ].
 	generalMapperFactory := [ FLLightGeneralMapper new ]
 ]
 
 FLAnalyzer >> when: aCondition substituteBy: aFactory
-[when: aCondition substituteBy: aFactory
+[
 	pluggableSubstitutions add: aCondition -> aFactory
 ]
 
 FLAnalyzer class >> defaultGlobalSymbols
+[
+	^ #(#Smalltalk #SourceFiles #Transcript #Undeclared #Display #TextConstants #ActiveWorld #ActiveHand #ActiveEvent #Sensor #Processor #SystemOrganization #World)
+		select: [ :each | self environment includesKey: each ]
+]
+
+FLAnalyzer class >> newDefault
+[
+	"Returns an instance with default configuration."
+
+	^ self new
+]
+
+>> defaultGlobalSymbols
 [defaultGlobalSymbols
 	^ #(#Smalltalk #SourceFiles #Transcript #Undeclared #Display #TextConstants #ActiveWorld #ActiveHand #ActiveEvent #Sensor #Processor #SystemOrganization #World)
 		select: [ :each | self environment includesKey: each ]

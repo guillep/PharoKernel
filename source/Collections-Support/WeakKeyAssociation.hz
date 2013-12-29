@@ -5,14 +5,14 @@ WeakKeyAssociation
 	package: #'Collections-Support'.
 
 WeakKeyAssociation >> < aLookupKey
-[< aLookupKey
+[
 	"Refer to the comment in Magnitude|<."
 
 	^ self key < aLookupKey key
 ]
 
 WeakKeyAssociation >> = aLookupKey
-[= aLookupKey
+[
 	"XXX why doesn't this consider the value? mvl"
 
 	self species = aLookupKey species
@@ -21,7 +21,7 @@ WeakKeyAssociation >> = aLookupKey
 ]
 
 WeakKeyAssociation >> expire
-[expire
+[
 	"Release the value if the key has gone. Return true if a modification was made."
 
 	(self basicAt: 1) ifNil: [ value == self
@@ -32,40 +32,40 @@ WeakKeyAssociation >> expire
 ]
 
 WeakKeyAssociation >> expired
-[expired
+[
 	^ value == self
 ]
 
 WeakKeyAssociation >> hash
-[hash
+[
 	"Hash is reimplemented because = is implemented."
 
 	^ self key hash
 ]
 
 WeakKeyAssociation >> isVariableBinding
-[isVariableBinding
+[
 	"Return true if I represent a literal variable binding"
 
 	^ true
 ]
 
 WeakKeyAssociation >> key
-[key
+[
 	"Answer the lookup key of the receiver."
 
 	^ self basicAt: 1
 ]
 
 WeakKeyAssociation >> key: anObject
-[key: anObject
+[
 	"Store the argument, anObject, as the lookup key of the receiver."
 
 	self basicAt: 1 put: anObject
 ]
 
 WeakKeyAssociation >> key: aKey value: anObject
-[key: aKey value: anObject
+[
 	"Store the arguments as the variables of the receiver."
 
 	self basicAt: 1 put: aKey.
@@ -73,21 +73,21 @@ WeakKeyAssociation >> key: aKey value: anObject
 ]
 
 WeakKeyAssociation >> name
-[name
+[
 	^ self key isString
 		ifTrue: [ self key ]
 		ifFalse: [ self key printString ]
 ]
 
 WeakKeyAssociation >> printOn: aStream
-[printOn: aStream
+[
 	self key printOn: aStream.
 	aStream nextPutAll: '->'.
 	value printOn: aStream
 ]
 
 WeakKeyAssociation >> storeOn: aStream
-[storeOn: aStream
+[
 	"Store in the format (key->value)"
 
 	aStream
@@ -103,7 +103,7 @@ WeakKeyAssociation >> storeOn: aStream
 ]
 
 WeakKeyAssociation >> value
-[value
+[
 	"Answer the value of the receiver."
 
 	^ value == self
@@ -112,7 +112,7 @@ WeakKeyAssociation >> value
 ]
 
 WeakKeyAssociation >> value: anObject
-[value: anObject
+[
 	"Store the argument, anObject, as the value of the receiver."
 
 	anObject == self
@@ -121,7 +121,7 @@ WeakKeyAssociation >> value: anObject
 ]
 
 WeakKeyAssociation class >> expired
-[expired
+[
 	"Answer an object that is already expired. Used for printing"
 
 	^ (self key: nil value: nil)
@@ -130,6 +130,14 @@ WeakKeyAssociation class >> expired
 ]
 
 WeakKeyAssociation class >> key: newKey value: newValue
+[
+	"Answer an instance of me with the arguments as the key and value of 
+	the association."
+
+	^ (self basicNew: 1) key: newKey value: newValue
+]
+
+value: newValue
 [key: newKey value: newValue
 	"Answer an instance of me with the arguments as the key and value of 
 	the association."

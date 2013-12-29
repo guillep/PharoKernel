@@ -4,41 +4,41 @@ TraitTransformation
 	package: #Traits.
 
 TraitTransformation >> - anArray
-[- anArray
+[
 	TraitCompositionException signal: 'Invalid trait exclusion. Exclusions have to be specified after aliases.'
 ]
 
 TraitTransformation >> @ anArrayOfAssociations
-[@ anArrayOfAssociations
+[
 	TraitCompositionException signal: 'Invalid trait exclusion. Aliases have to be specified before exclusions.'
 ]
 
 TraitTransformation >> addExclusionOf: aSymbol
-[addExclusionOf: aSymbol
+[
 	^ self - {aSymbol}
 ]
 
 TraitTransformation >> aliasesForSelector: aSymbol
-[aliasesForSelector: aSymbol
+[
 	"Return a collection of alias selectors that are defined in this transformation."
 
 	^ self subject aliasesForSelector: aSymbol
 ]
 
 TraitTransformation >> allAliasesDict
-[allAliasesDict
+[
 	"Return a dictionary with all alias associations that are defined in this transformation."
 
 	^ self subject allAliasesDict
 ]
 
 TraitTransformation >> allSelectors
-[allSelectors
+[
 	^ self subclassResponsibility
 ]
 
 TraitTransformation >> changedSelectorsComparedTo: aTraitTransformation
-[changedSelectorsComparedTo: aTraitTransformation
+[
 	| selectors otherSelectors changedSelectors aliases otherAliases |
 	selectors := self allSelectors asIdentitySet.
 	otherSelectors := aTraitTransformation allSelectors asIdentitySet.
@@ -56,7 +56,7 @@ TraitTransformation >> changedSelectorsComparedTo: aTraitTransformation
 ]
 
 TraitTransformation >> collectMethodsFor: aSelector into: methodDescription
-[collectMethodsFor: aSelector into: methodDescription
+[
 	"Collect instances of LocatedMethod into methodDescription
 	for each method that has the selector aSelector and is not excluded
 	or for which aSelector is an alias."
@@ -65,30 +65,30 @@ TraitTransformation >> collectMethodsFor: aSelector into: methodDescription
 ]
 
 TraitTransformation >> copy
-[copy
+[
 	self error: 'should not be called'.
 	^ super copy
 ]
 
 TraitTransformation >> copyTraitExpression
-[copyTraitExpression
+[
 	^ self shallowCopy
 		subject: self subject copyTraitExpression;
 		yourself
 ]
 
 TraitTransformation >> isEmpty
-[isEmpty
+[
 	self subclassResponsibility
 ]
 
 TraitTransformation >> isMeta
-[isMeta
+[
 	^ self subject isMeta
 ]
 
 TraitTransformation >> normalized
-[normalized
+[
 	^ self isEmpty
 		ifFalse: [ self subject: self subject normalized.
 			self ]
@@ -96,32 +96,57 @@ TraitTransformation >> normalized
 ]
 
 TraitTransformation >> postCopy
-[postCopy
+[
 	super postCopy.
 	subject := subject copy
 ]
 
 TraitTransformation >> printOn: aStream
-[printOn: aStream
+[
 	aStream print: self subject
 ]
 
 TraitTransformation >> removeAlias: aSymbol
-[removeAlias: aSymbol
+[
 	self subject removeAlias: aSymbol
 ]
 
 TraitTransformation >> selectors
-[selectors
+[
 	^ self allSelectors
 ]
 
 TraitTransformation >> sourceCodeTemplate
-[sourceCodeTemplate
+[
 	^ self subject sourceCodeTemplate
 ]
 
 TraitTransformation >> subject
+[
+	^ subject
+]
+
+TraitTransformation >> subject: aTraitTransformation
+[
+	subject := aTraitTransformation
+]
+
+TraitTransformation >> theNonMetaClass
+[
+	^ self subject theNonMetaClass
+]
+
+TraitTransformation >> trait
+[
+	^ self subject trait
+]
+
+TraitTransformation >> traitTransformations
+[
+	^ {subject}
+]
+
+ansformation >> subject
 [subject
 	^ subject
 ]

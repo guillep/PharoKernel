@@ -4,14 +4,14 @@ ErrorNonInteractive
 	package: #UIManager.
 
 ErrorNonInteractive >> defaultAction
-[defaultAction
+[
 	" log error and quit "
 
 	^ UIManager default quitFrom: self signalerContext withMessage: self description
 ]
 
 ErrorNonInteractive >> description
-[description
+[
 	^ String
 		streamContents: [ :s | s nextPutAll: 'An attempt to use interactive tools detected, while in non-interactive mode'.
 			self messageText ifNotEmpty: [ :message | s
@@ -25,16 +25,23 @@ ErrorNonInteractive >> description
 ]
 
 ErrorNonInteractive >> exception
-[exception
+[
 	^ exception
 ]
 
 ErrorNonInteractive >> exception: anError
-[exception: anError
+[
 	exception := anError
 ]
 
 ErrorNonInteractive class >> signalForException: anError
+[
+	^ self new
+		exception: anError;
+		signal
+]
+
+or
 [signalForException: anError
 	^ self new
 		exception: anError;

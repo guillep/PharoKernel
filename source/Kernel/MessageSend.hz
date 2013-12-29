@@ -3,33 +3,33 @@ MessageSend
 	package: #Kernel.
 
 MessageSend >> = anObject
-[= anObject
+[
 	^ anObject species == self species
 		and: [ receiver == anObject receiver and: [ selector == anObject selector and: [ arguments = anObject arguments ] ] ]
 ]
 
 MessageSend >> arguments
-[arguments
+[
 	^ arguments
 ]
 
 MessageSend >> arguments: anArray
-[arguments: anArray
+[
 	arguments := anArray
 ]
 
 MessageSend >> asMinimalRepresentation
-[asMinimalRepresentation
+[
 	^ self
 ]
 
 MessageSend >> asWeakMessageSend
-[asWeakMessageSend
+[
 	^ WeakMessageSend receiver: receiver selector: selector arguments: arguments copy
 ]
 
 MessageSend >> collectArguments: anArgArray
-[collectArguments: anArgArray
+[
 	"Private"
 
 	| staticArgs |
@@ -46,50 +46,50 @@ MessageSend >> collectArguments: anArgArray
 ]
 
 MessageSend >> cull: arg
-[cull: arg
+[
 	^ selector numArgs = 0
 		ifTrue: [ self value ]
 		ifFalse: [ self value: arg ]
 ]
 
 MessageSend >> cull: arg1 cull: arg2
-[cull: arg1 cull: arg2
+[
 	^ selector numArgs < 2
 		ifTrue: [ self cull: arg1 ]
 		ifFalse: [ self value: arg1 value: arg2 ]
 ]
 
 MessageSend >> cull: arg1 cull: arg2 cull: arg3
-[cull: arg1 cull: arg2 cull: arg3
+[
 	^ selector numArgs < 3
 		ifTrue: [ self cull: arg1 cull: arg2 ]
 		ifFalse: [ self value: arg1 value: arg2 value: arg3 ]
 ]
 
 MessageSend >> hash
-[hash
+[
 	^ receiver hash bitXor: selector hash
 ]
 
 MessageSend >> isMessageSend
-[isMessageSend
+[
 	^ true
 ]
 
 MessageSend >> isValid
-[isValid
+[
 	^ true
 ]
 
 MessageSend >> numArgs
-[numArgs
+[
 	"Answer the number of arguments in this message"
 
 	^ arguments size
 ]
 
 MessageSend >> printOn: aStream
-[printOn: aStream
+[
 	aStream
 		nextPutAll: self class name;
 		nextPut: $(.
@@ -100,27 +100,27 @@ MessageSend >> printOn: aStream
 ]
 
 MessageSend >> receiver
-[receiver
+[
 	^ receiver
 ]
 
 MessageSend >> receiver: anObject
-[receiver: anObject
+[
 	receiver := anObject
 ]
 
 MessageSend >> selector
-[selector
+[
 	^ selector
 ]
 
 MessageSend >> selector: aSymbol
-[selector: aSymbol
+[
 	selector := aSymbol
 ]
 
 MessageSend >> value
-[value
+[
 	"Send the message and answer the return value"
 
 	receiver class isObsolete
@@ -132,7 +132,7 @@ MessageSend >> value
 ]
 
 MessageSend >> value: anObject
-[value: anObject
+[
 	receiver class isObsolete
 		ifTrue: [ ^ nil ].
 	(receiver isBehavior and: [ receiver isObsolete ])
@@ -141,12 +141,12 @@ MessageSend >> value: anObject
 ]
 
 MessageSend >> value: anObject1 value: anObject2
-[value: anObject1 value: anObject2
+[
 	^ receiver perform: selector with: anObject1 with: anObject2
 ]
 
 MessageSend >> value: anObject1 value: anObject2 value: anObject3
-[value: anObject1 value: anObject2 value: anObject3
+[
 	^ receiver
 		perform: selector
 		with: anObject1
@@ -155,12 +155,12 @@ MessageSend >> value: anObject1 value: anObject2 value: anObject3
 ]
 
 MessageSend >> valueWithArguments: anArray
-[valueWithArguments: anArray
+[
 	^ receiver perform: selector withArguments: (self collectArguments: anArray)
 ]
 
 MessageSend >> valueWithEnoughArguments: anArray
-[valueWithEnoughArguments: anArray
+[
 	"call the selector with enough arguments from arguments and anArray"
 
 	| args |
@@ -180,6 +180,24 @@ MessageSend >> valueWithEnoughArguments: anArray
 ]
 
 MessageSend class >> receiver: anObject selector: aSymbol
+[
+	^ self receiver: anObject selector: aSymbol arguments: #()
+]
+
+MessageSend class >> receiver: anObject selector: aSymbol argument: aParameter
+[
+	^ self receiver: anObject selector: aSymbol arguments: (Array with: aParameter)
+]
+
+MessageSend class >> receiver: anObject selector: aSymbol arguments: anArray
+[
+	^ self new
+		receiver: anObject;
+		selector: aSymbol;
+		arguments: anArray
+]
+
+>> receiver: anObject selector: aSymbol
 [receiver: anObject selector: aSymbol
 	^ self receiver: anObject selector: aSymbol arguments: #()
 ]

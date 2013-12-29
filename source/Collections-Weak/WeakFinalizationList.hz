@@ -4,12 +4,12 @@ WeakFinalizationList
 	package: #'Collections-Weak'.
 
 WeakFinalizationList >> first
-[first
+[
 	^ first
 ]
 
 WeakFinalizationList >> swapWithNil
-[swapWithNil
+[
 	| head |
 	head := first.
 	first := nil.
@@ -17,20 +17,23 @@ WeakFinalizationList >> swapWithNil
 ]
 
 WeakFinalizationList class >> hasNewFinalization
-[hasNewFinalization
+[
 	^ HasNewFinalization == true
 ]
 
 WeakFinalizationList class >> initialize
-[initialize
+[
 	Smalltalk
 		removeFromStartUpList: self;
 		addToStartUpList: self after: SmalltalkImage
 ]
 
 WeakFinalizationList class >> startUp: resuming
-[startUp: resuming
+[
 	resuming
 		ifTrue: [ HasNewFinalization := Smalltalk vm isPharoVM ]
+]
+
+	ifTrue: [ HasNewFinalization := Smalltalk vm isPharoVM ]
 ]
 

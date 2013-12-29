@@ -4,21 +4,21 @@ DelayWaitTimeout
 	package: #Kernel.
 
 DelayWaitTimeout >> isExpired
-[isExpired
+[
 	"Did this timeout fire before the associated semaphore was signaled?"
 
 	^ expired
 ]
 
 DelayWaitTimeout >> setDelay: anInteger forSemaphore: aSemaphore
-[setDelay: anInteger forSemaphore: aSemaphore
+[
 	super setDelay: anInteger forSemaphore: aSemaphore.
 	process := Processor activeProcess.
 	expired := false
 ]
 
 DelayWaitTimeout >> signalWaitingProcess
-[signalWaitingProcess
+[
 	"Release the given process from the semaphore it is waiting on.
 	This method relies on running at highest priority so that it cannot be preempted
 	by the process being released."
@@ -32,7 +32,7 @@ DelayWaitTimeout >> signalWaitingProcess
 ]
 
 DelayWaitTimeout >> wait
-[wait
+[
 	"Wait until either the semaphore is signaled or the delay times out"
 
 	[ 
@@ -40,6 +40,11 @@ DelayWaitTimeout >> wait
 	beingWaitedOn
 		ifTrue: [ delaySemaphore wait ]
 		ifFalse: [ expired := true ] ]
+		ensure: [ self unschedule ].
+	^ self isExpired
+]
+
+e: [ expired := true ] ]
 		ensure: [ self unschedule ].
 	^ self isExpired
 ]

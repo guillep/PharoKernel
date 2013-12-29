@@ -3,62 +3,62 @@ LocaleID
 	package: #'System-Localization'.
 
 LocaleID >> = anotherObject
-[= anotherObject
+[
 	self class == anotherObject class
 		ifFalse: [ ^ false ].
 	^ self isoLanguage = anotherObject isoLanguage and: [ self isoCountry = anotherObject isoCountry ]
 ]
 
 LocaleID >> displayCountry
-[displayCountry
+[
 	^ ISOLanguageDefinition iso2Countries at: self isoCountry asUppercase ifAbsent: [ self isoCountry ]
 ]
 
 LocaleID >> displayLanguage
-[displayLanguage
+[
 	| language |
 	language := (ISOLanguageDefinition iso2LanguageTable at: self isoLanguage ifAbsent: [ ^ self isoLanguage ]) language.
 	^ self isoCountry ifNil: [ language ] ifNotNil: [ language , ' (' , self displayCountry , ')' ]
 ]
 
 LocaleID >> hasParent
-[hasParent
+[
 	^ self isoCountry notNil
 ]
 
 LocaleID >> hash
-[hash
+[
 	^ self isoLanguage hash bitXor: self isoCountry hash
 ]
 
 LocaleID >> isoCountry
-[isoCountry
+[
 	^ isoCountry
 ]
 
 LocaleID >> isoLanguage
-[isoLanguage
+[
 	^ isoLanguage
 ]
 
 LocaleID >> isoLanguage: langString isoCountry: countryStringOrNil
-[isoLanguage: langString isoCountry: countryStringOrNil
+[
 	isoLanguage := langString.
 	isoCountry := countryStringOrNil
 ]
 
 LocaleID >> isoString
-[isoString
+[
 	^ self asString
 ]
 
 LocaleID >> parent
-[parent
+[
 	^ self class isoLanguage: self isoLanguage
 ]
 
 LocaleID >> posixName
-[posixName
+[
 	"(LocaleID isoString: 'es-MX') posixName"
 
 	"(LocaleID isoString: 'es') posixName"
@@ -69,7 +69,7 @@ LocaleID >> posixName
 ]
 
 LocaleID >> printOn: stream
-[printOn: stream
+[
 	"<language>-<country>"
 
 	stream nextPutAll: self isoLanguage.
@@ -79,7 +79,7 @@ LocaleID >> printOn: stream
 ]
 
 LocaleID >> storeOn: aStream
-[storeOn: aStream
+[
 	aStream nextPut: $(.
 	aStream nextPutAll: self class name.
 	aStream nextPutAll: ' isoString: '.
@@ -88,22 +88,22 @@ LocaleID >> storeOn: aStream
 ]
 
 LocaleID class >> current
-[current
+[
 	^ Locale current localeID
 ]
 
 LocaleID class >> isoLanguage: langString
-[isoLanguage: langString
+[
 	^ self isoLanguage: langString isoCountry: nil
 ]
 
 LocaleID class >> isoLanguage: langString isoCountry: countryStringOrNil
-[isoLanguage: langString isoCountry: countryStringOrNil
+[
 	^ self new isoLanguage: langString isoCountry: countryStringOrNil
 ]
 
 LocaleID class >> isoString: isoString
-[isoString: isoString
+[
 	"Parse the isoString (<language>-<country>) into its components and return the matching LocaleID"
 
 	"LocaleID isoString: 'en' "
@@ -113,6 +113,22 @@ LocaleID class >> isoString: isoString
 	| parts language country |
 	parts := isoString findTokens: #($-).
 	language := parts first.
+	parts size > 1
+		ifTrue: [ country := parts second ].
+	^ self isoLanguage: language isoCountry: country
+]
+
+LocaleID class >> posixName: aString
+[
+	^ self isoString: (aString copyReplaceAll: '_' with: '-')
+]
+
+LocaleID class >> previous
+[
+	^ Locale previous localeID
+]
+
+guage := parts first.
 	parts size > 1
 		ifTrue: [ country := parts second ].
 	^ self isoLanguage: language isoCountry: country

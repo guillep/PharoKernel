@@ -5,19 +5,19 @@ Process
 	package: #Kernel.
 
 Process >> activateReturn: aContext value: value
-[activateReturn: aContext value: value
+[
 	"Activate 'aContext return: value', so execution will return to aContext's sender"
 
 	^ suspendedContext := suspendedContext activateReturn: aContext value: value
 ]
 
 Process >> browserPrintString
-[browserPrintString
+[
 	^ self browserPrintStringWith: suspendedContext
 ]
 
 Process >> browserPrintStringWith: anObject
-[browserPrintStringWith: anObject
+[
 	| stream |
 	stream := (String new: 100) writeStream.
 	stream nextPut: $(.
@@ -33,7 +33,7 @@ Process >> browserPrintStringWith: anObject
 ]
 
 Process >> calleeOf: aContext
-[calleeOf: aContext
+[
 	"Return the context whose sender is aContext.  Return nil if aContext is on top.  Raise error if aContext is not in process chain."
 
 	suspendedContext == aContext
@@ -43,7 +43,7 @@ Process >> calleeOf: aContext
 ]
 
 Process >> complete: aContext
-[complete: aContext
+[
 	"Run self until aContext is popped or an unhandled error is raised.  Return self's new top context, unless an unhandled error was raised then return the signaler context (rather than open a debugger)."
 
 	| ctxt pair error |
@@ -57,7 +57,7 @@ Process >> complete: aContext
 ]
 
 Process >> completeStep: aContext
-[completeStep: aContext
+[
 	"Resume self until aContext is on top, or if already on top, complete next step"
 
 	| callee |
@@ -72,7 +72,7 @@ Process >> completeStep: aContext
 ]
 
 Process >> completeTo: aContext
-[completeTo: aContext
+[
 	"Resume self until aContext is on top"
 
 	self suspendedContext == aContext
@@ -81,24 +81,24 @@ Process >> completeTo: aContext
 ]
 
 Process >> copyStack
-[copyStack
+[
 	^ self copy install: suspendedContext copyStack
 ]
 
 Process >> debug
-[debug
+[
 	^ self debugWithTitle: 'Debug'
 ]
 
 Process >> debug: context title: title
-[debug: context title: title
+[
 	"Open debugger on self with context shown on top"
 
 	^ self debug: context title: title full: false
 ]
 
 Process >> debug: context title: title full: bool
-[debug: context title: title full: bool
+[
 	^ Smalltalk tools debugger
 		openOn: self
 		context: context
@@ -108,7 +108,7 @@ Process >> debug: context title: title full: bool
 ]
 
 Process >> debugWithTitle: title
-[debugWithTitle: title
+[
 	"Open debugger on self"
 
 	| context |
@@ -119,12 +119,12 @@ Process >> debugWithTitle: title
 ]
 
 Process >> environmentKeyNotFound
-[environmentKeyNotFound
+[
 	self error: 'Environment key not found'
 ]
 
 Process >> install: aContext
-[install: aContext
+[
 	"Replace the suspendedContext with aContext."
 
 	self == Processor activeProcess
@@ -133,17 +133,17 @@ Process >> install: aContext
 ]
 
 Process >> isActiveProcess
-[isActiveProcess
+[
 	^ self == Processor activeProcess
 ]
 
 Process >> isSuspended
-[isSuspended
+[
 	^ myList isNil or: [ myList isEmpty ]
 ]
 
 Process >> isTerminated
-[isTerminated
+[
 	self isActiveProcess
 		ifTrue: [ ^ false ].
 	^ suspendedContext isNil
@@ -153,7 +153,7 @@ Process >> isTerminated
 ]
 
 Process >> longPrintOn: stream
-[longPrintOn: stream
+[
 	| ctxt |
 	super printOn: stream.
 	stream cr.
@@ -165,17 +165,17 @@ Process >> longPrintOn: stream
 ]
 
 Process >> name
-[name
+[
 	^ name ifNil: [ self hash asString forceTo: 10 paddingStartWith: $  ]
 ]
 
 Process >> name: aString
-[name: aString
+[
 	name := aString
 ]
 
 Process >> popTo: aContext
-[popTo: aContext
+[
 	"Pop self down to aContext by remote returning from aContext's callee.  Unwind blocks will be executed on the way.
 	This is done by pushing a new context on top which executes 'aContext callee return' then resuming self until aContext is reached.  This way any errors raised in an unwind block will get handled by senders in self and not by senders in the activeProcess.
 	If an unwind block raises an error that is not handled then the popping stops at the error and the signalling context is returned, othewise aContext is returned."
@@ -188,7 +188,7 @@ Process >> popTo: aContext
 ]
 
 Process >> popTo: aContext value: aValue
-[popTo: aContext value: aValue
+[
 	"Replace the suspendedContext with aContext, releasing all contexts 
 	between the currently suspendedContext and it."
 
@@ -200,7 +200,7 @@ Process >> popTo: aContext value: aValue
 ]
 
 Process >> primitiveResume
-[primitiveResume
+[
 	"Primitive. Allow the process that the receiver represents to continue. Put 
 	the receiver in line to become the activeProcess. Fail if the receiver is 
 	already waiting in a queue (in a Semaphore or ProcessScheduler). 
@@ -211,21 +211,21 @@ Process >> primitiveResume
 ]
 
 Process >> printOn: aStream
-[printOn: aStream
+[
 	super printOn: aStream.
 	aStream nextPutAll: ' in '.
 	suspendedContext printOn: aStream
 ]
 
 Process >> priority
-[priority
+[
 	"Answer the priority of the receiver."
 
 	^ priority
 ]
 
 Process >> priority: anInteger
-[priority: anInteger
+[
 	"Set the receiver's priority to anInteger."
 
 	(anInteger >= Processor lowestPriority and: [ anInteger <= Processor highestPriority ])
@@ -234,7 +234,7 @@ Process >> priority: anInteger
 ]
 
 Process >> psValueAt: index
-[psValueAt: index
+[
 	"Answer a process-specific value at given index, or nil if value at given index is not defined"
 
 	"NOTE: this method are PRIVATE. Do not use it directly, instead use ProcessSpecificVariable (or its subclasses) "
@@ -244,7 +244,7 @@ Process >> psValueAt: index
 ]
 
 Process >> psValueAt: index put: value
-[psValueAt: index put: value
+[
 	"Set a value for given index in process-specific storage"
 
 	"NOTE: this method are PRIVATE. Do not use it directly, instead use ProcessSpecificVariable (or its subclasses) "
@@ -256,7 +256,7 @@ Process >> psValueAt: index put: value
 ]
 
 Process >> pvtSignal: anException list: aList
-[pvtSignal: anException list: aList
+[
 	"Private. This method is used to signal an exception from another
 	process...the receiver must be the active process.  If the receiver 
 	was previously waiting on a Semaphore, then return the process
@@ -287,7 +287,7 @@ Process >> pvtSignal: anException list: aList
 ]
 
 Process >> resetPSValueAt: index
-[resetPSValueAt: index
+[
 	"NOTE: this method are PRIVATE. "
 
 	env ifNil: [ ^ self ].
@@ -297,14 +297,14 @@ Process >> resetPSValueAt: index
 ]
 
 Process >> restartTop
-[restartTop
+[
 	"Rollback top context and replace with new method.  Assumes self is suspended"
 
 	suspendedContext privRefresh
 ]
 
 Process >> restartTopWith: method
-[restartTopWith: method
+[
 	"Rollback top context and replace with new method.  Assumes self is suspended"
 
 	method isQuick
@@ -313,7 +313,7 @@ Process >> restartTopWith: method
 ]
 
 Process >> resume
-[resume
+[
 	"Allow the process that the receiver represents to continue. Put  
 	the receiver in line to become the activeProcess. Check for a nil 
 	suspendedContext, which indicates a previously terminated Process that 
@@ -324,7 +324,7 @@ Process >> resume
 ]
 
 Process >> return: aContext value: value
-[return: aContext value: value
+[
 	"Pop thread down to aContext's sender.  Execute any unwind blocks on the way.  See #popTo: comment and #runUntilErrorOrReturnFrom: for more details."
 
 	suspendedContext == aContext
@@ -334,7 +334,7 @@ Process >> return: aContext value: value
 ]
 
 Process >> run
-[run
+[
 	"Suspend current process and execute self instead"
 
 	| proc |
@@ -344,7 +344,7 @@ Process >> run
 ]
 
 Process >> signalException: anException
-[signalException: anException
+[
 	"Signal an exception in the receiver process...if the receiver is currently
 	suspended, the exception will get signaled when the receiver is resumed.  If 
 	the receiver is blocked on a Semaphore, it will be immediately re-awakened
@@ -365,12 +365,12 @@ Process >> signalException: anException
 ]
 
 Process >> step
-[step
+[
 	^ suspendedContext := suspendedContext step
 ]
 
 Process >> step: aContext
-[step: aContext
+[
 	"Resume self until aContext is on top, or if already on top, do next step"
 
 	^ self suspendedContext == aContext
@@ -379,7 +379,7 @@ Process >> step: aContext
 ]
 
 Process >> stepToCallee
-[stepToCallee
+[
 	"Step until top context changes"
 
 	| ctxt |
@@ -389,7 +389,7 @@ Process >> stepToCallee
 ]
 
 Process >> stepToHome: aContext
-[stepToHome: aContext
+[
 	"Resume self until the home of top context is aContext.  Top context may be a block context."
 
 	| home ctxt |
@@ -401,12 +401,12 @@ Process >> stepToHome: aContext
 ]
 
 Process >> stepToSendOrReturn
-[stepToSendOrReturn
+[
 	^ suspendedContext := suspendedContext stepToSendOrReturn
 ]
 
 Process >> suspend
-[suspend
+[
 	"Primitive. Stop the process that the receiver represents in such a way 
 	that it can be restarted at a later time (by sending the receiver the 
 	message resume). If the receiver represents the activeProcess, suspend it. 
@@ -423,26 +423,26 @@ Process >> suspend
 ]
 
 Process >> suspendedContext
-[suspendedContext
+[
 	"Answer the context the receiver has suspended."
 
 	^ suspendedContext
 ]
 
 Process >> suspendedContext: aContext
-[suspendedContext: aContext
+[
 	suspendedContext := aContext
 ]
 
 Process >> suspendingList
-[suspendingList
+[
 	"Answer the list on which the receiver has been suspended."
 
 	^ myList
 ]
 
 Process >> terminate
-[terminate
+[
 	"Stop the process that the receiver represents forever.  Unwind to execute pending ensure:/ifCurtailed: blocks before terminating."
 
 	| ctxt unwindBlock oldList |
@@ -475,7 +475,7 @@ Process >> terminate
 ]
 
 Process class >> allocatePSKey: anObject
-[allocatePSKey: anObject
+[
 	"Add a new process-specific key. 
 	If an object already registered as a key, answer its index,
 	if object is not registered, first search for an empty slot for insertion and if not found, grow an array to add new object"
@@ -492,6 +492,28 @@ Process class >> allocatePSKey: anObject
 					index = 0
 						ifTrue: [ 
 							index := PSKeys indexOf: nil.
+							index = 0
+								ifTrue: [ index := (PSKeys := PSKeys copyWith: anObject) size ]
+								ifFalse: [ 
+									"Yes, this is slow, but we have to make sure that if we reusing index,							all existing processes having value at given index reset to nil.							We don't care if new processes will be created during this loop,							since their env variable will be initially nil anyways, hence nothing to reset "
+									Process allSubInstancesDo: [ :p | p resetPSValueAt: index ].
+									PSKeys at: index put: anObject ] ] ] ].
+	^ index
+]
+
+Process class >> forContext: aContext priority: anInteger
+[
+	"Answer an instance of me that has suspended aContext at priority 
+	anInteger."
+
+	| newProcess |
+	newProcess := self new.
+	newProcess suspendedContext: aContext.
+	newProcess priority: anInteger.
+	^ newProcess
+]
+
+indexOf: nil.
 							index = 0
 								ifTrue: [ index := (PSKeys := PSKeys copyWith: anObject) size ]
 								ifFalse: [ 

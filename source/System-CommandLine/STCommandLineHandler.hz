@@ -4,7 +4,7 @@ STCommandLineHandler
 	package: #'System-CommandLine'.
 
 STCommandLineHandler >> activate
-[activate
+[
 	self activateHelp
 		ifTrue: [ ^ self ].
 	self loadSourceFiles: (self commandLine allFilesWithExtension: 'st').
@@ -13,7 +13,7 @@ STCommandLineHandler >> activate
 ]
 
 STCommandLineHandler >> end
-[end
+[
 	| quit |
 	quit := self commandLine hasOption: 'quit'.
 	(self commandLine hasOption: 'save')
@@ -23,7 +23,7 @@ STCommandLineHandler >> end
 ]
 
 STCommandLineHandler >> handleError: error
-[handleError: error
+[
 	"for syntax errors we can used the default action"
 
 	"otherwise resignal it"
@@ -34,7 +34,7 @@ STCommandLineHandler >> handleError: error
 ]
 
 STCommandLineHandler >> handleError: error reference: aReference
-[handleError: error reference: aReference
+[
 	"Print a header before failing on an errro / syntax notification from the the script loaded by the given request"
 
 	| fileReference |
@@ -55,14 +55,14 @@ STCommandLineHandler >> handleError: error reference: aReference
 ]
 
 STCommandLineHandler >> handleErrorsDuring: aBlock reference: aReference
-[handleErrorsDuring: aBlock reference: aReference
+[
 	aBlock
 		on: Error , OCSemanticWarning , OCSemanticError
 		do: [ :e | self handleError: e reference: aReference ]
 ]
 
 STCommandLineHandler >> installSourceFile: aReference
-[installSourceFile: aReference
+[
 	"Install the the source file given by aFileReference"
 
 	| codeImporter |
@@ -76,7 +76,7 @@ STCommandLineHandler >> installSourceFile: aReference
 ]
 
 STCommandLineHandler >> installSourceFiles
-[installSourceFiles
+[
 	"Install the previously loaded source files"
 
 	sourceFiles ifNil: [ ^ self ].
@@ -85,24 +85,24 @@ STCommandLineHandler >> installSourceFiles
 ]
 
 STCommandLineHandler >> loadSourceFiles: anArray
-[loadSourceFiles: anArray
+[
 	"Load all the source files in the given array."
 
 	sourceFiles := anArray collect: [ :each | (FileSystem disk resolve: each) asFileReference ]
 ]
 
 STCommandLineHandler class >> commandName
-[commandName
+[
 	^ 'st'
 ]
 
 STCommandLineHandler class >> description
-[description
+[
 	^ 'Loads and executes .st source files'
 ]
 
 STCommandLineHandler class >> isResponsibleFor: aCommandLine
-[isResponsibleFor: aCommandLine
+[
 	"This handler is reponsible only for .st files"
 
 	(aCommandLine hasFileWithExtension: '.st')
@@ -111,7 +111,7 @@ STCommandLineHandler class >> isResponsibleFor: aCommandLine
 ]
 
 STCommandLineHandler class >> printCompilerWarning: aSyntaxErrorNotification
-[printCompilerWarning: aSyntaxErrorNotification
+[
 	| stderr position contents errorLine errorMessage maxLineNumberSize lineNumber |
 	"format the error"
 	position := aSyntaxErrorNotification location.
@@ -140,6 +140,17 @@ STCommandLineHandler class >> printCompilerWarning: aSyntaxErrorNotification
 			stderr
 				nextPutAll: (lineNumber asString padLeftTo: maxLineNumberSize with: $0);
 				nextPutAll: ': '.
+			stderr
+				white;
+				nextPutAll: (contents copyFrom: start to: endWithoutDelimiters);
+				lf.	"print the marker under the error line"
+			lineNumber == errorLine
+				ifTrue: [ stderr red
+						nextPutAll: ('_^_' padLeftTo: position - start + maxLineNumberSize + 4);
+						lf ] ]
+]
+
+
 			stderr
 				white;
 				nextPutAll: (contents copyFrom: start to: endWithoutDelimiters);

@@ -3,7 +3,7 @@ Random
 	package: #Kernel.
 
 Random >> initialize
-[initialize
+[
 	" Set a reasonable Park-Miller starting seed "
 
 	super initialize.
@@ -18,25 +18,25 @@ Random >> initialize
 ]
 
 Random >> next
-[next
+[
 	"Answer a random Float in the interval [0 to 1)."
 
 	^ (seed := self nextValue) / m
 ]
 
 Random >> next: anInteger
-[next: anInteger
+[
 	^ self next: anInteger into: (Array new: anInteger)
 ]
 
 Random >> next: anInteger into: anArray
-[next: anInteger into: anArray
+[
 	1 to: anInteger do: [ :index | anArray at: index put: self next ].
 	^ anArray
 ]
 
 Random >> nextInt: anInteger
-[nextInt: anInteger
+[
 	"Answer a random integer in the interval [1, anInteger].
 	Handle large numbers too (for cryptography)."
 
@@ -48,7 +48,7 @@ Random >> nextInt: anInteger
 ]
 
 Random >> nextValue
-[nextValue
+[
 	"This method generates random instances of Integer 	in the interval
 	0 to 16r7FFFFFFF. This method does NOT update the seed; repeated sends
 	answer the same value.
@@ -67,17 +67,17 @@ Random >> nextValue
 ]
 
 Random >> seed
-[seed
+[
 	^ seed
 ]
 
 Random >> seed: anInteger
-[seed: anInteger
+[
 	seed := anInteger
 ]
 
 Random class >> bucketTest: randy
-[bucketTest: randy
+[
 	"Execute this:   Random bucketTest: Random new"
 
 	" A quick-and-dirty bucket test. Prints nbuckets values on the
@@ -109,17 +109,25 @@ more; go get coffee.
 ]
 
 Random class >> seed: anInteger
-[seed: anInteger
+[
 	^ self new seed: anInteger
 ]
 
 Random class >> theItsCompletelyBrokenTest
-[theItsCompletelyBrokenTest
+[
 	"Random theItsCompletelyBrokenTest"
 
 	"The above should print as...
 	(0.149243269650845 0.331633021743797 0.75619644800024 0.393701540023881 0.941783181364547 0.549929193942775 0.659962596213428 0.991354559078512 0.696074432551896 0.922987899707159 )
 	If they are not these values (accounting for precision of printing) then something is horribly wrong: DO NOT USE THIS CODE FOR ANYTHING. "
+
+	| rng |
+	rng := Random new.
+	rng seed: 2345678901.
+	^ (1 to: 10) collect: [ :i | rng next ]
+]
+
+omething is horribly wrong: DO NOT USE THIS CODE FOR ANYTHING. "
 
 	| rng |
 	rng := Random new.

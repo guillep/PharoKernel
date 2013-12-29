@@ -3,7 +3,7 @@ DynamicVariable
 	package: #Kernel.
 
 DynamicVariable >> value: anObject during: aBlock
-[value: anObject during: aBlock
+[
 	| p oldValue |
 	p := Processor activeProcess.
 	oldValue := (p psValueAt: index) ifNil: [ self default ].
@@ -13,7 +13,11 @@ DynamicVariable >> value: anObject during: aBlock
 ]
 
 DynamicVariable class >> value: anObject during: aBlock
-[value: anObject during: aBlock
+[
+	^ self soleInstance value: anObject during: aBlock
+]
+
+lock
 	^ self soleInstance value: anObject during: aBlock
 ]
 

@@ -3,17 +3,17 @@ ArrayedCollection
 	package: #'Collections-Abstract'.
 
 ArrayedCollection >> add: newObject
-[add: newObject
+[
 	self shouldNotImplement
 ]
 
 ArrayedCollection >> byteSize
-[byteSize
+[
 	^ self basicSize * self bytesPerBasicElement
 ]
 
 ArrayedCollection >> bytesPerBasicElement
-[bytesPerBasicElement
+[
 	"Answer the number of bytes that each of my basic elements requires.
 	In other words:
 		self basicSize * self bytesPerBasicElement
@@ -25,12 +25,12 @@ ArrayedCollection >> bytesPerBasicElement
 ]
 
 ArrayedCollection >> defaultElement
-[defaultElement
+[
 	^ nil
 ]
 
 ArrayedCollection >> fillFrom: aCollection with: aBlock
-[fillFrom: aCollection with: aBlock
+[
 	"Evaluate aBlock with each of aCollections's elements as the argument.  
 	Collect the resulting values into self. Answer self."
 
@@ -40,12 +40,12 @@ ArrayedCollection >> fillFrom: aCollection with: aBlock
 ]
 
 ArrayedCollection >> removeAll
-[removeAll
+[
 	self shouldNotImplement
 ]
 
 ArrayedCollection >> restoreEndianness
-[restoreEndianness
+[
 	"This word object was just read in from a stream.  It was stored in Big Endian (Mac) format.  Reverse the byte order if the current machine is Little Endian.
  	We only intend this for non-pointer arrays.  Do nothing if I contain pointers."
 
@@ -56,7 +56,7 @@ ArrayedCollection >> restoreEndianness
 ]
 
 ArrayedCollection >> size
-[size
+[
 	"Answer how many elements the receiver contains."
 
 	<primitive: 62>
@@ -64,7 +64,7 @@ ArrayedCollection >> size
 ]
 
 ArrayedCollection >> storeElementsFrom: firstIndex to: lastIndex on: aStream
-[storeElementsFrom: firstIndex to: lastIndex on: aStream
+[
 	| noneYet defaultElement arrayElement |
 	noneYet := true.
 	defaultElement := self defaultElement.
@@ -81,7 +81,7 @@ ArrayedCollection >> storeElementsFrom: firstIndex to: lastIndex on: aStream
 ]
 
 ArrayedCollection >> storeOn: aStream
-[storeOn: aStream
+[
 	aStream nextPutAll: '(('.
 	aStream nextPutAll: self class name.
 	aStream nextPutAll: ' new: '.
@@ -93,7 +93,7 @@ ArrayedCollection >> storeOn: aStream
 ]
 
 ArrayedCollection >> swapHalves
-[swapHalves
+[
 	"A normal switch in endianness (byte order in words) reverses the order of 4 bytes.  That is not correct for SoundBuffers, which use 2-bytes units.  If a normal switch has be done, this method corrects it further by swapping the two halves of the long word.
  	This method is only used for 16-bit quanities in SoundBuffer, ShortIntegerArray, etc."
 
@@ -122,7 +122,7 @@ ArrayedCollection >> swapHalves
 ]
 
 ArrayedCollection >> writeOn: aStream
-[writeOn: aStream
+[
 	"Store the array of bits onto the argument, aStream.  (leading byte ~= 16r80) identifies this as raw bits (uncompressed).  Always store in Big Endian (Mac) byte order.  Do the writing at BitBlt speeds. We only intend this for non-pointer arrays.  Do nothing if I contain pointers."
 
 	(self class isPointers or: [ self class isWords not ])
@@ -132,14 +132,14 @@ ArrayedCollection >> writeOn: aStream
 ]
 
 ArrayedCollection class >> new
-[new
+[
 	"Answer a new instance of me, with size = 0."
 
 	^ self new: 0
 ]
 
 ArrayedCollection class >> new: size withAll: value
-[new: size withAll: value
+[
 	"Answer an instance of me, with number of elements equal to size, each 
 	of which refers to the argument, value."
 
@@ -147,7 +147,7 @@ ArrayedCollection class >> new: size withAll: value
 ]
 
 ArrayedCollection class >> newFrom: aCollection
-[newFrom: aCollection
+[
 	"Answer an instance of me containing the same elements as aCollection."
 
 	| newArray |
@@ -157,7 +157,7 @@ ArrayedCollection class >> newFrom: aCollection
 ]
 
 ArrayedCollection class >> newFromStream: s
-[newFromStream: s
+[
 	"Only meant for my subclasses that are raw bits and word-like.  For quick unpack form the disk."
 
 	| len |
@@ -173,7 +173,7 @@ ArrayedCollection class >> newFromStream: s
 ]
 
 ArrayedCollection class >> with: anObject
-[with: anObject
+[
 	"Answer a new instance of me, containing only anObject."
 
 	| newCollection |
@@ -183,7 +183,7 @@ ArrayedCollection class >> with: anObject
 ]
 
 ArrayedCollection class >> with: firstObject with: secondObject
-[with: firstObject with: secondObject
+[
 	"Answer a new instance of me, containing firstObject and secondObject."
 
 	| newCollection |
@@ -194,7 +194,7 @@ ArrayedCollection class >> with: firstObject with: secondObject
 ]
 
 ArrayedCollection class >> with: firstObject with: secondObject with: thirdObject
-[with: firstObject with: secondObject with: thirdObject
+[
 	"Answer a new instance of me, containing only the three arguments as
 	elements."
 
@@ -207,7 +207,7 @@ ArrayedCollection class >> with: firstObject with: secondObject with: thirdObjec
 ]
 
 ArrayedCollection class >> with: firstObject with: secondObject with: thirdObject with: fourthObject
-[with: firstObject with: secondObject with: thirdObject with: fourthObject
+[
 	"Answer a new instance of me, containing only the three arguments as
 	elements."
 
@@ -221,7 +221,7 @@ ArrayedCollection class >> with: firstObject with: secondObject with: thirdObjec
 ]
 
 ArrayedCollection class >> with: firstObject with: secondObject with: thirdObject with: fourthObject with: fifthObject
-[with: firstObject with: secondObject with: thirdObject with: fourthObject with: fifthObject
+[
 	"Answer a new instance of me, containing only the five arguments as
 	elements."
 
@@ -236,7 +236,28 @@ ArrayedCollection class >> with: firstObject with: secondObject with: thirdObjec
 ]
 
 ArrayedCollection class >> with: firstObject with: secondObject with: thirdObject with: fourthObject with: fifthObject with: sixthObject
-[with: firstObject with: secondObject with: thirdObject with: fourthObject with: fifthObject with: sixthObject
+[
+	"Answer a new instance of me, containing only the 6 arguments as elements."
+
+	| newCollection |
+	newCollection := self new: 6.
+	newCollection at: 1 put: firstObject.
+	newCollection at: 2 put: secondObject.
+	newCollection at: 3 put: thirdObject.
+	newCollection at: 4 put: fourthObject.
+	newCollection at: 5 put: fifthObject.
+	newCollection at: 6 put: sixthObject.
+	^ newCollection
+]
+
+ArrayedCollection class >> withAll: aCollection
+[
+	"Create a new collection containing all the elements from aCollection."
+
+	^ (self new: aCollection size) replaceFrom: 1 to: aCollection size with: aCollection
+]
+
+ject with: fourthObject with: fifthObject with: sixthObject
 	"Answer a new instance of me, containing only the 6 arguments as elements."
 
 	| newCollection |

@@ -3,12 +3,12 @@ WeakIdentityKeyDictionary
 	package: #'Collections-Weak'.
 
 WeakIdentityKeyDictionary >> compare: object1 to: object2
-[compare: object1 to: object2
+[
 	^ object1 == object2
 ]
 
 WeakIdentityKeyDictionary >> scanForEmptySlotFor: aKey
-[scanForEmptySlotFor: aKey
+[
 	"Scan the key array for the first slot containing an empty slot (indicated by a nil). Answer the index of that slot. This method will be overridden in various subclasses that have different interpretations for matching elements."
 
 	| index start |
@@ -19,14 +19,14 @@ WeakIdentityKeyDictionary >> scanForEmptySlotFor: aKey
 ]
 
 WeakIdentityKeyDictionary >> startIndexFor: anObject
-[startIndexFor: anObject
+[
 	"Return the index at which the scan for anObject should start."
 
 	^ anObject identityHash \\ array size + 1
 ]
 
 WeakIdentityKeyDictionary >> valuesDo: aBlock
-[valuesDo: aBlock
+[
 	"See comments in Dictionary>>valuesDo:.  The code keeps the key so it's
 	not collected during the evaluation of aBlock"
 
@@ -36,6 +36,11 @@ WeakIdentityKeyDictionary >> valuesDo: aBlock
 		eachAssociation := array at: eachIndex.
 		nil == eachAssociation
 			ifFalse: [ eachKey := eachAssociation key.
+				nil == eachKey
+					ifFalse: [ aBlock value: eachAssociation value ] ] ]
+]
+
+iation key.
 				nil == eachKey
 					ifFalse: [ aBlock value: eachAssociation value ] ] ]
 ]

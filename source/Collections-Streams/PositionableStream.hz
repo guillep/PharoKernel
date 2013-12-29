@@ -4,14 +4,14 @@ PositionableStream
 	package: #'Collections-Streams'.
 
 PositionableStream >> asBinaryOrTextStream
-[asBinaryOrTextStream
+[
 	"Convert to a stream that can switch between bytes and characters"
 
 	^ (RWBinaryOrTextStream with: self contentsOfEntireFile) reset
 ]
 
 PositionableStream >> atEnd
-[atEnd
+[
 	"Primitive. Answer whether the receiver can access any more objects.
 	Optional. See Object documentation whatIsAPrimitive."
 
@@ -20,7 +20,7 @@ PositionableStream >> atEnd
 ]
 
 PositionableStream >> back
-[back
+[
 	"Go back one element and return it."
 
 	self position = 0
@@ -30,7 +30,7 @@ PositionableStream >> back
 ]
 
 PositionableStream >> backUpTo: subCollection
-[backUpTo: subCollection
+[
 	"Back up the position to he subCollection.  Position must be somewhere within the stream initially.  Leave it just after it.  Return true if succeeded.  No wildcards, and case does matter."
 
 	"Example:
@@ -57,14 +57,14 @@ PositionableStream >> backUpTo: subCollection
 ]
 
 PositionableStream >> boolean
-[boolean
+[
 	"Answer the next boolean value from this (binary) stream."
 
 	^ self next ~= 0
 ]
 
 PositionableStream >> boolean: aBoolean
-[boolean: aBoolean
+[
 	"Store the given boolean value on this (binary) stream."
 
 	self nextPut: (aBoolean
@@ -73,28 +73,28 @@ PositionableStream >> boolean: aBoolean
 ]
 
 PositionableStream >> collectionSpecies
-[collectionSpecies
+[
 	"Answer the species of collection into which the receiver can stream"
 
 	^ collection species
 ]
 
 PositionableStream >> contents
-[contents
+[
 	"Answer with a copy of my collection from 1 to readLimit."
 
 	^ collection copyFrom: 1 to: readLimit
 ]
 
 PositionableStream >> contentsOfEntireFile
-[contentsOfEntireFile
+[
 	"For non-file streams"
 
 	^ self contents
 ]
 
 PositionableStream >> int16
-[int16
+[
 	"Answer the next signed, 16-bit integer from this (binary) stream."
 
 	| n |
@@ -106,7 +106,7 @@ PositionableStream >> int16
 ]
 
 PositionableStream >> int16: anInteger
-[int16: anInteger
+[
 	"Store the given signed, 16-bit integer on this (binary) stream."
 
 	| n |
@@ -120,7 +120,7 @@ PositionableStream >> int16: anInteger
 ]
 
 PositionableStream >> int32
-[int32
+[
 	"Answer the next signed, 32-bit integer from this (binary) stream."
 
 	"Details: As a fast check for negative number, check the high bit of the first digit"
@@ -136,7 +136,7 @@ PositionableStream >> int32
 ]
 
 PositionableStream >> int32: anInteger
-[int32: anInteger
+[
 	"Store the given signed, 32-bit integer on this (binary) stream."
 
 	| n |
@@ -152,14 +152,14 @@ PositionableStream >> int32: anInteger
 ]
 
 PositionableStream >> isBinary
-[isBinary
+[
 	"Return true if the receiver is a binary byte stream"
 
 	^ collection class == ByteArray
 ]
 
 PositionableStream >> isEmpty
-[isEmpty
+[
 	"Answer whether the receiver's contents has no elements."
 
 	"Returns true if both the set of past and future sequence values of
@@ -169,7 +169,7 @@ the receiver are empty. Otherwise returns false"
 ]
 
 PositionableStream >> match: subCollection
-[match: subCollection
+[
 	"Set the access position of the receiver to be past the next occurrence of the subCollection. Answer whether subCollection is found.  No wildcards, and case does matter."
 
 	| pattern startMatch |
@@ -188,7 +188,7 @@ PositionableStream >> match: subCollection
 ]
 
 PositionableStream >> next: anInteger
-[next: anInteger
+[
 	"Answer the next anInteger elements of my collection. Must override 
 	because default uses self contents species, which might involve a large 
 	collection."
@@ -200,7 +200,7 @@ PositionableStream >> next: anInteger
 ]
 
 PositionableStream >> next: n into: aCollection
-[next: n into: aCollection
+[
 	"Read n objects into the given collection.
 	Return aCollection or a partial copy if less than
 	n elements have been read."
@@ -209,7 +209,7 @@ PositionableStream >> next: n into: aCollection
 ]
 
 PositionableStream >> next: requestedCount into: aCollection startingAt: startIndex
-[next: requestedCount into: aCollection startingAt: startIndex
+[
 	"Read requestedCount objects into the given collection. 
 	Return aCollection or a partial copy if less elements have been read."
 
@@ -221,14 +221,14 @@ PositionableStream >> next: requestedCount into: aCollection startingAt: startIn
 ]
 
 PositionableStream >> next: anInteger putAll: aCollection
-[next: anInteger putAll: aCollection
+[
 	"Store the next anInteger elements from the given collection."
 
 	^ self next: anInteger putAll: aCollection startingAt: 1
 ]
 
 PositionableStream >> nextDelimited: terminator
-[nextDelimited: terminator
+[
 	"Answer the contents of the receiver, up to the next terminator character. Doubled terminators indicate an embedded terminator character.  For example: 'this '' was a quote'. Start postioned before the initial terminator."
 
 	| out ch |
@@ -247,7 +247,7 @@ PositionableStream >> nextDelimited: terminator
 ]
 
 PositionableStream >> nextInt32
-[nextInt32
+[
 	"Read a 32-bit signed integer from the next 4 bytes"
 
 	| s |
@@ -259,7 +259,7 @@ PositionableStream >> nextInt32
 ]
 
 PositionableStream >> nextInt32Put: int32
-[nextInt32Put: int32
+[
 	"Write a signed integer to the next 4 bytes"
 
 	| pos |
@@ -271,7 +271,7 @@ PositionableStream >> nextInt32Put: int32
 ]
 
 PositionableStream >> nextInto: aCollection
-[nextInto: aCollection
+[
 	"Read the next elements of the receiver into aCollection.
 	Return aCollection or a partial copy if less than aCollection
 	size elements have been read."
@@ -280,7 +280,7 @@ PositionableStream >> nextInto: aCollection
 ]
 
 PositionableStream >> nextInto: aCollection startingAt: startIndex
-[nextInto: aCollection startingAt: startIndex
+[
 	"Read the next elements of the receiver into aCollection.
 	Return aCollection or a partial copy if less than aCollection
 	size elements have been read."
@@ -289,7 +289,7 @@ PositionableStream >> nextInto: aCollection startingAt: startIndex
 ]
 
 PositionableStream >> nextLine
-[nextLine
+[
 	"Answer next line (may be empty) without line end delimiters, or nil if at end.
 	Let the stream positioned after the line delimiter(s).
 	Handle a zoo of line delimiters CR, LF, or CR-LF pair"
@@ -301,7 +301,7 @@ PositionableStream >> nextLine
 ]
 
 PositionableStream >> nextLittleEndianNumber: n
-[nextLittleEndianNumber: n
+[
 	"Answer the next n bytes as a positive Integer or LargePositiveInteger, where the bytes are ordered from least significant to most significant."
 
 	| bytes s |
@@ -312,7 +312,7 @@ PositionableStream >> nextLittleEndianNumber: n
 ]
 
 PositionableStream >> nextLittleEndianNumber: n put: value
-[nextLittleEndianNumber: n put: value
+[
 	"Answer the next n bytes as a positive Integer or LargePositiveInteger, where the bytes are ordered from least significant to most significant."
 
 	| bytes |
@@ -322,7 +322,7 @@ PositionableStream >> nextLittleEndianNumber: n put: value
 ]
 
 PositionableStream >> nextNumber: n
-[nextNumber: n
+[
 	"Answer the next n bytes as a positive Integer or LargePositiveInteger."
 
 	| s |
@@ -332,7 +332,7 @@ PositionableStream >> nextNumber: n
 ]
 
 PositionableStream >> nextNumber: n put: v
-[nextNumber: n put: v
+[
 	"Append to the receiver the argument, v, which is a positive 
 	SmallInteger or a LargePositiveInteger, as the next n bytes.
 	Possibly pad with leading zeros."
@@ -342,7 +342,7 @@ PositionableStream >> nextNumber: n put: v
 ]
 
 PositionableStream >> nextString
-[nextString
+[
 	"Read a string from the receiver. The first byte is the length of the string, unless it is greater than 192, in which case the first four bytes encode the length.  I expect to be in ascii mode when called (caller puts back to binary)."
 
 	| length aByteArray |
@@ -358,7 +358,7 @@ PositionableStream >> nextString
 ]
 
 PositionableStream >> nextStringOld
-[nextStringOld
+[
 	"Read a string from the receiver. The first byte is the length of the 
 	string, unless it is greater than 192, in which case the first *two* bytes 
 	encode the length.  Max size 16K. "
@@ -373,7 +373,7 @@ PositionableStream >> nextStringOld
 ]
 
 PositionableStream >> nextStringPut: s
-[nextStringPut: s
+[
 	"Append the string, s, to the receiver.  Only used by DataStream.  Max size of 64*256*256*256."
 
 	| length |
@@ -388,7 +388,7 @@ PositionableStream >> nextStringPut: s
 ]
 
 PositionableStream >> nextWord
-[nextWord
+[
 	"Answer the next two bytes from the receiver as an Integer."
 
 	| high low |
@@ -402,7 +402,7 @@ PositionableStream >> nextWord
 ]
 
 PositionableStream >> nextWordPut: aWord
-[nextWordPut: aWord
+[
 	"Append to the receiver an Integer as the next two bytes."
 
 	self nextPut: ((aWord bitShift: -8) bitAnd: 255).
@@ -411,7 +411,7 @@ PositionableStream >> nextWordPut: aWord
 ]
 
 PositionableStream >> nextWordsInto: aBitmap
-[nextWordsInto: aBitmap
+[
 	"Fill the word based buffer from my collection. 
 	Stored on stream as Big Endian. Optimized for speed. 
 	Read in BigEndian, then restoreEndianness."
@@ -443,7 +443,7 @@ PositionableStream >> nextWordsInto: aBitmap
 ]
 
 PositionableStream >> oldBack
-[oldBack
+[
 	"Go back one element and return it.  Use indirect messages in case I am a StandardFileStream"
 
 	"The method is a misconception about what a stream is. A stream contains a pointer *between* elements with past and future elements. This method considers that the pointer is *on* an element. Please consider unit tests which verifies #back and #oldBack behavior. (Damien Cassou - 1 August 2007)"
@@ -458,7 +458,7 @@ PositionableStream >> oldBack
 ]
 
 PositionableStream >> oldPeekBack
-[oldPeekBack
+[
 	"Return the element at the previous position, without changing position.  Use indirect messages in case self is a StandardFileStream."
 
 	"The method is a misconception about what a stream is. A stream contains a pointer *between* elements with past and future elements. This method considers that the pointer is *on* an element. Please consider unit tests which verifies #peekBack and #oldPeekBack behavior. (Damien Cassou - 1 August 2007)"
@@ -470,7 +470,7 @@ PositionableStream >> oldPeekBack
 ]
 
 PositionableStream >> on: aCollection
-[on: aCollection
+[
 	collection := aCollection.
 	readLimit := aCollection size.
 	position := 0.
@@ -478,14 +478,14 @@ PositionableStream >> on: aCollection
 ]
 
 PositionableStream >> originalContents
-[originalContents
+[
 	"Answer the receiver's actual contents collection, NOT a copy."
 
 	^ collection
 ]
 
 PositionableStream >> padTo: nBytes put: aCharacter
-[padTo: nBytes put: aCharacter
+[
 	"Pad using the argument, aCharacter, to the next boundary of nBytes characters."
 
 	| rem |
@@ -496,7 +496,7 @@ PositionableStream >> padTo: nBytes put: aCharacter
 ]
 
 PositionableStream >> padToNextLongPut: char
-[padToNextLongPut: char
+[
 	"Make position be on long word boundary, writing the padding 
 	character, char, if necessary."
 
@@ -504,7 +504,7 @@ PositionableStream >> padToNextLongPut: char
 ]
 
 PositionableStream >> peek
-[peek
+[
 	"Answer what would be returned if the message next were sent to the 
 	receiver. If the receiver is at the end, answer nil."
 
@@ -517,7 +517,7 @@ PositionableStream >> peek
 ]
 
 PositionableStream >> peekBack
-[peekBack
+[
 	"Return the element at the previous position, without changing position.  Use indirect messages in case self is a StandardFileStream."
 
 	| element |
@@ -527,7 +527,7 @@ PositionableStream >> peekBack
 ]
 
 PositionableStream >> peekFor: anObject
-[peekFor: anObject
+[
 	"Answer false and do not move over the next element if it is not equal to 
 	the argument, anObject, or if the receiver is at the end. Answer true 
 	and increment the position for accessing elements, if the next element is 
@@ -544,14 +544,14 @@ PositionableStream >> peekFor: anObject
 ]
 
 PositionableStream >> position
-[position
+[
 	"Answer the current position of accessing the sequence of objects."
 
 	^ position
 ]
 
 PositionableStream >> position: anInteger
-[position: anInteger
+[
 	"Set the current position for accessing the objects to be anInteger, as long 
 	as anInteger is within the bounds of the receiver's contents. If it is not, 
 	create an error notification."
@@ -562,7 +562,7 @@ PositionableStream >> position: anInteger
 ]
 
 PositionableStream >> positionError
-[positionError
+[
 	"Since I am not necessarily writable, it is up to my subclasses to override 
 	position: if expanding the collection is preferrable to giving this error."
 
@@ -570,7 +570,7 @@ PositionableStream >> positionError
 ]
 
 PositionableStream >> positionOfSubCollection: subCollection
-[positionOfSubCollection: subCollection
+[
 	"Return a position such that that element at the new position equals the first element of sub, and the next elements equal the rest of the elements of sub. Begin the search at the current position.
 	If no such match is found, answer 0."
 
@@ -578,7 +578,7 @@ PositionableStream >> positionOfSubCollection: subCollection
 ]
 
 PositionableStream >> positionOfSubCollection: subCollection ifAbsent: exceptionBlock
-[positionOfSubCollection: subCollection ifAbsent: exceptionBlock
+[
 	"Return a position such that that element at the new position equals the first element of sub, and the next elements equal the rest of the elements of sub. Begin the search at the current position.
 	If no such match is found, answer the result of evaluating argument, exceptionBlock."
 
@@ -599,14 +599,14 @@ PositionableStream >> positionOfSubCollection: subCollection ifAbsent: exception
 ]
 
 PositionableStream >> pushBack: aString
-[pushBack: aString
+[
 	"Compatibility with SocketStreams"
 
 	self skip: aString size negated
 ]
 
 PositionableStream >> readInto: aCollection startingAt: startIndex count: n
-[readInto: aCollection startingAt: startIndex count: n
+[
 	"Read n objects into the given collection. 
 	Return number of elements that have been read."
 
@@ -618,14 +618,14 @@ PositionableStream >> readInto: aCollection startingAt: startIndex count: n
 ]
 
 PositionableStream >> reset
-[reset
+[
 	"Set the receiver's position to the beginning of the sequence of objects."
 
 	position := 0
 ]
 
 PositionableStream >> resetContents
-[resetContents
+[
 	"Set the position and limits to 0."
 
 	position := 0.
@@ -633,20 +633,20 @@ PositionableStream >> resetContents
 ]
 
 PositionableStream >> setFrom: newStart to: newStop
-[setFrom: newStart to: newStop
+[
 	position := newStart - 1.
 	readLimit := newStop
 ]
 
 PositionableStream >> setToEnd
-[setToEnd
+[
 	"Set the position of the receiver to the end of the sequence of objects."
 
 	position := readLimit
 ]
 
 PositionableStream >> skip: anInteger
-[skip: anInteger
+[
 	"Set the receiver's position to be the current position+anInteger. A 
 	subclass might choose to be more helpful and select the minimum of the 
 	receiver's size and position+anInteger, or the maximum of 1 and 
@@ -656,13 +656,13 @@ PositionableStream >> skip: anInteger
 ]
 
 PositionableStream >> skipSeparators
-[skipSeparators
+[
 	[ self atEnd ] whileFalse: [ self next isSeparator
 				ifFalse: [ ^ self position: self position - 1 ] ]
 ]
 
 PositionableStream >> skipSeparatorsAndPeekNext
-[skipSeparatorsAndPeekNext
+[
 	"A special function to make nextChunk fast"
 
 	| peek |
@@ -673,7 +673,7 @@ PositionableStream >> skipSeparatorsAndPeekNext
 ]
 
 PositionableStream >> skipTo: anObject
-[skipTo: anObject
+[
 	"Set the access position of the receiver to be past the next occurrence of 
 	anObject. Answer whether anObject is found."
 
@@ -683,7 +683,7 @@ PositionableStream >> skipTo: anObject
 ]
 
 PositionableStream >> string
-[string
+[
 	"Answer the next string from this (binary) stream."
 
 	| size |
@@ -692,7 +692,7 @@ PositionableStream >> string
 ]
 
 PositionableStream >> string: aString
-[string: aString
+[
 	"Store the given string on this (binary) stream. The string must contain 65535 or fewer characters."
 
 	aString size > 16rFFFF
@@ -702,7 +702,7 @@ PositionableStream >> string: aString
 ]
 
 PositionableStream >> uint16
-[uint16
+[
 	"Answer the next unsigned, 16-bit integer from this (binary) stream."
 
 	| n |
@@ -712,7 +712,7 @@ PositionableStream >> uint16
 ]
 
 PositionableStream >> uint16: anInteger
-[uint16: anInteger
+[
 	"Store the given unsigned, 16-bit integer on this (binary) stream."
 
 	(anInteger < 0 or: [ anInteger >= 16r10000 ])
@@ -722,7 +722,7 @@ PositionableStream >> uint16: anInteger
 ]
 
 PositionableStream >> uint24
-[uint24
+[
 	"Answer the next unsigned, 24-bit integer from this (binary) stream."
 
 	| n |
@@ -733,7 +733,7 @@ PositionableStream >> uint24
 ]
 
 PositionableStream >> uint24: anInteger
-[uint24: anInteger
+[
 	"Store the given unsigned, 24-bit integer on this (binary) stream."
 
 	(anInteger < 0 or: [ anInteger >= 16r1000000 ])
@@ -744,7 +744,7 @@ PositionableStream >> uint24: anInteger
 ]
 
 PositionableStream >> uint32
-[uint32
+[
 	"Answer the next unsigned, 32-bit integer from this (binary) stream."
 
 	| n |
@@ -756,7 +756,7 @@ PositionableStream >> uint32
 ]
 
 PositionableStream >> uint32: anInteger
-[uint32: anInteger
+[
 	"Store the given unsigned, 32-bit integer on this (binary) stream."
 
 	(anInteger < 0 or: [ anInteger >= 16r100000000 ])
@@ -768,7 +768,7 @@ PositionableStream >> uint32: anInteger
 ]
 
 PositionableStream >> untilEnd: aBlock displayingProgress: aString
-[untilEnd: aBlock displayingProgress: aString
+[
 	aString
 		displayProgressFrom: 0
 		to: self size
@@ -777,7 +777,7 @@ PositionableStream >> untilEnd: aBlock displayingProgress: aString
 ]
 
 PositionableStream >> untilEndWithFork: aBlock displayingProgress: aString
-[untilEndWithFork: aBlock displayingProgress: aString
+[
 	| sem done result |
 	sem := Semaphore new.
 	done := false.
@@ -792,7 +792,7 @@ PositionableStream >> untilEndWithFork: aBlock displayingProgress: aString
 ]
 
 PositionableStream >> upTo: anObject
-[upTo: anObject
+[
 	"Answer a subcollection from the current access position to the 
 	occurrence (if any, but not inclusive) of anObject in the receiver. If 
 	anObject is not in the collection, answer the entire rest of the receiver."
@@ -804,7 +804,7 @@ PositionableStream >> upTo: anObject
 ]
 
 PositionableStream >> upToAll: aCollection
-[upToAll: aCollection
+[
 	"Answer a subcollection from the current access position to the occurrence (if any, but not inclusive) of aCollection. If aCollection is not in the stream, answer the entire rest of the stream."
 
 	| startPos endMatch result |
@@ -820,7 +820,7 @@ PositionableStream >> upToAll: aCollection
 ]
 
 PositionableStream >> upToAny: aCollection
-[upToAny: aCollection
+[
 	"Answer a subcollection from the current access position to the 
 	occurrence (if any, but not inclusive) of any objects in the given collection in the receiver. If 
 	any of these is not in the collection, answer the entire rest of the receiver."
@@ -832,12 +832,55 @@ PositionableStream >> upToAny: aCollection
 ]
 
 PositionableStream >> upToAnyOf: aCollection
-[upToAnyOf: aCollection
+[
 	"Answer a subcollection from the current access position to the 
 	occurrence (if any, but not inclusive) of any object in the collection. If 
 	no matching object is found, answer the entire rest of the receiver."
 
 	^ self upToAnyOf: aCollection do: [ :matchingObject |  ]
+]
+
+PositionableStream >> upToAnyOf: subcollection do: aBlock
+[
+	"Answer a subcollection from the current access position to the occurrence (if any, but not inclusive) of any object in the collection.
+	Evaluate aBlock with this occurence as argument.
+	If no matching object is found, don't evaluate aBlock and answer the entire rest of the receiver."
+
+	^ self collectionSpecies
+		new: 1000
+		streamContents: [ :stream | | ch |
+			[ self atEnd or: [ (subcollection includes: (ch := self next)) and: [ aBlock value: ch.
+							true ] ] ]
+				whileFalse: [ stream nextPut: ch ] ]
+]
+
+PositionableStream >> upToEnd
+[
+	"Answer a subcollection from the current access position through the last element of the receiver."
+
+	| newStream |
+	newStream := (collection species new: 100) writeStream.
+	[ self atEnd ] whileFalse: [ newStream nextPut: self next ].
+	^ newStream contents
+]
+
+PositionableStream class >> on: aCollection
+[
+	"Answer an instance of me, streaming over the elements of aCollection."
+
+	^ self basicNew on: aCollection
+]
+
+PositionableStream class >> on: aCollection from: firstIndex to: lastIndex
+[
+	"Answer an instance of me, streaming over the elements of aCollection 
+	starting with the element at firstIndex and ending with the one at 
+	lastIndex."
+
+	^ self basicNew on: (aCollection copyFrom: firstIndex to: lastIndex)
+]
+
+lection do: [ :matchingObject |  ]
 ]
 
 PositionableStream >> upToAnyOf: subcollection do: aBlock

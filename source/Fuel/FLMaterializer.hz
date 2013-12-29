@@ -3,7 +3,7 @@ FLMaterializer
 	package: #Fuel.
 
 FLMaterializer >> decodeHeaderWith: aDecoder
-[decodeHeaderWith: aDecoder
+[
 	"See FLSerializer>>encodeHeaderWith:"
 
 	"todo: fix"
@@ -16,26 +16,26 @@ FLMaterializer >> decodeHeaderWith: aDecoder
 ]
 
 FLMaterializer >> fuelAccept: aGeneralMapper
-[fuelAccept: aGeneralMapper
+[
 	^ aGeneralMapper visitSubstitution: self by: nil
 ]
 
 FLMaterializer >> globalEnvironment
-[globalEnvironment
+[
 	"Answer a dictionary where the look up for global symbols will be done during materialization."
 
 	^ globalEnvironment
 ]
 
 FLMaterializer >> globalEnvironment: aDictionary
-[globalEnvironment: aDictionary
+[
 	"Set the dictionary where the look up for global symbols will be done during materialization."
 
 	globalEnvironment := aDictionary
 ]
 
 FLMaterializer >> initialize
-[initialize
+[
 	super initialize.
 	self setDefaultMaterialization.
 	self signature: self class defaultSignature.
@@ -45,12 +45,12 @@ FLMaterializer >> initialize
 ]
 
 FLMaterializer >> materializationFactory
-[materializationFactory
+[
 	^ materializationFactory
 ]
 
 FLMaterializer >> materializeFrom: aStream
-[materializeFrom: aStream
+[
 	| aDecoder materialization header |
 	aDecoder := FLDecoder on: aStream migrations: migrations globalEnvironment: globalEnvironment.
 	self verifySignatureFrom: aDecoder.
@@ -65,7 +65,7 @@ FLMaterializer >> materializeFrom: aStream
 ]
 
 FLMaterializer >> materializeHeaderFrom: aStream
-[materializeHeaderFrom: aStream
+[
 	| aDecoder |
 	aDecoder := FLDecoder on: aStream migrations: migrations globalEnvironment: globalEnvironment.
 	self verifySignatureFrom: aDecoder.
@@ -74,39 +74,39 @@ FLMaterializer >> materializeHeaderFrom: aStream
 ]
 
 FLMaterializer >> migrateClassNamed: aSymbol toClass: aClass
-[migrateClassNamed: aSymbol toClass: aClass
+[
 	self migrateClassNamed: aSymbol toClass: aClass variables: #()
 ]
 
 FLMaterializer >> migrateClassNamed: aSymbol toClass: aClass variables: aDictionary
-[migrateClassNamed: aSymbol toClass: aClass variables: aDictionary
+[
 	migrations at: aSymbol put: (FLMigration fromClassNamed: aSymbol toClass: aClass variables: aDictionary)
 ]
 
 FLMaterializer >> migrateClassNamed: aSymbol variables: aDictionary
-[migrateClassNamed: aSymbol variables: aDictionary
+[
 	self migrateClassNamed: aSymbol toClass: (self class environment at: aSymbol) variables: aDictionary
 ]
 
 FLMaterializer >> setDefaultMaterialization
-[setDefaultMaterialization
+[
 	materializationFactory := [ :aDecoder | (FLMaterialization with: aDecoder)
 		run;
 		yourself ]
 ]
 
 FLMaterializer >> signature
-[signature
+[
 	^ signature
 ]
 
 FLMaterializer >> signature: anObject
-[signature: anObject
+[
 	signature := anObject
 ]
 
 FLMaterializer >> verifySignatureFrom: aDecoder
-[verifySignatureFrom: aDecoder
+[
 	| streamSignature |
 	streamSignature := ByteArray new: self signature size.
 	aDecoder nextEncodedBytesInto: streamSignature.
@@ -115,7 +115,7 @@ FLMaterializer >> verifySignatureFrom: aDecoder
 ]
 
 FLMaterializer >> verifyVersionFrom: aDecoder
-[verifyVersionFrom: aDecoder
+[
 	| streamVersion |
 	streamVersion := aDecoder nextEncodedUint16.
 	self version = streamVersion
@@ -123,34 +123,60 @@ FLMaterializer >> verifyVersionFrom: aDecoder
 ]
 
 FLMaterializer >> version
-[version
+[
 	^ version
 ]
 
 FLMaterializer >> version: anObject
-[version: anObject
+[
 	version := anObject
 ]
 
 FLMaterializer class >> currentVersion
-[currentVersion
+[
 	"If you change this method, you should also create a version in ConfigurationOfFuel and FLSerializer >> currentVersion"
 
 	^ 19
 ]
 
 FLMaterializer class >> defaultSignature
-[defaultSignature
+[
 	^ 'FUEL'
 ]
 
 FLMaterializer class >> materializationFromFileNamed: aFilename
-[materializationFromFileNamed: aFilename
+[
 	^ StandardFileStream oldFileNamed: aFilename do: [ :aFileStream | self newDefault materializeFrom: aFileStream binary ]
 ]
 
 FLMaterializer class >> materializationHeaderFromFileNamed: aFilename
-[materializationHeaderFromFileNamed: aFilename
+[
+	^ StandardFileStream
+		oldFileNamed: aFilename
+		do: [ :aFileStream | self newDefault materializeHeaderFrom: aFileStream binary ]
+]
+
+FLMaterializer class >> materializeFromByteArray: byteArray
+[
+	^ (self newDefault materializeFrom: byteArray readStream) root
+]
+
+FLMaterializer class >> materializeFromFileNamed: aFilename
+[
+	^ (self materializationFromFileNamed: aFilename) root
+]
+
+FLMaterializer class >> materializeHeaderFromFileNamed: aFilename
+[
+	^ self materializationHeaderFromFileNamed: aFilename
+]
+
+FLMaterializer class >> newDefault
+[
+	^ self new
+]
+
+derFromFileNamed: aFilename
 	^ StandardFileStream
 		oldFileNamed: aFilename
 		do: [ :aFileStream | self newDefault materializeHeaderFrom: aFileStream binary ]

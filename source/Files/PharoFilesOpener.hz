@@ -4,22 +4,22 @@ PharoFilesOpener
 	package: #Files.
 
 PharoFilesOpener >> badContentMsg
-[badContentMsg
+[
 	^ '&fileRefhas been injured by an unpacking utility.  Crs were changed to CrLfs.Please set the preferences in your decompressing program to "do not convert text files" and unpack the system again.'
 ]
 
 PharoFilesOpener >> cannotLocateMsg
-[cannotLocateMsg
+[
 	^ 'Pharo cannot locate &fileRef.Please check that the file is named properly and is in thesame directory as this image.'
 ]
 
 PharoFilesOpener >> cannotWriteMsg
-[cannotWriteMsg
+[
 	^ 'Pharo cannot write to &fileRef.Please check that you have write permission for this file.You won''t be able to save this image correctly until you fix this.'
 ]
 
 PharoFilesOpener >> changesFileOrNil
-[changesFileOrNil
+[
 	| changes |
 	changes := self openChanges: self changesName.
 	changes ifNil: [ self informProblemInChanges: self cannotLocateMsg.
@@ -32,32 +32,32 @@ PharoFilesOpener >> changesFileOrNil
 ]
 
 PharoFilesOpener >> changesName
-[changesName
+[
 	^ Smalltalk changesName
 ]
 
 PharoFilesOpener >> ignoreIfFail: aBlock
-[ignoreIfFail: aBlock
+[
 	^ [ aBlock value ] ifError: [  ]
 ]
 
 PharoFilesOpener >> inform: msg withChangesRef: fileRef
-[inform: msg withChangesRef: fileRef
+[
 	self inform: msg withRef: 'the changes file named ' , fileRef
 ]
 
 PharoFilesOpener >> inform: msg withRef: fileRef
-[inform: msg withRef: fileRef
+[
 	self inform: (msg copyReplaceAll: '&fileRef' with: fileRef)
 ]
 
 PharoFilesOpener >> inform: msg withSourceRef: fileRef
-[inform: msg withSourceRef: fileRef
+[
 	self inform: msg withRef: 'the sources file named ' , fileRef
 ]
 
 PharoFilesOpener >> informCannotLocateSources
-[informCannotLocateSources
+[
 	| msg |
 	msg := self cannotLocateMsg.
 	Smalltalk os isMacOS
@@ -69,17 +69,17 @@ PharoFilesOpener >> informCannotLocateSources
 ]
 
 PharoFilesOpener >> informProblemInChanges: msg
-[informProblemInChanges: msg
+[
 	self inform: msg withChangesRef: self changesName
 ]
 
 PharoFilesOpener >> lastImagePath
-[lastImagePath
+[
 	^ Smalltalk lastImagePath
 ]
 
 PharoFilesOpener >> openChanges: changesPath
-[openChanges: changesPath
+[
 	| fileColocatedWithImage fileInWorkingDirectory locations |
 	fileColocatedWithImage := changesPath asFileReference.
 	fileInWorkingDirectory := FileSystem workingDirectory / fileColocatedWithImage basename.	"locations references all possible path where to search for the .changes file."
@@ -90,7 +90,7 @@ PharoFilesOpener >> openChanges: changesPath
 ]
 
 PharoFilesOpener >> openOrDownloadSources
-[openOrDownloadSources
+[
 	| sources |
 	(sources := self openSources)
 		ifNil: [ [ Smalltalk downloadSources	"this method only exists when Zinc is loaded" ]
@@ -101,12 +101,12 @@ PharoFilesOpener >> openOrDownloadSources
 ]
 
 PharoFilesOpener >> openSources
-[openSources
+[
 	^ self openSources: self sourcesName forImage: self lastImagePath
 ]
 
 PharoFilesOpener >> openSources: fullSourcesName forImage: imagePath
-[openSources: fullSourcesName forImage: imagePath
+[
 	"We first do a check to see if a compressed version ofthe sources file is present.
 Open the .sources file read-only after searching in:
 a) the directory where the VM lives
@@ -128,25 +128,52 @@ c) the DefaultDirectory (which is likely the same as b unless the SecurityManage
 ]
 
 PharoFilesOpener >> setInformAboutReadOnlyChanges
-[setInformAboutReadOnlyChanges
+[
 	"Make sure the user is informed when the .changes file can not be written to."
 
 	shouldInformAboutReadOnlyChanges := true
 ]
 
 PharoFilesOpener >> shouldInformAboutReadOnlyChanges
-[shouldInformAboutReadOnlyChanges
+[
 	"Answer true if and only if the user must be informed when the .changes file can not be written to."
 
 	^ shouldInformAboutReadOnlyChanges ifNil: [ shouldInformAboutReadOnlyChanges := true ]
 ]
 
 PharoFilesOpener >> sourcesFileOrNil
-[sourcesFileOrNil
+[
 	| sources |
 	sources := self openOrDownloadSources.
 	^ (sources isNil or: [ sources atEnd ])
 		ifTrue: [ self informCannotLocateSources.
+			nil ]
+		ifFalse: [ sources ]
+]
+
+PharoFilesOpener >> sourcesName
+[
+	^ Smalltalk sourcesName
+]
+
+PharoFilesOpener >> unsetInformAboutReadOnlyChanges
+[
+	"Make sure the user is *not* informed when the .changes file can not be written to."
+
+	shouldInformAboutReadOnlyChanges := false
+]
+
+PharoFilesOpener class >> default
+[
+	^ Default ifNil: [ Default := PharoFilesOpener new ]
+]
+
+PharoFilesOpener class >> reset
+[
+	Default := nil
+]
+
+.
 			nil ]
 		ifFalse: [ sources ]
 ]

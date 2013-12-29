@@ -3,12 +3,16 @@ FLMethodContextCluster
 	package: #Fuel.
 
 FLMethodContextCluster >> materializeInstanceWith: aDecoder
-[materializeInstanceWith: aDecoder
+[
 	^ theClass newFromFrameSize: aDecoder nextEncodedByte
 ]
 
 FLMethodContextCluster >> serializeInstance: aMethodContext with: anEncoder
-[serializeInstance: aMethodContext with: anEncoder
+[
+	anEncoder encodeByte: aMethodContext method frameSize
+]
+
+Context with: anEncoder
 	anEncoder encodeByte: aMethodContext method frameSize
 ]
 

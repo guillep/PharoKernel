@@ -4,30 +4,30 @@ FLObjectCluster
 	package: #Fuel.
 
 FLObjectCluster >> clusterMaterializeStepWith: aMaterialization
-[clusterMaterializeStepWith: aMaterialization
+[
 	super clusterMaterializeStepWith: aMaterialization.
 	theClass := aMaterialization decoder nextEncodedReference
 ]
 
 FLObjectCluster >> clusterReferencesDo: aBlock
-[clusterReferencesDo: aBlock
+[
 	aBlock value: theClass
 ]
 
 FLObjectCluster >> clusterSerializeStepWith: aSerialization
-[clusterSerializeStepWith: aSerialization
+[
 	super clusterSerializeStepWith: aSerialization.
 	aSerialization encoder encodeReferenceTo: theClass
 ]
 
 FLObjectCluster >> initializeAnalyzing: aClass
-[initializeAnalyzing: aClass
+[
 	self initializeAnalyzing.
 	theClass := aClass
 ]
 
 FLObjectCluster >> printNameOn: aStream
-[printNameOn: aStream
+[
 	"Append to the argument, aStream, a sequence of characters that  
 	identifies the receiver."
 
@@ -38,11 +38,23 @@ FLObjectCluster >> printNameOn: aStream
 ]
 
 FLObjectCluster >> theClass
-[theClass
+[
 	^ theClass
 ]
 
 FLObjectCluster class >> clusterBucketIn: aClusterization
+[
+	^ aClusterization baselevelBucket
+]
+
+FLObjectCluster class >> newAnalyzing: aClass
+[
+	^ self basicNew
+		initializeAnalyzing: aClass;
+		yourself
+]
+
+aClusterization
 [clusterBucketIn: aClusterization
 	^ aClusterization baselevelBucket
 ]

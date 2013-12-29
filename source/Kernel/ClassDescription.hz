@@ -5,7 +5,7 @@ ClassDescription
 	package: #Kernel.
 
 ClassDescription >> addAndClassifySelector: selector withMethod: compiledMethod inProtocol: category notifying: requestor
-[addAndClassifySelector: selector withMethod: compiledMethod inProtocol: category notifying: requestor
+[
 	| priorMethodOrNil priorOriginOrNil oldProtocol newProtocol |
 	priorMethodOrNil := self compiledMethodAt: selector ifAbsent: [ nil ].
 	priorMethodOrNil ifNotNil: [ priorOriginOrNil := priorMethodOrNil origin ].
@@ -42,34 +42,34 @@ ClassDescription >> addAndClassifySelector: selector withMethod: compiledMethod 
 ]
 
 ClassDescription >> addInstVarNamed: aString
-[addInstVarNamed: aString
+[
 	"Add the argument, aString, as one of the receiver's instance variables."
 
 	self subclassResponsibility
 ]
 
 ClassDescription >> baseClass
-[baseClass
+[
 	^ self subclassResponsibility
 ]
 
 ClassDescription >> basicOrganization
-[basicOrganization
+[
 	^ organization
 ]
 
 ClassDescription >> basicOrganization: aClassOrg
-[basicOrganization: aClassOrg
+[
 	organization := aClassOrg
 ]
 
 ClassDescription >> classClass
-[classClass
+[
 	^ self subclassResponsibility
 ]
 
 ClassDescription >> definition
-[definition
+[
 	"Answer a String that defines the receiver."
 
 	| aStream |
@@ -116,17 +116,17 @@ ClassDescription >> definition
 ]
 
 ClassDescription >> instanceVariables
-[instanceVariables
+[
 	^ instanceVariables
 ]
 
 ClassDescription >> instanceVariables: anObject
-[instanceVariables: anObject
+[
 	instanceVariables := anObject
 ]
 
 ClassDescription >> noteChangesFrom: oldMethodDict
-[noteChangesFrom: oldMethodDict
+[
 	"create notifications about the changes made to the method dictionary"
 
 	"additions have already been notified in #addTraitSelector:withMethod:"
@@ -142,19 +142,32 @@ ClassDescription >> noteChangesFrom: oldMethodDict
 ]
 
 ClassDescription >> theMetaClass
-[theMetaClass
+[
 	^ self classClass
 ]
 
 ClassDescription >> theNonMetaClass
-[theNonMetaClass
+[
 	^ self baseClass
 ]
 
 ClassDescription >> updateOrganizationSelector: aSymbol oldCategory: oldCategoryOrNil newCategory: newCategoryOrNil
-[updateOrganizationSelector: aSymbol oldCategory: oldCategoryOrNil newCategory: newCategoryOrNil
+[
 	| changedCategories composition |
 	changedCategories := IdentitySet new.
+	composition := self hasTraitComposition
+		ifTrue: [ self traitComposition ]
+		ifFalse: [ TraitComposition new ].
+	(composition methodDescriptionsForSelector: aSymbol)
+		do: [ :each | self
+				updateOrganizationDescription: each
+				oldCategory: oldCategoryOrNil
+				newCategory: newCategoryOrNil
+				changedCategories: changedCategories ].
+	^ changedCategories
+]
+
+ategories := IdentitySet new.
 	composition := self hasTraitComposition
 		ifTrue: [ self traitComposition ]
 		ifFalse: [ TraitComposition new ].

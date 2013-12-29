@@ -4,34 +4,39 @@ ZeroDivide
 	package: #Kernel.
 
 ZeroDivide >> dividend
-[dividend
+[
 	"Answer the number that was being divided by zero."
 
 	^ dividend
 ]
 
 ZeroDivide >> dividend: argument
-[dividend: argument
+[
 	"Specify the number that was being divided by zero."
 
 	dividend := argument
 ]
 
 ZeroDivide >> isResumable
-[isResumable
+[
 	"Determine whether an exception is resumable."
 
 	^ true
 ]
 
 ZeroDivide class >> dividend: argument
-[dividend: argument
+[
 	^ self new
 		dividend: argument;
 		yourself
 ]
 
 ZeroDivide class >> signalWithDividend: aDividend
+[
+	^ (self dividend: aDividend) signal
+]
+
+d: aDividend
 [signalWithDividend: aDividend
 	^ (self dividend: aDividend) signal
 ]

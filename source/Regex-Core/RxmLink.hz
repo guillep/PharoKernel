@@ -3,7 +3,7 @@ RxmLink
 	package: #'Regex-Core'.
 
 RxmLink >> matchAgainst: aMatcher
-[matchAgainst: aMatcher
+[
 	"If a link does not match the contents of the matcher's stream,
 	answer false. Otherwise, let the next matcher in the chain match."
 
@@ -11,19 +11,19 @@ RxmLink >> matchAgainst: aMatcher
 ]
 
 RxmLink >> next
-[next
+[
 	^ next
 ]
 
 RxmLink >> next: aLink
-[next: aLink
+[
 	"Set the next link, either an RxmLink or an RxmTerminator."
 
 	next := aLink
 ]
 
 RxmLink >> pointTailTo: anRxmLink
-[pointTailTo: anRxmLink
+[
 	"Propagate this message along the chain of links.
 	Point `next' reference of the last link to <anRxmLink>.
 	If the chain is already terminated, blow up."
@@ -34,19 +34,24 @@ RxmLink >> pointTailTo: anRxmLink
 ]
 
 RxmLink >> postCopy
-[postCopy
+[
 	super postCopy.
 	next := next copy
 ]
 
 RxmLink >> terminateWith: aTerminator
-[terminateWith: aTerminator
+[
 	"Propagate this message along the chain of links, and
 	make aTerminator the `next' link of the last link in the chain.
 	If the chain is already reminated with the same terminator, 
 	do not blow up."
 
 	next == nil
+		ifTrue: [ next := aTerminator ]
+		ifFalse: [ next terminateWith: aTerminator ]
+]
+
+t == nil
 		ifTrue: [ next := aTerminator ]
 		ifFalse: [ next terminateWith: aTerminator ]
 ]

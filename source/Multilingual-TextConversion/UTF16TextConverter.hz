@@ -4,7 +4,7 @@ UTF16TextConverter
 	package: #'Multilingual-TextConversion'.
 
 UTF16TextConverter >> charFromStream: aStream withFirst: firstValue
-[charFromStream: aStream withFirst: firstValue
+[
 	^ (firstValue < 16rD800 or: [ firstValue > 16rDBFF ])
 		ifTrue: [ Unicode value: firstValue ]
 		ifFalse: [ | character1 "We have a surrogate pair" character2 n secondValue |
@@ -20,7 +20,7 @@ UTF16TextConverter >> charFromStream: aStream withFirst: firstValue
 ]
 
 UTF16TextConverter >> checkBOMOn: aStream
-[checkBOMOn: aStream
+[
 	"Write bom if applicable, and we are at beginning of stream"
 
 	(self useByteOrderMark and: [ byteOrderMarkDone not ])
@@ -30,7 +30,7 @@ UTF16TextConverter >> checkBOMOn: aStream
 ]
 
 UTF16TextConverter >> initialize
-[initialize
+[
 	super initialize.
 	byteOrderMarkDone := false.
 	useByteOrderMark := false.
@@ -38,7 +38,7 @@ UTF16TextConverter >> initialize
 ]
 
 UTF16TextConverter >> next16BitValue: value toStream: aStream
-[next16BitValue: value toStream: aStream
+[
 	| v1 v2 |
 	v1 := value >> 8 bitAnd: 16rFF.
 	v2 := value bitAnd: 16rFF.
@@ -50,7 +50,7 @@ UTF16TextConverter >> next16BitValue: value toStream: aStream
 ]
 
 UTF16TextConverter >> nextFromStream: aStream
-[nextFromStream: aStream
+[
 	| character1 character2 readBOM charValue |
 	aStream isBinary
 		ifTrue: [ ^ aStream basicNext ].
@@ -74,7 +74,7 @@ UTF16TextConverter >> nextFromStream: aStream
 ]
 
 UTF16TextConverter >> nextPut: aCharacter toStream: aStream
-[nextPut: aCharacter toStream: aStream
+[
 	| v low high |
 	self checkBOMOn: aStream.
 	v := aCharacter charCode.
@@ -89,13 +89,13 @@ UTF16TextConverter >> nextPut: aCharacter toStream: aStream
 ]
 
 UTF16TextConverter >> nextPutAll: aString toStream: aStream
-[nextPutAll: aString toStream: aStream
+[
 	self checkBOMOn: aStream.
 	^ super nextPutAll: aString toStream: aStream
 ]
 
 UTF16TextConverter >> nextPutByteString: aString toStream: aStream
-[nextPutByteString: aString toStream: aStream
+[
 	| utf16Bytes start |
 	"No bytestring character will be a surrogate pair, so simply write the 2x size string with the correct endianness"
 	utf16Bytes := String new: aString size * 2.
@@ -107,21 +107,38 @@ UTF16TextConverter >> nextPutByteString: aString toStream: aStream
 ]
 
 UTF16TextConverter >> swapLatin1EncodingByteOrder
-[swapLatin1EncodingByteOrder
+[
 	latin1Encodings := latin1Encodings collect: [ :each | each reverse ]
 ]
 
 UTF16TextConverter >> useByteOrderMark
-[useByteOrderMark
+[
 	^ useByteOrderMark
 ]
 
 UTF16TextConverter >> useByteOrderMark: aBoolean
-[useByteOrderMark: aBoolean
+[
 	useByteOrderMark := aBoolean
 ]
 
 UTF16TextConverter >> useLittleEndian
+[
+	^ useLittleEndian
+]
+
+UTF16TextConverter >> useLittleEndian: aBoolean
+[
+	aBoolean = self useLittleEndian
+		ifFalse: [ self swapLatin1EncodingByteOrder ].
+	useLittleEndian := aBoolean
+]
+
+UTF16TextConverter class >> encodingNames
+[
+	^ #('utf-16' 'utf16' 'utf-16-le' 'utf-16-be') copy
+]
+
+F16TextConverter >> useLittleEndian
 [useLittleEndian
 	^ useLittleEndian
 ]

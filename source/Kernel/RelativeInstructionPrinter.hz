@@ -4,7 +4,7 @@ RelativeInstructionPrinter
 	package: #Kernel.
 
 RelativeInstructionPrinter >> jump: offset
-[jump: offset
+[
 	"Print the Unconditional Jump bytecode."
 
 	labelling
@@ -14,7 +14,7 @@ RelativeInstructionPrinter >> jump: offset
 ]
 
 RelativeInstructionPrinter >> jump: offset if: condition
-[jump: offset if: condition
+[
 	"Print the Conditional Jump bytecode."
 
 	labelling
@@ -36,7 +36,7 @@ RelativeInstructionPrinter >> jump: offset if: condition
 ]
 
 RelativeInstructionPrinter >> print: instruction
-[print: instruction
+[
 	"Append to the receiver a description of the bytecode, instruction."
 
 	stream tab: self indent.
@@ -72,17 +72,17 @@ RelativeInstructionPrinter >> print: instruction
 ]
 
 RelativeInstructionPrinter >> printCode
-[printCode
+[
 	^ printCode ~~ false
 ]
 
 RelativeInstructionPrinter >> printCode: aBoolean
-[printCode: aBoolean
+[
 	printCode := aBoolean
 ]
 
 RelativeInstructionPrinter >> printInstructionsOn: aStream
-[printInstructionsOn: aStream
+[
 	"Append to the stream, aStream, a description of each bytecode in the instruction stream."
 
 	| label |
@@ -98,7 +98,7 @@ RelativeInstructionPrinter >> printInstructionsOn: aStream
 ]
 
 RelativeInstructionPrinter >> printInstructionsOn: aStream do: aBlock
-[printInstructionsOn: aStream do: aBlock
+[
 	"Append to the stream, aStream, a description of each bytecode in the instruction stream.
 	  Evaluate aBlock with the receiver, the scanner and the stream after each instruction."
 
@@ -115,17 +115,30 @@ RelativeInstructionPrinter >> printInstructionsOn: aStream do: aBlock
 ]
 
 RelativeInstructionPrinter >> pushClosureCopyNumCopiedValues: numCopied numArgs: numArgs blockSize: blockSize
-[pushClosureCopyNumCopiedValues: numCopied numArgs: numArgs blockSize: blockSize
+[
 	self print: 'closureNumCopied: ' , numCopied printString , ' numArgs: ' , numArgs printString.
 	innerIndents atAll: (scanner pc to: scanner pc + blockSize - 1) put: (innerIndents at: scanner pc - 1) + 1
 ]
 
 RelativeInstructionPrinter >> send: selector super: supered numArgs: numArgs
-[send: selector super: supered numArgs: numArgs
+[
 	"Print the Send Message With Selector, selector, bytecode. The argument, 
 	supered, indicates whether the receiver of the message is specified with 
 	'super' in the source method. The arguments of the message are found in 
 	the top numArguments locations on the stack and the receiver just 
+	below them."
+
+	self
+		print:
+			(supered
+				ifTrue: [ 'superSend: ' ]
+				ifFalse: [ 'send: ' ]) , selector storeString
+				, (numArgs = 1
+						ifTrue: [ ' (1 arg)' ]
+						ifFalse: [ ' (' , numArgs printString , ' args)' ])
+]
+
+ocations on the stack and the receiver just 
 	below them."
 
 	self

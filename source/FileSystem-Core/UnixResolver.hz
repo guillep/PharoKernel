@@ -3,46 +3,46 @@ UnixResolver
 	package: #'FileSystem-Core'.
 
 UnixResolver >> cache
-[cache
+[
 	"http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html"
 
 	^ self directoryFromEnvVariableNamed: 'XDG_CACHE_HOME' or: [ self home / '.cache' ]
 ]
 
 UnixResolver >> desktop
-[desktop
+[
 	^ (self xdgUserDir: 'DESKTOP') ifNil: [ self home / 'Desktop' ]
 ]
 
 UnixResolver >> documents
-[documents
+[
 	^ (self xdgUserDir: 'DOCUMENTS') ifNil: [ self home / 'Documents' ]
 ]
 
 UnixResolver >> home
-[home
+[
 	^ self directoryFromEnvVariableNamed: 'HOME'
 ]
 
 UnixResolver >> preferences
-[preferences
+[
 	"http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html"
 
 	^ self directoryFromEnvVariableNamed: 'XDG_CONFIG_HOME' or: [ self home / '.config' ]
 ]
 
 UnixResolver >> supportedOrigins
-[supportedOrigins
+[
 	^ super supportedOrigins , #(#userData)
 ]
 
 UnixResolver >> userData
-[userData
+[
 	^ self directoryFromEnvVariableNamed: 'XDG_DATA_HOME' or: [ self home / '.local' / 'share' ]
 ]
 
 UnixResolver >> xdgParseUserDirLine: aStream
-[xdgParseUserDirLine: aStream
+[
 	"Format is XDG_xxx_DIR="
 
 	"$HOME/yyy"
@@ -68,7 +68,7 @@ UnixResolver >> xdgParseUserDirLine: aStream
 ]
 
 UnixResolver >> xdgUserDir: userDirName
-[xdgUserDir: userDirName
+[
 	"Read ~/.config/user-dirs.dirs to find the directory of userDirName (e.g., 'DESKTOP')"
 
 	"http://freedesktop.org/wiki/Software/xdg-user-dirs"
@@ -91,6 +91,16 @@ UnixResolver >> xdgUserDir: userDirName
 		readStreamDo: [ :stream | [ stream atEnd ]
 				whileFalse: [ (stream peek ~= $# and: [ (stream upTo: $=) = ('XDG_' , userDirName , '_DIR') ])
 						ifTrue: [ ^ self xdgParseUserDirLine: stream ]
+						ifFalse: [ stream nextLine ] ] ].
+	^ nil
+]
+
+UnixResolver class >> platformName
+[
+	^ 'unix'
+]
+
+: stream ]
 						ifFalse: [ stream nextLine ] ] ].
 	^ nil
 ]

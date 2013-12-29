@@ -3,13 +3,13 @@ RemoteString
 	package: #Files.
 
 RemoteString >> fileNumber: fileNumber position: position
-[fileNumber: fileNumber position: position
+[
 	sourceFileNumber := fileNumber.
 	filePositionHi := position
 ]
 
 RemoteString >> fileStream
-[fileStream
+[
 	"Answer the file stream with position set at the beginning of my string.
 	Answer a read only copy to avoid syntax errors when accessed via
 	multiple processes."
@@ -25,38 +25,38 @@ RemoteString >> fileStream
 ]
 
 RemoteString >> last
-[last
+[
 	^ self string ifNotNil: [ :s | s last ]
 ]
 
 RemoteString >> position
-[position
+[
 	"Answer the location of the string on a file."
 
 	^ filePositionHi
 ]
 
 RemoteString >> setSourcePointer: aSourcePointer
-[setSourcePointer: aSourcePointer
+[
 	sourceFileNumber := SourceFiles fileIndexFromSourcePointer: aSourcePointer.
 	filePositionHi := SourceFiles filePositionFromSourcePointer: aSourcePointer
 ]
 
 RemoteString >> sourceFileNumber
-[sourceFileNumber
+[
 	"Answer the index of the file on which the string is stored."
 
 	^ sourceFileNumber
 ]
 
 RemoteString >> sourcePointer
-[sourcePointer
+[
 	sourceFileNumber ifNil: [ ^ 0 ].
 	^ SourceFiles sourcePointerFromFileIndex: sourceFileNumber andPosition: filePositionHi
 ]
 
 RemoteString >> string
-[string
+[
 	"Answer the receiver's string if remote files are enabled.
 	Use a read only copy to avoid syntax errors when accessed via
 	multiple processes."
@@ -73,7 +73,7 @@ RemoteString >> string
 ]
 
 RemoteString >> string: aString onFileNumber: fileNumber
-[string: aString onFileNumber: fileNumber
+[
 	"Store this as my string if source files exist."
 
 	| theFile |
@@ -86,7 +86,7 @@ RemoteString >> string: aString onFileNumber: fileNumber
 ]
 
 RemoteString >> string: aString onFileNumber: fileNumber toFile: aFileStream
-[string: aString onFileNumber: fileNumber toFile: aFileStream
+[
 	"Store this as the receiver's string if source files exist."
 
 	| position |
@@ -97,12 +97,12 @@ RemoteString >> string: aString onFileNumber: fileNumber toFile: aFileStream
 ]
 
 RemoteString >> text
-[text
+[
 	^ self string asText
 ]
 
 RemoteString class >> newFileNumber: sourceIndex position: anInteger
-[newFileNumber: sourceIndex position: anInteger
+[
 	"Answer an instance of me fora file indexed by sourceIndex, at the 
 	position anInteger. Assume that the string is already stored on the file 
 	and the instance will be used to access it."
@@ -111,7 +111,7 @@ RemoteString class >> newFileNumber: sourceIndex position: anInteger
 ]
 
 RemoteString class >> newString: aString onFileNumber: sourceIndex
-[newString: aString onFileNumber: sourceIndex
+[
 	"Answer an instance of me for string, aString, on file indexed by 
 	sourceIndex. Put the string on the file and create the remote reference."
 
@@ -119,6 +119,16 @@ RemoteString class >> newString: aString onFileNumber: sourceIndex
 ]
 
 RemoteString class >> newString: aString onFileNumber: sourceIndex toFile: aFileStream
+[
+	"Answer an instance of me for string, aString, on file indexed by 
+	sourceIndex. Put the string on the file, aFileStream, and create the 
+	remote reference. Assume that the index corresponds properly to 
+	aFileStream."
+
+	^ self new string: aString onFileNumber: sourceIndex toFile: aFileStream
+]
+
+dex toFile: aFileStream
 [newString: aString onFileNumber: sourceIndex toFile: aFileStream
 	"Answer an instance of me for string, aString, on file indexed by 
 	sourceIndex. Put the string on the file, aFileStream, and create the 

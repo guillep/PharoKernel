@@ -3,12 +3,12 @@ SubscriptionRegistry
 	package: #'Announcements-Core'.
 
 SubscriptionRegistry >> add: subscription
-[add: subscription
+[
 	^ self protected: [ subscriptions add: subscription ]
 ]
 
 SubscriptionRegistry >> deliver: anAnnouncement
-[deliver: anAnnouncement
+[
 	| interestedSubscriptions |
 	"using a copy, so subscribers can unsubscribe from announcer "
 	subscriptions isEmpty
@@ -18,12 +18,12 @@ SubscriptionRegistry >> deliver: anAnnouncement
 ]
 
 SubscriptionRegistry >> deliver: anAnnouncement to: subs
-[deliver: anAnnouncement to: subs
+[
 	^ self deliver: anAnnouncement to: subs startingAt: 1
 ]
 
 SubscriptionRegistry >> deliver: anAnnouncement to: subs startingAt: startIndex
-[deliver: anAnnouncement to: subs startingAt: startIndex
+[
 	startIndex to: subs size do: [ :index | | subscription |
 		subscription := subs at: index.
 		[ subscription deliver: anAnnouncement ]
@@ -31,33 +31,33 @@ SubscriptionRegistry >> deliver: anAnnouncement to: subs startingAt: startIndex
 ]
 
 SubscriptionRegistry >> initialize
-[initialize
+[
 	monitor := Semaphore forMutualExclusion.
 	self reset
 ]
 
 SubscriptionRegistry >> numberOfSubscriptions
-[numberOfSubscriptions
+[
 	^ subscriptions size
 ]
 
 SubscriptionRegistry >> protected: aBlock
-[protected: aBlock
+[
 	^ monitor critical: [ aBlock value ]
 ]
 
 SubscriptionRegistry >> remove: subscription
-[remove: subscription
+[
 	^ self protected: [ subscriptions remove: subscription ifAbsent: nil ]
 ]
 
 SubscriptionRegistry >> removeSubscriber: subscriber
-[removeSubscriber: subscriber
+[
 	^ self protected: [ subscriptions removeAllSuchThat: [ :subscription | subscription subscriber == subscriber ] ]
 ]
 
 SubscriptionRegistry >> replace: subscription with: newOne
-[replace: subscription with: newOne
+[
 	" Note that it will signal an error if subscription is not there "
 
 	self protected: [ subscriptions remove: subscription.
@@ -66,16 +66,28 @@ SubscriptionRegistry >> replace: subscription with: newOne
 ]
 
 SubscriptionRegistry >> reset
-[reset
+[
 	"subscriber -> subscriptions"
 
 	subscriptions := IdentitySet new
 ]
 
 SubscriptionRegistry >> subscriptionsHandling: anAnnouncement
-[subscriptionsHandling: anAnnouncement
+[
 	^ Array
 		streamContents: [ :s | subscriptions do: [ :each | (each handlesAnnouncement: anAnnouncement)
+						ifTrue: [ s nextPut: each ] ] ]
+]
+
+SubscriptionRegistry >> subscriptionsOf: aSubscriber do: aBlock
+[
+	| copy |
+	self protected: [ copy := subscriptions copy ].
+	copy do: [ :subscription | subscription subscriber == aSubscriber
+				ifTrue: [ aBlock value: subscription ] ]
+]
+
+: anAnnouncement)
 						ifTrue: [ s nextPut: each ] ] ]
 ]
 

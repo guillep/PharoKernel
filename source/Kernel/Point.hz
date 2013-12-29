@@ -3,7 +3,7 @@ Point
 	package: #Kernel.
 
 Point >> * arg
-[* arg
+[
 	"Answer a Point that is the product of the receiver and arg."
 
 	arg isPoint
@@ -12,7 +12,7 @@ Point >> * arg
 ]
 
 Point >> + arg
-[+ arg
+[
 	"Answer a Point that is the sum of the receiver and arg."
 
 	arg isPoint
@@ -21,7 +21,7 @@ Point >> + arg
 ]
 
 Point >> - arg
-[- arg
+[
 	"Answer a Point that is the difference of the receiver and arg."
 
 	arg isPoint
@@ -30,7 +30,7 @@ Point >> - arg
 ]
 
 Point >> / arg
-[/ arg
+[
 	"Answer a Point that is the quotient of the receiver and arg."
 
 	arg isPoint
@@ -39,7 +39,7 @@ Point >> / arg
 ]
 
 Point >> // arg
-[// arg
+[
 	"Answer a Point that is the quotient of the receiver and arg."
 
 	arg isPoint
@@ -48,42 +48,42 @@ Point >> // arg
 ]
 
 Point >> < aPoint
-[< aPoint
+[
 	"Answer whether the receiver is above and to the left of aPoint."
 
 	^ x < aPoint x and: [ y < aPoint y ]
 ]
 
 Point >> <= aPoint
-[<= aPoint
+[
 	"Answer whether the receiver is neither below nor to the right of aPoint."
 
 	^ x <= aPoint x and: [ y <= aPoint y ]
 ]
 
 Point >> = aPoint
-[= aPoint
+[
 	self species = aPoint species
 		ifTrue: [ ^ x = aPoint x and: [ y = aPoint y ]	"Refer to the comment in Object|=." ]
 		ifFalse: [ ^ false ]
 ]
 
 Point >> > aPoint
-[> aPoint
+[
 	"Answer whether the receiver is below and to the right of aPoint."
 
 	^ x > aPoint x and: [ y > aPoint y ]
 ]
 
 Point >> >= aPoint
-[>= aPoint
+[
 	"Answer whether the receiver is neither above nor to the left of aPoint."
 
 	^ x >= aPoint x and: [ y >= aPoint y ]
 ]
 
 Point >> \\ arg
-[\\ arg
+[
 	"Answer a Point that is the mod of the receiver and arg."
 
 	arg isPoint
@@ -92,7 +92,7 @@ Point >> \\ arg
 ]
 
 Point >> abs
-[abs
+[
 	"Answer a Point whose x and y are the absolute values of the receiver's x 
 	and y."
 
@@ -100,7 +100,7 @@ Point >> abs
 ]
 
 Point >> adaptToCollection: rcvr andSend: selector
-[adaptToCollection: rcvr andSend: selector
+[
 	"If I am involved in arithmetic with a Collection, return a Collection of
 	the results of each element combined with me in that expression."
 
@@ -108,21 +108,21 @@ Point >> adaptToCollection: rcvr andSend: selector
 ]
 
 Point >> adaptToNumber: rcvr andSend: selector
-[adaptToNumber: rcvr andSend: selector
+[
 	"If I am involved in arithmetic with an Integer, convert it to a Point."
 
 	^ rcvr @ rcvr perform: selector with: self
 ]
 
 Point >> adaptToString: rcvr andSend: selector
-[adaptToString: rcvr andSend: selector
+[
 	"If I am involved in arithmetic with a String, convert it to a Number."
 
 	^ rcvr asNumber perform: selector with: self
 ]
 
 Point >> adhereTo: aRectangle
-[adhereTo: aRectangle
+[
 	"If the receiver lies outside aRectangle, return the nearest point on the boundary of the rectangle, otherwise return self."
 
 	(aRectangle containsPoint: self)
@@ -131,35 +131,35 @@ Point >> adhereTo: aRectangle
 ]
 
 Point >> asFloatPoint
-[asFloatPoint
+[
 	^ x asFloat @ y asFloat
 ]
 
 Point >> asIntegerPoint
-[asIntegerPoint
+[
 	^ x asInteger @ y asInteger
 ]
 
 Point >> asMargin
-[asMargin
+[
 	^ Margin fromPoint: self
 ]
 
 Point >> asNonFractionalPoint
-[asNonFractionalPoint
+[
 	(x isFraction or: [ y isFraction ])
 		ifTrue: [ ^ x asFloat @ y asFloat ]
 ]
 
 Point >> asPoint
-[asPoint
+[
 	"Answer the receiver itself."
 
 	^ self
 ]
 
 Point >> bearingToPoint: anotherPoint
-[bearingToPoint: anotherPoint
+[
 	"Return the bearing, in degrees, from the receiver to anotherPoint.
      Adapted from Playground, where the ultimate provenance of the algorithm was a wild earlier method of Jay Fenton's which I never checked carefully, but the thing has always seemed to work"
 
@@ -176,13 +176,13 @@ Point >> bearingToPoint: anotherPoint
 ]
 
 Point >> bitShiftPoint: bits
-[bitShiftPoint: bits
+[
 	x := x bitShift: bits.
 	y := y bitShift: bits
 ]
 
 Point >> ceiling
-[ceiling
+[
 	"Answer a Point that is the receiver's x and y ceiling. Answer the receiver if its coordinates are already integral."
 
 	(x isInteger and: [ y isInteger ])
@@ -191,12 +191,12 @@ Point >> ceiling
 ]
 
 Point >> closeTo: aPoint
-[closeTo: aPoint
+[
 	^ (x closeTo: aPoint x) and: [ y closeTo: aPoint y ]
 ]
 
 Point >> corner: aPoint
-[corner: aPoint
+[
 	"Answer a Rectangle whose origin is the receiver and whose corner is 
 	aPoint. This is one of the infix ways of expressing the creation of a 
 	rectangle."
@@ -205,7 +205,7 @@ Point >> corner: aPoint
 ]
 
 Point >> crossProduct: aPoint
-[crossProduct: aPoint
+[
 	"Answer a number that is the cross product of the receiver and the 
 	argument, aPoint."
 
@@ -213,14 +213,14 @@ Point >> crossProduct: aPoint
 ]
 
 Point >> deepCopy
-[deepCopy
+[
 	"Implemented here for better performance."
 
 	^ x deepCopy @ y deepCopy
 ]
 
 Point >> degrees
-[degrees
+[
 	"Answer the angle the receiver makes with origin in degrees. right is 0; down is 90."
 
 	| tan theta |
@@ -238,7 +238,7 @@ Point >> degrees
 ]
 
 Point >> dist: aPoint
-[dist: aPoint
+[
 	"Answer the distance between aPoint and the receiver."
 
 	| dx dy |
@@ -248,7 +248,7 @@ Point >> dist: aPoint
 ]
 
 Point >> dotProduct: aPoint
-[dotProduct: aPoint
+[
 	"Answer a number that is the dot product of the receiver and the 
 	argument, aPoint. That is, the two points are multipled and the 
 	coordinates of the result summed."
@@ -257,7 +257,7 @@ Point >> dotProduct: aPoint
 ]
 
 Point >> eightNeighbors
-[eightNeighbors
+[
 	^ {(self + (1 @ 0)).
 	(self + (1 @ 1)).
 	(self + (0 @ 1)).
@@ -269,7 +269,7 @@ Point >> eightNeighbors
 ]
 
 Point >> extent: aPoint
-[extent: aPoint
+[
 	"Answer a Rectangle whose origin is the receiver and whose extent is 
 	aPoint. This is one of the infix ways of expressing the creation of a 
 	rectangle."
@@ -278,7 +278,7 @@ Point >> extent: aPoint
 ]
 
 Point >> flipBy: direction centerAt: c
-[flipBy: direction centerAt: c
+[
 	"Answer a Point which is flipped according to the direction about the point c.
 	Direction must be #vertical or #horizontal."
 
@@ -290,7 +290,7 @@ Point >> flipBy: direction centerAt: c
 ]
 
 Point >> floor
-[floor
+[
 	"Answer a Point that is the receiver's x and y floor. Answer the receiver if its coordinates are already integral."
 
 	(x isInteger and: [ y isInteger ])
@@ -299,7 +299,7 @@ Point >> floor
 ]
 
 Point >> fourDirections
-[fourDirections
+[
 	"Return vertices for a square centered at 0 asPoint with the receiver as first corner.
 	Returns the four rotation of the reciever in counter clockwise order with the receiver appearing last."
 
@@ -311,7 +311,7 @@ Point >> fourDirections
 ]
 
 Point >> fourNeighbors
-[fourNeighbors
+[
 	^ Array
 		with: self + (1 @ 0)
 		with: self + (0 @ 1)
@@ -320,7 +320,7 @@ Point >> fourNeighbors
 ]
 
 Point >> grid: aPoint
-[grid: aPoint
+[
 	"Answer a Point to the nearest rounded grid modules specified by aPoint."
 
 	| newX newY |
@@ -330,21 +330,21 @@ Point >> grid: aPoint
 ]
 
 Point >> guarded
-[guarded
+[
 	"Return a positive nonzero extent."
 
 	self max: 1 @ 1
 ]
 
 Point >> hash
-[hash
+[
 	"Hash is reimplemented because = is implemented."
 
 	^ (x hash hashMultiply + y hash) hashMultiply
 ]
 
 Point >> insideTriangle: p1 with: p2 with: p3
-[insideTriangle: p1 with: p2 with: p3
+[
 	"Return true if the receiver is within the triangle defined by the three coordinates.
 	Note: This method computes the barycentric coordinates for the receiver and tests those coordinates."
 
@@ -367,14 +367,14 @@ Point >> insideTriangle: p1 with: p2 with: p3
 ]
 
 Point >> interpolateTo: end at: amountDone
-[interpolateTo: end at: amountDone
+[
 	"Interpolate between the instance and end after the specified amount has been done (0 - 1)."
 
 	^ self + ((end - self) * amountDone)
 ]
 
 Point >> isInsideCircle: a with: b with: c
-[isInsideCircle: a with: b with: c
+[
 	"Returns TRUE if self is inside the circle defined by the     
 	points a, b, c. See Guibas and Stolfi (1985) p.107"
 
@@ -383,27 +383,27 @@ Point >> isInsideCircle: a with: b with: c
 ]
 
 Point >> isIntegerPoint
-[isIntegerPoint
+[
 	^ x isInteger and: [ y isInteger ]
 ]
 
 Point >> isPoint
-[isPoint
+[
 	^ true
 ]
 
 Point >> isSelfEvaluating
-[isSelfEvaluating
+[
 	^ self class == Point
 ]
 
 Point >> isZero
-[isZero
+[
 	^ x isZero and: [ y isZero ]
 ]
 
 Point >> leftRotated
-[leftRotated
+[
 	"Return the receiver rotated 90 degrees. i.e., self rotateBy: #left centerAt: 0 asPoint.
 Compare to transposed and normal."
 
@@ -411,7 +411,7 @@ Compare to transposed and normal."
 ]
 
 Point >> max: aPoint
-[max: aPoint
+[
 	"Answer the lower right corner of the rectangle uniquely defined by the 
 	receiver and the argument, aPoint."
 
@@ -419,7 +419,7 @@ Point >> max: aPoint
 ]
 
 Point >> min: aPoint
-[min: aPoint
+[
 	"Answer the upper left corner of the rectangle uniquely defined by the 
 	receiver and the argument, aPoint."
 
@@ -427,12 +427,12 @@ Point >> min: aPoint
 ]
 
 Point >> min: aMin max: aMax
-[min: aMin max: aMax
+[
 	^ (self min: aMin) max: aMax
 ]
 
 Point >> nearestPointAlongLineFrom: p1 to: p2
-[nearestPointAlongLineFrom: p1 to: p2
+[
 	"Note this will give points beyond the endpoints.
 	Streamlined by Gerardo Richarte 11/3/97"
 
@@ -450,21 +450,21 @@ Point >> nearestPointAlongLineFrom: p1 to: p2
 ]
 
 Point >> nearestPointOnLineFrom: p1 to: p2
-[nearestPointOnLineFrom: p1 to: p2
+[
 	"This will not give points beyond the endpoints"
 
 	^ (self nearestPointAlongLineFrom: p1 to: p2) adhereTo: (p1 rectangle: p2)
 ]
 
 Point >> negated
-[negated
+[
 	"Answer a point whose x and y coordinates are the negatives of those of the receiver."
 
 	^ (0 - x) @ (0 - y)
 ]
 
 Point >> normal
-[normal
+[
 	"Answer a Point representing the unit vector rotated 90 deg clockwise. For the zero point return -1@0."
 
 	| n d |
@@ -475,7 +475,7 @@ Point >> normal
 ]
 
 Point >> normalized
-[normalized
+[
 	"Optimized for speed -- ar 8/26/2001"
 
 	| r |
@@ -484,7 +484,7 @@ Point >> normalized
 ]
 
 Point >> octantOf: otherPoint
-[octantOf: otherPoint
+[
 	"Return 1..8 indicating relative direction to otherPoint.  
 	1=ESE, 2=SSE, ... etc. clockwise to 8=ENE"
 
@@ -504,12 +504,12 @@ Point >> octantOf: otherPoint
 ]
 
 Point >> onLineFrom: p1 to: p2
-[onLineFrom: p1 to: p2
+[
 	^ self onLineFrom: p1 to: p2 within: 2
 ]
 
 Point >> onLineFrom: p1 to: p2 within: epsilon
-[onLineFrom: p1 to: p2 within: epsilon
+[
 	"Answer true if the receiver lies on the given line segment between p1 and p2 within a small epsilon."
 
 	"is this point within the box spanning p1 and p2 expanded by epsilon? (optimized)"
@@ -528,7 +528,7 @@ Point >> onLineFrom: p1 to: p2 within: epsilon
 ]
 
 Point >> printOn: aStream
-[printOn: aStream
+[
 	"The receiver prints on aStream in terms of infix notation."
 
 	aStream nextPut: $(.
@@ -542,7 +542,7 @@ Point >> printOn: aStream
 ]
 
 Point >> quadrantOf: otherPoint
-[quadrantOf: otherPoint
+[
 	"Return 1..4 indicating relative direction to otherPoint.
 	1 is downRight, 2=downLeft, 3=upLeft, 4=upRight"
 
@@ -556,14 +556,14 @@ Point >> quadrantOf: otherPoint
 ]
 
 Point >> r
-[r
+[
 	"Answer the receiver's radius in polar coordinate system."
 
 	^ (self dotProduct: self) sqrt
 ]
 
 Point >> reciprocal
-[reciprocal
+[
 	" Answer a Point with coordinates that are the reciprocals of mine. "
 
 	" Method was missing from release. "
@@ -574,21 +574,21 @@ Point >> reciprocal
 ]
 
 Point >> rectangle: aPoint
-[rectangle: aPoint
+[
 	"Answer a Rectangle that encompasses the receiver and aPoint. This is the most general infix way to create a rectangle."
 
 	^ Rectangle origin: (self min: aPoint) corner: (self max: aPoint)
 ]
 
 Point >> rightRotated
-[rightRotated
+[
 	"Return the receiver rotated 90 degrees, i.e. self rotateBy: #right centerAt: 0 asPoint. Compare to transposed and normal."
 
 	^ y negated @ x
 ]
 
 Point >> rotateBy: angle about: center
-[rotateBy: angle about: center
+[
 	"Even though Point.theta is measured CW, this rotates with the more conventional CCW interpretateion of angle."
 
 	| p r theta |
@@ -599,7 +599,7 @@ Point >> rotateBy: angle about: center
 ]
 
 Point >> rotateBy: direction centerAt: c
-[rotateBy: direction centerAt: c
+[
 	"Answer a Point which is rotated according to direction, about the point c.
 	Direction must be one of #right (CW), #left (CCW) or #pi (180 degrees)."
 
@@ -615,7 +615,7 @@ Point >> rotateBy: direction centerAt: c
 ]
 
 Point >> roundDownTo: grid
-[roundDownTo: grid
+[
 	"Answer a Point that is the receiver's x and y rounded to grid x and 
 	grid y by lower value (toward negative infinity)."
 
@@ -625,7 +625,7 @@ Point >> roundDownTo: grid
 ]
 
 Point >> roundTo: grid
-[roundTo: grid
+[
 	"Answer a Point that is the receiver's x and y rounded to grid x and 
 	grid y."
 
@@ -635,7 +635,7 @@ Point >> roundTo: grid
 ]
 
 Point >> roundUpTo: grid
-[roundUpTo: grid
+[
 	"Answer a Point that is the receiver's x and y rounded to grid x and 
 	grid y by upper value (toward infinity)."
 
@@ -645,7 +645,7 @@ Point >> roundUpTo: grid
 ]
 
 Point >> rounded
-[rounded
+[
 	"Answer a Point that is the receiver's x and y rounded. Answer the receiver if its coordinates are already integral."
 
 	(x isInteger and: [ y isInteger ])
@@ -654,21 +654,21 @@ Point >> rounded
 ]
 
 Point >> scaleBy: factor
-[scaleBy: factor
+[
 	"Answer a Point scaled by factor (an instance of Point)."
 
 	^ (factor x * x) @ (factor y * y)
 ]
 
 Point >> scaleFrom: rect1 to: rect2
-[scaleFrom: rect1 to: rect2
+[
 	"Produce a point stretched according to the stretch from rect1 to rect2"
 
 	^ rect2 topLeft + (((x - rect1 left) * rect2 width // rect1 width) @ ((y - rect1 top) * rect2 height // rect1 height))
 ]
 
 Point >> scaleTo: anExtent
-[scaleTo: anExtent
+[
 	"Return a Point scalefactor for shrinking a thumbnail of the receiver's extent to fit within anExtent"
 
 	" self and anExtent are expected to have positive nonZero x and y. "
@@ -685,7 +685,7 @@ Point >> scaleTo: anExtent
 ]
 
 Point >> setR: rho degrees: degrees
-[setR: rho degrees: degrees
+[
 	| radians |
 	radians := degrees asFloat degreesToRadians.
 	x := rho asFloat * radians cos.
@@ -693,13 +693,13 @@ Point >> setR: rho degrees: degrees
 ]
 
 Point >> setX: xValue setY: yValue
-[setX: xValue setY: yValue
+[
 	x := xValue.
 	y := yValue
 ]
 
 Point >> sideOf: otherPoint
-[sideOf: otherPoint
+[
 	"Returns #left, #right or #center if the otherPoint lies to the left, right 
 	or on the line given by the vector from 0@0 to self"
 
@@ -711,12 +711,12 @@ Point >> sideOf: otherPoint
 ]
 
 Point >> sign
-[sign
+[
 	^ x sign @ y sign
 ]
 
 Point >> sortsBefore: otherPoint
-[sortsBefore: otherPoint
+[
 	"Return true if the receiver sorts before the other point"
 
 	^ y = otherPoint y
@@ -725,7 +725,7 @@ Point >> sortsBefore: otherPoint
 ]
 
 Point >> squaredDistanceTo: aPoint
-[squaredDistanceTo: aPoint
+[
 	"Answer the distance between aPoint and the receiver."
 
 	| delta |
@@ -734,7 +734,7 @@ Point >> squaredDistanceTo: aPoint
 ]
 
 Point >> storeOn: aStream
-[storeOn: aStream
+[
 	"x@y printed form is good for storing too"
 
 	aStream nextPut: $(.
@@ -743,7 +743,7 @@ Point >> storeOn: aStream
 ]
 
 Point >> theta
-[theta
+[
 	"Answer the angle the receiver makes with origin in radians. right is 0; 
 	down is 90. 
 	Corrected the constants from single precision to 64 Bit precision 
@@ -764,7 +764,7 @@ Point >> theta
 ]
 
 Point >> to: end1 intersects: start2 to: end2
-[to: end1 intersects: start2 to: end2
+[
 	"Returns true if the linesegment from start1 (=self) to end1 intersects      
 	    with the segment from start2 to end2, otherwise false."
 
@@ -784,14 +784,87 @@ Point >> to: end1 intersects: start2 to: end2
 ]
 
 Point >> to: end sideOf: otherPoint
-[to: end sideOf: otherPoint
+[
 	"Returns #left, #right, #center if the otherPoint lies to the left, right or on the line given by the vector from self to end"
 
 	^ end - self sideOf: otherPoint - self
 ]
 
 Point >> translateBy: delta
-[translateBy: delta
+[
+	"Answer a Point translated by delta (an instance of Point)."
+
+	^ (delta x + x) @ (delta y + y)
+]
+
+Point >> transposed
+[
+	^ y @ x
+]
+
+Point >> triangleArea: b with: c
+[
+	"Returns twice the area of the oriented triangle (a, b, c), i.e., the   
+	area is positive if the triangle is oriented counterclockwise"
+
+	^ (b x - self x) * (c y - self y) - ((b y - self y) * (c x - self x))
+]
+
+Point >> truncateTo: grid
+[
+	"Answer a Point that is the receiver's x and y truncated to grid x and 
+	grid y."
+
+	| gridPoint |
+	gridPoint := grid asPoint.
+	^ (x truncateTo: gridPoint x) @ (y truncateTo: gridPoint y)
+]
+
+Point >> truncated
+[
+	"Answer a Point whose x and y coordinates are integers. Answer the receiver if its coordinates are already integral."
+
+	(x isInteger and: [ y isInteger ])
+		ifTrue: [ ^ self ].
+	^ x truncated @ y truncated
+]
+
+Point >> veryDeepCopyWith: deepCopier
+[
+	"Return self.  I am immutable in the Morphic world.  Do not record me."
+
+	
+]
+
+Point >> x
+[
+	"Answer the x coordinate."
+
+	^ x
+]
+
+Point >> y
+[
+	"Answer the y coordinate."
+
+	^ y
+]
+
+Point class >> r: rho degrees: degrees
+[
+	"Answer an instance of me with polar coordinates rho and theta."
+
+	^ self basicNew setR: rho degrees: degrees
+]
+
+Point class >> x: xInteger y: yInteger
+[
+	"Answer an instance of me with coordinates xInteger and yInteger."
+
+	^ self basicNew setX: xInteger setY: yInteger
+]
+
+elta
 	"Answer a Point translated by delta (an instance of Point)."
 
 	^ (delta x + x) @ (delta y + y)

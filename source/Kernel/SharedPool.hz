@@ -2,7 +2,7 @@ SharedPool
 	package: #Kernel.
 
 SharedPool class >> bindingOf: varName
-[bindingOf: varName
+[
 	"Answer the binding of some variable resolved in the scope of the receiver"
 
 	| aSymbol binding |
@@ -15,19 +15,19 @@ SharedPool class >> bindingOf: varName
 ]
 
 SharedPool class >> bindingsDo: aBlock
-[bindingsDo: aBlock
+[
 	^ self classPool bindingsDo: aBlock
 ]
 
 SharedPool class >> classBindingOf: varName
-[classBindingOf: varName
+[
 	"For initialization messages grant the regular scope"
 
 	^ super bindingOf: varName
 ]
 
 SharedPool class >> hasBindingThatBeginsWith: aString
-[hasBindingThatBeginsWith: aString
+[
 	"Answer true if the receiver has a binding that begins with aString, false otherwise"
 
 	"First look in classVar dictionary."
@@ -40,15 +40,20 @@ SharedPool class >> hasBindingThatBeginsWith: aString
 ]
 
 SharedPool class >> includesKey: aName
-[includesKey: aName
+[
 	"does this pool include aName"
 
 	^ (self bindingOf: aName) notNil
 ]
 
 SharedPool class >> keysDo: aBlock
-[keysDo: aBlock
+[
 	"A hopefully temporary fix for an issue arising from miss-spelled variable names in code being compiled. The correction code (see Class>possibleVariablesFor:continuedFrom: assumes that sharedPools are Dictionaries. The proper fix would involve making sure all pools are actually subclasses of SharedPool, which they are not currently."
+
+	self bindingsDo: [ :b | aBlock value: b key ]
+]
+
+ls are actually subclasses of SharedPool, which they are not currently."
 
 	self bindingsDo: [ :b | aBlock value: b key ]
 ]

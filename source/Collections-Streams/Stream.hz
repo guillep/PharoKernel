@@ -2,47 +2,47 @@ Stream
 	package: #'Collections-Streams'.
 
 Stream >> << items
-[<< items
+[
 	items putOn: self.
 	^ self
 ]
 
 Stream >> atEnd
-[atEnd
+[
 	"Answer whether the receiver can access any more objects."
 
 	self subclassResponsibility
 ]
 
 Stream >> basicNext
-[basicNext
+[
 	^ self next
 ]
 
 Stream >> basicNext: anAmount putAll: aCollection startingAt: startIndex
-[basicNext: anAmount putAll: aCollection startingAt: startIndex
+[
 	^ self next: anAmount putAll: aCollection startingAt: startIndex
 ]
 
 Stream >> basicNextPut: anObject
-[basicNextPut: anObject
+[
 	^ self nextPut: anObject
 ]
 
 Stream >> basicNextPutAll: aCollection
-[basicNextPutAll: aCollection
+[
 	^ self nextPutAll: aCollection
 ]
 
 Stream >> binary
-[binary
+[
 	"do nothing"
 
 	^ self
 ]
 
 Stream >> close
-[close
+[
 	"Presumably sets the status of the receiver to be closed. This message does 
 	nothing at this level, but is included for FileStream compatibility."
 
@@ -50,57 +50,57 @@ Stream >> close
 ]
 
 Stream >> closed
-[closed
+[
 	^ false
 ]
 
 Stream >> contents
-[contents
+[
 	"Answer all of the contents of the receiver."
 
 	self subclassResponsibility
 ]
 
 Stream >> do: aBlock
-[do: aBlock
+[
 	"Evaluate aBlock for each of the objects accessible by receiver."
 
 	[ self atEnd ] whileFalse: [ aBlock value: self next ]
 ]
 
 Stream >> flush
-[flush
+[
 	"Do nothing by default"
 
 	
 ]
 
 Stream >> isBinary
-[isBinary
+[
 	^ false
 ]
 
 Stream >> isStream
-[isStream
+[
 	"Return true if the receiver responds to the stream protocol"
 
 	^ true
 ]
 
 Stream >> localName
-[localName
+[
 	^ 'a stream'
 ]
 
 Stream >> next
-[next
+[
 	"Answer the next object accessible by the receiver."
 
 	self subclassResponsibility
 ]
 
 Stream >> next: anInteger
-[next: anInteger
+[
 	"Answer the next anInteger number of objects accessible by the receiver."
 
 	| aCollection |
@@ -110,7 +110,7 @@ Stream >> next: anInteger
 ]
 
 Stream >> next: anInteger put: anObject
-[next: anInteger put: anObject
+[
 	"Make anObject be the next anInteger number of objects accessible by the 
 	receiver. Answer anObject."
 
@@ -119,7 +119,7 @@ Stream >> next: anInteger put: anObject
 ]
 
 Stream >> next: anInteger putAll: aCollection startingAt: startIndex
-[next: anInteger putAll: aCollection startingAt: startIndex
+[
 	"Store the next anInteger elements from the given collection."
 
 	(startIndex = 1 and: [ anInteger = aCollection size ])
@@ -128,7 +128,7 @@ Stream >> next: anInteger putAll: aCollection startingAt: startIndex
 ]
 
 Stream >> nextMatchAll: aColl
-[nextMatchAll: aColl
+[
 	"Answer true if next N objects are the ones in aColl,
      else false.  Advance stream of true, leave as was if false."
 
@@ -141,7 +141,7 @@ Stream >> nextMatchAll: aColl
 ]
 
 Stream >> nextMatchFor: anObject
-[nextMatchFor: anObject
+[
 	"Gobble the next object and answer whether it is equal to the argument, 
 	anObject."
 
@@ -149,7 +149,7 @@ Stream >> nextMatchFor: anObject
 ]
 
 Stream >> nextPut: anObject
-[nextPut: anObject
+[
 	"Insert the argument, anObject, as the next object accessible by the 
 	receiver. Answer anObject."
 
@@ -157,7 +157,7 @@ Stream >> nextPut: anObject
 ]
 
 Stream >> nextPutAll: aCollection
-[nextPutAll: aCollection
+[
 	"Append the elements of aCollection to the sequence of objects accessible 
 	by the receiver. Answer aCollection."
 
@@ -166,7 +166,7 @@ Stream >> nextPutAll: aCollection
 ]
 
 Stream >> nextWordsPutAll: aCollection
-[nextWordsPutAll: aCollection
+[
 	"Write the argument a word-like object in big endian format on the receiver.
 	May be used to write other than plain word-like objects (such as ColorArray)."
 
@@ -177,12 +177,42 @@ Stream >> nextWordsPutAll: aCollection
 ]
 
 Stream >> openReadOnly
-[openReadOnly
+[
 	^ self
 ]
 
 Stream >> print: anObject
-[print: anObject
+[
+	"Have anObject print itself on the receiver."
+
+	anObject printOn: self
+]
+
+Stream >> readOnly
+[
+	^ self
+]
+
+Stream >> upToEnd
+[
+	"answer the remaining elements in the string"
+
+	| elements |
+	elements := OrderedCollection new.
+	[ self atEnd ] whileFalse: [ elements add: self next ].
+	^ elements
+]
+
+Stream >> write: encodedObject
+[
+	^ encodedObject putOn: self
+]
+
+Stream class >> new
+[
+	self error: 'Streams are created with on: and with:'
+]
+
 	"Have anObject print itself on the receiver."
 
 	anObject printOn: self

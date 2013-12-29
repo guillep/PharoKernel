@@ -3,29 +3,29 @@ FLEncoder
 	package: #Fuel.
 
 FLEncoder >> encodeBitmap: aBitmap
-[encodeBitmap: aBitmap
+[
 	"Append to the receiver an Integer as the next two bytes."
 
 	aBitmap writeOn: stream
 ]
 
 FLEncoder >> encodeByte: aSmallInteger
-[encodeByte: aSmallInteger
+[
 	stream nextPut: aSmallInteger
 ]
 
 FLEncoder >> encodeBytes: aBytesObject
-[encodeBytes: aBytesObject
+[
 	stream nextBytesPutAll: aBytesObject
 ]
 
 FLEncoder >> encodeClusterClass: aClusterClass
-[encodeClusterClass: aClusterClass
+[
 	self encodeString: aClusterClass name
 ]
 
 FLEncoder >> encodeInt24: aSmallInteger
-[encodeInt24: aSmallInteger
+[
 	"Write a signed integer to the next 4 bytes"
 
 	| pos |
@@ -36,7 +36,7 @@ FLEncoder >> encodeInt24: aSmallInteger
 ]
 
 FLEncoder >> encodeInt32: aSmallInteger
-[encodeInt32: aSmallInteger
+[
 	"Write a signed integer to the next 4 bytes"
 
 	| pos |
@@ -47,19 +47,19 @@ FLEncoder >> encodeInt32: aSmallInteger
 ]
 
 FLEncoder >> encodePositiveInteger: anInteger
-[encodePositiveInteger: anInteger
+[
 	"Append to the receiver an Integer as the next 4 bytes."
 
 	1 to: 4 do: [ :i | stream nextPut: (anInteger digitAt: 4 + 1 - i) ]
 ]
 
 FLEncoder >> encodeReferenceTo: anObject
-[encodeReferenceTo: anObject
+[
 	indexStream nextIndexPut: (objectsIndexes at: anObject ifAbsent: [ FLObjectNotFound signalWith: anObject ])
 ]
 
 FLEncoder >> encodeString: aString
-[encodeString: aString
+[
 	| length |
 	(length := aString size) < 192
 		ifTrue: [ stream nextPut: length ]
@@ -71,7 +71,7 @@ FLEncoder >> encodeString: aString
 ]
 
 FLEncoder >> encodeUint16: aSmallInteger
-[encodeUint16: aSmallInteger
+[
 	"Append to the receiver an Integer as the next two bytes."
 
 	stream nextPut: (aSmallInteger bitShift: -8).
@@ -79,7 +79,7 @@ FLEncoder >> encodeUint16: aSmallInteger
 ]
 
 FLEncoder >> encodeUint24: aSmallInteger
-[encodeUint24: aSmallInteger
+[
 	"Append to the receiver an Integer as the next 3 bytes."
 
 	stream
@@ -89,7 +89,7 @@ FLEncoder >> encodeUint24: aSmallInteger
 ]
 
 FLEncoder >> encodeUint32: aSmallInteger
-[encodeUint32: aSmallInteger
+[
 	"Append to the receiver an Integer as the next 4 bytes."
 
 	stream
@@ -100,60 +100,85 @@ FLEncoder >> encodeUint32: aSmallInteger
 ]
 
 FLEncoder >> encodeUint8: aSmallInteger
-[encodeUint8: aSmallInteger
+[
 	"Append to the receiver an Integer as the next two bytes."
 
 	stream nextPut: aSmallInteger
 ]
 
 FLEncoder >> encodeWeakReferenceTo: anObject
-[encodeWeakReferenceTo: anObject
+[
 	indexStream nextIndexPut: (objectsIndexes at: anObject ifAbsent: [ objectsIndexes at: nil ])
 ]
 
 FLEncoder >> encodeWords: aWordsObject
-[encodeWords: aWordsObject
+[
 	stream nextWordsPut: aWordsObject
 ]
 
 FLEncoder >> encodeYourself
-[encodeYourself
+[
 	self encodePositiveInteger: objectCount.
 	self encodePositiveInteger: Smalltalk isBigEndian asBit
 ]
 
 FLEncoder >> flush
-[flush
+[
 	^ stream flush
 ]
 
 FLEncoder >> fuelAccept: aGeneralMapper
-[fuelAccept: aGeneralMapper
+[
 	^ aGeneralMapper visitSubstitution: self by: nil
 ]
 
 FLEncoder >> globalEnvironment
-[globalEnvironment
+[
 	"Answer a dictionary where the look up for global symbols will be done during serialization."
 
 	^ globalEnvironment
 ]
 
 FLEncoder >> initializeOn: aStream globalEnvironment: aDictionary
-[initializeOn: aStream globalEnvironment: aDictionary
+[
 	self initialize.
 	stream := FLBufferedWriteStream on: aStream.
 	globalEnvironment := aDictionary
 ]
 
 FLEncoder >> objectCount
-[objectCount
+[
 	^ objectCount
 ]
 
 FLEncoder >> objectCount: aNumber
-[objectCount: aNumber
+[
 	objectCount := aNumber.
+	objectsIndexes := FLLargeIdentityDictionary new.
+	indexStream := FLIndexStream on: stream digits: aNumber digitLength
+]
+
+FLEncoder >> objectsIndexes
+[
+	^ objectsIndexes
+]
+
+FLEncoder class >> on: aStream globalEnvironment: aDictionary
+[
+	^ self basicNew
+		initializeOn: aStream globalEnvironment: aDictionary;
+		yourself
+]
+
+FLEncoder class >> on: aStream globalEnvironment: aDictionary do: aBlock
+[
+	| anEncoder |
+	anEncoder := self on: aStream globalEnvironment: aDictionary.
+	^ [ aBlock value: anEncoder ]
+		ensure: [ anEncoder flush ]
+]
+
+r.
 	objectsIndexes := FLLargeIdentityDictionary new.
 	indexStream := FLIndexStream on: stream digits: aNumber digitLength
 ]

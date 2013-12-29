@@ -4,24 +4,24 @@ FLBufferedWriteStream
 	package: #Fuel.
 
 FLBufferedWriteStream >> buffer
-[buffer
+[
 	buffer ifNil: [ self sizeBuffer: self defaultBufferSize ].
 	^ buffer
 ]
 
 FLBufferedWriteStream >> bufferFreeSize
-[bufferFreeSize
+[
 	^ buffer size - position
 ]
 
 FLBufferedWriteStream >> close
-[close
+[
 	self flushBuffer.
 	stream close
 ]
 
 FLBufferedWriteStream >> copyWordObjectToBuffer: aWordObject
-[copyWordObjectToBuffer: aWordObject
+[
 	| blt |
 	blt := (BitBlt toForm: (Form new hackBits: self buffer)) sourceForm: (Form new hackBits: aWordObject).
 	blt combinationRule: Form over.	"store"
@@ -37,18 +37,18 @@ FLBufferedWriteStream >> copyWordObjectToBuffer: aWordObject
 ]
 
 FLBufferedWriteStream >> defaultBufferSize
-[defaultBufferSize
+[
 	^ 8192	"2 raisedTo: 13  "
 ]
 
 FLBufferedWriteStream >> flush
-[flush
+[
 	self flushBuffer.
 	stream flush
 ]
 
 FLBufferedWriteStream >> flushBuffer
-[flushBuffer
+[
 	position = 0
 		ifTrue: [ ^ self ].
 	position = buffer size
@@ -60,13 +60,13 @@ FLBufferedWriteStream >> flushBuffer
 ]
 
 FLBufferedWriteStream >> flushBufferIfFull
-[flushBufferIfFull
+[
 	position = buffer size
 		ifTrue: [ self flushBuffer ]
 ]
 
 FLBufferedWriteStream >> initializeOn: writeStream bufferSize: aSize
-[initializeOn: writeStream bufferSize: aSize
+[
 	self initialize.
 	self initializeStream: writeStream.
 	self sizeBuffer: aSize.
@@ -74,13 +74,13 @@ FLBufferedWriteStream >> initializeOn: writeStream bufferSize: aSize
 ]
 
 FLBufferedWriteStream >> initializeStream: aWriteStream
-[initializeStream: aWriteStream
+[
 	stream := aWriteStream.	"This is ugly, but it is an optimization for #flushBuffer"
 	streamRespondsToNextPutAllStartingAt := stream respondsTo: #next:putAll:startingAt:
 ]
 
 FLBufferedWriteStream >> nextBytesPutAll: collection
-[nextBytesPutAll: collection
+[
 	self flushBufferIfFull.
 	collection size <= self bufferFreeSize
 		ifTrue: [ self buffer replaceFrom: position + 1 to: position + collection size with: collection.
@@ -92,14 +92,14 @@ FLBufferedWriteStream >> nextBytesPutAll: collection
 ]
 
 FLBufferedWriteStream >> nextPut: object
-[nextPut: object
+[
 	self flushBufferIfFull.
 	position := position + 1.
 	self buffer at: position put: object
 ]
 
 FLBufferedWriteStream >> nextPutAll: collection
-[nextPutAll: collection
+[
 	self flushBufferIfFull.
 	collection size <= self bufferFreeSize
 		ifTrue: [ self buffer replaceFrom: position + 1 to: position + collection size with: collection.
@@ -111,7 +111,7 @@ FLBufferedWriteStream >> nextPutAll: collection
 ]
 
 FLBufferedWriteStream >> nextWordsPut: aWordObject
-[nextWordsPut: aWordObject
+[
 	| byteSize |
 	byteSize := aWordObject byteSize.	"Ensure we are at bigger than the words added, with size next power-of-two"
 	byteSize > buffer size
@@ -123,19 +123,19 @@ FLBufferedWriteStream >> nextWordsPut: aWordObject
 ]
 
 FLBufferedWriteStream >> position
-[position
+[
 	^ position + stream position
 ]
 
 FLBufferedWriteStream >> printOn: aStream
-[printOn: aStream
+[
 	aStream
 		nextPutAll: 'a ';
 		nextPutAll: self class name
 ]
 
 FLBufferedWriteStream >> sizeBuffer: size
-[sizeBuffer: size
+[
 	buffer ifNotNil: [ self flushBuffer ].
 	buffer := (stream isBinary
 		ifTrue: [ ByteArray ]
@@ -143,6 +143,23 @@ FLBufferedWriteStream >> sizeBuffer: size
 ]
 
 FLBufferedWriteStream class >> defaultBufferSize
+[
+	^ 4096
+]
+
+FLBufferedWriteStream class >> on: writeStream
+[
+	^ self on: writeStream bufferSize: self defaultBufferSize
+]
+
+FLBufferedWriteStream class >> on: writeStream bufferSize: aSize
+[
+	^ self basicNew
+		initializeOn: writeStream bufferSize: aSize;
+		yourself
+]
+
+eredWriteStream class >> defaultBufferSize
 [defaultBufferSize
 	^ 4096
 ]

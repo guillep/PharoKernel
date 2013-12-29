@@ -3,12 +3,12 @@ FLSimpleStack
 	package: #Fuel.
 
 FLSimpleStack >> capacity
-[capacity
+[
 	^ array size
 ]
 
 FLSimpleStack >> grow
-[grow
+[
 	"Become larger in capacity."
 
 	| newArray |
@@ -22,18 +22,18 @@ FLSimpleStack >> grow
 ]
 
 FLSimpleStack >> initialize: hintSize
-[initialize: hintSize
+[
 	array := Array new: hintSize.
 	slotIndex := 1
 ]
 
 FLSimpleStack >> isEmpty
-[isEmpty
+[
 	^ 1 = slotIndex
 ]
 
 FLSimpleStack >> pop
-[pop
+[
 	"Returns the first element and remove it from the stack."
 
 	slotIndex := slotIndex - 1.
@@ -41,7 +41,7 @@ FLSimpleStack >> pop
 ]
 
 FLSimpleStack >> printOn: aStream
-[printOn: aStream
+[
 	"Append a sequence of characters that identify the receiver to aStream."
 
 	super printOn: aStream.
@@ -49,7 +49,7 @@ FLSimpleStack >> printOn: aStream
 ]
 
 FLSimpleStack >> push: anObject
-[push: anObject
+[
 	"Adds a new object of any kind on top of the stack."
 
 	array at: slotIndex put: anObject.
@@ -60,18 +60,23 @@ FLSimpleStack >> push: anObject
 ]
 
 FLSimpleStack class >> hintSize
-[hintSize
+[
 	^ 64
 ]
 
 FLSimpleStack class >> new
-[new
+[
 	^ self new: self hintSize
 ]
 
 FLSimpleStack class >> new: nElements
-[new: nElements
+[
 	"Create a Set large enough to hold nElements without growing"
+
+	^ self basicNew initialize: nElements
+]
+
+a Set large enough to hold nElements without growing"
 
 	^ self basicNew initialize: nElements
 ]

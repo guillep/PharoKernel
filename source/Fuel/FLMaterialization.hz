@@ -3,17 +3,17 @@ FLMaterialization
 	package: #Fuel.
 
 FLMaterialization >> additionalObjectAt: aKey
-[additionalObjectAt: aKey
+[
 	^ header additionalObjectAt: aKey
 ]
 
 FLMaterialization >> afterMaterializationStep
-[afterMaterializationStep
+[
 	clusters do: [ :aCluster | aCluster afterMaterializationStepWith: decoder ]
 ]
 
 FLMaterialization >> clusterInstancesStep
-[clusterInstancesStep
+[
 	| aCluster |
 	aCluster := decoder nextEncodedClusterClass newMaterializing.
 	aCluster clusterMaterializeStepWith: self.
@@ -24,17 +24,17 @@ FLMaterialization >> clusterInstancesStep
 ]
 
 FLMaterialization >> decoder
-[decoder
+[
 	^ decoder
 ]
 
 FLMaterialization >> header: aHeader
-[header: aHeader
+[
 	header := aHeader
 ]
 
 FLMaterialization >> headerStep
-[headerStep
+[
 	decoder decodeYourself.
 	clusterCount := decoder nextEncodedPositiveInteger.
 	clusters := OrderedCollection new: clusterCount.
@@ -42,45 +42,60 @@ FLMaterialization >> headerStep
 ]
 
 FLMaterialization >> initializeWith: aDecoder
-[initializeWith: aDecoder
+[
 	self initialize.
 	decoder := aDecoder
 ]
 
 FLMaterialization >> instancesStep
-[instancesStep
+[
 	clusterCount timesRepeat: [ self clusterInstancesStep ]
 ]
 
 FLMaterialization >> objects
-[objects
+[
 	"Answer a collection with the materialized objects."
 
 	^ decoder objects
 ]
 
 FLMaterialization >> referencesStep
-[referencesStep
+[
 	clusters do: [ :aCluster | aCluster materializeReferencesStepWith: decoder ]
 ]
 
 FLMaterialization >> registerAll: materializedObjects
-[registerAll: materializedObjects
+[
 	decoder registerAll: materializedObjects
 ]
 
 FLMaterialization >> root
-[root
+[
 	^ root
 ]
 
 FLMaterialization >> run
-[run
+[
 	self headerStep.
 	self instancesStep.
 	self referencesStep.
 	self trailerStep.
 	self afterMaterializationStep
+]
+
+FLMaterialization >> trailerStep
+[
+	root := decoder nextEncodedReference
+]
+
+FLMaterialization class >> with: aDecoder
+[
+	^ self basicNew
+		initializeWith: aDecoder;
+		yourself
+]
+
+ializationStep
 ]
 
 FLMaterialization >> trailerStep

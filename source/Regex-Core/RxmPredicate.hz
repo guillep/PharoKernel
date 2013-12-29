@@ -4,21 +4,21 @@ RxmPredicate
 	package: #'Regex-Core'.
 
 RxmPredicate >> bePerform: aSelector
-[bePerform: aSelector
+[
 	"Match any single character that answers true  to this message."
 
 	self predicate: [ :char | RxParser doHandlingMessageNotUnderstood: [ char perform: aSelector ] ]
 ]
 
 RxmPredicate >> bePerformNot: aSelector
-[bePerformNot: aSelector
+[
 	"Match any single character that answers false to this message."
 
 	self predicate: [ :char | RxParser doHandlingMessageNotUnderstood: [ (char perform: aSelector) not ] ]
 ]
 
 RxmPredicate >> matchAgainst: aMatcher
-[matchAgainst: aMatcher
+[
 	"Match if the predicate block evaluates to true when given the
 	current stream character as the argument."
 
@@ -31,7 +31,7 @@ RxmPredicate >> matchAgainst: aMatcher
 ]
 
 RxmPredicate >> predicate: aBlock
-[predicate: aBlock
+[
 	"This link will match any single character for which <aBlock>
 	evaluates to true."
 
@@ -39,6 +39,14 @@ RxmPredicate >> predicate: aBlock
 		ifTrue: [ self error: 'bad predicate block' ].
 	predicate := aBlock.
 	^ self
+]
+
+RxmPredicate class >> with: unaryBlock
+[
+	^ self new predicate: unaryBlock
+]
+
+
 ]
 
 RxmPredicate class >> with: unaryBlock

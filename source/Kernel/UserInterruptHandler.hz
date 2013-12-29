@@ -6,7 +6,7 @@ UserInterruptHandler
 	package: #Kernel.
 
 UserInterruptHandler >> handleEvent: evt
-[handleEvent: evt
+[
 	"Interrupt event... evt is shared, so make a copy of it."
 
 	| buf |
@@ -25,7 +25,7 @@ UserInterruptHandler >> handleEvent: evt
 ]
 
 UserInterruptHandler >> handleUserInterrupt
-[handleUserInterrupt
+[
 	"This will be called from the event-fetcher process. 
 	Assume no system-vital processes have a lower priority than this, and are thus ok to interrupt"
 
@@ -39,7 +39,7 @@ UserInterruptHandler >> handleUserInterrupt
 ]
 
 UserInterruptHandler >> processToInterrupt
-[processToInterrupt
+[
 	"Look for best candidate to interrupt: 
 		- any scheduled non-finalization process of lower priority 
 		- the weak-finalization process, if scheduled 
@@ -59,18 +59,26 @@ UserInterruptHandler >> processToInterrupt
 ]
 
 UserInterruptHandler >> setInterruptKeyValue: anInt
-[setInterruptKeyValue: anInt
+[
 	interruptKey := anInt
 ]
 
 UserInterruptHandler class >> cmdDotEnabled
-[cmdDotEnabled
+[
 	^ CmdDotEnabled ifNil: [ CmdDotEnabled := true ]
 ]
 
 UserInterruptHandler class >> cmdDotEnabled: aBoolean
-[cmdDotEnabled: aBoolean
+[
 	CmdDotEnabled := aBoolean
+]
+
+UserInterruptHandler class >> new
+[
+	^ super new setInterruptKeyValue: $. asciiValue
+]
+
+mdDotEnabled := aBoolean
 ]
 
 UserInterruptHandler class >> new

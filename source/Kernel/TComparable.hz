@@ -1,20 +1,20 @@
 Trait named: #TComparable
 	package: #'Kernel-Numbers'.TComparable >> < aComparable
-[< aComparable
+[
 	"Answer whether the receiver is less than the argument."
 
 	^ self subclassResponsibility
 ]
 
 TComparable >> <= aComparable
-[<= aComparable
+[
 	"Answer whether the receiver is less than or equal to the argument."
 
 	^ (self > aComparable) not
 ]
 
 TComparable >> = aComparable
-[= aComparable
+[
 	"Compare the receiver with the argument and answer with true if the 
 	receiver is equal to the argument. Otherwise answer false."
 
@@ -22,21 +22,21 @@ TComparable >> = aComparable
 ]
 
 TComparable >> > aComparable
-[> aComparable
+[
 	"Answer whether the receiver is greater than the argument."
 
 	^ aComparable < self
 ]
 
 TComparable >> >= aComparable
-[>= aComparable
+[
 	"Answer whether the receiver is greater than or equal to the argument."
 
 	^ aComparable <= self
 ]
 
 TComparable >> between: min and: max
-[between: min and: max
+[
 	"Answer whether the receiver is less than or equal to the argument, max, 
 	and greater than or equal to the argument, min."
 
@@ -44,14 +44,14 @@ TComparable >> between: min and: max
 ]
 
 TComparable >> hash
-[hash
+[
 	"Hash must be redefined whenever = is redefined."
 
 	^ self subclassResponsibility
 ]
 
 TComparable >> max: aComparable
-[max: aComparable
+[
 	"Answer the receiver or the argument, whichever is greater."
 
 	self > aComparable
@@ -60,10 +60,20 @@ TComparable >> max: aComparable
 ]
 
 TComparable >> min: aComparable
-[min: aComparable
+[
 	"Answer the receiver or the argument, whichever is lesser."
 
 	self < aComparable
+		ifTrue: [ ^ self ]
+		ifFalse: [ ^ aComparable ]
+]
+
+TComparable >> min: aMin max: aMax
+[
+	^ (self min: aMin) max: aMax
+]
+
+
 		ifTrue: [ ^ self ]
 		ifFalse: [ ^ aComparable ]
 ]

@@ -3,17 +3,17 @@ Latin2Environment
 	package: #'Multilingual-Languages'.
 
 Latin2Environment class >> initialize
-[initialize
+[
 	EncodedCharSet declareEncodedCharSet: self atIndex: 14 + 1
 ]
 
 Latin2Environment class >> leadingChar
-[leadingChar
+[
 	^ 0
 ]
 
 Latin2Environment class >> supportedLanguages
-[supportedLanguages
+[
 	"Return the languages that this class supports. 
 	Any translations for those languages will use this class as their environment."
 
@@ -21,9 +21,13 @@ Latin2Environment class >> supportedLanguages
 ]
 
 Latin2Environment class >> systemConverterClass
-[systemConverterClass
+[
 	Smalltalk os isWin32
 		ifTrue: [ ^ CP1250TextConverter ].
+	^ ISO88592TextConverter
+]
+
+ue: [ ^ CP1250TextConverter ].
 	^ ISO88592TextConverter
 ]
 

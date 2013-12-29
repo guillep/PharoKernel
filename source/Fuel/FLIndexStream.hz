@@ -3,14 +3,14 @@ FLIndexStream
 	package: #Fuel.
 
 FLIndexStream >> initializeOn: aStream digits: aNumberOfDigits
-[initializeOn: aStream digits: aNumberOfDigits
+[
 	self initialize.
 	stream := aStream.
 	digits := aNumberOfDigits
 ]
 
 FLIndexStream >> nextIndex
-[nextIndex
+[
 	| s |
 	s := 0.
 	1 to: digits do: [ :i | s := (s bitShift: 8) bitOr: stream next ].
@@ -18,12 +18,18 @@ FLIndexStream >> nextIndex
 ]
 
 FLIndexStream >> nextIndexPut: v
-[nextIndexPut: v
+[
 	1 to: digits do: [ :i | stream nextPut: (v digitAt: digits + 1 - i) ]
 ]
 
 FLIndexStream class >> on: aStream digits: aNumberOfDigits
-[on: aStream digits: aNumberOfDigits
+[
+	^ self basicNew
+		initializeOn: aStream digits: aNumberOfDigits;
+		yourself
+]
+
+digits: aNumberOfDigits
 	^ self basicNew
 		initializeOn: aStream digits: aNumberOfDigits;
 		yourself

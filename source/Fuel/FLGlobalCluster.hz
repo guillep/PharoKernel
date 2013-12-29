@@ -3,28 +3,37 @@ FLGlobalCluster
 	package: #Fuel.
 
 FLGlobalCluster >> materializeGlobalAssociationFrom: aDecoder
-[materializeGlobalAssociationFrom: aDecoder
+[
 	| globalName |
 	globalName := aDecoder nextEncodedString asSymbol.
 	^ aDecoder globalEnvironment associationAt: globalName ifAbsent: [ FLGlobalNotFound signalWithName: globalName ]
 ]
 
 FLGlobalCluster >> materializeGlobalClassFrom: aDecoder
-[materializeGlobalClassFrom: aDecoder
+[
 	| className |
 	className := aDecoder nextEncodedString asSymbol.
 	^ aDecoder classNamed: className
 ]
 
 FLGlobalCluster >> serializeGlobalAssociationKeyed: aSymbol on: anEncoder
-[serializeGlobalAssociationKeyed: aSymbol on: anEncoder
+[
 	anEncoder encodeString: aSymbol
 ]
 
 FLGlobalCluster >> serializeGlobalClass: aClass on: anEncoder
-[serializeGlobalClass: aClass on: anEncoder
+[
 	aClass isObsolete
 		ifTrue: [ FLObsolete signalWithName: aClass name ].
+	anEncoder encodeString: aClass name
+]
+
+FLGlobalCluster class >> clusterBucketIn: aClusterization
+[
+	^ aClusterization globalsBucket
+]
+
+solete signalWithName: aClass name ].
 	anEncoder encodeString: aClass name
 ]
 

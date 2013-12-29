@@ -4,24 +4,24 @@ SelectorException
 	package: #Kernel.
 
 SelectorException >> messageText
-[messageText
+[
 	"Overwritten to initialiaze the message text to a standard text if it has not yet been set"
 
 	^ messageText ifNil: [ messageText := self standardMessageText ]
 ]
 
 SelectorException >> selector
-[selector
+[
 	^ selector
 ]
 
 SelectorException >> selector: aSelector
-[selector: aSelector
+[
 	selector := aSelector
 ]
 
 SelectorException >> standardMessageText
-[standardMessageText
+[
 	"Generate a standard textual description"
 
 	^ String
@@ -32,7 +32,7 @@ SelectorException >> standardMessageText
 ]
 
 SelectorException class >> signalFor: aSelector
-[signalFor: aSelector
+[
 	"Create and signal an exception for aSelector in the default receiver."
 
 	^ self new
@@ -41,8 +41,16 @@ SelectorException class >> signalFor: aSelector
 ]
 
 SelectorException class >> signalFor: aSelector in: aReceiver
-[signalFor: aSelector in: aReceiver
+[
 	"Create and signal an exception for aSelector in aReceiver."
+
+	^ self new
+		object: aSelector;
+		signaler: aReceiver;
+		signal
+]
+
+an exception for aSelector in aReceiver."
 
 	^ self new
 		object: aSelector;

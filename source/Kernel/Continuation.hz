@@ -3,7 +3,7 @@ Continuation
 	package: #Kernel.
 
 Continuation >> initializeFromContext: aContext
-[initializeFromContext: aContext
+[
 	| valueStream context |
 	valueStream := WriteStream on: (Array new: 20).
 	context := aContext.
@@ -16,12 +16,12 @@ Continuation >> initializeFromContext: aContext
 ]
 
 Continuation >> numArgs
-[numArgs
+[
 	^ 1
 ]
 
 Continuation >> restoreValues
-[restoreValues
+[
 	| valueStream context |
 	valueStream := values readStream.
 	[ valueStream atEnd ]
@@ -31,19 +31,19 @@ Continuation >> restoreValues
 ]
 
 Continuation >> terminate: aContext
-[terminate: aContext
+[
 	| context |
 	context := aContext.
 	[ context notNil ] whileTrue: [ context := context swapSender: nil ]
 ]
 
 Continuation >> value
-[value
+[
 	self value: nil
 ]
 
 Continuation >> value: anObject
-[value: anObject
+[
 	"Invoke the continuation and answer anObject as return value."
 
 	self terminate: thisContext.
@@ -53,20 +53,28 @@ Continuation >> value: anObject
 ]
 
 Continuation >> valueWithArguments: anArray
-[valueWithArguments: anArray
+[
 	anArray size = 1
 		ifFalse: [ ^ self error: 'continuations can only be resumed with one argument' ].
 	self value: anArray first
 ]
 
 Continuation class >> current
-[current
+[
 	^ self fromContext: thisContext sender
 ]
 
 Continuation class >> currentDo: aBlock
-[currentDo: aBlock
+[
 	^ aBlock value: (self fromContext: thisContext sender)
+]
+
+Continuation class >> fromContext: aStack
+[
+	^ self new initializeFromContext: aStack
+]
+
+ck value: (self fromContext: thisContext sender)
 ]
 
 Continuation class >> fromContext: aStack

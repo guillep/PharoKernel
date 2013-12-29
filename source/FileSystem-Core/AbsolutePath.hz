@@ -4,17 +4,17 @@ AbsolutePath
 	package: #'FileSystem-Core'.
 
 AbsolutePath >> isAbsolute
-[isAbsolute
+[
 	^ true
 ]
 
 AbsolutePath >> isRoot
-[isRoot
+[
 	^ self size = 0
 ]
 
 AbsolutePath >> printOn: aStream
-[printOn: aStream
+[
 	aStream nextPutAll: 'Path'.
 	self isRoot
 		ifTrue: [ aStream nextPutAll: ' root' ]
@@ -25,19 +25,25 @@ AbsolutePath >> printOn: aStream
 ]
 
 AbsolutePath >> withParents
-[withParents
+[
 	^ super withParents
 		addFirst: Path root;
 		yourself
 ]
 
 AbsolutePath class >> addEmptyElementTo: result
-[addEmptyElementTo: result
+[
 	
 ]
 
 AbsolutePath class >> from: aString delimiter: aDelimiterCharater
-[from: aString delimiter: aDelimiterCharater
+[
+	aString = '/'
+		ifTrue: [ ^ self root ].
+	^ super from: aString delimiter: aDelimiterCharater
+]
+
+iterCharater
 	aString = '/'
 		ifTrue: [ ^ self root ].
 	^ super from: aString delimiter: aDelimiterCharater

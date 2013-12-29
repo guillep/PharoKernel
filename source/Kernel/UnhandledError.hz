@@ -4,7 +4,7 @@ UnhandledError
 	package: #Kernel.
 
 UnhandledError >> defaultAction
-[defaultAction
+[
 	<reflective: #unhandledErrorDefaultAction:message:>
 	^ Smalltalk globals
 		at: #UIManager
@@ -13,21 +13,28 @@ UnhandledError >> defaultAction
 ]
 
 UnhandledError >> exception
-[exception
+[
 	^ exception
 ]
 
 UnhandledError >> exception: anError
-[exception: anError
+[
 	exception := anError
 ]
 
 UnhandledError >> isResumable
-[isResumable
+[
 	^ false
 ]
 
 UnhandledError class >> signalForException: anError
+[
+	^ self new
+		exception: anError;
+		signal
+]
+
+or
 [signalForException: anError
 	^ self new
 		exception: anError;

@@ -6,7 +6,7 @@ HashTableSizes class
 	instanceVariables: #(#sizes ).
 
 HashTableSizes >> candidateIsGoodPrime
-[candidateIsGoodPrime
+[
 	"Answer true if candidate will make a good hash table size.
 	Some integers are rejected:
 	* Non-primes
@@ -24,7 +24,7 @@ HashTableSizes >> candidateIsGoodPrime
 ]
 
 HashTableSizes >> computeSizes
-[computeSizes
+[
 	"Answer an array of integers that make good hash table sizes.
 	In each power of two, there are about five primes to choose from.
 	Some primes are rejected:
@@ -41,7 +41,7 @@ HashTableSizes >> computeSizes
 ]
 
 HashTableSizes >> firstCandidateForExp: exp
-[firstCandidateForExp: exp
+[
 	"Answer the smallest odd integer greater 2**exp."
 
 	| n |
@@ -52,7 +52,7 @@ HashTableSizes >> firstCandidateForExp: exp
 ]
 
 HashTableSizes >> goodPrimeForExp: exp
-[goodPrimeForExp: exp
+[
 	"Answer the next prime integer >= 2**exp that will make a good hash table size,
 	Some primes are rejected:
 	* Primes close to a power of two.
@@ -69,7 +69,7 @@ HashTableSizes >> goodPrimeForExp: exp
 ]
 
 HashTableSizes >> initialize
-[initialize
+[
 	"Can't use any hashed collections, if sizes is being initialized might get infinite recursion"
 
 	goodPrimes := OrderedCollection new.	"Must contain a value less than any prime to avoid extra work in binary search"
@@ -82,7 +82,7 @@ HashTableSizes >> initialize
 ]
 
 HashTableSizes >> limitForExp: exp
-[limitForExp: exp
+[
 	"Answer the largest integer that isn't too close to the next higher power of 2 than exp."
 
 	| expLimit |
@@ -91,7 +91,7 @@ HashTableSizes >> limitForExp: exp
 ]
 
 HashTableSizes >> numValuesPerPower
-[numValuesPerPower
+[
 	"Answer the number of values that should be available in the cached table of primes
 	for each power-of-two range."
 
@@ -99,7 +99,7 @@ HashTableSizes >> numValuesPerPower
 ]
 
 HashTableSizes >> primeAlmostFactorsOf: anInteger
-[primeAlmostFactorsOf: anInteger
+[
 	"Answer primes less than anInteger whose remainder when dividing anInteger is small"
 
 	| factors trial |
@@ -114,7 +114,7 @@ HashTableSizes >> primeAlmostFactorsOf: anInteger
 ]
 
 HashTableSizes class >> atLeast: lowerLimit
-[atLeast: lowerLimit
+[
 	"Answer the next good size >= lowerlimit.
 	If lowerLimit is larger than the largest known good prime,
 	just make it odd."
@@ -138,7 +138,7 @@ HashTableSizes class >> atLeast: lowerLimit
 ]
 
 HashTableSizes class >> initialize
-[initialize
+[
 	"Throw away any previously-cached sizes, then compute and cache the sizes."
 
 	"HashTableSizes initialize"
@@ -148,10 +148,22 @@ HashTableSizes class >> initialize
 ]
 
 HashTableSizes class >> numValuesPerPower
-[numValuesPerPower
+[
 	"Answer the number of values that should be available in the cached table of primes
 	for each power-of-two range. A larger number allows closer sizing for pre-sized collections,
 	but results in a larger table that takes longer to search."
+
+	^ 5	"Chosen so there will be fewer than 128 primes in the sizes table"
+]
+
+HashTableSizes class >> sizes
+[
+	sizes ~~ nil
+		ifFalse: [ sizes := self new computeSizes ].
+	^ sizes
+]
+
+ger to search."
 
 	^ 5	"Chosen so there will be fewer than 128 primes in the sizes table"
 ]

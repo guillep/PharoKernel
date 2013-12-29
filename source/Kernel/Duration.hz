@@ -5,28 +5,28 @@ Duration
 	package: #Kernel.
 
 Duration >> * operand
-[* operand
+[
 	"operand is a Number"
 
 	^ self class nanoSeconds: (self asNanoSeconds * operand) asInteger
 ]
 
 Duration >> + operand
-[+ operand
+[
 	"operand is a Duration"
 
 	^ self class nanoSeconds: self asNanoSeconds + operand asNanoSeconds
 ]
 
 Duration >> - operand
-[- operand
+[
 	"operand is a Duration"
 
 	^ self + operand negated
 ]
 
 Duration >> / operand
-[/ operand
+[
 	"operand is a Duration or a Number"
 
 	^ operand isNumber
@@ -35,7 +35,7 @@ Duration >> / operand
 ]
 
 Duration >> // operand
-[// operand
+[
 	"operand is a Duration or a Number"
 
 	^ operand isNumber
@@ -44,12 +44,12 @@ Duration >> // operand
 ]
 
 Duration >> < comparand
-[< comparand
+[
 	^ self asNanoSeconds < comparand asNanoSeconds
 ]
 
 Duration >> = comparand
-[= comparand
+[
 	"Answer whether the argument is a <Duration> representing the same 
  	period of time as the receiver."
 
@@ -61,7 +61,7 @@ Duration >> = comparand
 ]
 
 Duration >> \\ operand
-[\\ operand
+[
 	"modulo. Remainder defined in terms of //. Answer a Duration with the 
  	same sign as aDuration. operand is a Duration or a Number."
 
@@ -71,119 +71,119 @@ Duration >> \\ operand
 ]
 
 Duration >> abs
-[abs
+[
 	^ self class seconds: seconds abs nanoSeconds: nanos abs
 ]
 
 Duration >> asDays
-[asDays
+[
 	"Answer the number of days in the receiver."
 
 	^ self asHours / 24
 ]
 
 Duration >> asDelay
-[asDelay
+[
 	^ Delay forDuration: self
 ]
 
 Duration >> asDuration
-[asDuration
+[
 	^ self
 ]
 
 Duration >> asHours
-[asHours
+[
 	"Answer the number of hours in the receiver."
 
 	^ self asMinutes / 60.0
 ]
 
 Duration >> asMilliSeconds
-[asMilliSeconds
+[
 	^ (seconds * NanosInSecond + nanos) // (10 raisedToInteger: 6)
 ]
 
 Duration >> asMinutes
-[asMinutes
+[
 	"Answer the number of minutes in the receiver."
 
 	^ seconds / 60.0
 ]
 
 Duration >> asNanoSeconds
-[asNanoSeconds
+[
 	^ seconds * NanosInSecond + nanos
 ]
 
 Duration >> asSeconds
-[asSeconds
+[
 	"Answer the number of seconds in the receiver."
 
 	^ seconds
 ]
 
 Duration >> days
-[days
+[
 	"Answer a number that represents the number of complete days in the receiver"
 
 	^ seconds quo: SecondsInDay
 ]
 
 Duration >> hash
-[hash
+[
 	^ seconds bitXor: nanos
 ]
 
 Duration >> hours
-[hours
+[
 	"Answer a number that represents the number of complete hours in the receiver, after the number of complete days has been removed."
 
 	^ (seconds rem: SecondsInDay) quo: SecondsInHour
 ]
 
 Duration >> initialize
-[initialize
+[
 	super initialize.
 	self seconds: 0 nanoSeconds: 0
 ]
 
 Duration >> isZero
-[isZero
+[
 	^ seconds = 0 and: [ nanos = 0 ]
 ]
 
 Duration >> minutes
-[minutes
+[
 	"Answer a number that represents the number of complete minutes in the receiver, after the number of complete hours has been removed."
 
 	^ (seconds rem: SecondsInHour) quo: SecondsInMinute
 ]
 
 Duration >> nanoSeconds
-[nanoSeconds
+[
 	^ nanos
 ]
 
 Duration >> negated
-[negated
+[
 	^ self class seconds: seconds negated nanoSeconds: nanos negated
 ]
 
 Duration >> negative
-[negative
+[
 	^ self positive not
 ]
 
 Duration >> positive
-[positive
+[
 	^ seconds = 0
 		ifTrue: [ nanos positive ]
 		ifFalse: [ seconds positive ]
 ]
 
 Duration >> printOn: aStream
-[printOn: aStream
+[
 	"Format as per ANSI 5.8.2.16: [-]D:HH:MM:SS[.S]"
 
 	| d h m s n |
@@ -216,21 +216,21 @@ Duration >> printOn: aStream
 ]
 
 Duration >> roundTo: aDuration
-[roundTo: aDuration
+[
 	"e.g. if the receiver is 5 minutes, 37 seconds, and aDuration is 2 minutes, answer 6 minutes."
 
 	^ self class nanoSeconds: (self asNanoSeconds roundTo: aDuration asNanoSeconds)
 ]
 
 Duration >> seconds
-[seconds
+[
 	"Answer a number that represents the number of complete seconds in the receiver, after the number of complete minutes has been removed."
 
 	^ seconds rem: SecondsInMinute
 ]
 
 Duration >> seconds: secondCount nanoSeconds: nanoCount
-[seconds: secondCount nanoSeconds: nanoCount
+[
 	"Private - only used by Duration class"
 
 	seconds := secondCount.
@@ -242,7 +242,7 @@ Duration >> seconds: secondCount nanoSeconds: nanoCount
 ]
 
 Duration >> storeOn: aStream
-[storeOn: aStream
+[
 	aStream
 		nextPut: $(;
 		nextPutAll: self className;
@@ -254,7 +254,7 @@ Duration >> storeOn: aStream
 ]
 
 Duration >> ticks
-[ticks
+[
 	"Answer an array {days. seconds. nanoSeconds}. Used by DateAndTime and Time."
 
 	| days |
@@ -263,24 +263,24 @@ Duration >> ticks
 ]
 
 Duration >> truncateTo: aDuration
-[truncateTo: aDuration
+[
 	"e.g. if the receiver is 5 minutes, 37 seconds, and aDuration is 2 minutes, answer 4 minutes."
 
 	^ self class nanoSeconds: (self asNanoSeconds truncateTo: aDuration asNanoSeconds)
 ]
 
 Duration >> wait
-[wait
+[
 	self asDelay wait
 ]
 
 Duration class >> days: aNumber
-[days: aNumber
+[
 	^ self seconds: aNumber * SecondsInDay nanoSeconds: 0
 ]
 
 Duration class >> days: days hours: hours minutes: minutes seconds: seconds
-[days: days hours: hours minutes: minutes seconds: seconds
+[
 	^ self
 		days: days
 		hours: hours
@@ -290,46 +290,46 @@ Duration class >> days: days hours: hours minutes: minutes seconds: seconds
 ]
 
 Duration class >> days: days hours: hours minutes: minutes seconds: seconds nanoSeconds: nanos
-[days: days hours: hours minutes: minutes seconds: seconds nanoSeconds: nanos
+[
 	^ self
 		seconds: days * SecondsInDay + (hours * SecondsInHour) + (minutes * SecondsInMinute) + seconds
 		nanoSeconds: nanos
 ]
 
 Duration class >> days: days seconds: seconds
-[days: days seconds: seconds
+[
 	^ self basicNew seconds: days * SecondsInDay + seconds nanoSeconds: 0
 ]
 
 Duration class >> fromString: aString
-[fromString: aString
+[
 	^ self readFrom: aString readStream
 ]
 
 Duration class >> hours: aNumber
-[hours: aNumber
+[
 	^ self seconds: aNumber * SecondsInHour nanoSeconds: 0
 ]
 
 Duration class >> milliSeconds: milliCount
-[milliSeconds: milliCount
+[
 	^ self seconds: (milliCount quo: 1000) nanoSeconds: (milliCount rem: 1000) * NanosInMillisecond
 ]
 
 Duration class >> minutes: aNumber
-[minutes: aNumber
+[
 	^ self seconds: aNumber * SecondsInMinute nanoSeconds: 0
 ]
 
 Duration class >> month: aMonth
-[month: aMonth
+[
 	"aMonth is an Integer or a String"
 
 	^ (Month month: aMonth) duration
 ]
 
 Duration class >> nanoSeconds: nanos
-[nanoSeconds: nanos
+[
 	"This method is slow. If you have nanos less than 10^6 you should use #seconds:nanoSeconds: instead."
 
 	| quo |
@@ -338,7 +338,7 @@ Duration class >> nanoSeconds: nanos
 ]
 
 Duration class >> readFrom: aStream
-[readFrom: aStream
+[
 	"Formatted as per ANSI 5.8.2.16: [-]D:HH:MM:SS[.S]"
 
 	| sign days hours minutes seconds nanos nanosBuffer |
@@ -352,6 +352,40 @@ Duration class >> readFrom: aStream
 	nanosBuffer := '000000000' copy.
 	nanos := nanosBuffer writeStream.
 	[ aStream atEnd not and: [ aStream peek isDigit ] ] whileTrue: [ nanos nextPut: aStream next ].
+	^ self
+		days: days
+		hours: hours
+		minutes: minutes
+		seconds: seconds
+		nanoSeconds: (nanosBuffer asInteger sign: sign)
+]
+
+Duration class >> seconds: seconds
+[
+	^ self seconds: seconds nanoSeconds: 0
+]
+
+Duration class >> seconds: seconds nanoSeconds: nanos
+[
+	^ self basicNew seconds: seconds truncated nanoSeconds: seconds fractionPart * NanosInSecond + nanos
+]
+
+Duration class >> weeks: aNumber
+[
+	^ self days: aNumber * 7 seconds: 0
+]
+
+Duration class >> years: aNumber
+[
+	^ self days: aNumber * 365 seconds: 0
+]
+
+Duration class >> zero
+[
+	^ self basicNew seconds: 0 nanoSeconds: 0
+]
+
+ek isDigit ] ] whileTrue: [ nanos nextPut: aStream next ].
 	^ self
 		days: days
 		hours: hours

@@ -3,7 +3,7 @@ FLDecoder
 	package: #Fuel.
 
 FLDecoder >> classNamed: className
-[classNamed: className
+[
 	^ migrations
 		detect: [ :m | m sourceClassName = className ]
 		ifFound: [ :migration | migration targetClass ]
@@ -11,7 +11,7 @@ FLDecoder >> classNamed: className
 ]
 
 FLDecoder >> decodeYourself
-[decodeYourself
+[
 	| objectCount |
 	objectCount := self nextEncodedPositiveInteger.
 	indexStream := FLIndexStream on: stream digits: objectCount digitLength.
@@ -21,19 +21,19 @@ FLDecoder >> decodeYourself
 ]
 
 FLDecoder >> globalClassNamed: className
-[globalClassNamed: className
+[
 	^ globalEnvironment at: className ifAbsent: [ FLClassNotFound signalWithName: className ]
 ]
 
 FLDecoder >> globalEnvironment
-[globalEnvironment
+[
 	"Answer a dictionary where the look up for global symbols will be done during materialization."
 
 	^ globalEnvironment
 ]
 
 FLDecoder >> initializeOn: aStream migrations: aCollection globalEnvironment: aDictionary
-[initializeOn: aStream migrations: aCollection globalEnvironment: aDictionary
+[
 	self initialize.
 	stream := aStream.
 	migrations := aCollection.
@@ -41,32 +41,32 @@ FLDecoder >> initializeOn: aStream migrations: aCollection globalEnvironment: aD
 ]
 
 FLDecoder >> isBigEndian
-[isBigEndian
+[
 	^ isBigEndian
 ]
 
 FLDecoder >> nextEncodedBitmap
-[nextEncodedBitmap
+[
 	^ Bitmap newFromStream: stream
 ]
 
 FLDecoder >> nextEncodedByte
-[nextEncodedByte
+[
 	^ stream next
 ]
 
 FLDecoder >> nextEncodedBytesInto: aBytesObject
-[nextEncodedBytesInto: aBytesObject
+[
 	stream next: aBytesObject basicSize into: aBytesObject
 ]
 
 FLDecoder >> nextEncodedClusterClass
-[nextEncodedClusterClass
+[
 	^ self class environment at: self nextEncodedString asSymbol
 ]
 
 FLDecoder >> nextEncodedInt24
-[nextEncodedInt24
+[
 	| n firstDigit |
 	n := firstDigit := stream next.
 	n := (n bitShift: 8) + stream next.
@@ -77,7 +77,7 @@ FLDecoder >> nextEncodedInt24
 ]
 
 FLDecoder >> nextEncodedInt32
-[nextEncodedInt32
+[
 	| n firstDigit |
 	n := firstDigit := stream next.
 	n := (n bitShift: 8) + stream next.
@@ -89,7 +89,7 @@ FLDecoder >> nextEncodedInt32
 ]
 
 FLDecoder >> nextEncodedPositiveInteger
-[nextEncodedPositiveInteger
+[
 	"Read a 32-bit signed integer from the next 4 bytes"
 
 	| s |
@@ -99,12 +99,12 @@ FLDecoder >> nextEncodedPositiveInteger
 ]
 
 FLDecoder >> nextEncodedReference
-[nextEncodedReference
+[
 	^ objects at: indexStream nextIndex
 ]
 
 FLDecoder >> nextEncodedString
-[nextEncodedString
+[
 	| length aByteArray |
 	"read the length in binary mode"
 	length := stream next.	"first byte."
@@ -117,14 +117,14 @@ FLDecoder >> nextEncodedString
 ]
 
 FLDecoder >> nextEncodedUint16
-[nextEncodedUint16
+[
 	"Answer the next unsigned, 16-bit integer from this (binary) stream."
 
 	^ (stream next bitShift: 8) + stream next
 ]
 
 FLDecoder >> nextEncodedUint24
-[nextEncodedUint24
+[
 	"Answer the next unsigned, 24-bit integer from this (binary) stream."
 
 	| n |
@@ -135,7 +135,7 @@ FLDecoder >> nextEncodedUint24
 ]
 
 FLDecoder >> nextEncodedUint32
-[nextEncodedUint32
+[
 	"Answer the next unsigned, 32-bit integer from this (binary) stream."
 
 	| n |
@@ -147,24 +147,43 @@ FLDecoder >> nextEncodedUint32
 ]
 
 FLDecoder >> nextEncodedUint8
-[nextEncodedUint8
+[
 	"Answer the next unsigned, 16-bit integer from this (binary) stream."
 
 	^ stream next
 ]
 
 FLDecoder >> nextEncodedWordsInto: aWordsObject
-[nextEncodedWordsInto: aWordsObject
+[
 	stream fuelNextWordsInto: aWordsObject
 ]
 
 FLDecoder >> objects
-[objects
+[
 	^ objects
 ]
 
 FLDecoder >> registerAll: someObjects
-[registerAll: someObjects
+[
+	objectsWriteStream nextPutAll: someObjects
+]
+
+FLDecoder >> variablesMappingFor: aClass
+[
+	| variables |
+	variables := FLVariablesMapping materializing: aClass from: self.
+	migrations select: [ :m | m targetClass == aClass ] thenDo: [ :m | m applyTo: variables ].
+	^ variables
+]
+
+FLDecoder class >> on: aStream migrations: aCollection globalEnvironment: aDictionary
+[
+	^ self basicNew
+		initializeOn: aStream migrations: aCollection globalEnvironment: aDictionary;
+		yourself
+]
+
+ts
 	objectsWriteStream nextPutAll: someObjects
 ]
 

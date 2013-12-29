@@ -4,19 +4,19 @@ FLGlobalSendCluster
 	package: #Fuel.
 
 FLGlobalSendCluster >> add: anObject name: globalName selector: selector traceWith: anAnalysis
-[add: anObject name: globalName selector: selector traceWith: anAnalysis
+[
 	self add: anObject traceWith: anAnalysis.
 	globalSends at: anObject ifAbsentPut: [ Association key: globalName value: selector ]
 ]
 
 FLGlobalSendCluster >> initializeAnalyzing
-[initializeAnalyzing
+[
 	super initializeAnalyzing.
 	globalSends := IdentityDictionary new
 ]
 
 FLGlobalSendCluster >> materializeInstanceWith: aDecoder
-[materializeInstanceWith: aDecoder
+[
 	| global selector |
 	global := (self materializeGlobalAssociationFrom: aDecoder) value.
 	selector := aDecoder nextEncodedString asSymbol.
@@ -24,8 +24,14 @@ FLGlobalSendCluster >> materializeInstanceWith: aDecoder
 ]
 
 FLGlobalSendCluster >> serializeInstance: anObject with: anEncoder
-[serializeInstance: anObject with: anEncoder
+[
 	| globalSend |
+	globalSend := globalSends at: anObject.
+	self serializeGlobalAssociationKeyed: globalSend key on: anEncoder.
+	anEncoder encodeString: globalSend value
+]
+
+obalSend |
 	globalSend := globalSends at: anObject.
 	self serializeGlobalAssociationKeyed: globalSend key on: anEncoder.
 	anEncoder encodeString: globalSend value

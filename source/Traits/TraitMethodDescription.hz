@@ -3,12 +3,12 @@ TraitMethodDescription
 	package: #Traits.
 
 TraitMethodDescription >> addLocatedMethod: aLocatedMethod
-[addLocatedMethod: aLocatedMethod
+[
 	locatedMethods add: aLocatedMethod
 ]
 
 TraitMethodDescription >> conflictMethod
-[conflictMethod
+[
 	| method argumentNames binary numberOfArguments |
 	self isConflict
 		ifFalse: [ ^ nil ].
@@ -25,7 +25,7 @@ TraitMethodDescription >> conflictMethod
 ]
 
 TraitMethodDescription >> effectiveMethod
-[effectiveMethod
+[
 	"Return the effective compiled method of this method description."
 
 	| locatedMethod method |
@@ -39,12 +39,12 @@ TraitMethodDescription >> effectiveMethod
 ]
 
 TraitMethodDescription >> effectiveMethodCategory
-[effectiveMethodCategory
+[
 	^ self effectiveMethodCategoryCurrent: nil new: nil
 ]
 
 TraitMethodDescription >> effectiveMethodCategoryCurrent: currentCategoryOrNil new: newCategoryOrNil
-[effectiveMethodCategoryCurrent: currentCategoryOrNil new: newCategoryOrNil
+[
 	| result size isCurrent isConflict |
 	size := self size.
 	size = 0
@@ -67,7 +67,7 @@ TraitMethodDescription >> effectiveMethodCategoryCurrent: currentCategoryOrNil n
 ]
 
 TraitMethodDescription >> generateMethod: aSelector withMarker: aSymbol forArgs: aNumber binary: aBoolean
-[generateMethod: aSelector withMarker: aSymbol forArgs: aNumber binary: aBoolean
+[
 	| source node |
 	source := String
 		streamContents: [ :stream | aNumber < 1
@@ -96,7 +96,7 @@ TraitMethodDescription >> generateMethod: aSelector withMarker: aSymbol forArgs:
 ]
 
 TraitMethodDescription >> getArgumentNames
-[getArgumentNames
+[
 	| argumentNamesCollection names defaultName |
 	defaultName := 'arg'.
 	argumentNamesCollection := self locatedMethods collect: [ :each | each argumentNames ].
@@ -110,13 +110,13 @@ TraitMethodDescription >> getArgumentNames
 ]
 
 TraitMethodDescription >> initialize
-[initialize
+[
 	super initialize.
 	locatedMethods := IdentitySet new
 ]
 
 TraitMethodDescription >> isAliasSelector
-[isAliasSelector
+[
 	"Return true if the selector is an alias (if it is different
 	from the original selector) or already an aliased method
 	in the original location (recursively search the compositions).
@@ -129,12 +129,12 @@ TraitMethodDescription >> isAliasSelector
 ]
 
 TraitMethodDescription >> isBinarySelector
-[isBinarySelector
+[
 	^ self locatedMethods anyOne isBinarySelector
 ]
 
 TraitMethodDescription >> isConflict
-[isConflict
+[
 	| count originMethodReferenciel |
 	count := 0.
 	self locatedMethods size > 1
@@ -150,12 +150,12 @@ TraitMethodDescription >> isConflict
 ]
 
 TraitMethodDescription >> isEmpty
-[isEmpty
+[
 	^ self size = 0
 ]
 
 TraitMethodDescription >> isLocalAliasSelector
-[isLocalAliasSelector
+[
 	"Return true if the selector is an alias (if it is different
 	from the original selector). Return false, if not or if we
 	have a conflict."
@@ -164,29 +164,29 @@ TraitMethodDescription >> isLocalAliasSelector
 ]
 
 TraitMethodDescription >> isProvided
-[isProvided
+[
 	^ self providedMethod notNil
 ]
 
 TraitMethodDescription >> isRequired
-[isRequired
+[
 	self isEmpty
 		ifTrue: [ ^ false ].
 	^ self locatedMethods allSatisfy: [ :each | each isRequired ]
 ]
 
 TraitMethodDescription >> locatedMethods
-[locatedMethods
+[
 	^ locatedMethods
 ]
 
 TraitMethodDescription >> methodsDo: aBlock
-[methodsDo: aBlock
+[
 	self locatedMethods do: [ :each | aBlock value: each ]
 ]
 
 TraitMethodDescription >> providedLocatedMethod
-[providedLocatedMethod
+[
 	| locatedMethod aLocatedMethod refOrigin |
 	locatedMethod := nil.
 	self locatedMethods ifEmpty: [ ^ nil ].
@@ -204,12 +204,12 @@ TraitMethodDescription >> providedLocatedMethod
 ]
 
 TraitMethodDescription >> providedMethod
-[providedMethod
+[
 	^ self providedLocatedMethod ifNotNil: [ :locatedMethod | locatedMethod method ]
 ]
 
 TraitMethodDescription >> requiredMethod
-[requiredMethod
+[
 	| argumentNames numberOfArguments binary |
 	self isRequired
 		ifFalse: [ ^ nil ].
@@ -225,6 +225,41 @@ TraitMethodDescription >> requiredMethod
 		withMarker: CompiledMethod implicitRequirementMarker
 		forArgs: argumentNames size
 		binary: binary
+]
+
+TraitMethodDescription >> selector
+[
+	^ selector
+]
+
+TraitMethodDescription >> selector: aSymbol
+[
+	selector := aSymbol
+]
+
+TraitMethodDescription >> size
+[
+	^ self locatedMethods size
+]
+
+TraitMethodDescription class >> maxArguments
+[
+	^ 30
+]
+
+TraitMethodDescription class >> new
+[
+	^ super new
+		initialize;
+		yourself
+]
+
+TraitMethodDescription class >> selector: aSymbol
+[
+	^ self new selector: aSymbol yourself
+]
+
+nary: binary
 ]
 
 TraitMethodDescription >> selector

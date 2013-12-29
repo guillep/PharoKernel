@@ -4,7 +4,7 @@ ZipStore
 	package: #'FileSystem-Zip'.
 
 ZipStore >> close
-[close
+[
 	| archive fs stream |
 	archive := ZipArchive new.
 	fs := FileSystem store: self.
@@ -18,13 +18,13 @@ ZipStore >> close
 ]
 
 ZipStore >> initializeWithReference: aReference
-[initializeWithReference: aReference
+[
 	self initialize.
 	reference := aReference
 ]
 
 ZipStore >> open
-[open
+[
 	| archive output |
 	self reference exists
 		ifFalse: [ ^ self ].
@@ -48,7 +48,7 @@ ZipStore >> open
 ]
 
 ZipStore >> pathFromMember: anArchiveMember
-[pathFromMember: anArchiveMember
+[
 	| path |
 	path := Path root resolve: anArchiveMember fileName.
 	^ path basename isEmpty
@@ -57,11 +57,16 @@ ZipStore >> pathFromMember: anArchiveMember
 ]
 
 ZipStore >> reference
-[reference
+[
 	^ reference
 ]
 
 ZipStore class >> reference: aReference
+[
+	^ self basicNew initializeWithReference: aReference yourself
+]
+
+ence: aReference
 [reference: aReference
 	^ self basicNew initializeWithReference: aReference yourself
 ]

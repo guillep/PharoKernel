@@ -3,12 +3,12 @@ Termcap
 	package: #'System-CommandLine'.
 
 Termcap >> flush
-[flush
+[
 	cache removeAll
 ]
 
 Termcap >> getent: aString
-[getent: aString
+[
 	"The tgetent routine loads the entry for name. 
 	It returns 1 on success, 
 	0 if there is no such entry,
@@ -23,21 +23,21 @@ Termcap >> getent: aString
 ]
 
 Termcap >> getflag: aString
-[getflag: aString
+[
 	"^ (PipeableOSProcess command: 'tput ', aString) output"
 
 	Error signal: 'Cannot interact with tput yet'
 ]
 
 Termcap >> getnum: aString
-[getnum: aString
+[
 	"^ (PipeableOSProcess command: 'tput ', aString) output asInteger"
 
 	^ Error signal: 'Cannot interact with the terminal yet'
 ]
 
 Termcap >> getstr: aString
-[getstr: aString
+[
 	^ cache
 		at: aString
 		ifAbsentPut: [ "(PipeableOSProcess command: 'tput ', aString) output"
@@ -45,13 +45,13 @@ Termcap >> getstr: aString
 ]
 
 Termcap >> initialize
-[initialize
+[
 	cache := Dictionary new.
 	self initializeDefaultSequences
 ]
 
 Termcap >> initializeDefaultSequences
-[initializeDefaultSequences
+[
 	"Until we have decent OSProcess support we precache the most common sequences"
 
 	| esc |
@@ -70,7 +70,10 @@ Termcap >> initializeDefaultSequences
 ]
 
 Termcap >> reset
-[reset
+[
 	self flag: 'TODO implement once we have OSProcess'	"self getent: (OSProcess thisOSProcess environmentAt: #TERM)"
+]
+
+: 'TODO implement once we have OSProcess'	"self getent: (OSProcess thisOSProcess environmentAt: #TERM)"
 ]
 

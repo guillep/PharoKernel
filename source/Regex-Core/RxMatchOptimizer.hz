@@ -3,7 +3,7 @@ RxMatchOptimizer
 	package: #'Regex-Core'.
 
 RxMatchOptimizer >> canStartMatch: aCharacter in: aMatcher
-[canStartMatch: aCharacter in: aMatcher
+[
 	"Answer whether a match could commence at the given lookahead
 	character, or in the current state of <aMatcher>. True answered
 	by this method does not mean a match will definitly occur, while false
@@ -15,7 +15,7 @@ RxMatchOptimizer >> canStartMatch: aCharacter in: aMatcher
 ]
 
 RxMatchOptimizer >> conditionTester
-[conditionTester
+[
 	"#any condition is filtered at the higher level;
 	it cannot appear among the conditions here."
 
@@ -42,7 +42,7 @@ RxMatchOptimizer >> conditionTester
 ]
 
 RxMatchOptimizer >> determineTestMethod
-[determineTestMethod
+[
 	"Answer a block closure that will work as a can-match predicate.
 	Answer nil if no viable optimization is possible (too many chars would
 	be able to start a match)."
@@ -65,7 +65,7 @@ RxMatchOptimizer >> determineTestMethod
 ]
 
 RxMatchOptimizer >> initialize: aRegex ignoreCase: aBoolean
-[initialize: aRegex ignoreCase: aBoolean
+[
 	"Set `testMethod' variable to a can-match predicate block:
 	two-argument block which accepts a lookahead character
 	and a matcher (presumably built from aRegex) and answers 
@@ -88,7 +88,7 @@ RxMatchOptimizer >> initialize: aRegex ignoreCase: aBoolean
 ]
 
 RxMatchOptimizer >> methodPredicateTester
-[methodPredicateTester
+[
 	| p selector |
 	methodPredicates isEmpty
 		ifTrue: [ ^ nil ].
@@ -101,7 +101,7 @@ RxMatchOptimizer >> methodPredicateTester
 ]
 
 RxMatchOptimizer >> nonMethodPredicateTester
-[nonMethodPredicateTester
+[
 	| p selector |
 	nonMethodPredicates isEmpty
 		ifTrue: [ ^ nil ].
@@ -113,7 +113,7 @@ RxMatchOptimizer >> nonMethodPredicateTester
 ]
 
 RxMatchOptimizer >> nonPredicateTester
-[nonPredicateTester
+[
 	| p pred |
 	nonPredicates isEmpty
 		ifTrue: [ ^ nil ].
@@ -125,7 +125,7 @@ RxMatchOptimizer >> nonPredicateTester
 ]
 
 RxMatchOptimizer >> nonPrefixTester
-[nonPrefixTester
+[
 	| np nonPrefixChar |
 	nonPrefixes isEmpty
 		ifTrue: [ ^ nil ].
@@ -137,7 +137,7 @@ RxMatchOptimizer >> nonPrefixTester
 ]
 
 RxMatchOptimizer >> optimizeSet: aSet
-[optimizeSet: aSet
+[
 	"If a set is small, convert it to array to speed up lookup
 	(Array has no hashing overhead, beats Set on small number
 	of elements)."
@@ -148,7 +148,7 @@ RxMatchOptimizer >> optimizeSet: aSet
 ]
 
 RxMatchOptimizer >> predicateTester
-[predicateTester
+[
 	| p pred |
 	predicates isEmpty
 		ifTrue: [ ^ nil ].
@@ -160,7 +160,7 @@ RxMatchOptimizer >> predicateTester
 ]
 
 RxMatchOptimizer >> prefixTester
-[prefixTester
+[
 	| p prefixChar |
 	prefixes isEmpty
 		ifTrue: [ ^ nil ].
@@ -178,28 +178,28 @@ RxMatchOptimizer >> prefixTester
 ]
 
 RxMatchOptimizer >> syntaxAny
-[syntaxAny
+[
 	"Any special char is among the prefixes."
 
 	conditions add: #any
 ]
 
 RxMatchOptimizer >> syntaxBeginningOfLine
-[syntaxBeginningOfLine
+[
 	"Beginning of line is among the prefixes."
 
 	conditions add: #atBeginningOfLine
 ]
 
 RxMatchOptimizer >> syntaxBeginningOfWord
-[syntaxBeginningOfWord
+[
 	"Beginning of line is among the prefixes."
 
 	conditions add: #atBeginningOfWord
 ]
 
 RxMatchOptimizer >> syntaxBranch: branchNode
-[syntaxBranch: branchNode
+[
 	"If the head piece of the branch is transparent (allows 0 matches),
 	we must recurse down the branch. Otherwise, just the head atom
 	is important."
@@ -210,7 +210,7 @@ RxMatchOptimizer >> syntaxBranch: branchNode
 ]
 
 RxMatchOptimizer >> syntaxCharSet: charSetNode
-[syntaxCharSet: charSetNode
+[
 	"All these (or none of these) characters is the prefix."
 
 	charSetNode isNegated
@@ -223,49 +223,76 @@ RxMatchOptimizer >> syntaxCharSet: charSetNode
 ]
 
 RxMatchOptimizer >> syntaxCharacter: charNode
-[syntaxCharacter: charNode
+[
 	"This character is the prefix, of one of them."
 
 	prefixes add: charNode character
 ]
 
 RxMatchOptimizer >> syntaxEndOfLine
-[syntaxEndOfLine
+[
 	"Beginning of line is among the prefixes."
 
 	conditions add: #atEndOfLine
 ]
 
 RxMatchOptimizer >> syntaxEndOfWord
-[syntaxEndOfWord
+[
 	conditions add: #atEndOfWord
 ]
 
 RxMatchOptimizer >> syntaxEpsilon
-[syntaxEpsilon
+[
 	"Empty string, terminate the recursion (do nothing)."
 
 	
 ]
 
 RxMatchOptimizer >> syntaxLookaround: lookaroundNode
-[syntaxLookaround: lookaroundNode
+[
 	lookarounds add: lookaroundNode
 ]
 
 RxMatchOptimizer >> syntaxMessagePredicate: messagePredicateNode
-[syntaxMessagePredicate: messagePredicateNode
+[
 	messagePredicateNode negated
 		ifTrue: [ nonMethodPredicates add: messagePredicateNode selector ]
 		ifFalse: [ methodPredicates add: messagePredicateNode selector ]
 ]
 
 RxMatchOptimizer >> syntaxNonWordBoundary
-[syntaxNonWordBoundary
+[
 	conditions add: #notAtWordBoundary
 ]
 
 RxMatchOptimizer >> syntaxPiece: pieceNode
+[
+	"Pass on to the atom."
+
+	pieceNode atom dispatchTo: self
+]
+
+RxMatchOptimizer >> syntaxPredicate: predicateNode
+[
+	predicates add: predicateNode predicate
+]
+
+RxMatchOptimizer >> syntaxRegex: regexNode
+[
+	"All prefixes of the regex's branches should be combined.
+	Therefore, just recurse."
+
+	regexNode branch dispatchTo: self.
+	regexNode regex notNil
+		ifTrue: [ regexNode regex dispatchTo: self ]
+]
+
+RxMatchOptimizer >> syntaxWordBoundary
+[
+	conditions add: #atWordBoundary
+]
+
+taxPiece: pieceNode
 [syntaxPiece: pieceNode
 	"Pass on to the atom."
 

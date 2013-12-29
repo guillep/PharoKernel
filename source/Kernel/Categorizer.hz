@@ -4,12 +4,12 @@ Categorizer
 	package: #Kernel.
 
 Categorizer >> addCategory: newCategory
-[addCategory: newCategory
+[
 	^ self addCategory: newCategory before: nil
 ]
 
 Categorizer >> addCategory: catString before: nextCategory
-[addCategory: catString before: nextCategory
+[
 	"Add a new category named heading.
 	If default category exists and is empty, remove it.
 	If nextCategory is nil, then add the new one at the end,
@@ -32,19 +32,19 @@ Categorizer >> addCategory: catString before: nextCategory
 ]
 
 Categorizer >> allMethodSelectors
-[allMethodSelectors
+[
 	"give a list of all method selectors."
 
 	^ elementArray copy sort
 ]
 
 Categorizer >> assertInvariant
-[assertInvariant
+[
 	[ elementArray size = categoryStops last ] assert
 ]
 
 Categorizer >> basicRemoveElement: element
-[basicRemoveElement: element
+[
 	"Remove the selector, element, from all categories."
 
 	| categoryIndex elementIndex nextStop newElements |
@@ -67,7 +67,7 @@ Categorizer >> basicRemoveElement: element
 ]
 
 Categorizer >> categories
-[categories
+[
 	"Answer an Array of categories (names)."
 
 	categoryArray ifNil: [ ^ nil ].
@@ -77,7 +77,7 @@ Categorizer >> categories
 ]
 
 Categorizer >> categories: anArray
-[categories: anArray
+[
 	"Reorder my categories to be in order of the argument, anArray. If the 
 	resulting organization does not include all elements, then give an error."
 
@@ -105,7 +105,7 @@ Categorizer >> categories: anArray
 ]
 
 Categorizer >> categoryOfElement: element
-[categoryOfElement: element
+[
 	"Answer the category associated with the argument, element."
 
 	| index |
@@ -116,7 +116,7 @@ Categorizer >> categoryOfElement: element
 ]
 
 Categorizer >> changeFromCategorySpecs: categorySpecs
-[changeFromCategorySpecs: categorySpecs
+[
 	"Tokens is an array of categorySpecs as scanned from a browser 'reorganize' pane, or built up by some other process, such as a scan of an environment."
 
 	| newCategories newStops temp cc currentStop oldElements newElements |
@@ -158,7 +158,7 @@ Categorizer >> changeFromCategorySpecs: categorySpecs
 ]
 
 Categorizer >> changeFromString: aString
-[changeFromString: aString
+[
 	"Parse the argument, aString, and make this be the receiver's structure."
 
 	| categorySpecs |
@@ -169,12 +169,12 @@ Categorizer >> changeFromString: aString
 ]
 
 Categorizer >> classify: element under: heading
-[classify: element under: heading
+[
 	self classify: element under: heading suppressIfDefault: true
 ]
 
 Categorizer >> classify: element under: heading suppressIfDefault: aBoolean
-[classify: element under: heading suppressIfDefault: aBoolean
+[
 	"Store the argument, element, in the category named heading.   If aBoolean is true, then invoke special logic such that the classification is NOT done if the new heading is the Default and the element already had a non-Default classification -- useful for filein"
 
 	| catName catIndex elemIndex realHeading |
@@ -203,12 +203,12 @@ Categorizer >> classify: element under: heading suppressIfDefault: aBoolean
 ]
 
 Categorizer >> classifyAll: aCollection under: heading
-[classifyAll: aCollection under: heading
+[
 	aCollection do: [ :element | self classify: element under: heading ]
 ]
 
 Categorizer >> elementCategoryDict
-[elementCategoryDict
+[
 	| dict firstIndex lastIndex |
 	elementArray ifNil: [ ^ nil ].
 	dict := Dictionary new: elementArray size.
@@ -219,7 +219,7 @@ Categorizer >> elementCategoryDict
 ]
 
 Categorizer >> firstIndexOfCategoryNumber: anInteger
-[firstIndexOfCategoryNumber: anInteger
+[
 	anInteger < 1
 		ifTrue: [ ^ nil ].
 	^ anInteger > 1
@@ -228,14 +228,14 @@ Categorizer >> firstIndexOfCategoryNumber: anInteger
 ]
 
 Categorizer >> isEmptyCategoryNamed: categoryName
-[isEmptyCategoryNamed: categoryName
+[
 	| i |
 	i := categoryArray indexOf: categoryName ifAbsent: [ ^ false ].
 	^ self isEmptyCategoryNumber: i
 ]
 
 Categorizer >> isEmptyCategoryNumber: anInteger
-[isEmptyCategoryNumber: anInteger
+[
 	| firstIndex lastIndex |
 	(anInteger < 1 or: [ anInteger > categoryStops size ])
 		ifTrue: [ ^ true ].
@@ -245,14 +245,14 @@ Categorizer >> isEmptyCategoryNumber: anInteger
 ]
 
 Categorizer >> lastIndexOfCategoryNumber: anInteger
-[lastIndexOfCategoryNumber: anInteger
+[
 	anInteger > categoryStops size
 		ifTrue: [ ^ nil ].
 	^ categoryStops at: anInteger
 ]
 
 Categorizer >> listAtCategoryNamed: categoryName
-[listAtCategoryNamed: categoryName
+[
 	"Answer the array of elements associated with the name, categoryName."
 
 	| i |
@@ -261,7 +261,7 @@ Categorizer >> listAtCategoryNamed: categoryName
 ]
 
 Categorizer >> listAtCategoryNumber: anInteger
-[listAtCategoryNumber: anInteger
+[
 	"Answer the array of elements stored at the position indexed by anInteger.  Answer nil if anInteger is larger than the number of categories."
 
 	| firstIndex lastIndex |
@@ -273,7 +273,7 @@ Categorizer >> listAtCategoryNumber: anInteger
 ]
 
 Categorizer >> numberOfCategoryOfElement: element
-[numberOfCategoryOfElement: element
+[
 	"Answer the index of the category with which the argument, element, is 
 	associated."
 
@@ -289,7 +289,7 @@ Categorizer >> numberOfCategoryOfElement: element
 ]
 
 Categorizer >> removeCategory: cat
-[removeCategory: cat
+[
 	"Remove the category named, cat. Create an error notificiation if the 
 	category has any elements in it."
 
@@ -308,12 +308,12 @@ Categorizer >> removeCategory: cat
 ]
 
 Categorizer >> removeElement: element
-[removeElement: element
+[
 	^ self basicRemoveElement: element
 ]
 
 Categorizer >> removeEmptyCategories
-[removeEmptyCategories
+[
 	"Remove empty categories."
 
 	| categoryIndex currentStop keptCategories keptStops |
@@ -332,7 +332,7 @@ Categorizer >> removeEmptyCategories
 ]
 
 Categorizer >> renameCategory: oldCatString toBe: newCatString
-[renameCategory: oldCatString toBe: newCatString
+[
 	"Rename a category. No action if new name already exists, or if old name does not exist."
 
 	| index oldCategory newCategory |
@@ -347,7 +347,7 @@ Categorizer >> renameCategory: oldCatString toBe: newCatString
 ]
 
 Categorizer >> scanFrom: aStream
-[scanFrom: aStream
+[
 	"Reads in the organization from the next chunk on aStream.
 	Categories or elements not found in the definition are not affected.
 	New elements are ignored."
@@ -357,14 +357,14 @@ Categorizer >> scanFrom: aStream
 ]
 
 Categorizer >> setDefaultList: aSortedCollection
-[setDefaultList: aSortedCollection
+[
 	categoryArray := Array with: Default.
 	categoryStops := Array with: aSortedCollection size.
 	elementArray := aSortedCollection asArray
 ]
 
 Categorizer >> sortCategories
-[sortCategories
+[
 	| privateCategories publicCategories newCategories |
 	privateCategories := self categories
 		select: [ :one | (one findString: 'private' startingAt: 1 caseSensitive: false) = 1 ].
@@ -376,7 +376,7 @@ Categorizer >> sortCategories
 ]
 
 Categorizer >> stringForFileOut
-[stringForFileOut
+[
 	^ String
 		streamContents: [ :aStream | | elementIndex |
 			elementIndex := 1.
@@ -393,19 +393,19 @@ Categorizer >> stringForFileOut
 ]
 
 Categorizer class >> allCategory
-[allCategory
+[
 	"Return a symbol that represents the virtual all methods category."
 
 	^ #'-- all --'
 ]
 
 Categorizer class >> default
-[default
+[
 	^ Default
 ]
 
 Categorizer class >> defaultList: aSortedCollection
-[defaultList: aSortedCollection
+[
 	"Answer an instance of me with initial elements from the argument, 
 	aSortedCollection."
 
@@ -413,9 +413,40 @@ Categorizer class >> defaultList: aSortedCollection
 ]
 
 Categorizer class >> documentation
-[documentation
+[
 	"Instances consist of an Array of category names (categoryArray), each of 
 	which refers to an Array of elements (elementArray). This association is 
+	made through an Array of stop indices (categoryStops), each of which is 
+	the index in elementArray of the last element (if any) of the 
+	corresponding category. For example: categories := Array with: 'firstCat' 
+	with: 'secondCat' with: 'thirdCat'. stops := Array with: 1 with: 4 with: 4. 
+	elements := Array with: #a with: #b with: #c with: #d. This means that 
+	category firstCat has only #a, secondCat has #b, #c, and #d, and 
+	thirdCat has no elements. This means that stops at: stops size must be the 
+	same as elements size."
+
+	
+]
+
+Categorizer class >> initialize
+[
+	"	self  initialize	"
+
+	Default := 'as yet unclassified' asSymbol.
+	NullCategory := 'no messages' asSymbol
+]
+
+Categorizer class >> nullCategory
+[
+	^ NullCategory
+]
+
+Categorizer class >> sortAllCategories
+[
+	self allSubInstances do: [ :x | x sortCategories ]
+]
+
+ elements (elementArray). This association is 
 	made through an Array of stop indices (categoryStops), each of which is 
 	the index in elementArray of the last element (if any) of the 
 	corresponding category. For example: categories := Array with: 'firstCat' 

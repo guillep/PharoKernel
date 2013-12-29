@@ -2,96 +2,122 @@ FLCluster
 	package: #Fuel.
 
 FLCluster >> afterMaterializationStepWith: aDecoder
-[afterMaterializationStepWith: aDecoder
+[
 	
 ]
 
 FLCluster >> clusterMaterializeStepWith: aMaterialization
-[clusterMaterializeStepWith: aMaterialization
+[
 	"Materialize cluster stuff"
 
 	
 ]
 
 FLCluster >> clusterReferencesDo: aBlock
-[clusterReferencesDo: aBlock
+[
 	"Evaluate a block with each object referenced by the cluster"
 
 	
 ]
 
 FLCluster >> clusterSerializeStepWith: aSerialization
-[clusterSerializeStepWith: aSerialization
+[
 	"Serialize cluster stuff"
 
 	
 ]
 
 FLCluster >> fuelAccept: aGeneralMapper
-[fuelAccept: aGeneralMapper
+[
 	^ aGeneralMapper visitSubstitution: self by: nil
 ]
 
 FLCluster >> initializeAnalyzing
-[initializeAnalyzing
+[
 	self initialize
 ]
 
 FLCluster >> initializeMaterializing
-[initializeMaterializing
+[
 	self initialize
 ]
 
 FLCluster >> materializeInstancesStepWith: aDecoder
-[materializeInstancesStepWith: aDecoder
+[
 	
 ]
 
 FLCluster >> materializePostInstancesStepWith: aDecoder
-[materializePostInstancesStepWith: aDecoder
+[
 	
 ]
 
 FLCluster >> materializeReferencesStepWith: aDecoder
-[materializeReferencesStepWith: aDecoder
+[
 	
 ]
 
 FLCluster >> objects
-[objects
+[
 	"Answer the objects that this cluster groups."
 
 	self subclassResponsibility
 ]
 
 FLCluster >> registerIndexesOn: aDictionary
-[registerIndexesOn: aDictionary
+[
 	"Maps objects with indexes in the dictionary."
 
 	
 ]
 
 FLCluster >> serializeInstancesStepWith: anEncoder
-[serializeInstancesStepWith: anEncoder
+[
 	
 ]
 
 FLCluster >> serializePostInstancesStepWith: anEncoder
-[serializePostInstancesStepWith: anEncoder
+[
 	
 ]
 
 FLCluster >> serializeReferencesStepWith: anEncoder
-[serializeReferencesStepWith: anEncoder
+[
 	
 ]
 
 FLCluster >> traceWith: anAnalysis
-[traceWith: anAnalysis
+[
 	self clusterReferencesDo: [ :aChild | anAnalysis privateTrace: aChild ]
 ]
 
 FLCluster class >> clusterBucketIn: aClusterization
+[
+	"Answer in which clusters bucket place this cluster. This defines the sort order in which the clusters will be ordered. See FLAnalyzer >> clusteredObjects for more information."
+
+	self subclassResponsibility
+]
+
+FLCluster class >> new
+[
+	self error: 'Use another instance creation message.'
+]
+
+FLCluster class >> newAnalyzing
+[
+	^ self basicNew
+		initializeAnalyzing;
+		yourself
+]
+
+FLCluster class >> newMaterializing
+[
+	^ self basicNew
+		initializeMaterializing;
+		yourself
+]
+
+sterBucketIn: aClusterization
 [clusterBucketIn: aClusterization
 	"Answer in which clusters bucket place this cluster. This defines the sort order in which the clusters will be ordered. See FLAnalyzer >> clusteredObjects for more information."
 

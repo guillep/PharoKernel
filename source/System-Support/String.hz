@@ -1,37 +1,43 @@
 String >> asClass
-[asClass
+[
 	"returns a global class with my name"
 
 	^ self asClassInEnvironment: Smalltalk globals
 ]
 
 String >> asClassIfAbsent: absentBlock
-[asClassIfAbsent: absentBlock
+[
 	"returns a global class with my name"
 
 	^ self asClassInEnvironment: Smalltalk globals ifAbsent: absentBlock
 ]
 
 String >> asClassIfPresent: presentBlock
-[asClassIfPresent: presentBlock
+[
 	"returns a global class with my name"
 
 	^ presentBlock cull: (self asClassIfAbsent: [ ^ nil ])
 ]
 
 String >> asClassInEnvironment: anEnvironment
-[asClassInEnvironment: anEnvironment
+[
 	"I return class named after myself from anEnvironment"
 
 	^ self asClassInEnvironment: anEnvironment ifAbsent: [ NotFound signalFor: self in: anEnvironment ]
 ]
 
 String >> asClassInEnvironment: anEnvironment ifAbsent: absentBlock
-[asClassInEnvironment: anEnvironment ifAbsent: absentBlock
+[
 	^ anEnvironment
 		at: self asSymbol
 		ifPresent: [ :aClass | self
 				assert: aClass isBehavior
+				description: [ self printString , ' is not a Class but an instance of a ' , aClass class name ].
+			aClass ]
+		ifAbsent: absentBlock
+]
+
+Class isBehavior
 				description: [ self printString , ' is not a Class but an instance of a ' , aClass class name ].
 			aClass ]
 		ifAbsent: absentBlock

@@ -6,21 +6,21 @@ InputEventSensor
 	package: #Kernel.
 
 InputEventSensor >> anyButtonPressed
-[anyButtonPressed
+[
 	"Answer whether at least one mouse button is currently being pressed."
 
 	^ self mouseButtons anyMask: 7
 ]
 
 InputEventSensor >> anyModifierKeyPressed
-[anyModifierKeyPressed
+[
 	"ignore, however, the shift keys 'cause that's not REALLY a command key"
 
 	^ self modifiers anyMask: 16r0E	"cmd | opt | ctrl"
 ]
 
 InputEventSensor >> blueButtonPressed
-[blueButtonPressed
+[
 	"Answer whether only the blue mouse button is being pressed. 
 	This is the third mouse button or cmd+click on the Mac."
 
@@ -28,7 +28,7 @@ InputEventSensor >> blueButtonPressed
 ]
 
 InputEventSensor >> characterForEvent: evtBuf
-[characterForEvent: evtBuf
+[
 	| keycode |
 	evtBuf ifNil: [ ^ nil ].
 	keycode := evtBuf sixth.
@@ -36,21 +36,21 @@ InputEventSensor >> characterForEvent: evtBuf
 ]
 
 InputEventSensor >> commandKeyPressed
-[commandKeyPressed
+[
 	"Answer whether the command key on the keyboard is being held down."
 
 	^ self modifiers anyMask: 16r08
 ]
 
 InputEventSensor >> controlKeyPressed
-[controlKeyPressed
+[
 	"Answer whether the control key on the keyboard is being held down."
 
 	^ self modifiers anyMask: 16r02
 ]
 
 InputEventSensor >> cursorPoint
-[cursorPoint
+[
 	"Answer a Point indicating the cursor location."
 
 	"Fetch the next event if any to update state.
@@ -61,42 +61,42 @@ InputEventSensor >> cursorPoint
 ]
 
 InputEventSensor >> flushAllButDandDEvents
-[flushAllButDandDEvents
+[
 	
 ]
 
 InputEventSensor >> flushEvents
-[flushEvents
+[
 	eventQueue ifNotNil: [ eventQueue flush ]
 ]
 
 InputEventSensor >> flushKeyboard
-[flushKeyboard
+[
 	"Remove all characters from the keyboard buffer."
 
 	[ self keyboardPressed ] whileTrue: [ self keyboard ]
 ]
 
 InputEventSensor >> flushNonKbdEvents
-[flushNonKbdEvents
+[
 	eventQueue ifNil: [ ^ self ].
 	eventQueue flushAllSuchThat: [ :buf | (self isKbdEvent: buf) not ]
 ]
 
 InputEventSensor >> handleEvent: evt
-[handleEvent: evt
+[
 	self queueEvent: evt shallowCopy
 ]
 
 InputEventSensor >> hasTablet
-[hasTablet
+[
 	"Answer true if there is a pen tablet available on this computer."
 
 	^ (self primTabletGetParameters: 1) notNil
 ]
 
 InputEventSensor >> initialize
-[initialize
+[
 	"Initialize the receiver"
 
 	super initialize.
@@ -107,17 +107,17 @@ InputEventSensor >> initialize
 ]
 
 InputEventSensor >> joystickButtons: index
-[joystickButtons: index
+[
 	^ ((self primReadJoystick: index) bitShift: -22) bitAnd: 16r71F
 ]
 
 InputEventSensor >> joystickOn: index
-[joystickOn: index
+[
 	^ (((self primReadJoystick: index) bitShift: -27) bitAnd: 1) ~= 0
 ]
 
 InputEventSensor >> joystickXY: index
-[joystickXY: index
+[
 	| inputWord x y |
 	inputWord := self primReadJoystick: index.
 	x := (inputWord bitAnd: 16r7FF) - 16r400.
@@ -126,28 +126,28 @@ InputEventSensor >> joystickXY: index
 ]
 
 InputEventSensor >> keyboard
-[keyboard
+[
 	"Answer the next character from the keyboard."
 
 	^ self characterForEvent: self nextKeyboardEvent
 ]
 
 InputEventSensor >> keyboardPeek
-[keyboardPeek
+[
 	"Answer the next character in the keyboard buffer without removing it, or nil if it is empty."
 
 	^ self characterForEvent: self peekKeyboardEvent
 ]
 
 InputEventSensor >> keyboardPressed
-[keyboardPressed
+[
 	"Answer true if keystrokes are available."
 
 	^ self peekKeyboardEvent notNil
 ]
 
 InputEventSensor >> mapButtons: buttons modifiers: anInteger
-[mapButtons: buttons modifiers: anInteger
+[
 	"Map the buttons to yellow or blue based on the given modifiers.
 	If only the red button is pressed, then map
 		Ctrl-RedButton -> BlueButton.
@@ -164,7 +164,7 @@ InputEventSensor >> mapButtons: buttons modifiers: anInteger
 ]
 
 InputEventSensor >> modifiers
-[modifiers
+[
 	"modifier keys; bitfield with the following entries:
 		1	-	shift key
 		2	-	ctrl key
@@ -180,7 +180,7 @@ InputEventSensor >> modifiers
 ]
 
 InputEventSensor >> mouseButtons
-[mouseButtons
+[
 	"button state; bitfield with the following entries:
 		1	-	yellow (e.g., right) button
 		2	-	blue (e.g., middle) button
@@ -195,7 +195,7 @@ InputEventSensor >> mouseButtons
 ]
 
 InputEventSensor >> nextEvent
-[nextEvent
+[
 	"Return the next event from the receiver."
 
 	| evt |
@@ -204,7 +204,7 @@ InputEventSensor >> nextEvent
 ]
 
 InputEventSensor >> nextKeyboardEvent
-[nextKeyboardEvent
+[
 	"Allows for use of old Sensor protocol to get at the keyboard,
 	as when running kbdTest or the InterpreterSimulator in Morphic"
 
@@ -215,14 +215,14 @@ InputEventSensor >> nextKeyboardEvent
 ]
 
 InputEventSensor >> noButtonPressed
-[noButtonPressed
+[
 	"Answer whether any mouse button is not being pressed."
 
 	^ self anyButtonPressed not
 ]
 
 InputEventSensor >> peekEvent
-[peekEvent
+[
 	"Look ahead at the next event."
 
 	| nextEvent |
@@ -232,7 +232,7 @@ InputEventSensor >> peekEvent
 ]
 
 InputEventSensor >> peekKeyboardEvent
-[peekKeyboardEvent
+[
 	"Allows for use of old Sensor protocol to get at the keyboard,
 	as when running kbdTest or the InterpreterSimulator in Morphic"
 
@@ -240,7 +240,7 @@ InputEventSensor >> peekKeyboardEvent
 ]
 
 InputEventSensor >> primReadJoystick: index
-[primReadJoystick: index
+[
 	"Return the joystick input word for the joystick with the given index in the range [1..16]. Returns zero if the index does not correspond to a currently installed joystick."
 
 	<primitive: 'primitiveReadJoystick' module: 'JoystickTabletPlugin'>
@@ -248,7 +248,7 @@ InputEventSensor >> primReadJoystick: index
 ]
 
 InputEventSensor >> primTabletGetParameters: cursorIndex
-[primTabletGetParameters: cursorIndex
+[
 	"Answer the pen tablet parameters. For parameters that differ from cursor to cursor, answer those associated with the cursor having the given index. Answer nil if there is no pen tablet. The parameters are:
 	1. tablet width, in tablet units
 	2. tablet height, in tablet units
@@ -266,7 +266,7 @@ InputEventSensor >> primTabletGetParameters: cursorIndex
 ]
 
 InputEventSensor >> primTabletRead: cursorIndex
-[primTabletRead: cursorIndex
+[
 	"Answer the pen tablet data for the cursor having the given index. Answer nil if there is no pen tablet. The data is:
 	1. index of the cursor to which this data applies
 	2. timestamp of the last state chance for this cursor
@@ -283,7 +283,7 @@ InputEventSensor >> primTabletRead: cursorIndex
 ]
 
 InputEventSensor >> processEvent: evt
-[processEvent: evt
+[
 	"Process a single event. This method is run at high priority."
 
 	| type |
@@ -307,7 +307,7 @@ InputEventSensor >> processEvent: evt
 ]
 
 InputEventSensor >> processMenuEvent: evt
-[processMenuEvent: evt
+[
 	| handler localCopyOfEvt |
 	Smalltalk globals
 		at: #HostSystemMenus
@@ -319,14 +319,14 @@ InputEventSensor >> processMenuEvent: evt
 ]
 
 InputEventSensor >> queueEvent: evt
-[queueEvent: evt
+[
 	"Queue the given event in the event queue"
 
 	eventQueue nextPut: evt
 ]
 
 InputEventSensor >> redButtonPressed
-[redButtonPressed
+[
 	"Answer true if only the red mouse button is being pressed.
 	This is the first mouse button, usually the left one."
 
@@ -334,29 +334,29 @@ InputEventSensor >> redButtonPressed
 ]
 
 InputEventSensor >> shiftPressed
-[shiftPressed
+[
 	"Answer whether the shift key on the keyboard is being held down."
 
 	^ self modifiers anyMask: 16r01
 ]
 
 InputEventSensor >> shutDown
-[shutDown
+[
 	
 ]
 
 InputEventSensor >> someEventInQueue
-[someEventInQueue
+[
 	^ eventQueue isEmpty not
 ]
 
 InputEventSensor >> startUp
-[startUp
+[
 	self initialize
 ]
 
 InputEventSensor >> tabletExtent
-[tabletExtent
+[
 	"Answer the full tablet extent in tablet coordinates."
 
 	| params |
@@ -366,7 +366,7 @@ InputEventSensor >> tabletExtent
 ]
 
 InputEventSensor >> tabletPoint
-[tabletPoint
+[
 	"Answer the current position of the first tablet pointing device (pen, puck, or eraser) in tablet coordinates."
 
 	| data |
@@ -375,7 +375,7 @@ InputEventSensor >> tabletPoint
 ]
 
 InputEventSensor >> tabletPressure
-[tabletPressure
+[
 	"Answer the current pressure of the first tablet pointing device (pen, puck, or eraser), a number between 0.0 (no pressure) and 1.0 (max pressure)"
 
 	| params data |
@@ -386,7 +386,7 @@ InputEventSensor >> tabletPressure
 ]
 
 InputEventSensor >> tabletTimestamp
-[tabletTimestamp
+[
 	"Answer the time (in tablet clock ticks) at which the tablet's primary pen last changed state. This can be used in polling loops; if this timestamp hasn't changed, then the pen state hasn't changed either."
 
 	| data |
@@ -395,7 +395,7 @@ InputEventSensor >> tabletTimestamp
 ]
 
 InputEventSensor >> waitButton
-[waitButton
+[
 	"Wait for the user to press any mouse button and then answer with the 
 	current location of the cursor."
 
@@ -406,7 +406,7 @@ InputEventSensor >> waitButton
 ]
 
 InputEventSensor >> waitButtonOrKeyboard
-[waitButtonOrKeyboard
+[
 	"Wait for the user to press either any mouse button or any key. 
 	Answer the current cursor location or nil if a keypress occured."
 
@@ -419,7 +419,7 @@ InputEventSensor >> waitButtonOrKeyboard
 ]
 
 InputEventSensor >> waitClickButton
-[waitClickButton
+[
 	"Wait for the user to click (press and then release) any mouse button and 
 	then answer with the current location of the cursor."
 
@@ -428,7 +428,7 @@ InputEventSensor >> waitClickButton
 ]
 
 InputEventSensor >> waitNoButton
-[waitNoButton
+[
 	"Wait for the user to release any mouse button and then answer the current location of the cursor."
 
 	| delay |
@@ -438,7 +438,7 @@ InputEventSensor >> waitNoButton
 ]
 
 InputEventSensor >> yellowButtonPressed
-[yellowButtonPressed
+[
 	"Answer whether only the yellow mouse button is being pressed. 
 	This is the second mouse button or option+click on the Mac."
 
@@ -446,14 +446,14 @@ InputEventSensor >> yellowButtonPressed
 ]
 
 InputEventSensor class >> default
-[default
+[
 	"Answer the default system InputEventSensor, Sensor."
 
 	^ Sensor
 ]
 
 InputEventSensor class >> defaultCrossPlatformKeys
-[defaultCrossPlatformKeys
+[
 	"Answer a list of key letters that are used for common editing operations
 	on different platforms."
 
@@ -468,7 +468,7 @@ InputEventSensor class >> defaultCrossPlatformKeys
 ]
 
 InputEventSensor class >> installEventSensorFramework
-[installEventSensorFramework
+[
 	"Installs the new sensor framework."
 
 	"InputEventSensor installEventSensorFramework"
@@ -477,7 +477,7 @@ InputEventSensor class >> installEventSensorFramework
 ]
 
 InputEventSensor class >> installEventSensorFramework: fetcherClass
-[installEventSensorFramework: fetcherClass
+[
 	"Installs the new sensor framework."
 
 	| newSensor |
@@ -492,6 +492,38 @@ InputEventSensor class >> installEventSensorFramework: fetcherClass
 	Smalltalk removeFromShutDownList: Sensor class.
 	Smalltalk removeFromStartUpList: Sensor class.	"Note: We must use #become: here to replace all references to the old sensor with the new one, since Sensor is referenced from all the existing controllers."
 	Sensor becomeForward: newSensor.	"done"	"Register the interrupt handler"
+	UserInterruptHandler new registerIn: InputEventFetcher default.
+	Smalltalk addToStartUpList: Sensor class after: fetcherClass.
+	Smalltalk addToShutDownList: Sensor class after: Form	"Project spawnNewProcessAndTerminateOld: true"
+]
+
+InputEventSensor class >> installMouseDecodeTable
+[
+	"Create a decode table that swaps the lowest-order 2 bits"
+
+	ButtonDecodeTable := self swapMouseButtons
+		ifTrue: [ ByteArray
+				withAll: ((0 to: 255) collect: [ :ea | ((ea bitAnd: 1) << 1 bitOr: (ea bitAnd: 2) >> 1) bitOr: (ea bitAnd: 16rFC) ]) ]
+		ifFalse: [ ByteArray withAll: (0 to: 255) ]
+]
+
+InputEventSensor class >> shutDown
+[
+	self default shutDown
+]
+
+InputEventSensor class >> startUp
+[
+	self installMouseDecodeTable.
+	self default startUp
+]
+
+InputEventSensor class >> swapMouseButtons
+[
+	^ Smalltalk os isWindows not
+]
+
+wSensor.	"done"	"Register the interrupt handler"
 	UserInterruptHandler new registerIn: InputEventFetcher default.
 	Smalltalk addToStartUpList: Sensor class after: fetcherClass.
 	Smalltalk addToShutDownList: Sensor class after: Form	"Project spawnNewProcessAndTerminateOld: true"

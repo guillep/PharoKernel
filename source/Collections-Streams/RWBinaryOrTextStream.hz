@@ -4,22 +4,22 @@ RWBinaryOrTextStream
 	package: #'Collections-Streams'.
 
 RWBinaryOrTextStream >> asBinaryOrTextStream
-[asBinaryOrTextStream
+[
 	^ self
 ]
 
 RWBinaryOrTextStream >> ascii
-[ascii
+[
 	isBinary := false
 ]
 
 RWBinaryOrTextStream >> binary
-[binary
+[
 	isBinary := true
 ]
 
 RWBinaryOrTextStream >> contents
-[contents
+[
 	"Answer with a copy of my collection from 1 to readLimit."
 
 	| newArray |
@@ -35,12 +35,12 @@ RWBinaryOrTextStream >> contents
 ]
 
 RWBinaryOrTextStream >> isBinary
-[isBinary
+[
 	^ isBinary
 ]
 
 RWBinaryOrTextStream >> next
-[next
+[
 	| byte |
 	^ isBinary
 		ifTrue: [ byte := super next.
@@ -49,7 +49,7 @@ RWBinaryOrTextStream >> next
 ]
 
 RWBinaryOrTextStream >> next: anInteger
-[next: anInteger
+[
 	"Answer the next anInteger elements of my collection. Must override to get class right."
 
 	| newArray |
@@ -60,7 +60,7 @@ RWBinaryOrTextStream >> next: anInteger
 ]
 
 RWBinaryOrTextStream >> next: n into: aCollection startingAt: startIndex
-[next: n into: aCollection startingAt: startIndex
+[
 	"Read n objects into the given collection. 
 	Return aCollection or a partial copy if less than n elements have been read."
 
@@ -80,7 +80,7 @@ RWBinaryOrTextStream >> next: n into: aCollection startingAt: startIndex
 ]
 
 RWBinaryOrTextStream >> next: anInteger putAll: aCollection startingAt: startIndex
-[next: anInteger putAll: aCollection startingAt: startIndex
+[
 	"Optimized for ByteArrays"
 
 	aCollection class == ByteArray
@@ -89,12 +89,12 @@ RWBinaryOrTextStream >> next: anInteger putAll: aCollection startingAt: startInd
 ]
 
 RWBinaryOrTextStream >> nextPut: charOrByte
-[nextPut: charOrByte
+[
 	^ super nextPut: charOrByte asCharacter
 ]
 
 RWBinaryOrTextStream >> nextPutAll: aCollection
-[nextPutAll: aCollection
+[
 	"Optimized for ByteArrays"
 
 	^ aCollection class == ByteArray
@@ -103,14 +103,14 @@ RWBinaryOrTextStream >> nextPutAll: aCollection
 ]
 
 RWBinaryOrTextStream >> padToEndWith: aChar
-[padToEndWith: aChar
+[
 	"We don't have pages, so we are at the end, and don't need to pad."
 
 	
 ]
 
 RWBinaryOrTextStream >> readInto: aCollection startingAt: startIndex count: n
-[readInto: aCollection startingAt: startIndex count: n
+[
 	"Read n objects into the given collection. 
 	Return number of elements that have been read."
 
@@ -128,7 +128,7 @@ RWBinaryOrTextStream >> readInto: aCollection startingAt: startIndex count: n
 ]
 
 RWBinaryOrTextStream >> reset
-[reset
+[
 	"Set the receiver's position to the beginning of the sequence of objects."
 
 	super reset.
@@ -140,19 +140,19 @@ RWBinaryOrTextStream >> reset
 ]
 
 RWBinaryOrTextStream >> setFileTypeToObject
-[setFileTypeToObject
+[
 	"do nothing.  We don't have a file type"
 
 	
 ]
 
 RWBinaryOrTextStream >> text
-[text
+[
 	isBinary := false
 ]
 
 RWBinaryOrTextStream >> upTo: anObject
-[upTo: anObject
+[
 	"Answer a subcollection from the current access position to the 
 	occurrence (if any, but not inclusive) of anObject in the receiver. If 
 	anObject is not in the collection, answer the entire rest of the receiver."
@@ -163,6 +163,21 @@ RWBinaryOrTextStream >> upTo: anObject
 		ifFalse: [ String ].
 	newStream := WriteStream on: (species new: 100).
 	[ self atEnd or: [ (element := self next) = anObject ] ] whileFalse: [ newStream nextPut: element ].
+	^ newStream contents
+]
+
+RWBinaryOrTextStream >> upToEnd
+[
+	"Must override to get class right."
+
+	| newArray |
+	newArray := (isBinary
+		ifTrue: [ ByteArray ]
+		ifFalse: [ ByteString ]) new: self size - self position.
+	^ self nextInto: newArray
+]
+
+element := self next) = anObject ] ] whileFalse: [ newStream nextPut: element ].
 	^ newStream contents
 ]
 

@@ -5,7 +5,7 @@ ByteString
 	package: #'Collections-Strings'.
 
 ByteString >> asByteArray
-[asByteArray
+[
 	| ba sz |
 	sz := self byteSize.
 	ba := ByteArray new: sz.
@@ -18,12 +18,12 @@ ByteString >> asByteArray
 ]
 
 ByteString >> asOctetString
-[asOctetString
+[
 	^ self
 ]
 
 ByteString >> at: index
-[at: index
+[
 	"Primitive. Answer the Character stored in the field of the receiver
 	indexed by the argument. Fail if the index argument is not an Integer or
 	is out of bounds. Essential. See Object documentation whatIsAPrimitive."
@@ -33,7 +33,7 @@ ByteString >> at: index
 ]
 
 ByteString >> at: index put: aCharacter
-[at: index put: aCharacter
+[
 	"Primitive. Store the Character in the field of the receiver indicated by
 	the index. Fail if the index is not an Integer or is out of bounds, or if
 	the argument is not a Character. Essential. See Object documentation
@@ -52,7 +52,7 @@ ByteString >> at: index put: aCharacter
 ]
 
 ByteString >> beginsWith: prefix
-[beginsWith: prefix
+[
 	"Answer whether the receiver begins with the given prefix string.
 	The comparison is case-sensitive."
 
@@ -73,25 +73,25 @@ ByteString >> beginsWith: prefix
 ]
 
 ByteString >> byteAt: index
-[byteAt: index
+[
 	<primitive: 60>
 	^ (self at: index) asciiValue
 ]
 
 ByteString >> byteAt: index put: value
-[byteAt: index put: value
+[
 	<primitive: 61>
 	self at: index put: value asCharacter.
 	^ value
 ]
 
 ByteString >> byteSize
-[byteSize
+[
 	^ self size
 ]
 
 ByteString >> convertFromSystemString
-[convertFromSystemString
+[
 	| readStream |
 	readStream := self readStream.
 	^ self class
@@ -102,26 +102,26 @@ ByteString >> convertFromSystemString
 ]
 
 ByteString >> findSubstring: key in: body startingAt: start matchTable: matchTable
-[findSubstring: key in: body startingAt: start matchTable: matchTable
+[
 	^ key findIn: body startingAt: start matchTable: matchTable
 ]
 
 ByteString >> hasWideCharacterFrom: start to: stop
-[hasWideCharacterFrom: start to: stop
+[
 	"Only WideStrings contain these characters"
 
 	^ false
 ]
 
 ByteString >> indexOfAnyOf: aCollection startingAt: start
-[indexOfAnyOf: aCollection startingAt: start
+[
 	"Use double dispatching for speed"
 
 	^ aCollection findFirstInByteString: self startingAt: start
 ]
 
 ByteString >> indexOfAnyOf: aCollection startingAt: start ifAbsent: aBlock
-[indexOfAnyOf: aCollection startingAt: start ifAbsent: aBlock
+[
 	"Use double dispatching for speed"
 
 	| index |
@@ -131,19 +131,19 @@ ByteString >> indexOfAnyOf: aCollection startingAt: start ifAbsent: aBlock
 ]
 
 ByteString >> isAsciiString
-[isAsciiString
+[
 	^ (self class findFirstInString: self inSet: NonAsciiMap startingAt: 1) = 0
 ]
 
 ByteString >> isByteString
-[isByteString
+[
 	"Answer whether the receiver is a ByteString"
 
 	^ true
 ]
 
 ByteString >> isOctetString
-[isOctetString
+[
 	"Answer whether the receiver can be represented as a byte string. 
 	This is different from asking whether the receiver *is* a ByteString 
 	(i.e., #isByteString)"
@@ -152,7 +152,7 @@ ByteString >> isOctetString
 ]
 
 ByteString >> replaceFrom: start to: stop with: replacement startingAt: repStart
-[replaceFrom: start to: stop with: replacement startingAt: repStart
+[
 	"Primitive. This destructively replaces elements from start to stop in the receiver starting at index, repStart, in the collection, replacement. Answer the receiver. Range checks are performed in the primitive only. Optional. See Object documentation whatIsAPrimitive."
 
 	<primitive: 105>
@@ -166,7 +166,7 @@ ByteString >> replaceFrom: start to: stop with: replacement startingAt: repStart
 ]
 
 ByteString class >> compare: string1 with: string2 collated: order
-[compare: string1 with: string2 collated: order
+[
 	"Return 1, 2 or 3, if string1 is <, =, or > string2, with the collating order of characters given by the order array."
 
 	<primitive: 'primitiveCompareString' module: 'MiscPrimitivePlugin'>
@@ -190,7 +190,7 @@ ByteString class >> compare: string1 with: string2 collated: order
 ]
 
 ByteString class >> findFirstInString: aString inSet: inclusionMap startingAt: start
-[findFirstInString: aString inSet: inclusionMap startingAt: start
+[
 	<primitive: 'primitiveFindFirstInString' module: 'MiscPrimitivePlugin'>
 	<var: #aString declareC: 'unsigned char *aString'>
 	<var: #inclusionMap declareC: 'char *inclusionMap'>
@@ -206,7 +206,7 @@ ByteString class >> findFirstInString: aString inSet: inclusionMap startingAt: s
 ]
 
 ByteString class >> indexOfAscii: anInteger inString: aString startingAt: start
-[indexOfAscii: anInteger inString: aString startingAt: start
+[
 	<primitive: 'primitiveIndexOfAsciiInString' module: 'MiscPrimitivePlugin'>
 	<var: #aCharacter declareC: 'int anInteger'>
 	<var: #aString declareC: 'unsigned char *aString'>
@@ -218,7 +218,7 @@ ByteString class >> indexOfAscii: anInteger inString: aString startingAt: start
 ]
 
 ByteString class >> initialize
-[initialize
+[
 	"ByteString initialize"
 
 	| latin1 utf8 |
@@ -229,18 +229,35 @@ ByteString class >> initialize
 ]
 
 ByteString class >> nonAsciiMap
-[nonAsciiMap
+[
 	^ NonAsciiMap
 ]
 
 ByteString class >> stringHash: aString initialHash: speciesHash
-[stringHash: aString initialHash: speciesHash
+[
 	<primitive: 'primitiveStringHash' module: 'MiscPrimitivePlugin'>
 	<var: #aHash declareC: 'int speciesHash'>
 	<var: #aString declareC: 'unsigned char *aString'>
 	| stringSize hash low |
 	stringSize := aString size.
 	hash := speciesHash bitAnd: 16rFFFFFFF.
+	1 to: stringSize do: [ :pos | hash := hash + (aString at: pos) asciiValue.	"Begin hashMultiply"
+		low := hash bitAnd: 16383.
+		hash := 16r260D * low + ((16r260D * (hash bitShift: -14) + (16r0065 * low) bitAnd: 16383) * 16384) bitAnd: 16r0FFFFFFF ].
+	^ hash
+]
+
+ByteString class >> translate: aString from: start to: stop table: table
+[
+	"translate the characters in the string by the given table, in place"
+
+	<primitive: 'primitiveTranslateStringWithTable' module: 'MiscPrimitivePlugin'>
+	<var: #table declareC: 'unsigned char *table'>
+	<var: #aString declareC: 'unsigned char *aString'>
+	start to: stop do: [ :i | aString at: i put: (table at: (aString at: i) asciiValue + 1) ]
+]
+
+FFFFF.
 	1 to: stringSize do: [ :pos | hash := hash + (aString at: pos) asciiValue.	"Begin hashMultiply"
 		low := hash bitAnd: 16383.
 		hash := 16r260D * low + ((16r260D * (hash bitShift: -14) + (16r0065 * low) bitAnd: 16383) * 16384) bitAnd: 16r0FFFFFFF ].

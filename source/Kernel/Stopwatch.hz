@@ -3,14 +3,14 @@ Stopwatch
 	package: #Kernel.
 
 Stopwatch >> activate
-[activate
+[
 	self isSuspended
 		ifTrue: [ self timespans add: (Timespan starting: DateAndTime now duration: Duration zero).
 			self state: #active ]
 ]
 
 Stopwatch >> duration
-[duration
+[
 	| ts last |
 	self isSuspended
 		ifTrue: [ (ts := self timespans) isEmpty
@@ -25,22 +25,22 @@ Stopwatch >> duration
 ]
 
 Stopwatch >> end
-[end
+[
 	^ self timespans last next
 ]
 
 Stopwatch >> isActive
-[isActive
+[
 	^ self state = #active
 ]
 
 Stopwatch >> isSuspended
-[isSuspended
+[
 	^ self state = #suspended
 ]
 
 Stopwatch >> printOn: aStream
-[printOn: aStream
+[
 	super printOn: aStream.
 	aStream
 		nextPut: $(;
@@ -51,40 +51,48 @@ Stopwatch >> printOn: aStream
 ]
 
 Stopwatch >> reActivate
-[reActivate
+[
 	self
 		suspend;
 		activate
 ]
 
 Stopwatch >> reset
-[reset
+[
 	self suspend.
 	timespans := nil
 ]
 
 Stopwatch >> start
-[start
+[
 	^ self timespans first start
 ]
 
 Stopwatch >> state
-[state
+[
 	^ state ifNil: [ state := #suspended ]
 ]
 
 Stopwatch >> state: aSymbol
-[state: aSymbol
+[
 	state := aSymbol
 ]
 
 Stopwatch >> suspend
-[suspend
+[
 	| ts |
 	self isActive
 		ifTrue: [ ts := self timespans last.
 			ts duration: DateAndTime now - ts start.
 			self state: #suspended ]
+]
+
+Stopwatch >> timespans
+[
+	^ timespans ifNil: [ timespans := OrderedCollection new ]
+]
+
+spended ]
 ]
 
 Stopwatch >> timespans

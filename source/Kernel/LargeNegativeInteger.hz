@@ -4,17 +4,17 @@ LargeNegativeInteger
 	package: #Kernel.
 
 LargeNegativeInteger >> abs
-[abs
+[
 	^ self negated
 ]
 
 LargeNegativeInteger >> asFloat
-[asFloat
+[
 	^ super asFloat negated
 ]
 
 LargeNegativeInteger >> bitAt: anInteger
-[bitAt: anInteger
+[
 	"super would not work because we have to pretend we are in two-complement.
 	this has to be tricky..."
 
@@ -37,7 +37,7 @@ LargeNegativeInteger >> bitAt: anInteger
 ]
 
 LargeNegativeInteger >> highBit
-[highBit
+[
 	"Answer the index of the high order bit of the receiver, or zero if the  
 	receiver is zero. Raise an error if the receiver is negative, since  
 	negative integers are defined to have an infinite number of leading 1's 
@@ -48,29 +48,29 @@ LargeNegativeInteger >> highBit
 ]
 
 LargeNegativeInteger >> ln
-[ln
+[
 	^ DomainError signal: 'ln is only defined for x > 0' from: 0
 ]
 
 LargeNegativeInteger >> log
-[log
+[
 	^ DomainError signal: 'log is only defined for x > 0' from: 0
 ]
 
 LargeNegativeInteger >> negated
-[negated
+[
 	^ self copyto: (LargePositiveInteger new: self digitLength)
 ]
 
 LargeNegativeInteger >> negative
-[negative
+[
 	"Answer whether the receiver is mathematically negative."
 
 	^ true
 ]
 
 LargeNegativeInteger >> normalize
-[normalize
+[
 	"Check for leading zeroes and return shortened copy if so"
 
 	<primitive: 'primNormalizeNegative' module: 'LargeIntegers'>
@@ -99,7 +99,7 @@ LargeNegativeInteger >> normalize
 ]
 
 LargeNegativeInteger >> positive
-[positive
+[
 	"Answer whether the receiver is positive or equal to 0. (ST-80 protocol).
 	See also strictlyPositive"
 
@@ -107,7 +107,7 @@ LargeNegativeInteger >> positive
 ]
 
 LargeNegativeInteger >> printOn: aStream base: b
-[printOn: aStream base: b
+[
 	"Append a representation of this number in base b on aStream."
 
 	aStream nextPut: $-.
@@ -115,20 +115,27 @@ LargeNegativeInteger >> printOn: aStream base: b
 ]
 
 LargeNegativeInteger >> sign
-[sign
+[
 	"Optimization. Answer -1 since receiver is less than 0."
 
 	^ -1
 ]
 
 LargeNegativeInteger >> sqrt
-[sqrt
+[
 	"Answer the square root of the receiver."
 
 	^ DomainError signal: 'sqrt undefined for number less than zero.'
 ]
 
 LargeNegativeInteger >> strictlyPositive
+[
+	"Answer whether the receiver is mathematically positive."
+
+	^ false
+]
+
+Integer >> strictlyPositive
 [strictlyPositive
 	"Answer whether the receiver is mathematically positive."
 

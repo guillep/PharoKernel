@@ -5,12 +5,12 @@ InputEventFetcher
 	package: #Kernel.
 
 InputEventFetcher >> eventHandlers
-[eventHandlers
+[
 	^ eventHandlers ifNil: [ eventHandlers := OrderedCollection new ]
 ]
 
 InputEventFetcher >> eventLoop
-[eventLoop
+[
 	"Fetch pending raw events from the VM.
 	 This method is run at high priority."
 
@@ -30,12 +30,12 @@ InputEventFetcher >> eventLoop
 ]
 
 InputEventFetcher >> fetcherProcess
-[fetcherProcess
+[
 	^ fetcherProcess
 ]
 
 InputEventFetcher >> installEventLoop
-[installEventLoop
+[
 	"Initialize the event loop process. Terminate the old process if any."
 
 	"InputEventFetcher default installEventLoop"
@@ -46,7 +46,7 @@ InputEventFetcher >> installEventLoop
 ]
 
 InputEventFetcher >> primGetNextEvent: array
-[primGetNextEvent: array
+[
 	"Store the next OS event available into the provided array.
 	Essential."
 
@@ -56,7 +56,7 @@ InputEventFetcher >> primGetNextEvent: array
 ]
 
 InputEventFetcher >> primInterruptSemaphore: aSemaphore
-[primInterruptSemaphore: aSemaphore
+[
 	"Primitive. Install the argument as the semaphore to be signalled whenever the user presses the interrupt key. The semaphore will be signaled once each time the interrupt key is pressed."
 
 	<primitive: 134>
@@ -64,7 +64,7 @@ InputEventFetcher >> primInterruptSemaphore: aSemaphore
 ]
 
 InputEventFetcher >> primSetInputSemaphore: semaIndex
-[primSetInputSemaphore: semaIndex
+[
 	"Set the input semaphore the VM should use for asynchronously signaling the availability of events. Primitive. Optional."
 
 	<primitive: 93>
@@ -72,18 +72,18 @@ InputEventFetcher >> primSetInputSemaphore: semaIndex
 ]
 
 InputEventFetcher >> registerHandler: handler
-[registerHandler: handler
+[
 	self eventHandlers add: handler
 ]
 
 InputEventFetcher >> shutDown
-[shutDown
+[
 	self terminateEventLoop.
 	inputSemaphore ifNotNil: [ Smalltalk unregisterExternalObject: inputSemaphore ]
 ]
 
 InputEventFetcher >> signalEvent: eventBuffer
-[signalEvent: eventBuffer
+[
 	"Signal the event buffer to all registered event handlers.
 	Handlers need make sure to copy the buffer or extract the data otherwise, as the buffer will be reused."
 
@@ -91,7 +91,7 @@ InputEventFetcher >> signalEvent: eventBuffer
 ]
 
 InputEventFetcher >> startUp
-[startUp
+[
 	inputSemaphore := Semaphore new.
 	self primSetInputSemaphore: (Smalltalk registerExternalObject: inputSemaphore).
 	inputSemaphore consumeAllSignals.
@@ -99,7 +99,7 @@ InputEventFetcher >> startUp
 ]
 
 InputEventFetcher >> terminateEventLoop
-[terminateEventLoop
+[
 	"Terminate the event loop process. Terminate the old process if any."
 
 	"InputEventFetcher default terminateEventLoop"
@@ -108,24 +108,24 @@ InputEventFetcher >> terminateEventLoop
 ]
 
 InputEventFetcher >> unregisterHandler: handler
-[unregisterHandler: handler
+[
 	self eventHandlers remove: handler ifAbsent: [  ]
 ]
 
 InputEventFetcher >> waitForInput
-[waitForInput
+[
 	inputSemaphore wait
 ]
 
 InputEventFetcher class >> default
-[default
+[
 	"InputEventFetcher default"
 
 	^ Default ifNil: [ Default := InputEventFetcher new ]
 ]
 
 InputEventFetcher class >> deinstall
-[deinstall
+[
 	"InputEventFetcher deinstall"
 
 	Default
@@ -138,10 +138,30 @@ InputEventFetcher class >> deinstall
 ]
 
 InputEventFetcher class >> install
-[install
+[
 	"InputEventFetcher install"
 
 	Smalltalk addToStartUpList: self after: Cursor.
+	Smalltalk addToShutDownList: self after: Form.
+	Default := self new.
+	Default startUp
+]
+
+InputEventFetcher class >> shutDown
+[
+	"InputEventFetcher shutDown"
+
+	self default shutDown
+]
+
+InputEventFetcher class >> startUp
+[
+	"InputEventFetcher startUp"
+
+	self default startUp
+]
+
+rsor.
 	Smalltalk addToShutDownList: self after: Form.
 	Default := self new.
 	Default startUp

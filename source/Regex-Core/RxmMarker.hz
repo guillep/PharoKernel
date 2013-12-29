@@ -4,7 +4,7 @@ RxmMarker
 	package: #'Regex-Core'.
 
 RxmMarker >> index: anIndex
-[index: anIndex
+[
 	"An index is a key that makes sense for the matcher.
 	This key can be passed to marker position getters and
 	setters to access position for this marker in the current
@@ -14,7 +14,7 @@ RxmMarker >> index: anIndex
 ]
 
 RxmMarker >> matchAgainst: aMatcher
-[matchAgainst: aMatcher
+[
 	"If the rest of the link chain matches successfully, report the
 	position of the stream *before* the match started to the matcher."
 
@@ -22,6 +22,11 @@ RxmMarker >> matchAgainst: aMatcher
 	startPosition := aMatcher position.
 	(next matchAgainst: aMatcher)
 		ifTrue: [ aMatcher markerPositionAt: index add: startPosition.
+			^ true ].
+	^ false
+]
+
+tPosition.
 			^ true ].
 	^ false
 ]

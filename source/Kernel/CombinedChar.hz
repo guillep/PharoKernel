@@ -4,7 +4,7 @@ CombinedChar
 	package: #Kernel.
 
 CombinedChar >> add: char
-[add: char
+[
 	| dict elem |
 	codes ifNil: [ codes := Array with: char.
 			combined := char.
@@ -17,17 +17,17 @@ CombinedChar >> add: char
 ]
 
 CombinedChar >> base
-[base
+[
 	^ codes first
 ]
 
 CombinedChar >> combined
-[combined
+[
 	^ combined
 ]
 
 CombinedChar >> combinesWith: char
-[combinesWith: char
+[
 	| dict |
 	codes ifNil: [ ^ false ].
 	dict := Compositions at: combined charCode ifAbsent: [ ^ false ].
@@ -36,7 +36,7 @@ CombinedChar >> combinesWith: char
 ]
 
 CombinedChar >> simpleAdd: char
-[simpleAdd: char
+[
 	| dict elem |
 	codes ifNil: [ codes := Array with: char.
 			combined := char.
@@ -49,9 +49,15 @@ CombinedChar >> simpleAdd: char
 ]
 
 CombinedChar class >> isCompositionCharacter: charCode
-[isCompositionCharacter: charCode
+[
 	^ Compositions includesKey: charCode
 ]
+
+CombinedChar class >> isDiacriticals: unicode
+[
+	^ Diacriticals includes: unicode
+]
+
 
 CombinedChar class >> isDiacriticals: unicode
 [isDiacriticals: unicode

@@ -3,7 +3,7 @@ EvaluateCommandLineHandler
 	package: #'System-CommandLine'.
 
 EvaluateCommandLineHandler >> activate
-[activate
+[
 	self activateHelp
 		ifTrue: [ ^ self ].
 	self arguments ifEmpty: [ ^ self evaluateStdIn ].
@@ -15,7 +15,7 @@ EvaluateCommandLineHandler >> activate
 ]
 
 EvaluateCommandLineHandler >> argumentString
-[argumentString
+[
 	| arguments skipArguments |
 	"Now this is ugly... Coral would be nice here! Basically we strip skipArguments if, and only if they appear at the beginning of arguments"
 	skipArguments := #('--no-quit' '--save' '-e').
@@ -28,7 +28,7 @@ EvaluateCommandLineHandler >> argumentString
 ]
 
 EvaluateCommandLineHandler >> evaluate: aStream
-[evaluate: aStream
+[
 	| result exceptionClassToUse |
 	"workaround to make old Compiler unloadable"
 	exceptionClassToUse := Smalltalk compilerClass == OpalCompiler
@@ -44,7 +44,7 @@ EvaluateCommandLineHandler >> evaluate: aStream
 ]
 
 EvaluateCommandLineHandler >> evaluateArguments
-[evaluateArguments
+[
 	| argumentString |
 	argumentString := self argumentString.
 	argumentString ifEmpty: [ ^ self ].
@@ -52,7 +52,7 @@ EvaluateCommandLineHandler >> evaluateArguments
 ]
 
 EvaluateCommandLineHandler >> evaluateStdIn
-[evaluateStdIn
+[
 	| stdin |
 	stdin := FileStream stdin ifNil: [ ^ self ].
 	stdin atEnd
@@ -64,20 +64,25 @@ EvaluateCommandLineHandler >> evaluateStdIn
 ]
 
 EvaluateCommandLineHandler class >> commandName
-[commandName
+[
 	^ 'eval'
 ]
 
 EvaluateCommandLineHandler class >> description
-[description
+[
 	^ 'Directly evaluates passed in one line scripts'
 ]
 
 EvaluateCommandLineHandler class >> isResponsibleFor: commandLineArguments
-[isResponsibleFor: commandLineArguments
+[
 	"directly handle top-level -e and --evaluate options"
 
 	commandLineArguments withFirstArgument: [ :arg | (#('-e' '--evaluate') includes: arg)
+				ifTrue: [ ^ true ] ].
+	^ commandLineArguments includesSubCommand: self commandName
+]
+
+| (#('-e' '--evaluate') includes: arg)
 				ifTrue: [ ^ true ] ].
 	^ commandLineArguments includesSubCommand: self commandName
 ]

@@ -4,42 +4,42 @@ PluggableDictionary
 	package: #'Collections-Unordered'.
 
 PluggableDictionary >> copyEmpty
-[copyEmpty
+[
 	^ super copyEmpty
 		hashBlock: hashBlock;
 		equalBlock: equalBlock
 ]
 
 PluggableDictionary >> equalBlock
-[equalBlock
+[
 	"Return the block used for comparing the elements in the receiver."
 
 	^ equalBlock
 ]
 
 PluggableDictionary >> equalBlock: aBlock
-[equalBlock: aBlock
+[
 	"Set a new equality block. The block must accept two arguments and return true if the argumets are considered to be equal, false otherwise"
 
 	equalBlock := aBlock
 ]
 
 PluggableDictionary >> hashBlock
-[hashBlock
+[
 	"Return the block used for hashing the elements in the receiver."
 
 	^ hashBlock
 ]
 
 PluggableDictionary >> hashBlock: aBlock
-[hashBlock: aBlock
+[
 	"Set a new hash block. The block must accept one argument and must return the hash value of the given argument."
 
 	hashBlock := aBlock
 ]
 
 PluggableDictionary >> scanFor: anObject
-[scanFor: anObject
+[
 	"Scan the key array for the first slot containing either a nil
 (indicating 
 	  an empty slot) or an element that matches anObject. Answer the index 
@@ -63,7 +63,7 @@ overridden
 ]
 
 PluggableDictionary >> scanForEmptySlotFor: aKey
-[scanForEmptySlotFor: aKey
+[
 	"Scan the key array for the first slot containing an empty slot (indicated by a nil). Answer the index of that slot. This method will be overridden in various subclasses that have different interpretations for matching elements."
 
 	| index start |
@@ -74,6 +74,11 @@ PluggableDictionary >> scanForEmptySlotFor: aKey
 ]
 
 PluggableDictionary class >> integerDictionary
+[
+	^ self new hashBlock: [ :integer | integer hash \\ 1064164 * 1009 ]
+]
+
+ary class >> integerDictionary
 [integerDictionary
 	^ self new hashBlock: [ :integer | integer hash \\ 1064164 * 1009 ]
 ]

@@ -4,33 +4,33 @@ CopyVisitor
 	package: #'FileSystem-Core'.
 
 CopyVisitor >> copyDirectory: aReference
-[copyDirectory: aReference
+[
 	| directory |
 	directory := dest resolve: (aReference relativeTo: source).
 	directory createDirectory
 ]
 
 CopyVisitor >> copyFile: aReference
-[copyFile: aReference
+[
 	| copy |
 	copy := dest resolve: (aReference relativeTo: source).
 	aReference copyTo: copy
 ]
 
 CopyVisitor >> initializeWithSource: srcReference dest: dstReference
-[initializeWithSource: srcReference dest: dstReference
+[
 	self initialize.
 	source := srcReference.
 	dest := dstReference
 ]
 
 CopyVisitor >> visit
-[visit
+[
 	(PreorderGuide for: self) show: source
 ]
 
 CopyVisitor >> visitDirectory: anEntry
-[visitDirectory: anEntry
+[
 	| reference |
 	reference := anEntry reference.
 	reference = source
@@ -39,7 +39,7 @@ CopyVisitor >> visitDirectory: anEntry
 ]
 
 CopyVisitor >> visitFile: anEntry
-[visitFile: anEntry
+[
 	| reference |
 	reference := anEntry reference.
 	reference = source
@@ -48,8 +48,16 @@ CopyVisitor >> visitFile: anEntry
 ]
 
 CopyVisitor class >> copy: source to: dest
-[copy: source to: dest
+[
 	(self from: source to: dest) visit
+]
+
+CopyVisitor class >> from: srcReference to: dstReference
+[
+	^ self basicNew initializeWithSource: srcReference dest: dstReference
+]
+
+from: source to: dest) visit
 ]
 
 CopyVisitor class >> from: srcReference to: dstReference

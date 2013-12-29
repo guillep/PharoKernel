@@ -1,22 +1,22 @@
 FileSystem class >> * aFileOrDirectoryName
-[* aFileOrDirectoryName
+[
 	^ self disk * aFileOrDirectoryName
 ]
 
 FileSystem class >> / aFileOrDirectoryName
-[/ aFileOrDirectoryName
+[
 	^ self disk / aFileOrDirectoryName
 ]
 
 FileSystem class >> disk
-[disk
+[
 	"Answer a filesystem that represents the 'on-disk' filesystem used by the host operating system."
 
 	^ DiskStore currentFileSystem
 ]
 
 FileSystem class >> lookInUsualPlaces: fileName
-[lookInUsualPlaces: fileName
+[
 	"Check the default directory, the imagePath, and the vmPath (and the vmPath's owner) for this file."
 
 	| file |
@@ -32,34 +32,34 @@ FileSystem class >> lookInUsualPlaces: fileName
 ]
 
 FileSystem class >> root
-[root
+[
 	^ self disk root
 ]
 
 FileSystem class >> workingDirectory
-[workingDirectory
+[
 	^ self disk workingDirectory
 ]
 
 FileSystem class >> * aFileOrDirectoryName
-[* aFileOrDirectoryName
+[
 	^ self disk * aFileOrDirectoryName
 ]
 
 FileSystem class >> / aFileOrDirectoryName
-[/ aFileOrDirectoryName
+[
 	^ self disk / aFileOrDirectoryName
 ]
 
 FileSystem class >> disk
-[disk
+[
 	"Answer a filesystem that represents the 'on-disk' filesystem used by the host operating system."
 
 	^ DiskStore currentFileSystem
 ]
 
 FileSystem class >> lookInUsualPlaces: fileName
-[lookInUsualPlaces: fileName
+[
 	"Check the default directory, the imagePath, and the vmPath (and the vmPath's owner) for this file."
 
 	| file |
@@ -70,6 +70,21 @@ FileSystem class >> lookInUsualPlaces: fileName
 	(file := Smalltalk vmDirectory resolve: fileName) exists
 		ifTrue: [ ^ file ].
 	(file := Smalltalk vmDirectory parent resolve: fileName) exists
+		ifTrue: [ ^ file ].
+	^ nil
+]
+
+FileSystem class >> root
+[
+	^ self disk root
+]
+
+FileSystem class >> workingDirectory
+[
+	^ self disk workingDirectory
+]
+
+ fileName) exists
 		ifTrue: [ ^ file ].
 	^ nil
 ]

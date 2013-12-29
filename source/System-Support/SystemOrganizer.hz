@@ -4,7 +4,7 @@ SystemOrganizer
 	package: #'System-Support'.
 
 SystemOrganizer >> addCategory: newCategory
-[addCategory: newCategory
+[
 	| r |
 	r := super addCategory: newCategory.
 	SystemAnnouncer uniqueInstance classCategoryAdded: newCategory.
@@ -12,7 +12,7 @@ SystemOrganizer >> addCategory: newCategory
 ]
 
 SystemOrganizer >> categoriesMatching: matchString
-[categoriesMatching: matchString
+[
 	"Return all matching categories"
 
 	self categories ifNil: [ ^ #() ].
@@ -20,12 +20,12 @@ SystemOrganizer >> categoriesMatching: matchString
 ]
 
 SystemOrganizer >> classesInCategory: category
-[classesInCategory: category
+[
 	^ (self listAtCategoryNamed: category) collect: [ :className | self environment at: className ]
 ]
 
 SystemOrganizer >> commentInventory: categoryName
-[commentInventory: categoryName
+[
 	"SystemOrganization commentInventory: 'Morphic*'"
 
 	| classes commentedClasses |
@@ -40,17 +40,17 @@ SystemOrganizer >> commentInventory: categoryName
 ]
 
 SystemOrganizer >> environment
-[environment
+[
 	^ environment ifNil: [ environment := Smalltalk globals ]
 ]
 
 SystemOrganizer >> environment: aSystemDictionary
-[environment: aSystemDictionary
+[
 	environment := aSystemDictionary
 ]
 
 SystemOrganizer >> fileOut
-[fileOut
+[
 	"SystemOrganization fileOut"
 
 	| internalStream |
@@ -68,7 +68,7 @@ SystemOrganizer >> fileOut
 ]
 
 SystemOrganizer >> fileOutCategory: category
-[fileOutCategory: category
+[
 	"Store on the file named category (a string) concatenated with '.st' all the 
 	classes associated with the category."
 
@@ -79,7 +79,7 @@ SystemOrganizer >> fileOutCategory: category
 ]
 
 SystemOrganizer >> fileOutCategory: category on: aFileStream
-[fileOutCategory: category on: aFileStream
+[
 	"Store on the file associated with aFileStream, all the classes associated 
 	with the category and any requested shared pools."
 
@@ -87,7 +87,7 @@ SystemOrganizer >> fileOutCategory: category on: aFileStream
 ]
 
 SystemOrganizer >> fileOutCategory: category on: aFileStream initializing: aBool
-[fileOutCategory: category on: aFileStream initializing: aBool
+[
 	"Store on the file associated with aFileStream, all the traits and classes associated 
 	with the category and any requested shared pools in the right order."
 
@@ -116,7 +116,7 @@ SystemOrganizer >> fileOutCategory: category on: aFileStream initializing: aBool
 ]
 
 SystemOrganizer >> includesCategory: aString
-[includesCategory: aString
+[
 	"Return all matching categories"
 
 	self categories ifNil: [ ^ #() ].
@@ -124,7 +124,7 @@ SystemOrganizer >> includesCategory: aString
 ]
 
 SystemOrganizer >> initialize
-[initialize
+[
 	super initialize.
 	categoryArray := Array new.
 	categoryStops := Array new.
@@ -132,7 +132,7 @@ SystemOrganizer >> initialize
 ]
 
 SystemOrganizer >> orderedTraitsIn: category
-[orderedTraitsIn: category
+[
 	"Answer an OrderedCollection containing references to the traits in the 
 	category whose name is the argument, category (a string). The traits 
 	are ordered so they can be filed in."
@@ -146,14 +146,14 @@ SystemOrganizer >> orderedTraitsIn: category
 ]
 
 SystemOrganizer >> removeCategoriesMatching: matchString
-[removeCategoriesMatching: matchString
+[
 	"Remove all matching categories with their classes"
 
 	(self categoriesMatching: matchString) do: [ :c | self removeSystemCategory: c ]
 ]
 
 SystemOrganizer >> removeCategory: category
-[removeCategory: category
+[
 	| r |
 	r := super removeCategory: category.	"If the category we try to remove is the default one, due to cleansing, we don't have to announce it since it is not a valid category for a Class"
 	category = Default
@@ -162,7 +162,7 @@ SystemOrganizer >> removeCategory: category
 ]
 
 SystemOrganizer >> removeMissingClasses
-[removeMissingClasses
+[
 	"Remove any class names that are no longer in the Smalltalk dictionary. Used for cleaning up after garbage collecting user-generated classes."
 
 	"SystemOrganization removeMissingClasses"
@@ -172,7 +172,7 @@ SystemOrganizer >> removeMissingClasses
 ]
 
 SystemOrganizer >> removeSystemCategory: category
-[removeSystemCategory: category
+[
 	"remove all the classes and traits associated with the category"
 
 	(self orderedTraitsIn: category) , (self superclassOrder: category) reverseDo: [ :each | each removeFromSystem ].
@@ -180,7 +180,7 @@ SystemOrganizer >> removeSystemCategory: category
 ]
 
 SystemOrganizer >> renameCategory: oldCatString toBe: newCatString
-[renameCategory: oldCatString toBe: newCatString
+[
 	| r |
 	r := super renameCategory: oldCatString toBe: newCatString.
 	SystemAnnouncer uniqueInstance classCategoryRenamedFrom: oldCatString to: newCatString.
@@ -188,7 +188,7 @@ SystemOrganizer >> renameCategory: oldCatString toBe: newCatString
 ]
 
 SystemOrganizer >> superclassOrder: category
-[superclassOrder: category
+[
 	"Answer an OrderedCollection containing references to the classes in the 
 	category whose name is the argument, category (a string). The classes 
 	are ordered with superclasses first so they can be filed in."
@@ -200,13 +200,34 @@ SystemOrganizer >> superclassOrder: category
 ]
 
 SystemOrganizer >> uncommentedClassesIn: categoryName
-[uncommentedClassesIn: categoryName
+[
 	"SystemOrganization uncommentedClassesIn: 'Morphic*'"
 
 	| classes |
 	classes := OrderedCollection new.
 	self categories
 		withIndexCollect: [ :cat :idx | (categoryName match: cat)
+				ifTrue: [ classes addAll: (self listAtCategoryNumber: idx) ]
+				ifFalse: [ nil ] ].
+	^ (classes collect: [ :clsName | self environment at: clsName ] thenSelect: [ :cls | cls hasComment not ]) asArray
+]
+
+SystemOrganizer class >> cleanUp: agressive
+[
+	"Remove empty categories when cleaning aggressively"
+
+	agressive
+		ifTrue: [ SystemOrganization removeEmptyCategories ]
+]
+
+SystemOrganizer class >> default
+[
+	"look in the environment that the receiver organizes for the associated organization"
+
+	^ self environment organization
+]
+
+ (categoryName match: cat)
 				ifTrue: [ classes addAll: (self listAtCategoryNumber: idx) ]
 				ifFalse: [ nil ] ].
 	^ (classes collect: [ :clsName | self environment at: clsName ] thenSelect: [ :cls | cls hasComment not ]) asArray

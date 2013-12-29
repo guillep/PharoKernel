@@ -4,13 +4,13 @@ AtomicSharedQueue
 	package: #'Collections-Atomic'.
 
 AtomicSharedQueue >> initialize
-[initialize
+[
 	super initialize.
 	availSema := Semaphore new
 ]
 
 AtomicSharedQueue >> next
-[next
+[
 	"Fetch the next item from queue. If queue is locked or empty, block the sender until operation can complete"
 
 	| result |
@@ -23,18 +23,23 @@ AtomicSharedQueue >> next
 ]
 
 AtomicSharedQueue >> signalAddedNewItem
-[signalAddedNewItem
+[
 	availSema signal
 ]
 
 AtomicSharedQueue >> signalNoMoreItems
-[signalNoMoreItems
+[
 	"queue is empty, reset sema signals"
 
 	availSema consumeAllSignals
 ]
 
 AtomicSharedQueue >> waitForNewItems
+[
+	availSema wait
+]
+
+redQueue >> waitForNewItems
 [waitForNewItems
 	availSema wait
 ]

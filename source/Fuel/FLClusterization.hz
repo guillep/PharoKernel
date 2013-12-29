@@ -3,12 +3,12 @@ FLClusterization
 	package: #Fuel.
 
 FLClusterization >> baselevelBucket
-[baselevelBucket
+[
 	^ baselevelBucket
 ]
 
 FLClusterization >> clusterBuckets
-[clusterBuckets
+[
 	"Answer a new collection with all the clusters that have been collected in trace. Note that order is imporant."
 
 	^ OrderedCollection new
@@ -23,22 +23,22 @@ FLClusterization >> clusterBuckets
 ]
 
 FLClusterization >> clusters
-[clusters
+[
 	^ self clusterBuckets gather: [ :c | c ]
 ]
 
 FLClusterization >> fuelAccept: aGeneralMapper
-[fuelAccept: aGeneralMapper
+[
 	^ aGeneralMapper visitSubstitution: self by: nil
 ]
 
 FLClusterization >> globalsBucket
-[globalsBucket
+[
 	^ globalsBucket
 ]
 
 FLClusterization >> initialize
-[initialize
+[
 	super initialize.
 	primitivesBucket := IdentityDictionary new.
 	baselevelBucket := IdentityDictionary new.
@@ -50,23 +50,37 @@ FLClusterization >> initialize
 ]
 
 FLClusterization >> metalevelClassSideBucket
-[metalevelClassSideBucket
+[
 	^ metalevelClassSideBucket
 ]
 
 FLClusterization >> metalevelInstanceSideBucket
-[metalevelInstanceSideBucket
+[
 	^ metalevelInstanceSideBucket
 ]
 
 FLClusterization >> objectCount
-[objectCount
+[
 	^ self clusterBuckets
 		sum: [ :aClusterBucket | aClusterBucket inject: 0 into: [ :sum :aCluster | sum + aCluster objects size ] ]
 ]
 
 FLClusterization >> postBaselevelBucket
-[postBaselevelBucket
+[
+	^ postBaselevelBucket
+]
+
+FLClusterization >> primitivesBucket
+[
+	^ primitivesBucket
+]
+
+FLClusterization >> substitutionsBucket
+[
+	^ substitutionsBucket
+]
+
+evelBucket
 	^ postBaselevelBucket
 ]
 

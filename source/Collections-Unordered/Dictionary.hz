@@ -3,7 +3,7 @@ Dictionary
 	package: #'Collections-Unordered'.
 
 Dictionary >> = aDictionary
-[= aDictionary
+[
 	"Two dictionaries are equal if
 	 (a) they are the same 'kind' of thing.
 	 (b) they have the same set of keys.
@@ -22,7 +22,7 @@ Dictionary >> = aDictionary
 ]
 
 Dictionary >> add: anAssociation
-[add: anAssociation
+[
 	| index element |
 	index := self findElementOrNil: anAssociation key.
 	element := array at: index.
@@ -33,19 +33,19 @@ Dictionary >> add: anAssociation
 ]
 
 Dictionary >> addAll: aKeyedCollection
-[addAll: aKeyedCollection
+[
 	aKeyedCollection == self
 		ifFalse: [ aKeyedCollection keysAndValuesDo: [ :key :value | self at: key put: value ] ].
 	^ aKeyedCollection
 ]
 
 Dictionary >> associationAt: key
-[associationAt: key
+[
 	^ self associationAt: key ifAbsent: [ self errorKeyNotFound: key ]
 ]
 
 Dictionary >> associationAt: key ifAbsent: aBlock
-[associationAt: key ifAbsent: aBlock
+[
 	"Answer the association with the given key.
 	If key is not found, return the result of evaluating aBlock."
 
@@ -58,7 +58,7 @@ Dictionary >> associationAt: key ifAbsent: aBlock
 ]
 
 Dictionary >> associations
-[associations
+[
 	"Answer a Collection containing the receiver's associations."
 
 	"Suggested by l. Uzonyi"
@@ -67,7 +67,7 @@ Dictionary >> associations
 ]
 
 Dictionary >> associationsDo: aBlock
-[associationsDo: aBlock
+[
 	"Evaluate aBlock for each of the receiver's elements (key/value 
 	associations)."
 
@@ -77,7 +77,7 @@ Dictionary >> associationsDo: aBlock
 ]
 
 Dictionary >> associationsSelect: aBlock
-[associationsSelect: aBlock
+[
 	"Evaluate aBlock with each of my associations as the argument. Collect
 	into a new dictionary, only those associations for which aBlock evaluates
 	to true."
@@ -90,14 +90,14 @@ Dictionary >> associationsSelect: aBlock
 ]
 
 Dictionary >> at: key
-[at: key
+[
 	"Answer the value associated with the key."
 
 	^ self at: key ifAbsent: [ self errorKeyNotFound: key ]
 ]
 
 Dictionary >> at: key ifAbsent: aBlock
-[at: key ifAbsent: aBlock
+[
 	"Answer the value associated with the key or, if key isn't found,
 	answer the result of evaluating aBlock."
 
@@ -105,7 +105,7 @@ Dictionary >> at: key ifAbsent: aBlock
 ]
 
 Dictionary >> at: key ifAbsentPut: aBlock
-[at: key ifAbsentPut: aBlock
+[
 	"Return the value at the given key. 
 	If key is not included in the receiver store the result 
 	of evaluating aBlock as new value."
@@ -114,14 +114,14 @@ Dictionary >> at: key ifAbsentPut: aBlock
 ]
 
 Dictionary >> at: key ifPresent: aBlock
-[at: key ifPresent: aBlock
+[
 	"Lookup the given key in the receiver. If it is present, answer the value of evaluating the given block with the value associated with the key. Otherwise, answer nil."
 
 	^ (array at: (self findElementOrNil: key)) ifNotNil: [ :assoc | aBlock cull: assoc value ]
 ]
 
 Dictionary >> at: key ifPresent: oneArgBlock ifAbsent: absentBlock
-[at: key ifPresent: oneArgBlock ifAbsent: absentBlock
+[
 	"Lookup the given key in the receiver. If it is present, answer the value of evaluating the oneArgBlock with the value associated with the key, otherwise answer the value of absentBlock."
 
 	self at: key ifPresent: [ :v | ^ oneArgBlock value: v ].
@@ -129,7 +129,7 @@ Dictionary >> at: key ifPresent: oneArgBlock ifAbsent: absentBlock
 ]
 
 Dictionary >> at: key put: anObject
-[at: key put: anObject
+[
 	"Set the value at key to be anObject.  If key is not found, create a
 	new entry for key and set is value to anObject. Answer anObject."
 
@@ -141,17 +141,17 @@ Dictionary >> at: key put: anObject
 ]
 
 Dictionary >> bindingOf: varName
-[bindingOf: varName
+[
 	^ self associationAt: varName ifAbsent: [ nil ]
 ]
 
 Dictionary >> bindingsDo: aBlock
-[bindingsDo: aBlock
+[
 	^ self associationsDo: aBlock
 ]
 
 Dictionary >> collect: aBlock
-[collect: aBlock
+[
 	"Evaluate aBlock with each of my values as the argument.  Collect the
 	resulting values into a collection that is like me. Answer with the new
 	collection."
@@ -163,7 +163,7 @@ Dictionary >> collect: aBlock
 ]
 
 Dictionary >> declare: key from: aDictionary
-[declare: key from: aDictionary
+[
 	"Add key to the receiver. If key already exists, do nothing. If aDictionary 
 	includes key, then remove it from aDictionary and use its association as 
 	the element of the receiver."
@@ -177,7 +177,7 @@ Dictionary >> declare: key from: aDictionary
 ]
 
 Dictionary >> difference: aCollection
-[difference: aCollection
+[
 	"Answer the set theoretic difference of two collections. This is a specialized version for Dictionaries keeping the keys of the objects. At a slightly higher price of an additional Set to track duplicates."
 
 	| other result duplicates |
@@ -192,22 +192,22 @@ Dictionary >> difference: aCollection
 ]
 
 Dictionary >> do: aBlock
-[do: aBlock
+[
 	^ self valuesDo: aBlock
 ]
 
 Dictionary >> errorKeyNotFound: aKey
-[errorKeyNotFound: aKey
+[
 	KeyNotFound signalFor: aKey
 ]
 
 Dictionary >> errorValueNotFound: value
-[errorValueNotFound: value
+[
 	ValueNotFound signalFor: value
 ]
 
 Dictionary >> fillFrom: aCollection with: aBlock
-[fillFrom: aCollection with: aBlock
+[
 	"Evaluate aBlock with each of aCollections's elements as the argument.  
 	Collect the resulting values into self. Answer self."
 
@@ -215,7 +215,7 @@ Dictionary >> fillFrom: aCollection with: aBlock
 ]
 
 Dictionary >> fixCollisionsFrom: start
-[fixCollisionsFrom: start
+[
 	"The element at start has been removed and replaced by nil.
 	This method moves forward from there, relocating any entries
 	that had been placed below due to collisions with this one."
@@ -229,7 +229,7 @@ Dictionary >> fixCollisionsFrom: start
 ]
 
 Dictionary >> hasBindingThatBeginsWith: aString
-[hasBindingThatBeginsWith: aString
+[
 	"Answer true if the receiver has a key that begins with aString, false otherwise"
 
 	self keysDo: [ :each | (each beginsWith: aString)
@@ -238,19 +238,19 @@ Dictionary >> hasBindingThatBeginsWith: aString
 ]
 
 Dictionary >> includes: anObject
-[includes: anObject
+[
 	self do: [ :each | anObject = each
 				ifTrue: [ ^ true ] ].
 	^ false
 ]
 
 Dictionary >> includesAssociation: anAssociation
-[includesAssociation: anAssociation
+[
 	^ (self associationAt: anAssociation key ifAbsent: [ ^ false ]) value = anAssociation value
 ]
 
 Dictionary >> includesIdentity: anObject
-[includesIdentity: anObject
+[
 	"Answer whether anObject is one of the values of the receiver.  Contrast #includes: in which there is only an equality check, here there is an identity check"
 
 	self do: [ :each | anObject == each
@@ -259,19 +259,19 @@ Dictionary >> includesIdentity: anObject
 ]
 
 Dictionary >> includesKey: key
-[includesKey: key
+[
 	"Answer whether the receiver has a key equal to the argument, key."
 
 	^ (array at: (self scanFor: key)) ~~ nil	"We could use #notNil here, but ProtoObject doesn't understand it."
 ]
 
 Dictionary >> isDictionary
-[isDictionary
+[
 	^ true
 ]
 
 Dictionary >> isHealthy
-[isHealthy
+[
 	"Test that object hashes match their positions stored in set's array,
 	answer true if everything ok, false otherwise
 	
@@ -287,7 +287,7 @@ Dictionary >> isHealthy
 ]
 
 Dictionary >> keyAtIdentityValue: value
-[keyAtIdentityValue: value
+[
 	"Answer the key that is the external name for the argument, value. If 
 	there is none, answer nil.
 	Note: There can be multiple keys with the same value. Only one is returned."
@@ -296,7 +296,7 @@ Dictionary >> keyAtIdentityValue: value
 ]
 
 Dictionary >> keyAtIdentityValue: value ifAbsent: exceptionBlock
-[keyAtIdentityValue: value ifAbsent: exceptionBlock
+[
 	"Answer the key that is the external name for the argument, value. If 
 	there is none, answer the result of evaluating exceptionBlock.
 	Note: There can be multiple keys with the same value. Only one is returned."
@@ -307,7 +307,7 @@ Dictionary >> keyAtIdentityValue: value ifAbsent: exceptionBlock
 ]
 
 Dictionary >> keyAtValue: value
-[keyAtValue: value
+[
 	"Answer the key that is the external name for the argument, value. If 
 	there is none, signal an error."
 
@@ -315,7 +315,7 @@ Dictionary >> keyAtValue: value
 ]
 
 Dictionary >> keyAtValue: value ifAbsent: exceptionBlock
-[keyAtValue: value ifAbsent: exceptionBlock
+[
 	"Answer the key that is the external name for the argument, value. If 
 	there is none, answer the result of evaluating exceptionBlock.
 	: Use =, not ==, so stings like 'this' can be found.  Note that MethodDictionary continues to use == so it will be fast."
@@ -326,7 +326,7 @@ Dictionary >> keyAtValue: value ifAbsent: exceptionBlock
 ]
 
 Dictionary >> keyForIdentity: anObject
-[keyForIdentity: anObject
+[
 	"If anObject is one of the values of the receive, return its key, else return nil.  Contrast #keyAtValue: in which there is only an equality check, here there is an identity check"
 
 	self associationsDo: [ :assoc | assoc value == anObject
@@ -335,19 +335,19 @@ Dictionary >> keyForIdentity: anObject
 ]
 
 Dictionary >> keys
-[keys
+[
 	"Answer an Array containing the receiver's keys."
 
 	^ Array new: self size streamContents: [ :s | self keysDo: [ :key | s nextPut: key ] ]
 ]
 
 Dictionary >> keysAndValuesDo: aBlock
-[keysAndValuesDo: aBlock
+[
 	^ self associationsDo: [ :assoc | aBlock value: assoc key value: assoc value ]
 ]
 
 Dictionary >> keysAndValuesRemove: keyValueBlock
-[keysAndValuesRemove: keyValueBlock
+[
 	"Removes all entries for which keyValueBlock returns true."
 
 	"When removing many items, you must not do it while iterating over the dictionary, since it may be changing.  This method takes care of tallying the removals in a first pass, and then performing all the deletions afterward.  Many places in the sytem could be simplified by using this method."
@@ -361,14 +361,14 @@ Dictionary >> keysAndValuesRemove: keyValueBlock
 ]
 
 Dictionary >> keysDo: aBlock
-[keysDo: aBlock
+[
 	"Evaluate aBlock for each of the receiver's keys."
 
 	self associationsDo: [ :association | aBlock value: association key ]
 ]
 
 Dictionary >> keysSortedSafely
-[keysSortedSafely
+[
 	"Answer an Array containing the receiver's keys."
 
 	"Suggested by l. Uzonyi"
@@ -386,7 +386,7 @@ Dictionary >> keysSortedSafely
 ]
 
 Dictionary >> noCheckAdd: anObject
-[noCheckAdd: anObject
+[
 	"Must be defined separately for Dictionary because (self findElementOrNil:) expects a key, not an association."
 
 	array at: (self findElementOrNil: anObject key) put: anObject.
@@ -394,14 +394,14 @@ Dictionary >> noCheckAdd: anObject
 ]
 
 Dictionary >> noCheckNoGrowFillFrom: anArray
-[noCheckNoGrowFillFrom: anArray
+[
 	"Add the elements of anArray except nils to me assuming that I don't contain any of them, they are unique and I have more free space than they require."
 
 	1 to: anArray size do: [ :index | (anArray at: index) ifNotNil: [ :association | array at: (self scanForEmptySlotFor: association key) put: association ] ]
 ]
 
 Dictionary >> postCopy
-[postCopy
+[
 	"Must copy the associations, or later store will affect both the
 original and the copy"
 
@@ -409,7 +409,7 @@ original and the copy"
 ]
 
 Dictionary >> printElementsOn: aStream
-[printElementsOn: aStream
+[
 	aStream nextPut: $(.
 	self size > 100
 		ifTrue: [ aStream nextPutAll: 'size '.
@@ -424,7 +424,7 @@ Dictionary >> printElementsOn: aStream
 ]
 
 Dictionary >> rehash
-[rehash
+[
 	"Smalltalk rehash."
 
 	| newSelf |
@@ -434,17 +434,17 @@ Dictionary >> rehash
 ]
 
 Dictionary >> remove: anObject
-[remove: anObject
+[
 	self shouldNotImplement
 ]
 
 Dictionary >> remove: anObject ifAbsent: exceptionBlock
-[remove: anObject ifAbsent: exceptionBlock
+[
 	self shouldNotImplement
 ]
 
 Dictionary >> removeKey: key
-[removeKey: key
+[
 	"Remove key from the receiver.
 	If key is not in the receiver, notify an error."
 
@@ -452,7 +452,7 @@ Dictionary >> removeKey: key
 ]
 
 Dictionary >> removeKey: key ifAbsent: aBlock
-[removeKey: key ifAbsent: aBlock
+[
 	"Remove key (and its associated value) from the receiver. If key is not in 
 	the receiver, answer the result of evaluating aBlock. Otherwise, answer 
 	the value externally named by key."
@@ -469,14 +469,14 @@ Dictionary >> removeKey: key ifAbsent: aBlock
 ]
 
 Dictionary >> removeUnreferencedKeys
-[removeUnreferencedKeys
+[
 	"Undeclared removeUnreferencedKeys"
 
 	^ self unreferencedKeys do: [ :key | self removeKey: key ]
 ]
 
 Dictionary >> scanFor: anObject
-[scanFor: anObject
+[
 	"Scan the key array for the first slot containing either a nil (indicating an empty slot) or an element that matches anObject. Answer the index of that slot or zero if no slot is found. This method will be overridden in various subclasses that have different interpretations for matching elements."
 
 	| element start finish |
@@ -490,7 +490,7 @@ Dictionary >> scanFor: anObject
 ]
 
 Dictionary >> select: aBlock
-[select: aBlock
+[
 	"Evaluate aBlock with each of my values as the argument. Collect into a new dictionary, only those associations for which aBlock evaluates to true."
 
 	| newCollection |
@@ -501,7 +501,7 @@ Dictionary >> select: aBlock
 ]
 
 Dictionary >> storeOn: aStream
-[storeOn: aStream
+[
 	| noneYet |
 	aStream nextPutAll: '(('.
 	aStream nextPutAll: self class name.
@@ -519,7 +519,7 @@ Dictionary >> storeOn: aStream
 ]
 
 Dictionary >> unreferencedKeys
-[unreferencedKeys
+[
 	"| uk | (Time millisecondsToRun: [uk := TextConstants unreferencedKeys]) -> uk"
 
 	^ 'Scanning for references . . .'
@@ -542,7 +542,7 @@ Dictionary >> unreferencedKeys
 ]
 
 Dictionary >> valueAtNewKey: aKey put: anObject atIndex: index declareFrom: aDictionary
-[valueAtNewKey: aKey put: anObject atIndex: index declareFrom: aDictionary
+[
 	"Support for coordinating class variable and global declarations
 	with variables that have been put in Undeclared so as to
 	redirect all references to the undeclared variable."
@@ -554,7 +554,7 @@ Dictionary >> valueAtNewKey: aKey put: anObject atIndex: index declareFrom: aDic
 ]
 
 Dictionary >> values
-[values
+[
 	"Answer a Collection containing the receiver's values."
 
 	| out |
@@ -564,8 +564,44 @@ Dictionary >> values
 ]
 
 Dictionary >> valuesDo: aBlock
-[valuesDo: aBlock
+[
 	"Evaluate aBlock for each of the receiver's values.  Implemented with == checks
+	merely for the sake of maximum efficiency"
+
+	tally = 0
+		ifTrue: [ ^ self ].
+	1 to: array size do: [ :eachIndex | | eachAssociation |
+		eachAssociation := array at: eachIndex.
+		nil == eachAssociation
+			ifFalse: [ aBlock value: eachAssociation value ] ]
+]
+
+Dictionary class >> newFrom: aDict
+[
+	"Answer an instance of me containing the same associations as aDict.
+	 Error if any key appears twice."
+
+	| newDictionary |
+	newDictionary := self new: aDict size.
+	aDict
+		associationsDo: [ :x | (newDictionary includesKey: x key)
+				ifTrue: [ self error: 'Duplicate key: ' , x key printString ]
+				ifFalse: [ newDictionary add: x ] ].
+	^ newDictionary	"	NewDictionary newFrom: {1->#a. 2->#b. 3->#c}	{1->#a. 2->#b. 3->#c} as: NewDictionary	NewDictionary newFrom: {1->#a. 2->#b. 1->#c}	{1->#a. 2->#b. 1->#c} as: NewDictionary"
+]
+
+Dictionary class >> newFromPairs: anArray
+[
+	"Answer an instance of me associating (anArray at:i) to (anArray at: i+i)
+	 for each odd i.  anArray must have an even number of entries."
+
+	| newDictionary |
+	newDictionary := self new: anArray size / 2.
+	1 to: anArray size - 1 by: 2 do: [ :i | newDictionary at: (anArray at: i) put: (anArray at: i + 1) ].
+	^ newDictionary	"  Dictionary newFromPairs: {'Red' . Color red . 'Blue' . Color blue . 'Green' . Color green}. "
+]
+
+ checks
 	merely for the sake of maximum efficiency"
 
 	tally = 0

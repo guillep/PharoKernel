@@ -4,7 +4,7 @@ WeakSet
 	package: #'Collections-Weak'.
 
 WeakSet >> add: newObject
-[add: newObject
+[
 	"Include newObject as one of the receiver's elements, but only if
 	not already present. Answer newObject"
 
@@ -16,7 +16,7 @@ WeakSet >> add: newObject
 ]
 
 WeakSet >> collect: aBlock
-[collect: aBlock
+[
 	| newSet |
 	newSet := self species new: self size.
 	tally = 0
@@ -28,7 +28,7 @@ WeakSet >> collect: aBlock
 ]
 
 WeakSet >> do: aBlock
-[do: aBlock
+[
 	tally = 0
 		ifTrue: [ ^ self ].
 	1 to: array size do: [ :index | (array at: index) ifNotNil: [ :object | object == flag
@@ -36,7 +36,7 @@ WeakSet >> do: aBlock
 ]
 
 WeakSet >> do: aBlock after: anElement
-[do: aBlock after: anElement
+[
 	| startIndex |
 	tally = 0
 		ifTrue: [ ^ self ].
@@ -46,7 +46,7 @@ WeakSet >> do: aBlock after: anElement
 ]
 
 WeakSet >> fixCollisionsFrom: start
-[fixCollisionsFrom: start
+[
 	"The element at start has been removed and replaced by flag.
 	This method moves forward from there, relocating any entries
 	that had been placed below due to collisions with this one."
@@ -66,7 +66,7 @@ WeakSet >> fixCollisionsFrom: start
 ]
 
 WeakSet >> grow
-[grow
+[
 	"Grow the elements array if needed.
 	Since WeakSets just nil their slots, alot of the occupied (in the eyes of the set) slots are usually 	empty. Doubling size if unneeded can lead to BAD performance, therefore we see if reassigning 	the <live> elements to a Set of similiar size leads to a sufficiently (50% used here) empty set first.
 	and reinsert the old elements"
@@ -79,7 +79,7 @@ WeakSet >> grow
 ]
 
 WeakSet >> growTo: anInteger
-[growTo: anInteger
+[
 	"Grow the elements array and reinsert the old elements"
 
 	| oldElements |
@@ -89,12 +89,12 @@ WeakSet >> growTo: anInteger
 ]
 
 WeakSet >> includes: anObject
-[includes: anObject
+[
 	^ (array at: (self scanFor: anObject)) ifNil: [ false ] ifNotNil: [ :object | object ~~ flag ]
 ]
 
 WeakSet >> initialize: n
-[initialize: n
+[
 	"Initialize array to an array size of n"
 
 	flag := Object new.
@@ -104,7 +104,7 @@ WeakSet >> initialize: n
 ]
 
 WeakSet >> isHealthy
-[isHealthy
+[
 	"Test that object hashes match their positions stored in set's array,
 	answer true if everything ok, false otherwise
 	
@@ -120,7 +120,7 @@ WeakSet >> isHealthy
 ]
 
 WeakSet >> like: anObject
-[like: anObject
+[
 	"Answer an object in the receiver that is equal to anObject,
 	nil if no such object is found. Relies heavily on hash properties"
 
@@ -130,7 +130,7 @@ WeakSet >> like: anObject
 ]
 
 WeakSet >> like: anObject ifAbsent: aBlock
-[like: anObject ifAbsent: aBlock
+[
 	"Answer an object in the receiver that is equal to anObject,
 	or evaluate the block if not found. Relies heavily on hash properties"
 
@@ -141,7 +141,7 @@ WeakSet >> like: anObject ifAbsent: aBlock
 ]
 
 WeakSet >> noCheckNoGrowFillFrom: anArray
-[noCheckNoGrowFillFrom: anArray
+[
 	"Add the elements of anArray except nils and flag to me assuming that I don't contain any of them, they are unique and I have more free space than they require."
 
 	tally := 0.
@@ -152,7 +152,7 @@ WeakSet >> noCheckNoGrowFillFrom: anArray
 ]
 
 WeakSet >> postCopy
-[postCopy
+[
 	| oldFlag |
 	super postCopy.
 	oldFlag := flag.
@@ -161,7 +161,7 @@ WeakSet >> postCopy
 ]
 
 WeakSet >> printElementsOn: aStream
-[printElementsOn: aStream
+[
 	| oldPos |
 	aStream nextPut: $(.
 	oldPos := aStream position.
@@ -174,12 +174,12 @@ WeakSet >> printElementsOn: aStream
 ]
 
 WeakSet >> rehash
-[rehash
+[
 	self growTo: array size
 ]
 
 WeakSet >> remove: oldObject ifAbsent: aBlock
-[remove: oldObject ifAbsent: aBlock
+[
 	| index |
 	index := self scanFor: oldObject.
 	(array at: index) == flag
@@ -191,7 +191,7 @@ WeakSet >> remove: oldObject ifAbsent: aBlock
 ]
 
 WeakSet >> scanFor: anObject
-[scanFor: anObject
+[
 	"Scan the key array for the first slot containing either flag (indicating an empty slot) or an element that matches anObject. Answer the index of that slot or raise an error if no slot is found. This method will be overridden in various subclasses that have different interpretations for matching elements."
 
 	| index start |
@@ -205,7 +205,7 @@ WeakSet >> scanFor: anObject
 ]
 
 WeakSet >> scanForEmptySlotFor: aKey
-[scanForEmptySlotFor: aKey
+[
 	"Scan the key array for the first slot containing an empty slot (indicated by flag or a nil). Answer the index of that slot. This method will be overridden in various subclasses that have different interpretations for matching elements."
 
 	| index start |
@@ -219,7 +219,7 @@ WeakSet >> scanForEmptySlotFor: aKey
 ]
 
 WeakSet >> scanForLoadedSymbol: anObject
-[scanForLoadedSymbol: anObject
+[
 	"Scan the key array for the first slot containing either a nil (indicating an empty slot) or an element that matches anObject. Answer the index of that slot or zero if no slot is found. This method will be overridden in various subclasses that have different interpretations for matching elements"
 
 	| element start finish |
@@ -228,6 +228,24 @@ WeakSet >> scanForLoadedSymbol: anObject
 	start to: finish do: [ :index | ((element := array at: index) == flag or: [ element asString = anObject asString ])
 			ifTrue: [ ^ index ] ].	"Search from 1 to where we started."
 	1 to: start - 1 do: [ :index | ((element := array at: index) == flag or: [ element asString = anObject asString ])
+			ifTrue: [ ^ index ] ].
+	^ 0	"No match AND no empty slot"
+]
+
+WeakSet >> slowSize
+[
+	"Careful! Answer the maximum amount
+	of elements in the receiver, not the
+	exact amount"
+
+	| count |
+	count := 0.
+	1 to: array size do: [ :index | (array at: index) ifNotNil: [ :object | object == flag
+					ifFalse: [ count := count + 1 ] ] ].
+	^ count
+]
+
+ing = anObject asString ])
 			ifTrue: [ ^ index ] ].
 	^ 0	"No match AND no empty slot"
 ]

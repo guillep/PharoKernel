@@ -5,7 +5,7 @@ Beeper class
 	instanceVariables: #(#default ).
 
 Beeper >> play
-[play
+[
 	"This is how the default Beeper makes a beep,
 	by sending beep to the default sound service.
 	The sound system will check if sounds are enabled."
@@ -14,7 +14,7 @@ Beeper >> play
 ]
 
 Beeper class >> beep
-[beep
+[
 	"The preferred way of producing an audible feedback.
 	The default playable entity (an instance of Beeper)
 	also uses the pluggable SoundService
@@ -25,7 +25,7 @@ Beeper class >> beep
 ]
 
 Beeper class >> beepPrimitive
-[beepPrimitive
+[
 	"Make a primitive beep. Only use this if
 	you want to force this to be a primitive beep.
 	Otherwise use Beeper class>>beep
@@ -37,7 +37,7 @@ Beeper class >> beepPrimitive
 ]
 
 Beeper class >> clearDefault
-[clearDefault
+[
 	"Clear the default playable.
 	Will be lazily initialized in Beeper class >>default."
 
@@ -45,7 +45,7 @@ Beeper class >> clearDefault
 ]
 
 Beeper class >> default
-[default
+[
 	"When the default is not defined it is
 	initialized using #newDefault."
 
@@ -53,7 +53,7 @@ Beeper class >> default
 ]
 
 Beeper class >> newDefault
-[newDefault
+[
 	"Subclasses may override me to provide a default beep.
 	This base implementation returns an instance of Beeper
 	which uses the pluggable sound service."
@@ -62,7 +62,7 @@ Beeper class >> newDefault
 ]
 
 Beeper class >> primitiveBeep
-[primitiveBeep
+[
 	"Make a primitive beep. Not to be called directly.
 	It is much better to use Beeper class>>beep
 	or Beeper class>>beepPrimitive
@@ -75,8 +75,13 @@ Beeper class >> primitiveBeep
 ]
 
 Beeper class >> setDefault: aPlayableEntity
-[setDefault: aPlayableEntity
+[
 	"Set the playable entity used when making a beep.
+	The playable entity should implement the message #play."
+
+	default := aPlayableEntity
+]
+
 	The playable entity should implement the message #play."
 
 	default := aPlayableEntity

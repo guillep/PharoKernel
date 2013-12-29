@@ -4,12 +4,12 @@ SetElement
 	package: #'Collections-Support'.
 
 SetElement >> = anObject
-[= anObject
+[
 	^ anObject class = self class and: [ enclosedElement = anObject enclosedSetElement ]
 ]
 
 SetElement >> asSetElement
-[asSetElement
+[
 	"A receiver has to be included into a set, as a distinct object.
 	We need to wrap receiver in own turn, otherwise #enclosedSetElement will return wrong object for that set"
 
@@ -17,27 +17,36 @@ SetElement >> asSetElement
 ]
 
 SetElement >> enclosedSetElement
-[enclosedSetElement
+[
 	^ enclosedElement
 ]
 
 SetElement >> enclosedSetElement: anObject
-[enclosedSetElement: anObject
+[
 	enclosedElement := anObject
 ]
 
 SetElement >> hash
-[hash
+[
 	^ enclosedElement hash
 ]
 
 SetElement class >> initialize
-[initialize
+[
 	NilElement := self with: nil
 ]
 
 SetElement class >> with: anObject
-[with: anObject
+[
+	^ self new enclosedSetElement: anObject
+]
+
+SetElement class >> withNil
+[
+	^ NilElement
+]
+
+ject
 	^ self new enclosedSetElement: anObject
 ]
 

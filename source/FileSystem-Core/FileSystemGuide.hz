@@ -3,39 +3,39 @@ FileSystemGuide
 	package: #'FileSystem-Core'.
 
 FileSystemGuide >> initialize
-[initialize
+[
 	super initialize.
 	work := OrderedCollection new
 ]
 
 FileSystemGuide >> initializeWithVisitor: aVisitor
-[initializeWithVisitor: aVisitor
+[
 	self initialize.
 	visitor := aVisitor
 ]
 
 FileSystemGuide >> pop
-[pop
+[
 	^ work removeLast
 ]
 
 FileSystemGuide >> push: anObject
-[push: anObject
+[
 	work add: anObject
 ]
 
 FileSystemGuide >> pushAll: aCollection
-[pushAll: aCollection
+[
 	aCollection do: [ :ea | self push: ea ]
 ]
 
 FileSystemGuide >> selectChildren
-[selectChildren
+[
 	^ selectChildren
 ]
 
 FileSystemGuide >> selectChildren: aBlock
-[selectChildren: aBlock
+[
 	"With this block you can control how the guide spreads over directories.
 	Example: 
 		self selectChildren: [ :parentEntry | parentEntry isSymlink not ].
@@ -49,31 +49,43 @@ FileSystemGuide >> selectChildren: aBlock
 ]
 
 FileSystemGuide >> shouldVisitChildrenOf: anEntry
-[shouldVisitChildrenOf: anEntry
+[
 	^ selectChildren ifNil: [ true ] ifNotNil: [ selectChildren cull: anEntry ]
 ]
 
 FileSystemGuide >> show: aReference
-[show: aReference
+[
 	self subclassResponsibility
 ]
 
 FileSystemGuide >> top
-[top
+[
 	^ work removeFirst
 ]
 
 FileSystemGuide >> whileNotDoneDo: aBlock
-[whileNotDoneDo: aBlock
+[
 	[ work isEmpty ] whileFalse: [ aBlock value ]
 ]
 
 FileSystemGuide class >> for: aVisitor
-[for: aVisitor
+[
 	^ self basicNew initializeWithVisitor: aVisitor
 ]
 
 FileSystemGuide class >> show: aReference to: aVisitor
+[
+	^ (self for: aVisitor) show: aReference
+]
+
+FileSystemGuide class >> show: aReference to: aVisitor selecting: aBlock
+[
+	^ (self for: aVisitor)
+		selectChildren: aBlock;
+		show: aReference
+]
+
+itor
 [show: aReference to: aVisitor
 	^ (self for: aVisitor) show: aReference
 ]

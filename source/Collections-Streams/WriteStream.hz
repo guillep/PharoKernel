@@ -4,7 +4,7 @@ WriteStream
 	package: #'Collections-Streams'.
 
 WriteStream >> << aCollection
-[<< aCollection
+[
 	"we want a readable version of nextPutAll, that also works with non Collection arguments"
 
 	| newEnd |
@@ -15,7 +15,7 @@ WriteStream >> << aCollection
 ]
 
 WriteStream >> braceArray
-[braceArray
+[
 	"This method is used in compilation of brace constructs.
 	It MUST NOT be deleted or altered."
 
@@ -23,7 +23,7 @@ WriteStream >> braceArray
 ]
 
 WriteStream >> braceArray: anArray
-[braceArray: anArray
+[
 	"This method is used in compilation of brace constructs.
 	It MUST NOT be deleted or altered."
 
@@ -34,20 +34,20 @@ WriteStream >> braceArray: anArray
 ]
 
 WriteStream >> contents
-[contents
+[
 	readLimit := readLimit max: position.
 	^ collection copyFrom: 1 to: position
 ]
 
 WriteStream >> cr
-[cr
+[
 	"Append a return character to the receiver."
 
 	self nextPut: Character cr
 ]
 
 WriteStream >> crlf
-[crlf
+[
 	"Append a line feed character to the receiver."
 
 	self
@@ -56,7 +56,7 @@ WriteStream >> crlf
 ]
 
 WriteStream >> crtab
-[crtab
+[
 	"Append a return character, followed by a single tab character, to the 
 	receiver."
 
@@ -65,7 +65,7 @@ WriteStream >> crtab
 ]
 
 WriteStream >> crtab: anInteger
-[crtab: anInteger
+[
 	"Append a return character, followed by anInteger tab characters, to the 
 	receiver."
 
@@ -74,7 +74,7 @@ WriteStream >> crtab: anInteger
 ]
 
 WriteStream >> ensureASpace
-[ensureASpace
+[
 	"Append a space character to the receiver IFF there is not one on the end."
 
 	(position > 0 and: [ (collection at: position) = Character space ])
@@ -83,14 +83,14 @@ WriteStream >> ensureASpace
 ]
 
 WriteStream >> ensureCr
-[ensureCr
+[
 	"Append a cr character to the receiver IFF there is not one on the end."
 
 	self ensureEndsWith: Character cr
 ]
 
 WriteStream >> ensureEndsWith: anObject
-[ensureEndsWith: anObject
+[
 	"Append anObject to the receiver IFF there is not one on the end."
 
 	(position > 0 and: [ (collection at: position) = anObject ])
@@ -99,7 +99,7 @@ WriteStream >> ensureEndsWith: anObject
 ]
 
 WriteStream >> ensureNoSpace
-[ensureNoSpace
+[
 	"If there is not one on the end, remove it."
 
 	(position > 0 and: [ (collection at: position) = Character space ])
@@ -107,7 +107,7 @@ WriteStream >> ensureNoSpace
 ]
 
 WriteStream >> growTo: anInteger
-[growTo: anInteger
+[
 	" anInteger is the required minimal new size of the collection "
 
 	| oldSize length |
@@ -118,19 +118,19 @@ WriteStream >> growTo: anInteger
 ]
 
 WriteStream >> lf
-[lf
+[
 	"Append a line feed character to the receiver."
 
 	self nextPut: Character lf
 ]
 
 WriteStream >> next
-[next
+[
 	self shouldNotImplement
 ]
 
 WriteStream >> next: anInteger putAll: aCollection startingAt: startIndex
-[next: anInteger putAll: aCollection startingAt: startIndex
+[
 	"Store the next anInteger elements from the given collection."
 
 	| newEnd numPut |
@@ -149,7 +149,7 @@ WriteStream >> next: anInteger putAll: aCollection startingAt: startIndex
 ]
 
 WriteStream >> nextChunkPut: aString
-[nextChunkPut: aString
+[
 	"Append the argument, aString, to the receiver, doubling embedded terminators."
 
 	| i remainder terminator |
@@ -169,14 +169,14 @@ WriteStream >> nextChunkPut: aString
 ]
 
 WriteStream >> nextChunkPutWithStyle: aString
-[nextChunkPutWithStyle: aString
+[
 	"Deprecated.  Append the argument, aText, to the receiver, doubling embedded terminators.  Put out one chunk for the string and one for the style runs.  Mark the style with ]style[."
 
 	^ self nextChunkPut: aString asString
 ]
 
 WriteStream >> nextPut: anObject
-[nextPut: anObject
+[
 	"Primitive. Insert the argument at the next position in the Stream
 	represented by the receiver. Fail if the collection of this stream is not an
 	Array or a String. Fail if the stream is positioned at its end, or if the
@@ -192,7 +192,7 @@ WriteStream >> nextPut: anObject
 ]
 
 WriteStream >> nextPutAll: aCollection
-[nextPutAll: aCollection
+[
 	| newEnd |
 	collection class == aCollection class
 		ifFalse: [ ^ super nextPutAll: aCollection ].
@@ -209,7 +209,7 @@ WriteStream >> nextPutAll: aCollection
 ]
 
 WriteStream >> nextPutKeyword: keyword withArg: argValue
-[nextPutKeyword: keyword withArg: argValue
+[
 	"Emit a keyword/value pair in the alternate syntax"
 
 	self
@@ -220,14 +220,14 @@ WriteStream >> nextPutKeyword: keyword withArg: argValue
 ]
 
 WriteStream >> on: aCollection
-[on: aCollection
+[
 	super on: aCollection.
 	readLimit := 0.
 	writeLimit := aCollection size
 ]
 
 WriteStream >> on: aCollection from: firstIndex to: lastIndex
-[on: aCollection from: firstIndex to: lastIndex
+[
 	| len |
 	collection := aCollection.
 	readLimit := writeLimit := lastIndex > (len := collection size)
@@ -239,7 +239,7 @@ WriteStream >> on: aCollection from: firstIndex to: lastIndex
 ]
 
 WriteStream >> pastEndPut: anObject
-[pastEndPut: anObject
+[
 	"Grow the collection by doubling the size, but keeping the growth between 20 and 1000000.
 	Then put <anObject> at the current write position."
 
@@ -250,7 +250,7 @@ WriteStream >> pastEndPut: anObject
 ]
 
 WriteStream >> peekLast
-[peekLast
+[
 	"Return that item just put at the end of the stream"
 
 	^ position > 0
@@ -259,7 +259,7 @@ WriteStream >> peekLast
 ]
 
 WriteStream >> position: anInteger
-[position: anInteger
+[
 	"Refer to the comment in PositionableStream|position:."
 
 	readLimit := readLimit max: position.
@@ -267,7 +267,7 @@ WriteStream >> position: anInteger
 ]
 
 WriteStream >> reset
-[reset
+[
 	"Refer to the comment in PositionableStream|reset."
 
 	readLimit := readLimit max: position.
@@ -275,12 +275,12 @@ WriteStream >> reset
 ]
 
 WriteStream >> resetToStart
-[resetToStart
+[
 	readLimit := position := 0
 ]
 
 WriteStream >> setToEnd
-[setToEnd
+[
 	"Refer to the comment in PositionableStream|setToEnd."
 
 	readLimit := readLimit max: position.
@@ -288,47 +288,47 @@ WriteStream >> setToEnd
 ]
 
 WriteStream >> size
-[size
+[
 	^ readLimit := readLimit max: position
 ]
 
 WriteStream >> space
-[space
+[
 	"Append a space character to the receiver."
 
 	self nextPut: Character space
 ]
 
 WriteStream >> space: anInteger
-[space: anInteger
+[
 	"Append anInteger space characters to the receiver."
 
 	anInteger timesRepeat: [ self space ]
 ]
 
 WriteStream >> store: anObject
-[store: anObject
+[
 	"Have anObject print on the receiver for purposes of rereading."
 
 	anObject storeOn: self
 ]
 
 WriteStream >> tab
-[tab
+[
 	"Append a tab character to the receiver."
 
 	self nextPut: Character tab
 ]
 
 WriteStream >> tab: anInteger
-[tab: anInteger
+[
 	"Append anInteger tab characters to the receiver."
 
 	anInteger timesRepeat: [ self tab ]
 ]
 
 WriteStream >> timeStamp
-[timeStamp
+[
 	"Append the current time to the receiver as a String."
 
 	self nextChunkPut: (String streamContents: [ :s | Smalltalk timeStamp: s ]) printString.	"double string quotes and !s"
@@ -336,29 +336,52 @@ WriteStream >> timeStamp
 ]
 
 WriteStream >> with: aCollection
-[with: aCollection
+[
 	super on: aCollection.
 	position := readLimit := writeLimit := aCollection size
 ]
 
 WriteStream >> withAttribute: att do: strmBlock
-[withAttribute: att do: strmBlock
+[
 	"No-op here is overriden in TextStream for font emphasis"
 
 	^ strmBlock value
 ]
 
 WriteStream >> withAttributes: attributes do: strmBlock
-[withAttributes: attributes do: strmBlock
+[
 	"No-op here is overriden in TextStream for font emphasis"
 
 	^ strmBlock value
 ]
 
 WriteStream class >> on: aCollection from: firstIndex to: lastIndex
-[on: aCollection from: firstIndex to: lastIndex
+[
 	"Answer an instance of me on a copy of the argument, aCollection, 
 	determined by the indices firstIndex and lastIndex. Position the instance 
+	at the beginning of the collection."
+
+	^ self basicNew on: aCollection from: firstIndex to: lastIndex
+]
+
+WriteStream class >> with: aCollection
+[
+	"Answer an instance of me on the argument, aCollection, positioned to 
+	store objects at the end of aCollection."
+
+	^ self basicNew with: aCollection
+]
+
+WriteStream class >> with: aCollection from: firstIndex to: lastIndex
+[
+	"Answer an instance of me on the subcollection of the argument, 
+	aCollection, determined by the indices firstIndex and lastIndex. Position 
+	the instance to store at the end of the subcollection."
+
+	^ self basicNew with: (aCollection copyFrom: firstIndex to: lastIndex)
+]
+
+lastIndex. Position the instance 
 	at the beginning of the collection."
 
 	^ self basicNew on: aCollection from: firstIndex to: lastIndex

@@ -3,7 +3,7 @@ FLByteObjectCluster
 	package: #Fuel.
 
 FLByteObjectCluster >> materializeInstanceWith: aDecoder
-[materializeInstanceWith: aDecoder
+[
 	| instance size |
 	size := aDecoder nextEncodedPositiveInteger.
 	instance := theClass basicNew: size.
@@ -12,8 +12,12 @@ FLByteObjectCluster >> materializeInstanceWith: aDecoder
 ]
 
 FLByteObjectCluster >> serializeInstance: anObject with: anEncoder
-[serializeInstance: anObject with: anEncoder
+[
 	anEncoder encodePositiveInteger: anObject basicSize.
+	anEncoder encodeBytes: anObject
+]
+
+odePositiveInteger: anObject basicSize.
 	anEncoder encodeBytes: anObject
 ]
 

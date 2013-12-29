@@ -4,47 +4,47 @@ MemoryStore
 	package: #'FileSystem-Memory'.
 
 MemoryStore >> basenameFromEntry: aMemoryFileSystemEntry
-[basenameFromEntry: aMemoryFileSystemEntry
+[
 	^ aMemoryFileSystemEntry basename
 ]
 
 MemoryStore >> basicCreationTime: aMemoryFileSystemEntry
-[basicCreationTime: aMemoryFileSystemEntry
+[
 	^ aMemoryFileSystemEntry creationTime
 ]
 
 MemoryStore >> basicEntry: entry nodesDo: aBlock
-[basicEntry: entry nodesDo: aBlock
+[
 	entry fileEntriesDo: aBlock
 ]
 
 MemoryStore >> basicEntry: directoryEntry path: aPath nodesDo: aBlock
-[basicEntry: directoryEntry path: aPath nodesDo: aBlock
+[
 	directoryEntry fileEntriesDo: aBlock
 ]
 
 MemoryStore >> basicIsDirectory: aMemoryFileSystemEntry
-[basicIsDirectory: aMemoryFileSystemEntry
+[
 	^ aMemoryFileSystemEntry isDirectory
 ]
 
 MemoryStore >> basicIsFile: aMemoryFileSystemEntry
-[basicIsFile: aMemoryFileSystemEntry
+[
 	^ aMemoryFileSystemEntry isFile
 ]
 
 MemoryStore >> basicIsSymlink: aNode
-[basicIsSymlink: aNode
+[
 	^ false
 ]
 
 MemoryStore >> basicModificationTime: aMemoryFileSystemEntry
-[basicModificationTime: aMemoryFileSystemEntry
+[
 	^ aMemoryFileSystemEntry modificationTime
 ]
 
 MemoryStore >> basicOpen: path writable: aBoolean
-[basicOpen: path writable: aBoolean
+[
 	^ self
 		nodeAt: path
 		ifPresent: [ :aMemoryFileSystemEntry | aMemoryFileSystemEntry ]
@@ -54,23 +54,23 @@ MemoryStore >> basicOpen: path writable: aBoolean
 ]
 
 MemoryStore >> basicPosixPermissions: anEntry
-[basicPosixPermissions: anEntry
+[
 	^ 8r777
 ]
 
 MemoryStore >> basicSize: aMemoryFileSystemEntry
-[basicSize: aMemoryFileSystemEntry
+[
 	^ aMemoryFileSystemEntry fileSize
 ]
 
 MemoryStore >> checkName: aString fixErrors: fixErrors
-[checkName: aString fixErrors: fixErrors
+[
 	aString ifEmpty: [ self error: 'zero length file name' ].
 	^ aString
 ]
 
 MemoryStore >> copy: sourcePath ifAbsent: absentBlock to: destinationPath ifPresent: presentBlock fileSystem: aFilesystem
-[copy: sourcePath ifAbsent: absentBlock to: destinationPath ifPresent: presentBlock fileSystem: aFilesystem
+[
 	| sourceNode destinationNode |
 	sourceNode := self nodeAt: sourcePath ifPresent: [ :source | source ] ifAbsent: [ ^ absentBlock value ].
 	sourceNode isDirectory
@@ -92,7 +92,7 @@ MemoryStore >> copy: sourcePath ifAbsent: absentBlock to: destinationPath ifPres
 ]
 
 MemoryStore >> createDirectory: path
-[createDirectory: path
+[
 	| parent |
 	parent := path parent.
 	^ self
@@ -107,7 +107,7 @@ MemoryStore >> createDirectory: path
 ]
 
 MemoryStore >> createFile: aPath
-[createFile: aPath
+[
 	^ self
 		nodeAt: aPath parent
 		ifPresent: [ :entry | entry isDirectory
@@ -116,7 +116,7 @@ MemoryStore >> createFile: aPath
 ]
 
 MemoryStore >> delete: path
-[delete: path
+[
 	self
 		nodeAt: path parent
 		ifPresent: [ :dict | dict fileEntryRemove: path basename ifAbsent: [ FileDoesNotExist signalWith: path ] ]
@@ -124,22 +124,22 @@ MemoryStore >> delete: path
 ]
 
 MemoryStore >> forReferencePrintOn: aStream
-[forReferencePrintOn: aStream
+[
 	aStream nextPutAll: 'memory://'
 ]
 
 MemoryStore >> handleClass
-[handleClass
+[
 	^ MemoryHandle
 ]
 
 MemoryStore >> initialize
-[initialize
+[
 	root := MemoryFileSystemDirectory new
 ]
 
 MemoryStore >> nodeAt: aPath ifPresent: presentBlock ifAbsent: absentBlock
-[nodeAt: aPath ifPresent: presentBlock ifAbsent: absentBlock
+[
 	| current |
 	current := self root.
 	aPath
@@ -150,7 +150,7 @@ MemoryStore >> nodeAt: aPath ifPresent: presentBlock ifAbsent: absentBlock
 ]
 
 MemoryStore >> openFileStream: path writable: isWriteStream
-[openFileStream: path writable: isWriteStream
+[
 	| entry |
 	entry := self basicOpen: path writable: isWriteStream.
 	^ isWriteStream
@@ -159,7 +159,7 @@ MemoryStore >> openFileStream: path writable: isWriteStream
 ]
 
 MemoryStore >> rename: sourcePath to: destinationPath
-[rename: sourcePath to: destinationPath
+[
 	| sourceEntry destinationParentEntry newName |
 	sourceEntry := self nodeAt: sourcePath.
 	newName := destinationPath basename.
@@ -167,6 +167,45 @@ MemoryStore >> rename: sourcePath to: destinationPath
 	destinationParentEntry isDirectory
 		ifFalse: [ Error signal: 'Copy destination has to be a directory' ].
 	destinationParentEntry fileEntryAt: newName ifPresent: [ Error signal: 'Destination file exists already' ].
+	destinationParentEntry fileEntryAt: newName put: sourceEntry.
+	sourceEntry basename: newName.
+	(self nodeAt: sourcePath parent) fileEntryRemove: sourcePath basename
+]
+
+MemoryStore >> replaceFile: path in: aBlock
+[
+	^ self
+		nodeAt: path parent
+		ifPresent: [ :entry | | old new |
+			entry isDirectory
+				ifFalse: [ self signalFileDoesNotExist: path ].
+			old := entry fileEntryAt: path basename ifAbsent: [ self signalFileDoesNotExist: path ].
+			new := aBlock value: old.
+			entry fileEntryAt: path basename put: new ]
+		ifAbsent: [ self signalFileDoesNotExist: path ]
+]
+
+MemoryStore >> root
+[
+	^ root
+]
+
+MemoryStore class >> delimiter
+[
+	^ $/
+]
+
+MemoryStore class >> isCaseSensitive
+[
+	^ true
+]
+
+MemoryStore class >> separator
+[
+	^ $:
+]
+
+rror signal: 'Destination file exists already' ].
 	destinationParentEntry fileEntryAt: newName put: sourceEntry.
 	sourceEntry basename: newName.
 	(self nodeAt: sourcePath parent) fileEntryRemove: sourcePath basename

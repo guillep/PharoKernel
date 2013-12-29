@@ -3,7 +3,7 @@ FLWordObjectCluster
 	package: #Fuel.
 
 FLWordObjectCluster >> materializeInstanceWith: aDecoder
-[materializeInstanceWith: aDecoder
+[
 	| inst wideSize |
 	wideSize := aDecoder nextEncodedPositiveInteger.
 	inst := theClass basicNew: wideSize.
@@ -14,13 +14,18 @@ FLWordObjectCluster >> materializeInstanceWith: aDecoder
 ]
 
 FLWordObjectCluster >> serializeInstance: aWordObject with: anEncoder
-[serializeInstance: aWordObject with: anEncoder
+[
 	anEncoder encodePositiveInteger: aWordObject basicSize.
 	anEncoder encodeWords: aWordObject
 ]
 
 FLWordObjectCluster >> swapBytesOf: aWordObject
-[swapBytesOf: aWordObject
+[
+	Bitmap swapBytesIn: aWordObject from: 1 to: aWordObject basicSize.
+	^ aWordObject
+]
+
+sOf: aWordObject
 	Bitmap swapBytesIn: aWordObject from: 1 to: aWordObject basicSize.
 	^ aWordObject
 ]

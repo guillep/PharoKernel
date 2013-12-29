@@ -4,7 +4,7 @@ LegacyWeakSubscription
 	package: #'Announcements-Core'.
 
 LegacyWeakSubscription >> makeStrong
-[makeStrong
+[
 	| sub |
 	sub := self subscriber.
 	sub ifNil: [ ^ self error: 'Subscriber is nil, cannot make strong subscription' ].
@@ -19,23 +19,28 @@ LegacyWeakSubscription >> makeStrong
 ]
 
 LegacyWeakSubscription >> register
-[register
+[
 	self weakRegistry add: self subscriber executor: self
 ]
 
 LegacyWeakSubscription >> subscriber: anObject
-[subscriber: anObject
+[
 	self subscriber ifNotNil: [ self error: 'subscriber already set' ].
 	self basicAt: 1 put: anObject.
 	self register
 ]
 
 LegacyWeakSubscription >> unregister
-[unregister
+[
 	self subscriber ifNotNil: [ :sub | self weakRegistry remove: sub ]
 ]
 
 LegacyWeakSubscription >> weakRegistry
+[
+	^ WeakRegistry default
+]
+
+on >> weakRegistry
 [weakRegistry
 	^ WeakRegistry default
 ]

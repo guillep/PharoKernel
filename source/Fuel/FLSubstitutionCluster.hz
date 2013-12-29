@@ -4,7 +4,7 @@ FLSubstitutionCluster
 	package: #Fuel.
 
 FLSubstitutionCluster >> add: anObject substitutedBy: anotherObject traceWith: aAnalysis
-[add: anObject substitutedBy: anotherObject traceWith: aAnalysis
+[
 	substitutions
 		at: anObject
 		ifAbsent: [ substitutions at: anObject put: anotherObject.
@@ -13,33 +13,33 @@ FLSubstitutionCluster >> add: anObject substitutedBy: anotherObject traceWith: a
 ]
 
 FLSubstitutionCluster >> initializeAnalyzing
-[initializeAnalyzing
+[
 	super initializeAnalyzing.
 	substitutions := IdentityDictionary new.
 	substitutes := IdentitySet new
 ]
 
 FLSubstitutionCluster >> isSubstitute: anObject
-[isSubstitute: anObject
+[
 	^ substitutes identityIncludes: anObject
 ]
 
 FLSubstitutionCluster >> objects
-[objects
+[
 	"This cluster does not have objects"
 
 	^ #()
 ]
 
 FLSubstitutionCluster >> printOn: aStream
-[printOn: aStream
+[
 	super printOn: aStream.
 	aStream nextPutAll: '->'.
 	substitutions printElementsOn: aStream
 ]
 
 FLSubstitutionCluster >> registerIndexesOn: aDictionary
-[registerIndexesOn: aDictionary
+[
 	substitutions
 		keysAndValuesDo: [ :anObject :theSubstitution | | substitutionIndex |
 			substitutionIndex := aDictionary at: theSubstitution.
@@ -47,6 +47,16 @@ FLSubstitutionCluster >> registerIndexesOn: aDictionary
 ]
 
 FLSubstitutionCluster >> substitutions
+[
+	^ substitutions
+]
+
+FLSubstitutionCluster class >> clusterBucketIn: aClusterization
+[
+	^ aClusterization substitutionsBucket
+]
+
+onCluster >> substitutions
 [substitutions
 	^ substitutions
 ]

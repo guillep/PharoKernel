@@ -1,53 +1,53 @@
 FloatArray >> * anObject
-[* anObject
+[
 	^ self copy *= anObject
 ]
 
 FloatArray >> *= anObject
-[*= anObject
+[
 	^ anObject isNumber
 		ifTrue: [ self primMulScalar: anObject asFloat ]
 		ifFalse: [ self primMulArray: anObject ]
 ]
 
 FloatArray >> + anObject
-[+ anObject
+[
 	^ self copy += anObject
 ]
 
 FloatArray >> += anObject
-[+= anObject
+[
 	^ anObject isNumber
 		ifTrue: [ self primAddScalar: anObject asFloat ]
 		ifFalse: [ self primAddArray: anObject ]
 ]
 
 FloatArray >> - anObject
-[- anObject
+[
 	^ self shallowCopy -= anObject
 ]
 
 FloatArray >> -= anObject
-[-= anObject
+[
 	^ anObject isNumber
 		ifTrue: [ self primSubScalar: anObject asFloat ]
 		ifFalse: [ self primSubArray: anObject ]
 ]
 
 FloatArray >> / anObject
-[/ anObject
+[
 	^ self copy /= anObject
 ]
 
 FloatArray >> /= anObject
-[/= anObject
+[
 	^ anObject isNumber
 		ifTrue: [ self primDivScalar: anObject asFloat ]
 		ifFalse: [ self primDivArray: anObject ]
 ]
 
 FloatArray >> \\= other
-[\\= other
+[
 	other isNumber
 		ifTrue: [ 1 to: self size do: [ :i | self at: i put: (self at: i) \\ other ].
 			^ self ].
@@ -55,7 +55,7 @@ FloatArray >> \\= other
 ]
 
 FloatArray >> adaptToNumber: rcvr andSend: selector
-[adaptToNumber: rcvr andSend: selector
+[
 	"If I am involved in arithmetic with a Number. If possible,
 	convert it to a float and perform the (more efficient) primitive operation."
 
@@ -73,7 +73,7 @@ FloatArray >> adaptToNumber: rcvr andSend: selector
 ]
 
 FloatArray >> dot: aFloatVector
-[dot: aFloatVector
+[
 	"Primitive. Return the dot product of the receiver and the argument.
 	Fail if the argument is not of the same size as the receiver."
 
@@ -82,6 +82,15 @@ FloatArray >> dot: aFloatVector
 	self size = aFloatVector size
 		ifFalse: [ ^ self error: 'Must be equal size' ].
 	result := 0.0.
+	1 to: self size do: [ :i | result := result + ((self at: i) * (aFloatVector at: i)) ].
+	^ result
+]
+
+FloatArray >> negated
+[
+	^ self copy *= -1
+]
+
 	1 to: self size do: [ :i | result := result + ((self at: i) * (aFloatVector at: i)) ].
 	^ result
 ]

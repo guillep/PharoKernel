@@ -3,14 +3,14 @@ NixEnvironment
 	package: #'System-Platforms'.
 
 NixEnvironment >> environ
-[environ
+[
 	"Return the address of the array holding the environment variables"
 
 	^ NBExternalAddress value: ((NativeBoost loadSymbol: 'environ' fromModule: NativeBoost CLibrary) nbUInt32AtOffset: 0)
 ]
 
 NixEnvironment >> environAt: index
-[environAt: index
+[
 	| address |
 	address := NBExternalAddress value: (self environ nbUInt32AtOffset: (index - 1) * 4).
 	address isNull
@@ -19,7 +19,7 @@ NixEnvironment >> environAt: index
 ]
 
 NixEnvironment >> keysAndValuesDo: aBlock
-[keysAndValuesDo: aBlock
+[
 	| index associationString |
 	index := 1.
 	[ associationString := self environAt: index.
@@ -30,10 +30,13 @@ NixEnvironment >> keysAndValuesDo: aBlock
 ]
 
 NixEnvironment >> setEnv: nameString value: valueString
-[setEnv: nameString value: valueString
+[
 	"This method calls the Standard C Library getenv() function"
 
 	<primitive: #primitiveNativeCall module: #NativeBoostPlugin error: #errorCode>
 	^ self nbCall: #(#int #setenv #(#String #nameString #, #String #valueString #, 1)) module: NativeBoost CLibrary
+]
+
+#String #nameString #, #String #valueString #, 1)) module: NativeBoost CLibrary
 ]
 

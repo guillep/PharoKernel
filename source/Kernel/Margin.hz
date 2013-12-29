@@ -3,17 +3,17 @@ Margin
 	package: #Kernel.
 
 Margin >> asMargin
-[asMargin
+[
 	^ self
 ]
 
 Margin >> bottom
-[bottom
+[
 	^ bottom
 ]
 
 Margin >> expandRectangle: aRectangle
-[expandRectangle: aRectangle
+[
 	"Answer a rectangle whose size has been expanded by the receiver which represents each rectangle corner."
 
 	| l r t b |
@@ -25,14 +25,14 @@ Margin >> expandRectangle: aRectangle
 ]
 
 Margin >> extendRectangle: aRectangle
-[extendRectangle: aRectangle
+[
 	"Answer a rectangle whose size has been expanded (without changing its origin) by the receiver which represents each rectangle corner."
 
 	^ Rectangle origin: aRectangle origin corner: aRectangle corner + self rightBottom
 ]
 
 Margin >> fromNumber: anInteger
-[fromNumber: anInteger
+[
 	self
 		setTop: anInteger
 		left: anInteger
@@ -41,7 +41,7 @@ Margin >> fromNumber: anInteger
 ]
 
 Margin >> fromPoint: aPoint
-[fromPoint: aPoint
+[
 	self
 		setTop: aPoint y
 		left: aPoint x
@@ -50,7 +50,7 @@ Margin >> fromPoint: aPoint
 ]
 
 Margin >> fromRectangle: aRectangle
-[fromRectangle: aRectangle
+[
 	"Pay attention do not use this method but prefer top:left:bottom:right:"
 
 	self
@@ -61,12 +61,12 @@ Margin >> fromRectangle: aRectangle
 ]
 
 Margin >> height
-[height
+[
 	^ self bottom - self top
 ]
 
 Margin >> initialize
-[initialize
+[
 	super initialize.
 	self
 		setTop: 0
@@ -76,7 +76,7 @@ Margin >> initialize
 ]
 
 Margin >> insetRectangle: aRectangle
-[insetRectangle: aRectangle
+[
 	"Answer a rectangle whose size has been reduced by the receiver. The limitation is that since a rectangle topleft is always less than its bottomright you may have a some cases that are not possible to express. For that you should use a margin object instead of a rectangle."
 
 	| l r t b |
@@ -88,17 +88,17 @@ Margin >> insetRectangle: aRectangle
 ]
 
 Margin >> isZero
-[isZero
+[
 	^ 0 = top and: [ 0 = left and: [ 0 = right and: [ 0 = bottom ] ] ]
 ]
 
 Margin >> left
-[left
+[
 	^ left
 ]
 
 Margin >> printOn: aStream
-[printOn: aStream
+[
 	aStream
 		nextPutAll: 'MorphMargin';
 		nextPutAll: ' top: ';
@@ -112,17 +112,17 @@ Margin >> printOn: aStream
 ]
 
 Margin >> right
-[right
+[
 	^ right
 ]
 
 Margin >> rightBottom
-[rightBottom
+[
 	^ right @ bottom
 ]
 
 Margin >> setTop: topNumber left: leftNumber bottom: bottomNumber right: rightNumber
-[setTop: topNumber left: leftNumber bottom: bottomNumber right: rightNumber
+[
 	top := topNumber.
 	left := leftNumber.
 	bottom := bottomNumber.
@@ -130,17 +130,17 @@ Margin >> setTop: topNumber left: leftNumber bottom: bottomNumber right: rightNu
 ]
 
 Margin >> top
-[top
+[
 	^ top
 ]
 
 Margin >> width
-[width
+[
 	^ self right - self left
 ]
 
 Margin class >> fromNumber: aNumber
-[fromNumber: aNumber
+[
 	"Create a margin whose four values are the same and based on anInteger"
 
 	^ self new
@@ -149,7 +149,7 @@ Margin class >> fromNumber: aNumber
 ]
 
 Margin class >> fromPoint: aPoint
-[fromPoint: aPoint
+[
 	"Create a margin whose values are based on the point value: top and bottom are y and left right are x."
 
 	^ self new
@@ -158,7 +158,7 @@ Margin class >> fromPoint: aPoint
 ]
 
 Margin class >> fromRectangle: aRectangle
-[fromRectangle: aRectangle
+[
 	"Create a margin with four values based on aRectangle using exactly top, left, bottom, right semantics. Pay attention that most of the time you should not use this method but prefer top:left:bottom:right:. The reason is that using rectangle may force you to create rectangles with negative extent which is totally wrong and bogus."
 
 	^ self new
@@ -167,6 +167,24 @@ Margin class >> fromRectangle: aRectangle
 ]
 
 Margin class >> left: leftNumber top: topNumber right: rightNumber bottom: bottomNumber
+[
+	^ self new
+		setTop: topNumber
+		left: leftNumber
+		bottom: bottomNumber
+		right: rightNumber
+]
+
+Margin class >> top: topNumber left: leftNumber bottom: bottomNumber right: rightNumber
+[
+	^ self new
+		setTop: topNumber
+		left: leftNumber
+		bottom: bottomNumber
+		right: rightNumber
+]
+
+ft: leftNumber top: topNumber right: rightNumber bottom: bottomNumber
 [left: leftNumber top: topNumber right: rightNumber bottom: bottomNumber
 	^ self new
 		setTop: topNumber

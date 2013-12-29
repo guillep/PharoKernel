@@ -3,98 +3,98 @@ FileSystemPermission
 	package: #'FileSystem-Core'.
 
 FileSystemPermission >> < other
-[< other
+[
 	^ posixPermission < other posixPermission
 ]
 
 FileSystemPermission >> <= other
-[<= other
+[
 	^ (posixPermission > other posixPermission) not
 ]
 
 FileSystemPermission >> > other
-[> other
+[
 	^ other posixPermission < posixPermission
 ]
 
 FileSystemPermission >> >= other
-[>= other
+[
 	^ other posixPermission <= posixPermission
 ]
 
 FileSystemPermission >> groupExecute
-[groupExecute
+[
 	^ self permissionBitAt: 4
 ]
 
 FileSystemPermission >> groupRead
-[groupRead
+[
 	^ self permissionBitAt: 6
 ]
 
 FileSystemPermission >> groupWrite
-[groupWrite
+[
 	^ self permissionBitAt: 5
 ]
 
 FileSystemPermission >> initialize: aNumber
-[initialize: aNumber
+[
 	posixPermission := aNumber.
 	self initialize
 ]
 
 FileSystemPermission >> isReadable
-[isReadable
+[
 	^ self ownerRead
 ]
 
 FileSystemPermission >> isWritable
-[isWritable
+[
 	^ self ownerWrite
 ]
 
 FileSystemPermission >> otherExecute
-[otherExecute
+[
 	^ self permissionBitAt: 1
 ]
 
 FileSystemPermission >> otherRead
-[otherRead
+[
 	^ self permissionBitAt: 3
 ]
 
 FileSystemPermission >> otherWrite
-[otherWrite
+[
 	^ self permissionBitAt: 2
 ]
 
 FileSystemPermission >> ownerExecute
-[ownerExecute
+[
 	^ self permissionBitAt: 7
 ]
 
 FileSystemPermission >> ownerRead
-[ownerRead
+[
 	^ self permissionBitAt: 9
 ]
 
 FileSystemPermission >> ownerWrite
-[ownerWrite
+[
 	^ self permissionBitAt: 8
 ]
 
 FileSystemPermission >> permissionBitAt: bitIndex
-[permissionBitAt: bitIndex
+[
 	^ (posixPermission bitAt: bitIndex) == 1
 ]
 
 FileSystemPermission >> posixPermission
-[posixPermission
+[
 	^ posixPermission
 ]
 
 FileSystemPermission >> printOn: aStream
-[printOn: aStream
+[
 	aStream
 		nextPut: (self ownerRead
 						ifTrue: [ $r ]
@@ -126,8 +126,23 @@ FileSystemPermission >> printOn: aStream
 ]
 
 FileSystemPermission class >> default
-[default
+[
 	^ self posixPermissions: 8r777
+]
+
+FileSystemPermission class >> new
+[
+	self error: 'Should not be called. Use #posixPermission: instead'
+]
+
+FileSystemPermission class >> posixPermissions: aNumber
+[
+	^ self basicNew
+		initialize: aNumber;
+		yourself
+]
+
+777
 ]
 
 FileSystemPermission class >> new

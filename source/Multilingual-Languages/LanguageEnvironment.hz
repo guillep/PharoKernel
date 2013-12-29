@@ -4,65 +4,65 @@ LanguageEnvironment
 	package: #'Multilingual-Languages'.
 
 LanguageEnvironment >> isoCountry
-[isoCountry
+[
 	^ self localeID isoCountry
 ]
 
 LanguageEnvironment >> isoLanguage
-[isoLanguage
+[
 	^ self localeID isoLanguage
 ]
 
 LanguageEnvironment >> leadingChar
-[leadingChar
+[
 	^ self class leadingChar
 ]
 
 LanguageEnvironment >> localeID
-[localeID
+[
 	^ id
 ]
 
 LanguageEnvironment >> localeID: anID
-[localeID: anID
+[
 	id := anID
 ]
 
 LanguageEnvironment class >> canBeGlobalVarInitial: char
-[canBeGlobalVarInitial: char
+[
 	^ Unicode canBeGlobalVarInitial: char
 ]
 
 LanguageEnvironment class >> canBeNonGlobalVarInitial: char
-[canBeNonGlobalVarInitial: char
+[
 	^ Unicode canBeNonGlobalVarInitial: char
 ]
 
 LanguageEnvironment class >> clearDefault
-[clearDefault
+[
 	SystemConverter := nil.
 	FileNameConverter := nil
 ]
 
 LanguageEnvironment class >> currentPlatform
-[currentPlatform
+[
 	^ Locale currentPlatform languageEnvironment
 ]
 
 LanguageEnvironment class >> defaultFileNameConverter
-[defaultFileNameConverter
+[
 	FileNameConverter ifNil: [ FileNameConverter := self currentPlatform class fileNameConverterClass new ].
 	^ FileNameConverter
 ]
 
 LanguageEnvironment class >> defaultSystemConverter
-[defaultSystemConverter
+[
 	SystemConverter ifNil: [ SystemConverter := self currentPlatform class systemConverterClass new ].
 	^ SystemConverter
 ]
 
 LanguageEnvironment class >> digitValueOf: char
-[digitValueOf: char
+[
 	"Answer 0-9 if the receiver is $0-$9, 10-35 if it is $A-$Z, and < 0
 	otherwise. This is used to parse literal numbers of radix 2-36."
 
@@ -70,12 +70,12 @@ LanguageEnvironment class >> digitValueOf: char
 ]
 
 LanguageEnvironment class >> fileNameConverterClass
-[fileNameConverterClass
+[
 	^ UTF8TextConverter
 ]
 
 LanguageEnvironment class >> initKnownEnvironments
-[initKnownEnvironments
+[
 	"LanguageEnvironment initKnownEnvironments"
 
 	| known |
@@ -91,14 +91,14 @@ LanguageEnvironment class >> initKnownEnvironments
 ]
 
 LanguageEnvironment class >> initialize
-[initialize
+[
 	"LanguageEnvironment initialize"
 
 	Smalltalk addToStartUpList: LanguageEnvironment
 ]
 
 LanguageEnvironment class >> isBreakableAt: index in: text
-[isBreakableAt: index in: text
+[
 	| char |
 	char := text at: index.
 	char = Character space
@@ -109,32 +109,32 @@ LanguageEnvironment class >> isBreakableAt: index in: text
 ]
 
 LanguageEnvironment class >> isCharset
-[isCharset
+[
 	^ false
 ]
 
 LanguageEnvironment class >> isDigit: char
-[isDigit: char
+[
 	^ Unicode isDigit: char
 ]
 
 LanguageEnvironment class >> isLetter: char
-[isLetter: char
+[
 	^ Unicode isLetter: char
 ]
 
 LanguageEnvironment class >> isLowercase: char
-[isLowercase: char
+[
 	^ Unicode isLowercase: char
 ]
 
 LanguageEnvironment class >> isUppercase: char
-[isUppercase: char
+[
 	^ Unicode isUppercase: char
 ]
 
 LanguageEnvironment class >> knownEnvironments
-[knownEnvironments
+[
 	"LanguageEnvironment knownEnvironments"
 
 	"KnownEnvironments := nil"
@@ -143,18 +143,18 @@ LanguageEnvironment class >> knownEnvironments
 ]
 
 LanguageEnvironment class >> leadingChar
-[leadingChar
+[
 	self subclassResponsibility.
 	^ 0
 ]
 
 LanguageEnvironment class >> localeChanged
-[localeChanged
+[
 	self startUp
 ]
 
 LanguageEnvironment class >> localeID: localeID
-[localeID: localeID
+[
 	self knownEnvironments at: localeID ifPresent: [ :value | ^ value ].
 	^ self knownEnvironments
 		at: (LocaleID isoLanguage: localeID isoLanguage)
@@ -162,20 +162,49 @@ LanguageEnvironment class >> localeID: localeID
 ]
 
 LanguageEnvironment class >> resetKnownEnvironments
-[resetKnownEnvironments
+[
 	"LanguageEnvironment resetKnownEnvironments"
 
 	KnownEnvironments := nil
 ]
 
 LanguageEnvironment class >> scanMultibyteCharactersFrom: startIndex to: stopIndex in: aWideString with: aCharacterScanner rightX: rightX font: aFont
-[scanMultibyteCharactersFrom: startIndex to: stopIndex in: aWideString with: aCharacterScanner rightX: rightX font: aFont
+[
 	"the default for scanning multibyte characters- other more specific encodings may do something else"
 
 	^ aFont
 		scanMultibyteCharactersFrom: startIndex
 		to: stopIndex
 		in: aWideString
+		with: aCharacterScanner
+		rightX: rightX
+]
+
+LanguageEnvironment class >> scanSelector
+[
+	^ #scanMultiCharactersFrom:to:in:rightX:stopConditions:kern:
+]
+
+LanguageEnvironment class >> startUp
+[
+	self clearDefault
+]
+
+LanguageEnvironment class >> supportedLanguages
+[
+	"Return the languages that this class supports. 
+	Any translations for those languages will use this class as their environment."
+
+	self subclassResponsibility
+]
+
+LanguageEnvironment class >> systemConverterClass
+[
+	self subclassResponsibility.
+	^ Latin1TextConverter
+]
+
+	in: aWideString
 		with: aCharacterScanner
 		rightX: rightX
 ]

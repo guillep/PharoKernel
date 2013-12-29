@@ -3,25 +3,25 @@ FLVariablesMapping
 	package: #Fuel.
 
 FLVariablesMapping >> initializeAnalyzing
-[initializeAnalyzing
+[
 	notIgnoredVariables := self instanceVariableNamesToSerialize.
 	mapping := notIgnoredVariables collect: [ :name | theClass instVarIndexFor: name ]
 ]
 
 FLVariablesMapping >> initializeMaterializingFrom: aDecoder
-[initializeMaterializingFrom: aDecoder
+[
 	notIgnoredVariables := (1 to: aDecoder nextEncodedByte) collect: [ :index | aDecoder nextEncodedString ].
 	mapping := notIgnoredVariables collect: [ :name | theClass instVarIndexFor: name ifAbsent: [ nil ] ]
 ]
 
 FLVariablesMapping >> initializeWith: aClass
-[initializeWith: aClass
+[
 	self initialize.
 	theClass := aClass
 ]
 
 FLVariablesMapping >> instanceVariableNamesToSerialize
-[instanceVariableNamesToSerialize
+[
 	| ignoredInstanceVariableNames instanceVariableNamesToSerialize |
 	ignoredInstanceVariableNames := theClass fuelIgnoredInstanceVariableNames.
 	instanceVariableNamesToSerialize := OrderedCollection new.
@@ -32,7 +32,7 @@ FLVariablesMapping >> instanceVariableNamesToSerialize
 ]
 
 FLVariablesMapping >> map: sourceName to: destinationName
-[map: sourceName to: destinationName
+[
 	| indexOfVariableToMap |
 	indexOfVariableToMap := notIgnoredVariables indexOf: sourceName.
 	indexOfVariableToMap > 0
@@ -42,7 +42,7 @@ FLVariablesMapping >> map: sourceName to: destinationName
 ]
 
 FLVariablesMapping >> materializeReferencesOf: anObject with: aDecoder
-[materializeReferencesOf: anObject with: aDecoder
+[
 	mapping
 		do: [ :index | | reference |
 			reference := aDecoder nextEncodedReference.
@@ -50,22 +50,38 @@ FLVariablesMapping >> materializeReferencesOf: anObject with: aDecoder
 ]
 
 FLVariablesMapping >> referencesOf: anObject do: aBlock
-[referencesOf: anObject do: aBlock
+[
 	mapping do: [ :index | aBlock value: (anObject instVarAt: index) ]
 ]
 
 FLVariablesMapping >> serializeOn: anEncoder
-[serializeOn: anEncoder
+[
 	anEncoder encodeByte: notIgnoredVariables size.
 	notIgnoredVariables do: [ :name | anEncoder encodeString: name ]
 ]
 
 FLVariablesMapping >> serializeReferencesOf: anObject with: anEncoder
-[serializeReferencesOf: anObject with: anEncoder
+[
 	mapping do: [ :index | anEncoder encodeReferenceTo: (anObject instVarAt: index) ]
 ]
 
 FLVariablesMapping class >> materializing: aClass from: aDecoder
+[
+	^ self basicNew
+		initializeWith: aClass;
+		initializeMaterializingFrom: aDecoder;
+		yourself
+]
+
+FLVariablesMapping class >> newAnalyzing: aClass
+[
+	^ self basicNew
+		initializeWith: aClass;
+		initializeAnalyzing;
+		yourself
+]
+
+LVariablesMapping class >> materializing: aClass from: aDecoder
 [materializing: aClass from: aDecoder
 	^ self basicNew
 		initializeWith: aClass;

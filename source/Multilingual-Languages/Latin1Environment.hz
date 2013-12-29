@@ -3,12 +3,12 @@ Latin1Environment
 	package: #'Multilingual-Languages'.
 
 Latin1Environment class >> leadingChar
-[leadingChar
+[
 	^ 0
 ]
 
 Latin1Environment class >> nextPutRightHalfValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
-[nextPutRightHalfValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
+[
 	^ self traditionalCharsetClass
 		nextPutRightHalfValue: ascii
 		toStream: aStream
@@ -16,7 +16,7 @@ Latin1Environment class >> nextPutRightHalfValue: ascii toStream: aStream withSh
 ]
 
 Latin1Environment class >> nextPutValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
-[nextPutValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
+[
 	^ self traditionalCharsetClass
 		nextPutValue: ascii
 		toStream: aStream
@@ -24,7 +24,7 @@ Latin1Environment class >> nextPutValue: ascii toStream: aStream withShiftSequen
 ]
 
 Latin1Environment class >> supportedLanguages
-[supportedLanguages
+[
 	"Return the languages that this class supports. 
 	Any translations for those languages will use this class as their environment."
 
@@ -32,11 +32,24 @@ Latin1Environment class >> supportedLanguages
 ]
 
 Latin1Environment class >> systemConverterClass
-[systemConverterClass
+[
 	Smalltalk os isWin32
 		ifTrue: [ ^ UTF8TextConverter ].
 	Smalltalk os isMacOSX
 		ifTrue: [ ^ UTF8TextConverter ].
+	Smalltalk os isMacOS
+		ifTrue: [ ^ MacRomanTextConverter ].
+	Smalltalk os isUnix
+		ifTrue: [ ^ UTF8TextConverter ].
+	^ Latin1TextConverter
+]
+
+Latin1Environment class >> traditionalCharsetClass
+[
+	^ Latin1
+]
+
+True: [ ^ UTF8TextConverter ].
 	Smalltalk os isMacOS
 		ifTrue: [ ^ MacRomanTextConverter ].
 	Smalltalk os isUnix

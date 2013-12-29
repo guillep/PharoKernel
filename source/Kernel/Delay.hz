@@ -4,43 +4,43 @@ Delay
 	package: #Kernel.
 
 Delay >> adjustResumptionTimeOldBase: oldBaseTime newBase: newBaseTime
-[adjustResumptionTimeOldBase: oldBaseTime newBase: newBaseTime
+[
 	"Private! Adjust the value of the system's millisecond clock at which this Delay will be awoken. Used to adjust resumption times after a snapshot or clock roll-over."
 
 	resumptionTime := newBaseTime + (resumptionTime - oldBaseTime)
 ]
 
 Delay >> beingWaitedOn
-[beingWaitedOn
+[
 	"Answer whether this delay is currently scheduled, e.g., being waited on"
 
 	^ beingWaitedOn
 ]
 
 Delay >> beingWaitedOn: aBool
-[beingWaitedOn: aBool
+[
 	"Indicate whether this delay is currently scheduled, e.g., being waited on"
 
 	beingWaitedOn := aBool
 ]
 
 Delay >> delayDuration
-[delayDuration
+[
 	^ delayDuration
 ]
 
 Delay >> delaySemaphore
-[delaySemaphore
+[
 	^ delaySemaphore
 ]
 
 Delay >> isExpired
-[isExpired
+[
 	^ delaySemaphore isSignaled
 ]
 
 Delay >> printOn: aStream
-[printOn: aStream
+[
 	super printOn: aStream.
 	aStream
 		nextPutAll: '(';
@@ -55,14 +55,14 @@ Delay >> printOn: aStream
 ]
 
 Delay >> resumptionTime
-[resumptionTime
+[
 	"Answer the value of the system's millisecondClock at which the receiver's suspended Process will resume."
 
 	^ resumptionTime
 ]
 
 Delay >> resumptionTime: anInteger
-[resumptionTime: anInteger
+[
 	"Private! Set the value of the system's millisecondClock at which the receiver's suspended Process will resumed.
 	Must only be called from the class-side #scheduleDelay:."
 
@@ -70,7 +70,7 @@ Delay >> resumptionTime: anInteger
 ]
 
 Delay >> schedule
-[schedule
+[
 	"Schedule this delay."
 
 	beingWaitedOn
@@ -80,14 +80,14 @@ Delay >> schedule
 ]
 
 Delay >> setDelay: milliseconds
-[setDelay: milliseconds
+[
 	"Private! Initialize this delay to signal the given semaphore after the given number of milliseconds."
 
 	delayDuration := milliseconds asInteger
 ]
 
 Delay >> setDelay: milliseconds forSemaphore: aSemaphore
-[setDelay: milliseconds forSemaphore: aSemaphore
+[
 	"Private! Initialize this delay to signal the given semaphore after the given number of milliseconds."
 
 	delayDuration := milliseconds asInteger.
@@ -98,7 +98,7 @@ Delay >> setDelay: milliseconds forSemaphore: aSemaphore
 ]
 
 Delay >> signalWaitingProcess
-[signalWaitingProcess
+[
 	"The delay time has elapsed; signal the waiting process."
 
 	beingWaitedOn := false.
@@ -106,13 +106,13 @@ Delay >> signalWaitingProcess
 ]
 
 Delay >> unschedule
-[unschedule
+[
 	AccessProtect critical: [ FinishedDelay := self.
 			TimingSemaphore signal ]
 ]
 
 Delay >> wait
-[wait
+[
 	"Schedule this Delay, then wait on its semaphore. The current process will be suspended for the amount of time specified when this Delay was created."
 
 	self schedule.
@@ -121,35 +121,35 @@ Delay >> wait
 ]
 
 Delay class >> anyActive
-[anyActive
+[
 	"Return true if there is any delay currently active"
 
 	^ ActiveDelay notNil
 ]
 
 Delay class >> forDuration: aDuration
-[forDuration: aDuration
+[
 	"Return a new Delay for the given duration."
 
 	^ self forMilliseconds: aDuration asMilliSeconds
 ]
 
 Delay class >> forMilliseconds: aNumber
-[forMilliseconds: aNumber
+[
 	"Return a new Delay for the given number of milliseconds. Sending 'wait' to this Delay will cause the sender's process to be suspended for approximately that length of time."
 
 	^ self new setDelay: aNumber forSemaphore: Semaphore new
 ]
 
 Delay class >> forSeconds: aNumber
-[forSeconds: aNumber
+[
 	"Return a new Delay for the given number of Seconds"
 
 	^ self forMilliseconds: aNumber * 1000
 ]
 
 Delay class >> handleTimerEvent
-[handleTimerEvent
+[
 	"Handle a timer event; which can be either:
 		- a schedule request (ScheduledDelay notNil)
 		- an unschedule request (FinishedDelay notNil)
@@ -185,7 +185,7 @@ Delay class >> handleTimerEvent
 ]
 
 Delay class >> initialize
-[initialize
+[
 	"Delay initialize"
 
 	TimingSemaphore := Smalltalk specialObjectsArray at: 30.
@@ -194,12 +194,12 @@ Delay class >> initialize
 ]
 
 Delay class >> nextWakeUpTime
-[nextWakeUpTime
+[
 	^ AccessProtect critical: [ ActiveDelay ifNil: [ 0 ] ifNotNil: [ ActiveDelay resumptionTime ] ]
 ]
 
 Delay class >> primSignal: aSemaphore atMilliseconds: aSmallInteger
-[primSignal: aSemaphore atMilliseconds: aSmallInteger
+[
 	"Signal the semaphore when the millisecond clock reaches the value of the second argument. Fail if the first argument is neither a Semaphore nor nil. Essential. See Object documentation whatIsAPrimitive."
 
 	<primitive: 136>
@@ -207,7 +207,7 @@ Delay class >> primSignal: aSemaphore atMilliseconds: aSmallInteger
 ]
 
 Delay class >> restoreResumptionTimes
-[restoreResumptionTimes
+[
 	"Private! Restore the resumption times of all scheduled Delays after a snapshot or clock roll-over. This method should be called only while the AccessProtect semaphore is held."
 
 	| newBaseTime |
@@ -218,14 +218,14 @@ Delay class >> restoreResumptionTimes
 ]
 
 Delay class >> runTimerEventLoop
-[runTimerEventLoop
+[
 	"Run the timer event loop."
 
 	[ RunTimerEventLoop ] whileTrue: [ self handleTimerEvent ]
 ]
 
 Delay class >> saveResumptionTimes
-[saveResumptionTimes
+[
 	"Private! Record the resumption times of all Delays relative to a base time of zero. This is done prior to snapshotting or adjusting the resumption times after a clock roll-over. This method should be called only while the AccessProtect semaphore is held."
 
 	| oldBaseTime |
@@ -238,7 +238,7 @@ Delay class >> saveResumptionTimes
 ]
 
 Delay class >> scheduleDelay: aDelay
-[scheduleDelay: aDelay
+[
 	"Private. Schedule this Delay."
 
 	aDelay resumptionTime: Time millisecondClockValue + aDelay delayDuration.	"Do the above here, via the high priority timer process to avoid rollover bug due to process pre-emption	since the caller cannot use the AccessProtect semaphore."
@@ -252,12 +252,12 @@ Delay class >> scheduleDelay: aDelay
 ]
 
 Delay class >> schedulingProcess
-[schedulingProcess
+[
 	^ TimerEventLoop
 ]
 
 Delay class >> shutDown
-[shutDown
+[
 	"Suspend the active delay, if any, before snapshotting. It will be reactived when the snapshot is resumed."
 
 	"Details: This prevents a timer interrupt from waking up the active delay in the midst snapshoting, since the active delay will be restarted when resuming the snapshot and we don't want to process the delay twice."
@@ -269,7 +269,7 @@ Delay class >> shutDown
 ]
 
 Delay class >> startTimerEventLoop
-[startTimerEventLoop
+[
 	"Start the timer event loop"
 
 	"Delay startTimerEventLoop"
@@ -291,7 +291,7 @@ Delay class >> startTimerEventLoop
 ]
 
 Delay class >> startUp
-[startUp
+[
 	"Restart active delay, if any, when resuming a snapshot."
 
 	"Compare to false since it can be nil"
@@ -305,7 +305,7 @@ Delay class >> startUp
 ]
 
 Delay class >> stopTimerEventLoop
-[stopTimerEventLoop
+[
 	"Stop the timer event loop"
 
 	RunTimerEventLoop := false.
@@ -314,10 +314,29 @@ Delay class >> stopTimerEventLoop
 ]
 
 Delay class >> timeoutSemaphore: aSemaphore afterMSecs: anInteger
-[timeoutSemaphore: aSemaphore afterMSecs: anInteger
+[
 	"Create and schedule a Delay to signal the given semaphore when the given number of milliseconds has elapsed. Return the scheduled Delay. The timeout can be cancelled by sending 'unschedule' to this Delay."
 
 	"Details: This mechanism is used to provide a timeout when waiting for an external event, such as arrival of data over a network connection, to signal a semaphore. The timeout ensures that the semaphore will be signalled within a reasonable period of time even if the event fails to occur. Typically, the waiting process cancels the timeout request when awoken, then determines if the awaited event has actually occurred."
+
+	^ (self new setDelay: anInteger forSemaphore: aSemaphore) schedule
+]
+
+Delay class >> unscheduleDelay: aDelay
+[
+	"Private. Unschedule this Delay."
+
+	aDelay beingWaitedOn
+		ifFalse: [ ^ self ].
+	ActiveDelay == aDelay
+		ifTrue: [ SuspendedDelays isEmpty
+				ifTrue: [ ActiveDelay := nil ]
+				ifFalse: [ ActiveDelay := SuspendedDelays removeFirst ] ]
+		ifFalse: [ SuspendedDelays remove: aDelay ifAbsent: [  ] ].
+	aDelay beingWaitedOn: false
+]
+
+ be signalled within a reasonable period of time even if the event fails to occur. Typically, the waiting process cancels the timeout request when awoken, then determines if the awaited event has actually occurred."
 
 	^ (self new setDelay: anInteger forSemaphore: aSemaphore) schedule
 ]

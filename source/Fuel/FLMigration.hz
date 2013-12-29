@@ -3,12 +3,12 @@ FLMigration
 	package: #Fuel.
 
 FLMigration >> applyTo: aVariablesMapping
-[applyTo: aVariablesMapping
+[
 	variables do: [ :link | aVariablesMapping map: link key to: link value ]
 ]
 
 FLMigration >> initializeClassNamed: aSymbol toClass: aClass variables: anArray
-[initializeClassNamed: aSymbol toClass: aClass variables: anArray
+[
 	self initialize.
 	sourceClassName := aSymbol.
 	targetClass := aClass.
@@ -16,16 +16,23 @@ FLMigration >> initializeClassNamed: aSymbol toClass: aClass variables: anArray
 ]
 
 FLMigration >> sourceClassName
-[sourceClassName
+[
 	^ sourceClassName
 ]
 
 FLMigration >> targetClass
-[targetClass
+[
 	^ targetClass
 ]
 
 FLMigration class >> fromClassNamed: aSymbol toClass: aClass variables: anArray
+[
+	^ self basicNew
+		initializeClassNamed: aSymbol toClass: aClass variables: anArray;
+		yourself
+]
+
+ables: anArray
 [fromClassNamed: aSymbol toClass: aClass variables: anArray
 	^ self basicNew
 		initializeClassNamed: aSymbol toClass: aClass variables: anArray;

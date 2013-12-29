@@ -4,25 +4,28 @@ InteractiveResolver
 	package: #'FileSystem-Core'.
 
 InteractiveResolver >> flushLocalCache
-[flushLocalCache
+[
 	cache := IdentityDictionary new
 ]
 
 InteractiveResolver >> initialize
-[initialize
+[
 	self flushLocalCache
 ]
 
 InteractiveResolver >> resolve: origin
-[resolve: origin
+[
 	^ cache at: origin ifAbsent: [ self unknownOrigin: origin ]
 ]
 
 InteractiveResolver >> unknownOrigin: origin
-[unknownOrigin: origin
+[
 	| reference |
 	^ (next ifNotNil: [ next resolve: origin ])
 		ifNil: [ reference := ResolutionRequest for: origin.
 			reference ifNotNil: [ cache at: origin put: reference ] ]
+]
+
+reference ifNotNil: [ cache at: origin put: reference ] ]
 ]
 

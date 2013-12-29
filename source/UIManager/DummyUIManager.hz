@@ -4,35 +4,35 @@ DummyUIManager
 	package: #UIManager.
 
 DummyUIManager >> checkForNewDisplaySize
-[checkForNewDisplaySize
+[
 	Display extent = DisplayScreen actualScreenSize
 		ifTrue: [ ^ self ].
 	DisplayScreen startUp
 ]
 
 DummyUIManager >> chooseDirectory: label from: dir
-[chooseDirectory: label from: dir
+[
 	^ nil
 ]
 
 DummyUIManager >> chooseFrom: aList lines: linesArray title: aString
-[chooseFrom: aList lines: linesArray title: aString
+[
 	^ aList first
 ]
 
 DummyUIManager >> chooseFrom: labelList values: valueList lines: linesArray title: aString
-[chooseFrom: labelList values: valueList lines: linesArray title: aString
+[
 	^ valueList first
 ]
 
 DummyUIManager >> confirm: queryString
-[confirm: queryString
+[
 	(ProvideAnswerNotification signal: queryString) ifNotNil: [ :answer | ^ answer ].
 	self error: 'No user response possible'
 ]
 
 DummyUIManager >> confirm: aString orCancel: cancelBlock
-[confirm: aString orCancel: cancelBlock
+[
 	(ProvideAnswerNotification signal: aString)
 		ifNotNil: [ :answer | ^ answer == #cancel
 				ifTrue: [ cancelBlock value ]
@@ -41,51 +41,51 @@ DummyUIManager >> confirm: aString orCancel: cancelBlock
 ]
 
 DummyUIManager >> edit: aText label: labelString accept: anAction
-[edit: aText label: labelString accept: anAction
+[
 	^ nil
 ]
 
 DummyUIManager >> fileDoesNotExistsDefaultAction: anException
-[fileDoesNotExistsDefaultAction: anException
+[
 	
 ]
 
 DummyUIManager >> fileExistsDefaultAction: anException
-[fileExistsDefaultAction: anException
+[
 	
 ]
 
 DummyUIManager >> fontFromUser: priorFont
-[fontFromUser: priorFont
+[
 	self error: 'No user response possible'
 ]
 
 DummyUIManager >> inform: aString
-[inform: aString
+[
 	"Nothing to be done here"
 
 	
 ]
 
 DummyUIManager >> informUserDuring: aBlock
-[informUserDuring: aBlock
+[
 	aBlock value: DummySystemProgressItem new
 ]
 
 DummyUIManager >> lowSpaceWatcherDefaultAction
-[lowSpaceWatcherDefaultAction
+[
 	Transcript
 		show: '*** LOW SPACE ***';
 		cr
 ]
 
 DummyUIManager >> multiLineRequest: queryString initialAnswer: defaultAnswer answerHeight: answerHeight
-[multiLineRequest: queryString initialAnswer: defaultAnswer answerHeight: answerHeight
+[
 	
 ]
 
 DummyUIManager >> newDisplayDepthNoRestore: pixelSize
-[newDisplayDepthNoRestore: pixelSize
+[
 	"Change depths.  Check if there is enough space!  , di"
 
 	| area need |
@@ -102,17 +102,17 @@ DummyUIManager >> newDisplayDepthNoRestore: pixelSize
 ]
 
 DummyUIManager >> progressBarEnabled
-[progressBarEnabled
+[
 	^ ProgressBarEnabled ifNil: [ ProgressBarEnabled := true ]
 ]
 
 DummyUIManager >> progressBarEnabled: aBoolean
-[progressBarEnabled: aBoolean
+[
 	ProgressBarEnabled := aBoolean
 ]
 
 DummyUIManager >> request: queryString initialAnswer: defaultAnswer
-[request: queryString initialAnswer: defaultAnswer
+[
 	^ self
 		request: queryString
 		initialAnswer: defaultAnswer
@@ -121,7 +121,7 @@ DummyUIManager >> request: queryString initialAnswer: defaultAnswer
 ]
 
 DummyUIManager >> request: aStringOrText initialAnswer: defaultAnswer entryCompletion: anEntryCompletion
-[request: aStringOrText initialAnswer: defaultAnswer entryCompletion: anEntryCompletion
+[
 	^ self
 		request: aStringOrText
 		initialAnswer: defaultAnswer
@@ -130,7 +130,7 @@ DummyUIManager >> request: aStringOrText initialAnswer: defaultAnswer entryCompl
 ]
 
 DummyUIManager >> request: aStringOrText initialAnswer: defaultAnswer title: aTitle entryCompletion: anEntryCompletion
-[request: aStringOrText initialAnswer: defaultAnswer title: aTitle entryCompletion: anEntryCompletion
+[
 	(ProvideAnswerNotification signal: aStringOrText)
 		ifNotNil: [ :answer | ^ answer == #default
 				ifTrue: [ defaultAnswer ]
@@ -139,6 +139,56 @@ DummyUIManager >> request: aStringOrText initialAnswer: defaultAnswer title: aTi
 ]
 
 DummyUIManager >> requestPassword: queryString
+[
+	^ self request: queryString initialAnswer: ''
+]
+
+DummyUIManager >> restoreDisplay
+[
+	
+]
+
+DummyUIManager >> restoreDisplayAfter: aBlock
+[
+	aBlock value.
+	Sensor waitButton
+]
+
+DummyUIManager >> syntaxErrorNotificationDefaultAction: anException
+[
+	Transcript
+		show: '*** SYNTAX ERROR ***';
+		cr.
+	Transcript
+		show: anException;
+		cr.
+	Transcript
+		show: (thisContext stack first: (20 min: thisContext stack size));
+		cr.
+	anException return
+]
+
+DummyUIManager >> unhandledErrorDefaultAction: anException
+[
+	Transcript
+		show: '*** EXCEPTION ***';
+		cr.
+	Transcript
+		show: anException;
+		cr.
+	Transcript
+		show: (thisContext stack first: (20 min: thisContext stack size));
+		cr.
+	anException isResumable
+		ifTrue: [ anException resume ]
+]
+
+DummyUIManager >> warningDefaultAction: anException
+[
+	^ self unhandledErrorDefaultAction: anException
+]
+
+ing
 [requestPassword: queryString
 	^ self request: queryString initialAnswer: ''
 ]

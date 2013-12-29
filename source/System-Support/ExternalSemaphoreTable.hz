@@ -3,7 +3,7 @@ ExternalSemaphoreTable
 	package: #'System-Support'.
 
 ExternalSemaphoreTable class >> clearExternalObjects
-[clearExternalObjects
+[
 	"Clear the array of objects that have been registered for use in non-Smalltalk code."
 
 	"Only lock additions, removals executing in parallel would have little effect on the resulting array"
@@ -12,7 +12,7 @@ ExternalSemaphoreTable class >> clearExternalObjects
 ]
 
 ExternalSemaphoreTable class >> collectionBasedOn: externalObjects withRoomFor: anObject
-[collectionBasedOn: externalObjects withRoomFor: anObject
+[
 	"Called if no slots to put anObject in have been found in externalObjects "
 
 	"Return a externalObject collection which does, either:
@@ -36,7 +36,7 @@ ExternalSemaphoreTable class >> collectionBasedOn: externalObjects withRoomFor: 
 ]
 
 ExternalSemaphoreTable class >> externalObjects
-[externalObjects
+[
 	"Not really sure why this is protected, once called you are out of protection of the locks anyways, and any use of the object is dangerous...
 	Only additions can potentially change the actual array in use though, so only lock that."
 
@@ -44,7 +44,7 @@ ExternalSemaphoreTable class >> externalObjects
 ]
 
 ExternalSemaphoreTable class >> freedSlotsIn: externalObjects ratherThanIncreaseSizeTo: newSize
-[freedSlotsIn: externalObjects ratherThanIncreaseSizeTo: newSize
+[
 	"In some VM's, the external object table has a max size, which has to be increased for vm to reference them correctly."
 
 	"In that case, try to gc to free slots first before actually increasing the max size"
@@ -70,18 +70,18 @@ ExternalSemaphoreTable class >> freedSlotsIn: externalObjects ratherThanIncrease
 ]
 
 ExternalSemaphoreTable class >> initialize
-[initialize
+[
 	ProtectAdd := Semaphore forMutualExclusion.
 	ProtectRemove := Semaphore forMutualExclusion
 ]
 
 ExternalSemaphoreTable class >> registerExternalObject: anObject
-[registerExternalObject: anObject
+[
 	^ ProtectAdd critical: [ self safelyRegisterExternalObject: anObject ]
 ]
 
 ExternalSemaphoreTable class >> safelyRegisterExternalObject: anObject
-[safelyRegisterExternalObject: anObject
+[
 	"Register the given object in the external objects array and return its index. If it is already there, just return its index."
 
 	| objects firstEmptyIndex |
@@ -95,7 +95,7 @@ ExternalSemaphoreTable class >> safelyRegisterExternalObject: anObject
 ]
 
 ExternalSemaphoreTable class >> safelyUnregisterExternalObject: anObject
-[safelyUnregisterExternalObject: anObject
+[
 	"Unregister the given object in the external objects array. Do nothing if it isn't registered.
 	JMM change to return if we clear the element, since it should only appear once in the array"
 
@@ -108,7 +108,7 @@ ExternalSemaphoreTable class >> safelyUnregisterExternalObject: anObject
 ]
 
 ExternalSemaphoreTable class >> slotFor: anObject in: aCollection
-[slotFor: anObject in: aCollection
+[
 	"find the first empty slot, or nil if there is none"
 
 	"The following was written in an atomic fashion using special methods with no suspension points, not sure if on purpose, but keeping it that way for now.
@@ -125,7 +125,21 @@ ExternalSemaphoreTable class >> slotFor: anObject in: aCollection
 ]
 
 ExternalSemaphoreTable class >> unprotectedExternalObjects
-[unprotectedExternalObjects
+[
+	^ Smalltalk specialObjectsArray at: 39
+]
+
+ExternalSemaphoreTable class >> unprotectedExternalObjects: aCollection
+[
+	^ Smalltalk specialObjectsArray at: 39 put: aCollection
+]
+
+ExternalSemaphoreTable class >> unregisterExternalObject: anObject
+[
+	ProtectRemove critical: [ self safelyUnregisterExternalObject: anObject ]
+]
+
+lObjects
 	^ Smalltalk specialObjectsArray at: 39
 ]
 

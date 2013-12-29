@@ -3,53 +3,66 @@ MacOSResolver
 	package: #'FileSystem-Core'.
 
 MacOSResolver >> cache
-[cache
+[
 	^ self library / 'Caches'
 ]
 
 MacOSResolver >> desktop
-[desktop
+[
 	^ self home / 'Desktop'
 ]
 
 MacOSResolver >> documents
-[documents
+[
 	^ self home / 'Documents'
 ]
 
 MacOSResolver >> home
-[home
+[
 	^ self directoryFromEnvVariableNamed: 'HOME'
 ]
 
 MacOSResolver >> library
-[library
+[
 	^ self userLibrary
 ]
 
 MacOSResolver >> preferences
-[preferences
+[
 	^ self home / 'Library' / 'Preferences'
 ]
 
 MacOSResolver >> supportedOrigins
-[supportedOrigins
+[
 	^ super supportedOrigins , #(#userApplicationSupport #systemApplicationSupport #systemLibrary #userLibrary)
 ]
 
 MacOSResolver >> systemApplicationSupport
-[systemApplicationSupport
+[
 	^ self systemLibrary / 'Application Support'
 ]
 
 MacOSResolver >> systemLibrary
-[systemLibrary
+[
 	^ FileSystem disk root / 'Library'
 ]
 
 MacOSResolver >> userApplicationSupport
-[userApplicationSupport
+[
 	^ self userLibrary / 'Application Support'
+]
+
+MacOSResolver >> userLibrary
+[
+	^ self home / 'Library'
+]
+
+MacOSResolver class >> platformName
+[
+	^ 'Mac OS'
+]
+
+t'
 ]
 
 MacOSResolver >> userLibrary

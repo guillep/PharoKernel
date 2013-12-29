@@ -3,17 +3,17 @@ DosTimestamp
 	package: #Kernel.
 
 DosTimestamp >> = rhs
-[= rhs
+[
 	^ self value = rhs value
 ]
 
 DosTimestamp >> asDateAndTime
-[asDateAndTime
+[
 	^ DateAndTime date: self date time: self time
 ]
 
 DosTimestamp >> date
-[date
+[
 	"See class comment for format details"
 
 	| encodedDate yearsSinceDosEpoch month day year |
@@ -26,33 +26,33 @@ DosTimestamp >> date
 ]
 
 DosTimestamp >> epoch
-[epoch
+[
 	^ self class epoch
 ]
 
 DosTimestamp >> hash
-[hash
+[
 	^ self value hash
 ]
 
 DosTimestamp >> high16Bits
-[high16Bits
+[
 	^ value >> 16
 ]
 
 DosTimestamp >> initializeValue: anInteger
-[initializeValue: anInteger
+[
 	value := anInteger.
 	^ self
 ]
 
 DosTimestamp >> low16Bits
-[low16Bits
+[
 	^ value & 2r1111111111111111
 ]
 
 DosTimestamp >> printOn: aStream
-[printOn: aStream
+[
 	aStream
 		nextPutAll: self asDateAndTime printString;
 		nextPutAll: ' (';
@@ -61,7 +61,7 @@ DosTimestamp >> printOn: aStream
 ]
 
 DosTimestamp >> time
-[time
+[
 	"See class comment for format details"
 
 	| encodedTime hours minutes secondsHalved seconds |
@@ -74,12 +74,12 @@ DosTimestamp >> time
 ]
 
 DosTimestamp >> value
-[value
+[
 	^ value
 ]
 
 DosTimestamp class >> dateValueFrom: aDate
-[dateValueFrom: aDate
+[
 	| dosYear dosMonth dosDay |
 	dosYear := aDate year - DateAndTime dosEpoch year << 9.
 	dosMonth := aDate monthIndex << 5.
@@ -88,12 +88,12 @@ DosTimestamp class >> dateValueFrom: aDate
 ]
 
 DosTimestamp class >> epoch
-[epoch
+[
 	^ DateAndTime dosEpoch
 ]
 
 DosTimestamp class >> fromDateAndTime: aDateAndTime
-[fromDateAndTime: aDateAndTime
+[
 	| dateValue timeValue local |
 	local := aDateAndTime asLocal.
 	dateValue := self dateValueFrom: local asDate.
@@ -102,12 +102,20 @@ DosTimestamp class >> fromDateAndTime: aDateAndTime
 ]
 
 DosTimestamp class >> on: anInteger
-[on: anInteger
+[
 	^ self new initializeValue: anInteger
 ]
 
 DosTimestamp class >> timeValueFrom: aTime
-[timeValueFrom: aTime
+[
+	| dosHours dosMinutes dosSeconds |
+	dosHours := aTime hour << 11.
+	dosMinutes := aTime minute << 5.
+	dosSeconds := (aTime second / 2) floor.
+	^ dosHours + dosMinutes + dosSeconds
+]
+
+Time
 	| dosHours dosMinutes dosSeconds |
 	dosHours := aTime hour << 11.
 	dosMinutes := aTime minute << 5.

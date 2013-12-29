@@ -5,12 +5,12 @@ CharacterSet
 	package: #'Collections-Support'.
 
 CharacterSet >> = anObject
-[= anObject
+[
 	^ self species == anObject species and: [ self byteArrayMap = anObject byteArrayMap ]
 ]
 
 CharacterSet >> add: aCharacter
-[add: aCharacter
+[
 	"I automatically become a WideCharacterSet if you add a wide character to myself"
 
 	aCharacter asciiValue >= 256
@@ -25,21 +25,21 @@ CharacterSet >> add: aCharacter
 ]
 
 CharacterSet >> asString
-[asString
+[
 	"Convert the receiver into a String"
 
 	^ String new: self size streamContents: [ :s | self do: [ :ch | s nextPut: ch ] ]
 ]
 
 CharacterSet >> byteArrayMap
-[byteArrayMap
+[
 	"return a ByteArray mapping each ascii value to a 1 if that ascii value is in the set, and a 0 if it isn't.  Intended for use by primitives only"
 
 	^ map
 ]
 
 CharacterSet >> byteComplement
-[byteComplement
+[
 	"return a character set containing precisely the single byte characters the receiver does not"
 
 	| set |
@@ -49,14 +49,14 @@ CharacterSet >> byteComplement
 ]
 
 CharacterSet >> complement
-[complement
+[
 	"return a character set containing precisely the characters the receiver does not"
 
 	^ CharacterSetComplement of: self copy
 ]
 
 CharacterSet >> do: aBlock
-[do: aBlock
+[
 	"evaluate aBlock with each character in the set"
 
 	Character allByteCharacters do: [ :c | (self includes: c)
@@ -64,24 +64,24 @@ CharacterSet >> do: aBlock
 ]
 
 CharacterSet >> findFirstInByteString: aByteString startingAt: startIndex
-[findFirstInByteString: aByteString startingAt: startIndex
+[
 	"Double dispatching: since we know this is a ByteString, we can use a superfast primitive using a ByteArray map with 0 slots for byte characters not included and 1 for byte characters included in the receiver."
 
 	^ ByteString findFirstInString: aByteString inSet: self byteArrayMap startingAt: startIndex
 ]
 
 CharacterSet >> hasWideCharacters
-[hasWideCharacters
+[
 	^ false
 ]
 
 CharacterSet >> hash
-[hash
+[
 	^ self byteArrayMap hash
 ]
 
 CharacterSet >> includes: aCharacter
-[includes: aCharacter
+[
 	aCharacter asciiValue >= 256
 		ifTrue: [ "Guard against wide characters"
 			^ false ].
@@ -89,19 +89,19 @@ CharacterSet >> includes: aCharacter
 ]
 
 CharacterSet >> initialize
-[initialize
+[
 	super initialize.
 	map := ByteArray new: 256 withAll: 0
 ]
 
 CharacterSet >> postCopy
-[postCopy
+[
 	super postCopy.
 	map := map copy
 ]
 
 CharacterSet >> remove: aCharacter
-[remove: aCharacter
+[
 	aCharacter asciiValue >= 256
 		ifFalse: [ "Guard against wide characters"
 			map at: aCharacter asciiValue + 1 put: 0 ].
@@ -109,24 +109,24 @@ CharacterSet >> remove: aCharacter
 ]
 
 CharacterSet >> remove: aCharacter ifAbsent: aBlock
-[remove: aCharacter ifAbsent: aBlock
+[
 	(self includes: aCharacter)
 		ifFalse: [ ^ aBlock value ].
 	^ self remove: aCharacter
 ]
 
 CharacterSet >> removeAll
-[removeAll
+[
 	map atAllPut: 0
 ]
 
 CharacterSet >> size
-[size
+[
 	^ map sum
 ]
 
 CharacterSet >> wideCharacterMap
-[wideCharacterMap
+[
 	"used for comparing with WideCharacterSet"
 
 	| wide |
@@ -136,7 +136,7 @@ CharacterSet >> wideCharacterMap
 ]
 
 CharacterSet class >> allCharacters
-[allCharacters
+[
 	"return a set containing all characters"
 
 	| set |
@@ -146,24 +146,44 @@ CharacterSet class >> allCharacters
 ]
 
 CharacterSet class >> crlf
-[crlf
+[
 	CrLf ifNil: [ CrLf := self with: Character cr with: Character lf ].
 	^ CrLf
 ]
 
 CharacterSet class >> empty
-[empty
+[
 	"return an empty set of characters"
 
 	^ self new
 ]
 
 CharacterSet class >> newFrom: aCollection
-[newFrom: aCollection
+[
 	| newCollection |
 	newCollection := self new.
 	newCollection addAll: aCollection.
 	^ newCollection
+]
+
+CharacterSet class >> nonSeparators
+[
+	"return a set containing everything but the whitespace characters"
+
+	^ self separators complement
+]
+
+CharacterSet class >> separators
+[
+	"return a set containing just the whitespace characters"
+
+	| set |
+	set := self empty.
+	set addAll: Character separators.
+	^ set
+]
+
+lection
 ]
 
 CharacterSet class >> nonSeparators

@@ -4,26 +4,26 @@ OrderedIdentityDictionary
 	package: #'Collections-Sequenceable'.
 
 OrderedIdentityDictionary >> add: anAssociation
-[add: anAssociation
+[
 	(self includesKey: anAssociation key)
 		ifFalse: [ keys add: anAssociation key ].
 	^ super add: anAssociation
 ]
 
 OrderedIdentityDictionary >> associationsDo: aBlock
-[associationsDo: aBlock
+[
 	keys do: [ :k | aBlock value: (self associationAt: k) ]
 ]
 
 OrderedIdentityDictionary >> at: key put: anObject
-[at: key put: anObject
+[
 	(self includesKey: key)
 		ifFalse: [ keys add: key ].
 	^ super at: key put: anObject
 ]
 
 OrderedIdentityDictionary >> initialize
-[initialize
+[
 	"This method is not used since new is overriden to use initalize:"
 
 	keys := OrderedCollection new.
@@ -31,14 +31,20 @@ OrderedIdentityDictionary >> initialize
 ]
 
 OrderedIdentityDictionary >> initialize: aNumber
-[initialize: aNumber
+[
 	keys := OrderedCollection new.
 	super initialize: aNumber
 ]
 
 OrderedIdentityDictionary >> removeKey: key ifAbsent: aBlock
-[removeKey: key ifAbsent: aBlock
+[
 	"Here I do not do anything if absent not to perform the block twice"
+
+	keys remove: key ifAbsent: [  ].
+	^ super removeKey: key ifAbsent: aBlock
+]
+
+if absent not to perform the block twice"
 
 	keys remove: key ifAbsent: [  ].
 	^ super removeKey: key ifAbsent: aBlock

@@ -4,7 +4,7 @@ AdditionalMethodState
 	package: #Kernel.
 
 AdditionalMethodState >> analogousCodeTo: aMethodProperties
-[analogousCodeTo: aMethodProperties
+[
 	| bs |
 	self class == aMethodProperties class
 		ifFalse: [ ^ false ].
@@ -16,14 +16,14 @@ AdditionalMethodState >> analogousCodeTo: aMethodProperties
 ]
 
 AdditionalMethodState >> at: aKey
-[at: aKey
+[
 	"Answer the property value or pragma associated with aKey."
 
 	^ self at: aKey ifAbsent: [ self error: 'not found' ]
 ]
 
 AdditionalMethodState >> at: aKey ifAbsent: aBlock
-[at: aKey ifAbsent: aBlock
+[
 	"Answer the property value or pragma associated with aKey or,
 	 if aKey isn't found, answer the result of evaluating aBlock."
 
@@ -36,7 +36,7 @@ AdditionalMethodState >> at: aKey ifAbsent: aBlock
 ]
 
 AdditionalMethodState >> at: aKey ifAbsentPut: aBlock
-[at: aKey ifAbsentPut: aBlock
+[
 	"Answer the property value or pragma associated with aKey or,
 	 if aKey isn't found, answer the result of evaluating aBlock."
 
@@ -49,14 +49,14 @@ AdditionalMethodState >> at: aKey ifAbsentPut: aBlock
 ]
 
 AdditionalMethodState >> at: aKey ifPresent: aBlock
-[at: aKey ifPresent: aBlock
+[
 	"Lookup the given key in the receiver. If it is present, answer the value of evaluating the given block with the value associated with the key. Otherwise, answer self."
 
 	^ aBlock value: (self at: aKey ifAbsent: [ ^ self ])
 ]
 
 AdditionalMethodState >> at: aKey put: aValue
-[at: aKey put: aValue
+[
 	"Replace the property value or pragma associated with aKey."
 
 	| keyAlreadyExists |
@@ -73,7 +73,7 @@ AdditionalMethodState >> at: aKey put: aValue
 ]
 
 AdditionalMethodState >> copyWith: aPropertyOrPragma
-[copyWith: aPropertyOrPragma
+[
 	"<Association|Pragma>"
 
 	"Answer a copy of the receiver which includes aPropertyOrPragma"
@@ -89,7 +89,7 @@ AdditionalMethodState >> copyWith: aPropertyOrPragma
 ]
 
 AdditionalMethodState >> copyWithout: aPropertyOrPragma
-[copyWithout: aPropertyOrPragma
+[
 	"<Association|Pragma>"
 
 	"Answer a copy of the receiver which no longer includes aPropertyOrPragma"
@@ -109,7 +109,7 @@ AdditionalMethodState >> copyWithout: aPropertyOrPragma
 ]
 
 AdditionalMethodState >> hasAtLeastTheSamePropertiesAs: aMethodProperties
-[hasAtLeastTheSamePropertiesAs: aMethodProperties
+[
 	"Answer if the recever has at least the same properties as the argument.
 	 N.B. The receiver may have additional properties and still answer true."
 
@@ -121,7 +121,7 @@ AdditionalMethodState >> hasAtLeastTheSamePropertiesAs: aMethodProperties
 ]
 
 AdditionalMethodState >> hasLiteralSuchThat: aBlock
-[hasLiteralSuchThat: aBlock
+[
 	"Answer true if litBlock returns true for any literal in this array, even if embedded in further array structure.
 	 This method is only intended for private use by CompiledMethod hasLiteralSuchThat:"
 
@@ -137,7 +137,7 @@ AdditionalMethodState >> hasLiteralSuchThat: aBlock
 ]
 
 AdditionalMethodState >> hasLiteralThorough: literal
-[hasLiteralThorough: literal
+[
 	"Answer true if any literal in these properties is literal,
 	 even if embedded in array structure."
 
@@ -153,7 +153,7 @@ AdditionalMethodState >> hasLiteralThorough: literal
 ]
 
 AdditionalMethodState >> includes: aPropertyOrPragma
-[includes: aPropertyOrPragma
+[
 	"<Association|Pragma>"
 
 	"Test if the property or pragma is present."
@@ -164,7 +164,7 @@ AdditionalMethodState >> includes: aPropertyOrPragma
 ]
 
 AdditionalMethodState >> includesKey: aKey
-[includesKey: aKey
+[
 	"Test if the property aKey or pragma with selector aKey is present."
 
 	1 to: self basicSize do: [ :i | (self basicAt: i) key == aKey
@@ -173,7 +173,7 @@ AdditionalMethodState >> includesKey: aKey
 ]
 
 AdditionalMethodState >> includesProperty: aKey
-[includesProperty: aKey
+[
 	"Test if the property aKey is present."
 
 	1 to: self basicSize do: [ :i | | propertyOrPragma "<Association|Pragma>" |
@@ -184,17 +184,17 @@ AdditionalMethodState >> includesProperty: aKey
 ]
 
 AdditionalMethodState >> isEmpty
-[isEmpty
+[
 	^ self basicSize = 0
 ]
 
 AdditionalMethodState >> isMethodProperties
-[isMethodProperties
+[
 	^ true
 ]
 
 AdditionalMethodState >> keysAndValuesDo: aBlock
-[keysAndValuesDo: aBlock
+[
 	"Enumerate the receiver with all the keys and values."
 
 	1 to: self basicSize do: [ :i | | propertyOrPragma "<Association|Pragma>" |
@@ -204,31 +204,31 @@ AdditionalMethodState >> keysAndValuesDo: aBlock
 ]
 
 AdditionalMethodState >> method
-[method
+[
 	^ method
 ]
 
 AdditionalMethodState >> method: aMethodNodeOrNil
-[method: aMethodNodeOrNil
+[
 	"For decompilation"
 
 	method := aMethodNodeOrNil
 ]
 
 AdditionalMethodState >> notEmpty
-[notEmpty
+[
 	^ self basicSize > 0
 ]
 
 AdditionalMethodState >> postCopy
-[postCopy
+[
 	"After copying we must duplicate any associations and pragmas so they don't end up being shared."
 
 	1 to: self basicSize do: [ :i | self basicAt: i put: (self basicAt: i) shallowCopy ]
 ]
 
 AdditionalMethodState >> pragmas
-[pragmas
+[
 	"Answer the raw messages comprising my pragmas."
 
 	| pragmaStream |
@@ -240,7 +240,7 @@ AdditionalMethodState >> pragmas
 ]
 
 AdditionalMethodState >> printOn: aStream
-[printOn: aStream
+[
 	super printOn: aStream.
 	aStream
 		space;
@@ -250,7 +250,7 @@ AdditionalMethodState >> printOn: aStream
 ]
 
 AdditionalMethodState >> properties
-[properties
+[
 	| propertyStream |
 	propertyStream := WriteStream on: (Array new: self basicSize * 2).
 	1 to: self basicSize do: [ :i | | propertyOrPragma "<Association|Pragma>" |
@@ -262,7 +262,7 @@ AdditionalMethodState >> properties
 ]
 
 AdditionalMethodState >> propertyKeysAndValuesDo: aBlock
-[propertyKeysAndValuesDo: aBlock
+[
 	"Enumerate the receiver with all the keys and values."
 
 	1 to: self basicSize do: [ :i | | propertyOrPragma "<Association|Pragma>" |
@@ -271,14 +271,14 @@ AdditionalMethodState >> propertyKeysAndValuesDo: aBlock
 ]
 
 AdditionalMethodState >> propertyValueAt: aKey
-[propertyValueAt: aKey
+[
 	"Answer the property value associated with aKey."
 
 	^ self propertyValueAt: aKey ifAbsent: [ self error: 'Property not found' ]
 ]
 
 AdditionalMethodState >> propertyValueAt: aKey ifAbsent: aBlock
-[propertyValueAt: aKey ifAbsent: aBlock
+[
 	"Answer the property value associated with aKey or, if aKey isn't found, answer the result of evaluating aBlock."
 
 	1 to: self basicSize do: [ :i | | propertyOrPragma "<Association|Pragma>" |
@@ -289,19 +289,19 @@ AdditionalMethodState >> propertyValueAt: aKey ifAbsent: aBlock
 ]
 
 AdditionalMethodState >> refersToLiteral: aLiteral
-[refersToLiteral: aLiteral
+[
 	^ self pragmas anySatisfy: [ :pragma | pragma hasLiteral: aLiteral ]
 ]
 
 AdditionalMethodState >> removeKey: aKey
-[removeKey: aKey
+[
 	"Remove the property with aKey. Answer the property or raise an error if aKey isn't found."
 
 	^ self removeKey: aKey ifAbsent: [ self error: 'Property not found' ]
 ]
 
 AdditionalMethodState >> removeKey: aKey ifAbsent: aBlock
-[removeKey: aKey ifAbsent: aBlock
+[
 	"Remove the property with aKey. Answer the value or, if aKey isn't found, answer the result of evaluating aBlock."
 
 	1 to: self basicSize do: [ :i | | propertyOrPragma "<Association|Pragma>" |
@@ -314,7 +314,40 @@ AdditionalMethodState >> removeKey: aKey ifAbsent: aBlock
 ]
 
 AdditionalMethodState >> selector
-[selector
+[
+	^ selector
+]
+
+AdditionalMethodState >> selector: aSymbol
+[
+	selector := aSymbol
+]
+
+AdditionalMethodState >> setMethod: aMethod
+[
+	method := aMethod.
+	1 to: self basicSize do: [ :i | | propertyOrPragma "<Association|Pragma>" |
+		(propertyOrPragma := self basicAt: i) isVariableBinding
+			ifFalse: [ propertyOrPragma setMethod: aMethod ] ]
+]
+
+AdditionalMethodState class >> forMethod: aMethod selector: aSelector
+[
+	^ (self new: 0)
+		selector: aSelector;
+		setMethod: aMethod;
+		yourself
+]
+
+AdditionalMethodState class >> selector: aSelector with: aPropertyOrPragma
+[
+	^ (self new: 1)
+		selector: aSelector;
+		basicAt: 1 put: aPropertyOrPragma;
+		yourself
+]
+
+tor
 	^ selector
 ]
 

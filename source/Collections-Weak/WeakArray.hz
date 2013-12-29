@@ -5,7 +5,7 @@ WeakArray
 	package: #'Collections-Weak'.
 
 WeakArray class >> addWeakDependent: anObject
-[addWeakDependent: anObject
+[
 	FinalizationLock
 		critical: [ | index finished weakDependent |
 			finished := false.
@@ -23,7 +23,7 @@ WeakArray class >> addWeakDependent: anObject
 ]
 
 WeakArray class >> finalizationProcess
-[finalizationProcess
+[
 	[ true ]
 		whileTrue: [ FinalizationSemaphore wait.
 			FinalizationLock
@@ -32,7 +32,7 @@ WeakArray class >> finalizationProcess
 ]
 
 WeakArray class >> initialize
-[initialize
+[
 	"WeakArray initialize"
 
 	"Do we need to initialize specialObjectsArray?"
@@ -46,14 +46,14 @@ WeakArray class >> initialize
 ]
 
 WeakArray class >> pvtCreateTemporaryObjectIn: tempObject
-[pvtCreateTemporaryObjectIn: tempObject
+[
 	"We have to create the temporary object in a separate stack frame"
 
 	tempObject at: 1 put: Object new
 ]
 
 WeakArray class >> removeWeakDependent: anObject
-[removeWeakDependent: anObject
+[
 	FinalizationLock
 		critical: [ 1 to: FinalizationDependents size do: [ :i | (FinalizationDependents at: i) == anObject
 					ifTrue: [ FinalizationDependents at: i put: nil ] ] ]
@@ -61,7 +61,7 @@ WeakArray class >> removeWeakDependent: anObject
 ]
 
 WeakArray class >> restartFinalizationProcess
-[restartFinalizationProcess
+[
 	"kill any old process, just in case"
 
 	FinalizationProcess ifNotNil: [ FinalizationProcess terminate.
@@ -74,8 +74,20 @@ WeakArray class >> restartFinalizationProcess
 ]
 
 WeakArray class >> runningFinalizationProcess
-[runningFinalizationProcess
+[
 	"Answer the FinalizationProcess I am running, if any"
+
+	^ FinalizationProcess
+]
+
+WeakArray class >> startUp: resuming
+[
+	resuming
+		ifFalse: [ ^ self ].
+	self restartFinalizationProcess
+]
+
+alizationProcess I am running, if any"
 
 	^ FinalizationProcess
 ]

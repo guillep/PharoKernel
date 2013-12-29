@@ -5,7 +5,7 @@ Class
 	package: #Kernel.
 
 Class >> addInstVarNamed: aString
-[addInstVarNamed: aString
+[
 	"Add the argument, aString, as one of the receiver's instance variables."
 
 	^ self classBuilder
@@ -20,22 +20,22 @@ Class >> addInstVarNamed: aString
 ]
 
 Class >> baseClass
-[baseClass
+[
 	^ self
 ]
 
 Class >> basicCategory
-[basicCategory
+[
 	^ category
 ]
 
 Class >> basicCategory: aSymbol
-[basicCategory: aSymbol
+[
 	category := aSymbol
 ]
 
 Class >> basicLocalSelectors
-[basicLocalSelectors
+[
 	"Direct accessor for the instance variable localSelectors.
 	Since localSelectors is lazily initialized, this may 
 	return nil, which means that all selectors are local."
@@ -44,17 +44,17 @@ Class >> basicLocalSelectors
 ]
 
 Class >> basicLocalSelectors: aSetOrNil
-[basicLocalSelectors: aSetOrNil
+[
 	localSelectors := aSetOrNil
 ]
 
 Class >> classClass
-[classClass
+[
 	^ self class
 ]
 
 Class >> classPool
-[classPool
+[
 	"Answer the dictionary of class variables."
 
 	classPool ifNil: [ classPool := Dictionary new ].
@@ -62,12 +62,12 @@ Class >> classPool
 ]
 
 Class >> classPool: aDictionary
-[classPool: aDictionary
+[
 	classPool := aDictionary
 ]
 
 Class >> copy
-[copy
+[
 	"Answer a copy of the receiver without a list of subclasses.
 	 This copy is used by the ClassBuilder when mutating classes on redefinition.
 	 (SystemNavigation new browseAllCallsOn: #copy localTo: ClassBuilder)"
@@ -87,18 +87,18 @@ Class >> copy
 ]
 
 Class >> environment
-[environment
+[
 	environment ifNil: [ ^ super environment ].
 	^ environment
 ]
 
 Class >> environment: anEnvironment
-[environment: anEnvironment
+[
 	environment := anEnvironment
 ]
 
 Class >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex initializing: aBool
-[fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex initializing: aBool
+[
 	"File a description of the receiver on aFileStream. If the boolean argument,
 	moveSource, is true, then set the trailing bytes to the position of aFileStream and
 	to fileIndex in order to indicate where to find the source code."
@@ -119,46 +119,46 @@ Class >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex initial
 ]
 
 Class >> getName
-[getName
+[
 	^ name
 ]
 
 Class >> isClass
-[isClass
+[
 	^ true
 ]
 
 Class >> name
-[name
+[
 	"Answer the name of the receiver."
 
 	^ name ifNil: [ super name ]
 ]
 
 Class >> name: aSymbol
-[name: aSymbol
+[
 	name := aSymbol
 ]
 
 Class >> setName: aSymbol
-[setName: aSymbol
+[
 	name := aSymbol
 ]
 
 Class >> sharedPools
-[sharedPools
+[
 	"Answer an orderedCollection  of the shared pools declared in the receiver."
 
 	^ sharedPools ifNil: [ sharedPools := OrderedCollection new ]
 ]
 
 Class >> sharedPools: aCollection
-[sharedPools: aCollection
+[
 	sharedPools := aCollection
 ]
 
 Class >> subclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
-[subclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+[
 	"This is the standard initialization message for creating a new class as a 
 	subclass of an existing class (the receiver)."
 
@@ -171,6 +171,33 @@ Class >> subclass: t instanceVariableNames: f classVariableNames: d poolDictiona
 		poolDictionaries: s
 		category: cat.
 	class ifNotNil: [ class setTraitComposition: {} asTraitComposition ].
+	^ class
+]
+
+Class >> subclasses
+[
+	"Answer a Set containing the receiver's subclasses."
+
+	^ subclasses ifNil: [ #() ] ifNotNil: [ subclasses copy ]
+]
+
+Class >> subclasses: aCollection
+[
+	subclasses := aCollection
+]
+
+Class >> traitComposition
+[
+	traitComposition ifNil: [ traitComposition := TraitComposition new ].
+	^ traitComposition
+]
+
+Class >> traitComposition: aTraitComposition
+[
+	traitComposition := aTraitComposition
+]
+
+on: {} asTraitComposition ].
 	^ class
 ]
 

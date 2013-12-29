@@ -3,46 +3,46 @@ FileSystemDirectoryEntry
 	package: #'FileSystem-Core'.
 
 FileSystemDirectoryEntry >> asFileReference
-[asFileReference
+[
 	^ reference
 ]
 
 FileSystemDirectoryEntry >> basename
-[basename
+[
 	^ reference basename
 ]
 
 FileSystemDirectoryEntry >> creation
-[creation
+[
 	^ self creationTime
 ]
 
 FileSystemDirectoryEntry >> creationSeconds
-[creationSeconds
+[
 	"Return the creation date and time of the entry receiver in seconds."
 
 	^ creation asSeconds
 ]
 
 FileSystemDirectoryEntry >> creationTime
-[creationTime
+[
 	"Return the creation date and time of the entry receiver."
 
 	^ creation
 ]
 
 FileSystemDirectoryEntry >> extension
-[extension
+[
 	^ reference extension
 ]
 
 FileSystemDirectoryEntry >> fullName
-[fullName
+[
 	^ reference fullName
 ]
 
 FileSystemDirectoryEntry >> initializeWithRef: ref creation: cTime modification: mTime isDir: directoryBoolean size: bytes posixPermissions: posixNumber isSymlink: symlinkBoolean
-[initializeWithRef: ref creation: cTime modification: mTime isDir: directoryBoolean size: bytes posixPermissions: posixNumber isSymlink: symlinkBoolean
+[
 	reference := ref.
 	creation := cTime.
 	modification := mTime.
@@ -53,93 +53,93 @@ FileSystemDirectoryEntry >> initializeWithRef: ref creation: cTime modification:
 ]
 
 FileSystemDirectoryEntry >> isDirectory
-[isDirectory
+[
 	"Return whether the receiver is a directory"
 
 	^ isDirectory
 ]
 
 FileSystemDirectoryEntry >> isFile
-[isFile
+[
 	"Return whether the receiver is a file"
 
 	^ isDirectory not
 ]
 
 FileSystemDirectoryEntry >> isSymlink
-[isSymlink
+[
 	^ isSymlink
 ]
 
 FileSystemDirectoryEntry >> modification
-[modification
+[
 	^ self modificationTime
 ]
 
 FileSystemDirectoryEntry >> modificationSeconds
-[modificationSeconds
+[
 	"Return the modification date and time of the entry receiver in seconds."
 
 	^ modification
 ]
 
 FileSystemDirectoryEntry >> modificationTime
-[modificationTime
+[
 	"Return the modification date and time of the entry receiver."
 
 	^ modification
 ]
 
 FileSystemDirectoryEntry >> pathSegments
-[pathSegments
+[
 	^ reference pathSegments
 ]
 
 FileSystemDirectoryEntry >> permissions
-[permissions
+[
 	^ self posixPermissions ifNotNil: [ FileSystemPermission posixPermissions: self posixPermissions ]
 ]
 
 FileSystemDirectoryEntry >> posixPermissions
-[posixPermissions
+[
 	^ posixPermissions
 ]
 
 FileSystemDirectoryEntry >> printOn: aStream
-[printOn: aStream
+[
 	aStream nextPutAll: 'DirectoryEntry: '.
 	reference ifNotNil: [ :ref | aStream nextPutAll: reference printString ]
 ]
 
 FileSystemDirectoryEntry >> readStream
-[readStream
+[
 	^ reference readStream
 ]
 
 FileSystemDirectoryEntry >> reference
-[reference
+[
 	^ reference
 ]
 
 FileSystemDirectoryEntry >> size
-[size
+[
 	"Returns the receiver size"
 
 	^ size
 ]
 
 FileSystemDirectoryEntry >> writeStream
-[writeStream
+[
 	^ reference writeStream
 ]
 
 FileSystemDirectoryEntry class >> allPosixPermissions
-[allPosixPermissions
+[
 	^ 8r777
 ]
 
 FileSystemDirectoryEntry class >> fileSystem: aFilesystem path: aPath creation: cTime modification: mTime isDir: aBoolean size: anInteger posixPermissions: posixNumber isSymlink: symlinkBooleam
-[fileSystem: aFilesystem path: aPath creation: cTime modification: mTime isDir: aBoolean size: anInteger posixPermissions: posixNumber isSymlink: symlinkBooleam
+[
 	"Create a directory entry given a filesystem and a path in such filesystem. In addition, the creation and modification time are required as well as a boolean that indicates whether the entry is a folder or a file and its size."
 
 	^ self
@@ -153,6 +153,20 @@ FileSystemDirectoryEntry class >> fileSystem: aFilesystem path: aPath creation: 
 ]
 
 FileSystemDirectoryEntry class >> reference: ref creation: cTime modification: mTime isDir: aBoolean size: anInteger posixPermissions: posixNumber isSymlink: symlinkBoolean
+[
+	"Create a directory entry for the file reference ref, with the creation time, cTime, the modification time, mTime. aBoolean indicates if the entry represents a directory or a file of size given by anInteger"
+
+	^ self basicNew
+		initializeWithRef: ref
+		creation: cTime
+		modification: mTime
+		isDir: aBoolean
+		size: anInteger
+		posixPermissions: posixNumber
+		isSymlink: symlinkBoolean
+]
+
+ileSystemDirectoryEntry class >> reference: ref creation: cTime modification: mTime isDir: aBoolean size: anInteger posixPermissions: posixNumber isSymlink: symlinkBoolean
 [reference: ref creation: cTime modification: mTime isDir: aBoolean size: anInteger posixPermissions: posixNumber isSymlink: symlinkBoolean
 	"Create a directory entry for the file reference ref, with the creation time, cTime, the modification time, mTime. aBoolean indicates if the entry represents a directory or a file of size given by anInteger"
 

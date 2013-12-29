@@ -5,44 +5,44 @@ RxsPredicate
 	package: #'Regex-Core'.
 
 RxsPredicate >> beAlphaNumeric
-[beAlphaNumeric
+[
 	predicate := [ :char | char isAlphaNumeric ].
 	negation := [ :char | char isAlphaNumeric not ]
 ]
 
 RxsPredicate >> beAlphabetic
-[beAlphabetic
+[
 	predicate := [ :char | char isLetter ].
 	negation := [ :char | char isLetter not ]
 ]
 
 RxsPredicate >> beBackslash
-[beBackslash
+[
 	predicate := [ :char | char == $\ ].
 	negation := [ :char | char ~~ $\ ]
 ]
 
 RxsPredicate >> beControl
-[beControl
+[
 	predicate := [ :char | char asInteger < 32 ].
 	negation := [ :char | char asInteger >= 32 ]
 ]
 
 RxsPredicate >> beDigit
-[beDigit
+[
 	predicate := [ :char | char isDigit ].
 	negation := [ :char | char isDigit not ]
 ]
 
 RxsPredicate >> beGraphics
-[beGraphics
+[
 	self
 		beControl;
 		negate
 ]
 
 RxsPredicate >> beHexDigit
-[beHexDigit
+[
 	| hexLetters |
 	hexLetters := 'abcdefABCDEF'.
 	predicate := [ :char | char isDigit or: [ hexLetters includes: char ] ].
@@ -50,41 +50,41 @@ RxsPredicate >> beHexDigit
 ]
 
 RxsPredicate >> beLowercase
-[beLowercase
+[
 	predicate := [ :char | char isLowercase ].
 	negation := [ :char | char isLowercase not ]
 ]
 
 RxsPredicate >> beNotDigit
-[beNotDigit
+[
 	self
 		beDigit;
 		negate
 ]
 
 RxsPredicate >> beNotSpace
-[beNotSpace
+[
 	self
 		beSpace;
 		negate
 ]
 
 RxsPredicate >> beNotWordConstituent
-[beNotWordConstituent
+[
 	self
 		beWordConstituent;
 		negate
 ]
 
 RxsPredicate >> bePrintable
-[bePrintable
+[
 	self
 		beControl;
 		negate
 ]
 
 RxsPredicate >> bePunctuation
-[bePunctuation
+[
 	| punctuationChars |
 	punctuationChars := #($. $, $! $? $; $: $" $' $- $( $) $`).
 	predicate := [ :char | punctuationChars includes: char ].
@@ -92,35 +92,35 @@ RxsPredicate >> bePunctuation
 ]
 
 RxsPredicate >> beSpace
-[beSpace
+[
 	predicate := [ :char | char isSeparator ].
 	negation := [ :char | char isSeparator not ]
 ]
 
 RxsPredicate >> beUppercase
-[beUppercase
+[
 	predicate := [ :char | char isUppercase ].
 	negation := [ :char | char isUppercase not ]
 ]
 
 RxsPredicate >> beWordConstituent
-[beWordConstituent
+[
 	predicate := [ :char | char isAlphaNumeric or: [ char == $_ ] ].
 	negation := [ :char | char isAlphaNumeric not and: [ char ~~ $_ ] ]
 ]
 
 RxsPredicate >> dispatchTo: anObject
-[dispatchTo: anObject
+[
 	^ anObject syntaxPredicate: self
 ]
 
 RxsPredicate >> isEnumerable
-[isEnumerable
+[
 	^ false
 ]
 
 RxsPredicate >> negate
-[negate
+[
 	| tmp |
 	tmp := predicate.
 	predicate := negation.
@@ -128,39 +128,39 @@ RxsPredicate >> negate
 ]
 
 RxsPredicate >> negated
-[negated
+[
 	^ self copy negate
 ]
 
 RxsPredicate >> predicate
-[predicate
+[
 	^ predicate
 ]
 
 RxsPredicate >> predicateNegation
-[predicateNegation
+[
 	^ negation
 ]
 
 RxsPredicate >> value: aCharacter
-[value: aCharacter
+[
 	^ predicate value: aCharacter
 ]
 
 RxsPredicate class >> forEscapedLetter: aCharacter
-[forEscapedLetter: aCharacter
+[
 	^ self new
 		perform: (EscapedLetterSelectors at: aCharacter ifAbsent: [ RxParser signalSyntaxException: 'bad backslash escape' ])
 ]
 
 RxsPredicate class >> forNamedClass: aString
-[forNamedClass: aString
+[
 	^ self new
 		perform: (NamedClassSelectors at: aString ifAbsent: [ RxParser signalSyntaxException: 'bad character class name' ])
 ]
 
 RxsPredicate class >> initialize
-[initialize
+[
 	"self initialize"
 
 	self
@@ -169,7 +169,7 @@ RxsPredicate class >> initialize
 ]
 
 RxsPredicate class >> initializeEscapedLetterSelectors
-[initializeEscapedLetterSelectors
+[
 	"self initializeEscapedLetterSelectors"
 
 	(EscapedLetterSelectors := Dictionary new)
@@ -183,10 +183,24 @@ RxsPredicate class >> initializeEscapedLetterSelectors
 ]
 
 RxsPredicate class >> initializeNamedClassSelectors
-[initializeNamedClassSelectors
+[
 	"self initializeNamedClassSelectors"
 
 	(NamedClassSelectors := Dictionary new)
+		at: 'alnum' put: #beAlphaNumeric;
+		at: 'alpha' put: #beAlphabetic;
+		at: 'cntrl' put: #beControl;
+		at: 'digit' put: #beDigit;
+		at: 'graph' put: #beGraphics;
+		at: 'lower' put: #beLowercase;
+		at: 'print' put: #bePrintable;
+		at: 'punct' put: #bePunctuation;
+		at: 'space' put: #beSpace;
+		at: 'upper' put: #beUppercase;
+		at: 'xdigit' put: #beHexDigit
+]
+
+assSelectors := Dictionary new)
 		at: 'alnum' put: #beAlphaNumeric;
 		at: 'alpha' put: #beAlphabetic;
 		at: 'cntrl' put: #beControl;

@@ -3,14 +3,14 @@ BasicCommandLineHandler
 	package: #'System-CommandLine'.
 
 BasicCommandLineHandler >> activate
-[activate
+[
 	[ self handleArgument: (self arguments ifEmpty: [ '' ] ifNotEmpty: [ :arguments | arguments first ]) ]
 		on: Exit
 		do: [ :exit | ^ self handleExit: exit ]
 ]
 
 BasicCommandLineHandler >> activateSubCommand: aCommandLinehandler
-[activateSubCommand: aCommandLinehandler
+[
 	[ aCommandLinehandler activateWith: commandLine ]
 		on: Exit
 		do: [ :exit | ^ self handleExit: exit for: aCommandLinehandler ].	"the return value of this method is used to check if the subcommand was successfull"
@@ -18,7 +18,7 @@ BasicCommandLineHandler >> activateSubCommand: aCommandLinehandler
 ]
 
 BasicCommandLineHandler >> copyright
-[copyright
+[
 	self stdout
 		nextPutAll: Smalltalk licenseString;
 		cr.
@@ -26,14 +26,14 @@ BasicCommandLineHandler >> copyright
 ]
 
 BasicCommandLineHandler >> default
-[default
+[
 	^ self
 		help;
 		exitSuccess
 ]
 
 BasicCommandLineHandler >> error
-[error
+[
 	self arguments size = 1
 		ifTrue: [ (self arguments first beginsWith: '-')
 				ifTrue: [ self << 'Invalid option: ' ]
@@ -47,7 +47,7 @@ BasicCommandLineHandler >> error
 ]
 
 BasicCommandLineHandler >> handleArgument: aString
-[handleArgument: aString
+[
 	"give priority to subcommands"
 
 	self handleSubcommand == self
@@ -67,19 +67,19 @@ BasicCommandLineHandler >> handleArgument: aString
 ]
 
 BasicCommandLineHandler >> handleEmptyArguments
-[handleEmptyArguments
+[
 	Smalltalk isHeadless
 		ifFalse: [ ^ self ].
 	self help
 ]
 
 BasicCommandLineHandler >> handleExit: exit
-[handleExit: exit
+[
 	^ self handleExit: exit for: self
 ]
 
 BasicCommandLineHandler >> handleExit: exit for: aCommandLinehandler
-[handleExit: exit for: aCommandLinehandler
+[
 	Smalltalk isInteractive
 		ifFalse: [ ^ exit pass ].
 	exit isSuccess
@@ -90,7 +90,7 @@ BasicCommandLineHandler >> handleExit: exit for: aCommandLinehandler
 ]
 
 BasicCommandLineHandler >> handleSubcommand
-[handleSubcommand
+[
 	"check if there is an active subcommand"
 
 	| handlers |
@@ -100,13 +100,13 @@ BasicCommandLineHandler >> handleSubcommand
 ]
 
 BasicCommandLineHandler >> initialize
-[initialize
+[
 	super initialize.
 	commandLine := CommandLineArguments new
 ]
 
 BasicCommandLineHandler >> list
-[list
+[
 	| handlers shortNames maxShortNameSize |
 	self stdout
 		nextPutAll: 'Currently installed Command Line Handlers:';
@@ -125,14 +125,14 @@ BasicCommandLineHandler >> list
 ]
 
 BasicCommandLineHandler >> noQuit
-[noQuit
+[
 	"Nothing to be done, unlike the other commands the image continues running"
 
 	
 ]
 
 BasicCommandLineHandler >> selectHandlers
-[selectHandlers
+[
 	| handlers |
 	handlers := (self subCommandsRoot selectHandlersFor: commandLine) copyWithout: self class.
 	handlers := handlers sort: [ :a :b | a priority >= b priority ].
@@ -140,17 +140,17 @@ BasicCommandLineHandler >> selectHandlers
 ]
 
 BasicCommandLineHandler >> selectedHandler
-[selectedHandler
+[
 	^ self selectHandlers ifEmpty: [ nil ] ifNotEmpty: [ :handlers | handlers first ]
 ]
 
 BasicCommandLineHandler >> subCommandsRoot
-[subCommandsRoot
+[
 	^ CommandLineHandler
 ]
 
 BasicCommandLineHandler >> version
-[version
+[
 	self stdout
 		nextPutAll: 'Image: ';
 		print: SystemVersion current;
@@ -162,25 +162,46 @@ BasicCommandLineHandler >> version
 ]
 
 BasicCommandLineHandler class >> commandName
-[commandName
+[
 	^ ''
 ]
 
 BasicCommandLineHandler class >> description
-[description
+[
 	^ 'basic responsible for the default options and activating other commands'
 ]
 
 BasicCommandLineHandler class >> initialize
-[initialize
+[
 	"hook into the startup list"
 
 	Smalltalk addToStartUpList: self
 ]
 
 BasicCommandLineHandler class >> isResponsibleFor: aCommandLine
-[isResponsibleFor: aCommandLine
+[
 	"I do not match ever, because my activation is manual"
+
+	^ false
+]
+
+BasicCommandLineHandler class >> priority
+[
+	"Lowest priority"
+
+	^ Float infinity negated
+]
+
+BasicCommandLineHandler class >> startUp: resuming
+[
+	"only handle when lauching a new image"
+
+	resuming
+		ifFalse: [ ^ self ].
+	Smalltalk addDeferredStartupAction: [ self new activate ]
+]
+
+ctivation is manual"
 
 	^ false
 ]

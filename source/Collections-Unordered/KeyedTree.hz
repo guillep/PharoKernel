@@ -3,7 +3,7 @@ KeyedTree
 	package: #'Collections-Unordered'.
 
 KeyedTree >> allKeys
-[allKeys
+[
 	"Answer an ordered collection of the keys of the receiver and any subtrees.
 		Please no circular references!"
 
@@ -15,7 +15,7 @@ KeyedTree >> allKeys
 ]
 
 KeyedTree >> atPath: anArray
-[atPath: anArray
+[
 	"Answer the element referenced by the give key path.
 	Signal an error if not found."
 
@@ -23,7 +23,7 @@ KeyedTree >> atPath: anArray
 ]
 
 KeyedTree >> atPath: anArray ifAbsent: aBlock
-[atPath: anArray ifAbsent: aBlock
+[
 	"Answer the element referenced by the given key path.
 	Answer the value of aBlock if not found."
 
@@ -34,7 +34,7 @@ KeyedTree >> atPath: anArray ifAbsent: aBlock
 ]
 
 KeyedTree >> atPath: anArray ifAbsentPut: aBlock
-[atPath: anArray ifAbsentPut: aBlock
+[
 	"Answer the element referenced by the given key path.
 	Answer the value of aBlock if not found after creating its path."
 
@@ -47,7 +47,7 @@ KeyedTree >> atPath: anArray ifAbsentPut: aBlock
 ]
 
 KeyedTree >> atPath: anArray put: aBlock
-[atPath: anArray put: aBlock
+[
 	"Answer the value of aBlock after creating its path."
 
 	| element |
@@ -59,7 +59,7 @@ KeyedTree >> atPath: anArray put: aBlock
 ]
 
 KeyedTree >> formattedText
-[formattedText
+[
 	"Answer a string or text representing the receiver with indentation and, possibly, markup."
 
 	| str |
@@ -69,7 +69,7 @@ KeyedTree >> formattedText
 ]
 
 KeyedTree >> formattedTextWithDescriptions: aKeyedTree
-[formattedTextWithDescriptions: aKeyedTree
+[
 	"Answer a string or text representing the receiver with indentation and, possibly, markup.
 	Descriptions of each item are taken from the given tree with
 	the same key structure as the receiver."
@@ -85,7 +85,7 @@ KeyedTree >> formattedTextWithDescriptions: aKeyedTree
 ]
 
 KeyedTree >> merge: aKeyedTree
-[merge: aKeyedTree
+[
 	"Merge the given tree into the receiver, overwriting or extending elements as needed."
 
 	aKeyedTree
@@ -99,7 +99,7 @@ KeyedTree >> merge: aKeyedTree
 ]
 
 KeyedTree >> postCopy
-[postCopy
+[
 	"Must copy the associations, or later store will affect both the
 		original and the copy.
 	Copy any subtrees too!"
@@ -115,7 +115,7 @@ KeyedTree >> postCopy
 ]
 
 KeyedTree >> putFormattedTextOn: aStream level: indentLevel indentString: aString
-[putFormattedTextOn: aStream level: indentLevel indentString: aString
+[
 	"Place a description of the receiver on the given stream with the given indentation level."
 
 	(self keys asSortedCollection: self sortBlock)
@@ -133,7 +133,7 @@ KeyedTree >> putFormattedTextOn: aStream level: indentLevel indentString: aStrin
 ]
 
 KeyedTree >> putFormattedTextOn: aStream withDescriptions: aKeyedTree level: indentLevel indentString: aString
-[putFormattedTextOn: aStream withDescriptions: aKeyedTree level: indentLevel indentString: aString
+[
 	"Place a print of the receiver and associated description on the given stream with the given indentation level."
 
 	(self keys asSortedCollection: self sortBlock)
@@ -158,7 +158,7 @@ KeyedTree >> putFormattedTextOn: aStream withDescriptions: aKeyedTree level: ind
 ]
 
 KeyedTree >> removePath: anArray
-[removePath: anArray
+[
 	"Remove and answer the element referenced by the given path.
 	Signal an error if not found."
 
@@ -166,7 +166,7 @@ KeyedTree >> removePath: anArray
 ]
 
 KeyedTree >> removePath: anArray ifAbsent: aBlock
-[removePath: anArray ifAbsent: aBlock
+[
 	"Remove and answer the element referenced by the given path.
 	Answer the value of aBlock if not found."
 
@@ -175,6 +175,26 @@ KeyedTree >> removePath: anArray ifAbsent: aBlock
 		ifTrue: [ ^ self ].
 	element := self.
 	anArray allButLastDo: [ :key | element := element at: key ifAbsent: [ ^ aBlock value ] ].
+	^ element removeKey: anArray last ifAbsent: aBlock
+]
+
+KeyedTree >> sortBlock
+[
+	"Answer the block to sort tree keys with."
+
+	^ [ :a :b | [ a <= b ]
+		on: Error
+		do: [ a class name <= b class name ] ]
+]
+
+KeyedTree >> subtrees
+[
+	"Answer the subtrees of the receiver."
+
+	^ (self select: [ :v | v isKindOf: KeyedTree ]) values
+]
+
+ray allButLastDo: [ :key | element := element at: key ifAbsent: [ ^ aBlock value ] ].
 	^ element removeKey: anArray last ifAbsent: aBlock
 ]
 

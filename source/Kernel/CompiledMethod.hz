@@ -5,7 +5,7 @@ CompiledMethod
 	package: #Kernel.
 
 CompiledMethod >> = aCompiledMethod
-[= aCompiledMethod
+[
 	"Answer whether the receiver implements the same code as aCompiledMethod."
 
 	| numLits |
@@ -25,7 +25,7 @@ CompiledMethod >> = aCompiledMethod
 ]
 
 CompiledMethod >> abstractBytecodeMessageAt: pc
-[abstractBytecodeMessageAt: pc
+[
 	"Answer the abstract bytecode message at pc in the receiver."
 
 	^ [ (InstructionStream new method: self pc: pc) interpretNextInstructionFor: nil ]
@@ -34,14 +34,14 @@ CompiledMethod >> abstractBytecodeMessageAt: pc
 ]
 
 CompiledMethod >> abstractBytecodeMessagesDo: aBlock
-[abstractBytecodeMessagesDo: aBlock
+[
 	"Evaluate aBlock with the sequence of abstract bytecodes in the receiver"
 
 	self abstractBytecodeMessagesFrom: self initialPC to: self endPC do: aBlock	"| msgs |	 msgs := OrderedCollection new.	 CompiledMethod >> #abstractBytecodeMessagesFrom:to: abstractBytecodeMessagesDo:		[:msg| msgs add: msg selector].	 msgs"
 ]
 
 CompiledMethod >> abstractBytecodeMessagesFrom: startpc to: endpc do: aBlock
-[abstractBytecodeMessagesFrom: startpc to: endpc do: aBlock
+[
 	"Evaluate aBlock with the sequence of abstract bytecodes from startpc through endpc in the receiver"
 
 	| scanner |
@@ -53,7 +53,7 @@ CompiledMethod >> abstractBytecodeMessagesFrom: startpc to: endpc do: aBlock
 ]
 
 CompiledMethod >> abstractSymbolic
-[abstractSymbolic
+[
 	"Answer a String that contains a list of all the byte codes in a method with a
 	 short description of each, using relative addresses and not including code bytes."
 
@@ -64,22 +64,22 @@ CompiledMethod >> abstractSymbolic
 ]
 
 CompiledMethod >> allLiterals
-[allLiterals
+[
 	^ self literals
 ]
 
 CompiledMethod >> argumentNames
-[argumentNames
+[
 	^ self ast argumentNames
 ]
 
 CompiledMethod >> asString
-[asString
+[
 	^ self sourceCode
 ]
 
 CompiledMethod >> author
-[author
+[
 	"Answer the author of the current version of the receiver. retrieved from the sources or changes file. Answer the empty string if no time stamp is available."
 
 	"(CompiledMethod compiledMethodAt: #author) author"
@@ -93,7 +93,7 @@ CompiledMethod >> author
 ]
 
 CompiledMethod >> bytecode
-[bytecode
+[
 	"Answer an ByteArray of the btyecode of the method."
 
 	| start stop bytecode |
@@ -105,33 +105,33 @@ CompiledMethod >> bytecode
 ]
 
 CompiledMethod >> category
-[category
+[
 	^ self methodClass organization categoryOfElement: self selector
 ]
 
 CompiledMethod >> classBinding
-[classBinding
+[
 	"answer the association to the class that I am installed in, or nil if none."
 
 	^ self literalAt: self numLiterals
 ]
 
 CompiledMethod >> classBinding: aBinding
-[classBinding: aBinding
+[
 	"sets the association to the class that I am installed in"
 
 	^ self literalAt: self numLiterals put: aBinding
 ]
 
 CompiledMethod >> clearFlag
-[clearFlag
+[
 	"Clear the user-level flag bit"
 
 	self objectAt: 1 put: (self header bitAnd: (1 << 29) bitInvert)
 ]
 
 CompiledMethod >> codeForNoSource
-[codeForNoSource
+[
 	"this is the marker we use for method that have no source"
 
 	^ String
@@ -143,7 +143,7 @@ CompiledMethod >> codeForNoSource
 ]
 
 CompiledMethod >> comment
-[comment
+[
 	"Return the first comment of the receiver"
 
 	"(self>>#comment) comment"
@@ -152,12 +152,12 @@ CompiledMethod >> comment
 ]
 
 CompiledMethod >> copyWithSource: aString
-[copyWithSource: aString
+[
 	^ self copyWithTrailerBytes: (CompiledMethodTrailer new sourceCode: aString)
 ]
 
 CompiledMethod >> copyWithTrailerBytes: trailer
-[copyWithTrailerBytes: trailer
+[
 	"Testing:
 	(CompiledMethod compiledMethodAt: #copyWithTrailerBytes:)
 		tempNamesPut: 'copy end '
@@ -177,12 +177,12 @@ CompiledMethod >> copyWithTrailerBytes: trailer
 ]
 
 CompiledMethod >> debuggerMap
-[debuggerMap
+[
 	^ self compilerClass debuggerMethodMapForMethod: self
 ]
 
 CompiledMethod >> defaultSelector
-[defaultSelector
+[
 	"Invent and answer an appropriate message selector (a Symbol) for me, 
 	that is, one that will parse with the correct number of arguments."
 
@@ -190,14 +190,14 @@ CompiledMethod >> defaultSelector
 ]
 
 CompiledMethod >> definition
-[definition
+[
 	"Polymorphic to class definition"
 
 	^ self sourceCode
 ]
 
 CompiledMethod >> embeddSourceInTrailer
-[embeddSourceInTrailer
+[
 	"When receiver is deinstalled from its class, its not managed anymore by development tools
 	and it's hard to predict, how long a method could stay in the image, because if it contains blocks,
 	they could still reference it. 
@@ -209,14 +209,14 @@ CompiledMethod >> embeddSourceInTrailer
 ]
 
 CompiledMethod >> endPC
-[endPC
+[
 	"Answer the index of the last bytecode."
 
 	^ self trailer endPC
 ]
 
 CompiledMethod >> equivalentTo: aCompiledMethod
-[equivalentTo: aCompiledMethod
+[
 	^ self = aCompiledMethod
 		or: [ self class == aCompiledMethod class
 				and: [ self numArgs = aCompiledMethod numArgs
@@ -224,24 +224,24 @@ CompiledMethod >> equivalentTo: aCompiledMethod
 ]
 
 CompiledMethod >> fileIndex
-[fileIndex
+[
 	^ SourceFiles fileIndexFromSourcePointer: self sourcePointer
 ]
 
 CompiledMethod >> filePosition
-[filePosition
+[
 	^ SourceFiles filePositionFromSourcePointer: self sourcePointer
 ]
 
 CompiledMethod >> flag
-[flag
+[
 	"Answer the user-level flag bit"
 
 	^ ((self header bitShift: -29) bitAnd: 1) = 1
 ]
 
 CompiledMethod >> flushCache
-[flushCache
+[
 	"Tell the interpreter to remove all references to this method from its method lookup cache, if it has one. This primitive must be called whenever a method is redefined or removed.
 	NOTE:  Only one of two selective flush methods (Symbol or CompiledMethod) needs to be used."
 
@@ -250,7 +250,7 @@ CompiledMethod >> flushCache
 ]
 
 CompiledMethod >> frameSize
-[frameSize
+[
 	"Answer the size of temporary frame needed to run the receiver."
 
 	"NOTE:  Versions 2.7 and later use two sizes of contexts."
@@ -261,19 +261,19 @@ CompiledMethod >> frameSize
 ]
 
 CompiledMethod >> getPreambleFrom: aFileStream at: position
-[getPreambleFrom: aFileStream at: position
+[
 	^ SourceFiles getPreambleFrom: aFileStream at: position
 ]
 
 CompiledMethod >> getSource
-[getSource
+[
 	"use #sourceCode instead"
 
 	^ self sourceCode
 ]
 
 CompiledMethod >> getSourceFromFile
-[getSourceFromFile
+[
 	"PLEASE Note: clients should always call #sourceCode"
 
 	"Read the source code from file, determining source file index and
@@ -286,7 +286,7 @@ CompiledMethod >> getSourceFromFile
 ]
 
 CompiledMethod >> getSourceReplacingSelectorWith: newSelector
-[getSourceReplacingSelectorWith: newSelector
+[
 	| oldKeywords newKeywords args newSelectorWithArgs source oldSelector s |
 	source := self sourceCode.
 	oldSelector := self ast selector.
@@ -312,7 +312,7 @@ CompiledMethod >> getSourceReplacingSelectorWith: newSelector
 ]
 
 CompiledMethod >> hasInstVarRef
-[hasInstVarRef
+[
 	"Answer whether the method references an instance variable."
 
 	| scanner end printer |
@@ -325,7 +325,7 @@ CompiledMethod >> hasInstVarRef
 ]
 
 CompiledMethod >> hasLiteral: literal
-[hasLiteral: literal
+[
 	"Answer whether the receiver references the argument, literal."
 
 	2 to: self numLiterals - 1 do: [ :index "exclude superclass + selector/properties" | ((self objectAt: index) literalEqual: literal)
@@ -334,7 +334,7 @@ CompiledMethod >> hasLiteral: literal
 ]
 
 CompiledMethod >> hasLiteralSuchThat: litBlock
-[hasLiteralSuchThat: litBlock
+[
 	"Answer true if litBlock returns true for any literal in this method, even if embedded in array structure."
 
 	(self penultimateLiteral isMethodProperties and: [ self penultimateLiteral hasLiteralSuchThat: litBlock ])
@@ -347,7 +347,7 @@ CompiledMethod >> hasLiteralSuchThat: litBlock
 ]
 
 CompiledMethod >> hasLiteralThorough: literal
-[hasLiteralThorough: literal
+[
 	"Answer true if any literal in this method is literal,
 	even if embedded in array structure."
 
@@ -361,12 +361,12 @@ CompiledMethod >> hasLiteralThorough: literal
 ]
 
 CompiledMethod >> hasPragmaNamed: aSymbol
-[hasPragmaNamed: aSymbol
+[
 	^ self pragmas anySatisfy: [ :pragma | pragma keyword = aSymbol ]
 ]
 
 CompiledMethod >> hasReportableSlip
-[hasReportableSlip
+[
 	"Answer whether the receiver contains anything that should be brought 
 	to the attention of the author when filing out. Customize the lists here 
 	to suit your preferences. If slips do not get reported in spite of your 
@@ -384,7 +384,7 @@ CompiledMethod >> hasReportableSlip
 ]
 
 CompiledMethod >> hash
-[hash
+[
 	"CompiledMethod>>#= compares code, i.e. same literals and same bytecode.
 	 So we look at the header, methodClass and some bytes between initialPC and endPC,
 	 but /not/ the selector because the equal method does not compare selectors.
@@ -401,7 +401,7 @@ CompiledMethod >> hash
 ]
 
 CompiledMethod >> header
-[header
+[
 	"Answer the word containing the information about the form of the 
 	receiver and the form of the context needed to run the receiver."
 
@@ -409,7 +409,7 @@ CompiledMethod >> header
 ]
 
 CompiledMethod >> headerDescription
-[headerDescription
+[
 	"Answer a description containing the information about the form of the 
 	receiver and the form of the context needed to run the receiver."
 
@@ -443,7 +443,7 @@ CompiledMethod >> headerDescription
 ]
 
 CompiledMethod >> indexOfLiteral: literal
-[indexOfLiteral: literal
+[
 	"Answer the literal index of the argument, literal, or zero if none."
 
 	2 to: self numLiterals - 1 do: [ :index | literal == (self objectAt: index)
@@ -452,100 +452,100 @@ CompiledMethod >> indexOfLiteral: literal
 ]
 
 CompiledMethod >> initialPC
-[initialPC
+[
 	"Answer the program counter for the receiver's first bytecode."
 
 	^ (self numLiterals + 1) * Smalltalk wordSize + 1
 ]
 
 CompiledMethod >> isAbstract
-[isAbstract
+[
 	"Answer true if I am abstract"
 
 	^ self markerOrNil == self class abstractMarker
 ]
 
 CompiledMethod >> isBinarySelector
-[isBinarySelector
+[
 	^ self selector allSatisfy: [ :each | each isSpecial ]
 ]
 
 CompiledMethod >> isCompiledMethod
-[isCompiledMethod
+[
 	^ true
 ]
 
 CompiledMethod >> isConflict
-[isConflict
+[
 	^ self markerOrNil == self class conflictMarker
 ]
 
 CompiledMethod >> isDeprecated
-[isDeprecated
+[
 	^ (self sendsSelector: #deprecated:) or: [ self sendsSelector: #deprecated:on:in: ]
 ]
 
 CompiledMethod >> isDisabled
-[isDisabled
+[
 	^ self isDisabled: self markerOrNil
 ]
 
 CompiledMethod >> isDisabled: marker
-[isDisabled: marker
+[
 	^ marker == self class disabledMarker
 ]
 
 CompiledMethod >> isDoIt
-[isDoIt
+[
 	^ self selector isDoIt
 ]
 
 CompiledMethod >> isExplicitlyRequired
-[isExplicitlyRequired
+[
 	^ self isExplicitlyRequired: self markerOrNil
 ]
 
 CompiledMethod >> isExplicitlyRequired: marker
-[isExplicitlyRequired: marker
+[
 	^ marker == self class explicitRequirementMarker
 ]
 
 CompiledMethod >> isExternalCallPrimitive
-[isExternalCallPrimitive
+[
 	^ self primitive = 120
 ]
 
 CompiledMethod >> isFromTrait
-[isFromTrait
+[
 	"Return true for methods that have been included from Traits"
 
 	^ self origin isTrait and: [ self origin ~= self methodClass ]
 ]
 
 CompiledMethod >> isImplicitlyRequired
-[isImplicitlyRequired
+[
 	^ self isImplicitlyRequired: self markerOrNil
 ]
 
 CompiledMethod >> isImplicitlyRequired: marker
-[isImplicitlyRequired: marker
+[
 	^ marker == self class implicitRequirementMarker
 ]
 
 CompiledMethod >> isInstalled
-[isInstalled
+[
 	self methodClass
 		ifNotNil: [ :class | self selector ifNotNil: [ :selector | ^ self == (class compiledMethodAt: selector ifAbsent: [  ]) ] ].
 	^ false
 ]
 
 CompiledMethod >> isNamedPrimitive
-[isNamedPrimitive
+[
 	^ self primitive = 117
 ]
 
 CompiledMethod >> isOverridden
-[isOverridden
+[
 	| selector |
 	selector := self selector.
 	self methodClass allSubclassesDo: [ :each | (each includesSelector: selector)
@@ -554,23 +554,23 @@ CompiledMethod >> isOverridden
 ]
 
 CompiledMethod >> isPrimitive
-[isPrimitive
+[
 	^ self primitive > 0
 ]
 
 CompiledMethod >> isProvided
-[isProvided
+[
 	^ self isProvided: self markerOrNil
 ]
 
 CompiledMethod >> isProvided: marker
-[isProvided: marker
+[
 	marker ifNil: [ ^ true ].
 	^ (self isRequired: marker) not and: [ (self isDisabled: marker) not ]
 ]
 
 CompiledMethod >> isQuick
-[isQuick
+[
 	"Answer whether the receiver is a quick return (of self or of an instance 
 	variable)."
 
@@ -578,12 +578,12 @@ CompiledMethod >> isQuick
 ]
 
 CompiledMethod >> isRequired
-[isRequired
+[
 	^ self isRequired: self markerOrNil
 ]
 
 CompiledMethod >> isRequired: marker
-[isRequired: marker
+[
 	marker ifNil: [ ^ false ].
 	(self isImplicitlyRequired: marker)
 		ifTrue: [ ^ true ].
@@ -595,43 +595,43 @@ CompiledMethod >> isRequired: marker
 ]
 
 CompiledMethod >> isReturnField
-[isReturnField
+[
 	"Answer whether the receiver is a quick return of an instance variable."
 
 	^ self primitive between: 264 and: 519
 ]
 
 CompiledMethod >> isReturnSelf
-[isReturnSelf
+[
 	"Answer whether the receiver is a quick return of self."
 
 	^ self primitive = 256
 ]
 
 CompiledMethod >> isReturnSpecial
-[isReturnSpecial
+[
 	"Answer whether the receiver is a quick return of self or constant."
 
 	^ self primitive between: 256 and: 263
 ]
 
 CompiledMethod >> isSelfEvaluating
-[isSelfEvaluating
+[
 	^ self methodClass notNil and: [ (#(#DoIt #DoItIn: nil) includes: self selector) not ]
 ]
 
 CompiledMethod >> isSubclassResponsibility
-[isSubclassResponsibility
+[
 	^ self isSubclassResponsibility: self markerOrNil
 ]
 
 CompiledMethod >> isSubclassResponsibility: marker
-[isSubclassResponsibility: marker
+[
 	^ marker == self class subclassResponsibilityMarker
 ]
 
 CompiledMethod >> linesOfCode
-[linesOfCode
+[
 	"An approximate measure of lines of code.
 	Includes comments, but excludes empty lines."
 
@@ -644,14 +644,14 @@ CompiledMethod >> linesOfCode
 ]
 
 CompiledMethod >> literalAt: index
-[literalAt: index
+[
 	"Answer the literal indexed by the argument."
 
 	^ self objectAt: index + 1
 ]
 
 CompiledMethod >> literalAt: index put: value
-[literalAt: index put: value
+[
 	"Replace the literal indexed by the first argument with the second 
 	argument. Answer the second argument."
 
@@ -659,7 +659,7 @@ CompiledMethod >> literalAt: index put: value
 ]
 
 CompiledMethod >> literalStrings
-[literalStrings
+[
 	| litStrs |
 	litStrs := OrderedCollection new: self numLiterals.
 	self
@@ -672,7 +672,7 @@ CompiledMethod >> literalStrings
 ]
 
 CompiledMethod >> literals
-[literals
+[
 	"Answer an Array of the literals referenced by the receiver."
 
 	| literals numberLiterals |
@@ -682,21 +682,21 @@ CompiledMethod >> literals
 ]
 
 CompiledMethod >> literalsDo: aBlock
-[literalsDo: aBlock
+[
 	"Evaluate aBlock for each of the literals referenced by the receiver."
 
 	1 to: self numLiterals do: [ :index | aBlock value: (self objectAt: index + 1) ]
 ]
 
 CompiledMethod >> longPrintOn: aStream
-[longPrintOn: aStream
+[
 	"List of all the byte codes in a method with a short description of each"
 
 	self longPrintOn: aStream indent: 0
 ]
 
 CompiledMethod >> longPrintOn: aStream indent: tabs
-[longPrintOn: aStream indent: tabs
+[
 	"List of all the byte codes in a method with a short description of each"
 
 	self isQuick
@@ -714,7 +714,7 @@ CompiledMethod >> longPrintOn: aStream indent: tabs
 ]
 
 CompiledMethod >> longPrintRelativeOn: aStream indent: tabs
-[longPrintRelativeOn: aStream indent: tabs
+[
 	"List of all the byte codes in a method with a short description of each"
 
 	self isQuick
@@ -729,7 +729,7 @@ CompiledMethod >> longPrintRelativeOn: aStream indent: tabs
 ]
 
 CompiledMethod >> markerOrNil
-[markerOrNil
+[
 	"If I am a marker method, answer the symbol used to mark me.  Otherwise
 	answer nil.
 
@@ -765,7 +765,7 @@ CompiledMethod >> markerOrNil
 ]
 
 CompiledMethod >> messages
-[messages
+[
 	"Answer a Set of all the message selectors sent by this method."
 
 	| scanner aSet |
@@ -777,26 +777,26 @@ CompiledMethod >> messages
 ]
 
 CompiledMethod >> messagesDo: aBlock
-[messagesDo: aBlock
+[
 	^ self messages do: aBlock
 ]
 
 CompiledMethod >> method
-[method
+[
 	"polymorphic with closure"
 
 	^ self
 ]
 
 CompiledMethod >> methodClass
-[methodClass
+[
 	"answer the class that I am installed in"
 
 	^ self classBinding value
 ]
 
 CompiledMethod >> methodClass: aClass
-[methodClass: aClass
+[
 	"set the class binding in the last literal to aClass"
 
 	^ self numLiterals > 0
@@ -804,7 +804,7 @@ CompiledMethod >> methodClass: aClass
 ]
 
 CompiledMethod >> needsFrameSize: newFrameSize
-[needsFrameSize: newFrameSize
+[
 	"Set the largeFrameBit to accomodate the newFrameSize"
 
 	| largeFrameBit header |
@@ -825,28 +825,28 @@ CompiledMethod >> needsFrameSize: newFrameSize
 ]
 
 CompiledMethod >> numArgs
-[numArgs
+[
 	"Answer the number of arguments the receiver takes."
 
 	^ (self header bitShift: -24) bitAnd: 16r0F
 ]
 
 CompiledMethod >> numLiterals
-[numLiterals
+[
 	"Answer the number of literals used by the receiver."
 
 	^ (self header bitShift: -9) bitAnd: 16rFF
 ]
 
 CompiledMethod >> numTemps
-[numTemps
+[
 	"Answer the number of temporary variables used by the receiver."
 
 	^ (self header bitShift: -18) bitAnd: 16r3F
 ]
 
 CompiledMethod >> objectAt: index
-[objectAt: index
+[
 	"Primitive. Answer the method header (if index=1) or a literal (if index 
 	>1) from the receiver. Essential. See Object documentation 
 	whatIsAPrimitive."
@@ -856,7 +856,7 @@ CompiledMethod >> objectAt: index
 ]
 
 CompiledMethod >> objectAt: index put: value
-[objectAt: index put: value
+[
 	"Primitive. Store the value argument into a literal in the receiver. An 
 	index of 2 corresponds to the first literal. Fails if the index is less than 2 
 	or greater than the number of literals. Answer the value as the result. 
@@ -869,13 +869,13 @@ CompiledMethod >> objectAt: index put: value
 ]
 
 CompiledMethod >> origin
-[origin
+[
 	self properties at: #traitSource ifPresent: [ :traitMethod | ^ traitMethod methodClass ].
 	^ self methodClass traitOrClassOfSelector: self selector
 ]
 
 CompiledMethod >> originMethod
-[originMethod
+[
 	| selector |
 	self properties at: #traitSource ifPresent: [ :traitMethod | ^ traitMethod ].	"Use the method dictionary because traits do not have method for accesing methods by selector"
 	selector := self methodClass traitComposition originSelectorOf: self selector.
@@ -883,7 +883,7 @@ CompiledMethod >> originMethod
 ]
 
 CompiledMethod >> pcPreviousTo: pc
-[pcPreviousTo: pc
+[
 	| scanner client prevPc |
 	pc > self endPC
 		ifTrue: [ ^ self endPC ].
@@ -895,7 +895,7 @@ CompiledMethod >> pcPreviousTo: pc
 ]
 
 CompiledMethod >> penultimateLiteral
-[penultimateLiteral
+[
 	"Answer the penultimate literal of the receiver, which holds either
 	 the receiver's selector or its properties (which will hold the selector)."
 
@@ -906,7 +906,7 @@ CompiledMethod >> penultimateLiteral
 ]
 
 CompiledMethod >> penultimateLiteral: anObject
-[penultimateLiteral: anObject
+[
 	"Answer the penultimate literal of the receiver, which holds either
 	 the receiver's selector or its properties (which will hold the selector)."
 
@@ -917,7 +917,7 @@ CompiledMethod >> penultimateLiteral: anObject
 ]
 
 CompiledMethod >> postCopy
-[postCopy
+[
 	| penultimateLiteral |
 	(penultimateLiteral := self penultimateLiteral) isMethodProperties
 		ifTrue: [ self penultimateLiteral: (penultimateLiteral copy
@@ -927,7 +927,7 @@ CompiledMethod >> postCopy
 ]
 
 CompiledMethod >> pragmaAt: aKey
-[pragmaAt: aKey
+[
 	"Answer the pragma with selector aKey, or nil if none."
 
 	| propertiesOrSelector |
@@ -937,7 +937,7 @@ CompiledMethod >> pragmaAt: aKey
 ]
 
 CompiledMethod >> pragmas
-[pragmas
+[
 	| selectorOrProperties |
 	^ (selectorOrProperties := self penultimateLiteral) isMethodProperties
 		ifTrue: [ selectorOrProperties pragmas ]
@@ -945,7 +945,7 @@ CompiledMethod >> pragmas
 ]
 
 CompiledMethod >> primitive
-[primitive
+[
 	"Answer the primitive index associated with the receiver.
 	Zero indicates that this is not a primitive method.
 	We currently allow 10 bits of primitive index, but they are in two places
@@ -958,7 +958,7 @@ CompiledMethod >> primitive
 ]
 
 CompiledMethod >> primitiveErrorVariableName
-[primitiveErrorVariableName
+[
 	"Answer the primitive error code temp name, or nil if none."
 
 	self isPrimitive
@@ -970,7 +970,7 @@ CompiledMethod >> primitiveErrorVariableName
 ]
 
 CompiledMethod >> printOn: aStream
-[printOn: aStream
+[
 	"Overrides method inherited from the byte arrayed collection."
 
 	aStream
@@ -980,7 +980,7 @@ CompiledMethod >> printOn: aStream
 ]
 
 CompiledMethod >> printPrimitiveOn: aStream
-[printPrimitiveOn: aStream
+[
 	"Print the primitive on aStream"
 
 	| primDecl |
@@ -1008,7 +1008,7 @@ CompiledMethod >> printPrimitiveOn: aStream
 ]
 
 CompiledMethod >> properties
-[properties
+[
 	"Answer the method properties of the receiver."
 
 	| propertiesOrSelector |
@@ -1018,7 +1018,7 @@ CompiledMethod >> properties
 ]
 
 CompiledMethod >> properties: aMethodProperties
-[properties: aMethodProperties
+[
 	"Set the method-properties of the receiver to aMethodProperties."
 
 	self
@@ -1032,7 +1032,7 @@ CompiledMethod >> properties: aMethodProperties
 ]
 
 CompiledMethod >> propertyKeysAndValuesDo: aBlock
-[propertyKeysAndValuesDo: aBlock
+[
 	"Enumerate the receiver with all the keys and values."
 
 	| propertiesOrSelector |
@@ -1041,7 +1041,7 @@ CompiledMethod >> propertyKeysAndValuesDo: aBlock
 ]
 
 CompiledMethod >> propertyValueAt: propName
-[propertyValueAt: propName
+[
 	| propertiesOrSelector |
 	^ (propertiesOrSelector := self penultimateLiteral) isMethodProperties
 		ifTrue: [ propertiesOrSelector propertyValueAt: propName ifAbsent: [ nil ] ]
@@ -1049,7 +1049,7 @@ CompiledMethod >> propertyValueAt: propName
 ]
 
 CompiledMethod >> propertyValueAt: propName ifAbsent: aBlock
-[propertyValueAt: propName ifAbsent: aBlock
+[
 	| propertiesOrSelector |
 	^ (propertiesOrSelector := self penultimateLiteral) isMethodProperties
 		ifTrue: [ propertiesOrSelector propertyValueAt: propName ifAbsent: aBlock ]
@@ -1057,7 +1057,7 @@ CompiledMethod >> propertyValueAt: propName ifAbsent: aBlock
 ]
 
 CompiledMethod >> propertyValueAt: propName put: propValue
-[propertyValueAt: propName put: propValue
+[
 	"Set or add the property with key propName and value propValue.
 	 If the receiver does not yet have a method properties create one and replace
 	 the selector with it.  Otherwise, either relace propValue in the method properties
@@ -1080,19 +1080,19 @@ CompiledMethod >> propertyValueAt: propName put: propValue
 ]
 
 CompiledMethod >> protocol
-[protocol
+[
 	" start to migrate to RING API "
 
 	^ self category
 ]
 
 CompiledMethod >> protocol: aString
-[protocol: aString
+[
 	^ self methodClass organization classify: self selector under: aString
 ]
 
 CompiledMethod >> putSource: sourceStr class: class category: catName withStamp: changeStamp inFile: fileIndex priorMethod: priorMethod
-[putSource: sourceStr class: class category: catName withStamp: changeStamp inFile: fileIndex priorMethod: priorMethod
+[
 	^ self
 		putSource: sourceStr
 		inFile: fileIndex
@@ -1105,7 +1105,7 @@ CompiledMethod >> putSource: sourceStr class: class category: catName withStamp:
 ]
 
 CompiledMethod >> putSource: sourceStr inFile: fileIndex withPreamble: preambleBlock
-[putSource: sourceStr inFile: fileIndex withPreamble: preambleBlock
+[
 	"Store the source code for the receiver on an external file.
 	If no sources are available, i.e., SourceFile is nil, then store
 	temp names for decompilation at the end of the method.
@@ -1125,7 +1125,7 @@ CompiledMethod >> putSource: sourceStr inFile: fileIndex withPreamble: preambleB
 ]
 
 CompiledMethod >> readsField: varIndex
-[readsField: varIndex
+[
 	"Answer whether the receiver loads the instance variable indexed by the argument."
 
 	| varIndexCode scanner |
@@ -1141,7 +1141,7 @@ CompiledMethod >> readsField: varIndex
 ]
 
 CompiledMethod >> readsRef: literalAssociation
-[readsRef: literalAssociation
+[
 	"Answer whether the receiver loads the argument."
 
 	| litIndex scanner |
@@ -1158,7 +1158,7 @@ CompiledMethod >> readsRef: literalAssociation
 ]
 
 CompiledMethod >> referredInstVars
-[referredInstVars
+[
 	| allInstVarNames instVarNames |
 	allInstVarNames := self methodClass allInstVarNames.
 	self isReturnField
@@ -1171,7 +1171,7 @@ CompiledMethod >> referredInstVars
 ]
 
 CompiledMethod >> refersToLiteral: aLiteral
-[refersToLiteral: aLiteral
+[
 	"Answer true if any literal in this method is literal, even if embedded in array structure or within its pragmas."
 
 	"only iterate to numLiterals - 1, as the last has the classBinding and the last-but-one needs special treatment"
@@ -1186,12 +1186,12 @@ CompiledMethod >> refersToLiteral: aLiteral
 ]
 
 CompiledMethod >> removeFromSystem
-[removeFromSystem
+[
 	^ self methodClass removeSelector: self selector
 ]
 
 CompiledMethod >> removeProperty: propName
-[removeProperty: propName
+[
 	"Remove the property propName if it exists.
 	 Do _not_ raise an error if the property is missing."
 
@@ -1202,7 +1202,7 @@ CompiledMethod >> removeProperty: propName
 ]
 
 CompiledMethod >> removeProperty: propName ifAbsent: aBlock
-[removeProperty: propName ifAbsent: aBlock
+[
 	"Remove the property propName if it exists.
 	 Answer the evaluation of aBlock if the property is missing."
 
@@ -1213,7 +1213,7 @@ CompiledMethod >> removeProperty: propName ifAbsent: aBlock
 ]
 
 CompiledMethod >> returnField
-[returnField
+[
 	"Answer the index of the instance variable returned by a quick return 
 	method."
 
@@ -1225,7 +1225,7 @@ CompiledMethod >> returnField
 ]
 
 CompiledMethod >> sameLiteralsAs: method
-[sameLiteralsAs: method
+[
 	"Compare my literals to those of method. This is needed to compare compiled methods."
 
 	| numLits literal1 literal2 |
@@ -1255,19 +1255,19 @@ CompiledMethod >> sameLiteralsAs: method
 ]
 
 CompiledMethod >> scanFor: byte
-[scanFor: byte
+[
 	"Answer whether the receiver contains the argument as a bytecode."
 
 	^ (InstructionStream on: self) scanFor: [ :instr | instr = byte ]	"Smalltalk browseAllSelect: [:m | m scanFor: 134]"
 ]
 
 CompiledMethod >> scanner
-[scanner
+[
 	^ InstructionStream on: self
 ]
 
 CompiledMethod >> searchForClass
-[searchForClass
+[
 	"search me in all classes, if found, return my class. Slow!"
 
 	self systemNavigation
@@ -1276,7 +1276,7 @@ CompiledMethod >> searchForClass
 ]
 
 CompiledMethod >> searchForSelector
-[searchForSelector
+[
 	"search me in all classes, if found, return my selector. Slow!"
 
 	self systemNavigation
@@ -1286,7 +1286,7 @@ CompiledMethod >> searchForSelector
 ]
 
 CompiledMethod >> selector
-[selector
+[
 	"Answer a method's selector.  This is either the penultimate literal,
 	 or, if the method has any properties or pragmas, the selector of
 	 the MethodProperties stored in the penultimate literal."
@@ -1298,7 +1298,7 @@ CompiledMethod >> selector
 ]
 
 CompiledMethod >> selector: aSelector
-[selector: aSelector
+[
 	"Set a method's selector.  This is either the penultimate literal,
 	 or, if the method has any properties or pragmas, the selector of
 	 the MethodProperties stored in the penultimate literal."
@@ -1312,12 +1312,12 @@ CompiledMethod >> selector: aSelector
 ]
 
 CompiledMethod >> sendsSelector: aSymbol
-[sendsSelector: aSymbol
+[
 	^ self messages includes: aSymbol
 ]
 
 CompiledMethod >> sendsToSuper
-[sendsToSuper
+[
 	"Answer whether the receiver sends any message to super."
 
 	| scanner |
@@ -1327,7 +1327,7 @@ CompiledMethod >> sendsToSuper
 ]
 
 CompiledMethod >> setSourcePointer: srcPointer
-[setSourcePointer: srcPointer
+[
 	"We can't change the trailer of existing method, since it could have completely different format. 	
 	Therefore we need to generate a copy with new trailer, containing scrPointer, and then become it."
 
@@ -1347,12 +1347,12 @@ CompiledMethod >> setSourcePointer: srcPointer
 ]
 
 CompiledMethod >> setSourcePosition: position inFile: fileIndex
-[setSourcePosition: position inFile: fileIndex
+[
 	self setSourcePointer: (SourceFiles sourcePointerFromFileIndex: fileIndex andPosition: position)
 ]
 
 CompiledMethod >> sourceCode
-[sourceCode
+[
 	"Retrieve or reconstruct the source code for this method."
 
 	| trailer source |
@@ -1369,7 +1369,7 @@ CompiledMethod >> sourceCode
 ]
 
 CompiledMethod >> sourceFileStream
-[sourceFileStream
+[
 	"Answer the sources file stream with position set at the beginning of my source string"
 
 	| pos |
@@ -1379,12 +1379,12 @@ CompiledMethod >> sourceFileStream
 ]
 
 CompiledMethod >> sourceFileStreamIfAbsent: aBlock
-[sourceFileStreamIfAbsent: aBlock
+[
 	^ self sourceFileStream ifNil: aBlock
 ]
 
 CompiledMethod >> sourcePointer
-[sourcePointer
+[
 	"Answer the integer which can be used to find the source file and position for this method.
 	The actual interpretation of this number is up to the SourceFileArray stored in the global variable SourceFiles."
 
@@ -1392,7 +1392,7 @@ CompiledMethod >> sourcePointer
 ]
 
 CompiledMethod >> storeOn: aStream
-[storeOn: aStream
+[
 	| noneYet |
 	aStream nextPutAll: '(('.
 	aStream nextPutAll: self class name.
@@ -1415,7 +1415,7 @@ CompiledMethod >> storeOn: aStream
 ]
 
 CompiledMethod >> symbolic
-[symbolic
+[
 	"Answer a String that contains a list of all the byte codes in a method 
 	with a short description of each."
 
@@ -1426,7 +1426,7 @@ CompiledMethod >> symbolic
 ]
 
 CompiledMethod >> symbolicLinesDo: aBlock
-[symbolicLinesDo: aBlock
+[
 	"Evaluate aBlock with each of the lines in the symbolic output."
 
 	| aStream pc |
@@ -1459,12 +1459,12 @@ CompiledMethod >> symbolicLinesDo: aBlock
 ]
 
 CompiledMethod >> tempNames
-[tempNames
+[
 	^ self methodNode tempNames
 ]
 
 CompiledMethod >> timeStamp
-[timeStamp
+[
 	"Answer the authoring time-stamp for the given method, retrieved from the sources or changes file. Answer the empty string if no time stamp is available."
 
 	"(CompiledMethod compiledMethodAt: #timeStamp) timeStamp"
@@ -1477,7 +1477,7 @@ CompiledMethod >> timeStamp
 ]
 
 CompiledMethod >> timeStampFromFile: file
-[timeStampFromFile: file
+[
 	"return the timestamp of this method for a given source filestream"
 
 	| preamble stamp tokens tokenCount |
@@ -1498,14 +1498,14 @@ CompiledMethod >> timeStampFromFile: file
 ]
 
 CompiledMethod >> trailer
-[trailer
+[
 	"Answer the receiver's trailer"
 
 	^ CompiledMethodTrailer new method: self
 ]
 
 CompiledMethod >> valueWithReceiver: aReceiver arguments: anArray
-[valueWithReceiver: aReceiver arguments: anArray
+[
 	"This should be changed when all the VM will support passign of extra arguments
 		^self receiver: aReceiver withArguments: anArray executeMethod: self"
 
@@ -1513,14 +1513,14 @@ CompiledMethod >> valueWithReceiver: aReceiver arguments: anArray
 ]
 
 CompiledMethod >> veryDeepCopyWith: deepCopier
-[veryDeepCopyWith: deepCopier
+[
 	"Return self.  I am always shared.  Do not record me.  Only use this for blocks.  Normally methodDictionaries should not be copied this way."
 
 	
 ]
 
 CompiledMethod >> voidCogVMState
-[voidCogVMState
+[
 	"Tell the VM to remove all references to any machine code form of the method.
 	 This primitive must be called whenever a method is in use and modified.  This is
 	 more aggressive (and *much* more costly) than flushCache since it must search
@@ -1533,7 +1533,7 @@ CompiledMethod >> voidCogVMState
 ]
 
 CompiledMethod >> writesField: varIndex
-[writesField: varIndex
+[
 	"Answer whether the receiver stores into the instance variable indexed by the argument."
 
 	| varIndexCode scanner |
@@ -1550,7 +1550,7 @@ CompiledMethod >> writesField: varIndex
 ]
 
 CompiledMethod >> writesRef: literalAssociation
-[writesRef: literalAssociation
+[
 	"Answer whether the receiver stores into the argument."
 
 	| litIndex scanner |
@@ -1564,55 +1564,55 @@ CompiledMethod >> writesRef: literalAssociation
 ]
 
 CompiledMethod class >> abstractMarker
-[abstractMarker
+[
 	^ #subclassResponsibility
 ]
 
 CompiledMethod class >> basicNew
-[basicNew
+[
 	self error: 'CompiledMethods may only be created with newMethod:header:'
 ]
 
 CompiledMethod class >> basicNew: size
-[basicNew: size
+[
 	self error: 'CompiledMethods may only be created with newMethod:header:'
 ]
 
 CompiledMethod class >> cleanUp
-[cleanUp
+[
 	self allInstances do: [ :e | e isInstalled
 				ifFalse: [ e embeddSourceInTrailer ] ]	"pay attention since embeddSourceInTrailer creates a new compiled method. So iterating while	changing it is a bad idea. This is why we use allInstances do and not allInstancesDo:"
 ]
 
 CompiledMethod class >> conflictMarker
-[conflictMarker
+[
 	^ #traitConflict
 ]
 
 CompiledMethod class >> disabledMarker
-[disabledMarker
+[
 	^ #shouldNotImplement
 ]
 
 CompiledMethod class >> explicitRequirementMarker
-[explicitRequirementMarker
+[
 	^ #explicitRequirement
 ]
 
 CompiledMethod class >> fullFrameSize
-[fullFrameSize
+[
 	"CompiledMethod fullFrameSize"
 
 	^ LargeFrame
 ]
 
 CompiledMethod class >> implicitRequirementMarker
-[implicitRequirementMarker
+[
 	^ #requirement
 ]
 
 CompiledMethod class >> initialize
-[initialize
+[
 	"CompiledMethod initialize"
 
 	"Initialize class variables specifying the size of the temporary frame
@@ -1623,7 +1623,7 @@ CompiledMethod class >> initialize
 ]
 
 CompiledMethod class >> methodPropertiesClass
-[methodPropertiesClass
+[
 	"Answer the class to use to create a method's properties, which can be a poor man's way
 	 to add instance variables to subclassses of CompiledMethod.  Subclasses of CompiledMethod
 	 should define a corresponding subclass of AdditionalMethodState that adds any instance variables
@@ -1633,7 +1633,7 @@ CompiledMethod class >> methodPropertiesClass
 ]
 
 CompiledMethod class >> new
-[new
+[
 	"This will not make a meaningful method, but it could be used
 	to invoke some otherwise useful method in this class."
 
@@ -1641,7 +1641,7 @@ CompiledMethod class >> new
 ]
 
 CompiledMethod class >> newBytes: numberOfBytes trailerBytes: trailer nArgs: nArgs nTemps: nTemps nStack: stackSize nLits: nLits primitive: primitiveIndex
-[newBytes: numberOfBytes trailerBytes: trailer nArgs: nArgs nTemps: nTemps nStack: stackSize nLits: nLits primitive: primitiveIndex
+[
 	"Answer an instance of me. The header is specified by the message 
 	arguments. The remaining parts are not as yet determined."
 
@@ -1666,7 +1666,7 @@ CompiledMethod class >> newBytes: numberOfBytes trailerBytes: trailer nArgs: nAr
 ]
 
 CompiledMethod class >> newBytes: numberOfBytes trailerBytes: trailer nArgs: nArgs nTemps: nTemps nStack: stackSize nLits: nLits primitive: primitiveIndex flag: flag
-[newBytes: numberOfBytes trailerBytes: trailer nArgs: nArgs nTemps: nTemps nStack: stackSize nLits: nLits primitive: primitiveIndex flag: flag
+[
 	"Answer an instance of me. The header is specified by the message 
 	arguments. The remaining parts are not as yet determined."
 
@@ -1691,7 +1691,126 @@ CompiledMethod class >> newBytes: numberOfBytes trailerBytes: trailer nArgs: nAr
 ]
 
 CompiledMethod class >> newFrom: aCompiledMethod
-[newFrom: aCompiledMethod
+[
+	| inst |
+	inst := super basicNew: aCompiledMethod size.
+	1 to: aCompiledMethod size do: [ :index | inst at: index put: (aCompiledMethod at: index) ].
+	^ inst
+]
+
+CompiledMethod class >> newInstanceFrom: oldInstance variable: variable size: instSize map: map
+[
+	"Create a new instance of the receiver based on the given old instance.
+	The supplied map contains a mapping of the old instVar names into
+	the receiver's instVars"
+
+	| new |
+	new := self newFrom: oldInstance.
+	1 to: instSize do: [ :offset | (map at: offset) > 0
+			ifTrue: [ new instVarAt: offset put: (oldInstance instVarAt: (map at: offset)) ] ].
+	^ new
+]
+
+CompiledMethod class >> newMethod: numberOfBytes header: headerWord
+[
+	"Primitive. Answer an instance of me. The number of literals (and other 
+	information) is specified the headerWord. The first argument specifies 
+	the number of fields for bytecodes in the method. Fail if either 
+	argument is not a SmallInteger, or if numberOfBytes is negative. Once 
+	the header of a method is set by this primitive, it cannot be changed in 
+	any way. Essential. See Object documentation whatIsAPrimitive."
+
+	<primitive: 79>
+	(numberOfBytes isInteger and: [ headerWord isInteger and: [ numberOfBytes >= 0 ] ])
+		ifTrue: [ "args okay; space must be low"
+			OutOfMemory signal.	"retry if user proceeds"
+			^ self newMethod: numberOfBytes header: headerWord ].
+	^ self primitiveFailed
+]
+
+CompiledMethod class >> primitive: primNum numArgs: numArgs numTemps: numTemps stackSize: stackSize literals: literals bytecodes: bytecodes trailer: trailerBytes
+[
+	"Create method with given attributes.  numTemps includes numArgs.  stackSize does not include numTemps."
+
+	| compiledMethod |
+	compiledMethod := self
+		newBytes: bytecodes size
+		trailerBytes: trailerBytes
+		nArgs: numArgs
+		nTemps: numTemps
+		nStack: 0
+		nLits: literals size
+		primitive: primNum.
+	(WriteStream with: compiledMethod)
+		position: compiledMethod initialPC - 1;
+		nextPutAll: bytecodes.
+	literals withIndexDo: [ :obj :i | compiledMethod literalAt: i put: obj ].
+	compiledMethod needsFrameSize: stackSize.
+	^ compiledMethod
+]
+
+CompiledMethod class >> smallFrameSize
+[
+	^ SmallFrame
+]
+
+CompiledMethod class >> subclassResponsibilityMarker
+[
+	^ #subclassResponsibility
+]
+
+CompiledMethod class >> toReturnConstant: index trailerBytes: trailer
+[
+	"Answer an instance of me that is a quick return of the constant
+	indexed in (true false nil -1 0 1 2)."
+
+	^ self
+		newBytes: 0
+		trailerBytes: trailer
+		nArgs: 0
+		nTemps: 0
+		nStack: 0
+		nLits: 2
+		primitive: 256 + index
+]
+
+CompiledMethod class >> toReturnField: field trailerBytes: trailer
+[
+	"Answer an instance of me that is a quick return of the instance variable 
+	indexed by the argument, field."
+
+	^ self
+		newBytes: 0
+		trailerBytes: trailer
+		nArgs: 0
+		nTemps: 0
+		nStack: 0
+		nLits: 2
+		primitive: 264 + field
+]
+
+CompiledMethod class >> toReturnSelf
+[
+	"Answer an instance of me that is a quick return of the instance (^self)."
+
+	^ self toReturnSelfTrailerBytes: CompiledMethodTrailer empty
+]
+
+CompiledMethod class >> toReturnSelfTrailerBytes: trailer
+[
+	"Answer an instance of me that is a quick return of the instance (^self)."
+
+	^ self
+		newBytes: 0
+		trailerBytes: trailer
+		nArgs: 0
+		nTemps: 0
+		nStack: 0
+		nLits: 2
+		primitive: 256
+]
+
+: aCompiledMethod
 	| inst |
 	inst := super basicNew: aCompiledMethod size.
 	1 to: aCompiledMethod size do: [ :index | inst at: index put: (aCompiledMethod at: index) ].

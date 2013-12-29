@@ -4,42 +4,42 @@ NotFound
 	package: #'Collections-Abstract'.
 
 NotFound >> collection
-[collection
+[
 	"Return the collection where something is not found in"
 
 	^ self signaler
 ]
 
 NotFound >> collection: aCollection
-[collection: aCollection
+[
 	"Set the collection where something is not found in"
 
 	self signaler: aCollection
 ]
 
 NotFound >> messageText
-[messageText
+[
 	"Overwritten to initialiaze the message text to a standard text if it has not yet been set"
 
 	^ messageText ifNil: [ messageText := self standardMessageText ]
 ]
 
 NotFound >> object
-[object
+[
 	"Return the object that was not found"
 
 	^ object
 ]
 
 NotFound >> object: anObject
-[object: anObject
+[
 	"Set the object that was not found"
 
 	object := anObject
 ]
 
 NotFound >> standardMessageText
-[standardMessageText
+[
 	"Generate a standard textual description"
 
 	^ String
@@ -49,7 +49,7 @@ NotFound >> standardMessageText
 ]
 
 NotFound class >> signalFor: anObject
-[signalFor: anObject
+[
 	"Create and signal a NotFound exception for anObject in the default receiver."
 
 	^ self new
@@ -58,8 +58,16 @@ NotFound class >> signalFor: anObject
 ]
 
 NotFound class >> signalFor: anObject in: aCollection
-[signalFor: anObject in: aCollection
+[
 	"Create and signal a NotFound exception for anObject in aCollection."
+
+	^ self new
+		object: anObject;
+		collection: aCollection;
+		signal
+]
+
+eate and signal a NotFound exception for anObject in aCollection."
 
 	^ self new
 		object: anObject;

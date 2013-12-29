@@ -2,7 +2,7 @@ Boolean
 	package: #Kernel.
 
 Boolean >> & aBoolean
-[& aBoolean
+[
 	"Evaluating conjunction. Evaluate the argument. Then answer true if 
 	both the receiver and the argument are true."
 
@@ -10,7 +10,7 @@ Boolean >> & aBoolean
 ]
 
 Boolean >> ==> aBlock
-[==> aBlock
+[
 	"The material conditional, also known as the material implication or truth functional conditional.
 	Correspond to not ... or ... and does not correspond to the English if...then... construction.
 		
@@ -35,7 +35,7 @@ Boolean >> ==> aBlock
 ]
 
 Boolean >> and: alternativeBlock
-[and: alternativeBlock
+[
 	"Nonevaluating conjunction. If the receiver is true, answer the value of 
 	the argument, alternativeBlock; otherwise answer false without 
 	evaluating the argument."
@@ -44,14 +44,14 @@ Boolean >> and: alternativeBlock
 ]
 
 Boolean >> asBit
-[asBit
+[
 	"convert myself to an Integer representing 1 for true and 0 for false"
 
 	self subclassResponsibility
 ]
 
 Boolean >> deepCopy
-[deepCopy
+[
 	"Receiver has two concrete subclasses, True and False.
 	Only one instance of each should be made, so return self."
 
@@ -59,14 +59,14 @@ Boolean >> deepCopy
 ]
 
 Boolean >> eqv: aBoolean
-[eqv: aBoolean
+[
 	"Answer true if the receiver is equivalent to aBoolean."
 
 	^ self == aBoolean
 ]
 
 Boolean >> ifFalse: alternativeBlock
-[ifFalse: alternativeBlock
+[
 	"If the receiver is true (i.e., the condition is true), then the value is the 
 	true alternative, which is nil. Otherwise answer the result of evaluating 
 	the argument, alternativeBlock. Create an error notification if the 
@@ -77,14 +77,14 @@ Boolean >> ifFalse: alternativeBlock
 ]
 
 Boolean >> ifFalse: falseAlternativeBlock ifTrue: trueAlternativeBlock
-[ifFalse: falseAlternativeBlock ifTrue: trueAlternativeBlock
+[
 	"Same as ifTrue:ifFalse:."
 
 	self subclassResponsibility
 ]
 
 Boolean >> ifTrue: alternativeBlock
-[ifTrue: alternativeBlock
+[
 	"If the receiver is false (i.e., the condition is false), then the value is the 
 	false alternative, which is nil. Otherwise answer the result of evaluating 
 	the argument, alternativeBlock. Create an error notification if the 
@@ -95,7 +95,7 @@ Boolean >> ifTrue: alternativeBlock
 ]
 
 Boolean >> ifTrue: trueAlternativeBlock ifFalse: falseAlternativeBlock
-[ifTrue: trueAlternativeBlock ifFalse: falseAlternativeBlock
+[
 	"If the receiver is true (i.e., the condition is true), then answer the value 
 	of the argument trueAlternativeBlock. If the receiver is false, answer the 
 	result of evaluating the argument falseAlternativeBlock. If the receiver 
@@ -106,17 +106,17 @@ Boolean >> ifTrue: trueAlternativeBlock ifFalse: falseAlternativeBlock
 ]
 
 Boolean >> isLiteral
-[isLiteral
+[
 	^ true
 ]
 
 Boolean >> isSelfEvaluating
-[isSelfEvaluating
+[
 	^ true
 ]
 
 Boolean >> not
-[not
+[
 	"Negation. Answer true if the receiver is false, answer false if the 
 	receiver is true."
 
@@ -124,7 +124,7 @@ Boolean >> not
 ]
 
 Boolean >> or: alternativeBlock
-[or: alternativeBlock
+[
 	"Nonevaluating disjunction. If the receiver is false, answer the value of 
 	the argument, alternativeBlock; otherwise answer true without 
 	evaluating the argument."
@@ -133,7 +133,7 @@ Boolean >> or: alternativeBlock
 ]
 
 Boolean >> shallowCopy
-[shallowCopy
+[
 	"Receiver has two concrete subclasses, True and False.
 	Only one instance of each should be made, so return self."
 
@@ -141,15 +141,33 @@ Boolean >> shallowCopy
 ]
 
 Boolean >> storeOn: aStream
-[storeOn: aStream
+[
 	"Refer to the comment in Object|storeOn:."
 
 	self printOn: aStream
 ]
 
 Boolean >> veryDeepCopyWith: deepCopier
-[veryDeepCopyWith: deepCopier
+[
 	"Return self.  I can't be copied.  Do not record me."
+
+	
+]
+
+Boolean >> | aBoolean
+[
+	"Evaluating disjunction (OR). Evaluate the argument. Then answer true 
+	if either the receiver or the argument is true."
+
+	self subclassResponsibility
+]
+
+Boolean class >> new
+[
+	self error: 'You may not create any more Booleans - this is two-valued logic'
+]
+
+ self.  I can't be copied.  Do not record me."
 
 	
 ]

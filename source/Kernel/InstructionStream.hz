@@ -4,7 +4,7 @@ InstructionStream
 	package: #Kernel.
 
 InstructionStream >> addSelectorTo: set
-[addSelectorTo: set
+[
 	"If this instruction is a send, add its selector to set."
 
 	| selectorOrSelf |
@@ -13,59 +13,59 @@ InstructionStream >> addSelectorTo: set
 ]
 
 InstructionStream >> atEnd
-[atEnd
+[
 	^ pc > self method endPC
 ]
 
 InstructionStream >> debuggerMap
-[debuggerMap
+[
 	^ self method debuggerMap
 ]
 
 InstructionStream >> firstByte
-[firstByte
+[
 	"Answer the first byte of the current bytecode."
 
 	^ self method at: pc
 ]
 
 InstructionStream >> followingByte
-[followingByte
+[
 	"Answer the next bytecode."
 
 	^ self method at: pc + 1
 ]
 
 InstructionStream >> followingBytecode
-[followingBytecode
+[
 	"Answer the bytecode of the following bytecode (different to nextByte)."
 
 	^ self method at: self followingPc
 ]
 
 InstructionStream >> followingPc
-[followingPc
+[
 	"Answer the pc of the following bytecode."
 
 	^ self nextPc: (self method at: pc)
 ]
 
 InstructionStream >> fourthByte
-[fourthByte
+[
 	"Answer the fourth byte of the current bytecode."
 
 	^ self method at: pc + 3
 ]
 
 InstructionStream >> interpret
-[interpret
+[
 	| endPC |
 	endPC := self method endPC.
 	[ pc > endPC ] whileFalse: [ self interpretNextInstructionFor: self ]
 ]
 
 InstructionStream >> interpretExtension: offset in: method for: client
-[interpretExtension: offset in: method for: client
+[
 	| type offset2 byte2 byte3 byte4 |
 	offset <= 6
 		ifTrue: [ "Extended op codes 128-134"
@@ -163,7 +163,7 @@ InstructionStream >> interpretExtension: offset in: method for: client
 ]
 
 InstructionStream >> interpretJump
-[interpretJump
+[
 	| byte |
 	byte := self method at: pc.
 	(byte between: 144 and: 151)
@@ -176,7 +176,7 @@ InstructionStream >> interpretJump
 ]
 
 InstructionStream >> interpretJumpIfCond
-[interpretJumpIfCond
+[
 	| byte |
 	byte := self method at: pc.
 	(byte between: 152 and: 159)
@@ -189,7 +189,7 @@ InstructionStream >> interpretJumpIfCond
 ]
 
 InstructionStream >> interpretNextInstructionFor: client
-[interpretNextInstructionFor: client
+[
 	"Send to the argument, client, a message that specifies the type of the 
 	next instruction."
 
@@ -266,34 +266,34 @@ InstructionStream >> interpretNextInstructionFor: client
 ]
 
 InstructionStream >> method
-[method
+[
 	"Answer the compiled method that supplies the receiver's bytecodes."
 
 	^ sender	"method access when used alone (not as part of a context)"
 ]
 
 InstructionStream >> method: method pc: startpc
-[method: method pc: startpc
+[
 	sender := method.	"allows this class to stand alone as a method scanner"
 	pc := startpc
 ]
 
 InstructionStream >> nextByte
-[nextByte
+[
 	"Answer the next bytecode."
 
 	^ self method at: pc
 ]
 
 InstructionStream >> nextInstruction
-[nextInstruction
+[
 	"Return the next bytecode instruction as a message that an InstructionClient would understand.  This advances the pc by one instruction."
 
 	^ self interpretNextInstructionFor: MessageCatcher new
 ]
 
 InstructionStream >> nextPc: currentByte
-[nextPc: currentByte
+[
 	"Answer the pc of the next bytecode following the current one, given the current bytecode.."
 
 	| type |
@@ -307,19 +307,19 @@ InstructionStream >> nextPc: currentByte
 ]
 
 InstructionStream >> pc
-[pc
+[
 	"Answer the index of the next bytecode."
 
 	^ pc
 ]
 
 InstructionStream >> pc: anInteger
-[pc: anInteger
+[
 	pc := anInteger
 ]
 
 InstructionStream >> peekInstruction
-[peekInstruction
+[
 	"Return the next bytecode instruction as a message that an InstructionClient would understand.  The pc remains unchanged."
 
 	| currentPc instruction |
@@ -330,12 +330,12 @@ InstructionStream >> peekInstruction
 ]
 
 InstructionStream >> previousPc
-[previousPc
+[
 	^ self method pcPreviousTo: pc
 ]
 
 InstructionStream >> scanFor: scanBlock
-[scanFor: scanBlock
+[
 	"Answer the index of the first bytecode for which scanBlock
 	 answers true when supplied with that bytecode."
 
@@ -350,14 +350,14 @@ InstructionStream >> scanFor: scanBlock
 ]
 
 InstructionStream >> secondByte
-[secondByte
+[
 	"Answer the second byte of the current bytecode."
 
 	^ self method at: pc + 1
 ]
 
 InstructionStream >> selectorToSendOrSelf
-[selectorToSendOrSelf
+[
 	"If this instruction is a send, answer the selector, otherwise answer self."
 
 	| byte byte2 |
@@ -383,7 +383,7 @@ InstructionStream >> selectorToSendOrSelf
 ]
 
 InstructionStream >> skipBackBeforeJump
-[skipBackBeforeJump
+[
 	"Assuming that the receiver is positioned jast after a jump, skip back one or two bytes, depending on the size of the previous jump instruction."
 
 	| strm short |
@@ -400,26 +400,26 @@ InstructionStream >> skipBackBeforeJump
 ]
 
 InstructionStream >> thirdByte
-[thirdByte
+[
 	"Answer the third byte of the current bytecode."
 
 	^ self method at: pc + 2
 ]
 
 InstructionStream >> willBlockReturn
-[willBlockReturn
+[
 	^ (self method at: pc) = 125
 ]
 
 InstructionStream >> willCreateBlock
-[willCreateBlock
+[
 	"next bytecode is a block creation"
 
 	^ (self method at: pc) = 143
 ]
 
 InstructionStream >> willJump
-[willJump
+[
 	"unconditionally"
 
 	| byte |
@@ -428,7 +428,7 @@ InstructionStream >> willJump
 ]
 
 InstructionStream >> willJumpIfFalse
-[willJumpIfFalse
+[
 	"Answer whether the next bytecode is a jump-if-false."
 
 	| byte |
@@ -437,7 +437,7 @@ InstructionStream >> willJumpIfFalse
 ]
 
 InstructionStream >> willJumpIfTrue
-[willJumpIfTrue
+[
 	"Answer whether the next bytecode is a jump-if-true."
 
 	| byte |
@@ -446,19 +446,19 @@ InstructionStream >> willJumpIfTrue
 ]
 
 InstructionStream >> willJustPop
-[willJustPop
+[
 	^ (self method at: pc) = 135
 ]
 
 InstructionStream >> willReturn
-[willReturn
+[
 	"Answer whether the next bytecode is a return."
 
 	^ (self method at: pc) between: 120 and: 125
 ]
 
 InstructionStream >> willSend
-[willSend
+[
 	"Answer whether the next bytecode is a message-send."
 
 	| byte |
@@ -469,7 +469,7 @@ InstructionStream >> willSend
 ]
 
 InstructionStream >> willStore
-[willStore
+[
 	"Answer whether the next bytecode is a store or store-pop"
 
 	| byte |
@@ -489,7 +489,7 @@ InstructionStream >> willStore
 ]
 
 InstructionStream >> willStorePop
-[willStorePop
+[
 	"Answer whether the next bytecode is a store-pop."
 
 	| byte |
@@ -498,6 +498,29 @@ InstructionStream >> willStorePop
 		or: [ "142		storeAndPopRemoteTempLongBytecode"
 			byte = 142
 				or: [ "96 103		storeAndPopReceiverVariableBytecode"
+					"104 111	storeAndPopTemporaryVariableBytecode"
+					byte between: 96 and: 111 ] ]
+]
+
+InstructionStream class >> initialize
+[
+	"Initialize an array of special constants returned by single-bytecode returns."
+
+	SpecialConstants := (Array with: true with: false with: nil) , (Array
+				with: -1
+				with: 0
+				with: 1
+				with: 2)	"InstructionStream initialize."
+]
+
+InstructionStream class >> on: method
+[
+	"Answer an instance of me on the argument, method."
+
+	^ self new method: method pc: method initialPC
+]
+
+leBytecode"
 					"104 111	storeAndPopTemporaryVariableBytecode"
 					byte between: 96 and: 111 ] ]
 ]

@@ -1,10 +1,10 @@
 DateAndTime >> fuelAccept: aGeneralMapper
-[fuelAccept: aGeneralMapper
+[
 	^ aGeneralMapper visitHookPrimitive: self
 ]
 
 DateAndTime >> fuelSet: julianDay nanoSecond: nanoSeconds seconds: numberOfSeconds offset: anOffset
-[fuelSet: julianDay nanoSecond: nanoSeconds seconds: numberOfSeconds offset: anOffset
+[
 	self
 		setJdn: julianDay
 		seconds: numberOfSeconds
@@ -13,7 +13,7 @@ DateAndTime >> fuelSet: julianDay nanoSecond: nanoSeconds seconds: numberOfSecon
 ]
 
 DateAndTime >> serializeOn: anEncoder
-[serializeOn: anEncoder
+[
 	anEncoder
 		encodeUint32: self julianDayNumberUTC;
 		encodeUint32: self nanoSecond;
@@ -23,10 +23,16 @@ DateAndTime >> serializeOn: anEncoder
 ]
 
 DateAndTime class >> materializeFrom: aDecoder
-[materializeFrom: aDecoder
+[
 	^ self basicNew
 		fuelSet: aDecoder nextEncodedUint32
 			nanoSecond: aDecoder nextEncodedUint32
+			seconds: aDecoder nextEncodedInt24
+			offset: (Duration seconds: aDecoder nextEncodedInt24 nanoSeconds: aDecoder nextEncodedInt32);
+		yourself
+]
+
+dUint32
 			seconds: aDecoder nextEncodedInt24
 			offset: (Duration seconds: aDecoder nextEncodedInt24 nanoSeconds: aDecoder nextEncodedInt32);
 		yourself

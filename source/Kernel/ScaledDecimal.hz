@@ -4,84 +4,84 @@ ScaledDecimal
 	package: #Kernel.
 
 ScaledDecimal >> * aNumber
-[* aNumber
+[
 	aNumber class = self class
 		ifTrue: [ ^ self asFraction * aNumber asFraction asScaledDecimal: (scale max: aNumber scale) ].
 	^ self coerce: self asFraction * aNumber
 ]
 
 ScaledDecimal >> + aNumber
-[+ aNumber
+[
 	aNumber class = self class
 		ifTrue: [ ^ self asFraction + aNumber asFraction asScaledDecimal: (scale max: aNumber scale) ].
 	^ self coerce: self asFraction + aNumber
 ]
 
 ScaledDecimal >> - aNumber
-[- aNumber
+[
 	aNumber class = self class
 		ifTrue: [ ^ self asFraction - aNumber asFraction asScaledDecimal: (scale max: aNumber scale) ].
 	^ self coerce: self asFraction - aNumber
 ]
 
 ScaledDecimal >> / aNumber
-[/ aNumber
+[
 	aNumber class = self class
 		ifTrue: [ ^ self asFraction / aNumber asFraction asScaledDecimal: (scale max: aNumber scale) ].
 	^ self coerce: self asFraction / aNumber
 ]
 
 ScaledDecimal >> < aNumber
-[< aNumber
+[
 	aNumber class = self class
 		ifTrue: [ ^ self asFraction < aNumber asFraction ].
 	^ self asFraction < aNumber
 ]
 
 ScaledDecimal >> <= aNumber
-[<= aNumber
+[
 	aNumber class = self class
 		ifTrue: [ ^ self asFraction <= aNumber asFraction ].
 	^ self asFraction <= aNumber
 ]
 
 ScaledDecimal >> = aNumber
-[= aNumber
+[
 	aNumber class = self class
 		ifTrue: [ ^ self asFraction = aNumber asFraction ].
 	^ self asFraction = aNumber
 ]
 
 ScaledDecimal >> > aNumber
-[> aNumber
+[
 	aNumber class = self class
 		ifTrue: [ ^ self asFraction > aNumber asFraction ].
 	^ self asFraction > aNumber
 ]
 
 ScaledDecimal >> >= aNumber
-[>= aNumber
+[
 	aNumber class = self class
 		ifTrue: [ ^ self asFraction >= aNumber asFraction ].
 	^ self asFraction >= aNumber
 ]
 
 ScaledDecimal >> adaptToFraction: rcvr andSend: selector
-[adaptToFraction: rcvr andSend: selector
+[
 	"If I am involved in arithmetic with a Fraction, convert it to a ScaledDecimal."
 
 	^ (rcvr asScaledDecimal: scale) perform: selector with: self
 ]
 
 ScaledDecimal >> adaptToInteger: rcvr andSend: selector
-[adaptToInteger: rcvr andSend: selector
+[
 	"If I am involved in arithmetic with an Integer, convert it to a ScaledDecimal."
 
 	^ (rcvr asScaledDecimal: scale) perform: selector with: self
 ]
 
 ScaledDecimal >> asFraction
-[asFraction
+[
 	"Convert the receiver to a Fraction.
 	Avoid using numerator / denominator to save a useless and costly gcd: computation"
 
@@ -91,7 +91,7 @@ ScaledDecimal >> asFraction
 ]
 
 ScaledDecimal >> coerce: aNumber
-[coerce: aNumber
+[
 	"Note: this quick hack could be replaced by double dispatching"
 
 	aNumber class = self class
@@ -102,14 +102,14 @@ ScaledDecimal >> coerce: aNumber
 ]
 
 ScaledDecimal >> isFraction
-[isFraction
+[
 	"Though kind of Fraction, pretend we are not a Fraction to let coercion works correctly"
 
 	^ false
 ]
 
 ScaledDecimal >> isLiteral
-[isLiteral
+[
 	"Answer if this number could be a well behaved literal.
 	Well, it would only if evaluating back to self.
 	This is not the case of all ScaledDecimals.
@@ -123,14 +123,14 @@ ScaledDecimal >> isLiteral
 ]
 
 ScaledDecimal >> isSelfEvaluating
-[isSelfEvaluating
+[
 	"Not all scaled decimal are self evaluating, because they print rounded digits."
 
 	^ self isLiteral
 ]
 
 ScaledDecimal >> literalEqual: other
-[literalEqual: other
+[
 	"Testing equality is not enough.
 	It is also necessary to test number of decimal places (scale).
 	Otherwise we cannot compile both literals 0.5s1 and 0.50s2 in the same method"
@@ -139,12 +139,12 @@ ScaledDecimal >> literalEqual: other
 ]
 
 ScaledDecimal >> negated
-[negated
+[
 	^ self class newFromNumber: super negated scale: scale
 ]
 
 ScaledDecimal >> nthRoot: anInteger
-[nthRoot: anInteger
+[
 	"Answer the nth root of the receiver.
 	Preserve receiver class and scale if answer is exact.
 	Otherwise, answer a Float to denote inexactness."
@@ -157,7 +157,7 @@ ScaledDecimal >> nthRoot: anInteger
 ]
 
 ScaledDecimal >> printOn: aStream
-[printOn: aStream
+[
 	"Append an approximated representation of the receiver on aStream.
 	Use prescribed number of digits after decimal point (the scale) using a rounding operation if not exact"
 
@@ -168,40 +168,40 @@ ScaledDecimal >> printOn: aStream
 ]
 
 ScaledDecimal >> printOn: aStream base: base
-[printOn: aStream base: base
+[
 	base = 10
 		ifFalse: [ self error: 'ScaledDecimals should be printed only in base 10' ].
 	^ self printOn: aStream
 ]
 
 ScaledDecimal >> raisedTo: aNumber
-[raisedTo: aNumber
+[
 	^ self coerce: (super raisedTo: aNumber)
 ]
 
 ScaledDecimal >> raisedToInteger: aNumber
-[raisedToInteger: aNumber
+[
 	^ self class newFromNumber: (super raisedToInteger: aNumber) scale: scale
 ]
 
 ScaledDecimal >> reciprocal
-[reciprocal
+[
 	^ self class newFromNumber: super reciprocal scale: scale
 ]
 
 ScaledDecimal >> scale
-[scale
+[
 	^ scale
 ]
 
 ScaledDecimal >> setNumerator: n denominator: d scale: s
-[setNumerator: n denominator: d scale: s
+[
 	self setNumerator: n denominator: d.
 	scale := s
 ]
 
 ScaledDecimal >> sqrt
-[sqrt
+[
 	"Answer the square root of the receiver.
 	Preserve receiver class and scale if answer is exact.
 	Otherwise, answer a Float to denote inexactness."
@@ -214,12 +214,12 @@ ScaledDecimal >> sqrt
 ]
 
 ScaledDecimal >> squared
-[squared
+[
 	^ self class newFromNumber: super squared scale: scale
 ]
 
 ScaledDecimal >> storeOn: aStream
-[storeOn: aStream
+[
 	"ScaledDecimal sometimes have more digits than they print (potentially an infinity).
 	In this case, do not use printOn: because it would loose some extra digits"
 
@@ -236,12 +236,26 @@ ScaledDecimal >> storeOn: aStream
 ]
 
 ScaledDecimal class >> newFromNumber: aNumber scale: anInteger
-[newFromNumber: aNumber scale: anInteger
+[
 	| aFraction |
 	aFraction := aNumber asFraction.
 	^ aFraction isFraction
 		ifTrue: [ self new setNumerator: aFraction numerator denominator: aFraction denominator scale: anInteger ]
 		ifFalse: [ self new setNumerator: aFraction denominator: 1 scale: anInteger ]
+]
+
+ScaledDecimal class >> readFrom: stringOrStream
+[
+	"Answer a decimal number as described on stringOrStream.
+	The number may not include a leading radix specification, as in 16rFADE,
+	nor an exponent like 1.0e-3
+	It might have a scale specification at end or not like 10.3s2
+	If not, number of digits after decimal point will be used as scale"
+
+	^ (NumberParser on: stringOrStream) nextScaledDecimal
+]
+
+ new setNumerator: aFraction denominator: 1 scale: anInteger ]
 ]
 
 ScaledDecimal class >> readFrom: stringOrStream

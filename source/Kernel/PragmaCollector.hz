@@ -3,7 +3,7 @@ PragmaCollector
 	package: #Kernel.
 
 PragmaCollector >> addPragma: aPragma
-[addPragma: aPragma
+[
 	"if aPragma is to be kept, then add it and announce its adding"
 
 	(self keepPragma: aPragma)
@@ -12,7 +12,7 @@ PragmaCollector >> addPragma: aPragma
 ]
 
 PragmaCollector >> addedEventOccurs: anEvent
-[addedEventOccurs: anEvent
+[
 	"method adding event occured: if the 
 	concerned method contains a pragma then 
 	try to update myself with it"
@@ -24,19 +24,19 @@ PragmaCollector >> addedEventOccurs: anEvent
 ]
 
 PragmaCollector >> announce: anAnnouncement
-[announce: anAnnouncement
+[
 	"see Announcements packages"
 
 	self announcer ifNotNil: [ announcer announce: anAnnouncement ]
 ]
 
 PragmaCollector >> announcer
-[announcer
+[
 	^ announcer
 ]
 
 PragmaCollector >> classRemovedEventOccurs: anEvent
-[classRemovedEventOccurs: anEvent
+[
 	"a class has been removed: first see if the class is not my class
 	because then I must be unplugged from system event notifications"
 
@@ -46,49 +46,49 @@ PragmaCollector >> classRemovedEventOccurs: anEvent
 ]
 
 PragmaCollector >> collect: aBlock
-[collect: aBlock
+[
 	^ self collected collect: aBlock
 ]
 
 PragmaCollector >> collected
-[collected
+[
 	^ collected ifNil: [ collected := OrderedCollection new ]
 ]
 
 PragmaCollector >> detect: aBlock
-[detect: aBlock
+[
 	^ self collected detect: aBlock ifNone: [  ]
 ]
 
 PragmaCollector >> do: aBlock
-[do: aBlock
+[
 	self collected do: aBlock
 ]
 
 PragmaCollector >> filter
-[filter
+[
 	^ filter ifNil: [ filter := [ :prg | true ] ]
 ]
 
 PragmaCollector >> filter: aOneArgValuable
-[filter: aOneArgValuable
+[
 	filter := aOneArgValuable
 ]
 
 PragmaCollector >> ifNotEmpty: aBlock
-[ifNotEmpty: aBlock
+[
 	self collected ifNotEmpty: aBlock
 ]
 
 PragmaCollector >> initialize
-[initialize
+[
 	super initialize.
 	announcer := Announcer new.
 	self installSystemNotifications
 ]
 
 PragmaCollector >> installSystemNotifications
-[installSystemNotifications
+[
 	"Allows myself to be kept up-to-date regarding system changes"
 
 	SystemAnnouncer uniqueInstance unsubscribe: self.
@@ -100,22 +100,22 @@ PragmaCollector >> installSystemNotifications
 ]
 
 PragmaCollector >> isEmpty
-[isEmpty
+[
 	^ self collected isEmpty
 ]
 
 PragmaCollector >> isNotEmpty
-[isNotEmpty
+[
 	^ self collected isNotEmpty
 ]
 
 PragmaCollector >> keepPragma: aPragma
-[keepPragma: aPragma
+[
 	^ self filter value: aPragma
 ]
 
 PragmaCollector >> modifiedEventOccurs: anEvent
-[modifiedEventOccurs: anEvent
+[
 	"
 	a method has been updated: try to update an handler:
 	1 - I already have one for the method, then
@@ -137,7 +137,7 @@ PragmaCollector >> modifiedEventOccurs: anEvent
 ]
 
 PragmaCollector >> noMoreAnnounceWhile: aBlock
-[noMoreAnnounceWhile: aBlock
+[
 	"unplug the announcer during aBlock"
 
 	| oldAnnouncer |
@@ -148,14 +148,14 @@ PragmaCollector >> noMoreAnnounceWhile: aBlock
 ]
 
 PragmaCollector >> noMoreNotifications
-[noMoreNotifications
+[
 	"Do not receiver any system change notification anymore"
 
 	SystemAnnouncer uniqueInstance unsubscribe: self
 ]
 
 PragmaCollector >> noMoreNotificationsWhile: aBlock
-[noMoreNotificationsWhile: aBlock
+[
 	"don not receive any system change notification during aBloc"
 
 	self noMoreNotifications.
@@ -164,31 +164,31 @@ PragmaCollector >> noMoreNotificationsWhile: aBlock
 ]
 
 PragmaCollector >> noneSatisfy: aBlock
-[noneSatisfy: aBlock
+[
 	^ self collected noneSatisfy: aBlock
 ]
 
 PragmaCollector >> pragmaWithSelector: aSelector inClass: aClass
-[pragmaWithSelector: aSelector inClass: aClass
+[
 	"return the handler corresponding to a pragma method which selector is aSelector in class aClass"
 
 	^ self detect: [ :prag | prag methodClass = aClass and: [ prag selector = aSelector ] ]
 ]
 
 PragmaCollector >> pragmasOfClass: aClass
-[pragmasOfClass: aClass
+[
 	"return all handlers of class aClass"
 
 	^ self select: [ :prag | prag methodClass = aClass ]
 ]
 
 PragmaCollector >> reject: aBlock
-[reject: aBlock
+[
 	^ self collected reject: aBlock
 ]
 
 PragmaCollector >> release
-[release
+[
 	self noMoreNotifications.
 	announcer := nil.
 	collected := nil.
@@ -196,7 +196,7 @@ PragmaCollector >> release
 ]
 
 PragmaCollector >> removePragma: aPragma
-[removePragma: aPragma
+[
 	"remove an handler an announce it"
 
 	self collected remove: aPragma ifAbsent: [  ].
@@ -204,7 +204,7 @@ PragmaCollector >> removePragma: aPragma
 ]
 
 PragmaCollector >> removedEventOccurs: anEvent
-[removedEventOccurs: anEvent
+[
 	"a method has been removed, remove any corresponding handler if found"
 
 	(self detect: [ :prag | prag selector = anEvent selector and: [ prag methodClass = anEvent methodClass ] ])
@@ -212,7 +212,7 @@ PragmaCollector >> removedEventOccurs: anEvent
 ]
 
 PragmaCollector >> reset
-[reset
+[
 	"reinitialize current system settings"
 
 	self
@@ -222,29 +222,58 @@ PragmaCollector >> reset
 ]
 
 PragmaCollector >> select: aBlock
-[select: aBlock
+[
 	^ self collected select: aBlock
 ]
 
 PragmaCollector >> subscribe: anAnnouncement send: aSelector to: anObject
-[subscribe: anAnnouncement send: aSelector to: anObject
+[
 	"see Announcements packages"
 
 	self announcer subscribe: anAnnouncement send: aSelector to: anObject
 ]
 
 PragmaCollector >> unsubscribe: anObject
-[unsubscribe: anObject
+[
 	"see Announcements packages"
 
 	self announcer unsubscribe: anObject
 ]
 
 PragmaCollector >> updatePragma: aPragma
-[updatePragma: aPragma
+[
 	"only announce that the pragma has been updated"
 
 	self announcer announce: (PragmaUpdated pragma: aPragma)
+]
+
+PragmaCollector >> whenChangedSend: aSelector to: anObject
+[
+	"record a change listener"
+
+	self subscribe: PragmaAnnouncement send: aSelector to: anObject
+]
+
+PragmaCollector >> whenResetSend: aSelector to: anObject
+[
+	"record a change listener"
+
+	self subscribe: PragmaCollectorReset send: aSelector to: anObject
+]
+
+PragmaCollector class >> allSystemPragmas
+[
+	^ Array
+		streamContents: [ :stream | SystemNavigation new
+				allBehaviorsDo: [ :behavior | Pragma withPragmasIn: behavior do: [ :pragma | stream nextPut: pragma ] ] ]
+]
+
+PragmaCollector class >> filter: aOneArgValuable
+[
+	^ self new filter: aOneArgValuable
+]
+
+Updated pragma: aPragma)
 ]
 
 PragmaCollector >> whenChangedSend: aSelector to: anObject

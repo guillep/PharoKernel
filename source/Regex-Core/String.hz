@@ -1,15 +1,15 @@
 String >> allRangesOfRegexMatches: rxString
-[allRangesOfRegexMatches: rxString
+[
 	^ rxString asRegex matchingRangesIn: self
 ]
 
 String >> allRegexMatches: rxString
-[allRegexMatches: rxString
+[
 	^ rxString asRegex matchesIn: self
 ]
 
 String >> asRegex
-[asRegex
+[
 	"Compile the receiver as a regex matcher. May raise RxParser>>syntaxErrorSignal
 	or RxParser>>compilationErrorSignal.
 	This is a part of the Regular Expression Matcher package, (c) 1996, 1999 Vassili Bykov.
@@ -19,7 +19,7 @@ String >> asRegex
 ]
 
 String >> asRegexIgnoringCase
-[asRegexIgnoringCase
+[
 	"Compile the receiver as a regex matcher. May raise RxParser>>syntaxErrorSignal
 	or RxParser>>compilationErrorSignal.
 	This is a part of the Regular Expression Matcher package, (c) 1996, 1999 Vassili Bykov.
@@ -29,17 +29,17 @@ String >> asRegexIgnoringCase
 ]
 
 String >> copyWithRegex: rxString matchesReplacedWith: aString
-[copyWithRegex: rxString matchesReplacedWith: aString
+[
 	^ rxString asRegex copy: self replacingMatchesWith: aString
 ]
 
 String >> copyWithRegex: rxString matchesTranslatedUsing: aBlock
-[copyWithRegex: rxString matchesTranslatedUsing: aBlock
+[
 	^ rxString asRegex copy: self translatingMatchesUsing: aBlock
 ]
 
 String >> matchesRegex: regexString
-[matchesRegex: regexString
+[
 	"Test if the receiver matches a regex.  May raise RxParser>>regexErrorSignal or
 	child signals.
 	This is a part of the Regular Expression Matcher package, (c) 1996, 1999 Vassili Bykov.
@@ -49,7 +49,7 @@ String >> matchesRegex: regexString
 ]
 
 String >> matchesRegexIgnoringCase: regexString
-[matchesRegexIgnoringCase: regexString
+[
 	"Test if the receiver matches a regex.  May raise RxParser>>regexErrorSignal or
 	child signals.
 	This is a part of the Regular Expression Matcher package, (c) 1996, 1999 Vassili Bykov.
@@ -59,7 +59,7 @@ String >> matchesRegexIgnoringCase: regexString
 ]
 
 String >> prefixMatchesRegex: regexString
-[prefixMatchesRegex: regexString
+[
 	"Test if the receiver's prefix matches a regex.	
 	May raise RxParser class>>regexErrorSignal or child signals.
 	This is a part of the Regular Expression Matcher package, (c) 1996, 1999 Vassili Bykov.
@@ -69,7 +69,7 @@ String >> prefixMatchesRegex: regexString
 ]
 
 String >> prefixMatchesRegexIgnoringCase: regexString
-[prefixMatchesRegexIgnoringCase: regexString
+[
 	"Test if the receiver's prefix matches a regex.	
 	May raise RxParser class>>regexErrorSignal or child signals.
 	This is a part of the Regular Expression Matcher package, (c) 1996, 1999 Vassili Bykov.
@@ -79,6 +79,23 @@ String >> prefixMatchesRegexIgnoringCase: regexString
 ]
 
 String >> regex: rxString matchesCollect: aBlock
+[
+	^ rxString asRegex matchesIn: self collect: aBlock
+]
+
+String >> regex: rxString matchesDo: aBlock
+[
+	^ rxString asRegex matchesIn: self do: aBlock
+]
+
+String >> search: aString
+[
+	"compatibility method to make regexp and strings work polymorphicly"
+
+	^ aString includesSubstring: self
+]
+
+ex: rxString matchesCollect: aBlock
 [regex: rxString matchesCollect: aBlock
 	^ rxString asRegex matchesIn: self collect: aBlock
 ]

@@ -1,5 +1,5 @@
 Array >> +* aCollection
-[+* aCollection
+[
 	"Premultiply aCollection by self.  aCollection should be an Array or Matrix.
 	 The name of this method is APL's +.x squished into Smalltalk syntax."
 
@@ -7,7 +7,7 @@ Array >> +* aCollection
 ]
 
 Array >> preMultiplyByArray: a
-[preMultiplyByArray: a
+[
 	"Answer a+*self where a is an Array.  Arrays are always understood as column vectors,
 	 so an n element Array is an n*1 Array.  This multiplication is legal iff self size = 1."
 
@@ -17,7 +17,7 @@ Array >> preMultiplyByArray: a
 ]
 
 Array >> preMultiplyByMatrix: m
-[preMultiplyByMatrix: m
+[
 	"Answer m+*self where m is a Matrix."
 
 	m columnCount = self size
@@ -26,6 +26,10 @@ Array >> preMultiplyByMatrix: m
 		collect: [ :row | | s |
 			s := 0.
 			1 to: self size do: [ :k | s := (m at: row at: k) * (self at: k) + s ].
+			s ]
+]
+
+| s := (m at: row at: k) * (self at: k) + s ].
 			s ]
 ]
 

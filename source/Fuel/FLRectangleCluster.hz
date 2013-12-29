@@ -3,21 +3,21 @@ FLRectangleCluster
 	package: #Fuel.
 
 FLRectangleCluster >> materializeInstanceWith: aDecoder
-[materializeInstanceWith: aDecoder
+[
 	"Since in Pharo #@ is associated with a special bytecode, it is faster than doing  Point basicNew"
 
 	^ Rectangle basicNew
 ]
 
 FLRectangleCluster >> materializeReferencesOf: aRectangle with: aDecoder
-[materializeReferencesOf: aRectangle with: aDecoder
+[
 	aRectangle
 		setOrigin: aDecoder nextEncodedReference @ aDecoder nextEncodedReference
 		corner: aDecoder nextEncodedReference @ aDecoder nextEncodedReference
 ]
 
 FLRectangleCluster >> referencesOf: aRectangle do: aBlock
-[referencesOf: aRectangle do: aBlock
+[
 	aBlock value: aRectangle origin x.
 	aBlock value: aRectangle origin y.
 	aBlock value: aRectangle corner x.
@@ -25,8 +25,14 @@ FLRectangleCluster >> referencesOf: aRectangle do: aBlock
 ]
 
 FLRectangleCluster >> serializeReferencesOf: aRectangle with: anEncoder
-[serializeReferencesOf: aRectangle with: anEncoder
+[
 	anEncoder encodeReferenceTo: aRectangle origin x.
+	anEncoder encodeReferenceTo: aRectangle origin y.
+	anEncoder encodeReferenceTo: aRectangle corner x.
+	anEncoder encodeReferenceTo: aRectangle corner y
+]
+
+e origin x.
 	anEncoder encodeReferenceTo: aRectangle origin y.
 	anEncoder encodeReferenceTo: aRectangle corner x.
 	anEncoder encodeReferenceTo: aRectangle corner y

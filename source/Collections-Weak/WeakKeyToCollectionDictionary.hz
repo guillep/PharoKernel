@@ -3,12 +3,12 @@ WeakKeyToCollectionDictionary
 	package: #'Collections-Weak'.
 
 WeakKeyToCollectionDictionary >> finalizeValues
-[finalizeValues
+[
 	self rehash
 ]
 
 WeakKeyToCollectionDictionary >> noCheckAddForRehash: anAssociation
-[noCheckAddForRehash: anAssociation
+[
 	| cleanedValue |
 	anAssociation key ifNil: [ ^ self ].
 	cleanedValue := anAssociation value copyWithout: nil.
@@ -18,7 +18,7 @@ WeakKeyToCollectionDictionary >> noCheckAddForRehash: anAssociation
 ]
 
 WeakKeyToCollectionDictionary >> noCheckNoGrowFillFrom: anArray
-[noCheckNoGrowFillFrom: anArray
+[
 	"Add the elements of anArray except nils and associations with empty collections (or with only nils) to me assuming that I don't contain any of them, they are unique and I have more free space than they require."
 
 	tally := 0.
@@ -28,6 +28,10 @@ WeakKeyToCollectionDictionary >> noCheckNoGrowFillFrom: anArray
 						(cleanedValue := association value copyWithout: nil) isEmpty
 							ifFalse: [ association value: cleanedValue.
 								array at: (self scanForEmptySlotFor: key) put: association.
+								tally := tally + 1 ] ] ] ]
+]
+
+ForEmptySlotFor: key) put: association.
 								tally := tally + 1 ] ] ] ]
 ]
 
