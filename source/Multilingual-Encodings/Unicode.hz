@@ -4,7 +4,7 @@ Unicode
 	package: #'Multilingual-Encodings'.
 
 Unicode class >> blocks320Comment
-blocks320Comment
+[blocks320Comment
 	"# Blocks-3.2.0.txt
 # Correlated with Unicode 3.2
 # Start Code..End Code; Block Name
@@ -123,9 +123,10 @@ F0000..FFFFF; Supplementary Private Use Area-A
 "
 
 	
+]
 
 Unicode class >> blocks320Comment2
-blocks320Comment2
+[blocks320Comment2
 	"# Blocks-3.2.0.txt
 # Correlated with Unicode 3.2
 # Start Code..End Code; Block Name
@@ -333,21 +334,25 @@ F0000..FFFFF; Supplementary Private Use Area-A
 "
 
 	
+]
 
 Unicode class >> charFromUnicode: uniCode
-charFromUnicode: uniCode
+[charFromUnicode: uniCode
 	^ Character value: uniCode
+]
 
 Unicode class >> compoundTextFinalChar
-compoundTextFinalChar
+[compoundTextFinalChar
 	self shouldNotImplement
+]
 
 Unicode class >> compoundTextSequence
-compoundTextSequence
+[compoundTextSequence
 	self subclassResponsibility
+]
 
 Unicode class >> digitValueOf: char
-digitValueOf: char
+[digitValueOf: char
 	"Answer 0-9 if the receiver is $0-$9, 10-35 if it is $A-$Z, and < 0
 	otherwise. This is used to parse literal numbers of radix 2-36."
 
@@ -363,13 +368,15 @@ digitValueOf: char
 	value > (DecimalProperty size - 1)
 		ifTrue: [ ^ -1 ].
 	^ DecimalProperty at: value + 1
+]
 
 Unicode class >> generalCategory
-generalCategory
+[generalCategory
 	^ GeneralCategory
+]
 
 Unicode class >> generalCategoryComment
-generalCategoryComment
+[generalCategoryComment
 	"
 Lu Letter, Uppercase 
 Ll Letter, Lowercase 
@@ -404,9 +411,10 @@ Cn Other, Not Assigned (no characters in the file have this property)
 "
 
 	
+]
 
 Unicode class >> initialize
-initialize
+[initialize
 	"This class should be initialized using the textual unicode definitions that can be found in
 	http://www.unicode.org/Public/UNIDATA/UnicodeData.txt
 	http://www.unicode.org/Public/UNIDATA/CaseFolding.txt
@@ -440,9 +448,10 @@ initialize
 
 	EncodedCharSet declareEncodedCharSet: self atIndex: 0 + 1.
 	EncodedCharSet declareEncodedCharSet: self atIndex: 256
+]
 
 Unicode class >> initializeTagConstants
-initializeTagConstants
+[initializeTagConstants
 	" Unicode initializeTagConstants "
 
 	(self classPool keys select: [ :sym | sym size = 2 and: [ sym first isUppercase and: [ sym last isLowercase ] ] ])
@@ -453,49 +462,56 @@ initializeTagConstants
 					index ]
 				ifFalse: [ self classPool at: sym put: index.
 					index + 1 ] ]
+]
 
 Unicode class >> isCharset
-isCharset
+[isCharset
 	^ false
+]
 
 Unicode class >> isDigit: char
-isDigit: char
+[isDigit: char
 	| value |
 	value := char charCode.
 	value > (GeneralCategory size - 1)
 		ifTrue: [ ^ false ].
 	^ (GeneralCategory at: value + 1) = Nd
+]
 
 Unicode class >> isLetter: char
-isLetter: char
+[isLetter: char
 	| value codeCat |
 	value := char charCode.
 	value > (GeneralCategory size - 1)
 		ifTrue: [ ^ false ].
 	^ (codeCat := GeneralCategory at: value + 1) >= Ll and: [ codeCat <= Lu ]
+]
 
 Unicode class >> isLowercase: char
-isLowercase: char
+[isLowercase: char
 	| value |
 	value := char charCode.
 	value > (GeneralCategory size - 1)
 		ifTrue: [ ^ false ].
 	^ (GeneralCategory at: value + 1) = Ll
+]
 
 Unicode class >> isUppercase: char
-isUppercase: char
+[isUppercase: char
 	| value |
 	value := char charCode.
 	value > (GeneralCategory size - 1)
 		ifTrue: [ ^ false ].
 	^ (GeneralCategory at: value + 1) = Lu
+]
 
 Unicode class >> leadingChar
-leadingChar
+[leadingChar
 	^ 0
+]
 
 Unicode class >> parseCaseMappingFrom: stream
-parseCaseMappingFrom: stream
+[parseCaseMappingFrom: stream
 	"Parse the Unicode casing mappings from the given stream.
 	Handle only the simple mappings"
 
@@ -522,9 +538,10 @@ parseCaseMappingFrom: stream
 					ToCasefold keys
 						detect: [ :e | (self isUppercase: (self value: e)) and: [ (ToCasefold at: e) = v ] ]
 						ifFound: [ :up | ToUpper at: k ifAbsentPut: up ] ] ]
+]
 
 Unicode class >> parseUnicodeDataFrom: stream
-parseUnicodeDataFrom: stream
+[parseUnicodeDataFrom: stream
 	| line fieldEnd point fieldStart toNumber generalCategory decimalProperty loValue |
 	toNumber := [ :quad | ('16r' , quad) asNumber ].
 	GeneralCategory := SparseLargeTable
@@ -561,54 +578,61 @@ parseUnicodeDataFrom: stream
 					DecimalProperty at: point + 1 put: decimalProperty asNumber ] ].
 	GeneralCategory zapDefaultOnlyEntries.
 	DecimalProperty zapDefaultOnlyEntries
+]
 
 Unicode class >> toCasefold: aWideString
-toCasefold: aWideString
+[toCasefold: aWideString
 	"Transform a Wide String into fold case.
 	This is to enable case insensitive conversion."
 
 	^ aWideString
 		collect: [ :e | (ToCasefold at: e charCode ifAbsent: [ nil ]) ifNil: [ e ] ifNotNil: [ :low | self value: low ] ]
+]
 
 Unicode class >> toLowercase: aCharacter
-toLowercase: aCharacter
+[toLowercase: aCharacter
 	"Transform a Wide String into lowercase.
 	This does not handle special cases where number of characters could change.
 	The algorithm would work for ByteString, however it's far from the most efficient."
 
 	(ToLower at: aCharacter charCode ifAbsent: [ ^ aCharacter ]) ifNotNil: [ :low | ^ self value: low ]
+]
 
 Unicode class >> toLowercaseString: aWideString
-toLowercaseString: aWideString
+[toLowercaseString: aWideString
 	"Transform a Wide String into lowercase.
 	This does not handle special cases where number of characters could change.
 	The algorithm would work for ByteString, however it's far from the most efficient."
 
 	^ aWideString
 		collect: [ :e | (ToLower at: e charCode ifAbsent: [ nil ]) ifNil: [ e ] ifNotNil: [ :low | self value: low ] ]
+]
 
 Unicode class >> toUppercase: aCharacter
-toUppercase: aCharacter
+[toUppercase: aCharacter
 	"Transform a Wide String into uppercase.
 	This does not handle special cases where number of characters could change.
 	The algorithm would work for ByteString, however it's far from the most efficient."
 
 	(ToUpper at: aCharacter charCode ifAbsent: [ ^ aCharacter ]) ifNotNil: [ :up | ^ self value: up ]
+]
 
 Unicode class >> toUppercaseString: aWideString
-toUppercaseString: aWideString
+[toUppercaseString: aWideString
 	"Transform a Wide String into uppercase.
 	This does not handle special cases where number of characters could change.
 	The algorithm would work for ByteString, however it's far from the most efficient."
 
 	^ aWideString
 		collect: [ :e | (ToUpper at: e charCode ifAbsent: [ nil ]) ifNil: [ e ] ifNotNil: [ :up | self value: up ] ]
+]
 
 Unicode class >> value: code
-value: code
+[value: code
 	| l |
 	code < 256
 		ifTrue: [ ^ Character value: code ].
 	l := Locale currentPlatform languageEnvironment leadingChar.
 	^ Character leadingChar: l code: code
+]
 

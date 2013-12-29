@@ -4,61 +4,73 @@ MemoryStore
 	package: #'FileSystem-Memory'.
 
 MemoryStore >> basenameFromEntry: aMemoryFileSystemEntry
-basenameFromEntry: aMemoryFileSystemEntry
+[basenameFromEntry: aMemoryFileSystemEntry
 	^ aMemoryFileSystemEntry basename
+]
 
 MemoryStore >> basicCreationTime: aMemoryFileSystemEntry
-basicCreationTime: aMemoryFileSystemEntry
+[basicCreationTime: aMemoryFileSystemEntry
 	^ aMemoryFileSystemEntry creationTime
+]
 
 MemoryStore >> basicEntry: entry nodesDo: aBlock
-basicEntry: entry nodesDo: aBlock
+[basicEntry: entry nodesDo: aBlock
 	entry fileEntriesDo: aBlock
+]
 
 MemoryStore >> basicEntry: directoryEntry path: aPath nodesDo: aBlock
-basicEntry: directoryEntry path: aPath nodesDo: aBlock
+[basicEntry: directoryEntry path: aPath nodesDo: aBlock
 	directoryEntry fileEntriesDo: aBlock
+]
 
 MemoryStore >> basicIsDirectory: aMemoryFileSystemEntry
-basicIsDirectory: aMemoryFileSystemEntry
+[basicIsDirectory: aMemoryFileSystemEntry
 	^ aMemoryFileSystemEntry isDirectory
+]
 
 MemoryStore >> basicIsFile: aMemoryFileSystemEntry
-basicIsFile: aMemoryFileSystemEntry
+[basicIsFile: aMemoryFileSystemEntry
 	^ aMemoryFileSystemEntry isFile
+]
 
 MemoryStore >> basicIsSymlink: aNode
-basicIsSymlink: aNode
+[basicIsSymlink: aNode
 	^ false
+]
 
 MemoryStore >> basicModificationTime: aMemoryFileSystemEntry
-basicModificationTime: aMemoryFileSystemEntry
+[basicModificationTime: aMemoryFileSystemEntry
 	^ aMemoryFileSystemEntry modificationTime
+]
 
 MemoryStore >> basicOpen: path writable: aBoolean
-basicOpen: path writable: aBoolean
+[basicOpen: path writable: aBoolean
 	^ self
 		nodeAt: path
 		ifPresent: [ :aMemoryFileSystemEntry | aMemoryFileSystemEntry ]
 		ifAbsent: [ aBoolean
 				ifFalse: [ self signalFileDoesNotExist: path ]
 				ifTrue: [ self createFile: path ] ]
+]
 
 MemoryStore >> basicPosixPermissions: anEntry
-basicPosixPermissions: anEntry
+[basicPosixPermissions: anEntry
 	^ 8r777
+]
 
 MemoryStore >> basicSize: aMemoryFileSystemEntry
-basicSize: aMemoryFileSystemEntry
+[basicSize: aMemoryFileSystemEntry
 	^ aMemoryFileSystemEntry fileSize
+]
 
 MemoryStore >> checkName: aString fixErrors: fixErrors
-checkName: aString fixErrors: fixErrors
+[checkName: aString fixErrors: fixErrors
 	aString ifEmpty: [ self error: 'zero length file name' ].
 	^ aString
+]
 
 MemoryStore >> copy: sourcePath ifAbsent: absentBlock to: destinationPath ifPresent: presentBlock fileSystem: aFilesystem
-copy: sourcePath ifAbsent: absentBlock to: destinationPath ifPresent: presentBlock fileSystem: aFilesystem
+[copy: sourcePath ifAbsent: absentBlock to: destinationPath ifPresent: presentBlock fileSystem: aFilesystem
 	| sourceNode destinationNode |
 	sourceNode := self nodeAt: sourcePath ifPresent: [ :source | source ] ifAbsent: [ ^ absentBlock value ].
 	sourceNode isDirectory
@@ -77,9 +89,10 @@ copy: sourcePath ifAbsent: absentBlock to: destinationPath ifPresent: presentBlo
 		put: (sourceNode copy
 				basename: destinationPath basename;
 				yourself)
+]
 
 MemoryStore >> createDirectory: path
-createDirectory: path
+[createDirectory: path
 	| parent |
 	parent := path parent.
 	^ self
@@ -91,36 +104,42 @@ createDirectory: path
 						ifFalse: [ self signalFileExists: path ] ].
 			entry ensureCreateDirectory: path basename ]
 		ifAbsent: [ self signalDirectoryDoesNotExist: parent ]
+]
 
 MemoryStore >> createFile: aPath
-createFile: aPath
+[createFile: aPath
 	^ self
 		nodeAt: aPath parent
 		ifPresent: [ :entry | entry isDirectory
 				ifTrue: [ entry ensureCreateFile: aPath basename ] ]
 		ifAbsent: [ self signalDirectoryDoesNotExist: aPath parent ]
+]
 
 MemoryStore >> delete: path
-delete: path
+[delete: path
 	self
 		nodeAt: path parent
 		ifPresent: [ :dict | dict fileEntryRemove: path basename ifAbsent: [ FileDoesNotExist signalWith: path ] ]
 		ifAbsent: [ DirectoryDoesNotExist signalWith: path parent ]
+]
 
 MemoryStore >> forReferencePrintOn: aStream
-forReferencePrintOn: aStream
+[forReferencePrintOn: aStream
 	aStream nextPutAll: 'memory://'
+]
 
 MemoryStore >> handleClass
-handleClass
+[handleClass
 	^ MemoryHandle
+]
 
 MemoryStore >> initialize
-initialize
+[initialize
 	root := MemoryFileSystemDirectory new
+]
 
 MemoryStore >> nodeAt: aPath ifPresent: presentBlock ifAbsent: absentBlock
-nodeAt: aPath ifPresent: presentBlock ifAbsent: absentBlock
+[nodeAt: aPath ifPresent: presentBlock ifAbsent: absentBlock
 	| current |
 	current := self root.
 	aPath
@@ -128,17 +147,19 @@ nodeAt: aPath ifPresent: presentBlock ifAbsent: absentBlock
 				ifTrue: [ current := current fileEntryAt: segment ifAbsent: [ ^ absentBlock value ] ]
 				ifFalse: [ ^ absentBlock value ] ].
 	^ presentBlock value: current
+]
 
 MemoryStore >> openFileStream: path writable: isWriteStream
-openFileStream: path writable: isWriteStream
+[openFileStream: path writable: isWriteStream
 	| entry |
 	entry := self basicOpen: path writable: isWriteStream.
 	^ isWriteStream
 		ifTrue: [ entry writeStream ]
 		ifFalse: [ entry readStream ]
+]
 
 MemoryStore >> rename: sourcePath to: destinationPath
-rename: sourcePath to: destinationPath
+[rename: sourcePath to: destinationPath
 	| sourceEntry destinationParentEntry newName |
 	sourceEntry := self nodeAt: sourcePath.
 	newName := destinationPath basename.
@@ -149,9 +170,10 @@ rename: sourcePath to: destinationPath
 	destinationParentEntry fileEntryAt: newName put: sourceEntry.
 	sourceEntry basename: newName.
 	(self nodeAt: sourcePath parent) fileEntryRemove: sourcePath basename
+]
 
 MemoryStore >> replaceFile: path in: aBlock
-replaceFile: path in: aBlock
+[replaceFile: path in: aBlock
 	^ self
 		nodeAt: path parent
 		ifPresent: [ :entry | | old new |
@@ -161,20 +183,25 @@ replaceFile: path in: aBlock
 			new := aBlock value: old.
 			entry fileEntryAt: path basename put: new ]
 		ifAbsent: [ self signalFileDoesNotExist: path ]
+]
 
 MemoryStore >> root
-root
+[root
 	^ root
+]
 
 MemoryStore class >> delimiter
-delimiter
+[delimiter
 	^ $/
+]
 
 MemoryStore class >> isCaseSensitive
-isCaseSensitive
+[isCaseSensitive
 	^ true
+]
 
 MemoryStore class >> separator
-separator
+[separator
 	^ $:
+]
 

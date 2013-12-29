@@ -3,30 +3,34 @@ ReadWriteStream
 	package: #'Collections-Streams'.
 
 ReadWriteStream >> = other
-= other
+[= other
 	(self class == ReadWriteStream and: [ other class == ReadWriteStream ])
 		ifFalse: [ ^ super = other ].	"does an identity test.  Don't read contents of FileStream"
 	^ self position = other position and: [ self contents = other contents ]
+]
 
 ReadWriteStream >> contents
-contents
+[contents
 	"Answer with a copy of my collection from 1 to readLimit."
 
 	readLimit := readLimit max: position.
 	^ collection copyFrom: 1 to: readLimit
+]
 
 ReadWriteStream >> hash
-hash
+[hash
 	self class == ReadWriteStream
 		ifFalse: [ ^ super hash ].
 	^ (self position + readLimit + 53) hash
+]
 
 ReadWriteStream >> name
-name
+[name
 	^ 'a stream'	"for fileIn compatibility"
+]
 
 ReadWriteStream >> next
-next
+[next
 	"Primitive. Return the next object in the Stream represented by the
 	receiver. Fail if the collection of this stream is not an Array or a String.
 	Fail if the stream is positioned at its end, or if the position is out of
@@ -39,9 +43,10 @@ next
 	position >= readLimit
 		ifTrue: [ ^ nil ]
 		ifFalse: [ ^ collection at: (position := position + 1) ]
+]
 
 ReadWriteStream >> next: anInteger
-next: anInteger
+[next: anInteger
 	"Answer the next anInteger elements of my collection.  overriden for efficiency"
 
 	| ans endPosition |
@@ -50,10 +55,12 @@ next: anInteger
 	ans := collection copyFrom: position + 1 to: endPosition.
 	position := endPosition.
 	^ ans
+]
 
 ReadWriteStream >> readStream
-readStream
+[readStream
 	"polymorphic with SequenceableCollection.  Return self"
 
 	^ self
+]
 

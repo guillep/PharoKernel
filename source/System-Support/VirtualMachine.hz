@@ -3,41 +3,46 @@ VirtualMachine
 	package: #'System-Support'.
 
 VirtualMachine >> allocationsBetweenGC
-allocationsBetweenGC
+[allocationsBetweenGC
 	"allocations between GCs (read-write)"
 
 	^ self parameterAt: 5
+]
 
 VirtualMachine >> allocationsBetweenGC: anInteger
-allocationsBetweenGC: anInteger
+[allocationsBetweenGC: anInteger
 	"allocations between GCs (read-write)"
 
 	^ self parameterAt: 5 put: anInteger
+]
 
 VirtualMachine >> binary
-binary
+[binary
 	"Answer the a file reference to the virtual machine binary."
 
 	"SmalltalkImage current vmBinary"
 
 	^ FileLocator vmBinary
+]
 
 VirtualMachine >> buildDate
-buildDate
+[buildDate
 	"Return a String reflecting the build date of the VM"
 
 	"Smalltalk buildDate"
 
 	^ self getSystemAttribute: 1006
+]
 
 VirtualMachine >> cogitClass
-cogitClass
+[cogitClass
 	"Return the jit class that is currently executing the system (Cog VM only)"
 
 	^ self getSystemAttribute: 1008
+]
 
 VirtualMachine >> command
-command
+[command
 	"return a bash-like lauch command for the vm including all arguments up to the image name "
 
 	^ String
@@ -48,73 +53,83 @@ command
 					s
 						space;
 						nextPutAll: argument ] ]
+]
 
 VirtualMachine >> directory
-directory
+[directory
 	"Answer the a file reference to the directory containing the Smalltalk virtual machine."
 
 	"SmalltalkImage current directory"
 
 	^ FileLocator vmDirectory
+]
 
 VirtualMachine >> disableModuleLoading
-disableModuleLoading
+[disableModuleLoading
 	"Primitive. Disable a new module loading mechanism for the rest of current session.
 	This operation is not reversable.
 	Any subsequent attempts to load either external or internal module(s) will fail"
 
 	<primitive: 'primitiveDisableModuleLoading' module: ''>
 	
+]
 
 VirtualMachine >> documentPath
-documentPath
+[documentPath
 	"Answer the absolute path of the document passed to the vm or nil if none."
 
 	"Smalltalk commandLine documentPath"
 
 	^ self getSystemAttribute: 2
+]
 
 VirtualMachine >> extraVMMemory
-extraVMMemory
+[extraVMMemory
 	"Answer the current setting of the 'extraVMMemory' VM parameter. See the comment in extraVMMemory: for details."
 
 	^ self parameterAt: 23
+]
 
 VirtualMachine >> extraVMMemory: extraBytesToReserve
-extraVMMemory: extraBytesToReserve
+[extraVMMemory: extraBytesToReserve
 	"Request that the given amount of extra memory be reserved for use by the virtual machine to leave extra C heap space available for things like plugins, network and file buffers, and so on. This request is stored when the image is saved and honored when the image is next started up. Answer the previous value of this parameter."
 
 	extraBytesToReserve < 0
 		ifTrue: [ self error: 'VM memory reservation must be non-negative' ].
 	^ self parameterAt: 23 put: extraBytesToReserve
+]
 
 VirtualMachine >> fileName
-fileName
+[fileName
 	^ FilePathEncoder decode: self fullPath
+]
 
 VirtualMachine >> flagInterpretedMethods: aBoolean
-flagInterpretedMethods: aBoolean
+[flagInterpretedMethods: aBoolean
 	"The Cog VM can be instructed to set the flag bit of CompiledMethods that it executes but will only interpret.  This can be used e.g. to profile startup. See CompiledMethod>>#flag & CompiledMethod>>#clearFlag. This flag persists across snapshots, stored in the image header."
 
 	self parameterAt: 48 put: ((self parameterAt: 48) bitClear: 2) + (aBoolean
 						ifTrue: [ 2 ]
 						ifFalse: [ 0 ])
+]
 
 VirtualMachine >> forgetModule: aString
-forgetModule: aString
+[forgetModule: aString
 	"Primitive. If the module named aString is loaded, unloaded. If not, and it is marked an unloadable, unmark it so the VM will try to load it again next time. See comment for #unloadModule:."
 
 	<primitive: 571>
 	^ self primitiveFailed
+]
 
 VirtualMachine >> fullGCCount
-fullGCCount
+[fullGCCount
 	"Answer the total number of full GCs since startup (read-only)."
 
 	^ self parameterAt: 7
+]
 
 VirtualMachine >> fullPath
-fullPath
+[fullPath
 	"Return the full vm path as a string"
 
 	"Ex: '/Applications/Squeak/Squeak 4.2.5beta1U.app/Contents/MacOS/Squeak VM Opt'"
@@ -122,24 +137,27 @@ fullPath
 	"SmalltalkImage current vmFullPath"
 
 	^ self getSystemAttribute: 0
+]
 
 VirtualMachine >> gcBiasToGrow: aBool
-gcBiasToGrow: aBool
+[gcBiasToGrow: aBool
 	"Tell the VM to grow after tenures instead of running in a tight loop where it does IGCs over and over. For some weird reason the primitive takes an integer not a bool but oh well..."
 
 	self primitiveGCBiasToGrow: (aBool
 				ifTrue: [ 1 ]
 				ifFalse: [ 0 ])
+]
 
 VirtualMachine >> gcBiasToGrowLimit: arg
-gcBiasToGrowLimit: arg
+[gcBiasToGrowLimit: arg
 	"Tell the VM the grow limit if the GC logic has bias to grow."
 
 	<primitive: 'primitiveSetGCBiasToGrowGCLimit'>
 	^ self primitiveFailed
+]
 
 VirtualMachine >> getParameters
-getParameters
+[getParameters
 	"Answer an Array containing the current values of the VM's internal
 	parameter/metric registers.  Each value is stored in the array at the
 	index corresponding to its VM register.  (See #vmParameterAt: and
@@ -149,9 +167,10 @@ getParameters
 
 	<primitive: 254>
 	self primitiveFailed
+]
 
 VirtualMachine >> getSystemAttribute: attributeID
-getSystemAttribute: attributeID
+[getSystemAttribute: attributeID
 	"Optional. Answer the string for the system attribute with the given 
 	integer ID. Answer nil if the given attribute is not defined on this 
 	platform. On platforms that support invoking programs from command 
@@ -190,48 +209,55 @@ getSystemAttribute: attributeID
 
 	<primitive: 149>
 	^ nil
+]
 
 VirtualMachine >> headlessOption
-headlessOption
+[headlessOption
 	"Return the default name for the headless option for this VM"
 
 	^ self optionDash , (Smalltalk os isUnix
 				ifTrue: [ 'vm-display-null' ]
 				ifFalse: [ 'headless' ])
+]
 
 VirtualMachine >> imageFile
-imageFile
+[imageFile
 	"Image file "
 
 	^ Smalltalk image imageFile
+]
 
 VirtualMachine >> imagePath
-imagePath
+[imagePath
 	"Image file path
 	Ex:  '/Users/foo/Pharo/Pharo-1.1.1-dev10.09.1.image'"
 
 	^ Smalltalk image imagePath
+]
 
 VirtualMachine >> imageVersionNumber
-imageVersionNumber
+[imageVersionNumber
 	"Image version number (6505 means the Squeak V3 format with BlockClosure support (but _without_ BlockContext support)"
 
 	^ self parameterAt: 41
+]
 
 VirtualMachine >> incrementalGCCount
-incrementalGCCount
+[incrementalGCCount
 	"Answer the total number of incremental GCs since startup (read-only)."
 
 	^ self parameterAt: 9
+]
 
 VirtualMachine >> interpreterClass
-interpreterClass
+[interpreterClass
 	"Return the interpreter class that is currently executing the system (Cog VM only)"
 
 	^ self getSystemAttribute: 1007
+]
 
 VirtualMachine >> interpreterSourceDate
-interpreterSourceDate
+[interpreterSourceDate
 	"Return the date of changes given by `self interpreterSourceVersion`"
 
 	| dateString parts |
@@ -253,9 +279,10 @@ interpreterSourceDate
 				nextPutAll: parts last;
 				space	"year"	"month name"	"day of month"	"time"	"timezone" ].
 	^ dateString asDateAndTime
+]
 
 VirtualMachine >> interpreterSourceVersion
-interpreterSourceVersion
+[interpreterSourceVersion
 	"The use of this primitive not recommended. Not all VMs providing that"
 
 	"Answer a string corresponding to the version of the interpreter source.
@@ -269,9 +296,10 @@ interpreterSourceVersion
 
 	<primitive: 'primitiveInterpreterSourceVersion'>
 	^ self getSystemAttribute: 1009
+]
 
 VirtualMachine >> isPharoVM
-isPharoVM
+[isPharoVM
 	"Answers if this VM is a valid PharoVM (made with our sources)"
 
 	| version |
@@ -283,35 +311,39 @@ isPharoVM
 						and: [ | pos |
 							pos := (version findString: 'Commit: ') + 8.
 							(version copyFrom: pos to: pos + 39) allSatisfy: [ :each | ($a to: $f) , ($0 to: $9) includes: each ] ] ] ]
+]
 
 VirtualMachine >> isRunningCog
-isRunningCog
+[isRunningCog
 	"Returns true if we're running on a Cog VM (JIT or StackInterpreter)
 	 (parameterAt: 42 is the number of stack pages)"
 
 	^ [ (self parameterAt: 42) > 0 ]
 		on: Error
 		do: [ :ex | ex return: false ]
+]
 
 VirtualMachine >> isRunningCogit
-isRunningCogit
+[isRunningCogit
 	"Returns true if we're running on the Cog JIT
 	 (vmParameterAt: 46 is the size of the machine code zone)"
 
 	^ [ (self parameterAt: 46) > 0 ]
 		on: Error
 		do: [ :ex | ex return: false ]
+]
 
 VirtualMachine >> listBuiltinModule: index
-listBuiltinModule: index
+[listBuiltinModule: index
 	"Return the name of the n-th builtin module.
 	This list is not sorted!"
 
 	<primitive: 572>
 	^ self primitiveFailed
+]
 
 VirtualMachine >> listBuiltinModules
-listBuiltinModules
+[listBuiltinModules
 	"Smalltalk vm listBuiltinModules"
 
 	"Return a list of all builtin modules (e.g., plugins). Builtin plugins are those that are 
@@ -327,17 +359,19 @@ listBuiltinModules
 			tname ifNil: [ ^ modules contents ].
 			modules nextPut: tname.
 			index := index + 1 ]
+]
 
 VirtualMachine >> listLoadedModule: index
-listLoadedModule: index
+[listLoadedModule: index
 	"Return the name of the n-th loaded module.
 	This list is not sorted!"
 
 	<primitive: 573>
 	^ self primitiveFailed
+]
 
 VirtualMachine >> listLoadedModules
-listLoadedModules
+[listLoadedModules
 	"SmalltalkImage current listLoadedModules"
 
 	"Return a list of all currently loaded modules (e.g., plugins). Loaded modules are those that currently in use (e.g., active). The list returned will contain all currently active modules regardless of whether they're builtin (that is compiled with the VM) or external (e.g., residing in some external shared library). Note that the returned list is not sorted!"
@@ -350,18 +384,20 @@ listLoadedModules
 			tname ifNil: [ ^ modules contents ].
 			modules nextPut: tname.
 			index := index + 1 ]
+]
 
 VirtualMachine >> loadModule: aModuleName
-loadModule: aModuleName
+[loadModule: aModuleName
 	"Primitive. Attempt to load a module of the given name.
 	Fail if module cannot be found, or cannot be loaded,
 	or failed to initialize"
 
 	<primitive: 'primLoadModule' module: '' error: #errorCode>
 	^ self primitiveFailed
+]
 
 VirtualMachine >> maxExternalSemaphores
-maxExternalSemaphores
+[maxExternalSemaphores
 	"The size of array in some VM's where external signals for
 	semaphores in externalObjects are handled.
 	Essentially, if a semaphore is registered in externalObjects outside
@@ -370,9 +406,10 @@ maxExternalSemaphores
 	^ [ self parameterAt: 49 ]
 		on: PrimitiveFailed
 		do: [ :ex | ex return: nil ]
+]
 
 VirtualMachine >> maxExternalSemaphores: aSize
-maxExternalSemaphores: aSize
+[maxExternalSemaphores: aSize
 	"This method should never be called as result of normal program
 	execution. If it is however, handle it differently:
 	- In development, signal an error to promt user to set a bigger size
@@ -399,9 +436,10 @@ maxExternalSemaphores: aSize
 				crTrace: 'Current table size: ' , self maxExternalSemaphores printString ]
 		ifFalse: [ "Smalltalk image"
 			self error: 'Not enough space for external objects, set a larger size at startup!'	"Smalltalk image" ]
+]
 
 VirtualMachine >> maxExternalSemaphoresSilently: aSize
-maxExternalSemaphoresSilently: aSize
+[maxExternalSemaphoresSilently: aSize
 	"Changes the size of array where external signals for semaphores in
 	externalObjects are handled.. 
 	The size can only grow, and will always be the next power of two
@@ -420,43 +458,49 @@ maxExternalSemaphoresSilently: aSize
 	(aSize < 0 or: [ aSize > 65535 ])
 		ifTrue: [ ^ DomainError signalFrom: 0 to: 65535 ].
 	^ self parameterAt: 49 put: aSize
+]
 
 VirtualMachine >> maxFilenameLength
-maxFilenameLength
+[maxFilenameLength
 	"Return the maximal filename length (only under MacOS)"
 
 	"Smalltalk vm maxFilenameLength"
 
 	^ self getSystemAttribute: 1201
+]
 
 VirtualMachine >> memoryEnd
-memoryEnd
+[memoryEnd
 	"end of memory"
 
 	^ self parameterAt: 3
+]
 
 VirtualMachine >> oldSpaceEnd
-oldSpaceEnd
+[oldSpaceEnd
 	"end of old-space (0-based, read-only)"
 
 	^ self parameterAt: 1
+]
 
 VirtualMachine >> optionAt: i
-optionAt: i
+[optionAt: i
 	"Answer the i-th option of the command line, or nil if not so many options."
 
 	^ self getSystemAttribute: i negated
+]
 
 VirtualMachine >> optionDash
-optionDash
+[optionDash
 	"VMs release in Mai 2013 use -- instead of - for VM command line options"
 
 	^ Smalltalk vm interpreterSourceDate > '2013-05-17' asDate
 		ifTrue: [ '--' ]
 		ifFalse: [ '-' ]
+]
 
 VirtualMachine >> options
-options
+[options
 	"return an array with all the options passed to the VM (up to the image) "
 
 	^ Array
@@ -464,9 +508,10 @@ options
 				do: [ :argument | (argument endsWith: '.image')
 						ifTrue: [ ^ s contents ].
 					s nextPut: argument ] ]
+]
 
 VirtualMachine >> parameterAt: parameterIndex
-parameterAt: parameterIndex
+[parameterAt: parameterIndex
 	"parameterIndex is a positive integer corresponding to one of the VM's internal
 	parameter/metric registers.  Answer with the current value of that register.
 	Fail if parameterIndex has no corresponding register.
@@ -522,9 +567,10 @@ parameterAt: parameterIndex
 
 	<primitive: 254>
 	self primitiveFailed
+]
 
 VirtualMachine >> parameterAt: parameterIndex put: newValue
-parameterAt: parameterIndex put: newValue
+[parameterAt: parameterIndex put: newValue
 	"parameterIndex is a positive integer corresponding to one of the VM's internal
 	parameter/metric registers.  Store newValue (a positive integer) into that
 	register and answer with the previous value that was stored there.
@@ -533,17 +579,19 @@ parameterAt: parameterIndex put: newValue
 
 	<primitive: 254>
 	self primitiveFailed
+]
 
 VirtualMachine >> path
-path
+[path
 	"Answer the path for the directory containing the Smalltalk virtual machine. Return the 	empty string if this primitive is not implemented."
 
 	"SmalltalkImage current vmPath"
 
 	^ FilePathEncoder decode: self primVmPath
+]
 
 VirtualMachine >> platformSourceVersion
-platformSourceVersion
+[platformSourceVersion
 	"The use of this primitive not recommended. Not all VMs providing that"
 
 	"Answer a string corresponding to the version of the external platform source
@@ -555,25 +603,28 @@ platformSourceVersion
 	<primitive: 'primitivePlatformSourceVersion'>
 	self notify: 'This virtual machine does not support the optional primitive #primitivePlatformSourceVersion' translated.
 	^ ''
+]
 
 VirtualMachine >> primVmPath
-primVmPath
+[primVmPath
 	"Answer the path for the directory containing the Smalltalk virtual machine. Return the empty string if this primitive is not implemented."
 
 	"Smalltalk vmPath"
 
 	<primitive: 142>
 	^ ''
+]
 
 VirtualMachine >> primitiveGCBiasToGrow: arg
-primitiveGCBiasToGrow: arg
+[primitiveGCBiasToGrow: arg
 	"Tell the VM to grow after tenures instead of running in a tight loop where it does IGCs over and over. For some weird reason the primitive takes an integer not a bool but oh well..."
 
 	<primitive: 'primitiveSetGCBiasToGrow'>
 	^ self primitiveFailed
+]
 
 VirtualMachine >> processHasThreadIdInstVar: aBoolean
-processHasThreadIdInstVar: aBoolean
+[processHasThreadIdInstVar: aBoolean
 	"The threaded VM needs to know if the 4th inst var of Process
 	 is threadId which it uses to control process-to-thread binding.
 	 This flag persists across snapshots, stored in the image header."
@@ -581,17 +632,19 @@ processHasThreadIdInstVar: aBoolean
 	aBoolean
 		ifTrue: [ self assert: (Process instVarNames at: 4) = 'threadId' ].
 	self parameterAt: 48 put: ((self parameterAt: 48) bitClear: 1) + aBoolean asBit
+]
 
 VirtualMachine >> processPreemptionYields
-processPreemptionYields
+[processPreemptionYields
 	"Answer whether the VM causes a process to yield on process preemption, i.e. to put a preempted process at the back of its run queue.  If the parameter is unavailable (non-Cog VMs) or bit 2 (4) is 0 then preemption yields."
 
 	^ (([ self parameterAt: 48 ]
 		on: Error
 		do: [ :ex | ^ true ]) allMask: 2r100) not
+]
 
 VirtualMachine >> processPreemptionYields: aBoolean
-processPreemptionYields: aBoolean
+[processPreemptionYields: aBoolean
 	"The Cog VM can be instructed not to yield on process preemption, i.e. not to put a preempted process at the back of its run queue.  By default preempting a process causes it to yield (Blue Book semantics) which can have unfortunate effects. This flag persists across snapshots, stored in the image header."
 
 	self
@@ -599,39 +652,44 @@ processPreemptionYields: aBoolean
 		put: ((self parameterAt: 48) bitClear: 4) + (aBoolean
 						ifTrue: [ 0 ]
 						ifFalse: [ 2r100 ])
+]
 
 VirtualMachine >> setGCBiasToGrow: aNumber
-setGCBiasToGrow: aNumber
+[setGCBiasToGrow: aNumber
 	"Primitive. Indicate that the GC logic should be bias to grow"
 
 	<primitive: 'primitiveSetGCBiasToGrow'>
 	^ self primitiveFailed	"Example:	Smalltalk vm  setGCBiasToGrowGCLimit: 16*1024*1024.	Smalltalk vm setGCBiasToGrow: 1."
+]
 
 VirtualMachine >> setGCBiasToGrowGCLimit: aNumber
-setGCBiasToGrowGCLimit: aNumber
+[setGCBiasToGrowGCLimit: aNumber
 	"Primitive. Indicate that the bias to grow logic should do a GC after aNumber Bytes"
 
 	<primitive: 'primitiveSetGCBiasToGrowGCLimit'>
 	^ self primitiveFailed	"Example:	Smalltalk vm setGCBiasToGrowGCLimit: 16*1024*1024."
+]
 
 VirtualMachine >> setGCParameters
-setGCParameters
+[setGCParameters
 	"Adjust the VM's default GC parameters to avoid premature tenuring."
 
 	self allocationsBetweenGC: 4000.	"do an incremental GC after this many allocations"
 	self tenuringThreshold: 2000.	"tenure when more than this many objects survive the GC"
 	self setGCBiasToGrowGCLimit: 16 * 1024 * 1024.
 	self setGCBiasToGrow: 1
+]
 
 VirtualMachine >> setGCSemaphore: semaIndex
-setGCSemaphore: semaIndex
+[setGCSemaphore: semaIndex
 	"Primitive. Indicate the GC semaphore index to be signaled on GC occurance."
 
 	<primitive: 'primitiveSetGCSemaphore'>
 	^ self primitiveFailed	"Example:	| index sema process |	sema := Semaphore new.	index := Smalltalk registerExternalObject: sema.	Smalltalk setGCSemaphore: index.	process := [		[[true] whileTrue:[			sema wait.			Smalltalk beep.		]] ensure:[			Smalltalk setGCSemaphore: 0.			Smalltalk unregisterExternalObject: sema.		].	] fork.	process inspect."
+]
 
 VirtualMachine >> statisticsReport
-statisticsReport
+[statisticsReport
 	"Workspace openContents: (Smalltalk vm statisticsReport) label: 'VM Statistics'"
 
 	| oldSpaceEnd youngSpaceEnd memoryEnd fullGCs fullGCTime incrGCs incrGCTime tenureCount upTime upTime2 fullGCs2 fullGCTime2 incrGCs2 incrGCTime2 tenureCount2 str |
@@ -795,44 +853,51 @@ statisticsReport
 	LastStats at: 5 put: incrGCTime.
 	LastStats at: 6 put: tenureCount.
 	^ str contents
+]
 
 VirtualMachine >> tenureCount
-tenureCount
+[tenureCount
 	"tenures of surving objects since startup (read-only)."
 
 	^ self parameterAt: 11
+]
 
 VirtualMachine >> tenuringThreshold
-tenuringThreshold
+[tenuringThreshold
 	"survivor count tenuring threshold (read-write)"
 
 	^ self parameterAt: 6
+]
 
 VirtualMachine >> tenuringThreshold: anInteger
-tenuringThreshold: anInteger
+[tenuringThreshold: anInteger
 	"survivor count tenuring threshold (read-write).
 	tenure when more than this many objects survive the GC"
 
 	^ self parameterAt: 6 put: anInteger
+]
 
 VirtualMachine >> totalFullGCTime
-totalFullGCTime
+[totalFullGCTime
 	"Answer the total time in milliseconds spent in full GCs since startup (read-only)."
 
 	^ self parameterAt: 8
+]
 
 VirtualMachine >> totalGCTime
-totalGCTime
+[totalGCTime
 	^ self totalFullGCTime + self totalIncrementalGCTime
+]
 
 VirtualMachine >> totalIncrementalGCTime
-totalIncrementalGCTime
+[totalIncrementalGCTime
 	"Answer the total time in milliseconds spent in incremental GCs since startup (read-only)."
 
 	^ self parameterAt: 10
+]
 
 VirtualMachine >> unloadModule: aString
-unloadModule: aString
+[unloadModule: aString
 	"Primitive. Unload the given module.
 	This primitive is intended for development only since some
 	platform do not implement unloading of DLL's accordingly.
@@ -841,9 +906,10 @@ unloadModule: aString
 
 	<primitive: 571>
 	^ self primitiveFailed
+]
 
 VirtualMachine >> version
-version
+[version
 	"Return a string of attributes representing the current VM"
 
 	"
@@ -861,9 +927,10 @@ version
 			s
 				nextPutAll: self interpreterSourceVersion;
 				cr ]
+]
 
 VirtualMachine >> versionLabel
-versionLabel
+[versionLabel
 	"The use of this primitive not recommended. Not all VMs providing that"
 
 	"Answer a string corresponding to the version of virtual machine. This
@@ -881,17 +948,20 @@ versionLabel
 	<primitive: 'primitiveVMVersion'>
 	self notify: 'This virtual machine does not support the optional primitive #primitiveVMVersion' translated.
 	^ ''
+]
 
 VirtualMachine >> vmDirectory
-vmDirectory
+[vmDirectory
 	^ self directory
+]
 
 VirtualMachine >> vmFileName
-vmFileName
+[vmFileName
 	^ self fileName
+]
 
 VirtualMachine >> voidCogVMState
-voidCogVMState
+[voidCogVMState
 	"Void any internal caches the VM maintains other than the method lookup caches.
 	 These comprise
 		- the stack zone, where method activations are stored, and
@@ -899,16 +969,19 @@ voidCogVMState
 
 	<primitive: 214>
 	^ self primitiveFailed
+]
 
 VirtualMachine >> wordSize
-wordSize
+[wordSize
 	^ WordSize ifNil: [ WordSize := [ self parameterAt: 40 ]
 				on: Error
 				do: [ 4 ] ]
+]
 
 VirtualMachine >> youngSpaceEnd
-youngSpaceEnd
+[youngSpaceEnd
 	"end of young-space"
 
 	^ self parameterAt: 2
+]
 

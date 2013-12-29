@@ -4,15 +4,17 @@ RelativePath
 	package: #'FileSystem-Core'.
 
 RelativePath >> isAbsolute
-isAbsolute
+[isAbsolute
 	^ false
+]
 
 RelativePath >> isRoot
-isRoot
+[isRoot
 	^ false
+]
 
 RelativePath >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	aStream nextPutAll: 'Path '.
 	self isWorkingDirectory
 		ifTrue: [ aStream nextPutAll: 'workingDirectory' ]
@@ -24,11 +26,13 @@ printOn: aStream
 					nextPutAll: ' / ''';
 					nextPutAll: (self at: i);
 					nextPut: $' ] ]
+]
 
 RelativePath >> printOn: aStream delimiter: aCharacter
-printOn: aStream delimiter: aCharacter
+[printOn: aStream delimiter: aCharacter
 	self isWorkingDirectory
 		ifTrue: [ aStream nextPut: $..
 			^ self ].
 	super printOn: aStream delimiter: aCharacter
+]
 

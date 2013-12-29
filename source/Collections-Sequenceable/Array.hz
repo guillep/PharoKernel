@@ -4,33 +4,37 @@ Array
 	package: #'Collections-Sequenceable'.
 
 Array >> asArray
-asArray
+[asArray
 	"Answer with the receiver itself."
 
 	^ self
+]
 
 Array >> atWrap: index
-atWrap: index
+[atWrap: index
 	"Optimized to go through the primitive if possible"
 
 	<primitive: 60>
 	^ self at: (index - 1) \\ self size + 1
+]
 
 Array >> atWrap: index put: anObject
-atWrap: index put: anObject
+[atWrap: index put: anObject
 	"Optimized to go through the primitive if possible"
 
 	<primitive: 61>
 	^ self at: (index - 1) \\ self size + 1 put: anObject
+]
 
 Array >> copyWithDependent: newElement
-copyWithDependent: newElement
+[copyWithDependent: newElement
 	self size = 0
 		ifTrue: [ ^ DependentsArray with: newElement ].
 	^ self copyWith: newElement
+]
 
 Array >> elementsExchangeIdentityWith: otherArray
-elementsExchangeIdentityWith: otherArray
+[elementsExchangeIdentityWith: otherArray
 	"This primitive performs a bulk mutation, causing all pointers to the elements of this array to be replaced by pointers to the corresponding elements of otherArray.  At the same time, all pointers to the elements of otherArray are replaced by pointers to the corresponding elements of this array.  The identityHashes remain with the pointers rather than with the objects so that objects in hashed structures should still be properly indexed after the mutation."
 
 	<primitive: 128>
@@ -47,16 +51,18 @@ elementsExchangeIdentityWith: otherArray
 	(Smalltalk bytesLeft: true) = Smalltalk primitiveGarbageCollect
 		ifTrue: [ ^ self primitiveFailed ].
 	^ self elementsExchangeIdentityWith: otherArray
+]
 
 Array >> elementsForwardIdentityTo: otherArray
-elementsForwardIdentityTo: otherArray
+[elementsForwardIdentityTo: otherArray
 	"This primitive performs a bulk mutation, causing all pointers to the elements of this array to be replaced by pointers to the corresponding elements of otherArray.  The identityHashes remain with the pointers rather than with the objects so that the objects in this array should still be properly indexed in any existing hashed structures after the mutation."
 
 	<primitive: 72>
 	self primitiveFailed
+]
 
 Array >> elementsForwardIdentityTo: otherArray copyHash: copyHash
-elementsForwardIdentityTo: otherArray copyHash: copyHash
+[elementsForwardIdentityTo: otherArray copyHash: copyHash
 	"This primitive performs a bulk mutation, causing all pointers to the elements of this array to be replaced by pointers to the corresponding elements of otherArray.  
 	If copyHash is true, 
 		the identityHashes remain with the pointers rather than with the objects so that the objects in this array should still be properly indexed in any existing hashed structures after the mutation.
@@ -67,9 +73,10 @@ elementsForwardIdentityTo: otherArray copyHash: copyHash
 
 	<primitive: 249>
 	self primitiveFailed
+]
 
 Array >> hasLiteral: literal
-hasLiteral: literal
+[hasLiteral: literal
 	"Answer true if literal is identical to any literal in this array, even 
 	if imbedded in further array structure. This method is only intended 
 	for private use by CompiledMethod hasLiteralSymbol:"
@@ -80,9 +87,10 @@ hasLiteral: literal
 		(Array == lit class and: [ lit hasLiteral: literal ])
 			ifTrue: [ ^ true ] ].
 	^ false
+]
 
 Array >> hasLiteralSuchThat: testBlock
-hasLiteralSuchThat: testBlock
+[hasLiteralSuchThat: testBlock
 	"Answer true if testBlock returns true for any literal in this array, even if imbedded in 	further Arrays or CompiledMethods.  This method is only intended for private use by 	CompiledMethod 	hasLiteralSuchThat:"
 
 	| lit |
@@ -91,21 +99,25 @@ hasLiteralSuchThat: testBlock
 		(lit hasLiteralSuchThat: testBlock)
 			ifTrue: [ ^ true ] ].
 	^ false
+]
 
 Array >> isArray
-isArray
+[isArray
 	^ true
+]
 
 Array >> isLiteral
-isLiteral
+[isLiteral
 	^ self class == Array and: [ self allSatisfy: [ :each | each isLiteral ] ]
+]
 
 Array >> isSelfEvaluating
-isSelfEvaluating
+[isSelfEvaluating
 	^ (self allSatisfy: [ :each | each isSelfEvaluating ]) and: [ self class == Array ]
+]
 
 Array >> literalEqual: other
-literalEqual: other
+[literalEqual: other
 	self class == other class
 		ifFalse: [ ^ false ].
 	self size = other size
@@ -113,20 +125,23 @@ literalEqual: other
 	self with: other do: [ :e1 :e2 | (e1 literalEqual: e2)
 				ifFalse: [ ^ false ] ].
 	^ true
+]
 
 Array >> printAsLiteralFormOn: aStream
-printAsLiteralFormOn: aStream
+[printAsLiteralFormOn: aStream
 	aStream nextPut: $#.
 	self printElementsOn: aStream
+]
 
 Array >> printAsSelfEvaluatingFormOn: aStream
-printAsSelfEvaluatingFormOn: aStream
+[printAsSelfEvaluatingFormOn: aStream
 	aStream nextPut: ${.
 	self do: [ :el | el printOn: aStream ] separatedBy: [ aStream nextPutAll: '. ' ].
 	aStream nextPut: $}
+]
 
 Array >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	self shouldBePrintedAsLiteral
 		ifTrue: [ self printAsLiteralFormOn: aStream.
 			^ self ].
@@ -134,9 +149,10 @@ printOn: aStream
 		ifTrue: [ self printAsSelfEvaluatingFormOn: aStream.
 			^ self ].
 	super printOn: aStream
+]
 
 Array >> refersToLiteral: literal
-refersToLiteral: literal
+[refersToLiteral: literal
 	"Answer true if literal is identical to any literal in this array, even if imbedded in further array structures or closure methods"
 
 	1 to: self size do: [ :index | | lit |
@@ -145,9 +161,10 @@ refersToLiteral: literal
 		(lit refersToLiteral: literal)
 			ifTrue: [ ^ true ] ].
 	^ false
+]
 
 Array >> replaceFrom: start to: stop with: replacement startingAt: repStart
-replaceFrom: start to: stop with: replacement startingAt: repStart
+[replaceFrom: start to: stop with: replacement startingAt: repStart
 	"Primitive. This destructively replaces elements from start to stop in the receiver starting at index, repStart, in the collection, replacement. Answer the receiver. Range checks are performed in the primitive only. Optional. See Object documentation whatIsAPrimitive."
 
 	<primitive: 105>
@@ -156,13 +173,15 @@ replaceFrom: start to: stop with: replacement startingAt: repStart
 		to: stop
 		with: replacement
 		startingAt: repStart
+]
 
 Array >> shouldBePrintedAsLiteral
-shouldBePrintedAsLiteral
+[shouldBePrintedAsLiteral
 	^ self class == Array and: [ self allSatisfy: [ :each | each shouldBePrintedAsLiteral ] ]
+]
 
 Array >> storeOn: aStream
-storeOn: aStream
+[storeOn: aStream
 	"Use the literal form if possible."
 
 	self shouldBePrintedAsLiteral
@@ -173,22 +192,25 @@ storeOn: aStream
 					aStream space ].
 			aStream nextPut: $) ]
 		ifFalse: [ super storeOn: aStream ]
+]
 
 Array >> storeOnStream: aStream
-storeOnStream: aStream
+[storeOnStream: aStream
 	self shouldBePrintedAsLiteral
 		ifTrue: [ super storeOnStream: aStream ]
 		ifFalse: [ aStream writeCollection: self ]
+]
 
 Array class >> braceStream: nElements
-braceStream: nElements
+[braceStream: nElements
 	"This method is used in compilation of brace constructs.
 	It MUST NOT be deleted or altered."
 
 	^ WriteStream basicNew braceArray: (self new: nElements)
+]
 
 Array class >> braceWith: a
-braceWith: a
+[braceWith: a
 	"This method is used in compilation of brace constructs.
 	It MUST NOT be deleted or altered."
 
@@ -196,9 +218,10 @@ braceWith: a
 	array := self new: 1.
 	array at: 1 put: a.
 	^ array
+]
 
 Array class >> braceWith: a with: b
-braceWith: a with: b
+[braceWith: a with: b
 	"This method is used in compilation of brace constructs.
 	It MUST NOT be deleted or altered."
 
@@ -207,9 +230,10 @@ braceWith: a with: b
 	array at: 1 put: a.
 	array at: 2 put: b.
 	^ array
+]
 
 Array class >> braceWith: a with: b with: c
-braceWith: a with: b with: c
+[braceWith: a with: b with: c
 	"This method is used in compilation of brace constructs.
 	It MUST NOT be deleted or altered."
 
@@ -219,9 +243,10 @@ braceWith: a with: b with: c
 	array at: 2 put: b.
 	array at: 3 put: c.
 	^ array
+]
 
 Array class >> braceWith: a with: b with: c with: d
-braceWith: a with: b with: c with: d
+[braceWith: a with: b with: c with: d
 	"This method is used in compilation of brace constructs.
 	It MUST NOT be deleted or altered."
 
@@ -232,22 +257,25 @@ braceWith: a with: b with: c with: d
 	array at: 3 put: c.
 	array at: 4 put: d.
 	^ array
+]
 
 Array class >> braceWithNone
-braceWithNone
+[braceWithNone
 	"This method is used in compilation of brace constructs.
 	It MUST NOT be deleted or altered."
 
 	^ self new: 0
+]
 
 Array class >> empty
-empty
+[empty
 	"A canonicalized empty Array instance."
 
 	^ #()
+]
 
 Array class >> new: sizeRequested
-new: sizeRequested
+[new: sizeRequested
 	"Answer an instance of this class with the number of indexable
 	variables specified by the argument, sizeRequested.
 	
@@ -257,4 +285,5 @@ new: sizeRequested
 
 	<primitive: 71>
 	^ self basicNew: sizeRequested	"Exceptional conditions will be handled in basicNew:"
+]
 

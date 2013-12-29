@@ -1,28 +1,34 @@
 Trait named: #TComposingDescription
 	package: #'Traits-Kernel-Traits'.TComposingDescription >> + aTraitOrTraitComposition
-+ aTraitOrTraitComposition
+[+ aTraitOrTraitComposition
 	"Use double dispatch to avoid having nested composition in cases where
 	parenthesis are used, such as T1 + (T2 + T3)"
 
 	^ aTraitOrTraitComposition addOnTheLeft: self
+]
 
 TComposingDescription >> - anArrayOfSelectors
-- anArrayOfSelectors
+[- anArrayOfSelectors
 	^ TraitExclusion with: self exclusions: anArrayOfSelectors
+]
 
 TComposingDescription >> @ anArrayOfAssociations
-@ anArrayOfAssociations
+[@ anArrayOfAssociations
 	^ TraitAlias with: self aliases: anArrayOfAssociations
+]
 
 TComposingDescription >> addCompositionOnLeft: aTraitComposition
-addCompositionOnLeft: aTraitComposition
+[addCompositionOnLeft: aTraitComposition
 	^ aTraitComposition add: self
+]
 
 TComposingDescription >> addOnTheLeft: aTraitExpression
-addOnTheLeft: aTraitExpression
+[addOnTheLeft: aTraitExpression
 	^ TraitComposition with: aTraitExpression with: self
+]
 
 TComposingDescription >> asTraitComposition
-asTraitComposition
+[asTraitComposition
 	^ TraitComposition with: self
+]
 

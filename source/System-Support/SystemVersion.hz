@@ -4,25 +4,29 @@ SystemVersion
 	package: #'System-Support'.
 
 SystemVersion >> date
-date
+[date
 	^ date
+]
 
 SystemVersion >> date: newDate
-date: newDate
+[date: newDate
 	date := newDate
+]
 
 SystemVersion >> datedVersion
-datedVersion
+[datedVersion
 	" E.g. 'Pharo2.0a of ''18 April 2012''' "
 
 	^ self version asString , ' of ' , self date printString
+]
 
 SystemVersion >> dottedMajorMinor
-dottedMajorMinor
+[dottedMajorMinor
 	^ self majorMinor: '.'
+]
 
 SystemVersion >> highestUpdate
-highestUpdate
+[highestUpdate
 	"Returns the highest number of available updates"
 
 	| sortedUpdates |
@@ -32,13 +36,15 @@ highestUpdate
 				ifTrue: [ 0 ]
 				ifFalse: [ sortedUpdates last ] ].
 	^ highestUpdate
+]
 
 SystemVersion >> highestUpdate: anInteger
-highestUpdate: anInteger
+[highestUpdate: anInteger
 	highestUpdate := anInteger
+]
 
 SystemVersion >> imageVersionString
-imageVersionString
+[imageVersionString
 	"Print the version compatibile with naming the image."
 
 	^ String
@@ -52,31 +58,36 @@ imageVersionString
 				nextPutAll: self highestUpdate printString;
 				nextPut: $-;
 				nextPutAll: self suffix ]
+]
 
 SystemVersion >> includesUpdate: anUpdate
-includesUpdate: anUpdate
+[includesUpdate: anUpdate
 	^ self updates includes: anUpdate
+]
 
 SystemVersion >> initialize
-initialize
+[initialize
 	super initialize.
 	date := Date today.
 	updates := Set new
+]
 
 SystemVersion >> major
-major
+[major
 	"Answer the major number of a version. 1 in '1.2'"
 
 	^ major
+]
 
 SystemVersion >> major: anObject
-major: anObject
+[major: anObject
 	"Set the value of major"
 
 	major := anObject
+]
 
 SystemVersion >> majorMinor: aSeparatingString
-majorMinor: aSeparatingString
+[majorMinor: aSeparatingString
 	"Return the major/minor version number of the form XaSeparatingStringY, without any 'alpha' or 'beta' or other suffix. If the receiver needs upgrading, do it. Remove the guard in 1.3."
 
 	"SystemVersion current majorMinor: '-'"
@@ -89,41 +100,48 @@ majorMinor: aSeparatingString
 				nextPutAll: self major printString;
 				nextPutAll: aSeparatingString;
 				nextPutAll: self minor printString ]
+]
 
 SystemVersion >> majorMinorVersion
-majorMinorVersion
+[majorMinorVersion
 	^ self type , self dottedMajorMinor
+]
 
 SystemVersion >> minor
-minor
+[minor
 	"Answer the minor number of a version. 2 in '1.2'"
 
 	^ minor
+]
 
 SystemVersion >> minor: anObject
-minor: anObject
+[minor: anObject
 	"Set the value of minor"
 
 	minor := anObject
+]
 
 SystemVersion >> printOn: stream
-printOn: stream
+[printOn: stream
 	stream
 		nextPutAll: self datedVersion;
 		nextPutAll: ' update ';
 		nextPutAll: self highestUpdate printString
+]
 
 SystemVersion >> registerUpdate: update
-registerUpdate: update
+[registerUpdate: update
 	self updates add: update.
 	self resetHighestUpdate
+]
 
 SystemVersion >> resetHighestUpdate
-resetHighestUpdate
+[resetHighestUpdate
 	highestUpdate := nil
+]
 
 SystemVersion >> shortVersionString
-shortVersionString
+[shortVersionString
 	"Print a short version string.  Compatibile with senders that concatenate this with 
 	#lastUpdateString or #highestUpdate. Essentially the old version format. Guard 
 	against no state being set."
@@ -136,41 +154,48 @@ shortVersionString
 				nextPut: $.;
 				nextPutAll: self minor printString;
 				nextPutAll: self suffix ]
+]
 
 SystemVersion >> suffix
-suffix
+[suffix
 	"Answer the suffix (alpha, beta, rc  of a version. beta in '1.2beta'"
 
 	^ suffix
+]
 
 SystemVersion >> suffix: anObject
-suffix: anObject
+[suffix: anObject
 	"Set the value of suffix"
 
 	suffix := anObject
+]
 
 SystemVersion >> type
-type
+[type
 	"Answer the value of type"
 
 	^ type
+]
 
 SystemVersion >> type: anObject
-type: anObject
+[type: anObject
 	"Set the value of type"
 
 	type := anObject
+]
 
 SystemVersion >> unregisterUpdate: update
-unregisterUpdate: update
+[unregisterUpdate: update
 	self updates remove: update ifAbsent: [  ]
+]
 
 SystemVersion >> updates
-updates
+[updates
 	^ updates
+]
 
 SystemVersion >> upgrade
-upgrade
+[upgrade
 	| parts |
 	version ifNil: [ ^ self ].
 	parts := self class parseShortVersionString: version.
@@ -179,20 +204,23 @@ upgrade
 	self minor: parts third.
 	self suffix: parts fourth.
 	version := nil
+]
 
 SystemVersion >> version
-version
+[version
 	"Answer the short version string. If the receiver needs upgrading, do it."
 
 	^ self shortVersionString
+]
 
 SystemVersion class >> current
-current
+[current
 	Current ifNil: [ Current := SystemVersion new ].
 	^ Current
+]
 
 SystemVersion class >> fromShortVersionString: aString
-fromShortVersionString: aString
+[fromShortVersionString: aString
 	"Create a new SystemVersion from the given short version string. Useful for testing."
 
 	| parts |
@@ -203,9 +231,10 @@ fromShortVersionString: aString
 		minor: parts third;
 		suffix: parts fourth;
 		yourself
+]
 
 SystemVersion class >> newVersion: versionName
-newVersion: versionName
+[newVersion: versionName
 	"Install a new SystemVersion as the current version. Only preserve the higest update recorded.
 	This method is a candidate for being removed, I am not sure it ever makes sense to do this."
 
@@ -213,9 +242,10 @@ newVersion: versionName
 	newVersion := self fromShortVersionString: versionName.
 	newVersion highestUpdate: self current highestUpdate.
 	Current := newVersion
+]
 
 SystemVersion class >> parseShortVersionString: aString
-parseShortVersionString: aString
+[parseShortVersionString: aString
 	"Answer the parts of aString, expected in short format <type><major>.<minor><suffix>."
 
 	| stream length type major minor suffix |
@@ -235,9 +265,10 @@ parseShortVersionString: aString
 	major.
 	minor.
 	suffix}
+]
 
 SystemVersion class >> parseVersionString: versionString
-parseVersionString: versionString
+[parseVersionString: versionString
 	"Answer the version of this release as version, date, update."
 
 	"SystemVersion parseVersionString: 'Squeak3.1alpha of 28 February 2001 [latest update: #3966]' "
@@ -254,4 +285,5 @@ parseVersionString: versionString
 	^ {version.
 	date.
 	update}
+]
 

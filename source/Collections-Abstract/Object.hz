@@ -1,21 +1,24 @@
 Object >> appendTo: aCollection
-appendTo: aCollection
+[appendTo: aCollection
 	"double dispatch for join:"
 
 	^ aCollection addLast: self
+]
 
 Object >> join: aSequenceableCollection
-join: aSequenceableCollection
+[join: aSequenceableCollection
 	^ (Array with: self) join: aSequenceableCollection
+]
 
 Object >> joinTo: stream
-joinTo: stream
+[joinTo: stream
 	"double dispatch for join:"
 
 	^ stream nextPut: self
+]
 
 Object >> split: aSequenceableCollection
-split: aSequenceableCollection
+[split: aSequenceableCollection
 	"optimized version for single delimiters:
 	Example:
 		$/ split: '/foo/bar'"
@@ -24,9 +27,10 @@ split: aSequenceableCollection
 	result := OrderedCollection new: (aSequenceableCollection size / 2) asInteger.
 	self split: aSequenceableCollection do: [ :item | result add: item ].
 	^ result
+]
 
 Object >> split: aSequenceableCollection do: aBlock
-split: aSequenceableCollection do: aBlock
+[split: aSequenceableCollection do: aBlock
 	"optimized version for single delimiters:
 	Example:
 		$/ split: '/foo/bar' indicesDo: [ :item | ]"
@@ -34,9 +38,10 @@ split: aSequenceableCollection do: aBlock
 	self
 		split: aSequenceableCollection
 		indicesDo: [ :start :end | aBlock value: (aSequenceableCollection copyFrom: start to: end) ]
+]
 
 Object >> split: aSequenceableCollection indicesDo: aBlock
-split: aSequenceableCollection indicesDo: aBlock
+[split: aSequenceableCollection indicesDo: aBlock
 	"optimized version for single delimiters:
 	Example:
 		$/ split: '/foo/bar' indicesDo: [ :start :end | ]"
@@ -51,4 +56,5 @@ split: aSequenceableCollection indicesDo: aBlock
 			oldPosition := position.
 			position := aSequenceableCollection indexOf: self startingAt: position ].
 	aBlock value: oldPosition value: aSequenceableCollection size
+]
 

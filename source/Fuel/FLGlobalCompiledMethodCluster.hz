@@ -3,7 +3,7 @@ FLGlobalCompiledMethodCluster
 	package: #Fuel.
 
 FLGlobalCompiledMethodCluster >> materializeInstanceWith: aDecoder
-materializeInstanceWith: aDecoder
+[materializeInstanceWith: aDecoder
 	| methodClass selector method serializedHash |
 	methodClass := self materializeGlobalClassFrom: aDecoder.
 	aDecoder nextEncodedByte = 1
@@ -16,9 +16,10 @@ materializeInstanceWith: aDecoder
 	method bytecodesHash = serializedHash
 		ifFalse: [ FLMethodChanged signalWith: methodClass name and: selector ].
 	^ method
+]
 
 FLGlobalCompiledMethodCluster >> serializeInstance: aCompiledMethod with: anEncoder
-serializeInstance: aCompiledMethod with: anEncoder
+[serializeInstance: aCompiledMethod with: anEncoder
 	| methodClass |
 	methodClass := aCompiledMethod methodClass.
 	self serializeGlobalClass: methodClass instanceSide on: anEncoder.
@@ -27,4 +28,5 @@ serializeInstance: aCompiledMethod with: anEncoder
 				ifFalse: [ 0 ]).
 	anEncoder encodeString: aCompiledMethod selector.
 	anEncoder encodeUint16: aCompiledMethod bytecodesHash
+]
 

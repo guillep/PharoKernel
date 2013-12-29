@@ -4,11 +4,12 @@ IntegerArray
 	package: #'Collections-Native'.
 
 IntegerArray >> asIntegerArray
-asIntegerArray
+[asIntegerArray
 	^ self
+]
 
 IntegerArray >> at: index
-at: index
+[at: index
 	<primitive: 165>
 	| word |
 	word := self basicAt: index.
@@ -18,9 +19,10 @@ at: index
 		ifTrue: [ "word - 16r100000000"
 			(word bitInvert32 + 1) negated ]
 		ifFalse: [ word ]	"Negative?!"
+]
 
 IntegerArray >> at: index put: anInteger
-at: index put: anInteger
+[at: index put: anInteger
 	<primitive: 166>
 	| word |
 	anInteger < 0
@@ -29,26 +31,30 @@ at: index put: anInteger
 		ifFalse: [ word := anInteger ].
 	self basicAt: index put: word.
 	^ anInteger
+]
 
 IntegerArray >> atAllPut: anInteger
-atAllPut: anInteger
+[atAllPut: anInteger
 	| word |
 	anInteger < 0
 		ifTrue: [ "word := 16r100000000 + anInteger"
 			word := (anInteger + 1) negated bitInvert32 ]
 		ifFalse: [ word := anInteger ].
 	self primFill: word
+]
 
 IntegerArray >> defaultElement
-defaultElement
+[defaultElement
 	"Return the default element of the receiver"
 
 	^ 0
+]
 
 IntegerArray >> primFill: aPositiveInteger
-primFill: aPositiveInteger
+[primFill: aPositiveInteger
 	"Fill the receiver, an indexable bytes or words object, with the given positive integer. The range of possible fill values is [0..255] for byte arrays and [0..(2^32 - 1)] for word arrays."
 
 	<primitive: 145>
 	self errorImproperStore
+]
 

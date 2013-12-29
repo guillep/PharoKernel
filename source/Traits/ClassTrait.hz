@@ -5,28 +5,33 @@ ClassTrait
 	package: #Traits.
 
 ClassTrait >> adoptInstance: oldInstance from: oldMetaClass
-adoptInstance: oldInstance from: oldMetaClass
+[adoptInstance: oldInstance from: oldMetaClass
 	^ self error: 'Traits cannot adopt instances'
+]
 
 ClassTrait >> baseTrait
-baseTrait
+[baseTrait
 	^ baseTrait
+]
 
 ClassTrait >> baseTrait: aTrait
-baseTrait: aTrait
+[baseTrait: aTrait
 	[ aTrait isBaseTrait ] assert.
 	baseTrait := aTrait
+]
 
 ClassTrait >> classTrait
-classTrait
+[classTrait
 	^ self
+]
 
 ClassTrait >> classTrait: aClassTrait
-classTrait: aClassTrait
+[classTrait: aClassTrait
 	self error: 'Trait is already a class trait!'
+]
 
 ClassTrait >> compile: text classified: category withStamp: changeStamp notifying: requestor logSource: logSource
-compile: text classified: category withStamp: changeStamp notifying: requestor logSource: logSource
+[compile: text classified: category withStamp: changeStamp notifying: requestor logSource: logSource
 	| classSideUsersOfBaseTrait message |
 	classSideUsersOfBaseTrait := self baseTrait users select: [ :each | each isClassSide ].
 	classSideUsersOfBaseTrait isEmpty
@@ -45,9 +50,10 @@ compile: text classified: category withStamp: changeStamp notifying: requestor l
 		withStamp: changeStamp
 		notifying: requestor
 		logSource: logSource
+]
 
 ClassTrait >> copy
-copy
+[copy
 	"Make a copy of the receiver. Share the 
 	reference to the base trait."
 
@@ -55,47 +61,56 @@ copy
 		baseTrait: self baseTrait;
 		initializeFrom: self;
 		yourself
+]
 
 ClassTrait >> definition
-definition
+[definition
 	^ String
 		streamContents: [ :stream | stream
 				nextPutAll: self name;
 				crtab;
 				nextPutAll: 'uses: ';
 				nextPutAll: self traitCompositionString ]
+]
 
 ClassTrait >> initializeWithBaseTrait: aTrait
-initializeWithBaseTrait: aTrait
+[initializeWithBaseTrait: aTrait
 	self baseTrait: aTrait.
 	self noteNewBaseTraitCompositionApplied: aTrait traitComposition.
 	aTrait users do: [ :each | self addUser: each classSide ]
+]
 
 ClassTrait >> instanceVariableNames: instVarString
-instanceVariableNames: instVarString
+[instanceVariableNames: instVarString
 	"Compatibility purposes"
 
 	
+]
 
 ClassTrait >> isBaseTrait
-isBaseTrait
+[isBaseTrait
 	^ false
+]
 
 ClassTrait >> isClassTrait
-isClassTrait
+[isClassTrait
 	^ true
+]
 
 ClassTrait >> name
-name
+[name
 	^ self baseTrait name , ' classTrait'
+]
 
 ClassTrait >> new
-new
+[new
 	self error: 'Traits have no instances'
+]
 
 ClassTrait class >> for: aTrait
-for: aTrait
+[for: aTrait
 	^ self new
 		initializeWithBaseTrait: aTrait;
 		yourself
+]
 

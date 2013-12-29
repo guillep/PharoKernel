@@ -6,7 +6,7 @@ Author class
 	instanceVariables: #(#uniqueInstance ).
 
 Author >> checkAndSetFullNameWith: aString
-checkAndSetFullNameWith: aString
+[checkAndSetFullNameWith: aString
 	| s allowed |
 	aString ifNil: [ ^ self ].
 	s := ''.
@@ -14,9 +14,10 @@ checkAndSetFullNameWith: aString
 	aString do: [ :c | (allowed includes: c)
 				ifTrue: [ s := s , c asString ] ].
 	self fullName: s
+]
 
 Author >> fullName
-fullName
+[fullName
 	"Answer the full name to be used to identify the current code author."
 
 	[ fullName isEmptyOrNil ]
@@ -25,22 +26,25 @@ fullName
 				ifTrue: [ fullName := nil.
 					^ 'Anonymous' ] ].
 	^ fullName
+]
 
 Author >> fullName: aString
-fullName: aString
+[fullName: aString
 	fullName := aString.
 	#UserManager
 		asClassIfPresent: [ :userManager | userManager default currentUser setUserName: aString forGroup: #author ]
+]
 
 Author >> fullNamePerSe
-fullNamePerSe
+[fullNamePerSe
 	"Answer the currently-prevailing author full name, such as it is, empty or not"
 
 	#UserManager asClassIfPresent: [ :userManager | ^ userManager default currentUser userNameFor: #author ].
 	^ fullName
+]
 
 Author >> ifUnknownAuthorUse: aString during: aBlock
-ifUnknownAuthorUse: aString during: aBlock
+[ifUnknownAuthorUse: aString during: aBlock
 	"If no author is set use the name aString while executing aBlock."
 
 	"for compatibility with 1.0"
@@ -50,48 +54,55 @@ ifUnknownAuthorUse: aString during: aBlock
 	fullName := aString.
 	^ aBlock
 		ensure: [ self reset ]
+]
 
 Author >> initialize
-initialize
+[initialize
 	super initialize.
 	fullName := ''
+]
 
 Author >> requestFullName
-requestFullName
+[requestFullName
 	| initialAnswer |
 	initialAnswer := fullName isEmptyOrNil
 		ifTrue: [ 'FirstnameLastname' translated ]
 		ifFalse: [ fullName ].
 	self checkAndSetFullNameWith: (AuthorNameRequest new initialAnswer: initialAnswer) signal
+]
 
 Author >> reset
-reset
+[reset
 	fullName := ''
+]
 
 Author >> useAuthor: aString during: aBlock
-useAuthor: aString during: aBlock
+[useAuthor: aString during: aBlock
 	| previous |
 	previous := fullName.
 	fullName := aString.
 	^ aBlock
 		ensure: [ fullName := previous ]
+]
 
 Author class >> changeStamp
-changeStamp
+[changeStamp
 	"Answer a string to be pasted into source code to mark who changed it and when."
 
 	^ Author fullName , ' ' , Date today mmddyyyy , ' '
 		, ((String streamContents: [ :s | Time now print24: true on: s ]) copyFrom: 1 to: 5)
+]
 
 Author class >> changeStampPerSe
-changeStampPerSe
+[changeStampPerSe
 	"Answer a string to be pasted into source code to mark who changed it and when."
 
 	^ (Author fullNamePerSe ifNil: [ '.' ]) , ' ' , Date today mmddyyyy , ' '
 		, ((String streamContents: [ :s | Time now print24: true on: s ]) copyFrom: 1 to: 5)
+]
 
 Author class >> fixStamp: changeStamp
-fixStamp: changeStamp
+[fixStamp: changeStamp
 	| parts |
 	parts := changeStamp findTokens: ' '.
 	(parts notEmpty and: [ parts last first isLetter ])
@@ -102,37 +113,46 @@ fixStamp: changeStamp
 								space;
 								nextPutAll: p ] ] ].
 	^ changeStamp
+]
 
 Author class >> fullName
-fullName
+[fullName
 	^ Author uniqueInstance fullName
+]
 
 Author class >> fullName: aString
-fullName: aString
+[fullName: aString
 	^ Author uniqueInstance checkAndSetFullNameWith: aString
+]
 
 Author class >> fullNamePerSe
-fullNamePerSe
+[fullNamePerSe
 	^ Author uniqueInstance fullNamePerSe
+]
 
 Author class >> new
-new
+[new
 	self error: 'Author is a singleton -- send uniqueInstance instead'
+]
 
 Author class >> requestFullName
-requestFullName
+[requestFullName
 	^ Author uniqueInstance requestFullName
+]
 
 Author class >> reset
-reset
+[reset
 	#UserManager asClassIfPresent: [ :userManager | userManager default currentUser setUserName: nil forGroup: #author ].
 	^ uniqueInstance := nil
+]
 
 Author class >> uniqueInstance
-uniqueInstance
+[uniqueInstance
 	^ uniqueInstance ifNil: [ uniqueInstance := super new ]
+]
 
 Author class >> useAuthor: aString during: aBlock
-useAuthor: aString during: aBlock
+[useAuthor: aString during: aBlock
 	^ self uniqueInstance useAuthor: aString during: aBlock
+]
 

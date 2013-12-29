@@ -3,15 +3,17 @@ ReadStream
 	package: #'Collections-Streams'.
 
 ReadStream >> ascii
-ascii
+[ascii
 	
+]
 
 ReadStream >> localName
-localName
+[localName
 	^ 'ReadStream'
+]
 
 ReadStream >> next
-next
+[next
 	"Primitive. Answer the next object in the Stream represented by the
 	receiver. Fail if the collection of this stream is not an Array or a String.
 	Fail if the stream is positioned at its end, or if the position is out of
@@ -22,9 +24,10 @@ next
 	position >= readLimit
 		ifTrue: [ ^ nil ]
 		ifFalse: [ ^ collection at: (position := position + 1) ]
+]
 
 ReadStream >> next: anInteger
-next: anInteger
+[next: anInteger
 	"Answer the next anInteger elements of my collection.  overriden for efficiency"
 
 	| ans endPosition |
@@ -32,13 +35,15 @@ next: anInteger
 	ans := collection copyFrom: position + 1 to: endPosition.
 	position := endPosition.
 	^ ans
+]
 
 ReadStream >> nextPut: anObject
-nextPut: anObject
+[nextPut: anObject
 	self shouldNotImplement
+]
 
 ReadStream >> on: aCollection from: firstIndex to: lastIndex
-on: aCollection from: firstIndex to: lastIndex
+[on: aCollection from: firstIndex to: lastIndex
 	| len |
 	collection := aCollection.
 	readLimit := lastIndex > (len := collection size)
@@ -47,9 +52,10 @@ on: aCollection from: firstIndex to: lastIndex
 	position := firstIndex <= 1
 		ifTrue: [ 0 ]
 		ifFalse: [ firstIndex - 1 ]
+]
 
 ReadStream >> readInto: aCollection startingAt: startIndex count: n
-readInto: aCollection startingAt: startIndex count: n
+[readInto: aCollection startingAt: startIndex count: n
 	"Read n objects into the given collection. 
 	Return number of elements that have been read."
 
@@ -62,21 +68,24 @@ readInto: aCollection startingAt: startIndex count: n
 		startingAt: position + 1.
 	position := position + max.
 	^ max
+]
 
 ReadStream >> readStream
-readStream
+[readStream
 	"polymorphic with SequenceableCollection.  Return self"
 
 	^ self
+]
 
 ReadStream >> size
-size
+[size
 	"Compatibility with other streams (e.g., FileStream)"
 
 	^ readLimit
+]
 
 ReadStream >> upTo: anObject
-upTo: anObject
+[upTo: anObject
 	"fast version using indexOf:"
 
 	| start end |
@@ -86,9 +95,10 @@ upTo: anObject
 		ifTrue: [ ^ self upToEnd ].	"skip to the end and return the data passed over"
 	position := end.
 	^ collection copyFrom: start to: end - 1
+]
 
 ReadStream >> upToAnyOf: aCollection do: aBlock
-upToAnyOf: aCollection do: aBlock
+[upToAnyOf: aCollection do: aBlock
 	"Overriden for speed"
 
 	| end result |
@@ -99,18 +109,21 @@ upToAnyOf: aCollection do: aBlock
 	position := end.
 	aBlock value: (collection at: end).
 	^ result
+]
 
 ReadStream >> upToEnd
-upToEnd
+[upToEnd
 	| start |
 	start := 1 + position.
 	position := readLimit.
 	^ collection copyFrom: start to: position
+]
 
 ReadStream class >> on: aCollection from: firstIndex to: lastIndex
-on: aCollection from: firstIndex to: lastIndex
+[on: aCollection from: firstIndex to: lastIndex
 	"Answer with a new instance streaming over a copy of aCollection from
 	firstIndex to lastIndex."
 
 	^ self basicNew on: aCollection from: firstIndex to: lastIndex
+]
 

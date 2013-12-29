@@ -3,13 +3,14 @@ ExceptionSet
 	package: #Kernel.
 
 ExceptionSet >> , anException
-, anException
+[, anException
 	"Return an exception set that contains the receiver and the argument exception. This is commonly used to specify a set of exception selectors for an exception handler."
 
 	self add: anException
+]
 
 ExceptionSet >> - anotherException
-- anotherException
+[- anotherException
 	"Create an exception set containnig the receiver
 	and anotherException as an exclusion."
 
@@ -17,21 +18,25 @@ ExceptionSet >> - anotherException
 		add: self;
 		addExclusion: anotherException;
 		yourself
+]
 
 ExceptionSet >> add: anException
-add: anException
+[add: anException
 	"Add anException to the exceptions that I handle"
 
 	^ exceptions add: anException
+]
 
 ExceptionSet >> handles: anException
-handles: anException
+[handles: anException
 	"Determine whether an exception handler will accept a signaled exception."
 
 	^ exceptions anySatisfy: [ :exception | exception handles: anException ]
+]
 
 ExceptionSet >> initialize
-initialize
+[initialize
 	super initialize.
 	exceptions := OrderedCollection new
+]
 

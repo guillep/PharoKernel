@@ -3,7 +3,7 @@ Random
 	package: #Kernel.
 
 Random >> initialize
-initialize
+[initialize
 	" Set a reasonable Park-Miller starting seed "
 
 	super initialize.
@@ -15,24 +15,28 @@ initialize
 	m := 16r7FFFFFFF asFloat.	" magic constant = 2147483647 "
 	q := (m quo: a) asFloat.
 	r := (m \\ a) asFloat
+]
 
 Random >> next
-next
+[next
 	"Answer a random Float in the interval [0 to 1)."
 
 	^ (seed := self nextValue) / m
+]
 
 Random >> next: anInteger
-next: anInteger
+[next: anInteger
 	^ self next: anInteger into: (Array new: anInteger)
+]
 
 Random >> next: anInteger into: anArray
-next: anInteger into: anArray
+[next: anInteger into: anArray
 	1 to: anInteger do: [ :index | anArray at: index put: self next ].
 	^ anArray
+]
 
 Random >> nextInt: anInteger
-nextInt: anInteger
+[nextInt: anInteger
 	"Answer a random integer in the interval [1, anInteger].
 	Handle large numbers too (for cryptography)."
 
@@ -41,9 +45,10 @@ nextInt: anInteger
 	anInteger asFloat isInfinite
 		ifTrue: [ ^ (self next asFraction * anInteger) truncated + 1 ].
 	^ (self next * anInteger) truncated + 1
+]
 
 Random >> nextValue
-nextValue
+[nextValue
 	"This method generates random instances of Integer 	in the interval
 	0 to 16r7FFFFFFF. This method does NOT update the seed; repeated sends
 	answer the same value.
@@ -59,17 +64,20 @@ nextValue
 		ifTrue: [ aLoRHi ]
 		ifFalse: [ aLoRHi + m ].
 	^ answer
+]
 
 Random >> seed
-seed
+[seed
 	^ seed
+]
 
 Random >> seed: anInteger
-seed: anInteger
+[seed: anInteger
 	seed := anInteger
+]
 
 Random class >> bucketTest: randy
-bucketTest: randy
+[bucketTest: randy
 	"Execute this:   Random bucketTest: Random new"
 
 	" A quick-and-dirty bucket test. Prints nbuckets values on the
@@ -98,13 +106,15 @@ more; go get coffee.
 			buckets at: slot put: (buckets at: slot) + 1 ].
 	Transcript cr.
 	1 to: nbuckets do: [ :nb | Transcript show: (buckets at: nb) printString , ' ' ]
+]
 
 Random class >> seed: anInteger
-seed: anInteger
+[seed: anInteger
 	^ self new seed: anInteger
+]
 
 Random class >> theItsCompletelyBrokenTest
-theItsCompletelyBrokenTest
+[theItsCompletelyBrokenTest
 	"Random theItsCompletelyBrokenTest"
 
 	"The above should print as...
@@ -115,4 +125,5 @@ theItsCompletelyBrokenTest
 	rng := Random new.
 	rng seed: 2345678901.
 	^ (1 to: 10) collect: [ :i | rng next ]
+]
 

@@ -4,19 +4,22 @@ RWBinaryOrTextStream
 	package: #'Collections-Streams'.
 
 RWBinaryOrTextStream >> asBinaryOrTextStream
-asBinaryOrTextStream
+[asBinaryOrTextStream
 	^ self
+]
 
 RWBinaryOrTextStream >> ascii
-ascii
+[ascii
 	isBinary := false
+]
 
 RWBinaryOrTextStream >> binary
-binary
+[binary
 	isBinary := true
+]
 
 RWBinaryOrTextStream >> contents
-contents
+[contents
 	"Answer with a copy of my collection from 1 to readLimit."
 
 	| newArray |
@@ -29,21 +32,24 @@ contents
 		to: readLimit
 		with: collection
 		startingAt: 1
+]
 
 RWBinaryOrTextStream >> isBinary
-isBinary
+[isBinary
 	^ isBinary
+]
 
 RWBinaryOrTextStream >> next
-next
+[next
 	| byte |
 	^ isBinary
 		ifTrue: [ byte := super next.
 			byte ifNil: [ nil ] ifNotNil: [ byte asciiValue ] ]
 		ifFalse: [ super next ]
+]
 
 RWBinaryOrTextStream >> next: anInteger
-next: anInteger
+[next: anInteger
 	"Answer the next anInteger elements of my collection. Must override to get class right."
 
 	| newArray |
@@ -51,9 +57,10 @@ next: anInteger
 		ifTrue: [ ByteArray ]
 		ifFalse: [ ByteString ]) new: anInteger.
 	^ self nextInto: newArray
+]
 
 RWBinaryOrTextStream >> next: n into: aCollection startingAt: startIndex
-next: n into: aCollection startingAt: startIndex
+[next: n into: aCollection startingAt: startIndex
 	"Read n objects into the given collection. 
 	Return aCollection or a partial copy if less than n elements have been read."
 
@@ -70,35 +77,40 @@ next: n into: aCollection startingAt: startIndex
 	max = n
 		ifTrue: [ ^ aCollection ]
 		ifFalse: [ ^ aCollection copyFrom: 1 to: startIndex + max - 1 ]
+]
 
 RWBinaryOrTextStream >> next: anInteger putAll: aCollection startingAt: startIndex
-next: anInteger putAll: aCollection startingAt: startIndex
+[next: anInteger putAll: aCollection startingAt: startIndex
 	"Optimized for ByteArrays"
 
 	aCollection class == ByteArray
 		ifTrue: [ ^ super next: anInteger putAll: aCollection asString startingAt: startIndex ].
 	^ super next: anInteger putAll: aCollection startingAt: startIndex
+]
 
 RWBinaryOrTextStream >> nextPut: charOrByte
-nextPut: charOrByte
+[nextPut: charOrByte
 	^ super nextPut: charOrByte asCharacter
+]
 
 RWBinaryOrTextStream >> nextPutAll: aCollection
-nextPutAll: aCollection
+[nextPutAll: aCollection
 	"Optimized for ByteArrays"
 
 	^ aCollection class == ByteArray
 		ifTrue: [ super nextPutAll: aCollection asString ]
 		ifFalse: [ super nextPutAll: aCollection ]
+]
 
 RWBinaryOrTextStream >> padToEndWith: aChar
-padToEndWith: aChar
+[padToEndWith: aChar
 	"We don't have pages, so we are at the end, and don't need to pad."
 
 	
+]
 
 RWBinaryOrTextStream >> readInto: aCollection startingAt: startIndex count: n
-readInto: aCollection startingAt: startIndex count: n
+[readInto: aCollection startingAt: startIndex count: n
 	"Read n objects into the given collection. 
 	Return number of elements that have been read."
 
@@ -113,9 +125,10 @@ readInto: aCollection startingAt: startIndex count: n
 		startingAt: position + 1.
 	position := position + max.
 	^ max
+]
 
 RWBinaryOrTextStream >> reset
-reset
+[reset
 	"Set the receiver's position to the beginning of the sequence of objects."
 
 	super reset.
@@ -124,19 +137,22 @@ reset
 		ifTrue: [ "Store as String and convert as needed."
 			collection := collection asString.
 			isBinary := true ]
+]
 
 RWBinaryOrTextStream >> setFileTypeToObject
-setFileTypeToObject
+[setFileTypeToObject
 	"do nothing.  We don't have a file type"
 
 	
+]
 
 RWBinaryOrTextStream >> text
-text
+[text
 	isBinary := false
+]
 
 RWBinaryOrTextStream >> upTo: anObject
-upTo: anObject
+[upTo: anObject
 	"Answer a subcollection from the current access position to the 
 	occurrence (if any, but not inclusive) of anObject in the receiver. If 
 	anObject is not in the collection, answer the entire rest of the receiver."
@@ -148,9 +164,10 @@ upTo: anObject
 	newStream := WriteStream on: (species new: 100).
 	[ self atEnd or: [ (element := self next) = anObject ] ] whileFalse: [ newStream nextPut: element ].
 	^ newStream contents
+]
 
 RWBinaryOrTextStream >> upToEnd
-upToEnd
+[upToEnd
 	"Must override to get class right."
 
 	| newArray |
@@ -158,4 +175,5 @@ upToEnd
 		ifTrue: [ ByteArray ]
 		ifFalse: [ ByteString ]) new: self size - self position.
 	^ self nextInto: newArray
+]
 

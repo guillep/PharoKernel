@@ -7,7 +7,7 @@ ByteTextConverter class
 	instanceVariables: #(#byteToUnicode #unicodeToByte ).
 
 ByteTextConverter >> byteToUnicode: char
-byteToUnicode: char
+[byteToUnicode: char
 	"Map from my byte based encoding to unicode.
 	Due to the leading char encoding this is not strictly true, but hopefully at some point we can get rid of the leading char overhead."
 
@@ -18,9 +18,10 @@ byteToUnicode: char
 	value > 255
 		ifTrue: [ ^ char ].
 	^ self class byteToUnicodeTable at: value - 128 + 1
+]
 
 ByteTextConverter >> nextFromStream: aStream
-nextFromStream: aStream
+[nextFromStream: aStream
 	"Read the next byte (we are only dealing with byte based encodings here) character from aStream and return the result converted to unicode."
 
 	| byteOrChar |
@@ -28,43 +29,49 @@ nextFromStream: aStream
 	aStream isBinary
 		ifTrue: [ ^ byteOrChar ].
 	^ byteOrChar ifNotNil: [ self byteToUnicode: byteOrChar ]
+]
 
 ByteTextConverter >> nextPut: unicodeCharacter toStream: aStream
-nextPut: unicodeCharacter toStream: aStream
+[nextPut: unicodeCharacter toStream: aStream
 	"Write the unicode character to aStream."
 
 	aStream isBinary
 		ifTrue: [ aStream basicNextPut: unicodeCharacter charCode ]
 		ifFalse: [ aStream basicNextPut: (self unicodeToByte: unicodeCharacter) ]
+]
 
 ByteTextConverter >> unicodeToByte: unicodeChar
-unicodeToByte: unicodeChar
+[unicodeToByte: unicodeChar
 	^ unicodeChar charCode < 128
 		ifTrue: [ unicodeChar ]
 		ifFalse: [ self class unicodeToByteTable at: unicodeChar charCode ifAbsent: [ 0 asCharacter ] ]
+]
 
 ByteTextConverter class >> byteToUnicodeSpec
-byteToUnicodeSpec
+[byteToUnicodeSpec
 	"Sepcify a table mapping the entries 0x80 to 0xFF to their unicode counterparts by returning a 128 element array..
 	The entries 0x00 to 0x7F map to identical values so we don't need to specify them.
 	See #generateByteToUnicodeSpec: for an automated way to generate these mappings."
 
 	self subclassResponsibility
+]
 
 ByteTextConverter class >> byteToUnicodeTable
-byteToUnicodeTable
+[byteToUnicodeTable
 	"Return the table mapping from my byte based encoding to unicode"
 
 	^ byteToUnicode
+]
 
 ByteTextConverter class >> initialize
-initialize
+[initialize
 	"ByteTextConverter initialize"
 
 	self allSubclassesDo: [ :subclass | subclass initializeTables ]
+]
 
 ByteTextConverter class >> initializeTables
-initializeTables
+[initializeTables
 	"Initialize the mappings to and from Unicode."
 
 	byteToUnicode := Array new: 128.
@@ -74,14 +81,17 @@ initializeTables
 			unicodeValue := unicode ifNil: [ 127 + index ] ifNotNil: [ unicode ].
 			byteToUnicode at: index put: (Character value: unicodeValue).
 			unicodeToByte at: unicodeValue put: (127 + index) asCharacter ]
+]
 
 ByteTextConverter class >> languageEnvironment
-languageEnvironment
+[languageEnvironment
 	self subclassResponsibility
+]
 
 ByteTextConverter class >> unicodeToByteTable
-unicodeToByteTable
+[unicodeToByteTable
 	"Return the table mapping from unicode to my byte based encoding"
 
 	^ unicodeToByte
+]
 

@@ -4,24 +4,29 @@ InputEventHandler
 	package: #Kernel.
 
 InputEventHandler >> flushEvents
-flushEvents
+[flushEvents
 	
+]
 
 InputEventHandler >> handleEvent: eventBuffer
-handleEvent: eventBuffer
+[handleEvent: eventBuffer
 	self subclassResponsibility
+]
 
 InputEventHandler >> isKbdEvent: bufEvt
-isKbdEvent: bufEvt
+[isKbdEvent: bufEvt
 	^ bufEvt first = EventTypeKeyboard and: [ bufEvt fourth = EventKeyChar ]
+]
 
 InputEventHandler >> registerIn: anEventFetcher
-registerIn: anEventFetcher
+[registerIn: anEventFetcher
 	eventFetcher := anEventFetcher.
 	eventFetcher registerHandler: self
+]
 
 InputEventHandler >> unregister
-unregister
+[unregister
 	eventFetcher ifNotNil: [ eventFetcher unregisterHandler: self.
 			eventFetcher := nil ]
+]
 

@@ -4,7 +4,7 @@ Schedule
 	package: #Kernel.
 
 Schedule >> between: aStart and: anEnd do: aBlock
-between: aStart and: anEnd do: aBlock
+[between: aStart and: anEnd do: aBlock
 	"from Cuis 99"
 
 	| element end i startDate |
@@ -25,43 +25,51 @@ between: aStart and: anEnd do: aBlock
 			i := i + 1.
 			i > schedule size
 				ifTrue: [ i := 1 ] ]
+]
 
 Schedule >> dateAndTimes
-dateAndTimes
+[dateAndTimes
 	| dateAndTimes |
 	dateAndTimes := OrderedCollection new.
 	self scheduleDo: [ :e | dateAndTimes add: e ].
 	^ dateAndTimes asArray
+]
 
 Schedule >> everyDayAtSameTimes
-everyDayAtSameTimes
+[everyDayAtSameTimes
 	"Answer false if unknown"
 
 	| count |
 	count := (Duration days: 1) / self scheduleDuration.
 	^ count >= 1 and: [ count isInteger ]
+]
 
 Schedule >> includes: aDateAndTime
-includes: aDateAndTime
+[includes: aDateAndTime
 	| dt |
 	dt := aDateAndTime asDateAndTime.
 	self scheduleDo: [ :e | e = dt
 				ifTrue: [ ^ true ] ].
 	^ false
+]
 
 Schedule >> schedule
-schedule
+[schedule
 	^ schedule
+]
 
 Schedule >> schedule: anArrayOfDurations
-schedule: anArrayOfDurations
+[schedule: anArrayOfDurations
 	schedule := anArrayOfDurations
+]
 
 Schedule >> scheduleDo: aBlock
-scheduleDo: aBlock
+[scheduleDo: aBlock
 	self between: self start and: self end do: aBlock
+]
 
 Schedule >> scheduleDuration
-scheduleDuration
+[scheduleDuration
 	^ schedule sum
+]
 

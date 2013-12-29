@@ -4,7 +4,7 @@ SortedCollection
 	package: #'Collections-Sequenceable'.
 
 SortedCollection >> = aSortedCollection
-= aSortedCollection
+[= aSortedCollection
 	"Answer true if my and aSortedCollection's species are the same,
 	and if our blocks are the same, and if our elements are the same."
 
@@ -13,29 +13,34 @@ SortedCollection >> = aSortedCollection
 	sortBlock = aSortedCollection sortBlock
 		ifTrue: [ ^ super = aSortedCollection ]
 		ifFalse: [ ^ false ]
+]
 
 SortedCollection >> add: newObject
-add: newObject
+[add: newObject
 	^ super insert: newObject before: (self indexForInserting: newObject)
+]
 
 SortedCollection >> addAll: aCollection
-addAll: aCollection
+[addAll: aCollection
 	aCollection size > (self size // 3)
 		ifTrue: [ aCollection do: [ :each | self addLast: each ].
 			self reSort ]
 		ifFalse: [ aCollection do: [ :each | self add: each ] ].
 	^ aCollection
+]
 
 SortedCollection >> addFirst: newObject
-addFirst: newObject
+[addFirst: newObject
 	self shouldNotImplement
+]
 
 SortedCollection >> at: anInteger put: anObject
-at: anInteger put: anObject
+[at: anInteger put: anObject
 	self shouldNotImplement
+]
 
 SortedCollection >> collect: aBlock
-collect: aBlock
+[collect: aBlock
 	"Evaluate aBlock with each of my elements as the argument. Collect the 
 	resulting values into an OrderedCollection. Answer the new collection. 
 	Override the superclass in order to produce an OrderedCollection instead
@@ -45,15 +50,17 @@ collect: aBlock
 	newCollection := OrderedCollection new: self size.
 	self do: [ :each | newCollection addLast: (aBlock value: each) ].
 	^ newCollection
+]
 
 SortedCollection >> copyEmpty
-copyEmpty
+[copyEmpty
 	"Answer a copy of the receiver without any of the receiver's elements."
 
 	^ self species sortBlock: sortBlock
+]
 
 SortedCollection >> defaultSort: i to: j
-defaultSort: i to: j
+[defaultSort: i to: j
 	"Sort elements i through j of self to be nondescending according to
 	sortBlock."
 
@@ -96,13 +103,15 @@ defaultSort: i to: j
 						whileTrue: [ array swap: k with: l ].	"Now l<k (either 1 or 2 less), and di through dl are all less than or equal to dk	through dj.  Sort those two segments."
 					self defaultSort: i to: l.
 					self defaultSort: k to: j ] ]
+]
 
 SortedCollection >> flatCollect: aBlock
-flatCollect: aBlock
+[flatCollect: aBlock
 	^ self flatCollect: aBlock as: OrderedCollection
+]
 
 SortedCollection >> indexForInserting: newObject
-indexForInserting: newObject
+[indexForInserting: newObject
 	| index low high |
 	low := firstIndex.
 	high := lastIndex.
@@ -118,31 +127,36 @@ indexForInserting: newObject
 						ifTrue: [ low := index + 1 ]
 						ifFalse: [ high := index - 1 ] ] ].
 	^ low
+]
 
 SortedCollection >> insert: anObject before: spot
-insert: anObject before: spot
+[insert: anObject before: spot
 	self shouldNotImplement
+]
 
 SortedCollection >> median
-median
+[median
 	"Return the middle element, or as close as we can get."
 
 	^ self at: (self size + 1) // 2
+]
 
 SortedCollection >> reSort
-reSort
+[reSort
 	self sort: firstIndex to: lastIndex
+]
 
 SortedCollection >> sort: aSortBlock
-sort: aSortBlock
+[sort: aSortBlock
 	"Sort this array using aSortBlock. The block should take two arguments
 	and return true if the first element should preceed the second one."
 
 	super sort: aSortBlock.
 	sortBlock := aSortBlock
+]
 
 SortedCollection >> sort: i to: j
-sort: i to: j
+[sort: i to: j
 	"Sort elements i through j of self to be nondescending according to
 	sortBlock."
 
@@ -183,27 +197,31 @@ sort: i to: j
 						whileTrue: [ array swap: k with: l ].	"Now l<k (either 1 or 2 less), and di through dl are all less than or equal to dk	through dj.  Sort those two segments."
 					self sort: i to: l.
 					self sort: k to: j ] ]
+]
 
 SortedCollection >> sortBlock
-sortBlock
+[sortBlock
 	"Answer the blockContext which is the criterion for sorting elements of 
 	the receiver."
 
 	^ sortBlock
+]
 
 SortedCollection >> sortBlock: aBlock
-sortBlock: aBlock
+[sortBlock: aBlock
 	"Make the argument, aBlock, be the criterion for ordering elements of the 
 	receiver."
 
 	sortBlock := aBlock.	"sortBlocks with side effects may not work right"
 	self size > 0
 		ifTrue: [ self reSort ]
+]
 
 SortedCollection class >> sortBlock: aBlock
-sortBlock: aBlock
+[sortBlock: aBlock
 	"Answer an instance of me such that its elements are sorted according to 
 	the criterion specified in aBlock."
 
 	^ (super new: 10) sortBlock: aBlock
+]
 

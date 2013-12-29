@@ -4,15 +4,17 @@ LargeNegativeInteger
 	package: #Kernel.
 
 LargeNegativeInteger >> abs
-abs
+[abs
 	^ self negated
+]
 
 LargeNegativeInteger >> asFloat
-asFloat
+[asFloat
 	^ super asFloat negated
+]
 
 LargeNegativeInteger >> bitAt: anInteger
-bitAt: anInteger
+[bitAt: anInteger
 	"super would not work because we have to pretend we are in two-complement.
 	this has to be tricky..."
 
@@ -32,9 +34,10 @@ bitAt: anInteger
 			"two complement (bitInvert + 1) raises a carry:			0 bitInvert -> 2r11111111.  2r11111111 + 1 -> 0 with carry...			Thus we must inquire one digit forward"
 			i := i + 1 ].	"We escaped the while loop, because there is no more carry.	Do a simple bitInvert without a carry"
 	^ 1 - ((self digitAt: digitIndex) bitAt: bitIndex)
+]
 
 LargeNegativeInteger >> highBit
-highBit
+[highBit
 	"Answer the index of the high order bit of the receiver, or zero if the  
 	receiver is zero. Raise an error if the receiver is negative, since  
 	negative integers are defined to have an infinite number of leading 1's 
@@ -42,27 +45,32 @@ highBit
 	get the highest bit of the magnitude."
 
 	^ self shouldNotImplement
+]
 
 LargeNegativeInteger >> ln
-ln
+[ln
 	^ DomainError signal: 'ln is only defined for x > 0' from: 0
+]
 
 LargeNegativeInteger >> log
-log
+[log
 	^ DomainError signal: 'log is only defined for x > 0' from: 0
+]
 
 LargeNegativeInteger >> negated
-negated
+[negated
 	^ self copyto: (LargePositiveInteger new: self digitLength)
+]
 
 LargeNegativeInteger >> negative
-negative
+[negative
 	"Answer whether the receiver is mathematically negative."
 
 	^ true
+]
 
 LargeNegativeInteger >> normalize
-normalize
+[normalize
 	"Check for leading zeroes and return shortened copy if so"
 
 	<primitive: 'primNormalizeNegative' module: 'LargeIntegers'>
@@ -88,36 +96,42 @@ normalize
 	len < oldLen
 		ifTrue: [ ^ self growto: len ]
 		ifFalse: [ ^ self ]
+]
 
 LargeNegativeInteger >> positive
-positive
+[positive
 	"Answer whether the receiver is positive or equal to 0. (ST-80 protocol).
 	See also strictlyPositive"
 
 	^ false
+]
 
 LargeNegativeInteger >> printOn: aStream base: b
-printOn: aStream base: b
+[printOn: aStream base: b
 	"Append a representation of this number in base b on aStream."
 
 	aStream nextPut: $-.
 	self abs printOn: aStream base: b
+]
 
 LargeNegativeInteger >> sign
-sign
+[sign
 	"Optimization. Answer -1 since receiver is less than 0."
 
 	^ -1
+]
 
 LargeNegativeInteger >> sqrt
-sqrt
+[sqrt
 	"Answer the square root of the receiver."
 
 	^ DomainError signal: 'sqrt undefined for number less than zero.'
+]
 
 LargeNegativeInteger >> strictlyPositive
-strictlyPositive
+[strictlyPositive
 	"Answer whether the receiver is mathematically positive."
 
 	^ false
+]
 

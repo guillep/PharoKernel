@@ -5,43 +5,51 @@ CommandLineUIManager
 	package: #UIManager.
 
 CommandLineUIManager >> abort: aStringOrText
-abort: aStringOrText
+[abort: aStringOrText
 	self abort: aStringOrText title: 'Error'
+]
 
 CommandLineUIManager >> abort: aStringOrText title: aString
-abort: aStringOrText title: aString
+[abort: aStringOrText title: aString
 	self logTitle: aString andDescription: aStringOrText to: self stderr
+]
 
 CommandLineUIManager >> activate
-activate
+[activate
 	NonInteractiveTranscript stderr install
+]
 
 CommandLineUIManager >> alert: aStringOrText
-alert: aStringOrText
+[alert: aStringOrText
 	self abort: aStringOrText title: 'Alert'
+]
 
 CommandLineUIManager >> alert: aStringOrText title: aString
-alert: aStringOrText title: aString
+[alert: aStringOrText title: aString
 	self logTitle: aString andDescription: aStringOrText to: self stdout
+]
 
 CommandLineUIManager >> alert: aStringOrText title: aString configure: aBlock
-alert: aStringOrText title: aString configure: aBlock
+[alert: aStringOrText title: aString configure: aBlock
 	"Ignore the block, because we don't create a dialog, so there is nothing to configure."
 
 	self alert: aStringOrText title: aString
+]
 
 CommandLineUIManager >> checkForNewDisplaySize
-checkForNewDisplaySize
+[checkForNewDisplaySize
 	"do nothing"
 
 	
+]
 
 CommandLineUIManager >> choose: questionsAnswerDict title: queryString
-choose: questionsAnswerDict title: queryString
+[choose: questionsAnswerDict title: queryString
 	
+]
 
 CommandLineUIManager >> chooseFrom: aList lines: linesArray title: aString
-chooseFrom: aList lines: linesArray title: aString
+[chooseFrom: aList lines: linesArray title: aString
 	| maxPad |
 	maxPad := aList size asString size.
 	self stdout
@@ -57,54 +65,61 @@ chooseFrom: aList lines: linesArray title: aString
 				cr ].
 	self stdout nextPutAll: '> '.
 	^ aList at: (self stdin upToAnyOf: String crlf do: [ :chr |  ]) asInteger
+]
 
 CommandLineUIManager >> confirm: queryString trueChoice: trueLabel falseChoice: falseLabel
-confirm: queryString trueChoice: trueLabel falseChoice: falseLabel
+[confirm: queryString trueChoice: trueLabel falseChoice: falseLabel
 	^ self
 		confirm: queryString
 		trueChoice: trueLabel
 		falseChoice: falseLabel
 		cancelChoice: nil
 		default: nil
+]
 
 CommandLineUIManager >> confirm: queryString trueChoice: trueLabel falseChoice: falseLabel cancelChoice: cancelLabel default: trueFalseNil
-confirm: queryString trueChoice: trueLabel falseChoice: falseLabel cancelChoice: cancelLabel default: trueFalseNil
+[confirm: queryString trueChoice: trueLabel falseChoice: falseLabel cancelChoice: cancelLabel default: trueFalseNil
 	| questions |
 	questions := Dictionary new.
 	trueLabel ifNotNil: [ questions at: 'y' put: trueLabel ].
 	falseLabel ifNotNil: [ questions at: 'n' put: falseLabel ].
 	cancelLabel ifNotNil: [ questions at: 'c' put: cancelLabel ].
 	^ self choose: questions title: queryString
+]
 
 CommandLineUIManager >> deny: aStringOrText
-deny: aStringOrText
+[deny: aStringOrText
 	"Open a denial dialog."
 
 	
+]
 
 CommandLineUIManager >> deny: aStringOrText title: aString
-deny: aStringOrText title: aString
+[deny: aStringOrText title: aString
 	"Open a denial dialog."
 
 	
+]
 
 CommandLineUIManager >> exitFailure
-exitFailure
+[exitFailure
 	[ self class snapshotErrorImage
 		ifTrue: [ doNotQuitOnRestart := true.	"make a new image version snapshot before leaving"
 			Smalltalk saveAsNewVersion ] ]
 		ensure: [ doNotQuitOnRestart
 				ifFalse: [ Smalltalk exitFailure ].
 			doNotQuitOnRestart := false ]
+]
 
 CommandLineUIManager >> headlessManager
-headlessManager
+[headlessManager
 	self class == CommandLineUIManager
 		ifFalse: [ ^ self ].
 	^ CommandLineUIManager replacing: uiManager
+]
 
 CommandLineUIManager >> inform: aString
-inform: aString
+[inform: aString
 	| logBlock |
 	"Just log notifications"
 	(ProvideAnswerNotification signal: aString) ifNotNil: [ :answer | ^ true ].
@@ -122,21 +137,24 @@ inform: aString
 	Transcript
 		show: aString;
 		cr
+]
 
 CommandLineUIManager >> informUserDuring: aBlock
-informUserDuring: aBlock
+[informUserDuring: aBlock
 	self
 		displayProgress: ''
 		from: 1
 		to: 100
 		during: aBlock
+]
 
 CommandLineUIManager >> initialize
-initialize
+[initialize
 	doNotQuitOnRestart := false
+]
 
 CommandLineUIManager >> logColored: anAnsiiColorCode during: aBlock
-logColored: anAnsiiColorCode during: aBlock
+[logColored: anAnsiiColorCode during: aBlock
 	Smalltalk
 		logStdErrorDuring: [ :stderr | stderr
 				nextPut: Character escape;
@@ -147,52 +165,61 @@ logColored: anAnsiiColorCode during: aBlock
 			stderr
 				nextPut: Character escape;
 				nextPutAll: '[0m' ]
+]
 
 CommandLineUIManager >> logDuring: aBlock
-logDuring: aBlock
+[logDuring: aBlock
 	Smalltalk logStdErrorDuring: [ :stderr | aBlock value: stderr ]
+]
 
 CommandLineUIManager >> logGreenDuring: aBlock
-logGreenDuring: aBlock
+[logGreenDuring: aBlock
 	^ self logColored: '32' during: aBlock
+]
 
 CommandLineUIManager >> logRedDuring: aBlock
-logRedDuring: aBlock
+[logRedDuring: aBlock
 	^ self logColored: '31' during: aBlock
+]
 
 CommandLineUIManager >> logTitle: aString andDescription: aStringOrText to: aStream
-logTitle: aString andDescription: aStringOrText to: aStream
+[logTitle: aString andDescription: aStringOrText to: aStream
 	aStream
 		nextPutAll: aString;
 		nextPutAll: ': ';
 		nextPutAll: aStringOrText asString;
 		cr
+]
 
 CommandLineUIManager >> logYellowDuring: aBlock
-logYellowDuring: aBlock
+[logYellowDuring: aBlock
 	^ self logColored: '33' during: aBlock
+]
 
 CommandLineUIManager >> newDisplayDepthNoRestore: pixelSize
-newDisplayDepthNoRestore: pixelSize
+[newDisplayDepthNoRestore: pixelSize
 	"do nothing"
 
 	
+]
 
 CommandLineUIManager >> nonInteractiveManager
-nonInteractiveManager
+[nonInteractiveManager
 	" Answer an instance of non-interactive manager, which will be used when image runs headless.
 	  We put it here, so subclasses can override it. "
 
 	^ NonInteractiveUIManager replacing: uiManager
+]
 
 CommandLineUIManager >> onPrimitiveError: aString
-onPrimitiveError: aString
+[onPrimitiveError: aString
 	" log error and quit "
 
 	^ self quitFrom: thisContext sender withMessage: aString
+]
 
 CommandLineUIManager >> onSnapshot: resuming
-onSnapshot: resuming
+[onSnapshot: resuming
 	"The resuming argument is true when image boots from disk,
 	and false, if user just did an image snapshot."
 
@@ -205,47 +232,54 @@ onSnapshot: resuming
 			^ self ].	" this flag set to true only if we are saving a snapshot before quitting "
 	doNotQuitOnRestart
 		ifTrue: [ Smalltalk snapshot: false andQuit: true ]
+]
 
 CommandLineUIManager >> proceed: aStringOrText
-proceed: aStringOrText
+[proceed: aStringOrText
 	"Open a proceed dialog."
 
 	
+]
 
 CommandLineUIManager >> proceed: aStringOrText title: aString
-proceed: aStringOrText title: aString
+[proceed: aStringOrText title: aString
 	"Open a proceed dialog and answer true if not cancelled, false otherwise."
 
 	
+]
 
 CommandLineUIManager >> question: aStringOrText
-question: aStringOrText
+[question: aStringOrText
 	"Open a question dialog."
 
 	
+]
 
 CommandLineUIManager >> question: aStringOrText title: aString
-question: aStringOrText title: aString
+[question: aStringOrText title: aString
 	"Open a question dialog and answer true if yes,
 	false if no and nil if cancelled."
 
 	
+]
 
 CommandLineUIManager >> questionWithoutCancel: aStringOrText
-questionWithoutCancel: aStringOrText
+[questionWithoutCancel: aStringOrText
 	"Open a question dialog."
 
 	
+]
 
 CommandLineUIManager >> questionWithoutCancel: aStringOrText title: aString
-questionWithoutCancel: aStringOrText title: aString
+[questionWithoutCancel: aStringOrText title: aString
 	"Open a question dialog and answer true if yes,
 	false if no and nil if cancelled."
 
 	
+]
 
 CommandLineUIManager >> quitFrom: aContext withMessage: aString
-quitFrom: aContext withMessage: aString
+[quitFrom: aContext withMessage: aString
 	" log error and quit "
 
 	[ Smalltalk logError: aString inContext: aContext.	" Print stacks of all current processes "
@@ -273,50 +307,57 @@ quitFrom: aContext withMessage: aString
 						cr;
 						cr ] ] ]
 		ensure: [ self exitFailure ]
+]
 
 CommandLineUIManager >> replacing: aUIManager
-replacing: aUIManager
+[replacing: aUIManager
 	" save the aUIManager to restore it later, when we become interactive again "
 
 	uiManager := aUIManager.
 	self beDefault
+]
 
 CommandLineUIManager >> restoreDisplay
-restoreDisplay
+[restoreDisplay
 	"do nothing"
 
 	
+]
 
 CommandLineUIManager >> restoreDisplayAfter: aBlock
-restoreDisplayAfter: aBlock
+[restoreDisplayAfter: aBlock
 	"do nothing"
 
 	
+]
 
 CommandLineUIManager >> stderr
-stderr
+[stderr
 	"install the line end conversion and initialize the converter"
 
 	FileStream stderr
 		wantsLineEndConversion: true;
 		converter.
 	^ FileStream stderr
+]
 
 CommandLineUIManager >> stdin
-stdin
+[stdin
 	^ FileStream stdin
+]
 
 CommandLineUIManager >> stdout
-stdout
+[stdout
 	"install the line end conversion and initialize the converter"
 
 	FileStream stdout
 		wantsLineEndConversion: true;
 		converter.
 	^ FileStream stdout
+]
 
 CommandLineUIManager >> syntaxErrorNotificationDefaultAction: aSyntaxErrorNotification
-syntaxErrorNotificationDefaultAction: aSyntaxErrorNotification
+[syntaxErrorNotificationDefaultAction: aSyntaxErrorNotification
 	"log the syntax notificaiton and print a nicely formatted and colored syntax error on stderr"
 
 	Smalltalk
@@ -326,40 +367,46 @@ syntaxErrorNotificationDefaultAction: aSyntaxErrorNotification
 			aSyntaxErrorNotification signalerContext errorReportOn: logger ].
 	STCommandLineHandler printCompilerWarning: aSyntaxErrorNotification.	"in noninteractive mode simply quit"
 	^ self exitFailure
+]
 
 CommandLineUIManager >> textEntry: aStringOrText
-textEntry: aStringOrText
+[textEntry: aStringOrText
 	"Open a text entry dialog."
 
 	
+]
 
 CommandLineUIManager >> textEntry: aStringOrText title: aString
-textEntry: aStringOrText title: aString
+[textEntry: aStringOrText title: aString
 	"Open a text entry dialog."
 
 	
+]
 
 CommandLineUIManager >> textEntry: aStringOrText title: aString entryText: defaultEntryText
-textEntry: aStringOrText title: aString entryText: defaultEntryText
+[textEntry: aStringOrText title: aString entryText: defaultEntryText
 	"Open a text entry dialog."
 
 	
+]
 
 CommandLineUIManager >> uiProcess
-uiProcess
+[uiProcess
 	" receiver don't have a ui process, associated with it,
 	client should check explicitly if #uiProcess answers nil or not"
 
 	^ nil
+]
 
 CommandLineUIManager >> unhandledErrorDefaultAction: anException
-unhandledErrorDefaultAction: anException
+[unhandledErrorDefaultAction: anException
 	self quitFrom: anException signalerContext withMessage: anException description.
 	UIManager default == self
 		ifFalse: [ ^ UIManager default unhandledErrorDefaultAction: anException ]
+]
 
 CommandLineUIManager >> warningDefaultAction: aWarning
-warningDefaultAction: aWarning
+[warningDefaultAction: aWarning
 	| logBlock |
 	"Pass all warnings, but log them"
 	logBlock := [ :logger | logger
@@ -370,24 +417,28 @@ warningDefaultAction: aWarning
 	Smalltalk logDuring: logBlock.
 	self logYellowDuring: logBlock.
 	aWarning resume
+]
 
 CommandLineUIManager class >> replacing: aUIManager
-replacing: aUIManager
+[replacing: aUIManager
 	"Replace the current UI manager with instance of myself. 
 	Keep a backup reference to old manager, and then restore it, when image will be interactive again. "
 
 	^ self new replacing: aUIManager
+]
 
 CommandLineUIManager class >> snapshotErrorImage
-snapshotErrorImage
+[snapshotErrorImage
 	^ SnapshotErrorImage == true
+]
 
 CommandLineUIManager class >> snapshotErrorImage: aBoolean
-snapshotErrorImage: aBoolean
+[snapshotErrorImage: aBoolean
 	SnapshotErrorImage := aBoolean
+]
 
 CommandLineUIManager class >> uiSettingsOn: aBuilder
-uiSettingsOn: aBuilder
+[uiSettingsOn: aBuilder
 	<systemsettings>
 	(aBuilder group: #nonInteractive)
 		label: 'Headless mode';
@@ -395,4 +446,5 @@ uiSettingsOn: aBuilder
 						label: 'Make a snapshot of new version before quit' translated;
 						target: CommandLineUIManager;
 						description: 'On unhandled exception, save a new version of image before quit' translated ]
+]
 

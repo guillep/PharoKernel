@@ -4,50 +4,59 @@ TraitExclusion
 	package: #Traits.
 
 TraitExclusion >> - anArrayOfSelectors
-- anArrayOfSelectors
+[- anArrayOfSelectors
 	^ TraitExclusion with: subject exclusions: anArrayOfSelectors , exclusions asArray
+]
 
 TraitExclusion >> addExclusionOf: aSymbol
-addExclusionOf: aSymbol
+[addExclusionOf: aSymbol
 	self exclusions: (self exclusions copyWith: aSymbol)
+]
 
 TraitExclusion >> allSelectors
-allSelectors
+[allSelectors
 	| selectors |
 	selectors := self subject allSelectors.
 	self exclusions do: [ :each | selectors remove: each ifAbsent: [  ] ].
 	^ selectors
+]
 
 TraitExclusion >> collectMethodsFor: aSelector into: methodDescription
-collectMethodsFor: aSelector into: methodDescription
+[collectMethodsFor: aSelector into: methodDescription
 	(self exclusions includes: aSelector)
 		ifFalse: [ self subject collectMethodsFor: aSelector into: methodDescription ]
+]
 
 TraitExclusion >> copyTraitExpression
-copyTraitExpression
+[copyTraitExpression
 	^ super copyTraitExpression
 		exclusions: self exclusions deepCopy;
 		yourself
+]
 
 TraitExclusion >> exclusions
-exclusions
+[exclusions
 	^ exclusions
+]
 
 TraitExclusion >> exclusions: aCollection
-exclusions: aCollection
+[exclusions: aCollection
 	exclusions := aCollection
+]
 
 TraitExclusion >> isEmpty
-isEmpty
+[isEmpty
 	^ self exclusions isEmpty
+]
 
 TraitExclusion >> postCopy
-postCopy
+[postCopy
 	super postCopy.
 	exclusions := exclusions copy
+]
 
 TraitExclusion >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	super printOn: aStream.
 	aStream
 		space;
@@ -56,11 +65,13 @@ printOn: aStream
 		nextPut: ${.
 	self exclusions do: [ :each | aStream print: each ] separatedBy: [ aStream nextPutAll: '. ' ].
 	aStream nextPut: $}
+]
 
 TraitExclusion class >> with: aTraitComposition exclusions: anArrayOfSelectors
-with: aTraitComposition exclusions: anArrayOfSelectors
+[with: aTraitComposition exclusions: anArrayOfSelectors
 	^ self new
 		subject: aTraitComposition;
 		exclusions: anArrayOfSelectors;
 		yourself
+]
 

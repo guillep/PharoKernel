@@ -4,63 +4,77 @@ MemoryFileSystemDirectory
 	package: #'FileSystem-Memory'.
 
 MemoryFileSystemDirectory >> ensureCreateDirectory: aDirectoryName
-ensureCreateDirectory: aDirectoryName
+[ensureCreateDirectory: aDirectoryName
 	^ self fileEntryAt: aDirectoryName put: (MemoryFileSystemDirectory named: aDirectoryName)
+]
 
 MemoryFileSystemDirectory >> ensureCreateFile: aFileName
-ensureCreateFile: aFileName
+[ensureCreateFile: aFileName
 	^ self fileEntryAt: aFileName put: (MemoryFileSystemFile named: aFileName)
+]
 
 MemoryFileSystemDirectory >> entries
-entries
+[entries
 	^ entries
+]
 
 MemoryFileSystemDirectory >> fileEntriesDo: aBlock
-fileEntriesDo: aBlock
+[fileEntriesDo: aBlock
 	entries keys sort do: [ :fileName | aBlock value: (entries at: fileName) ]
+]
 
 MemoryFileSystemDirectory >> fileEntriesIncludes: aFileName
-fileEntriesIncludes: aFileName
+[fileEntriesIncludes: aFileName
 	^ entries includesKey: aFileName
+]
 
 MemoryFileSystemDirectory >> fileEntryAt: aFileName
-fileEntryAt: aFileName
+[fileEntryAt: aFileName
 	^ entries at: aFileName
+]
 
 MemoryFileSystemDirectory >> fileEntryAt: aFileName ifAbsent: aBlock
-fileEntryAt: aFileName ifAbsent: aBlock
+[fileEntryAt: aFileName ifAbsent: aBlock
 	^ entries at: aFileName ifAbsent: aBlock
+]
 
 MemoryFileSystemDirectory >> fileEntryAt: aFileName ifPresent: aBlock
-fileEntryAt: aFileName ifPresent: aBlock
+[fileEntryAt: aFileName ifPresent: aBlock
 	^ entries at: aFileName ifPresent: aBlock
+]
 
 MemoryFileSystemDirectory >> fileEntryAt: aFileName put: anEntry
-fileEntryAt: aFileName put: anEntry
+[fileEntryAt: aFileName put: anEntry
 	^ entries at: aFileName ifAbsentPut: [ self modified.
 			anEntry ]
+]
 
 MemoryFileSystemDirectory >> fileEntryRemove: aFileName
-fileEntryRemove: aFileName
+[fileEntryRemove: aFileName
 	^ self fileEntryRemove: aFileName ifAbsent: [ FileDoesNotExist signalWith: aFileName ]
+]
 
 MemoryFileSystemDirectory >> fileEntryRemove: aFileName ifAbsent: absentBlock
-fileEntryRemove: aFileName ifAbsent: absentBlock
+[fileEntryRemove: aFileName ifAbsent: absentBlock
 	| deletedEntry |
 	deletedEntry := entries removeKey: aFileName ifAbsent: [ ^ absentBlock value ].
 	modificationTime := DateAndTime now.
 	^ deletedEntry
+]
 
 MemoryFileSystemDirectory >> fileSize
-fileSize
+[fileSize
 	^ 0
+]
 
 MemoryFileSystemDirectory >> initialize
-initialize
+[initialize
 	super initialize.
 	entries := Dictionary new
+]
 
 MemoryFileSystemDirectory >> isDirectory
-isDirectory
+[isDirectory
 	^ true
+]
 

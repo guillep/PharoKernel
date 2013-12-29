@@ -4,42 +4,50 @@ DomainError
 	package: #Kernel.
 
 DomainError >> from
-from
+[from
 	^ from
+]
 
 DomainError >> from: start
-from: start
+[from: start
 	from := start
+]
 
 DomainError >> to
-to
+[to
 	^ to
+]
 
 DomainError >> to: end
-to: end
+[to: end
 	to := end
+]
 
 DomainError class >> signal: signallerText from: start
-signal: signallerText from: start
+[signal: signallerText from: start
 	^ self signal: signallerText from: start to: Float infinity
+]
 
 DomainError class >> signal: signallerText from: start to: end
-signal: signallerText from: start to: end
+[signal: signallerText from: start to: end
 	^ self new
 		from: start;
 		to: end;
 		signal: signallerText
+]
 
 DomainError class >> signal: signallerText to: end
-signal: signallerText to: end
+[signal: signallerText to: end
 	^ self signal: signallerText from: Float infinity negated to: end
+]
 
 DomainError class >> signalFrom: start
-signalFrom: start
+[signalFrom: start
 	^ self signalFrom: start to: Float infinity
+]
 
 DomainError class >> signalFrom: start to: end
-signalFrom: start to: end
+[signalFrom: start to: end
 	| msgStart msgEnd |
 	msgStart := (start isFloat and: [ start isFinite not ])
 		ifTrue: [ '(-infinity' ]
@@ -50,8 +58,10 @@ signalFrom: start to: end
 	^ self
 		signal: 'Value outside ' , msgStart , ' , ' , msgEnd from: start;
 		to: end
+]
 
 DomainError class >> signalTo: end
-signalTo: end
+[signalTo: end
 	^ self signalFrom: Float infinity negated to: end
+]
 

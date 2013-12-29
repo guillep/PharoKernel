@@ -5,20 +5,23 @@ MultiByteFileStream
 	package: #Files.
 
 MultiByteFileStream >> accepts: aSymbol
-accepts: aSymbol
+[accepts: aSymbol
 	^ converter accepts: aSymbol
+]
 
 MultiByteFileStream >> ascii
-ascii
+[ascii
 	super ascii.
 	self detectLineEndConvention
+]
 
 MultiByteFileStream >> bareNext
-bareNext
+[bareNext
 	^ self converter nextFromStream: self
+]
 
 MultiByteFileStream >> basicChunk
-basicChunk
+[basicChunk
 	"If our buffer in collection contains an chunk with no embedded !'s, nor
 	any non-ascii characters, return that.
 	This presumes the source code encoding is unambiguously ascii-compatible"
@@ -33,70 +36,86 @@ basicChunk
 							goodString isAsciiString ] ] ])
 		ifTrue: [ position := bufferIX.
 			goodString ]
+]
 
 MultiByteFileStream >> basicNext: anInteger
-basicNext: anInteger
+[basicNext: anInteger
 	^ super next: anInteger
+]
 
 MultiByteFileStream >> basicNext: n into: aString
-basicNext: n into: aString
+[basicNext: n into: aString
 	^ super next: n into: aString
+]
 
 MultiByteFileStream >> basicNext: anInteger putAll: aCollection startingAt: startIndex
-basicNext: anInteger putAll: aCollection startingAt: startIndex
+[basicNext: anInteger putAll: aCollection startingAt: startIndex
 	^ super next: anInteger putAll: aCollection startingAt: startIndex
+]
 
 MultiByteFileStream >> basicNextInto: aString
-basicNextInto: aString
+[basicNextInto: aString
 	^ super nextInto: aString
+]
 
 MultiByteFileStream >> basicNextPut: char
-basicNextPut: char
+[basicNextPut: char
 	^ super nextPut: char
+]
 
 MultiByteFileStream >> basicNextPutAll: aString
-basicNextPutAll: aString
+[basicNextPutAll: aString
 	^ super nextPutAll: aString
+]
 
 MultiByteFileStream >> basicPeek
-basicPeek
+[basicPeek
 	^ super peek
+]
 
 MultiByteFileStream >> basicPosition
-basicPosition
+[basicPosition
 	^ super position
+]
 
 MultiByteFileStream >> basicPosition: pos
-basicPosition: pos
+[basicPosition: pos
 	^ super position: pos
+]
 
 MultiByteFileStream >> basicReadInto: byteArray startingAt: startIndex count: count
-basicReadInto: byteArray startingAt: startIndex count: count
+[basicReadInto: byteArray startingAt: startIndex count: count
 	^ super readInto: byteArray startingAt: startIndex count: count
+]
 
 MultiByteFileStream >> basicSetToEnd
-basicSetToEnd
+[basicSetToEnd
 	^ super setToEnd
+]
 
 MultiByteFileStream >> basicSkip: n
-basicSkip: n
+[basicSkip: n
 	^ super skip: n
+]
 
 MultiByteFileStream >> basicUpTo: delim
-basicUpTo: delim
+[basicUpTo: delim
 	^ super upTo: delim
+]
 
 MultiByteFileStream >> basicVerbatim: aString
-basicVerbatim: aString
+[basicVerbatim: aString
 	^ super verbatim: aString
+]
 
 MultiByteFileStream >> binary
-binary
+[binary
 	super binary.
 	self lineEndConvention: nil
+]
 
 MultiByteFileStream >> convertStringFromCr: aString
-convertStringFromCr: aString
+[convertStringFromCr: aString
 	| inStream outStream |
 	lineEndConvention ifNil: [ ^ aString ].
 	lineEndConvention == #cr
@@ -110,9 +129,10 @@ convertStringFromCr: aString
 			(inStream atEnd not or: [ aString last = Cr ])
 				ifTrue: [ outStream nextPutAll: CrLf ] ].
 	^ outStream contents
+]
 
 MultiByteFileStream >> convertStringToCr: aString
-convertStringToCr: aString
+[convertStringToCr: aString
 	| inStream outStream |
 	lineEndConvention ifNil: [ ^ aString ].
 	lineEndConvention == #cr
@@ -128,19 +148,22 @@ convertStringToCr: aString
 					inStream peek = Lf
 						ifTrue: [ inStream next ] ] ].
 	^ outStream contents
+]
 
 MultiByteFileStream >> converter
-converter
+[converter
 	converter ifNil: [ self converter: TextConverter defaultSystemConverter ].
 	^ converter
+]
 
 MultiByteFileStream >> converter: aConverter
-converter: aConverter
+[converter: aConverter
 	converter := aConverter.
 	self installLineEndConventionInConverter
+]
 
 MultiByteFileStream >> detectLineEndConvention
-detectLineEndConvention
+[detectLineEndConvention
 	"Detect the line end convention used in this stream. The result may be either #cr, #lf or #crlf."
 
 	| char numRead state |
@@ -171,36 +194,42 @@ detectLineEndConvention
 	converter restoreStateOf: self with: state.
 	self lineEndConvention: LineEndDefault.
 	^ lineEndConvention
+]
 
 MultiByteFileStream >> doConversion
-doConversion
+[doConversion
 	^ wantsLineEndConversion == true and: [ lineEndConvention notNil ]
+]
 
 MultiByteFileStream >> fileInEncodingName: aString
-fileInEncodingName: aString
+[fileInEncodingName: aString
 	self converter: (TextConverter newForEncoding: aString).
 	super fileIn
+]
 
 MultiByteFileStream >> installLineEndConventionInConverter
-installLineEndConventionInConverter
+[installLineEndConventionInConverter
 	converter
 		ifNotNil: [ converter
 				installLineEndConvention:
 					((wantsLineEndConversion == true and: [ lineEndConvention notNil ])
 						ifTrue: [ LineEndStrings at: lineEndConvention ]
 						ifFalse: [ nil ])	"#doConversion is inlined here" ]
+]
 
 MultiByteFileStream >> lineEndConvention
-lineEndConvention
+[lineEndConvention
 	^ lineEndConvention
+]
 
 MultiByteFileStream >> lineEndConvention: aSymbol
-lineEndConvention: aSymbol
+[lineEndConvention: aSymbol
 	(lineEndConvention := aSymbol) ifNotNil: [ wantsLineEndConversion := true ].
 	self installLineEndConventionInConverter
+]
 
 MultiByteFileStream >> next
-next
+[next
 	| char secondChar state |
 	char := (converter ifNil: [ self converter ]) nextFromStream: self.
 	(wantsLineEndConversion == true and: [ lineEndConvention notNil ])
@@ -213,9 +242,10 @@ next
 			char == Lf
 				ifTrue: [ ^ Cr ] ].	"#doConversion is inlined here"
 	^ char
+]
 
 MultiByteFileStream >> next: anInteger
-next: anInteger
+[next: anInteger
 	| multiString |
 	self isBinary
 		ifTrue: [ ^ super next: anInteger ].
@@ -233,9 +263,10 @@ next: anInteger
 	(multiString size = anInteger or: [ self atEnd ])
 		ifTrue: [ ^ multiString ].
 	^ multiString , (self next: anInteger - multiString size)
+]
 
 MultiByteFileStream >> next: n innerFor: aString
-next: n innerFor: aString
+[next: n innerFor: aString
 	| peekChar state |
 	"if we just read a CR, and the next character is an LF, then skip the LF"
 	aString size = 0
@@ -246,9 +277,10 @@ next: n innerFor: aString
 			(peekChar notNil and: [ peekChar ~= Character lf ])
 				ifTrue: [ converter restoreStateOf: self with: state ] ].
 	^ aString withSqueakLineEndings
+]
 
 MultiByteFileStream >> next: anInteger putAll: aCollection startingAt: startIndex
-next: anInteger putAll: aCollection startingAt: startIndex
+[next: anInteger putAll: aCollection startingAt: startIndex
 	(self isBinary or: [ aCollection class == ByteArray ])
 		ifTrue: [ ^ super next: anInteger putAll: aCollection startingAt: startIndex ].
 	^ self converter
@@ -256,9 +288,10 @@ next: anInteger putAll: aCollection startingAt: startIndex
 		putAll: aCollection
 		startingAt: startIndex
 		toStream: self
+]
 
 MultiByteFileStream >> nextChunk
-nextChunk
+[nextChunk
 	"Answer the contents of the receiver, up to the next terminator
 	character. Doubled terminators indicate an embedded terminator
 	character."
@@ -276,9 +309,10 @@ nextChunk
 											self next ~~ $! ] ] ]
 								whileFalse: [ stream nextPut: character ].
 							character ifNotNil: [ converter restoreStateOf: self with: state ] ] ])
+]
 
 MultiByteFileStream >> nextDelimited: terminator
-nextDelimited: terminator
+[nextDelimited: terminator
 	| out ch save |
 	out := (String new: 1000) writeStream.
 	self atEnd
@@ -294,18 +328,20 @@ nextDelimited: terminator
 						ifFalse: [ ^ out contents	"terminator is not doubled; we're done!" ] ].
 			out nextPut: ch ].
 	^ out contents
+]
 
 MultiByteFileStream >> nextMatchAll: aColl
-nextMatchAll: aColl
+[nextMatchAll: aColl
 	| save |
 	save := converter saveStateOf: self.
 	aColl do: [ :each | self next = each
 				ifFalse: [ converter restoreStateOf: self with: save.
 					^ false ] ].
 	^ true
+]
 
 MultiByteFileStream >> nextPut: aCharacter
-nextPut: aCharacter
+[nextPut: aCharacter
 	aCharacter isInteger
 		ifTrue: [ ^ super nextPut: aCharacter ].
 	(wantsLineEndConversion == true and: [ lineEndConvention notNil ])
@@ -314,24 +350,27 @@ nextPut: aCharacter
 				ifFalse: [ converter nextPut: aCharacter toStream: self ].
 			^ aCharacter ].	"#doConversion is inlined here"
 	^ self converter nextPut: aCharacter toStream: self
+]
 
 MultiByteFileStream >> nextPutAll: aCollection
-nextPutAll: aCollection
+[nextPutAll: aCollection
 	^ (self isBinary or: [ aCollection class == ByteArray ])
 		ifTrue: [ super nextPutAll: aCollection ]
 		ifFalse: [ self converter nextPutAll: aCollection toStream: self ]
+]
 
 MultiByteFileStream >> open: fileName forWrite: writeMode
-open: fileName forWrite: writeMode
+[open: fileName forWrite: writeMode
 	| result |
 	result := super open: fileName forWrite: writeMode.
 	result
 		ifNotNil: [ converter ifNil: [ self converter: UTF8TextConverter new ].
 			lineEndConvention ifNil: [ self detectLineEndConvention ] ].
 	^ result
+]
 
 MultiByteFileStream >> peek
-peek
+[peek
 	"Answer what would be returned if the message next were sent to the receiver. If the receiver is at the end, answer nil.  "
 
 	| next save |
@@ -341,9 +380,10 @@ peek
 	next := self next.
 	converter restoreStateOf: self with: save.
 	^ next
+]
 
 MultiByteFileStream >> peekFor: item
-peekFor: item
+[peekFor: item
 	| next state |
 	state := converter saveStateOf: self.
 	(next := self next) == nil
@@ -352,9 +392,10 @@ peekFor: item
 		ifTrue: [ ^ true ].
 	converter restoreStateOf: self with: state.
 	^ false
+]
 
 MultiByteFileStream >> readInto: buffer startingAt: offset count: requestedCount
-readInto: buffer startingAt: offset count: requestedCount
+[readInto: buffer startingAt: offset count: requestedCount
 	"Read up to requestedCount elements into the given buffer starting at offset.
 	Return the number of elements actually read.
 	If I am binary or if buffer is a ByteArray, I skip decoding. Yes this is weird.
@@ -366,9 +407,10 @@ readInto: buffer startingAt: offset count: requestedCount
 		(element := self next) ifNil: [ ^ count ].
 		buffer at: offset + count put: element ].
 	^ requestedCount
+]
 
 MultiByteFileStream >> requestDropStream: dropIndex
-requestDropStream: dropIndex
+[requestDropStream: dropIndex
 	"Needs to install proper converter"
 
 	| result |
@@ -377,14 +419,16 @@ requestDropStream: dropIndex
 		ifNotNil: [ converter ifNil: [ self converter: UTF8TextConverter new ].
 			lineEndConvention ifNil: [ self detectLineEndConvention ] ].
 	^ result
+]
 
 MultiByteFileStream >> reset
-reset
+[reset
 	super reset.
 	converter ifNil: [ self converter: UTF8TextConverter new ]
+]
 
 MultiByteFileStream >> setConverterForCode
-setConverterForCode
+[setConverterForCode
 	| current |
 	(SourceFiles at: 2) ifNotNil: [ self fullName = (SourceFiles at: 2) fullName
 				ifTrue: [ ^ self ] ].
@@ -396,17 +440,19 @@ setConverterForCode
 		ifFalse: [ self converter: MacRomanTextConverter new ].
 	converter restoreStateOf: self with: current.
 	self text
+]
 
 MultiByteFileStream >> skipSeparators
-skipSeparators
+[skipSeparators
 	| state character |
 	[ state := converter saveStateOf: self.
 	(character := self next) ifNil: [ false ] ifNotNil: [ character isSeparator ] ]
 		whileTrue.
 	character ifNotNil: [ converter restoreStateOf: self with: state ]
+]
 
 MultiByteFileStream >> skipSeparatorsAndPeekNext
-skipSeparatorsAndPeekNext
+[skipSeparatorsAndPeekNext
 	"Same as #skipSeparators, but returns the next character after the separators if such exists."
 
 	| state character |
@@ -415,59 +461,68 @@ skipSeparatorsAndPeekNext
 		whileTrue.
 	character ifNotNil: [ converter restoreStateOf: self with: state.
 			^ character ]
+]
 
 MultiByteFileStream >> upTo: delimiter
-upTo: delimiter
+[upTo: delimiter
 	^ self collectionSpecies
 		new: 1000
 		streamContents: [ :stream | | ch |
 			[ (ch := self next) == nil or: [ ch = delimiter ] ] whileFalse: [ stream nextPut: ch ] ]
+]
 
 MultiByteFileStream >> upToAnyOf: delimiters do: aBlock
-upToAnyOf: delimiters do: aBlock
+[upToAnyOf: delimiters do: aBlock
 	^ self collectionSpecies
 		new: 1000
 		streamContents: [ :stream | | ch |
 			[ (ch := self next) == nil or: [ (delimiters includes: ch) and: [ aBlock value: ch.
 							true ] ] ]
 				whileFalse: [ stream nextPut: ch ] ]
+]
 
 MultiByteFileStream >> upToEnd
-upToEnd
+[upToEnd
 	^ self collectionSpecies
 		new: self size - self position
 		streamContents: [ :stream | | element |
 			[ (element := self next) == nil ] whileFalse: [ stream nextPut: element ] ]
+]
 
 MultiByteFileStream >> wantsLineEndConversion
-wantsLineEndConversion
+[wantsLineEndConversion
 	^ wantsLineEndConversion == true
+]
 
 MultiByteFileStream >> wantsLineEndConversion: aBoolean
-wantsLineEndConversion: aBoolean
+[wantsLineEndConversion: aBoolean
 	wantsLineEndConversion := aBoolean.
 	lineEndConvention ifNil: [ self detectLineEndConvention ]
+]
 
 MultiByteFileStream class >> defaultToCR
-defaultToCR
+[defaultToCR
 	"MultiByteFileStream defaultToCR"
 
 	LineEndDefault := #cr
+]
 
 MultiByteFileStream class >> defaultToCRLF
-defaultToCRLF
+[defaultToCRLF
 	"MultiByteFileStream defaultToCRLF"
 
 	LineEndDefault := #crlf
+]
 
 MultiByteFileStream class >> defaultToLF
-defaultToLF
+[defaultToLF
 	"MultiByteFileStream defaultToLF"
 
 	LineEndDefault := #lf
+]
 
 MultiByteFileStream class >> guessDefaultLineEndConvention
-guessDefaultLineEndConvention
+[guessDefaultLineEndConvention
 	"Lets try to guess the line end convention from what we know about the
 	path name delimiter from FileDirectory."
 
@@ -480,9 +535,10 @@ guessDefaultLineEndConvention
 	FileSystem disk delimiter = $\
 		ifTrue: [ ^ self defaultToCRLF ].	"in case we don't know"
 	^ self defaultToCR
+]
 
 MultiByteFileStream class >> initialize
-initialize
+[initialize
 	"MultiByteFileStream initialize"
 
 	Cr := Character cr.
@@ -495,22 +551,26 @@ initialize
 	LookAheadCount := 2048.
 	Smalltalk addToStartUpList: self.
 	self startUp
+]
 
 MultiByteFileStream class >> lineEndDefault
-lineEndDefault
+[lineEndDefault
 	"Answer the default line-ending convention that will be used by default, which was determined at start-up by looking at platform attributes."
 
 	^ LineEndDefault
+]
 
 MultiByteFileStream class >> newFrom: aFileStream
-newFrom: aFileStream
+[newFrom: aFileStream
 	| rw n |
 	n := aFileStream name.
 	rw := aFileStream isReadOnly not.
 	aFileStream close.
 	^ self new open: n forWrite: rw
+]
 
 MultiByteFileStream class >> startUp
-startUp
+[startUp
 	self guessDefaultLineEndConvention
+]
 

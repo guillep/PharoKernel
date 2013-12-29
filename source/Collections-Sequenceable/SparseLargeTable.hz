@@ -5,16 +5,17 @@ SparseLargeTable
 	package: #'Collections-Sequenceable'.
 
 SparseLargeTable >> allDefaultValueSubtableAt: index
-allDefaultValueSubtableAt: index
+[allDefaultValueSubtableAt: index
 	| t |
 	t := self basicAt: index.
 	t ifNil: [ ^ true ].
 	t do: [ :e | e ~= defaultValue
 				ifTrue: [ ^ false ] ].
 	^ true
+]
 
 SparseLargeTable >> analyzeSpaceSaving
-analyzeSpaceSaving
+[analyzeSpaceSaving
 	| total elems tablesTotal nonNilTables |
 	total := size - base + 1.
 	elems := 0.
@@ -32,43 +33,51 @@ analyzeSpaceSaving
 			strm nextPutAll: tablesTotal printString.
 			strm nextPutAll: ' non-nil: '.
 			strm nextPutAll: nonNilTables printString ]
+]
 
 SparseLargeTable >> arrayClass
-arrayClass
+[arrayClass
 	^ (self basicAt: 1) class
+]
 
 SparseLargeTable >> at: index
-at: index
+[at: index
 	self pvtCheckIndex: index.
 	^ self noCheckAt: index
+]
 
 SparseLargeTable >> at: index put: value
-at: index put: value
+[at: index put: value
 	self pvtCheckIndex: index.
 	^ self noCheckAt: index put: value
+]
 
 SparseLargeTable >> base
-base
+[base
 	^ base
+]
 
 SparseLargeTable >> chunkSize
-chunkSize
+[chunkSize
 	^ chunkSize
+]
 
 SparseLargeTable >> copyEmpty
-copyEmpty
+[copyEmpty
 	"Answer a copy of the receiver that contains no elements."
 
 	^ self speciesNew: 0
+]
 
 SparseLargeTable >> findLastNonNilSubTable
-findLastNonNilSubTable
+[findLastNonNilSubTable
 	(self basicAt: self basicSize) ifNotNil: [ ^ self basicSize ].
 	self basicSize - 1 to: 1 by: -1 do: [ :lastIndex | (self basicAt: lastIndex) ifNotNil: [ ^ lastIndex ] ].
 	^ 0
+]
 
 SparseLargeTable >> initChunkSize: aChunkSize size: aSize arrayClass: aClass base: b defaultValue: d
-initChunkSize: aChunkSize size: aSize arrayClass: aClass base: b defaultValue: d
+[initChunkSize: aChunkSize size: aSize arrayClass: aClass base: b defaultValue: d
 	| lastChunkSize |
 	chunkSize := aChunkSize.
 	size := aSize.
@@ -81,9 +90,10 @@ initChunkSize: aChunkSize size: aSize arrayClass: aClass base: b defaultValue: d
 	size = 0
 		ifTrue: [ self basicAt: 1 put: (aClass new: 0) ]
 		ifFalse: [ self basicAt: self basicSize put: (aClass new: lastChunkSize withAll: defaultValue) ]
+]
 
 SparseLargeTable >> noCheckAt: index
-noCheckAt: index
+[noCheckAt: index
 	| chunkIndex t |
 	chunkIndex := (index - base) // chunkSize + 1.
 	(chunkIndex > self basicSize or: [ chunkIndex < 1 ])
@@ -91,9 +101,10 @@ noCheckAt: index
 	t := self basicAt: chunkIndex.
 	t ifNil: [ ^ defaultValue ].
 	^ t at: index - base + 1 - ((chunkIndex - 1) * chunkSize)
+]
 
 SparseLargeTable >> noCheckAt: index put: value
-noCheckAt: index put: value
+[noCheckAt: index put: value
 	| chunkIndex t |
 	chunkIndex := (index - base) // chunkSize + 1.
 	chunkIndex > self basicSize
@@ -101,14 +112,16 @@ noCheckAt: index put: value
 	t := self basicAt: chunkIndex.
 	t ifNil: [ ^ value ].
 	^ t at: index - base + 1 - ((chunkIndex - 1) * chunkSize) put: value
+]
 
 SparseLargeTable >> postCopy
-postCopy
+[postCopy
 	super postCopy.
 	1 to: self basicSize do: [ :i | self basicAt: i put: (self basicAt: i) copy ]
+]
 
 SparseLargeTable >> printElementsOn: aStream
-printElementsOn: aStream
+[printElementsOn: aStream
 	| element |
 	aStream nextPut: $(.
 	base to: size do: [ :index | element := self at: index.
@@ -118,56 +131,67 @@ printElementsOn: aStream
 	self isEmpty
 		ifFalse: [ aStream skip: -1 ].
 	aStream nextPut: $)
+]
 
 SparseLargeTable >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	(#(#String) includes: self arrayClass name)
 		ifTrue: [ ^ self storeOn: aStream ].
 	^ super printOn: aStream
+]
 
 SparseLargeTable >> privateSize: s
-privateSize: s
+[privateSize: s
 	size := s
+]
 
 SparseLargeTable >> pvtCheckIndex: index
-pvtCheckIndex: index
+[pvtCheckIndex: index
 	index isInteger
 		ifFalse: [ self errorNonIntegerIndex ].
 	index < 1
 		ifTrue: [ self errorSubscriptBounds: index ].
 	index > size
 		ifTrue: [ self errorSubscriptBounds: index ]
+]
 
 SparseLargeTable >> similarInstance
-similarInstance
+[similarInstance
 	^ self class new: self size chunkSize: self chunkSize arrayClass: self arrayClass
+]
 
 SparseLargeTable >> similarInstance: newSize
-similarInstance: newSize
+[similarInstance: newSize
 	^ self class new: newSize chunkSize: self chunkSize arrayClass: self arrayClass
+]
 
 SparseLargeTable >> similarSpeciesInstance
-similarSpeciesInstance
+[similarSpeciesInstance
 	^ self similarInstance
+]
 
 SparseLargeTable >> similarSpeciesInstance: newSize
-similarSpeciesInstance: newSize
+[similarSpeciesInstance: newSize
 	^ self similarInstance: newSize
+]
 
 SparseLargeTable >> size
-size
+[size
 	^ size
+]
 
 SparseLargeTable >> speciesNew
-speciesNew
+[speciesNew
 	^ self species new: self size chunkSize: self chunkSize arrayClass: self arrayClass
+]
 
 SparseLargeTable >> speciesNew: newSize
-speciesNew: newSize
+[speciesNew: newSize
 	^ self species new: newSize chunkSize: self chunkSize arrayClass: self arrayClass
+]
 
 SparseLargeTable >> storeOn: aStream
-storeOn: aStream
+[storeOn: aStream
 	| x |
 	(#(#String) includes: self arrayClass name)
 		ifTrue: [ aStream nextPut: $'.
@@ -178,9 +202,10 @@ storeOn: aStream
 			aStream nextPutAll: self chunkSize asString.
 			^ self ].
 	^ super storeOn: aStream
+]
 
 SparseLargeTable >> zapDefaultOnlyEntries
-zapDefaultOnlyEntries
+[zapDefaultOnlyEntries
 	| lastIndex newInst |
 	1 to: self basicSize do: [ :i | (self allDefaultValueSubtableAt: i)
 			ifTrue: [ self basicAt: i put: nil ] ].
@@ -198,42 +223,49 @@ zapDefaultOnlyEntries
 	1 to: newInst basicSize do: [ :i | (newInst allDefaultValueSubtableAt: i)
 			ifTrue: [ newInst basicAt: i put: nil ] ].	" this is not allowed in production: self becomeForward: newInst. "
 	^ newInst
+]
 
 SparseLargeTable class >> defaultChunkSize
-defaultChunkSize
+[defaultChunkSize
 	^ 100
+]
 
 SparseLargeTable class >> defaultChunkSizeForFiles
-defaultChunkSizeForFiles
+[defaultChunkSizeForFiles
 	^ 8000
+]
 
 SparseLargeTable class >> new: size
-new: size
+[new: size
 	^ self new: size chunkSize: self defaultChunkSize
+]
 
 SparseLargeTable class >> new: size chunkSize: chunkSize
-new: size chunkSize: chunkSize
+[new: size chunkSize: chunkSize
 	^ self new: size chunkSize: chunkSize arrayClass: Array
+]
 
 SparseLargeTable class >> new: size chunkSize: chunkSize arrayClass: aClass
-new: size chunkSize: chunkSize arrayClass: aClass
+[new: size chunkSize: chunkSize arrayClass: aClass
 	^ self
 		new: size
 		chunkSize: chunkSize
 		arrayClass: Array
 		base: 1
+]
 
 SparseLargeTable class >> new: size chunkSize: chunkSize arrayClass: aClass base: b
-new: size chunkSize: chunkSize arrayClass: aClass base: b
+[new: size chunkSize: chunkSize arrayClass: aClass base: b
 	^ self
 		new: size
 		chunkSize: chunkSize
 		arrayClass: Array
 		base: 1
 		defaultValue: nil
+]
 
 SparseLargeTable class >> new: size chunkSize: chunkSize arrayClass: aClass base: b defaultValue: d
-new: size chunkSize: chunkSize arrayClass: aClass base: b defaultValue: d
+[new: size chunkSize: chunkSize arrayClass: aClass base: b defaultValue: d
 	| basicSize |
 	(basicSize := (size - 1) // chunkSize + 1) = 0
 		ifTrue: [ basicSize := 1 ].
@@ -244,4 +276,5 @@ new: size chunkSize: chunkSize arrayClass: aClass base: b defaultValue: d
 			base: b
 			defaultValue: d;
 		yourself
+]
 

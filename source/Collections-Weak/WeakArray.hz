@@ -5,7 +5,7 @@ WeakArray
 	package: #'Collections-Weak'.
 
 WeakArray class >> addWeakDependent: anObject
-addWeakDependent: anObject
+[addWeakDependent: anObject
 	FinalizationLock
 		critical: [ | index finished weakDependent |
 			finished := false.
@@ -20,17 +20,19 @@ addWeakDependent: anObject
 					FinalizationDependents := FinalizationDependents , (WeakArray new: 10).
 					FinalizationDependents at: index put: anObject ] ]
 		ifError: [ :msg :rcvr | rcvr error: msg ]
+]
 
 WeakArray class >> finalizationProcess
-finalizationProcess
+[finalizationProcess
 	[ true ]
 		whileTrue: [ FinalizationSemaphore wait.
 			FinalizationLock
 				critical: [ FinalizationDependents
 						do: [ :weakDependent | weakDependent ifNotNil: [ [ weakDependent finalizeValues ] on: Exception fork: [ :ex | ex pass ] ] ] ] ]
+]
 
 WeakArray class >> initialize
-initialize
+[initialize
 	"WeakArray initialize"
 
 	"Do we need to initialize specialObjectsArray?"
@@ -41,22 +43,25 @@ initialize
 	FinalizationSemaphore := Smalltalk specialObjectsArray at: 42.
 	FinalizationLock := Semaphore forMutualExclusion.
 	FinalizationDependents ifNil: [ FinalizationDependents := WeakArray new: 10 ]
+]
 
 WeakArray class >> pvtCreateTemporaryObjectIn: tempObject
-pvtCreateTemporaryObjectIn: tempObject
+[pvtCreateTemporaryObjectIn: tempObject
 	"We have to create the temporary object in a separate stack frame"
 
 	tempObject at: 1 put: Object new
+]
 
 WeakArray class >> removeWeakDependent: anObject
-removeWeakDependent: anObject
+[removeWeakDependent: anObject
 	FinalizationLock
 		critical: [ 1 to: FinalizationDependents size do: [ :i | (FinalizationDependents at: i) == anObject
 					ifTrue: [ FinalizationDependents at: i put: nil ] ] ]
 		ifError: [ :msg :rcvr | rcvr error: msg ]
+]
 
 WeakArray class >> restartFinalizationProcess
-restartFinalizationProcess
+[restartFinalizationProcess
 	"kill any old process, just in case"
 
 	FinalizationProcess ifNotNil: [ FinalizationProcess terminate.
@@ -66,16 +71,19 @@ restartFinalizationProcess
 	FinalizationLock := Semaphore forMutualExclusion.
 	FinalizationProcess := [ self finalizationProcess ] forkAt: Processor userInterruptPriority.
 	FinalizationProcess name: 'WeakArray Finalization Process'
+]
 
 WeakArray class >> runningFinalizationProcess
-runningFinalizationProcess
+[runningFinalizationProcess
 	"Answer the FinalizationProcess I am running, if any"
 
 	^ FinalizationProcess
+]
 
 WeakArray class >> startUp: resuming
-startUp: resuming
+[startUp: resuming
 	resuming
 		ifFalse: [ ^ self ].
 	self restartFinalizationProcess
+]
 

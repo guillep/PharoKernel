@@ -3,7 +3,7 @@ UnixStore
 	package: #'FileSystem-Disk'.
 
 UnixStore >> checkName: aFileName fixErrors: fixing
-checkName: aFileName fixErrors: fixing
+[checkName: aFileName fixErrors: fixing
 	"Check if the file name contains any invalid characters"
 
 	| fName |
@@ -13,26 +13,32 @@ checkName: aFileName fixErrors: fixing
 	fixing
 		ifFalse: [ self error: 'Invalid file name' ].
 	^ fName copyReplaceAll: self delimiter asString with: '#'
+]
 
 UnixStore class >> delimiter
-delimiter
+[delimiter
 	^ $/
+]
 
 UnixStore class >> isActiveClass
-isActiveClass
+[isActiveClass
 	^ Smalltalk os isUnix and: [ super isActiveClass ]
+]
 
 UnixStore class >> isCaseSensitive
-isCaseSensitive
+[isCaseSensitive
 	"except for OSX the default is case sensitive"
 
 	^ Smalltalk os isMacOSX not
+]
 
 UnixStore class >> maxFileNameLength
-maxFileNameLength
+[maxFileNameLength
 	^ 255
+]
 
 UnixStore class >> separator
-separator
+[separator
 	^ $:
+]
 

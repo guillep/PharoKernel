@@ -4,21 +4,23 @@ MemoryFileSystemFile
 	package: #'FileSystem-Memory'.
 
 MemoryFileSystemFile >> at: index
-at: index
+[at: index
 	self flag: #todo.	"out of bounds checks?"
 	^ bytes at: index
+]
 
 MemoryFileSystemFile >> at: index put: anObject
-at: index put: anObject
+[at: index put: anObject
 	index > bytes size
 		ifTrue: [ self grow ].
 	bytes at: index put: (anObject isCharacter
 				ifTrue: [ anObject codePoint ]
 				ifFalse: [ anObject ]).
 	size := size max: index
+]
 
 MemoryFileSystemFile >> at: index read: aCollection startingAt: start count: count
-at: index read: aCollection startingAt: start count: count
+[at: index read: aCollection startingAt: start count: count
 	| max stop |
 	max := size - index + 1 min: count.
 	stop := start + max - 1.
@@ -28,9 +30,10 @@ at: index read: aCollection startingAt: start count: count
 		with: bytes
 		startingAt: index.
 	^ stop - start + 1
+]
 
 MemoryFileSystemFile >> at: first write: aCollection startingAt: start count: count
-at: first write: aCollection startingAt: start count: count
+[at: first write: aCollection startingAt: start count: count
 	| last |
 	last := first + count - 1.
 	last > bytes size
@@ -41,56 +44,68 @@ at: first write: aCollection startingAt: start count: count
 		with: aCollection
 		startingAt: start.
 	size := last
+]
 
 MemoryFileSystemFile >> bytes
-bytes
+[bytes
 	^ bytes
+]
 
 MemoryFileSystemFile >> copyFrom: from to: position
-copyFrom: from to: position
+[copyFrom: from to: position
 	^ bytes copyFrom: from to: position
+]
 
 MemoryFileSystemFile >> fileSize
-fileSize
+[fileSize
 	^ size
+]
 
 MemoryFileSystemFile >> grow
-grow
+[grow
 	self grownBy: self sizeIncrement
+]
 
 MemoryFileSystemFile >> grownBy: length
-grownBy: length
+[grownBy: length
 	bytes := bytes grownBy: length.
 	self modified
+]
 
 MemoryFileSystemFile >> initialize
-initialize
+[initialize
 	super initialize.
 	bytes := #[].
 	size := 0
+]
 
 MemoryFileSystemFile >> internalSize
-internalSize
+[internalSize
 	^ bytes size
+]
 
 MemoryFileSystemFile >> isDirectory
-isDirectory
+[isDirectory
 	^ false
+]
 
 MemoryFileSystemFile >> readStream
-readStream
+[readStream
 	^ ReadStream on: bytes asString from: 1 to: size
+]
 
 MemoryFileSystemFile >> sizeIncrement
-sizeIncrement
+[sizeIncrement
 	^ (bytes size min: 20) max: 1024
+]
 
 MemoryFileSystemFile >> truncate
-truncate
+[truncate
 	self truncateTo: size
+]
 
 MemoryFileSystemFile >> truncateTo: aSize
-truncateTo: aSize
+[truncateTo: aSize
 	bytes size = aSize
 		ifFalse: [ bytes := bytes size < aSize
 				ifTrue: [ (ByteArray new: aSize)
@@ -101,14 +116,17 @@ truncateTo: aSize
 				ifFalse: [ bytes copyFrom: 1 to: aSize ] ].
 	size := bytes size.
 	self modified
+]
 
 MemoryFileSystemFile >> updateSize: newSize
-updateSize: newSize
+[updateSize: newSize
 	size := newSize.
 	modificationTime := nil
+]
 
 MemoryFileSystemFile >> writeStream
-writeStream
+[writeStream
 	self flag: #todo.	"need a nicer abstraction here to keep a shared bytes without calling grownBy on every at:put:"
 	^ WriteStream on: self from: 1 to: size
+]
 

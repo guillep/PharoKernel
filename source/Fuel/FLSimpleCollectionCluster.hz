@@ -3,16 +3,19 @@ FLSimpleCollectionCluster
 	package: #Fuel.
 
 FLSimpleCollectionCluster >> materializeReferencesOf: anObject with: aDecoder
-materializeReferencesOf: anObject with: aDecoder
+[materializeReferencesOf: anObject with: aDecoder
 	aDecoder nextEncodedPositiveInteger timesRepeat: [ anObject add: aDecoder nextEncodedReference ]	"anObject size"
+]
 
 FLSimpleCollectionCluster >> referencesOf: anObject do: aBlock
-referencesOf: anObject do: aBlock
+[referencesOf: anObject do: aBlock
 	aBlock value: anObject size.
 	anObject do: [ :each | aBlock value: each ]
+]
 
 FLSimpleCollectionCluster >> serializeReferencesOf: anObject with: anEncoder
-serializeReferencesOf: anObject with: anEncoder
+[serializeReferencesOf: anObject with: anEncoder
 	anEncoder encodePositiveInteger: anObject size.
 	anObject do: [ :each | anEncoder encodeReferenceTo: each ]
+]
 

@@ -4,11 +4,12 @@ WideCharacterSet
 	package: #'Collections-Support'.
 
 WideCharacterSet >> = anObject
-= anObject
+[= anObject
 	^ self species == anObject species and: [ self wideCharacterMap = anObject wideCharacterMap ]
+]
 
 WideCharacterSet >> add: aCharacter
-add: aCharacter
+[add: aCharacter
 	| val high low lowmap |
 	val := aCharacter asciiValue.
 	val < 256
@@ -19,9 +20,10 @@ add: aCharacter
 			ByteArray new: 8192 ].
 	self setBitmap: lowmap at: low.
 	^ aCharacter
+]
 
 WideCharacterSet >> bitmap: aMap at: shortInteger
-bitmap: aMap at: shortInteger
+[bitmap: aMap at: shortInteger
 	"access a single bit in aMap.
 	shortInteger should be between: 0 and: 16rFFFF"
 
@@ -29,9 +31,10 @@ bitmap: aMap at: shortInteger
 	collecIndex := shortInteger bitShift: -3.
 	bitIndex := shortInteger bitAnd: 7.
 	^ (aMap at: collecIndex + 1) bitAnd: (1 bitShift: bitIndex)
+]
 
 WideCharacterSet >> bitmap: aMap do: aBlock
-bitmap: aMap do: aBlock
+[bitmap: aMap do: aBlock
 	"Execute a block with each value (0 based) corresponding to set bits.
 	Implementation notes: this version works best for sparse maps.
 	It has (byte lowBit) inlined for speed."
@@ -44,9 +47,10 @@ bitmap: aMap do: aBlock
 				aBlock value: byteOffset + (lowBits at: byte).	"Eliminate the low bit and loop if some bit remain"
 				(byte := byte bitAnd: byte - 1) = 0 ]
 					whileFalse ] ]
+]
 
 WideCharacterSet >> byteArrayMap
-byteArrayMap
+[byteArrayMap
 	"return a ByteArray mapping each ascii value to a 1 if that ascii value is in the set, and a 0 if it isn't.
 	Intended for use by primitives only. (and comparison)
 	This version will answer a subset with only byte characters"
@@ -58,9 +62,10 @@ byteArrayMap
 			lowmap := lowmap copyFrom: 1 to: 32.	"Keep first 8*32=256 bits..."
 			self bitmap: lowmap do: [ :code | byteArrayMap at: code + 1 put: 1 ] ].
 	^ byteArrayMap
+]
 
 WideCharacterSet >> clearBitmap: aMap at: shortInteger
-clearBitmap: aMap at: shortInteger
+[clearBitmap: aMap at: shortInteger
 	"clear a single bit in aMap.
 	shortInteger should be between: 0 and: 16rFFFF"
 
@@ -68,36 +73,41 @@ clearBitmap: aMap at: shortInteger
 	collecIndex := shortInteger bitShift: -3.
 	bitIndex := shortInteger bitAnd: 7.
 	^ aMap at: collecIndex + 1 put: ((aMap at: collecIndex + 1) bitClear: (1 bitShift: bitIndex))
+]
 
 WideCharacterSet >> complement
-complement
+[complement
 	"return a character set containing precisely the characters the receiver does not"
 
 	^ CharacterSetComplement of: self copy
+]
 
 WideCharacterSet >> do: aBlock
-do: aBlock
+[do: aBlock
 	map
 		keysAndValuesDo: [ :index :lowmap | | high16Bits |
 			high16Bits := index bitShift: 16.
 			self bitmap: lowmap do: [ :low16Bits | aBlock value: (Character value: high16Bits + low16Bits) ] ]
+]
 
 WideCharacterSet >> findFirstInByteString: aByteString startingAt: startIndex
-findFirstInByteString: aByteString startingAt: startIndex
+[findFirstInByteString: aByteString startingAt: startIndex
 	"Double dispatching: since we know this is a ByteString, we can use a superfast primitive using a ByteArray map with 0 slots for byte characters not included and 1 for byte characters included in the receiver."
 
 	^ ByteString findFirstInString: aByteString inSet: self byteArrayMap startingAt: startIndex
+]
 
 WideCharacterSet >> hasWideCharacters
-hasWideCharacters
+[hasWideCharacters
 	"Answer true if i contain any wide character"
 
 	self do: [ :e | e asciiValue >= 256
 				ifTrue: [ ^ true ] ].
 	^ false
+]
 
 WideCharacterSet >> hash
-hash
+[hash
 	"Answer a hash code aimed at storing and retrieving the receiver in a Set or Dictionary.
 	Two equal objects should have equal hash.
 	Note: as the receiver can be equal to an ordinary CharacterSet,
@@ -106,28 +116,32 @@ hash
 	^ self hasWideCharacters
 		ifTrue: [ map hash ]
 		ifFalse: [ self asCharacterSet hash ]
+]
 
 WideCharacterSet >> includes: aCharacter
-includes: aCharacter
+[includes: aCharacter
 	| val high low |
 	val := aCharacter asciiValue.
 	high := val bitShift: -16.
 	low := val bitAnd: 16rFFFF.
 	^ (self bitmap: (map at: high ifAbsent: [ ^ false ]) at: low) isZero not
+]
 
 WideCharacterSet >> initialize
-initialize
+[initialize
 	super initialize.
 	map := Dictionary new.
 	byteArrayMap := ByteArray new: 256
+]
 
 WideCharacterSet >> postCopy
-postCopy
+[postCopy
 	super postCopy.
 	map := map collect: [ :each | each copy ]
+]
 
 WideCharacterSet >> remove: aCharacter
-remove: aCharacter
+[remove: aCharacter
 	| val high low lowmap |
 	val := aCharacter asciiValue.
 	val < 256
@@ -139,20 +153,23 @@ remove: aCharacter
 	(lowmap allSatisfy: [ :e | e = 0 ])
 		ifTrue: [ map removeKey: high ].
 	^ aCharacter
+]
 
 WideCharacterSet >> remove: aCharacter ifAbsent: aBlock
-remove: aCharacter ifAbsent: aBlock
+[remove: aCharacter ifAbsent: aBlock
 	(self includes: aCharacter)
 		ifFalse: [ ^ aBlock value ].
 	^ self remove: aCharacter
+]
 
 WideCharacterSet >> removeAll
-removeAll
+[removeAll
 	map removeAll.
 	byteArrayMap := ByteArray new: 256
+]
 
 WideCharacterSet >> setBitmap: aMap at: shortInteger
-setBitmap: aMap at: shortInteger
+[setBitmap: aMap at: shortInteger
 	"set a single bit in aMap.
 	shortInteger should be between: 0 and: 16rFFFF"
 
@@ -160,28 +177,33 @@ setBitmap: aMap at: shortInteger
 	collecIndex := shortInteger bitShift: -3.
 	bitIndex := shortInteger bitAnd: 7.
 	^ aMap at: collecIndex + 1 put: ((aMap at: collecIndex + 1) bitOr: (1 bitShift: bitIndex))
+]
 
 WideCharacterSet >> size
-size
+[size
 	| size |
 	size := 0.
 	map keysAndValuesDo: [ :high :lowmap | self bitmap: lowmap do: [ :low | size := size + 1 ] ].
 	^ size
+]
 
 WideCharacterSet >> species
-species
+[species
 	^ self hasWideCharacters
 		ifTrue: [ WideCharacterSet ]
 		ifFalse: [ CharacterSet ]
+]
 
 WideCharacterSet >> wideCharacterMap
-wideCharacterMap
+[wideCharacterMap
 	^ map
+]
 
 WideCharacterSet class >> newFrom: aCollection
-newFrom: aCollection
+[newFrom: aCollection
 	| newCollection |
 	newCollection := self new.
 	newCollection addAll: aCollection.
 	^ newCollection
+]
 

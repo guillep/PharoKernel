@@ -4,7 +4,7 @@ DependentsArray
 	package: #Kernel.
 
 DependentsArray >> at: anIndex
-at: anIndex
+[at: anIndex
 	| basicSize counter dep |
 	anIndex > 0
 		ifTrue: [ basicSize := self basicSize.
@@ -14,9 +14,10 @@ at: anIndex
 							ifFalse: [ (counter := counter + 1) = anIndex
 									ifTrue: [ ^ dep ] ] ] ] ].
 	self error: 'access with an index out of bounds'
+]
 
 DependentsArray >> at: anIndex put: anObject
-at: anIndex put: anObject
+[at: anIndex put: anObject
 	| basicSize counter |
 	anIndex > 0
 		ifTrue: [ basicSize := self basicSize.
@@ -26,16 +27,18 @@ at: anIndex put: anObject
 							ifFalse: [ (counter := counter + 1) = anIndex
 									ifTrue: [ ^ self basicAt: i put: anObject ] ] ] ] ].
 	self error: 'access with an index out of bounds'
+]
 
 DependentsArray >> basicReplaceFrom: start to: stop with: replacement startingAt: repStart
-basicReplaceFrom: start to: stop with: replacement startingAt: repStart
+[basicReplaceFrom: start to: stop with: replacement startingAt: repStart
 	"Primitive. This destructively replaces elements from start to stop in the receiver starting at index, repStart, in the collection, replacement. Answer the receiver. Range checks are performed in the primitive only. Optional. See Object documentation whatIsAPrimitive."
 
 	<primitive: 105>
 	start to: stop do: [ :i | self basicAt: i put: (replacement basicAt: repStart - start + i) ]
+]
 
 DependentsArray >> collect: aBlock
-collect: aBlock
+[collect: aBlock
 	"Refer to the comment in Collection|select:."
 
 	| basicSize newSelf size dep selection |
@@ -51,9 +54,10 @@ collect: aBlock
 		with: newSelf
 		startingAt: 1.
 	^ selection
+]
 
 DependentsArray >> copyWith: newElement
-copyWith: newElement
+[copyWith: newElement
 	"Re-implemented to not copy any niled out dependents."
 
 	| copy i |
@@ -62,33 +66,38 @@ copyWith: newElement
 	self do: [ :item | copy basicAt: (i := i + 1) put: item ].
 	copy basicAt: (i := i + 1) put: newElement.
 	^ copy
+]
 
 DependentsArray >> do: aBlock
-do: aBlock
+[do: aBlock
 	"Evaluate a Block on non nil elements of the receiver"
 
 	| dep |
 	1 to: self basicSize do: [ :i | (dep := self basicAt: i) ifNotNil: [ aBlock value: dep ] ]
+]
 
 DependentsArray >> first
-first
+[first
 	self do: [ :dep | ^ dep ].
 	self error: 'this collection is empty'
+]
 
 DependentsArray >> last
-last
+[last
 	self reverseDo: [ :dep | ^ dep ].
 	self error: 'this collection is empty'
+]
 
 DependentsArray >> reverseDo: aBlock
-reverseDo: aBlock
+[reverseDo: aBlock
 	"Refer to the comment in Collection|do:."
 
 	| dep |
 	self basicSize to: 1 by: -1 do: [ :i | (dep := self basicAt: i) ifNotNil: [ aBlock value: dep ] ]
+]
 
 DependentsArray >> select: aBlock
-select: aBlock
+[select: aBlock
 	"Refer to the comment in Collection|select:."
 
 	| basicSize newSelf size selection |
@@ -104,50 +113,57 @@ select: aBlock
 		with: newSelf
 		startingAt: 1.
 	^ selection
+]
 
 DependentsArray >> size
-size
+[size
 	"count each non nil elements in self.
 	Note: count: will use do: which will already have filtered out nil elements"
 
 	^ self count: [ :each | true ]
+]
 
 DependentsArray >> writeStream
-writeStream
+[writeStream
 	^ WriteStream on: self
+]
 
 DependentsArray class >> with: anObject
-with: anObject
+[with: anObject
 	^ (self basicNew: 1)
 		basicAt: 1 put: anObject;
 		yourself
+]
 
 DependentsArray class >> with: firstObject with: secondObject
-with: firstObject with: secondObject
+[with: firstObject with: secondObject
 	^ (self basicNew: 2)
 		basicAt: 1 put: firstObject;
 		basicAt: 2 put: secondObject;
 		yourself
+]
 
 DependentsArray class >> with: firstObject with: secondObject with: thirdObject
-with: firstObject with: secondObject with: thirdObject
+[with: firstObject with: secondObject with: thirdObject
 	^ (self basicNew: 3)
 		basicAt: 1 put: firstObject;
 		basicAt: 2 put: secondObject;
 		basicAt: 3 put: thirdObject;
 		yourself
+]
 
 DependentsArray class >> with: firstObject with: secondObject with: thirdObject with: fourthObject
-with: firstObject with: secondObject with: thirdObject with: fourthObject
+[with: firstObject with: secondObject with: thirdObject with: fourthObject
 	^ (self basicNew: 4)
 		basicAt: 1 put: firstObject;
 		basicAt: 2 put: secondObject;
 		basicAt: 3 put: thirdObject;
 		basicAt: 4 put: fourthObject;
 		yourself
+]
 
 DependentsArray class >> with: firstObject with: secondObject with: thirdObject with: fourthObject with: fifthObject
-with: firstObject with: secondObject with: thirdObject with: fourthObject with: fifthObject
+[with: firstObject with: secondObject with: thirdObject with: fourthObject with: fifthObject
 	^ (self basicNew: 5)
 		basicAt: 1 put: firstObject;
 		basicAt: 2 put: secondObject;
@@ -155,9 +171,10 @@ with: firstObject with: secondObject with: thirdObject with: fourthObject with: 
 		basicAt: 4 put: fourthObject;
 		basicAt: 5 put: fifthObject;
 		yourself
+]
 
 DependentsArray class >> with: firstObject with: secondObject with: thirdObject with: fourthObject with: fifthObject with: sixthObject
-with: firstObject with: secondObject with: thirdObject with: fourthObject with: fifthObject with: sixthObject
+[with: firstObject with: secondObject with: thirdObject with: fourthObject with: fifthObject with: sixthObject
 	^ (self basicNew: 6)
 		basicAt: 1 put: firstObject;
 		basicAt: 2 put: secondObject;
@@ -166,11 +183,13 @@ with: firstObject with: secondObject with: thirdObject with: fourthObject with: 
 		basicAt: 5 put: fifthObject;
 		basicAt: 6 put: sixthObject;
 		yourself
+]
 
 DependentsArray class >> withAll: aCollection
-withAll: aCollection
+[withAll: aCollection
 	| newInstance |
 	newInstance := self basicNew: aCollection size.
 	1 to: aCollection size do: [ :i | newInstance basicAt: i put: (aCollection at: i) ].
 	^ newInstance
+]
 

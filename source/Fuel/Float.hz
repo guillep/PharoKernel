@@ -1,17 +1,20 @@
 Float >> fuelAccept: aGeneralMapper
-fuelAccept: aGeneralMapper
+[fuelAccept: aGeneralMapper
 	^ aGeneralMapper visitHookPrimitive: self
+]
 
 Float >> serializeOn: anEncoder
-serializeOn: anEncoder
+[serializeOn: anEncoder
 	anEncoder
 		encodeUint32: (self at: 1);
 		encodeUint32: (self at: 2)
+]
 
 Float class >> materializeFrom: aDecoder
-materializeFrom: aDecoder
+[materializeFrom: aDecoder
 	^ (self new: 2)
 		at: 1 put: aDecoder nextEncodedUint32;
 		at: 2 put: aDecoder nextEncodedUint32;
 		yourself
+]
 

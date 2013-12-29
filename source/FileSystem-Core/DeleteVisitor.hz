@@ -3,14 +3,17 @@ DeleteVisitor
 	package: #'FileSystem-Core'.
 
 DeleteVisitor >> visit: aReference
-visit: aReference
+[visit: aReference
 	PostorderGuide show: aReference to: self selecting: [ :entry | entry isSymlink not ]
+]
 
 DeleteVisitor >> visitReference: anEntry
-visitReference: anEntry
+[visitReference: anEntry
 	anEntry reference delete
+]
 
 DeleteVisitor class >> delete: aReference
-delete: aReference
+[delete: aReference
 	^ self new visit: aReference
+]
 

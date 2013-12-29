@@ -5,13 +5,14 @@ Deprecation
 	package: #Kernel.
 
 Deprecation >> = anObject
-= anObject
+[= anObject
 	^ self class == anObject class
 		and: [ methodReference = anObject methodReference
 				and: [ methodReference ifNil: [ explanationString = anObject explanationString ] ifNotNil: [ true ] ] ]
+]
 
 Deprecation >> defaultAction
-defaultAction
+[defaultAction
 	Log ifNotNil: [ :log | log add: self ].
 	self showWarning
 		ifTrue: [ Transcript
@@ -20,60 +21,70 @@ defaultAction
 				flush ].
 	self raiseWarning
 		ifTrue: [ super defaultAction ]
+]
 
 Deprecation >> deprecationDate
-deprecationDate
+[deprecationDate
 	"Answer the value of deprecationDate"
 
 	^ deprecationDate
+]
 
 Deprecation >> explanationString
-explanationString
+[explanationString
 	"Answer the value of explanationString"
 
 	^ explanationString
+]
 
 Deprecation >> hash
-hash
+[hash
 	^ (methodReference ifNil: [ explanationString ]) hash
+]
 
 Deprecation >> messageText
-messageText
+[messageText
 	"Return an exception's message text."
 
 	^ 'The method ' , methodReference fullName
 		,
 			' has been deprecated.' , explanationString
+]
 
 Deprecation >> method: aCompiledMethod explanation: anExplanationString on: dateString in: aVersionString
-method: aCompiledMethod explanation: anExplanationString on: dateString in: aVersionString
+[method: aCompiledMethod explanation: anExplanationString on: dateString in: aVersionString
 	methodReference := aCompiledMethod methodReference.
 	explanationString := anExplanationString.
 	deprecationDate := dateString.
 	versionString := aVersionString
+]
 
 Deprecation >> methodReference
-methodReference
+[methodReference
 	"Answer the value of methodReference"
 
 	^ methodReference
+]
 
 Deprecation >> raiseWarning
-raiseWarning
+[raiseWarning
 	^ self class raiseWarning
+]
 
 Deprecation >> showWarning
-showWarning
+[showWarning
 	^ self class showWarning
+]
 
 Deprecation >> versionString
-versionString
+[versionString
 	"Answer the value of versionString"
 
 	^ versionString
+]
 
 Deprecation class >> deprecationsWhile: aBlock
-deprecationsWhile: aBlock
+[deprecationsWhile: aBlock
 	| oldLog result |
 	oldLog := Log.
 	Log := Set new.
@@ -82,32 +93,39 @@ deprecationsWhile: aBlock
 	oldLog ifNotNil: [ oldLog addAll: result ].
 	Log := oldLog.
 	^ result
+]
 
 Deprecation class >> initialize
-initialize
+[initialize
 	Log := nil
+]
 
 Deprecation class >> method: aCompiledMethod explanation: anExplanationString on: dateString in: aVersionString
-method: aCompiledMethod explanation: anExplanationString on: dateString in: aVersionString
+[method: aCompiledMethod explanation: anExplanationString on: dateString in: aVersionString
 	^ self new
 		method: aCompiledMethod
 		explanation: anExplanationString
 		on: dateString
 		in: aVersionString
+]
 
 Deprecation class >> raiseWarning
-raiseWarning
+[raiseWarning
 	^ RaiseWarning ifNil: [ RaiseWarning := true ]
+]
 
 Deprecation class >> raiseWarning: aBoolean
-raiseWarning: aBoolean
+[raiseWarning: aBoolean
 	RaiseWarning := aBoolean
+]
 
 Deprecation class >> showWarning
-showWarning
+[showWarning
 	^ ShowWarning ifNil: [ ShowWarning := true ]
+]
 
 Deprecation class >> showWarning: aBoolean
-showWarning: aBoolean
+[showWarning: aBoolean
 	ShowWarning := aBoolean
+]
 

@@ -3,15 +3,17 @@ FLAnalysis
 	package: #Fuel.
 
 FLAnalysis >> clusterization
-clusterization
+[clusterization
 	^ clusterization
+]
 
 FLAnalysis >> fuelAccept: aGeneralMapper
-fuelAccept: aGeneralMapper
+[fuelAccept: aGeneralMapper
 	^ aGeneralMapper visitSubstitution: self by: nil
+]
 
 FLAnalysis >> initializeWith: aMapper private: privateMapper root: anObject
-initializeWith: aMapper private: privateMapper root: anObject
+[initializeWith: aMapper private: privateMapper root: anObject
 	self initialize.
 	firstMapper := aMapper.
 	privateFirstMapper := privateMapper.
@@ -21,36 +23,43 @@ initializeWith: aMapper private: privateMapper root: anObject
 	objectStack := FLSimpleStack new.
 	privateObjectStack := FLSimpleStack new.
 	clusterization := FLClusterization new
+]
 
 FLAnalysis >> mapAndTrace: anObject
-mapAndTrace: anObject
+[mapAndTrace: anObject
 	"Map an object to its cluster. Trace its references."
 
 	firstMapper mapAndTrace: anObject
+]
 
 FLAnalysis >> privateMapAndTrace: anObject
-privateMapAndTrace: anObject
+[privateMapAndTrace: anObject
 	"Map an object to its cluster. Trace its references."
 
 	privateFirstMapper mapAndTrace: anObject
+]
 
 FLAnalysis >> privateTrace: anObject
-privateTrace: anObject
+[privateTrace: anObject
 	privateObjectStack push: anObject
+]
 
 FLAnalysis >> run
-run
+[run
 	objectStack push: root.
 	[ objectStack isEmpty ] whileFalse: [ self mapAndTrace: objectStack pop ].
 	[ privateObjectStack isEmpty ] whileFalse: [ self privateMapAndTrace: privateObjectStack pop ]
+]
 
 FLAnalysis >> trace: anObject
-trace: anObject
+[trace: anObject
 	objectStack push: anObject
+]
 
 FLAnalysis class >> newWith: aMapper private: privateMapper root: anObject
-newWith: aMapper private: privateMapper root: anObject
+[newWith: aMapper private: privateMapper root: anObject
 	^ self basicNew
 		initializeWith: aMapper private: privateMapper root: anObject;
 		yourself
+]
 

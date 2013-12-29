@@ -4,17 +4,19 @@ Semaphore
 	package: #Kernel.
 
 Semaphore >> = anObject
-= anObject
+[= anObject
 	^ self == anObject
+]
 
 Semaphore >> consumeAllSignals
-consumeAllSignals
+[consumeAllSignals
 	"Consume any excess signals the receiver may have accumulated."
 
 	excessSignals := 0
+]
 
 Semaphore >> critical: mutuallyExcludedBlock
-critical: mutuallyExcludedBlock
+[critical: mutuallyExcludedBlock
 	"Evaluate mutuallyExcludedBlock only if the receiver is not currently in
 	the process of running the critical: message. If the receiver is, evaluate
 	mutuallyExcludedBlock after the other critical: message is finished."
@@ -42,18 +44,20 @@ critical: mutuallyExcludedBlock
 		ensure: [ caught
 				ifTrue: [ self signal ] ].
 	^ blockValue
+]
 
 Semaphore >> critical: mutuallyExcludedBlock ifCurtailed: terminationBlock
-critical: mutuallyExcludedBlock ifCurtailed: terminationBlock
+[critical: mutuallyExcludedBlock ifCurtailed: terminationBlock
 	"Evaluate mutuallyExcludedBlock only if the receiver is not currently in 
 	the process of running the critical: message. If the receiver is, evaluate 
 	mutuallyExcludedBlock after the other critical: message is finished."
 
 	^ self critical: [ mutuallyExcludedBlock
 				ifCurtailed: terminationBlock ]
+]
 
 Semaphore >> critical: mutuallyExcludedBlock ifError: errorBlock
-critical: mutuallyExcludedBlock ifError: errorBlock
+[critical: mutuallyExcludedBlock ifError: errorBlock
 	"Evaluate mutuallyExcludedBlock only if the receiver is not currently in 
 	the process of running the critical: message. If the receiver is, evaluate 
 	mutuallyExcludedBlock after the other critical: message is finished."
@@ -67,9 +71,10 @@ critical: mutuallyExcludedBlock ifError: errorBlock
 	hasError
 		ifTrue: [ ^ errorBlock cull: errMsg cull: errRcvr ].
 	^ blockValue
+]
 
 Semaphore >> critical: mutuallyExcludedBlock ifLocked: alternativeBlock
-critical: mutuallyExcludedBlock ifLocked: alternativeBlock
+[critical: mutuallyExcludedBlock ifLocked: alternativeBlock
 	"Evaluate mutuallyExcludedBlock only if the receiver is not currently in 
 	the process of running the critical: message. If the receiver is, evaluate 
 	mutuallyExcludedBlock after the other critical: message is finished."
@@ -83,33 +88,38 @@ test is written carefully so that it will result in bytecodes only."
 			"If we come here, then the semaphore was locked when the test executed. 			Evaluate the alternative block and answer its result."
 			^ alternativeBlock value ].
 	^ self critical: mutuallyExcludedBlock
+]
 
 Semaphore >> hash
-hash
+[hash
 	^ self identityHash
+]
 
 Semaphore >> initSignals
-initSignals
+[initSignals
 	"Consume any excess signals the receiver may have accumulated."
 
 	excessSignals := 0
+]
 
 Semaphore >> isSignaled
-isSignaled
+[isSignaled
 	"Return true if this semaphore is currently signaled"
 
 	^ excessSignals > 0
+]
 
 Semaphore >> resumeProcess: aProcess
-resumeProcess: aProcess
+[resumeProcess: aProcess
 	"Remove the given process from the list of waiting processes (if it's there) and resume it.  This is used when a process asked for its wait to be timed out."
 
 	| process |
 	process := self remove: aProcess ifAbsent: [ nil ].
 	process ifNotNil: [ process resume ]
+]
 
 Semaphore >> signal
-signal
+[signal
 	"Primitive. Send a signal through the receiver. If one or more processes 
 	have been suspended trying to receive a signal, allow the first one to 
 	proceed. If no process is waiting, remember the excess signal. Essential. 
@@ -117,16 +127,18 @@ signal
 
 	<primitive: 85>
 	self primitiveFailed	"self isEmpty    		ifTrue: [excessSignals := excessSignals+1]    		ifFalse: [Processor resume: self removeFirstLink]"
+]
 
 Semaphore >> terminateProcess
-terminateProcess
+[terminateProcess
 	"Terminate the process waiting on this semaphore, if any."
 
 	self isEmpty
 		ifFalse: [ self removeFirst terminate ]
+]
 
 Semaphore >> wait
-wait
+[wait
 	"Primitive. The active Process must receive a signal through the receiver 
 	before proceeding. If no signal has been sent, the active Process will be 
 	suspended until one is sent. Essential. See Object documentation 
@@ -134,34 +146,39 @@ wait
 
 	<primitive: 86>
 	self primitiveFailed	"excessSignals>0  		ifTrue: [excessSignals := excessSignals-1]  		ifFalse: [self addLastLink: Processor activeProcess suspend]"
+]
 
 Semaphore >> waitTimeoutMSecs: anInteger
-waitTimeoutMSecs: anInteger
+[waitTimeoutMSecs: anInteger
 	"Wait on this semaphore for up to the given number of milliseconds, then timeout. 
 	Return true if the deadline expired, false otherwise."
 
 	| d |
 	d := DelayWaitTimeout new setDelay: (anInteger max: 0) forSemaphore: self.
 	^ d wait
+]
 
 Semaphore >> waitTimeoutSeconds: anInteger
-waitTimeoutSeconds: anInteger
+[waitTimeoutSeconds: anInteger
 	"Wait on this semaphore for up to the given number of seconds, then timeout.
 	Return true if the deadline expired, false otherwise."
 
 	^ self waitTimeoutMSecs: anInteger * 1000
+]
 
 Semaphore class >> forMutualExclusion
-forMutualExclusion
+[forMutualExclusion
 	"Answer an instance of me that contains a single signal. This new 
 	instance can now be used for mutual exclusion (see the critical: message 
 	to Semaphore)."
 
 	^ self new signal
+]
 
 Semaphore class >> new
-new
+[new
 	"Answer a new instance of Semaphore that contains no signals."
 
 	^ self basicNew initSignals
+]
 

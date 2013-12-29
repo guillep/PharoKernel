@@ -3,7 +3,7 @@ NonInteractiveUIManager
 	package: #UIManager.
 
 NonInteractiveUIManager >> chooseDirectory: label from: dir
-chooseDirectory: label from: dir
+[chooseDirectory: label from: dir
 	"Let the user choose a directory"
 
 	^ self
@@ -15,15 +15,17 @@ chooseDirectory: label from: dir
 						nextPutAll: label asString;
 						nextPutAll: ' ] from ';
 						print: dir ])
+]
 
 NonInteractiveUIManager >> chooseFileMatching: patterns label: labelString
-chooseFileMatching: patterns label: labelString
+[chooseFileMatching: patterns label: labelString
 	"Let the user choose a file matching the given patterns"
 
 	^ self chooseFullFileNameMatching: patterns label: labelString
+]
 
 NonInteractiveUIManager >> chooseFrom: aList lines: linesArray title: aString
-chooseFrom: aList lines: linesArray title: aString
+[chooseFrom: aList lines: linesArray title: aString
 	"Choose an item from the given list. Answer the index of the selected item."
 
 	^ self
@@ -31,9 +33,10 @@ chooseFrom: aList lines: linesArray title: aString
 		values: aList
 		lines: linesArray
 		title: aString
+]
 
 NonInteractiveUIManager >> chooseFrom: labelList values: valueList lines: linesArray title: aString
-chooseFrom: labelList values: valueList lines: linesArray title: aString
+[chooseFrom: labelList values: valueList lines: linesArray title: aString
 	"Choose an item from the given list. Answer the selected item."
 
 	^ self
@@ -41,9 +44,10 @@ chooseFrom: labelList values: valueList lines: linesArray title: aString
 		values: valueList
 		lines: linesArray
 		title: aString
+]
 
 NonInteractiveUIManager >> chooseFullFileNameMatching: patterns label: labelString
-chooseFullFileNameMatching: patterns label: labelString
+[chooseFullFileNameMatching: patterns label: labelString
 	"Let the user choose a file matching the given patterns"
 
 	^ self
@@ -55,9 +59,10 @@ chooseFullFileNameMatching: patterns label: labelString
 						nextPutAll: labelString asString;
 						nextPutAll: ' ] ';
 						print: patterns ])
+]
 
 NonInteractiveUIManager >> chooseOrRequestFrom: labelList values: valueList lines: linesArray title: aString
-chooseOrRequestFrom: labelList values: valueList lines: linesArray title: aString
+[chooseOrRequestFrom: labelList values: valueList lines: linesArray title: aString
 	^ self
 		nonInteractiveWarning:
 			(String
@@ -74,30 +79,36 @@ chooseOrRequestFrom: labelList values: valueList lines: linesArray title: aStrin
 								tab;
 								print: value;
 								cr ] ])
+]
 
 NonInteractiveUIManager >> confirm: queryString
-confirm: queryString
+[confirm: queryString
 	(ProvideAnswerNotification signal: queryString) ifNotNil: [ :answer | ^ answer ].
 	^ self nonInteractiveWarning: 'Confirming: ' , queryString
+]
 
 NonInteractiveUIManager >> confirm: queryString label: titleString
-confirm: queryString label: titleString
+[confirm: queryString label: titleString
 	^ self nonInteractiveRequest: queryString title: titleString
+]
 
 NonInteractiveUIManager >> confirm: aString orCancel: cancelBlock
-confirm: aString orCancel: cancelBlock
+[confirm: aString orCancel: cancelBlock
 	^ self nonInteractiveRequest: aString
+]
 
 NonInteractiveUIManager >> confirm: queryString trueChoice: trueChoice falseChoice: falseChoice
-confirm: queryString trueChoice: trueChoice falseChoice: falseChoice
+[confirm: queryString trueChoice: trueChoice falseChoice: falseChoice
 	^ self nonInteractiveRequest: queryString
+]
 
 NonInteractiveUIManager >> confirm: queryString trueChoice: trueChoice falseChoice: falseChoice cancelChoice: cancelChoice default: aSymbol
-confirm: queryString trueChoice: trueChoice falseChoice: falseChoice cancelChoice: cancelChoice default: aSymbol
+[confirm: queryString trueChoice: trueChoice falseChoice: falseChoice cancelChoice: cancelChoice default: aSymbol
 	^ self nonInteractiveRequest: queryString
+]
 
 NonInteractiveUIManager >> edit: aText label: labelString accept: anAction
-edit: aText label: labelString accept: anAction
+[edit: aText label: labelString accept: anAction
 	"Open an editor on the given string/text"
 
 	^ self
@@ -111,42 +122,50 @@ edit: aText label: labelString accept: anAction
 					s
 						cr;
 						nextPutAll: aText ])
+]
 
 NonInteractiveUIManager >> fileDoesNotExistsDefaultAction: anException
-fileDoesNotExistsDefaultAction: anException
+[fileDoesNotExistsDefaultAction: anException
 	^ self nonInteractive: anException
+]
 
 NonInteractiveUIManager >> fileExistsDefaultAction: anException
-fileExistsDefaultAction: anException
+[fileExistsDefaultAction: anException
 	^ self nonInteractive: anException
+]
 
 NonInteractiveUIManager >> fontFromUser: priorFont
-fontFromUser: priorFont
+[fontFromUser: priorFont
 	^ self nonInteractiveWarning: 'Font Choose Request'
+]
 
 NonInteractiveUIManager >> lowSpaceWatcherDefaultAction: preemptedProcess
-lowSpaceWatcherDefaultAction: preemptedProcess
+[lowSpaceWatcherDefaultAction: preemptedProcess
 	| ctx |
 	"yeah.. space is low.. quit!! :)"
 	ctx := preemptedProcess ifNotNil: [ preemptedProcess suspendedContext ].
 	ctx ifNil: [ ctx := thisContext sender ].
 	self quitFrom: ctx withMessage: 'Low space signal received.'.
 	self error	"what else we can do? "
+]
 
 NonInteractiveUIManager >> multiLineRequest: queryString initialAnswer: defaultAnswer answerHeight: answerHeight
-multiLineRequest: queryString initialAnswer: defaultAnswer answerHeight: answerHeight
+[multiLineRequest: queryString initialAnswer: defaultAnswer answerHeight: answerHeight
 	^ self nonInteractiveRequest: queryString
+]
 
 NonInteractiveUIManager >> nonInteractive
-nonInteractive
+[nonInteractive
 	^ ErrorNonInteractive signal
+]
 
 NonInteractiveUIManager >> nonInteractive: anException
-nonInteractive: anException
+[nonInteractive: anException
 	^ ErrorNonInteractive signalForException: anException
+]
 
 NonInteractiveUIManager >> nonInteractiveManager
-nonInteractiveManager
+[nonInteractiveManager
 	" Answer an instance of non-interactive manager, which will be used when image runs headless.
 	  We put it here, so subclasses can override it. 
 	
@@ -154,13 +173,15 @@ nonInteractiveManager
 	"
 
 	^ self
+]
 
 NonInteractiveUIManager >> nonInteractiveRequest: aStringOrText
-nonInteractiveRequest: aStringOrText
+[nonInteractiveRequest: aStringOrText
 	^ self nonInteractiveRequest: aStringOrText title: nil
+]
 
 NonInteractiveUIManager >> nonInteractiveRequest: aStringOrText title: aTitle
-nonInteractiveRequest: aStringOrText title: aTitle
+[nonInteractiveRequest: aStringOrText title: aTitle
 	^ self
 		nonInteractiveWarning:
 			(String
@@ -170,17 +191,20 @@ nonInteractiveRequest: aStringOrText title: aTitle
 								nextPutAll: aTitle asString;
 								nextPutAll: ' ] ' ].
 					s nextPutAll: aStringOrText asString ])
+]
 
 NonInteractiveUIManager >> nonInteractiveWarning: aWarnMessage
-nonInteractiveWarning: aWarnMessage
+[nonInteractiveWarning: aWarnMessage
 	^ ErrorNonInteractive signal: aWarnMessage
+]
 
 NonInteractiveUIManager >> onDebug: process context: context title: title full: bool
-onDebug: process context: context title: title full: bool
+[onDebug: process context: context title: title full: bool
 	^ self nonInteractiveWarning: 'Opening Debugger'
+]
 
 NonInteractiveUIManager >> onSnapshot: resuming
-onSnapshot: resuming
+[onSnapshot: resuming
 	"The resuming argument is true when image boots from disk,
 	and false, if user just did an image snapshot."
 
@@ -195,17 +219,19 @@ onSnapshot: resuming
 					^ self headlessManager onSnapshot: resuming ] ].	" this flag set to true only if we are saving a snapshot before quitting "
 	doNotQuitOnRestart
 		ifTrue: [ Smalltalk snapshot: false andQuit: true ]
+]
 
 NonInteractiveUIManager >> request: queryString initialAnswer: defaultAnswer
-request: queryString initialAnswer: defaultAnswer
+[request: queryString initialAnswer: defaultAnswer
 	^ self
 		request: queryString
 		initialAnswer: defaultAnswer
 		title: nil
 		entryCompletion: nil
+]
 
 NonInteractiveUIManager >> request: queryString initialAnswer: defaultAnswer centerAt: aPoint
-request: queryString initialAnswer: defaultAnswer centerAt: aPoint
+[request: queryString initialAnswer: defaultAnswer centerAt: aPoint
 	"Create an instance of me whose question is queryString with the given initial answer. Answer the string the user accepts. Answer the empty string if the user cancels."
 
 	^ self
@@ -213,39 +239,45 @@ request: queryString initialAnswer: defaultAnswer centerAt: aPoint
 		initialAnswer: defaultAnswer
 		title: nil
 		entryCompletion: nil
+]
 
 NonInteractiveUIManager >> request: queryString initialAnswer: defaultAnswer entryCompletion: anEntryCompletion
-request: queryString initialAnswer: defaultAnswer entryCompletion: anEntryCompletion
+[request: queryString initialAnswer: defaultAnswer entryCompletion: anEntryCompletion
 	^ self
 		request: queryString
 		initialAnswer: defaultAnswer
 		title: nil
 		entryCompletion: anEntryCompletion
+]
 
 NonInteractiveUIManager >> request: aStringOrText initialAnswer: defaultAnswer title: aTitle
-request: aStringOrText initialAnswer: defaultAnswer title: aTitle
+[request: aStringOrText initialAnswer: defaultAnswer title: aTitle
 	^ self
 		request: aStringOrText
 		initialAnswer: defaultAnswer
 		title: aTitle
 		entryCompletion: nil
+]
 
 NonInteractiveUIManager >> request: aStringOrText initialAnswer: defaultAnswer title: aTitle entryCompletion: anEntryCompletion
-request: aStringOrText initialAnswer: defaultAnswer title: aTitle entryCompletion: anEntryCompletion
+[request: aStringOrText initialAnswer: defaultAnswer title: aTitle entryCompletion: anEntryCompletion
 	(ProvideAnswerNotification signal: aStringOrText)
 		ifNotNil: [ :answer | ^ answer = #default
 				ifTrue: [ defaultAnswer ]
 				ifFalse: [ answer ] ].
 	^ self nonInteractiveRequest: aStringOrText title: aTitle
+]
 
 NonInteractiveUIManager >> requestPassword: queryString
-requestPassword: queryString
+[requestPassword: queryString
 	^ self nonInteractiveWarning: 'Requesting Password'
+]
 
 NonInteractiveUIManager >> syntaxErrorNotificationDefaultAction: aSyntaxErrorNotification
-syntaxErrorNotificationDefaultAction: aSyntaxErrorNotification
+[syntaxErrorNotificationDefaultAction: aSyntaxErrorNotification
 	"display and log the syntax error"
 
 	super syntaxErrorNotificationDefaultAction: aSyntaxErrorNotification.	"in noninteractive mode simply quit"
 	^ self exitFailure
+]
 

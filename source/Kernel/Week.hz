@@ -5,42 +5,50 @@ Week
 	package: #Kernel.
 
 Week >> asWeek
-asWeek
+[asWeek
 	^ self
+]
 
 Week >> index
-index
+[index
 	^ (self asMonth dayOfWeek + self dayOfMonth - 2) // 7 + 1
+]
 
 Week >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	aStream nextPutAll: 'a Week starting: '.
 	self start printOn: aStream
+]
 
 Week class >> dayNames
-dayNames
+[dayNames
 	^ DayNames
+]
 
 Week class >> indexOfDay: aSymbol
-indexOfDay: aSymbol
+[indexOfDay: aSymbol
 	^ DayNames indexOf: aSymbol
+]
 
 Week class >> nameOfDay: anIndex
-nameOfDay: anIndex
+[nameOfDay: anIndex
 	^ DayNames at: anIndex
+]
 
 Week class >> startDay
-startDay
+[startDay
 	^ StartDay ifNil: [ StartDay := DayNames first ]
+]
 
 Week class >> startDay: aSymbol
-startDay: aSymbol
+[startDay: aSymbol
 	(DayNames includes: aSymbol)
 		ifTrue: [ StartDay := aSymbol ]
 		ifFalse: [ self error: aSymbol , ' is not a recognised day name' ]
+]
 
 Week class >> starting: aDateAndTime duration: aDuration
-starting: aDateAndTime duration: aDuration
+[starting: aDateAndTime duration: aDuration
 	"Override - the duration is always one week.
 	 Week will start from the Week class>>startDay"
 
@@ -49,17 +57,20 @@ starting: aDateAndTime duration: aDuration
 	delta := (midnight dayOfWeek + 7 - (DayNames indexOf: self startDay) rem: 7) abs.
 	adjusted := midnight - (Duration days: delta seconds: 0).
 	^ super starting: adjusted duration: (Duration weeks: 1)
+]
 
 Week class >> week: weekNumber
-week: weekNumber
+[week: weekNumber
 	"Return a week in this year"
 
 	^ self year: Year current week: weekNumber
+]
 
 Week class >> year: aYear week: weekNumber
-year: aYear week: weekNumber
+[year: aYear week: weekNumber
 	"Return the ISO week for the given week number and the given year.
 	Week 1 contains the year's first Thursday (weekday = 5)"
 
 	^ self starting: aYear asYear firstThursday + (weekNumber * 7 - 5) days	"adjust for firstThursday"
+]
 

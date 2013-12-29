@@ -4,41 +4,50 @@ FLPointerObjectCluster
 	package: #Fuel.
 
 FLPointerObjectCluster >> afterMaterializationStepWith: aDecoder
-afterMaterializationStepWith: aDecoder
+[afterMaterializationStepWith: aDecoder
 	objects do: [ :anObject | anObject fuelAfterMaterialization ]
+]
 
 FLPointerObjectCluster >> clusterMaterializeStepWith: aMaterialization
-clusterMaterializeStepWith: aMaterialization
+[clusterMaterializeStepWith: aMaterialization
 	super clusterMaterializeStepWith: aMaterialization.
 	variablesMapping := aMaterialization decoder variablesMappingFor: theClass
+]
 
 FLPointerObjectCluster >> clusterSerializeStepWith: aSerialization
-clusterSerializeStepWith: aSerialization
+[clusterSerializeStepWith: aSerialization
 	super clusterSerializeStepWith: aSerialization.
 	variablesMapping serializeOn: aSerialization encoder
+]
 
 FLPointerObjectCluster >> initializeAnalyzing: aClass
-initializeAnalyzing: aClass
+[initializeAnalyzing: aClass
 	super initializeAnalyzing: aClass.
 	variablesMapping := FLVariablesMapping newAnalyzing: theClass
+]
 
 FLPointerObjectCluster >> materializeReferencesOf: anObject with: aDecoder
-materializeReferencesOf: anObject with: aDecoder
+[materializeReferencesOf: anObject with: aDecoder
 	variablesMapping materializeReferencesOf: anObject with: aDecoder
+]
 
 FLPointerObjectCluster >> materializeReferencesStepWith: aDecoder
-materializeReferencesStepWith: aDecoder
+[materializeReferencesStepWith: aDecoder
 	objects do: [ :anObject | self materializeReferencesOf: anObject with: aDecoder ]
+]
 
 FLPointerObjectCluster >> referencesOf: anObject do: aBlock
-referencesOf: anObject do: aBlock
+[referencesOf: anObject do: aBlock
 	variablesMapping referencesOf: anObject do: aBlock
+]
 
 FLPointerObjectCluster >> serializeReferencesOf: anObject with: anEncoder
-serializeReferencesOf: anObject with: anEncoder
+[serializeReferencesOf: anObject with: anEncoder
 	variablesMapping serializeReferencesOf: anObject with: anEncoder
+]
 
 FLPointerObjectCluster >> serializeReferencesStepWith: anEncoder
-serializeReferencesStepWith: anEncoder
+[serializeReferencesStepWith: anEncoder
 	objects do: [ :anObject | self serializeReferencesOf: anObject with: anEncoder ]
+]
 

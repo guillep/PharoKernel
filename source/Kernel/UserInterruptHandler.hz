@@ -6,7 +6,7 @@ UserInterruptHandler
 	package: #Kernel.
 
 UserInterruptHandler >> handleEvent: evt
-handleEvent: evt
+[handleEvent: evt
 	"Interrupt event... evt is shared, so make a copy of it."
 
 	| buf |
@@ -22,9 +22,10 @@ handleEvent: evt
 						ifTrue: [ (Smalltalk classNamed: #SoundService) default shutDown ].
 					self handleUserInterrupt ].
 			^ self ]
+]
 
 UserInterruptHandler >> handleUserInterrupt
-handleUserInterrupt
+[handleUserInterrupt
 	"This will be called from the event-fetcher process. 
 	Assume no system-vital processes have a lower priority than this, and are thus ok to interrupt"
 
@@ -35,9 +36,10 @@ handleUserInterrupt
 		ifNil: [ UIManager default inform: 'Process not interruptable' ]	"fork exceptions, we don't want interrupt handler to die" ]
 		on: Error
 		fork: [ :ex | ex pass ]
+]
 
 UserInterruptHandler >> processToInterrupt
-processToInterrupt
+[processToInterrupt
 	"Look for best candidate to interrupt: 
 		- any scheduled non-finalization process of lower priority 
 		- the weak-finalization process, if scheduled 
@@ -54,20 +56,25 @@ processToInterrupt
 						ifFalse: [ fallback := p ] ] ]
 		startingAt: Processor activePriority.
 	^ fallback
+]
 
 UserInterruptHandler >> setInterruptKeyValue: anInt
-setInterruptKeyValue: anInt
+[setInterruptKeyValue: anInt
 	interruptKey := anInt
+]
 
 UserInterruptHandler class >> cmdDotEnabled
-cmdDotEnabled
+[cmdDotEnabled
 	^ CmdDotEnabled ifNil: [ CmdDotEnabled := true ]
+]
 
 UserInterruptHandler class >> cmdDotEnabled: aBoolean
-cmdDotEnabled: aBoolean
+[cmdDotEnabled: aBoolean
 	CmdDotEnabled := aBoolean
+]
 
 UserInterruptHandler class >> new
-new
+[new
 	^ super new setInterruptKeyValue: $. asciiValue
+]
 

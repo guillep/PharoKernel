@@ -4,26 +4,29 @@ FLLightGlobalMapper
 	package: #Fuel.
 
 FLLightGlobalMapper >> initializeWith: someObjects
-initializeWith: someObjects
+[initializeWith: someObjects
 	self initialize.
 	globals := someObjects
+]
 
 FLLightGlobalMapper >> mapAndTrace: anObject
-mapAndTrace: anObject
+[mapAndTrace: anObject
 	"Uses the Chain of Responsibility pattern to answer the cluster which maps with the received object."
 
 	(globals includes: anObject)
 		ifTrue: [ self mapAndTraceByClusterName: anObject to: FLGlobalValueCluster ]
 		ifFalse: [ next mapAndTrace: anObject ]
+]
 
 FLLightGlobalMapper class >> for: globalSymbols in: globalEnvironment
-for: globalSymbols in: globalEnvironment
+[for: globalSymbols in: globalEnvironment
 	^ self basicNew
 		initializeWith: (self valuesFor: globalSymbols in: globalEnvironment);
 		yourself
+]
 
 FLLightGlobalMapper class >> valuesFor: globalSymbols in: globalEnvironment
-valuesFor: globalSymbols in: globalEnvironment
+[valuesFor: globalSymbols in: globalEnvironment
 	"Some globals, like ActiveHand have a nil value in the Smalltalk globals. Therefore, we cannot map nil to globalCluster. We could filter before in #defaultGlobalSymbols but that means that not even the Association will be consider global."
 
 	| values |
@@ -31,4 +34,5 @@ valuesFor: globalSymbols in: globalEnvironment
 	globalSymbols
 		do: [ :aSymbol | globalEnvironment at: aSymbol ifPresent: [ :value | value ifNotNil: [ values add: value ] ] ].
 	^ values
+]
 

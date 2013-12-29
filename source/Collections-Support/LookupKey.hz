@@ -4,64 +4,75 @@ LookupKey
 	package: #'Collections-Support'.
 
 LookupKey >> < aLookupKey
-< aLookupKey
+[< aLookupKey
 	"Refer to the comment in Magnitude|<."
 
 	^ key < aLookupKey key
+]
 
 LookupKey >> = aLookupKey
-= aLookupKey
+[= aLookupKey
 	self species = aLookupKey species
 		ifTrue: [ ^ key = aLookupKey key ]
 		ifFalse: [ ^ false ]
+]
 
 LookupKey >> canAssign
-canAssign
+[canAssign
 	^ true
+]
 
 LookupKey >> hash
-hash
+[hash
 	"Hash is reimplemented because = is implemented."
 
 	^ key hash
+]
 
 LookupKey >> isSpecialReadBinding
-isSpecialReadBinding
+[isSpecialReadBinding
 	"Return true if this variable binding is read protected, e.g., should not be accessed primitively but rather by sending #value messages"
 
 	^ false
+]
 
 LookupKey >> isVariableBinding
-isVariableBinding
+[isVariableBinding
 	"Return true if I represent a literal variable binding"
 
 	^ true
+]
 
 LookupKey >> key
-key
+[key
 	"Answer the lookup key of the receiver."
 
 	^ key
+]
 
 LookupKey >> key: anObject
-key: anObject
+[key: anObject
 	"Store the argument, anObject, as the lookup key of the receiver."
 
 	key := anObject
+]
 
 LookupKey >> name
-name
+[name
 	^ self key isString
 		ifTrue: [ self key ]
 		ifFalse: [ self key printString ]
+]
 
 LookupKey >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	key printOn: aStream
+]
 
 LookupKey class >> key: aKey
-key: aKey
+[key: aKey
 	"Answer an instance of me with the argument as the lookup up."
 
 	^ self basicNew key: aKey
+]
 

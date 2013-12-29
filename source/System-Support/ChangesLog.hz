@@ -4,7 +4,7 @@ ChangesLog
 	package: #'System-Support'.
 
 ChangesLog >> assureStartupStampLogged
-assureStartupStampLogged
+[assureStartupStampLogged
 	"If there is a startup stamp not yet actually logged to disk, do it now."
 
 	| changesFile |
@@ -21,9 +21,10 @@ assureStartupStampLogged
 		cr.
 	startupStamp := nil.
 	self forceChangesToDisk
+]
 
 ChangesLog >> forceChangesToDisk
-forceChangesToDisk
+[forceChangesToDisk
 	"Ensure that the changes file has been fully written to disk by closing and re-opening it. This makes the system more robust in the face of a power failure or hard-reboot."
 
 	| changesFile |
@@ -34,9 +35,10 @@ forceChangesToDisk
 	changesFile close.
 	changesFile open: changesFile name forWrite: true.
 	changesFile setToEnd
+]
 
 ChangesLog >> logChange: aStringOrText
-logChange: aStringOrText
+[logChange: aStringOrText
 	"Write the argument, aString, onto the changes file."
 
 	| aString changesFile |
@@ -54,28 +56,33 @@ logChange: aStringOrText
 		cr.
 	changesFile nextChunkPut: aString.	"If want style changes in DoIt, use nextChunkPutWithStyle:, and allow Texts to get here"
 	self forceChangesToDisk
+]
 
 ChangesLog >> logClassRemoved: annoucement
-logClassRemoved: annoucement
+[logClassRemoved: annoucement
 	annoucement classRemoved acceptsLoggingOfCompilation
 		ifTrue: [ self logChange: 'Smalltalk globals removeClassNamed: #' , annoucement classRemoved name ]
+]
 
 ChangesLog >> logClassRenamed: annoucement
-logClassRenamed: annoucement
+[logClassRenamed: annoucement
 	annoucement classRenamed acceptsLoggingOfCompilation
 		ifTrue: [ self logChange: '(Smalltalk globals at: #' , annoucement oldName , ') rename: #' , annoucement newName ]
+]
 
 ChangesLog >> logExpressionEvaluated: announcement
-logExpressionEvaluated: announcement
+[logExpressionEvaluated: announcement
 	self logChange: announcement expressionEvaluated
+]
 
 ChangesLog >> logMethodRemoved: announcement
-logMethodRemoved: announcement
+[logMethodRemoved: announcement
 	announcement methodClass acceptsLoggingOfCompilation
 		ifTrue: [ self logChange: announcement methodClass name , ' removeSelector: #' , announcement selector ]
+]
 
 ChangesLog >> logSnapshot: save andQuit: quit
-logSnapshot: save andQuit: quit
+[logSnapshot: save andQuit: quit
 	"Log into the changes file the fact that the session will be either snapshoted, quit, or both."
 
 	| message |
@@ -103,26 +110,31 @@ logSnapshot: save andQuit: quit
 						setToEnd;
 						position) ].
 	self logChange: message
+]
 
 ChangesLog >> recordStartupStamp
-recordStartupStamp
+[recordStartupStamp
 	startupStamp := '----STARTUP----' , DateAndTime now printString , ' as ' , Smalltalk imagePath
+]
 
 ChangesLog >> registerToAnnouncements
-registerToAnnouncements
+[registerToAnnouncements
 	SystemAnnouncer uniqueInstance
 		on: ClassRemoved send: #logClassRemoved: to: self;
 		on: ClassRenamed send: #logClassRenamed: to: self;
 		on: MethodRemoved send: #logMethodRemoved: to: self;
 		on: ExpressionEvaluated send: #logExpressionEvaluated: to: self
+]
 
 ChangesLog class >> default
-default
+[default
 	^ DefaultInstance ifNil: [ DefaultInstance := self new.
 			DefaultInstance registerToAnnouncements ]
+]
 
 ChangesLog class >> reset
-reset
+[reset
 	SystemAnnouncer uniqueInstance unsubscribe: DefaultInstance.
 	DefaultInstance := nil
+]
 

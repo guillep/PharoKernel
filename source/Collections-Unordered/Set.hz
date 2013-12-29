@@ -3,7 +3,7 @@ Set
 	package: #'Collections-Unordered'.
 
 Set >> = aSet
-= aSet
+[= aSet
 	self == aSet
 		ifTrue: [ ^ true ].	"stop recursion"
 	(aSet isKindOf: Set)
@@ -13,9 +13,10 @@ Set >> = aSet
 	self do: [ :each | (aSet includes: each)
 				ifFalse: [ ^ false ] ].
 	^ true
+]
 
 Set >> add: newObject
-add: newObject
+[add: newObject
 	"Include newObject as one of the receiver's elements, but only if
 	not already present. Answer newObject."
 
@@ -23,17 +24,20 @@ add: newObject
 	index := self scanFor: newObject.
 	(array at: index) ifNil: [ self atNewIndex: index put: newObject asSetElement ].
 	^ newObject
+]
 
 Set >> add: newObject withOccurrences: anInteger
-add: newObject withOccurrences: anInteger
+[add: newObject withOccurrences: anInteger
 	^ self add: newObject
+]
 
 Set >> asSet
-asSet
+[asSet
 	^ self
+]
 
 Set >> atRandom: aGenerator
-atRandom: aGenerator
+[atRandom: aGenerator
 	"Answer a random element of the receiver. Uses aGenerator which
     should be kept by the user in a variable and used every time. Use
     this instead of #atRandom for better uniformity of random numbers because 
@@ -45,9 +49,10 @@ atRandom: aGenerator
 	self doWithIndex: [ :each :ind | ind == rand
 				ifTrue: [ ^ each ] ].
 	^ self errorEmptyCollection
+]
 
 Set >> collect: aBlock
-collect: aBlock
+[collect: aBlock
 	"Evaluate aBlock with each of the receiver's elements as the argument.  
 	Collect the resulting values into a collection like the receiver. Answer  
 	the new collection."
@@ -56,18 +61,20 @@ collect: aBlock
 	newSet := Set new: self size.
 	array do: [ :each | each ifNotNil: [ newSet add: (aBlock value: each enclosedSetElement) ] ].
 	^ newSet
+]
 
 Set >> copyWithout: oldElement
-copyWithout: oldElement
+[copyWithout: oldElement
 	"Answer a copy of the receiver that does not contain any
 	elements equal to oldElement."
 
 	^ self copy
 		remove: oldElement ifAbsent: [  ];
 		yourself
+]
 
 Set >> difference: aCollection
-difference: aCollection
+[difference: aCollection
 	"Answer the set theoretic difference of two collections. 
 	Optimized version for Sets where no intermediate Set is necessary"
 
@@ -75,16 +82,18 @@ difference: aCollection
 	set := self copy.
 	aCollection do: [ :each | set remove: each ifAbsent: [  ] ].
 	^ set
+]
 
 Set >> do: aBlock
-do: aBlock
+[do: aBlock
 	tally = 0
 		ifTrue: [ ^ self ].
 	1 to: array size do: [ :index | | each |
 		(each := array at: index) ifNotNil: [ aBlock value: each enclosedSetElement ] ]
+]
 
 Set >> fixCollisionsFrom: start
-fixCollisionsFrom: start
+[fixCollisionsFrom: start
 	"The element at start has been removed and replaced by nil.
 	This method moves forward from there, relocating any entries
 	that had been placed below due to collisions with this one"
@@ -95,13 +104,15 @@ fixCollisionsFrom: start
 		whileFalse: [ | newIndex |
 			(newIndex := self scanFor: element enclosedSetElement) = index
 				ifFalse: [ array swap: index with: newIndex ] ]
+]
 
 Set >> flatCollect: aBlock
-flatCollect: aBlock
+[flatCollect: aBlock
 	^ self flatCollectAsSet: aBlock
+]
 
 Set >> grow
-grow
+[grow
 	"Grow the elements array and reinsert the old elements"
 
 	| oldElements |
@@ -110,13 +121,15 @@ grow
 	tally := 0.
 	oldElements do: [ :each | each == nil
 				ifFalse: [ self noCheckAdd: each enclosedSetElement ] ]
+]
 
 Set >> includes: anObject
-includes: anObject
+[includes: anObject
 	^ (array at: (self findElementOrNil: anObject)) ~~ nil
+]
 
 Set >> intersection: aCollection
-intersection: aCollection
+[intersection: aCollection
 	"Answer the set theoretic intersection of two collections.
 	Optimized version for Sets where no intermediate Set is necessary"
 
@@ -126,9 +139,10 @@ intersection: aCollection
 		do: [ :each | ((self includes: each) and: [ (outputSet includes: each) not ])
 				ifTrue: [ outputSet add: each ] ].
 	^ outputSet
+]
 
 Set >> isHealthy
-isHealthy
+[isHealthy
 	"Test that object hashes match their positions stored in set's array,
 	answer true if everything ok, false otherwise
 	
@@ -140,57 +154,65 @@ isHealthy
 		withIndexDo: [ :element :index | element ifNotNil: [ (self scanFor: element) == index
 						ifFalse: [ ^ false ] ] ].
 	^ true
+]
 
 Set >> like: anObject
-like: anObject
+[like: anObject
 	"Answer an object in the receiver that is equal to anObject,
 	nil if no such object is found. Relies heavily on hash properties.
 	Note, use #like:ifAbsent: if you need to match against nil as element"
 
 	^ self like: anObject ifAbsent: [ nil ]
+]
 
 Set >> like: anObject ifAbsent: aBlock
-like: anObject ifAbsent: aBlock
+[like: anObject ifAbsent: aBlock
 	"Answer an object in the receiver that is equal to anObject,
 	or evaluate the block if not found. Relies heavily on hash properties"
 
 	| element |
 	element := array at: (self scanFor: anObject).
 	^ element ifNil: [ aBlock value ] ifNotNil: [ element enclosedSetElement ]
+]
 
 Set >> noCheckAdd: anObject
-noCheckAdd: anObject
+[noCheckAdd: anObject
 	"This method should be deprecated"
 
 	array at: (self findElementOrNil: anObject) put: anObject asSetElement.
 	tally := tally + 1
+]
 
 Set >> noCheckNoGrowFillFrom: anArray
-noCheckNoGrowFillFrom: anArray
+[noCheckNoGrowFillFrom: anArray
 	"Add the elements of anArray except nils to me assuming that I don't contain any of them, they are unique and I have more free space than they require."
 
 	1 to: anArray size do: [ :index | (anArray at: index) ifNotNil: [ :object | array at: (self scanForEmptySlotFor: object enclosedSetElement) put: object ] ]
+]
 
 Set >> occurrencesOf: anObject
-occurrencesOf: anObject
+[occurrencesOf: anObject
 	^ (self includes: anObject)
 		ifTrue: [ 1 ]
 		ifFalse: [ 0 ]
+]
 
 Set >> postCopy
-postCopy
+[postCopy
 	super postCopy.
 	array := array copy
+]
 
 Set >> rehash
-rehash
+[rehash
 	| newSelf |
 	newSelf := self species new: self size.
 	self do: [ :each | newSelf noCheckAdd: each ].
 	array := newSelf array
+]
 
 Set >> remove: oldObject ifAbsent: aBlock
-remove: oldObject ifAbsent: aBlock
+[remove: oldObject ifAbsent: aBlock
 	| index |
 	index := self findElementOrNil: oldObject.
 	(array at: index) == nil
@@ -199,9 +221,10 @@ remove: oldObject ifAbsent: aBlock
 	tally := tally - 1.
 	self fixCollisionsFrom: index.
 	^ oldObject
+]
 
 Set >> scanFor: anObject
-scanFor: anObject
+[scanFor: anObject
 	"Scan the key array for the first slot containing either a nil (indicating an empty slot) or an element that matches anObject. Answer the index of that slot or raise an error if no slot is found. This method will be overridden in various subclasses that have different interpretations for matching elements."
 
 	| index start |
@@ -212,33 +235,38 @@ scanFor: anObject
 	(index := index \\ array size + 1) = start ]
 		whileFalse.
 	self errorNoFreeSpace
+]
 
 Set >> withArray: anArray
-withArray: anArray
+[withArray: anArray
 	"private -- for use only in copy"
 
 	"I want to get a conflict"
 
 	array := anArray
+]
 
 Set class >> new
-new
+[new
 	^ self basicNew
 		initialize: 5;
 		yourself
+]
 
 Set class >> newFrom: aCollection
-newFrom: aCollection
+[newFrom: aCollection
 	"Answer an instance of me containing the same elements as aCollection."
 
 	| newCollection |
 	newCollection := self new: aCollection size.
 	newCollection addAll: aCollection.
 	^ newCollection	"	Set newFrom: {1. 2. 3}	{1. 2. 3} as: Set"
+]
 
 Set class >> sizeFor: nElements
-sizeFor: nElements
+[sizeFor: nElements
 	"Large enough size to hold nElements with some slop (see fullCheck)"
 
 	^ HashTableSizes atLeast: nElements * 4 // 3
+]
 

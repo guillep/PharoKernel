@@ -4,7 +4,7 @@ FileSystemHandle
 	package: #'FileSystem-Core'.
 
 FileSystemHandle >> at: index
-at: index
+[at: index
 	| buffer |
 	buffer := ByteArray new: 1.
 	self
@@ -13,9 +13,10 @@ at: index
 		startingAt: 1
 		count: 1.
 	^ buffer at: 1
+]
 
 FileSystemHandle >> at: index put: anObject
-at: index put: anObject
+[at: index put: anObject
 	| buffer |
 	buffer := ByteArray with: (anObject isCharacter
 				ifTrue: [ anObject codePoint ]
@@ -25,85 +26,105 @@ at: index put: anObject
 		write: buffer
 		startingAt: 1
 		count: 1
+]
 
 FileSystemHandle >> at: offset read: buffer startingAt: start count: count
-at: offset read: buffer startingAt: start count: count
+[at: offset read: buffer startingAt: start count: count
 	self subclassResponsibility
+]
 
 FileSystemHandle >> at: offset write: buffer startingAt: start count: count
-at: offset write: buffer startingAt: start count: count
+[at: offset write: buffer startingAt: start count: count
 	self subclassResponsibility
+]
 
 FileSystemHandle >> basicOpen
-basicOpen
+[basicOpen
 	"get the raw stream description from the filesystem's store"
 
 	^ self fileSystem openStreamDescription: reference path writable: writable
+]
 
 FileSystemHandle >> close
-close
+[close
 	self subclassResponsibility
+]
 
 FileSystemHandle >> ensureClosed
-ensureClosed
+[ensureClosed
 	reference exists
 		ifTrue: [ self close ]
+]
 
 FileSystemHandle >> fileSystem
-fileSystem
+[fileSystem
 	^ reference fileSystem
+]
 
 FileSystemHandle >> flush
-flush
+[flush
 	self subclassResponsibility
+]
 
 FileSystemHandle >> fullName
-fullName
+[fullName
 	^ reference fullName
+]
 
 FileSystemHandle >> isOpen
-isOpen
+[isOpen
 	self subclassResponsibility
+]
 
 FileSystemHandle >> isWritable
-isWritable
+[isWritable
 	^ writable
+]
 
 FileSystemHandle >> open
-open
+[open
 	self subclassResponsibility
+]
 
 FileSystemHandle >> readStream
-readStream
+[readStream
 	self subclassResponsibility
+]
 
 FileSystemHandle >> reference
-reference
+[reference
 	^ reference
+]
 
 FileSystemHandle >> reopen
-reopen
+[reopen
 	self close.
 	self open
+]
 
 FileSystemHandle >> setReference: aReference writable: aBoolean
-setReference: aReference writable: aBoolean
+[setReference: aReference writable: aBoolean
 	reference := aReference resolve.
 	writable := aBoolean
+]
 
 FileSystemHandle >> truncateTo: anInteger
-truncateTo: anInteger
+[truncateTo: anInteger
 	self subclassResponsibility
+]
 
 FileSystemHandle >> writeStream
-writeStream
+[writeStream
 	self subclassResponsibility
+]
 
 FileSystemHandle class >> on: aReference writable: aBoolean
-on: aReference writable: aBoolean
+[on: aReference writable: aBoolean
 	^ self new setReference: aReference writable: aBoolean
+]
 
 FileSystemHandle class >> open: aReference writable: aBoolean
-open: aReference writable: aBoolean
+[open: aReference writable: aBoolean
 	^ (self on: aReference writable: aBoolean) open
+]
 

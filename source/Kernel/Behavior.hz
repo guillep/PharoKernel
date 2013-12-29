@@ -5,7 +5,7 @@ Behavior
 	package: #Kernel.
 
 Behavior >> basicNew
-basicNew
+[basicNew
 	"Primitive. Answer an instance of the receiver (which is a class) with no 
 	indexable variables. Fail if the class is indexable. Essential. See Object 
 	documentation whatIsAPrimitive."
@@ -15,9 +15,10 @@ basicNew
 		ifTrue: [ ^ self basicNew: 0 ].	"space must be low"
 	OutOfMemory signal.
 	^ self basicNew	"retry if user proceeds"
+]
 
 Behavior >> basicNew: sizeRequested
-basicNew: sizeRequested
+[basicNew: sizeRequested
 	"Primitive. Answer an instance of this class with the number
 	of indexable variables specified by the argument, sizeRequested.
 	Fail if this class is not indexable or if the argument is not a
@@ -32,79 +33,91 @@ basicNew: sizeRequested
 			OutOfMemory signal.
 			^ self basicNew: sizeRequested	"retry if user proceeds" ].
 	self primitiveFailed
+]
 
 Behavior >> basicObsoleteSubclasses
-basicObsoleteSubclasses
+[basicObsoleteSubclasses
 	^ ObsoleteSubclasses
+]
 
 Behavior >> bindingOf: varName
-bindingOf: varName
+[bindingOf: varName
 	"Answer the binding of some variable resolved in the scope of the receiver"
 
 	^ self superclass bindingOf: varName
+]
 
 Behavior >> format
-format
+[format
 	"Answer an Integer that encodes the kinds and numbers of variables of 
 	instances of the receiver."
 
 	^ format
+]
 
 Behavior >> instSize
-instSize
+[instSize
 	"Answer the number of named instance variables
 	(as opposed to indexed variables) of the receiver."
 
 	self flag: #instSizeChange.	"Smalltalk browseAllCallsOn: #instSizeChange"	"	NOTE: This code supports the backward-compatible extension to 8 bits of instSize.	When we revise the image format, it should become...	^ ((format bitShift: -1) bitAnd: 16rFF) - 1	Note also that every other method in this category will require	2 bits more of right shift after the change."
 	^ ((self format bitShift: -10) bitAnd: 16rC0) + ((self format bitShift: -1) bitAnd: 16r3F) - 1
+]
 
 Behavior >> isBehavior
-isBehavior
+[isBehavior
 	"Return true if the receiver is a behavior"
 
 	^ true
+]
 
 Behavior >> methodDict
-methodDict
+[methodDict
 	"The method dictionary of a class can be nil when we want to use the #cannotInterpret: hook. Indeed when a class dictionary is nil, the VM sends the message cannotInterpret: to the receiver but starting the look up in the superclass of the class whose method dictionary was nil.
 	 Now the system relies that when the message methodDict is sent to a class a method dictionary is returned. In order to prevent the complaints of tools and IDE unaware of this feature, we fool them by providing an empty MethodDictionary. This will hopefully work in most cases, but the tools will loose the ability to modify the behaviour of this behavior. The user of #cannotInterpret: should be aware of this."
 
 	methodDict ifNil: [ ^ MethodDictionary new ].
 	^ methodDict
+]
 
 Behavior >> methodDict: aDictionary
-methodDict: aDictionary
+[methodDict: aDictionary
 	methodDict := aDictionary
+]
 
 Behavior >> name
-name
+[name
 	"Answer a String that is the name of the receiver."
 
 	^ 'a subclass of ' , self superclass name
+]
 
 Behavior >> setFormat: aFormatInstanceDescription
-setFormat: aFormatInstanceDescription
+[setFormat: aFormatInstanceDescription
 	"only use this method with extreme care since it modifies the format of the class 
      ie a description of the number of instance variables and whether the class is
      compact, variable sized"
 
 	format := aFormatInstanceDescription
+]
 
 Behavior >> subclassDefinerClass
-subclassDefinerClass
+[subclassDefinerClass
 	"Answer an evaluator class appropriate for evaluating definitions of new 
 	subclasses of this class."
 
 	^ self compilerClass
+]
 
 Behavior >> superclass
-superclass
+[superclass
 	"Answer the receiver's superclass, a Class."
 
 	^ superclass
+]
 
 Behavior >> superclass: aClass
-superclass: aClass
+[superclass: aClass
 	"Change the receiver's superclass to be aClass."
 
 	"Note: Do not use 'aClass isKindOf: Behavior' here
@@ -114,49 +127,57 @@ superclass: aClass
 		ifTrue: [ superclass := aClass.
 			Object flushCache ]
 		ifFalse: [ self error: 'superclass must be a class-describing object' ]
+]
 
 Behavior >> traitComposition
-traitComposition
+[traitComposition
 	self subclassResponsibility
+]
 
 Behavior >> traitComposition: aTraitComposition
-traitComposition: aTraitComposition
+[traitComposition: aTraitComposition
 	"Compatibility purposes"
 
 	
+]
 
 Behavior >> users
-users
+[users
 	"Compatibility purposes"
 
 	^ IdentitySet new
+]
 
 Behavior >> users: aCollection
-users: aCollection
+[users: aCollection
 	"Compatibility purposes"
 
 	
+]
 
 Behavior class >> canZapMethodDictionary
-canZapMethodDictionary
+[canZapMethodDictionary
 	"Return false since zapping the method dictionary of Behavior class or its subclasses will cause the system to fail."
 
 	^ false
+]
 
 Behavior class >> cleanUp
-cleanUp
+[cleanUp
 	"Flush the obsolete subclasses."
 
 	self flushObsoleteSubclasses
+]
 
 Behavior class >> flushObsoleteSubclasses
-flushObsoleteSubclasses
+[flushObsoleteSubclasses
 	"Behavior flushObsoleteSubclasses"
 
 	ObsoleteSubclasses finalizeValues
+]
 
 Behavior class >> initialize
-initialize
+[initialize
 	"Behavior initialize"
 
 	"Never called for real"
@@ -167,8 +188,10 @@ initialize
 			newDict := WeakKeyToCollectionDictionary newFrom: ObsoleteSubclasses.
 			newDict rehash.
 			ObsoleteSubclasses := newDict ]
+]
 
 Behavior class >> initializeObsoleteSubclasses
-initializeObsoleteSubclasses
+[initializeObsoleteSubclasses
 	ObsoleteSubclasses := WeakKeyToCollectionDictionary new
+]
 

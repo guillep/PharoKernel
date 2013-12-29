@@ -3,7 +3,7 @@ Pragma
 	package: #Kernel.
 
 Pragma >> = aPragma
-= aPragma
+[= aPragma
 	self == aPragma
 		ifTrue: [ ^ true ].
 	self species == aPragma species
@@ -15,81 +15,94 @@ Pragma >> = aPragma
 	self arguments = aPragma arguments
 		ifFalse: [ ^ false ].
 	^ true
+]
 
 Pragma >> analogousCodeTo: anObject
-analogousCodeTo: anObject
+[analogousCodeTo: anObject
 	^ self class == anObject class and: [ keyword == anObject keyword and: [ arguments = anObject arguments ] ]
+]
 
 Pragma >> argumentAt: anInteger
-argumentAt: anInteger
+[argumentAt: anInteger
 	"Answer one of the arguments of the pragma."
 
 	^ self arguments at: anInteger
+]
 
 Pragma >> arguments
-arguments
+[arguments
 	"Answer the arguments of the receiving pragma. For a pragma defined as <key1: val1 key2: val2> this will answer #(val1 val2)."
 
 	^ arguments
+]
 
 Pragma >> hasLiteral: aLiteral
-hasLiteral: aLiteral
+[hasLiteral: aLiteral
 	^ keyword == aLiteral or: [ arguments hasLiteral: aLiteral ]
+]
 
 Pragma >> hasLiteralSuchThat: aBlock
-hasLiteralSuchThat: aBlock
+[hasLiteralSuchThat: aBlock
 	"Answer true if litBlock returns true for any literal in the receiver, even if embedded in further array structure.
 	 This method is only intended for private use by CompiledMethod hasLiteralSuchThat:"
 
 	^ (aBlock value: keyword) or: [ arguments hasLiteralSuchThat: aBlock ]
+]
 
 Pragma >> hash
-hash
+[hash
 	| hash |
 	hash := self method hash bitXor: self keyword hash.
 	1 to: self basicSize do: [ :index | hash := hash bitXor: (self basicAt: index) hash ].
 	^ hash
+]
 
 Pragma >> key
-key
+[key
 	"Answer the keyword of the pragma (the selector of its message pattern).
 	 This accessor provides polymorphism with Associations used for properties."
 
 	^ keyword
+]
 
 Pragma >> keyword
-keyword
+[keyword
 	"Answer the keyword of the pragma (the selector of its message pattern).
 	 For a pragma defined as <key1: val1 key2: val2> this will answer #key1:key2:."
 
 	^ keyword
+]
 
 Pragma >> message
-message
+[message
 	"Answer the message of the receiving pragma."
 
 	^ Message selector: self keyword arguments: self arguments
+]
 
 Pragma >> method
-method
+[method
 	"Answer the compiled-method containing the pragma."
 
 	^ method
+]
 
 Pragma >> methodClass
-methodClass
+[methodClass
 	"Answer the class of the method containing the pragma."
 
 	^ method methodClass
+]
 
 Pragma >> numArgs
-numArgs
+[numArgs
 	"Answer the number of arguments in the pragma."
 
 	^ self arguments size
+]
 
 Pragma >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	aStream nextPut: $<.
 	self keyword precedence = 1
 		ifTrue: [ aStream nextPutAll: self keyword ]
@@ -102,40 +115,47 @@ printOn: aStream
 						space ].
 			aStream skip: -1 ].
 	aStream nextPut: $>
+]
 
 Pragma >> selector
-selector
+[selector
 	"Answer the selector of the method containing the pragma.
 	 Do not confuse this with the selector of the pragma's message pattern."
 
 	^ method selector
+]
 
 Pragma >> sendTo: anObject
-sendTo: anObject
+[sendTo: anObject
 	"Send the pragma keyword together with its arguments to anObject and answer the result."
 
 	^ anObject perform: self keyword withArguments: self arguments
+]
 
 Pragma >> setArguments: anArray
-setArguments: anArray
+[setArguments: anArray
 	arguments := anArray
+]
 
 Pragma >> setKeyword: aSymbol
-setKeyword: aSymbol
+[setKeyword: aSymbol
 	keyword := aSymbol
+]
 
 Pragma >> setMethod: aCompiledMethod
-setMethod: aCompiledMethod
+[setMethod: aCompiledMethod
 	method := aCompiledMethod
+]
 
 Pragma >> withArgumentsDo: aBlock
-withArgumentsDo: aBlock
+[withArgumentsDo: aBlock
 	"Pass the arguments of the receiving pragma into aBlock and answer the result."
 
 	^ aBlock valueWithArguments: self arguments
+]
 
 Pragma class >> allNamed: aSymbol from: aSubClass to: aSuperClass
-allNamed: aSymbol from: aSubClass to: aSuperClass
+[allNamed: aSymbol from: aSubClass to: aSuperClass
 	"Answer a collection of all pragmas found in methods of all classes between aSubClass and aSuperClass (inclusive) whose keyword is aSymbol."
 
 	^ Array
@@ -144,9 +164,10 @@ allNamed: aSymbol from: aSubClass to: aSuperClass
 								ifTrue: [ stream nextPut: pragma ] ].
 					aSuperClass = class
 						ifTrue: [ ^ stream contents ] ] ]
+]
 
 Pragma class >> allNamed: aSymbol from: aSubClass to: aSuperClass sortedByArgument: anInteger
-allNamed: aSymbol from: aSubClass to: aSuperClass sortedByArgument: anInteger
+[allNamed: aSymbol from: aSubClass to: aSuperClass sortedByArgument: anInteger
 	"Answer a collection of all pragmas found in methods of all classes between aSubClass and aSuperClass (inclusive) whose keyword is aSymbol, sorted according to argument anInteger."
 
 	^ self
@@ -154,49 +175,57 @@ allNamed: aSymbol from: aSubClass to: aSuperClass sortedByArgument: anInteger
 		from: aSubClass
 		to: aSuperClass
 		sortedUsing: [ :a :b | (a argumentAt: anInteger) < (b argumentAt: anInteger) ]
+]
 
 Pragma class >> allNamed: aSymbol from: aSubClass to: aSuperClass sortedUsing: aSortBlock
-allNamed: aSymbol from: aSubClass to: aSuperClass sortedUsing: aSortBlock
+[allNamed: aSymbol from: aSubClass to: aSuperClass sortedUsing: aSortBlock
 	"Answer a collection of all pragmas found in methods of all classes between aSubClass and aSuperClass (inclusive) whose keyword is aSymbol, sorted according to aSortBlock."
 
 	^ (self allNamed: aSymbol from: aSubClass to: aSuperClass) sort: aSortBlock
+]
 
 Pragma class >> allNamed: aSymbol in: aClass
-allNamed: aSymbol in: aClass
+[allNamed: aSymbol in: aClass
 	"Answer a collection of all pragmas found in methods of aClass whose keyword is aSymbol."
 
 	^ Array
 		streamContents: [ :stream | self withPragmasIn: aClass do: [ :pragma | pragma keyword = aSymbol
 						ifTrue: [ stream nextPut: pragma ] ] ]
+]
 
 Pragma class >> allNamed: aSymbol in: aClass sortedByArgument: anInteger
-allNamed: aSymbol in: aClass sortedByArgument: anInteger
+[allNamed: aSymbol in: aClass sortedByArgument: anInteger
 	"Answer a collection of all pragmas found in methods of aClass whose keyword is aSymbol, sorted according to argument anInteger."
 
 	^ self allNamed: aSymbol in: aClass sortedUsing: [ :a :b | (a argumentAt: anInteger) < (b argumentAt: anInteger) ]
+]
 
 Pragma class >> allNamed: aSymbol in: aClass sortedUsing: aSortBlock
-allNamed: aSymbol in: aClass sortedUsing: aSortBlock
+[allNamed: aSymbol in: aClass sortedUsing: aSortBlock
 	"Answer a collection of all pragmas found in methods of aClass whose keyword is aSymbol, sorted according to aSortBlock."
 
 	^ (self allNamed: aSymbol in: aClass) sort: aSortBlock
+]
 
 Pragma class >> for: aMethod selector: aSelector arguments: anArray
-for: aMethod selector: aSelector arguments: anArray
+[for: aMethod selector: aSelector arguments: anArray
 	^ self new
 		setMethod: aMethod;
 		setKeyword: aSelector;
 		setArguments: anArray;
 		yourself
+]
 
 Pragma class >> keyword: aSymbol arguments: anArray
-keyword: aSymbol arguments: anArray
+[keyword: aSymbol arguments: anArray
 	^ self new
 		setKeyword: aSymbol;
 		setArguments: anArray;
 		yourself
+]
 
 Pragma class >> withPragmasIn: aClass do: aBlock
-withPragmasIn: aClass do: aBlock
+[withPragmasIn: aClass do: aBlock
 	aClass selectorsAndMethodsDo: [ :selector :method | method pragmas do: aBlock ]
+]
 

@@ -1,14 +1,16 @@
 Trait named: #TTransformationCompatibility
 	package: #'Traits-Kernel-Traits'.TTransformationCompatibility >> aliasesForSelector: aSelector
-aliasesForSelector: aSelector
+[aliasesForSelector: aSelector
 	^ OrderedCollection new
+]
 
 TTransformationCompatibility >> allAliasesDict
-allAliasesDict
+[allAliasesDict
 	^ IdentityDictionary new
+]
 
 TTransformationCompatibility >> changedSelectorsComparedTo: aTraitTransformation
-changedSelectorsComparedTo: aTraitTransformation
+[changedSelectorsComparedTo: aTraitTransformation
 	| selectors otherSelectors changedSelectors aliases otherAliases |
 	selectors := self allSelectors asIdentitySet.
 	otherSelectors := aTraitTransformation allSelectors asIdentitySet.
@@ -23,21 +25,25 @@ changedSelectorsComparedTo: aTraitTransformation
 		keysAndValuesDo: [ :key :value | value ~~ (aliases at: key ifAbsent: [ nil ])
 				ifTrue: [ changedSelectors add: key ] ].
 	^ changedSelectors
+]
 
 TTransformationCompatibility >> collectMethodsFor: aSelector into: methodDescription
-collectMethodsFor: aSelector into: methodDescription
+[collectMethodsFor: aSelector into: methodDescription
 	(self includesSelector: aSelector)
 		ifTrue: [ methodDescription addLocatedMethod: (self compiledMethodAt: aSelector) ]
+]
 
 TTransformationCompatibility >> subject
-subject
+[subject
 	"for compatibility with TraitTransformations"
 
 	^ self
+]
 
 TTransformationCompatibility >> trait
-trait
+[trait
 	"for compatibility with TraitTransformations"
 
 	^ self
+]
 

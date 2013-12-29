@@ -4,7 +4,7 @@ UTF16TextConverter
 	package: #'Multilingual-TextConversion'.
 
 UTF16TextConverter >> charFromStream: aStream withFirst: firstValue
-charFromStream: aStream withFirst: firstValue
+[charFromStream: aStream withFirst: firstValue
 	^ (firstValue < 16rD800 or: [ firstValue > 16rDBFF ])
 		ifTrue: [ Unicode value: firstValue ]
 		ifFalse: [ | character1 "We have a surrogate pair" character2 n secondValue |
@@ -17,25 +17,28 @@ charFromStream: aStream withFirst: firstValue
 					character2 := tmp ].
 			secondValue := (character1 charCode << 8) + character2 charCode.
 			Unicode value: (firstValue - 16rD800) * 16r400 + (secondValue - 16rDC00) + 16r10000 ]
+]
 
 UTF16TextConverter >> checkBOMOn: aStream
-checkBOMOn: aStream
+[checkBOMOn: aStream
 	"Write bom if applicable, and we are at beginning of stream"
 
 	(self useByteOrderMark and: [ byteOrderMarkDone not ])
 		ifTrue: [ aStream position = 0
 				ifTrue: [ self next16BitValue: 16rFEFF toStream: aStream ].
 			byteOrderMarkDone := true ]
+]
 
 UTF16TextConverter >> initialize
-initialize
+[initialize
 	super initialize.
 	byteOrderMarkDone := false.
 	useByteOrderMark := false.
 	useLittleEndian := false
+]
 
 UTF16TextConverter >> next16BitValue: value toStream: aStream
-next16BitValue: value toStream: aStream
+[next16BitValue: value toStream: aStream
 	| v1 v2 |
 	v1 := value >> 8 bitAnd: 16rFF.
 	v2 := value bitAnd: 16rFF.
@@ -44,9 +47,10 @@ next16BitValue: value toStream: aStream
 			aStream basicNextPut: (Character value: v1) ]
 		ifFalse: [ aStream basicNextPut: (Character value: v1).
 			aStream basicNextPut: (Character value: v2) ]
+]
 
 UTF16TextConverter >> nextFromStream: aStream
-nextFromStream: aStream
+[nextFromStream: aStream
 	| character1 character2 readBOM charValue |
 	aStream isBinary
 		ifTrue: [ ^ aStream basicNext ].
@@ -67,9 +71,10 @@ nextFromStream: aStream
 		ifTrue: [ (character2 charCode bitShift: 8) + character1 charCode ]
 		ifFalse: [ (character1 charCode bitShift: 8) + character2 charCode ].
 	^ self charFromStream: aStream withFirst: charValue
+]
 
 UTF16TextConverter >> nextPut: aCharacter toStream: aStream
-nextPut: aCharacter toStream: aStream
+[nextPut: aCharacter toStream: aStream
 	| v low high |
 	self checkBOMOn: aStream.
 	v := aCharacter charCode.
@@ -81,14 +86,16 @@ nextPut: aCharacter toStream: aStream
 			high := v // 16r400 + 16rD800.
 			self next16BitValue: high toStream: aStream.
 			self next16BitValue: low toStream: aStream ]
+]
 
 UTF16TextConverter >> nextPutAll: aString toStream: aStream
-nextPutAll: aString toStream: aStream
+[nextPutAll: aString toStream: aStream
 	self checkBOMOn: aStream.
 	^ super nextPutAll: aString toStream: aStream
+]
 
 UTF16TextConverter >> nextPutByteString: aString toStream: aStream
-nextPutByteString: aString toStream: aStream
+[nextPutByteString: aString toStream: aStream
 	| utf16Bytes start |
 	"No bytestring character will be a surrogate pair, so simply write the 2x size string with the correct endianness"
 	utf16Bytes := String new: aString size * 2.
@@ -97,30 +104,37 @@ nextPutByteString: aString toStream: aStream
 		ifFalse: [ 2 ].
 	start to: utf16Bytes size by: 2 do: [ :ix | utf16Bytes at: ix put: (aString at: (ix + 1) // 2) ].
 	aStream basicNextPutAll: utf16Bytes
+]
 
 UTF16TextConverter >> swapLatin1EncodingByteOrder
-swapLatin1EncodingByteOrder
+[swapLatin1EncodingByteOrder
 	latin1Encodings := latin1Encodings collect: [ :each | each reverse ]
+]
 
 UTF16TextConverter >> useByteOrderMark
-useByteOrderMark
+[useByteOrderMark
 	^ useByteOrderMark
+]
 
 UTF16TextConverter >> useByteOrderMark: aBoolean
-useByteOrderMark: aBoolean
+[useByteOrderMark: aBoolean
 	useByteOrderMark := aBoolean
+]
 
 UTF16TextConverter >> useLittleEndian
-useLittleEndian
+[useLittleEndian
 	^ useLittleEndian
+]
 
 UTF16TextConverter >> useLittleEndian: aBoolean
-useLittleEndian: aBoolean
+[useLittleEndian: aBoolean
 	aBoolean = self useLittleEndian
 		ifFalse: [ self swapLatin1EncodingByteOrder ].
 	useLittleEndian := aBoolean
+]
 
 UTF16TextConverter class >> encodingNames
-encodingNames
+[encodingNames
 	^ #('utf-16' 'utf16' 'utf-16-le' 'utf-16-be') copy
+]
 

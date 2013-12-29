@@ -2,76 +2,87 @@ Magnitude
 	package: #Kernel.
 
 Magnitude >> < aMagnitude
-< aMagnitude
+[< aMagnitude
 	"Answer whether the receiver is less than the argument."
 
 	^ self subclassResponsibility
+]
 
 Magnitude >> <= aMagnitude
-<= aMagnitude
+[<= aMagnitude
 	"Answer whether the receiver is less than or equal to the argument."
 
 	^ (self > aMagnitude) not
+]
 
 Magnitude >> = aMagnitude
-= aMagnitude
+[= aMagnitude
 	"Compare the receiver with the argument and answer with true if the 
 	receiver is equal to the argument. Otherwise answer false."
 
 	^ self subclassResponsibility
+]
 
 Magnitude >> > aMagnitude
-> aMagnitude
+[> aMagnitude
 	"Answer whether the receiver is greater than the argument."
 
 	^ aMagnitude < self
+]
 
 Magnitude >> >= aMagnitude
->= aMagnitude
+[>= aMagnitude
 	"Answer whether the receiver is greater than or equal to the argument."
 
 	^ aMagnitude <= self
+]
 
 Magnitude >> between: min and: max
-between: min and: max
+[between: min and: max
 	"Answer whether the receiver is less than or equal to the argument, max, 
 	and greater than or equal to the argument, min."
 
 	^ self >= min and: [ self <= max ]
+]
 
 Magnitude >> compareWith: anotherMagnitude ifLesser: lesserBlock ifEqual: equalBlock ifGreater: greaterBlock
-compareWith: anotherMagnitude ifLesser: lesserBlock ifEqual: equalBlock ifGreater: greaterBlock
+[compareWith: anotherMagnitude ifLesser: lesserBlock ifEqual: equalBlock ifGreater: greaterBlock
 	self < anotherMagnitude
 		ifTrue: lesserBlock
 		ifFalse: [ self = anotherMagnitude
 				ifTrue: equalBlock
 				ifFalse: greaterBlock ]
+]
 
 Magnitude >> hash
-hash
+[hash
 	"Hash must be redefined whenever = is redefined."
 
 	^ self subclassResponsibility
+]
 
 Magnitude >> max: aMagnitude
-max: aMagnitude
+[max: aMagnitude
 	"Answer the receiver or the argument, whichever has the greater 
 	magnitude."
 
 	self > aMagnitude
 		ifTrue: [ ^ self ]
 		ifFalse: [ ^ aMagnitude ]
+]
 
 Magnitude >> min: aMagnitude
-min: aMagnitude
+[min: aMagnitude
 	"Answer the receiver or the argument, whichever has the lesser 
 	magnitude."
 
 	self < aMagnitude
 		ifTrue: [ ^ self ]
 		ifFalse: [ ^ aMagnitude ]
+]
 
 Magnitude >> min: aMin max: aMax
-min: aMin max: aMax
+[min: aMin max: aMax
 	^ (self min: aMin) max: aMax
+]
 

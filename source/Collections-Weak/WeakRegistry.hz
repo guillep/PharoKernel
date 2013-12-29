@@ -5,13 +5,14 @@ WeakRegistry
 	package: #'Collections-Weak'.
 
 WeakRegistry >> add: anObject
-add: anObject
+[add: anObject
 	"Add anObject to the receiver. Store the object as well as the associated executor."
 
 	^ self add: anObject executor: anObject executor
+]
 
 WeakRegistry >> add: anObject executor: anExecutor
-add: anObject executor: anExecutor
+[add: anObject executor: anExecutor
 	" with new finalization, we can simply override associations with key == nil in valueDictionary "
 
 	self
@@ -23,13 +24,15 @@ add: anObject executor: anExecutor
 						ifFalse: [ valueDictionary at: anObject put: (WeakFinalizerItem new list: list object: anObject) ] ].
 			finItem add: anExecutor ].
 	^ anObject
+]
 
 WeakRegistry >> do: aBlock
-do: aBlock
+[do: aBlock
 	^ self protected: [ valueDictionary keysDo: aBlock ]
+]
 
 WeakRegistry >> finalizeValues
-finalizeValues
+[finalizeValues
 	"Finalize any values, which happen to stocked in our list, due to some weak references become garbage"
 
 	| finalizer |
@@ -46,28 +49,32 @@ finalizeValues
 			next := finalizer next.
 			[ finalizer finalizeValues ] on: Exception fork: [ :ex | ex pass ].
 			finalizer := next ]
+]
 
 WeakRegistry >> initialize
-initialize
+[initialize
 	valueDictionary := WeakIdentityKeyDictionary new.
 	list := WeakFinalizationList new.
 	sema := Semaphore forMutualExclusion.
 	self installFinalizer
+]
 
 WeakRegistry >> installFinalizer
-installFinalizer
+[installFinalizer
 	" do nothing, pharo does not supports it right now
 	valueDictionary finalizer: #finalizeValues
 	"
 
 	
+]
 
 WeakRegistry >> keys
-keys
+[keys
 	^ self protected: [ valueDictionary keys ]
+]
 
 WeakRegistry >> postCopy
-postCopy
+[postCopy
 	"should we prohibit any attempts to copy receiver?"
 
 	self
@@ -78,57 +85,67 @@ postCopy
 			valueDictionary := WeakIdentityKeyDictionary new.
 			self installFinalizer.
 			oldDict keysAndValuesDo: [ :key :value | valueDictionary at: key put: (value copyWithList: list) ] ]
+]
 
 WeakRegistry >> printElementsOn: aStream
-printElementsOn: aStream
+[printElementsOn: aStream
 	sema ifNil: [ ^ super printElementsOn: aStream ].
 	aStream nextPutAll: '(<this WeakRegistry is locked>)'
+]
 
 WeakRegistry >> protected: aBlock
-protected: aBlock
+[protected: aBlock
 	"Execute aBlock protected by the accessLock"
 
 	^ sema critical: aBlock ifError: [ :msg :rcvr | rcvr error: msg ]
+]
 
 WeakRegistry >> remove: oldObject ifAbsent: exceptionBlock
-remove: oldObject ifAbsent: exceptionBlock
+[remove: oldObject ifAbsent: exceptionBlock
 	"Remove oldObject as one of the receiver's elements."
 
 	oldObject ifNil: [ ^ nil ].
 	^ (self protected: [ valueDictionary removeKey: oldObject ifAbsent: nil ]) ifNil: [ exceptionBlock value ]
+]
 
 WeakRegistry >> removeAll
-removeAll
+[removeAll
 	"See super"
 
 	self protected: [ valueDictionary removeAll.
 			list swapWithNil	"prune finalization list as well" ]
+]
 
 WeakRegistry >> size
-size
+[size
 	"Use #associationsDo: , to count associations with non-nil keys"
 
 	| count |
 	count := 0.
 	self protected: [ valueDictionary associationsDo: [ :ass | count := count + 1 ] ].
 	^ count
+]
 
 WeakRegistry >> species
-species
+[species
 	^ Set
+]
 
 WeakRegistry class >> default
-default
+[default
 	^ Default ifNil: [ Default := self new ]
+]
 
 WeakRegistry class >> new
-new
+[new
 	| registry |
 	registry := super new.
 	WeakArray addWeakDependent: registry.
 	^ registry
+]
 
 WeakRegistry class >> new: n
-new: n
+[new: n
 	^ self new
+]
 

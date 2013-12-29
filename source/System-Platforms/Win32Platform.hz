@@ -3,37 +3,44 @@ Win32Platform
 	package: #'System-Platforms'.
 
 Win32Platform >> environment
-environment
+[environment
 	^ environment ifNil: [ environment := Win32Environment new ]
+]
 
 Win32Platform >> family
-family
+[family
 	^ #Windows
+]
 
 Win32Platform >> isWin32
-isWin32
+[isWin32
 	^ true
+]
 
 Win32Platform >> isWindows
-isWindows
+[isWindows
 	^ true
+]
 
 Win32Platform >> lineEnding
-lineEnding
+[lineEnding
 	^ String crlf
+]
 
 Win32Platform >> virtualKey: virtualKeyCode
-virtualKey: virtualKeyCode
+[virtualKey: virtualKeyCode
 	"Win32Platform virtualKey: $C charCode"
 
 	(virtualKeyCode <= 90 and: [ virtualKeyCode >= 65	"$A " ])
 		ifFalse: [ ^ nil ].	"$Z charCode"	"#($a $b $c $d $e $f $g $h $i $j $k $l $m $n $o $p $q $r $s $t $u $v $w $x $y $z)"
 	^ (#($a nil $c $d nil $f $g nil nil nil nil $l $m $n nil $p nil nil $s nil nil $v nil $x nil $z)
 		at: virtualKeyCode - 64) ifNotNil: [ :char | char charCode ]
+]
 
 Win32Platform class >> isActivePlatform
-isActivePlatform
+[isActivePlatform
 	"Answer whether the receiver is the active platform"
 
 	^ self currentPlatformName = 'Win32'
+]
 

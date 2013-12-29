@@ -4,36 +4,41 @@ Association
 	package: #'Collections-Support'.
 
 Association >> = anAssociation
-= anAssociation
+[= anAssociation
 	^ super = anAssociation and: [ value = anAssociation value ]
+]
 
 Association >> isSelfEvaluating
-isSelfEvaluating
+[isSelfEvaluating
 	^ self class == Association and: [ self key isSelfEvaluating and: [ self value isSelfEvaluating ] ]
+]
 
 Association >> key: aKey value: anObject
-key: aKey value: anObject
+[key: aKey value: anObject
 	"Store the arguments as the variables of the receiver."
 
 	key := aKey.
 	value := anObject
+]
 
 Association >> literalEqual: otherLiteral
-literalEqual: otherLiteral
+[literalEqual: otherLiteral
 	"Answer true if the receiver and otherLiteral represent the same literal.
 	Variable bindings are literally equals only if identical.
 	This is how variable sharing works, by preserving identity and changing only the value."
 
 	^ self == otherLiteral
+]
 
 Association >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	super printOn: aStream.
 	aStream nextPutAll: '->'.
 	value printOn: aStream
+]
 
 Association >> storeOn: aStream
-storeOn: aStream
+[storeOn: aStream
 	"Store in the format (key->value)"
 
 	aStream nextPut: $(.
@@ -41,23 +46,27 @@ storeOn: aStream
 	aStream nextPutAll: '->'.
 	value storeOn: aStream.
 	aStream nextPut: $)
+]
 
 Association >> value
-value
+[value
 	"Answer the value of the receiver."
 
 	^ value
+]
 
 Association >> value: anObject
-value: anObject
+[value: anObject
 	"Store the argument, anObject, as the value of the receiver."
 
 	value := anObject
+]
 
 Association class >> key: newKey value: newValue
-key: newKey value: newValue
+[key: newKey value: newValue
 	"Answer an instance of me with the arguments as the key and value of 
 	the association."
 
 	^ (super key: newKey) value: newValue
+]
 

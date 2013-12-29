@@ -3,11 +3,12 @@ VTermInputDriver
 	package: #'System-CommandLine'.
 
 VTermInputDriver >> closed
-closed
+[closed
 	^ inStream isNil or: [ inStream closed ]
+]
 
 VTermInputDriver >> continueReadCSINumber: v
-continueReadCSINumber: v
+[continueReadCSINumber: v
 	| value character |
 	value := v.
 	[ $0 <= (character := inStream next) and: [ character <= $9 ] ]
@@ -15,30 +16,35 @@ continueReadCSINumber: v
 	character = $~
 		ifFalse: [ self fail: character in: 'Control Sequence Introducer (number end)' ].
 	^ csi at: value ifAbsent: [ self fail: character in: 'Control Sequence Introducer (number end)' ]
+]
 
 VTermInputDriver >> fail: value in: mode
-fail: value in: mode
+[fail: value in: mode
 	self error: mode asString , ' does not support ' , value asString
+]
 
 VTermInputDriver >> handler: anObject
-handler: anObject
+[handler: anObject
 	handler := anObject
+]
 
 VTermInputDriver >> inStream: aStream
-inStream: aStream
+[inStream: aStream
 	inStream := aStream
+]
 
 VTermInputDriver >> initialize
-initialize
+[initialize
 	normal := Dictionary new.
 	self initializeNormal: normal.
 	ss3 := Dictionary new.
 	self initializeSS3: ss3.
 	csi := Dictionary new.
 	self initializeCSI: csi
+]
 
 VTermInputDriver >> initializeCSI: actions
-initializeCSI: actions
+[initializeCSI: actions
 	actions at: $A put: [ handler up ].
 	actions at: $B put: [ handler down ].
 	actions at: $C put: [ handler right ].
@@ -69,9 +75,10 @@ initializeCSI: actions
 	actions at: 33 put: [ handler functionKey: 19 ].
 	actions at: 34 put: [ handler functionKey: 20 ].
 	actions at: $[ put: [ self readCSI ]
+]
 
 VTermInputDriver >> initializeNormal: actions
-initializeNormal: actions
+[initializeNormal: actions
 	actions at: 1 put: [ handler startOfHeading ].
 	actions at: 2 put: [ handler startOfText ].
 	actions at: 3 put: [ handler endOfText ].
@@ -89,9 +96,10 @@ initializeNormal: actions
 	actions at: 15 put: [ handler shiftIn ].
 	actions at: 27 put: [ self readC1 ].
 	actions at: 127 put: [ handler backspace ]
+]
 
 VTermInputDriver >> initializeSS3: actions
-initializeSS3: actions
+[initializeSS3: actions
 	actions at: $p put: [ handler keypad: 0 ].
 	actions at: $q put: [ handler keypad: 1 ].
 	actions at: $r put: [ handler keypad: 2 ].
@@ -116,9 +124,10 @@ initializeSS3: actions
 	actions at: $S put: [ handler functionKey: 4 ].
 	actions at: $H put: [ handler home ].
 	actions at: $F put: [ handler end ]
+]
 
 VTermInputDriver >> read
-read
+[read
 	" C0 Control (Escape) mode "
 
 	| character action |
@@ -126,9 +135,10 @@ read
 	character ifNil: [ Error signal: 'could not read character from input' ].
 	action := normal at: character asInteger ifAbsent: [ ^ handler write: character ].
 	action value
+]
 
 VTermInputDriver >> readC1
-readC1
+[readC1
 	" C1 Control Escape mode "
 
 	| character |
@@ -138,9 +148,10 @@ readC1
 	character = $O
 		ifTrue: [ ^ self readSS3 ].
 	handler alt: character
+]
 
 VTermInputDriver >> readCSI
-readCSI
+[readCSI
 	" Control Sequence Introducer mode "
 
 	| character action |
@@ -149,23 +160,27 @@ readCSI
 		ifTrue: [ self continueReadCSINumber: character asInteger - $0 asInteger ]
 		ifFalse: [ csi at: character ifAbsent: [ self fail: character in: 'Control Sequence Introducer' ] ].
 	action value
+]
 
 VTermInputDriver >> readSS3
-readSS3
+[readSS3
 	" Single-Shift 3 mode "
 
 	| character action |
 	character := inStream next.
 	action := ss3 at: character ifAbsent: [ self fail: character in: 'Single-Shift 3' ].
 	action value
+]
 
 VTermInputDriver class >> on: inputStream
-on: inputStream
+[on: inputStream
 	^ self new
 		inStream: inputStream;
 		yourself
+]
 
 VTermInputDriver class >> stdIn
-stdIn
+[stdIn
 	^ self on: FileStream stdin
+]
 

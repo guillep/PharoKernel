@@ -3,7 +3,7 @@ PrintVersionCommandLineHandler
 	package: #'System-CommandLine'.
 
 PrintVersionCommandLineHandler >> activate
-activate
+[activate
 	self activateHelp
 		ifTrue: [ ^ self ].
 	(self hasOption: 'numeric')
@@ -17,23 +17,26 @@ activate
 			^ self exitSuccess ].
 	self printHelp.
 	^ self exitFailure
+]
 
 PrintVersionCommandLineHandler >> printNumericVersion
-printNumericVersion
+[printNumericVersion
 	self stdout
 		print: SystemVersion current highestUpdate;
 		lf
+]
 
 PrintVersionCommandLineHandler >> printRelease
-printRelease
+[printRelease
 	self stdout
 		print: SystemVersion current major;
 		nextPutAll: '.';
 		print: SystemVersion current minor;
 		lf
+]
 
 PrintVersionCommandLineHandler >> printVersion
-printVersion
+[printVersion
 	self stdout
 		nextPutAll: '[version] ';
 		print: SystemVersion current major;
@@ -42,12 +45,15 @@ printVersion
 		nextPutAll: ' #';
 		print: SystemVersion current highestUpdate;
 		lf
+]
 
 PrintVersionCommandLineHandler class >> commandName
-commandName
+[commandName
 	^ 'printVersion'
+]
 
 PrintVersionCommandLineHandler class >> description
-description
+[description
 	^ 'Print image version'
+]
 

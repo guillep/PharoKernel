@@ -4,17 +4,19 @@ Exit
 	package: #Kernel.
 
 Exit >> defaultAction
-defaultAction
+[defaultAction
 	self messageText isEmpty
 		ifFalse: [ self printMessage ].
 	Smalltalk exit: self status
+]
 
 Exit >> isSuccess
-isSuccess
+[isSuccess
 	^ self status = 0
+]
 
 Exit >> printMessage
-printMessage
+[printMessage
 	| stderr |
 	stderr := VTermOutputDriver stderr.
 	self isSuccess
@@ -23,47 +25,58 @@ printMessage
 		nextPutAll: self messageText;
 		lf;
 		clear
+]
 
 Exit >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	super printOn: aStream.
 	aStream space print: self status
+]
 
 Exit >> status
-status
+[status
 	^ status
+]
 
 Exit >> status: anInteger
-status: anInteger
+[status: anInteger
 	status := anInteger
+]
 
 Exit class >> failure
-failure
+[failure
 	^ self status: 1
+]
 
 Exit class >> signalFailure
-signalFailure
+[signalFailure
 	^ self failure signal
+]
 
 Exit class >> signalFailure: aMessage
-signalFailure: aMessage
+[signalFailure: aMessage
 	^ self failure signal: aMessage
+]
 
 Exit class >> signalSuccess
-signalSuccess
+[signalSuccess
 	^ self success signal
+]
 
 Exit class >> signalSuccess: aMessage
-signalSuccess: aMessage
+[signalSuccess: aMessage
 	^ self success signal: aMessage
+]
 
 Exit class >> status: aPositiveInteger
-status: aPositiveInteger
+[status: aPositiveInteger
 	^ self new
 		status: aPositiveInteger;
 		yourself
+]
 
 Exit class >> success
-success
+[success
 	^ self status: 0
+]
 

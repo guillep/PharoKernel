@@ -3,7 +3,7 @@ FLWordObjectCluster
 	package: #Fuel.
 
 FLWordObjectCluster >> materializeInstanceWith: aDecoder
-materializeInstanceWith: aDecoder
+[materializeInstanceWith: aDecoder
 	| inst wideSize |
 	wideSize := aDecoder nextEncodedPositiveInteger.
 	inst := theClass basicNew: wideSize.
@@ -11,14 +11,17 @@ materializeInstanceWith: aDecoder
 	aDecoder isBigEndian = Smalltalk isBigEndian asBit
 		ifTrue: [ ^ inst ]
 		ifFalse: [ ^ self swapBytesOf: inst ]
+]
 
 FLWordObjectCluster >> serializeInstance: aWordObject with: anEncoder
-serializeInstance: aWordObject with: anEncoder
+[serializeInstance: aWordObject with: anEncoder
 	anEncoder encodePositiveInteger: aWordObject basicSize.
 	anEncoder encodeWords: aWordObject
+]
 
 FLWordObjectCluster >> swapBytesOf: aWordObject
-swapBytesOf: aWordObject
+[swapBytesOf: aWordObject
 	Bitmap swapBytesIn: aWordObject from: 1 to: aWordObject basicSize.
 	^ aWordObject
+]
 

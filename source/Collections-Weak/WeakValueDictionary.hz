@@ -3,12 +3,13 @@ WeakValueDictionary
 	package: #'Collections-Weak'.
 
 WeakValueDictionary >> add: anAssociation
-add: anAssociation
+[add: anAssociation
 	self at: anAssociation key put: anAssociation value.
 	^ anAssociation
+]
 
 WeakValueDictionary >> at: key put: anObject
-at: key put: anObject
+[at: key put: anObject
 	"Set the value at key to be anObject.  If key is not found, create a new
 	entry for key and set is value to anObject. Answer anObject."
 
@@ -19,9 +20,10 @@ at: key put: anObject
 		ifTrue: [ self atNewIndex: index put: (WeakValueAssociation key: key value: anObject) ]
 		ifFalse: [ element value: anObject ].
 	^ anObject
+]
 
 WeakValueDictionary >> valuesDo: aBlock
-valuesDo: aBlock
+[valuesDo: aBlock
 	"See comments in Dictionary>>valuesDo:.  The code keeps
 	a reference to the value to facilitate debugging"
 
@@ -32,4 +34,5 @@ valuesDo: aBlock
 		nil == eachAssociation
 			ifFalse: [ eachValue := eachAssociation value.
 				aBlock value: eachValue ] ]
+]
 

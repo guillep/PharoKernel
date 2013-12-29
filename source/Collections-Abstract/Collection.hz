@@ -3,81 +3,92 @@ Collection
 	package: #'Collections-Abstract'.
 
 Collection >> & aCollection
-& aCollection
+[& aCollection
 	^ self intersection: aCollection
+]
 
 Collection >> , aCollection
-, aCollection
+[, aCollection
 	^ self copy
 		addAll: aCollection;
 		yourself
+]
 
 Collection >> \ aCollection
-\ aCollection
+[\ aCollection
 	^ self difference: aCollection
+]
 
 Collection >> adaptToCollection: rcvr andSend: selector
-adaptToCollection: rcvr andSend: selector
+[adaptToCollection: rcvr andSend: selector
 	"If I am involved in arithmetic with another Collection, return a Collection of
 	the results of each element combined with the scalar in that expression."
 
 	(rcvr isSequenceable and: [ self isSequenceable ])
 		ifFalse: [ self error: 'Only sequenceable collections may be combined arithmetically' ].
 	^ rcvr with: self collect: [ :rcvrElement :myElement | rcvrElement perform: selector with: myElement ]
+]
 
 Collection >> adaptToNumber: rcvr andSend: selector
-adaptToNumber: rcvr andSend: selector
+[adaptToNumber: rcvr andSend: selector
 	"If I am involved in arithmetic with a scalar, return a Collection of
 	the results of each element combined with the scalar in that expression."
 
 	^ self collect: [ :element | rcvr perform: selector with: element ]
+]
 
 Collection >> adaptToPoint: rcvr andSend: selector
-adaptToPoint: rcvr andSend: selector
+[adaptToPoint: rcvr andSend: selector
 	"If I am involved in arithmetic with a scalar, return a Collection of
 	the results of each element combined with the scalar in that expression."
 
 	^ self collect: [ :element | rcvr perform: selector with: element ]
+]
 
 Collection >> adaptToString: rcvr andSend: selector
-adaptToString: rcvr andSend: selector
+[adaptToString: rcvr andSend: selector
 	"If I am involved in arithmetic with a String, convert it to a Number."
 
 	^ rcvr asNumber perform: selector with: self
+]
 
 Collection >> add: newObject
-add: newObject
+[add: newObject
 	"Include newObject as one of the receiver's elements. Answer newObject. 
 	ArrayedCollections cannot respond to this message."
 
 	self subclassResponsibility
+]
 
 Collection >> add: newObject withOccurrences: anInteger
-add: newObject withOccurrences: anInteger
+[add: newObject withOccurrences: anInteger
 	"Add newObject anInteger times to the receiver. Answer newObject."
 
 	anInteger timesRepeat: [ self add: newObject ].
 	^ newObject
+]
 
 Collection >> addAll: aCollection
-addAll: aCollection
+[addAll: aCollection
 	"Include all the elements of aCollection as the receiver's elements. Answer 
 	aCollection. Actually, any object responding to #do: can be used as argument."
 
 	aCollection do: [ :each | self add: each ].
 	^ aCollection
+]
 
 Collection >> addIfNotPresent: anObject
-addIfNotPresent: anObject
+[addIfNotPresent: anObject
 	"Include anObject as one of the receiver's elements, but only if there
 	is no such element already. Anwser anObject."
 
 	(self includes: anObject)
 		ifFalse: [ self add: anObject ].
 	^ anObject
+]
 
 Collection >> allSatisfy: aBlock
-allSatisfy: aBlock
+[allSatisfy: aBlock
 	"Evaluate aBlock with the elements of the receiver.
 	If aBlock returns false for any element return false.
 	Otherwise return true."
@@ -85,18 +96,20 @@ allSatisfy: aBlock
 	self do: [ :each | (aBlock value: each)
 				ifFalse: [ ^ false ] ].
 	^ true
+]
 
 Collection >> anyOne
-anyOne
+[anyOne
 	"Answer a representative sample of the receiver. This method can
 	be helpful when needing to preinfer the nature of the contents of 
 	semi-homogeneous collections."
 
 	self emptyCheck.
 	self do: [ :each | ^ each ]
+]
 
 Collection >> anySatisfy: aBlock
-anySatisfy: aBlock
+[anySatisfy: aBlock
 	"Evaluate aBlock with the elements of the receiver.
 	If aBlock returns true for any element return true.
 	Otherwise return false."
@@ -104,9 +117,10 @@ anySatisfy: aBlock
 	self do: [ :each | (aBlock value: each)
 				ifTrue: [ ^ true ] ].
 	^ false
+]
 
 Collection >> asArray
-asArray
+[asArray
 	"Answer an Array whose elements are the elements of the receiver.
 	Implementation note: Cannot use ''Array withAll: self'' as that only
 	works for SequenceableCollections which support the replacement 
@@ -117,15 +131,17 @@ asArray
 	index := 0.
 	self do: [ :each | array at: (index := index + 1) put: each ].
 	^ array
+]
 
 Collection >> asBag
-asBag
+[asBag
 	"Answer a Bag whose elements are the elements of the receiver."
 
 	^ Bag withAll: self
+]
 
 Collection >> asByteArray
-asByteArray
+[asByteArray
 	"Answer a ByteArray whose elements are the elements of the receiver.
 	Implementation note: Cannot use ''ByteArray withAll: self'' as that only
 	works for SequenceableCollections which support the replacement 
@@ -136,38 +152,44 @@ asByteArray
 	index := 0.
 	self do: [ :each | array at: (index := index + 1) put: each ].
 	^ array
+]
 
 Collection >> asCharacterSet
-asCharacterSet
+[asCharacterSet
 	"Answer a CharacterSet whose elements are the unique elements of the receiver.
 	The reciever should only contain characters."
 
 	^ CharacterSet newFrom: self
+]
 
 Collection >> asCommaString
-asCommaString
+[asCommaString
 	"Return collection printed as 'a, b, c' "
 
 	^ String streamContents: [ :s | self asStringOn: s delimiter: ', ' ]
+]
 
 Collection >> asCommaStringAnd
-asCommaStringAnd
+[asCommaStringAnd
 	"Return collection printed as 'a, b and c' "
 
 	^ String streamContents: [ :s | self asStringOn: s delimiter: ', ' last: ' and ' ]
+]
 
 Collection >> asDictionary
-asDictionary
+[asDictionary
 	^ self as: Dictionary
+]
 
 Collection >> asIdentitySet
-asIdentitySet
+[asIdentitySet
 	^ (IdentitySet new: self size)
 		addAll: self;
 		yourself
+]
 
 Collection >> asOrderedCollection
-asOrderedCollection
+[asOrderedCollection
 	"Answer an OrderedCollection whose elements are the elements of the
 	receiver. The order in which elements are added depends on the order
 	in which the receiver enumerates its elements. In the case of unordered
@@ -175,21 +197,24 @@ asOrderedCollection
 	requests for the conversion."
 
 	^ self as: OrderedCollection
+]
 
 Collection >> asSet
-asSet
+[asSet
 	"Answer a Set whose elements are the unique elements of the receiver."
 
 	^ Set withAll: self
+]
 
 Collection >> asSortedCollection
-asSortedCollection
+[asSortedCollection
 	"Answer a SortedCollection whose elements are the elements of the receiver. The sort order is the default less than or equal. Note that you should use #sorted: if you don't really need a SortedCollection, but a sorted collection."
 
 	^ self as: SortedCollection
+]
 
 Collection >> asSortedCollection: aSortBlock
-asSortedCollection: aSortBlock
+[asSortedCollection: aSortBlock
 	"Answer a SortedCollection whose elements are the elements of the receiver. The sort order is defined by the argument, aSortBlock. Note that this is better to use #sorted: if you don't really need a SortedCollection, but a sorted collection!!"
 
 	| aSortedCollection |
@@ -197,17 +222,19 @@ asSortedCollection: aSortBlock
 	aSortedCollection sortBlock: aSortBlock.
 	aSortedCollection addAll: self.
 	^ aSortedCollection
+]
 
 Collection >> asStringOn: aStream delimiter: delimString
-asStringOn: aStream delimiter: delimString
+[asStringOn: aStream delimiter: delimString
 	"Print elements on a stream separated
 	with a delimiter String like: 'a, b, c'
 	Uses #asString instead of #print:."
 
 	self do: [ :elem | aStream nextPutAll: elem asString ] separatedBy: [ aStream nextPutAll: delimString ]
+]
 
 Collection >> asStringOn: aStream delimiter: delimString last: lastDelimString
-asStringOn: aStream delimiter: delimString last: lastDelimString
+[asStringOn: aStream delimiter: delimString last: lastDelimString
 	"Print elements on a stream separated
 	with a delimiter between all the elements and with
 	a special one before the last like: 'a, b and c'.
@@ -224,26 +251,29 @@ asStringOn: aStream delimiter: delimString last: lastDelimString
 		separatedBy: [ aStream nextPutAll: (n = sz
 						ifTrue: [ lastDelimString ]
 						ifFalse: [ delimString ]) ]
+]
 
 Collection >> associationsDo: aBlock
-associationsDo: aBlock
+[associationsDo: aBlock
 	"Evaluate aBlock for each of the receiver's elements (key/value 
 	associations).  If any non-association is within, the error is not caught now,
 	but later, when a key or value message is sent to it."
 
 	self do: aBlock
+]
 
 Collection >> atRandom
-atRandom
+[atRandom
 	"Answer a random element of the receiver.  Uses a shared random 
 	number generator owned by class Collection.  If you use this a lot, 
 	define your own instance of Random and use #atRandom:.  Causes 
 	an error if self has no elements."
 
 	^ self class mutexForPicking critical: [ self atRandom: self class randomForPicking ]	"Examples:	#('one' 'or' 'the' 'other') atRandom	(1 to: 10) atRandom	'Just pick one of these letters at random' atRandom	#(3 7 4 9 21) asSet atRandom		(just to show it also works for Sets)"
+]
 
 Collection >> atRandom: aGenerator
-atRandom: aGenerator
+[atRandom: aGenerator
 	"Answer a random element of the receiver. Uses aGenerator which
     should be kept by the user in a variable and used every time. Use
     this instead of #atRandom for better uniformity of random numbers because 
@@ -257,15 +287,17 @@ atRandom: aGenerator
 				ifTrue: [ ^ each ].
 			index := index + 1 ].
 	^ self errorEmptyCollection
+]
 
 Collection >> capacity
-capacity
+[capacity
 	"Answer the current capacity of the receiver."
 
 	^ self size
+]
 
 Collection >> collect: aBlock
-collect: aBlock
+[collect: aBlock
 	"Evaluate aBlock with each of the receiver's elements as the argument.  
 	Collect the resulting values into a collection like the receiver. Answer  
 	the new collection."
@@ -274,85 +306,98 @@ collect: aBlock
 	newCollection := self species new.
 	self do: [ :each | newCollection add: (aBlock value: each) ].
 	^ newCollection
+]
 
 Collection >> collect: aBlock as: aClass
-collect: aBlock as: aClass
+[collect: aBlock as: aClass
 	"Evaluate aBlock with each of the receiver's elements as the argument.  
 	Collect the resulting values into an instance of aClass. Answer the resulting collection."
 
 	^ (aClass new: self size) fillFrom: self with: aBlock
+]
 
 Collection >> collect: aBlock into: aCollection
-collect: aBlock into: aCollection
+[collect: aBlock into: aCollection
 	"Evaluate aBlock with each of the receiver's elements as the argument.  
 	Collect the resulting values into aCollection. Answer aCollection."
 
 	^ aCollection fillFrom: self with: aBlock
+]
 
 Collection >> collect: collectBlock thenDo: doBlock
-collect: collectBlock thenDo: doBlock
+[collect: collectBlock thenDo: doBlock
 	"Utility method to improve readability."
 
 	^ self do: [ :each | doBlock value: (collectBlock value: each) ]
+]
 
 Collection >> collect: collectBlock thenReject: selectBlock
-collect: collectBlock thenReject: selectBlock
+[collect: collectBlock thenReject: selectBlock
 	"Utility method to improve readability."
 
 	^ (self collect: collectBlock) reject: selectBlock
+]
 
 Collection >> collect: collectBlock thenSelect: selectBlock
-collect: collectBlock thenSelect: selectBlock
+[collect: collectBlock thenSelect: selectBlock
 	"Utility method to improve readability."
 
 	^ (self collect: collectBlock) select: selectBlock
+]
 
 Collection >> contains: aBlock
-contains: aBlock
+[contains: aBlock
 	"VW compatibility"
 
 	^ self anySatisfy: aBlock
+]
 
 Collection >> contents
-contents
+[contents
 	^ self
+]
 
 Collection >> copyEmpty
-copyEmpty
+[copyEmpty
 	^ self species new
+]
 
 Collection >> copyWith: newElement
-copyWith: newElement
+[copyWith: newElement
 	"Answer a new collection with newElement added (as last
 	element if sequenceable)."
 
 	^ self copy
 		add: newElement;
 		yourself
+]
 
 Collection >> copyWithDependent: newElement
-copyWithDependent: newElement
+[copyWithDependent: newElement
 	"Answer a new collection with newElement added (as last
 	element if sequenceable)."
 
 	^ self copyWith: newElement
+]
 
 Collection >> copyWithout: oldElement
-copyWithout: oldElement
+[copyWithout: oldElement
 	"Answer a copy of the receiver that does not contain any
 	elements equal to oldElement."
 
 	^ self reject: [ :each | each = oldElement ]	"Examples:	'fred the bear' copyWithout: $e	#(2 3 4 5 5 6) copyWithout: 5"
+]
 
 Collection >> copyWithoutAll: aCollection
-copyWithoutAll: aCollection
+[copyWithoutAll: aCollection
 	"Answer a copy of the receiver that does not contain any elements 
 	equal to those in aCollection."
 
 	^ self reject: [ :each | aCollection includes: each ]
+]
 
 Collection >> count: aBlock
-count: aBlock
+[count: aBlock
 	"Evaluate aBlock with each of the receiver's elements as the argument.  
 	Answer the number of elements that answered true."
 
@@ -361,16 +406,18 @@ count: aBlock
 	self do: [ :each | (aBlock value: each)
 				ifTrue: [ sum := sum + 1 ] ].
 	^ sum
+]
 
 Collection >> detect: aBlock
-detect: aBlock
+[detect: aBlock
 	"Evaluate aBlock with each of the receiver's elements as the argument. 
 	Answer the first element for which aBlock evaluates to true."
 
 	^ self detect: aBlock ifNone: [ self errorNotFound: aBlock ]
+]
 
 Collection >> detect: aBlock ifFound: foundBlock
-detect: aBlock ifFound: foundBlock
+[detect: aBlock ifFound: foundBlock
 	"Evaluate aBlock with each of the receiver's elements as the argument.  
 	If some element evaluates aBlock to true, then cull this element into 
 	foundBlock. 
@@ -379,9 +426,10 @@ detect: aBlock ifFound: foundBlock
 
 	self detect: aBlock ifFound: foundBlock ifNone: [ "Do nothing on purpose"
 			 ]
+]
 
 Collection >> detect: aBlock ifFound: foundBlock ifNone: exceptionBlock
-detect: aBlock ifFound: foundBlock ifNone: exceptionBlock
+[detect: aBlock ifFound: foundBlock ifNone: exceptionBlock
 	"Evaluate aBlock with each of the receiver's elements as the argument.  
 	If some element evaluates aBlock to true, then cull this element into 
 	foundBlock and answer the result of this evaluation. 
@@ -390,17 +438,19 @@ detect: aBlock ifFound: foundBlock ifNone: exceptionBlock
 	self do: [ :each | (aBlock value: each)
 				ifTrue: [ ^ foundBlock cull: each ] ].
 	^ exceptionBlock value
+]
 
 Collection >> detect: aBlock ifNone: exceptionBlock
-detect: aBlock ifNone: exceptionBlock
+[detect: aBlock ifNone: exceptionBlock
 	"Evaluate aBlock with each of the receiver's elements as the argument.  
 	Answer the first element for which aBlock evaluates to true. If none  
 	evaluate to true, then evaluate the argument, exceptionBlock."
 
 	^ self detect: aBlock ifFound: [ :element | element ] ifNone: exceptionBlock
+]
 
 Collection >> detectMax: aBlock
-detectMax: aBlock
+[detectMax: aBlock
 	"Evaluate aBlock with each of the receiver's elements as the argument. 
 	Answer the element for which aBlock evaluates to the highest magnitude.
 	If collection empty, return nil.  This method might also be called elect:."
@@ -417,9 +467,10 @@ detectMax: aBlock
 					maxElement := each.
 					maxValue := aBlock value: each ]	"Note that there is no way to get the first element that works 				for all kinds of Collections.  Must test every one." ].
 	^ maxElement
+]
 
 Collection >> detectMin: aBlock
-detectMin: aBlock
+[detectMin: aBlock
 	"Evaluate aBlock with each of the receiver's elements as the argument. 
 	Answer the element for which aBlock evaluates to the lowest number.
 	If collection empty, return nil."
@@ -436,9 +487,10 @@ detectMin: aBlock
 					minElement := each.
 					minValue := aBlock value: each ]	"Note that there is no way to get the first element that works 				for all kinds of Collections.  Must test every one." ].
 	^ minElement
+]
 
 Collection >> detectSum: aBlock
-detectSum: aBlock
+[detectSum: aBlock
 	"Evaluate aBlock with each of the receiver's elements as the argument. 
 	Return the sum of the answers."
 
@@ -446,24 +498,27 @@ detectSum: aBlock
 	sum := 0.
 	self do: [ :each | sum := (aBlock value: each) + sum ].
 	^ sum
+]
 
 Collection >> difference: aCollection
-difference: aCollection
+[difference: aCollection
 	"Answer the set theoretic difference of two collections."
 
 	| set |
 	set := self asSet.
 	aCollection do: [ :each | set remove: each ifAbsent: [  ] ].
 	^ self species withAll: set asArray
+]
 
 Collection >> do: aBlock
-do: aBlock
+[do: aBlock
 	"Evaluate aBlock with each of the receiver's elements as the argument."
 
 	self subclassResponsibility
+]
 
 Collection >> do: aBlock displayingProgress: aStringOrBlock
-do: aBlock displayingProgress: aStringOrBlock
+[do: aBlock displayingProgress: aStringOrBlock
 	"Enumerate aBlock displaying progress information. 
 	If the argument is a string, use a static label for the process. 
 	If the argument is a block, evaluate it with the element to retrieve the label.
@@ -476,9 +531,10 @@ do: aBlock displayingProgress: aStringOrBlock
 	"
 
 	^ self do: aBlock displayingProgress: aStringOrBlock every: 20
+]
 
 Collection >> do: aBlock displayingProgress: aStringOrBlock every: msecs
-do: aBlock displayingProgress: aStringOrBlock every: msecs
+[do: aBlock displayingProgress: aStringOrBlock every: msecs
 	"Enumerate aBlock displaying progress information.
        If the argument is a string, use a static label for the process.
        If the argument is a block, evaluate it with the element to retrieve the label.
@@ -512,9 +568,10 @@ do: aBlock displayingProgress: aStringOrBlock every: msecs
 							lastUpdate := Time millisecondClockValue ].
 					aBlock value: each.
 					count := count + 1 ] ]
+]
 
 Collection >> do: elementBlock separatedBy: separatorBlock
-do: elementBlock separatedBy: separatorBlock
+[do: elementBlock separatedBy: separatorBlock
 	"Evaluate the elementBlock for all elements in the receiver,
 	and evaluate the separatorBlock between."
 
@@ -525,51 +582,59 @@ do: elementBlock separatedBy: separatorBlock
 				ifTrue: [ beforeFirst := false ]
 				ifFalse: [ separatorBlock value ].
 			elementBlock value: each ]
+]
 
 Collection >> do: aBlock without: anItem
-do: aBlock without: anItem
+[do: aBlock without: anItem
 	"Enumerate all elements in the receiver. 
 	Execute aBlock for those elements that are not equal to the given item"
 
 	^ self do: [ :each | anItem = each
 				ifFalse: [ aBlock value: each ] ]
+]
 
 Collection >> emptyCheck
-emptyCheck
+[emptyCheck
 	self isEmpty
 		ifTrue: [ self errorEmptyCollection ]
+]
 
 Collection >> errorEmptyCollection
-errorEmptyCollection
+[errorEmptyCollection
 	"Signal a CollectionIsEmpty exception"
 
 	CollectionIsEmpty signalWith: self
+]
 
 Collection >> errorNoMatch
-errorNoMatch
+[errorNoMatch
 	"Signal a SizeMismatch exception"
 
 	SizeMismatch signal
+]
 
 Collection >> errorNotFound: anObject
-errorNotFound: anObject
+[errorNotFound: anObject
 	"Raise a NotFound exception."
 
 	NotFound signalFor: anObject
+]
 
 Collection >> errorNotKeyed
-errorNotKeyed
+[errorNotKeyed
 	self error: ('Instances of {1} do not respond to keyed accessing messages.' translated format: {(self class name)})
+]
 
 Collection >> fillFrom: aCollection with: aBlock
-fillFrom: aCollection with: aBlock
+[fillFrom: aCollection with: aBlock
 	"Evaluate aBlock with each of aCollections's elements as the argument.  
 	Collect the resulting values into self. Answer self."
 
 	aCollection do: [ :each | self add: (aBlock value: each) ]
+]
 
 Collection >> findFirstInByteString: aByteString startingAt: start
-findFirstInByteString: aByteString startingAt: start
+[findFirstInByteString: aByteString startingAt: start
 	"Find the index of first character starting at start in aByteString that is included in the receiver.
 	Default is to use a naive algorithm.
 	Subclasses might want to implement a more efficient scheme"
@@ -577,9 +642,10 @@ findFirstInByteString: aByteString startingAt: start
 	start to: aByteString size do: [ :index | (self includes: (aByteString at: index))
 			ifTrue: [ ^ index ] ].
 	^ 0
+]
 
 Collection >> flatCollect: aBlock
-flatCollect: aBlock
+[flatCollect: aBlock
 	"Evaluate aBlock for each of the receiver's elements and answer the
 	list of all resulting values flatten one level. Assumes that aBlock returns some kind
 	of collection for each element. Equivalent to the lisp's mapcan"
@@ -590,9 +656,10 @@ flatCollect: aBlock
 	stream := (self species new: 0) writeStream.
 	self do: [ :each | stream nextPutAll: (aBlock value: each) ].
 	^ stream contents
+]
 
 Collection >> flatCollect: aBlock as: aCollectionClass
-flatCollect: aBlock as: aCollectionClass
+[flatCollect: aBlock as: aCollectionClass
 	"Evaluate aBlock for each of the receiver's elements and answer the
 	list of all resulting values flatten one level. Assumes that aBlock returns some kind
 	of collection for each element. Equivalent to the lisp's mapcan"
@@ -603,24 +670,27 @@ flatCollect: aBlock as: aCollectionClass
 	col := aCollectionClass new: self size.
 	self do: [ :each | col addAll: (aBlock value: each) ].
 	^ col
+]
 
 Collection >> flatCollectAsSet: aBlock
-flatCollectAsSet: aBlock
+[flatCollectAsSet: aBlock
 	"Evaluate aBlock for each of the receiver's elements and answer the
 	list of all resulting values flatten one level. Assumes that aBlock returns some kind
 	of collection for each element. Equivalent to the lisp's mapcan"
 
 	^ self flatCollect: aBlock as: Set
+]
 
 Collection >> flattenOn: aStream
-flattenOn: aStream
+[flattenOn: aStream
 	self
 		do: [ :each | (each isCollection and: [ each isString not ])
 				ifTrue: [ each flattenOn: aStream ]
 				ifFalse: [ aStream nextPut: each ] ]
+]
 
 Collection >> flattened
-flattened
+[flattened
 	"Flattens a collection of collections (no matter how many levels of collections exist).
 	Strings are considered atoms and, as such, won't be flattened
 	
@@ -629,9 +699,10 @@ flattened
 	#('string1' #('string2' 'string3')) flattened returns #('string1' 'string2' 'string3')"
 
 	^ Array streamContents: [ :stream | self flattenOn: stream ]
+]
 
 Collection >> fold: binaryBlock
-fold: binaryBlock
+[fold: binaryBlock
 	"Evaluate the block with the first two elements of the receiver,
 	then with the result of the first evaluation and the next element,
 	and so on.  Answer the result of the final evaluation. If the receiver
@@ -641,23 +712,26 @@ fold: binaryBlock
 	"#('if' 'it' 'is' 'to' 'be' 'it' 'is' 'up' 'to' 'me') fold: [:a :b | a, ' ', b]"
 
 	^ self reduce: binaryBlock
+]
 
 Collection >> gather: aBlock
-gather: aBlock
+[gather: aBlock
 	"This method is kept for compatibility reasons, use flatCollect instead."
 
 	^ self flatCollect: aBlock
+]
 
 Collection >> groupBy: keyBlock having: selectBlock
-groupBy: keyBlock having: selectBlock
+[groupBy: keyBlock having: selectBlock
 	"This message is deprecated. Please use groupedBy:having:. 
 	But we let it right now without warning because we are not sure to 
 	remove in the next iteration."
 
 	^ self groupedBy: keyBlock having: selectBlock
+]
 
 Collection >> groupedBy: aBlock
-groupedBy: aBlock
+[groupedBy: aBlock
 	"Answer a dictionary whose keys are the result of evaluating aBlock
 	for all my elements, and the value for each key is the selection of 
 	my elements that evaluated to that key. Uses species."
@@ -668,17 +742,19 @@ groupedBy: aBlock
 	self species ~~ OrderedCollection
 		ifTrue: [ groups associationsDo: [ :association | association value: (self species withAll: association value) ] ].
 	^ groups
+]
 
 Collection >> groupedBy: aBlock having: aSelectionBlock
-groupedBy: aBlock having: aSelectionBlock
+[groupedBy: aBlock having: aSelectionBlock
 	"Like in SQL operation - Split the recievers contents into collections of 
 	elements for which keyBlock returns the same results, and return those 
 	collections allowed by selectBlock."
 
 	^ (self groupedBy: aBlock) select: aSelectionBlock
+]
 
 Collection >> hash
-hash
+[hash
 	"Answer an integer hash value for the receiver such that,
 	  -- the hash value of an unchanged object is constant over time, and
 	  -- two equal objects have equal hash values"
@@ -688,17 +764,19 @@ hash
 	self size <= 10
 		ifTrue: [ self do: [ :elem | hash := hash bitXor: elem hash ] ].
 	^ hash bitXor: self size hash
+]
 
 Collection >> identityIncludes: anObject
-identityIncludes: anObject
+[identityIncludes: anObject
 	"Answer whether anObject is one of the receiver's elements."
 
 	self do: [ :each | anObject == each
 				ifTrue: [ ^ true ] ].
 	^ false
+]
 
 Collection >> ifEmpty: aBlock
-ifEmpty: aBlock
+[ifEmpty: aBlock
 	"Evaluate the given block with the receiver as argument, answering its value if the receiver is empty, otherwise answer the receiver."
 
 	"Note that the fact that this method returns its argument in case the receiver is not empty allows one to write expressions like the following ones: self classifyMethodAs: (myProtocol ifEmpty: ['As yet unclassified'])"
@@ -706,9 +784,10 @@ ifEmpty: aBlock
 	^ self isEmpty
 		ifTrue: [ ^ aBlock value ]
 		ifFalse: [ self ]
+]
 
 Collection >> ifEmpty: emptyBlock ifNotEmpty: notEmptyBlock
-ifEmpty: emptyBlock ifNotEmpty: notEmptyBlock
+[ifEmpty: emptyBlock ifNotEmpty: notEmptyBlock
 	"Evaluate emptyBlock if I'm empty, notEmptyBlock otherwise"
 
 	" If the notEmptyBlock has an argument, eval with the receiver as its argument"
@@ -716,9 +795,10 @@ ifEmpty: emptyBlock ifNotEmpty: notEmptyBlock
 	self isEmpty
 		ifTrue: [ ^ emptyBlock value ].
 	^ notEmptyBlock cull: self
+]
 
 Collection >> ifEmpty: emptyBlock ifNotEmptyDo: notEmptyBlock
-ifEmpty: emptyBlock ifNotEmptyDo: notEmptyBlock
+[ifEmpty: emptyBlock ifNotEmptyDo: notEmptyBlock
 	"Evaluate emptyBlock if I'm empty, notEmptyBlock otherwise"
 
 	"Evaluate the notEmptyBlock with the receiver as its argument"
@@ -726,9 +806,10 @@ ifEmpty: emptyBlock ifNotEmptyDo: notEmptyBlock
 	self isEmpty
 		ifTrue: [ ^ emptyBlock value ].
 	^ notEmptyBlock value: self
+]
 
 Collection >> ifNotEmpty: aBlock
-ifNotEmpty: aBlock
+[ifNotEmpty: aBlock
 	"Evaluate the given block with the receiver as argument, answering its value
       unless the receiver is empty, in which case answer the receiver
 
@@ -743,66 +824,75 @@ ifNotEmpty: aBlock
 	^ self isEmpty
 		ifTrue: [ self ]
 		ifFalse: [ aBlock cull: self ]
+]
 
 Collection >> ifNotEmpty: notEmptyBlock ifEmpty: emptyBlock
-ifNotEmpty: notEmptyBlock ifEmpty: emptyBlock
+[ifNotEmpty: notEmptyBlock ifEmpty: emptyBlock
 	"Evaluate emptyBlock if I'm empty, notEmptyBlock otherwise
 	 If the notEmptyBlock has an argument, eval with the receiver as its argument"
 
 	self isEmpty
 		ifFalse: [ ^ notEmptyBlock cull: self ].
 	^ emptyBlock value
+]
 
 Collection >> ifNotEmptyDo: aBlock
-ifNotEmptyDo: aBlock
+[ifNotEmptyDo: aBlock
 	"Evaluate the given block with the receiver as its argument."
 
 	self isEmpty
 		ifFalse: [ ^ aBlock value: self ]
+]
 
 Collection >> ifNotEmptyDo: notEmptyBlock ifEmpty: emptyBlock
-ifNotEmptyDo: notEmptyBlock ifEmpty: emptyBlock
+[ifNotEmptyDo: notEmptyBlock ifEmpty: emptyBlock
 	"Evaluate emptyBlock if I'm empty, notEmptyBlock otherwise
 	Evaluate the notEmptyBlock with the receiver as its argument"
 
 	self isEmpty
 		ifFalse: [ ^ notEmptyBlock value: self ].
 	^ emptyBlock value
+]
 
 Collection >> includes: anObject
-includes: anObject
+[includes: anObject
 	"Answer whether anObject is one of the receiver's elements."
 
 	^ self anySatisfy: [ :each | each = anObject ]
+]
 
 Collection >> includesAll: aCollection
-includesAll: aCollection
+[includesAll: aCollection
 	"Answer whether all the elements of aCollection are in the receiver."
 
 	aCollection do: [ :elem | (self includes: elem)
 				ifFalse: [ ^ false ] ].
 	^ true
+]
 
 Collection >> includesAllOf: aCollection
-includesAllOf: aCollection
+[includesAllOf: aCollection
 	self flag: 'use includesAll: instead'.
 	^ self includesAll: aCollection
+]
 
 Collection >> includesAny: aCollection
-includesAny: aCollection
+[includesAny: aCollection
 	"Answer whether any element of aCollection is one of the receiver's elements."
 
 	aCollection do: [ :elem | (self includes: elem)
 				ifTrue: [ ^ true ] ].
 	^ false
+]
 
 Collection >> includesAnyOf: aCollection
-includesAnyOf: aCollection
+[includesAnyOf: aCollection
 	self flag: 'use includesAny: instead'.
 	^ self includesAny: aCollection
+]
 
 Collection >> includesSubstringAnywhere: testString
-includesSubstringAnywhere: testString
+[includesSubstringAnywhere: testString
 	"Answer whether the receiver includes, anywhere in its nested structure, a string that has testString as a substring"
 
 	self
@@ -813,9 +903,10 @@ includesSubstringAnywhere: testString
 				ifTrue: [ (element includesSubstringAnywhere: testString)
 						ifTrue: [ ^ true ] ] ].
 	^ false	"#(first (second third) ((allSentMessages ('Elvis' includes:)))) includesSubstringAnywhere:  'lvi'"
+]
 
 Collection >> inject: thisValue into: binaryBlock
-inject: thisValue into: binaryBlock
+[inject: thisValue into: binaryBlock
 	"Accumulate a running value associated with evaluating the argument, 
 	binaryBlock, with the current value of the argument, thisValue, and the 
 	receiver as block arguments. For instance, to sum the numeric elements 
@@ -826,9 +917,10 @@ inject: thisValue into: binaryBlock
 	nextValue := thisValue.
 	self do: [ :each | nextValue := binaryBlock value: nextValue value: each ].
 	^ nextValue
+]
 
 Collection >> intersection: aCollection
-intersection: aCollection
+[intersection: aCollection
 	"Answer the set theoretic intersection of two collections."
 
 	| set outputSet |
@@ -838,41 +930,48 @@ intersection: aCollection
 		do: [ :each | ((set includes: each) and: [ (outputSet includes: each) not ])
 				ifTrue: [ outputSet add: each ] ].
 	^ self species withAll: outputSet asArray
+]
 
 Collection >> isCollection
-isCollection
+[isCollection
 	"Return true if the receiver is some sort of Collection and responds to basic collection messages such as #size and #do:"
 
 	^ true
+]
 
 Collection >> isEmpty
-isEmpty
+[isEmpty
 	"Answer whether the receiver contains any elements."
 
 	^ self size = 0
+]
 
 Collection >> isEmptyOrNil
-isEmptyOrNil
+[isEmptyOrNil
 	"Answer whether the receiver contains any elements, or is nil.  Useful in numerous situations where one wishes the same reaction to an empty collection or to nil"
 
 	^ self isEmpty
+]
 
 Collection >> isNotEmpty
-isNotEmpty
+[isNotEmpty
 	"Answer whether the receiver contains any elements."
 
 	^ self isEmpty not
+]
 
 Collection >> isSequenceable
-isSequenceable
+[isSequenceable
 	^ false
+]
 
 Collection >> median
-median
+[median
 	^ self asSortedCollection median
+]
 
 Collection >> noneSatisfy: aBlock
-noneSatisfy: aBlock
+[noneSatisfy: aBlock
 	"Evaluate aBlock with the elements of the receiver.
 	If aBlock returns false for all elements return true.
 	Otherwise return false"
@@ -880,17 +979,19 @@ noneSatisfy: aBlock
 	self do: [ :item | (aBlock value: item)
 				ifTrue: [ ^ false ] ].
 	^ true
+]
 
 Collection >> notEmpty
-notEmpty
+[notEmpty
 	"Answer whether the receiver contains any elements."
 
 	"use isNotEmpty for consistency with isEmpty"
 
 	^ self isEmpty not
+]
 
 Collection >> occurrencesOf: anObject
-occurrencesOf: anObject
+[occurrencesOf: anObject
 	"Answer how many of the receiver's elements are equal to anObject."
 
 	| tally |
@@ -898,18 +999,20 @@ occurrencesOf: anObject
 	self do: [ :each | anObject = each
 				ifTrue: [ tally := tally + 1 ] ].
 	^ tally
+]
 
 Collection >> piecesCutWhere: binaryBlock
-piecesCutWhere: binaryBlock
+[piecesCutWhere: binaryBlock
 	"Answer substrings of the receiver derived from cutting the receiver at points where binaryBlock answers true for adjacent elements."
 
 	| pieces |
 	pieces := OrderedCollection new.
 	self piecesCutWhere: binaryBlock do: [ :piece | pieces add: piece ].
 	^ pieces	"'Now is the time for all good people to come to the aid of the cause of world peace.  It is just fine, even desirable, to love your country, if that means wanting it to play a beneficial role in the course of world events and be the best possible example of a good society.  But if it means wanting dominion over the rest of the world, it is not love but defensiveness or self-glorification, and will lead only to oblivion.'  piecesCutWhere: [:a :b| a = $. and: [b isSeparator]]"
+]
 
 Collection >> piecesCutWhere: binaryBlock do: pieceBlock
-piecesCutWhere: binaryBlock do: pieceBlock
+[piecesCutWhere: binaryBlock do: pieceBlock
 	"Evaluate pieceBlock with substrings of the receiver derived from cutting the receiver at points where binaryBlock answers true for adjacent elements."
 
 	| size lastCut this next |
@@ -925,36 +1028,41 @@ piecesCutWhere: binaryBlock do: pieceBlock
 				lastCut := i ].
 		this := next ].
 	pieceBlock value: (self copyFrom: lastCut to: size)
+]
 
 Collection >> printElementsOn: aStream
-printElementsOn: aStream
+[printElementsOn: aStream
 	"The original code used #skip:, but some streams do not support that,
 	 and we don't really need it."
 
 	aStream nextPut: $(.
 	self do: [ :element | aStream print: element ] separatedBy: [ aStream space ].
 	aStream nextPut: $)
+]
 
 Collection >> printNameOn: aStream
-printNameOn: aStream
+[printNameOn: aStream
 	super printOn: aStream
+]
 
 Collection >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	"Append a sequence of characters that identify the receiver to aStream."
 
 	self printNameOn: aStream.
 	self printElementsOn: aStream
+]
 
 Collection >> printOn: aStream delimiter: delimString
-printOn: aStream delimiter: delimString
+[printOn: aStream delimiter: delimString
 	"Print elements on a stream separated
 	with a delimiter String like: 'a, b, c' "
 
 	self do: [ :elem | aStream print: elem ] separatedBy: [ aStream print: delimString ]
+]
 
 Collection >> printOn: aStream delimiter: delimString last: lastDelimString
-printOn: aStream delimiter: delimString last: lastDelimString
+[printOn: aStream delimiter: delimString last: lastDelimString
 	"Print elements on a stream separated
 	with a delimiter between all the elements and with
 	a special one before the last like: 'a, b and c'
@@ -970,9 +1078,10 @@ printOn: aStream delimiter: delimString last: lastDelimString
 		separatedBy: [ n = sz
 				ifTrue: [ aStream print: lastDelimString ]
 				ifFalse: [ aStream print: delimString ] ]
+]
 
 Collection >> reduce: aBlock
-reduce: aBlock
+[reduce: aBlock
 	"Fold the result of the receiver into aBlock. The argument aBlock must take two or more arguments. It applies the argument, binaryBlock cumulatively to the elements of the receiver. For sequenceable collections the elements will be used in order, for unordered collections the order is unspecified."
 
 	"#(1 2 3) asSet reduce: [ :a :b | a + b ]
@@ -981,37 +1090,42 @@ reduce: aBlock
 		--> 1 + 2 + 3 + 4 + 5 = 15"
 
 	^ self asOrderedCollection reduce: aBlock
+]
 
 Collection >> reject: aBlock
-reject: aBlock
+[reject: aBlock
 	"Evaluate aBlock with each of the receiver's elements as the argument. 
 	Collect into a new collection like the receiver only those elements for 
 	which aBlock evaluates to false. Answer the new collection."
 
 	^ self select: [ :element | (aBlock value: element) == false ]
+]
 
 Collection >> reject: rejectBlock thenCollect: collectBlock
-reject: rejectBlock thenCollect: collectBlock
+[reject: rejectBlock thenCollect: collectBlock
 	"Utility method to improve readability."
 
 	^ (self reject: rejectBlock) collect: collectBlock
+]
 
 Collection >> reject: rejectBlock thenDo: doBlock
-reject: rejectBlock thenDo: doBlock
+[reject: rejectBlock thenDo: doBlock
 	"Utility method to improve readability."
 
 	(self reject: rejectBlock) do: doBlock
+]
 
 Collection >> remove: oldObject
-remove: oldObject
+[remove: oldObject
 	"Remove oldObject from the receiver's elements. Answer oldObject 
 	unless no element is equal to oldObject, in which case, raise an error.
 	ArrayedCollections cannot respond to this message."
 
 	^ self remove: oldObject ifAbsent: [ self errorNotFound: oldObject ]
+]
 
 Collection >> remove: oldObject ifAbsent: anExceptionBlock
-remove: oldObject ifAbsent: anExceptionBlock
+[remove: oldObject ifAbsent: anExceptionBlock
 	"Remove oldObject from the receiver's elements. If several of the 
 	elements are equal to oldObject, only one is removed. If no element is 
 	equal to oldObject, answer the result of evaluating anExceptionBlock. 
@@ -1019,9 +1133,10 @@ remove: oldObject ifAbsent: anExceptionBlock
 	respond to this message."
 
 	self subclassResponsibility
+]
 
 Collection >> removeAll
-removeAll
+[removeAll
 	"Remove each element from the receiver and leave it empty.
 	ArrayedCollections cannot respond to this message.
 	There are two good reasons why a subclass should override this message:
@@ -1029,9 +1144,10 @@ removeAll
 	2) the subclass provides a much faster way than iterating through each element"
 
 	self do: [ :each | self remove: each ]
+]
 
 Collection >> removeAll: aCollection
-removeAll: aCollection
+[removeAll: aCollection
 	"Remove each element of aCollection from the receiver. If successful for 
 	each, answer aCollection. Otherwise create an error notification.
 	ArrayedCollections cannot respond to this message."
@@ -1040,27 +1156,30 @@ removeAll: aCollection
 		ifTrue: [ ^ self removeAll ].
 	aCollection do: [ :each | self remove: each ].
 	^ aCollection
+]
 
 Collection >> removeAllFoundIn: aCollection
-removeAllFoundIn: aCollection
+[removeAllFoundIn: aCollection
 	"Remove each element of aCollection which is present in the receiver 
 	from the receiver. Answer aCollection. No error is raised if an element
 	isn't found. ArrayedCollections cannot respond to this message."
 
 	aCollection do: [ :each | self remove: each ifAbsent: [  ] ].
 	^ aCollection
+]
 
 Collection >> removeAllSuchThat: aBlock
-removeAllSuchThat: aBlock
+[removeAllSuchThat: aBlock
 	"Evaluate aBlock for each element and remove all that elements from
 	the receiver for that aBlock evaluates to true.  Use a copy to enumerate 
 	collections whose order changes when an element is removed (i.e. Sets)."
 
 	self copy do: [ :each | (aBlock value: each)
 				ifTrue: [ self remove: each ] ]
+]
 
 Collection >> select: aBlock
-select: aBlock
+[select: aBlock
 	"Evaluate aBlock with each of the receiver's elements as the argument. 
 	Collect into a new collection like the receiver, only those elements for 
 	which aBlock evaluates to true. Answer the new collection."
@@ -1070,57 +1189,64 @@ select: aBlock
 	self do: [ :each | (aBlock value: each)
 				ifTrue: [ newCollection add: each ] ].
 	^ newCollection
+]
 
 Collection >> select: selectBlock thenCollect: collectBlock
-select: selectBlock thenCollect: collectBlock
+[select: selectBlock thenCollect: collectBlock
 	"Utility method to improve readability."
 
 	^ (self select: selectBlock) collect: collectBlock
+]
 
 Collection >> select: selectBlock thenDo: doBlock
-select: selectBlock thenDo: doBlock
+[select: selectBlock thenDo: doBlock
 	"Utility method to improve readability.
 	Do not create the intermediate collection."
 
 	self do: [ :each | (selectBlock value: each)
 				ifTrue: [ doBlock value: each ] ]
+]
 
 Collection >> size
-size
+[size
 	"Answer how many elements the receiver contains."
 
 	| tally |
 	tally := 0.
 	self do: [ :each | tally := tally + 1 ].
 	^ tally
+]
 
 Collection >> sorted
-sorted
+[sorted
 	"Return a new sequenceable collection which contains the same elements as self but its 
 elements are sorted"
 
 	^ self asArray sorted
+]
 
 Collection >> sorted: aSortBlockOrNil
-sorted: aSortBlockOrNil
+[sorted: aSortBlockOrNil
 	"Return a new sequenceable collection which contains the same elements as self but its 
 elements are sorted by aSortBlockOrNil. The block should take two arguments and return true if 
 the first element should preceed the second one. If aSortBlock is nil then <= is used for 
 comparison."
 
 	^ self asArray sort: aSortBlockOrNil
+]
 
 Collection >> stdev
-stdev
+[stdev
 	| avg sample sum |
 	avg := self average.	"see comment in self sum"
 	sample := self anyOne.
 	sum := self inject: sample into: [ :accum :each | accum + (each - avg) squared ].
 	sum := sum - sample.
 	^ (sum / (self size - 1)) sqrt
+]
 
 Collection >> storeOn: aStream
-storeOn: aStream
+[storeOn: aStream
 	"Refer to the comment in Object|storeOn:."
 
 	| noneYet |
@@ -1137,9 +1263,10 @@ storeOn: aStream
 	noneYet
 		ifFalse: [ aStream nextPutAll: '; yourself' ].
 	aStream nextPut: $)
+]
 
 Collection >> sum: aBlock
-sum: aBlock
+[sum: aBlock
 	"This is implemented using a variant of the normal inject:into: pattern. 
 	The reason for this is that it is not known whether we're in the normal 
 	number line, i.e. whether 0 is a good initial value for the sum. 
@@ -1150,9 +1277,10 @@ sum: aBlock
 	sample := aBlock value: self anyOne.
 	sum := self inject: sample into: [ :previousValue :each | previousValue + (aBlock value: each) ].
 	^ sum - sample
+]
 
 Collection >> sumNumbers: aBlock
-sumNumbers: aBlock
+[sumNumbers: aBlock
 	"This is implemented using a variant of the normal inject:into: pattern
 	that is specific to handling numbers. aBlock is expected to return a number
 	for every element in the collection.
@@ -1162,9 +1290,10 @@ sumNumbers: aBlock
 	dealing with numbers."
 
 	^ self inject: 0 into: [ :sum :each | sum + (aBlock value: each) ]
+]
 
 Collection >> toBraceStack: itsSize
-toBraceStack: itsSize
+[toBraceStack: itsSize
 	"Push receiver's elements onto the stack of thisContext sender.  Error if receiver does
 	 not have itsSize elements or if receiver is unordered.
 	 Do not call directly: this is called by {a. b} := ... constructs."
@@ -1172,9 +1301,10 @@ toBraceStack: itsSize
 	self size ~= itsSize
 		ifTrue: [ self error: 'Trying to store ' , self size printString , ' values into ' , itsSize printString , ' variables.' ].
 	thisContext sender push: itsSize fromIndexable: self
+]
 
 Collection >> union: aCollection
-union: aCollection
+[union: aCollection
 	"Answer the set theoretic union of two collections."
 
 	| set |
@@ -1182,50 +1312,58 @@ union: aCollection
 		addAll: aCollection;
 		yourself.
 	^ self species withAll: set asArray
+]
 
 Collection >> write: anObject
-write: anObject
+[write: anObject
 	^ self add: anObject
+]
 
 Collection >> | aCollection
-| aCollection
+[| aCollection
 	^ self union: aCollection
+]
 
 Collection class >> initialize
-initialize
+[initialize
 	"Set up a Random number generator to be used by atRandom when the 
 	user does not feel like creating his own Random generator."
 
 	RandomForPicking := Random new.
 	MutexForPicking := Semaphore forMutualExclusion
+]
 
 Collection class >> mutexForPicking
-mutexForPicking
+[mutexForPicking
 	^ MutexForPicking
+]
 
 Collection class >> randomForPicking
-randomForPicking
+[randomForPicking
 	^ RandomForPicking
+]
 
 Collection class >> with: anObject
-with: anObject
+[with: anObject
 	"Answer an instance of me containing anObject."
 
 	^ self new
 		add: anObject;
 		yourself
+]
 
 Collection class >> with: firstObject with: secondObject
-with: firstObject with: secondObject
+[with: firstObject with: secondObject
 	"Answer an instance of me containing the two arguments as elements."
 
 	^ self new
 		add: firstObject;
 		add: secondObject;
 		yourself
+]
 
 Collection class >> with: firstObject with: secondObject with: thirdObject
-with: firstObject with: secondObject with: thirdObject
+[with: firstObject with: secondObject with: thirdObject
 	"Answer an instance of me containing the three arguments as elements."
 
 	^ self new
@@ -1233,9 +1371,10 @@ with: firstObject with: secondObject with: thirdObject
 		add: secondObject;
 		add: thirdObject;
 		yourself
+]
 
 Collection class >> with: firstObject with: secondObject with: thirdObject with: fourthObject
-with: firstObject with: secondObject with: thirdObject with: fourthObject
+[with: firstObject with: secondObject with: thirdObject with: fourthObject
 	"Answer an instance of me, containing the four arguments as the elements."
 
 	^ self new
@@ -1244,9 +1383,10 @@ with: firstObject with: secondObject with: thirdObject with: fourthObject
 		add: thirdObject;
 		add: fourthObject;
 		yourself
+]
 
 Collection class >> with: firstObject with: secondObject with: thirdObject with: fourthObject with: fifthObject
-with: firstObject with: secondObject with: thirdObject with: fourthObject with: fifthObject
+[with: firstObject with: secondObject with: thirdObject with: fourthObject with: fifthObject
 	"Answer an instance of me, containing the five arguments as the elements."
 
 	^ self new
@@ -1256,9 +1396,10 @@ with: firstObject with: secondObject with: thirdObject with: fourthObject with: 
 		add: fourthObject;
 		add: fifthObject;
 		yourself
+]
 
 Collection class >> with: firstObject with: secondObject with: thirdObject with: fourthObject with: fifthObject with: sixthObject
-with: firstObject with: secondObject with: thirdObject with: fourthObject with: fifthObject with: sixthObject
+[with: firstObject with: secondObject with: thirdObject with: fourthObject with: fifthObject with: sixthObject
 	"Answer an instance of me, containing the six arguments as the elements."
 
 	^ self new
@@ -1269,12 +1410,14 @@ with: firstObject with: secondObject with: thirdObject with: fourthObject with: 
 		add: fifthObject;
 		add: sixthObject;
 		yourself
+]
 
 Collection class >> withAll: aCollection
-withAll: aCollection
+[withAll: aCollection
 	"Create a new collection containing all the elements from aCollection."
 
 	^ (self new: aCollection size)
 		addAll: aCollection;
 		yourself
+]
 

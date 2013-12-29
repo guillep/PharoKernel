@@ -3,36 +3,41 @@ Model
 	package: #'System-Support'.
 
 Model >> actAsExecutor
-actAsExecutor
+[actAsExecutor
 	"Prepare the receiver to act as executor for any resources associated with it"
 
 	self breakDependents
+]
 
 Model >> addDependent: anObject
-addDependent: anObject
+[addDependent: anObject
 	"Make the given object one of the receiver's dependents."
 
 	(self dependents includes: anObject)
 		ifFalse: [ self myDependents: (self dependents copyWithDependent: anObject) ].
 	^ anObject
+]
 
 Model >> dependents
-dependents
+[dependents
 	"Answer a collection of objects that are 'dependent' on the receiver;
 	 that is, all objects that should be notified if the receiver changes."
 
 	^ self myDependents ifNil: [ #() ]
+]
 
 Model >> myDependents
-myDependents
+[myDependents
 	^ dependents
+]
 
 Model >> myDependents: aCollectionOrNil
-myDependents: aCollectionOrNil
+[myDependents: aCollectionOrNil
 	dependents := aCollectionOrNil
+]
 
 Model >> removeDependent: anObject
-removeDependent: anObject
+[removeDependent: anObject
 	"Remove the given object as one of the receiver's dependents."
 
 	| newDependents |
@@ -40,13 +45,15 @@ removeDependent: anObject
 	self myDependents: (newDependents isEmpty
 				ifFalse: [ newDependents ]).
 	^ anObject
+]
 
 Model >> update: anAspect
-update: anAspect
+[update: anAspect
 	^ self
+]
 
 Model >> veryDeepFixupWith: deepCopier
-veryDeepFixupWith: deepCopier
+[veryDeepFixupWith: deepCopier
 	"See if the dependents are being copied also.  If so, point at the new copies.  (The dependent has self as its model.)
 	Dependents handled in class Object, when the model is not a Model, are fixed up in Object veryDeepCopy."
 
@@ -60,4 +67,5 @@ veryDeepFixupWith: deepCopier
 		do: [ :originalDependent | | newDependent |
 			newDependent := refs at: originalDependent ifAbsent: [  ].
 			newDependent ifNotNil: [ self addDependent: newDependent ] ]
+]
 

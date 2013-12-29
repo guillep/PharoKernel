@@ -3,44 +3,53 @@ FileSystemResolver
 	package: #'FileSystem-Core'.
 
 FileSystemResolver >> addResolver: aResolver
-addResolver: aResolver
+[addResolver: aResolver
 	next ifNil: [ next := aResolver ] ifNotNil: [ next addResolver: aResolver ]
+]
 
 FileSystemResolver >> canResolve: aSymbol
-canResolve: aSymbol
+[canResolve: aSymbol
 	^ self supportedOrigins includes: aSymbol
+]
 
 FileSystemResolver >> flushCaches
-flushCaches
+[flushCaches
 	self flushLocalCache.
 	next ifNotNil: [ next flushCaches ]
+]
 
 FileSystemResolver >> flushLocalCache
-flushLocalCache
+[flushLocalCache
 	
+]
 
 FileSystemResolver >> next
-next
+[next
 	^ next
+]
 
 FileSystemResolver >> resolve: aSymbol
-resolve: aSymbol
+[resolve: aSymbol
 	^ (self canResolve: aSymbol)
 		ifTrue: [ self perform: aSymbol ]
 		ifFalse: [ self unknownOrigin: aSymbol ]
+]
 
 FileSystemResolver >> resolveString: aString
-resolveString: aString
+[resolveString: aString
 	| decoded fs |
 	decoded := FilePathEncoder decode: aString.
 	fs := FileSystem disk.
 	^ FileReference fileSystem: fs path: (fs pathFromString: decoded)
+]
 
 FileSystemResolver >> supportedOrigins
-supportedOrigins
+[supportedOrigins
 	^ #()
+]
 
 FileSystemResolver >> unknownOrigin: aSymbol
-unknownOrigin: aSymbol
+[unknownOrigin: aSymbol
 	^ next ifNotNil: [ next resolve: aSymbol ]
+]
 

@@ -1,84 +1,97 @@
 String >> allRangesOfRegexMatches: rxString
-allRangesOfRegexMatches: rxString
+[allRangesOfRegexMatches: rxString
 	^ rxString asRegex matchingRangesIn: self
+]
 
 String >> allRegexMatches: rxString
-allRegexMatches: rxString
+[allRegexMatches: rxString
 	^ rxString asRegex matchesIn: self
+]
 
 String >> asRegex
-asRegex
+[asRegex
 	"Compile the receiver as a regex matcher. May raise RxParser>>syntaxErrorSignal
 	or RxParser>>compilationErrorSignal.
 	This is a part of the Regular Expression Matcher package, (c) 1996, 1999 Vassili Bykov.
 	Refer to `documentation' protocol of RxParser class for details."
 
 	^ RxParser preferredMatcherClass for: (RxParser new parse: self)
+]
 
 String >> asRegexIgnoringCase
-asRegexIgnoringCase
+[asRegexIgnoringCase
 	"Compile the receiver as a regex matcher. May raise RxParser>>syntaxErrorSignal
 	or RxParser>>compilationErrorSignal.
 	This is a part of the Regular Expression Matcher package, (c) 1996, 1999 Vassili Bykov.
 	Refer to `documentation' protocol of RxParser class for details."
 
 	^ RxParser preferredMatcherClass for: (RxParser new parse: self) ignoreCase: true
+]
 
 String >> copyWithRegex: rxString matchesReplacedWith: aString
-copyWithRegex: rxString matchesReplacedWith: aString
+[copyWithRegex: rxString matchesReplacedWith: aString
 	^ rxString asRegex copy: self replacingMatchesWith: aString
+]
 
 String >> copyWithRegex: rxString matchesTranslatedUsing: aBlock
-copyWithRegex: rxString matchesTranslatedUsing: aBlock
+[copyWithRegex: rxString matchesTranslatedUsing: aBlock
 	^ rxString asRegex copy: self translatingMatchesUsing: aBlock
+]
 
 String >> matchesRegex: regexString
-matchesRegex: regexString
+[matchesRegex: regexString
 	"Test if the receiver matches a regex.  May raise RxParser>>regexErrorSignal or
 	child signals.
 	This is a part of the Regular Expression Matcher package, (c) 1996, 1999 Vassili Bykov.
 	Refer to `documentation' protocol of RxParser class for details."
 
 	^ regexString asRegex matches: self
+]
 
 String >> matchesRegexIgnoringCase: regexString
-matchesRegexIgnoringCase: regexString
+[matchesRegexIgnoringCase: regexString
 	"Test if the receiver matches a regex.  May raise RxParser>>regexErrorSignal or
 	child signals.
 	This is a part of the Regular Expression Matcher package, (c) 1996, 1999 Vassili Bykov.
 	Refer to `documentation' protocol of RxParser class for details."
 
 	^ regexString asRegexIgnoringCase matches: self
+]
 
 String >> prefixMatchesRegex: regexString
-prefixMatchesRegex: regexString
+[prefixMatchesRegex: regexString
 	"Test if the receiver's prefix matches a regex.	
 	May raise RxParser class>>regexErrorSignal or child signals.
 	This is a part of the Regular Expression Matcher package, (c) 1996, 1999 Vassili Bykov.
 	Refer to `documentation' protocol of RxParser class for details."
 
 	^ regexString asRegex matchesPrefix: self
+]
 
 String >> prefixMatchesRegexIgnoringCase: regexString
-prefixMatchesRegexIgnoringCase: regexString
+[prefixMatchesRegexIgnoringCase: regexString
 	"Test if the receiver's prefix matches a regex.	
 	May raise RxParser class>>regexErrorSignal or child signals.
 	This is a part of the Regular Expression Matcher package, (c) 1996, 1999 Vassili Bykov.
 	Refer to `documentation' protocol of RxParser class for details."
 
 	^ regexString asRegexIgnoringCase matchesPrefix: self
+]
 
 String >> regex: rxString matchesCollect: aBlock
-regex: rxString matchesCollect: aBlock
+[regex: rxString matchesCollect: aBlock
 	^ rxString asRegex matchesIn: self collect: aBlock
+]
 
 String >> regex: rxString matchesDo: aBlock
-regex: rxString matchesDo: aBlock
+[regex: rxString matchesDo: aBlock
 	^ rxString asRegex matchesIn: self do: aBlock
+]
 
 String >> search: aString
-search: aString
+[search: aString
 	"compatibility method to make regexp and strings work polymorphicly"
 
 	^ aString includesSubstring: self
+]
 

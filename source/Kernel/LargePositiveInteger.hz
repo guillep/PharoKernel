@@ -4,11 +4,12 @@ LargePositiveInteger
 	package: #Kernel.
 
 LargePositiveInteger >> abs
-abs
+[abs
 	
+]
 
 LargePositiveInteger >> bitAt: anInteger
-bitAt: anInteger
+[bitAt: anInteger
 	"Optimize super algorithm to avoid long bit operations.
 	Instead work on digits which are known to be SmallInteger and fast.
 	Note that this algorithm does not work for negative integers."
@@ -19,9 +20,10 @@ bitAt: anInteger
 		ifTrue: [ ^ 0 ].
 	bitIndex := (anInteger - 1) \\ 8 + 1.
 	^ (self digitAt: digitIndex) bitAt: bitIndex
+]
 
 LargePositiveInteger >> highBit
-highBit
+[highBit
 	"Answer the index of the high order bit of the receiver, or zero if the  
 	receiver is zero. Raise an error if the receiver is negative, since  
 	negative integers are defined to have an infinite number of leading 1's 
@@ -29,9 +31,10 @@ highBit
 	get the highest bit of the magnitude."
 
 	^ self highBitOfMagnitude
+]
 
 LargePositiveInteger >> ln
-ln
+[ln
 	"This function is defined because super ln might overflow."
 
 	| res h |
@@ -40,9 +43,10 @@ ln
 		ifTrue: [ ^ res ].
 	h := self highBit.
 	^ 2 ln * h + (self / (1 << h)) asFloat ln
+]
 
 LargePositiveInteger >> log
-log
+[log
 	"This function is defined because super log might overflow."
 
 	| res h |
@@ -51,19 +55,22 @@ log
 		ifTrue: [ ^ res ].
 	h := self highBit.
 	^ 2 log * h + (self / (1 << h)) asFloat log
+]
 
 LargePositiveInteger >> negated
-negated
+[negated
 	^ (self copyto: (LargeNegativeInteger new: self digitLength)) normalize	"Need to normalize to catch SmallInteger minVal"
+]
 
 LargePositiveInteger >> negative
-negative
+[negative
 	"Answer whether the receiver is mathematically negative."
 
 	^ false
+]
 
 LargePositiveInteger >> normalize
-normalize
+[normalize
 	"Check for leading zeroes and return shortened copy if so"
 
 	<primitive: 'primNormalizePositive' module: 'LargeIntegers'>
@@ -81,16 +88,18 @@ normalize
 	len < oldLen
 		ifTrue: [ ^ self growto: len ]
 		ifFalse: [ ^ self ]
+]
 
 LargePositiveInteger >> positive
-positive
+[positive
 	"Answer whether the receiver is positive or equal to 0. (ST-80 protocol).
 	See also strictlyPositive"
 
 	^ true
+]
 
 LargePositiveInteger >> printOn: aStream base: b
-printOn: aStream base: b
+[printOn: aStream base: b
 	"Append a representation of this number in base b on aStream.
 	In order to reduce cost of LargePositiveInteger ops, split the number in approximately two equal parts in number of digits."
 
@@ -110,15 +119,17 @@ printOn: aStream base: b
 	tail := self - (head * halfPower).	"print head"
 	head printOn: aStream base: b.	"print tail without the overhead to count the digits"
 	tail printOn: aStream base: b nDigits: halfDigits
+]
 
 LargePositiveInteger >> sign
-sign
+[sign
 	"Optimization. Answer 1 since receiver is greater than 0."
 
 	^ 1
+]
 
 LargePositiveInteger >> sqrt
-sqrt
+[sqrt
 	"If we know for sure no exact solution exists, then just answer the cheap float approximation without wasting time."
 
 	| selfAsFloat |
@@ -127,10 +138,12 @@ sqrt
 			selfAsFloat isFinite
 				ifTrue: [ ^ self asFloat sqrt ] ].	"If some exact solution might exist, or self asFloat isInfinite, call potentially expensive super"
 	^ super sqrt
+]
 
 LargePositiveInteger >> strictlyPositive
-strictlyPositive
+[strictlyPositive
 	"Answer whether the receiver is mathematically positive."
 
 	^ true
+]
 

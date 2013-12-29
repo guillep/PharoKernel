@@ -4,11 +4,12 @@ LIFOQueue
 	package: #'Collections-Atomic'.
 
 LIFOQueue >> errorEmptyStack
-errorEmptyStack
+[errorEmptyStack
 	self error: 'this stack is empty'
+]
 
 LIFOQueue >> fastPeek
-fastPeek
+[fastPeek
 	"Answer a top-most value without removing it from queue.
 	Answer nil, if queue is empty or currently blocked by other process,
 	which reading from queue"
@@ -20,18 +21,20 @@ fastPeek
 				ifTrue: [ ^ nil ].
 			(item := item next) ifNil: [ ^ nil ] ].
 	^ result
+]
 
 LIFOQueue >> initialize
-initialize
+[initialize
 	| dummy |
 	dummy := self newItem.
 	dummy
 		next: nil;
 		object: dummy.
 	head := dummy
+]
 
 LIFOQueue >> next
-next
+[next
 	| dummy tail |
 	dummy := self newItem.
 	dummy object: dummy.	"this is atomic"
@@ -50,9 +53,10 @@ next
 					^ result ] ].
 	dummy next: tail next.
 	^ tail object
+]
 
 LIFOQueue >> nextIfNone: aBlock
-nextIfNone: aBlock
+[nextIfNone: aBlock
 	| dummy tail |
 	dummy := self newItem.
 	dummy object: dummy.
@@ -67,13 +71,15 @@ nextIfNone: aBlock
 					^ aBlock value ] ].
 	dummy next: tail next.
 	^ tail object
+]
 
 LIFOQueue >> nextOrNil
-nextOrNil
+[nextOrNil
 	^ self nextIfNone: [ nil ]
+]
 
 LIFOQueue >> nextPut: anObject
-nextPut: anObject
+[nextPut: anObject
 	| newItem oldHead |
 	newItem := self newItem.
 	newItem object: anObject.	"this is atomic"
@@ -82,9 +88,10 @@ nextPut: anObject
 	newItem next: oldHead.
 	self signalAddedNewItem.
 	^ anObject
+]
 
 LIFOQueue >> peek
-peek
+[peek
 	"answer a top-most value without removing it,  or nil, if queue is empty.
 	May block if there's another process reading from queue"
 
@@ -94,12 +101,15 @@ peek
 		whileTrue: [ [ item isCircular ] whileTrue: [ self yield ].
 			(item := item next) ifNil: [ ^ nil ] ].
 	^ result
+]
 
 LIFOQueue >> pop
-pop
+[pop
 	^ self nextIfNone: [ self errorEmptyStack ]
+]
 
 LIFOQueue >> push: anObject
-push: anObject
+[push: anObject
 	^ self nextPut: anObject
+]
 

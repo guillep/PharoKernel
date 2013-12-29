@@ -3,62 +3,72 @@ TraitComposition
 	package: #Traits.
 
 TraitComposition >> + aTraitExpression
-+ aTraitExpression
+[+ aTraitExpression
 	^ aTraitExpression addCompositionOnLeft: self
+]
 
 TraitComposition >> - anArray
-- anArray
+[- anArray
 	"the modifier operators #@ and #- bind stronger than +"
 
 	self transformations: (self transformations collect: [ :t | t - anArray ])
+]
 
 TraitComposition >> @ anArrayOfAssociations
-@ anArrayOfAssociations
+[@ anArrayOfAssociations
 	"the modifier operators #@ and #- bind stronger than +"
 
 	self transformations: (self transformations collect: [ :t | t @ anArrayOfAssociations ])
+]
 
 TraitComposition >> add: aTraitTransformation
-add: aTraitTransformation
+[add: aTraitTransformation
 	self errorIfNotAddable: aTraitTransformation.
 	self transformations addLast: aTraitTransformation
+]
 
 TraitComposition >> addCompositionOnLeft: aTraitComposition
-addCompositionOnLeft: aTraitComposition
+[addCompositionOnLeft: aTraitComposition
 	self transformations do: [ :each | aTraitComposition add: each ].
 	^ aTraitComposition
+]
 
 TraitComposition >> addOnTheLeft: aTrait
-addOnTheLeft: aTrait
+[addOnTheLeft: aTrait
 	self errorIfNotAddable: aTrait.
 	self transformations addFirst: aTrait
+]
 
 TraitComposition >> allSelectors
-allSelectors
+[allSelectors
 	^ Array
 		streamContents: [ :stream | self transformations do: [ :transformation | stream nextPutAll: transformation allSelectors ] ]
+]
 
 TraitComposition >> allTraits
-allTraits
+[allTraits
 	^ self traits
 		gather: [ :trait | trait hasTraitComposition
 				ifTrue: [ trait traitComposition allTraits copyWith: trait ]
 				ifFalse: [ Array with: trait ] ]
+]
 
 TraitComposition >> asTraitComposition
-asTraitComposition
+[asTraitComposition
 	^ self
+]
 
 TraitComposition >> assertValidUser: aBehavior
-assertValidUser: aBehavior
+[assertValidUser: aBehavior
 	"Assert that this trait composition set for aBehavior
 	does not introduce a cycle."
 
 	(self allTraits includes: aBehavior)
 		ifTrue: [ TraitCompositionException signal: 'Cycle in compositions:  The composition (in)directly includes this trait!' ]
+]
 
 TraitComposition >> changedSelectorsComparedTo: oldComposition
-changedSelectorsComparedTo: oldComposition
+[changedSelectorsComparedTo: oldComposition
 	| changedSelectors traits |
 	changedSelectors := IdentitySet new.
 	traits := self traits asIdentitySet
@@ -72,21 +82,24 @@ changedSelectorsComparedTo: oldComposition
 				ifTrue: [ changedSelectors addAll: each selectors ]
 				ifFalse: [ changedSelectors addAll: (newTransformation changedSelectorsComparedTo: oldTransformation) ] ].
 	^ changedSelectors
+]
 
 TraitComposition >> copy
-copy
+[copy
 	self error: 'should not be called'.
 	^ super copy
+]
 
 TraitComposition >> copyTraitExpression
-copyTraitExpression
+[copyTraitExpression
 	| newCopy |
 	newCopy := self shallowCopy.
 	newCopy transformations: (self transformations collect: [ :each | each copyTraitExpression ]).
 	^ newCopy
+]
 
 TraitComposition >> copyWithExclusionOf: aSymbol to: aTrait
-copyWithExclusionOf: aSymbol to: aTrait
+[copyWithExclusionOf: aSymbol to: aTrait
 	| composition transformation |
 	composition := self copyTraitExpression.
 	transformation := composition transformationOfTrait: aTrait.
@@ -94,9 +107,10 @@ copyWithExclusionOf: aSymbol to: aTrait
 		remove: transformation;
 		add: (transformation addExclusionOf: aSymbol);
 		yourself
+]
 
 TraitComposition >> copyWithoutAlias: aSymbol of: aTrait
-copyWithoutAlias: aSymbol of: aTrait
+[copyWithoutAlias: aSymbol of: aTrait
 	| composition transformation |
 	composition := self copyTraitExpression.
 	transformation := composition transformationOfTrait: aTrait.
@@ -105,27 +119,32 @@ copyWithoutAlias: aSymbol of: aTrait
 		add: (transformation removeAlias: aSymbol);
 		normalizeTransformations;
 		yourself
+]
 
 TraitComposition >> errorIfNotAddable: aTraitTransformation
-errorIfNotAddable: aTraitTransformation
+[errorIfNotAddable: aTraitTransformation
 	(self includesTrait: aTraitTransformation trait)
 		ifTrue: [ ^ TraitCompositionException signal: 'Trait ' , aTraitTransformation trait asString , ' already in composition' ]
+]
 
 TraitComposition >> includesMethod: aSelector
-includesMethod: aSelector
+[includesMethod: aSelector
 	^ (self methodDescriptionForSelector: aSelector) isEmpty not
+]
 
 TraitComposition >> includesTrait: aTrait
-includesTrait: aTrait
+[includesTrait: aTrait
 	^ self traits includes: aTrait
+]
 
 TraitComposition >> initialize
-initialize
+[initialize
 	super initialize.
 	transformations := OrderedCollection new
+]
 
 TraitComposition >> isAliasSelector: aSymbol
-isAliasSelector: aSymbol
+[isAliasSelector: aSymbol
 	"Return true if the selector aSymbol is an alias defined
 	in this or in another composition somewhere deeper in 
 	the tree of traits compositions."
@@ -133,31 +152,35 @@ isAliasSelector: aSymbol
 	| methodDescription |
 	methodDescription := (self methodDescriptionsForSelector: aSymbol) detect: [ :each | each selector = aSymbol ].
 	^ methodDescription isAliasSelector
+]
 
 TraitComposition >> isEmpty
-isEmpty
+[isEmpty
 	^ self transformations isEmpty
+]
 
 TraitComposition >> isLocalAliasSelector: aSymbol
-isLocalAliasSelector: aSymbol
+[isLocalAliasSelector: aSymbol
 	"Return true if the selector aSymbol is an alias defined
 	in this composition."
 
 	| methodDescription |
 	methodDescription := (self methodDescriptionsForSelector: aSymbol) detect: [ :each | each selector = aSymbol ].
 	^ methodDescription isLocalAliasSelector
+]
 
 TraitComposition >> methodDescriptionForSelector: aSymbol
-methodDescriptionForSelector: aSymbol
+[methodDescriptionForSelector: aSymbol
 	"Return a TraitMethodDescription for the selector aSymbol."
 
 	| description |
 	description := TraitMethodDescription selector: aSymbol.
 	self transformations do: [ :each | each collectMethodsFor: aSymbol into: description ].
 	^ description
+]
 
 TraitComposition >> methodDescriptionsForSelector: aSymbol
-methodDescriptionsForSelector: aSymbol
+[methodDescriptionsForSelector: aSymbol
 	"Return a collection of TraitMethodDescriptions for aSymbol and all the 
 	aliases of aSymbol."
 
@@ -167,30 +190,35 @@ methodDescriptionsForSelector: aSymbol
 	collection := OrderedCollection new: selectors size.
 	selectors do: [ :each | collection add: (self methodDescriptionForSelector: each) ].
 	^ collection
+]
 
 TraitComposition >> normalizeTransformations
-normalizeTransformations
+[normalizeTransformations
 	self transformations: (self transformations collect: [ :each | each normalized ])
+]
 
 TraitComposition >> notEmpty
-notEmpty
+[notEmpty
 	^ self isEmpty not
+]
 
 TraitComposition >> originSelectorOf: aSelector
-originSelectorOf: aSelector
+[originSelectorOf: aSelector
 	self isEmpty
 		ifTrue: [ ^ aSelector ].
 	self transformations
 		do: [ :transformation | transformation allAliasesDict at: aSelector ifPresent: [ :value | ^ value ] ].
 	^ aSelector
+]
 
 TraitComposition >> postCopy
-postCopy
+[postCopy
 	super postCopy.
 	transformations := transformations collect: [ :each | each copy ]
+]
 
 TraitComposition >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	self transformations isEmptyOrNil
 		ifFalse: [ "The first element does not need parenthesis"
 			aStream nextPutAll: (self transformations at: 1) asString.
@@ -202,25 +230,30 @@ printOn: aStream
 								ifFalse: [ '(' , each asString , ')' ]) ]
 				separatedBy: [ aStream nextPutAll: ' + ' ] ]
 		ifTrue: [ aStream nextPutAll: '{}' ]
+]
 
 TraitComposition >> printString
-printString
+[printString
 	^ String streamContents: [ :stream | self printOn: stream ]
+]
 
 TraitComposition >> remove: aTransformation
-remove: aTransformation
+[remove: aTransformation
 	self transformations remove: aTransformation
+]
 
 TraitComposition >> removeFromComposition: aTrait
-removeFromComposition: aTrait
+[removeFromComposition: aTrait
 	self remove: (self transformationOfTrait: aTrait)
+]
 
 TraitComposition >> size
-size
+[size
 	^ transformations size
+]
 
 TraitComposition >> traitProvidingSelector: aSymbol
-traitProvidingSelector: aSymbol
+[traitProvidingSelector: aSymbol
 	"Return the trait which originally provides the method aSymbol or return nil
 	if trait composition does not provide this selector or there is a conflict.
 	Take aliases into account. Return the trait which the aliased method is defined in."
@@ -231,36 +264,43 @@ traitProvidingSelector: aSymbol
 		ifTrue: [ ^ nil ].
 	locatedMethod := methodDescription providedLocatedMethod.
 	^ locatedMethod methodClass traitOrClassOfSelector: locatedMethod selector
+]
 
 TraitComposition >> traits
-traits
+[traits
 	^ self transformations collect: [ :each | each trait ]
+]
 
 TraitComposition >> transformationOfTrait: aTrait
-transformationOfTrait: aTrait
+[transformationOfTrait: aTrait
 	"Return the transformation which holds aTrait
 	or nil if this composition doesn't include aTrait."
 
 	^ self transformations detect: [ :each | each trait = aTrait ] ifNone: [ nil ]
+]
 
 TraitComposition >> transformations
-transformations
+[transformations
 	^ transformations
+]
 
 TraitComposition >> transformations: aCollection
-transformations: aCollection
+[transformations: aCollection
 	transformations := aCollection
+]
 
 TraitComposition class >> with: aTraitTransformation
-with: aTraitTransformation
+[with: aTraitTransformation
 	^ self new
 		add: aTraitTransformation;
 		yourself
+]
 
 TraitComposition class >> with: aTraitTransformation with: anotherTraitTransformation
-with: aTraitTransformation with: anotherTraitTransformation
+[with: aTraitTransformation with: anotherTraitTransformation
 	^ self new
 		add: aTraitTransformation;
 		add: anotherTraitTransformation;
 		yourself
+]
 

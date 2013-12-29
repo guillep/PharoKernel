@@ -3,7 +3,7 @@ RxMatchOptimizer
 	package: #'Regex-Core'.
 
 RxMatchOptimizer >> canStartMatch: aCharacter in: aMatcher
-canStartMatch: aCharacter in: aMatcher
+[canStartMatch: aCharacter in: aMatcher
 	"Answer whether a match could commence at the given lookahead
 	character, or in the current state of <aMatcher>. True answered
 	by this method does not mean a match will definitly occur, while false
@@ -12,9 +12,10 @@ canStartMatch: aCharacter in: aMatcher
 	aCharacter isNil
 		ifTrue: [ ^ true ].
 	^ testBlock == nil or: [ testBlock value: aCharacter value: aMatcher ]
+]
 
 RxMatchOptimizer >> conditionTester
-conditionTester
+[conditionTester
 	"#any condition is filtered at the higher level;
 	it cannot appear among the conditions here."
 
@@ -38,9 +39,10 @@ conditionTester
 			RxParser signalCompilationException: 'invalid match condition' ].	"More than one condition. Capture them as an array in scope."
 	matchCondition := conditions asArray.
 	^ [ :c :matcher | matchCondition contains: [ :conditionSelector | matcher perform: conditionSelector ] ]
+]
 
 RxMatchOptimizer >> determineTestMethod
-determineTestMethod
+[determineTestMethod
 	"Answer a block closure that will work as a can-match predicate.
 	Answer nil if no viable optimization is possible (too many chars would
 	be able to start a match)."
@@ -60,9 +62,10 @@ determineTestMethod
 		ifTrue: [ ^ testers first ].
 	testers := testers asArray.
 	^ [ :char :matcher | testers contains: [ :t | t value: char value: matcher ] ]
+]
 
 RxMatchOptimizer >> initialize: aRegex ignoreCase: aBoolean
-initialize: aRegex ignoreCase: aBoolean
+[initialize: aRegex ignoreCase: aBoolean
 	"Set `testMethod' variable to a can-match predicate block:
 	two-argument block which accepts a lookahead character
 	and a matcher (presumably built from aRegex) and answers 
@@ -82,9 +85,10 @@ initialize: aRegex ignoreCase: aBoolean
 	aRegex isNullable
 		ifTrue: [ conditions add: #atEndOfLine ].
 	testBlock := self determineTestMethod
+]
 
 RxMatchOptimizer >> methodPredicateTester
-methodPredicateTester
+[methodPredicateTester
 	| p selector |
 	methodPredicates isEmpty
 		ifTrue: [ ^ nil ].
@@ -94,9 +98,10 @@ methodPredicateTester
 			selector := p first.
 			[ :char :matcher | RxParser doHandlingMessageNotUnderstood: [ char perform: selector ] ] ]
 		ifFalse: [ [ :char :m | RxParser doHandlingMessageNotUnderstood: [ p contains: [ :sel | char perform: sel ] ] ] ]
+]
 
 RxMatchOptimizer >> nonMethodPredicateTester
-nonMethodPredicateTester
+[nonMethodPredicateTester
 	| p selector |
 	nonMethodPredicates isEmpty
 		ifTrue: [ ^ nil ].
@@ -105,9 +110,10 @@ nonMethodPredicateTester
 		ifTrue: [ selector := p first.
 			[ :char :matcher | RxParser doHandlingMessageNotUnderstood: [ (char perform: selector) not ] ] ]
 		ifFalse: [ [ :char :m | RxParser doHandlingMessageNotUnderstood: [ p contains: [ :sel | (char perform: sel) not ] ] ] ]
+]
 
 RxMatchOptimizer >> nonPredicateTester
-nonPredicateTester
+[nonPredicateTester
 	| p pred |
 	nonPredicates isEmpty
 		ifTrue: [ ^ nil ].
@@ -116,9 +122,10 @@ nonPredicateTester
 		ifTrue: [ pred := p first.
 			[ :char :matcher | (pred value: char) not ] ]
 		ifFalse: [ [ :char :m | p contains: [ :some | (some value: char) not ] ] ]
+]
 
 RxMatchOptimizer >> nonPrefixTester
-nonPrefixTester
+[nonPrefixTester
 	| np nonPrefixChar |
 	nonPrefixes isEmpty
 		ifTrue: [ ^ nil ].
@@ -127,9 +134,10 @@ nonPrefixTester
 		ifTrue: [ nonPrefixChar := np first.
 			[ :char :matcher | char ~= nonPrefixChar ] ]
 		ifFalse: [ [ :char :matcher | (np includes: char) not ] ]	"might be be pretty common case"
+]
 
 RxMatchOptimizer >> optimizeSet: aSet
-optimizeSet: aSet
+[optimizeSet: aSet
 	"If a set is small, convert it to array to speed up lookup
 	(Array has no hashing overhead, beats Set on small number
 	of elements)."
@@ -137,9 +145,10 @@ optimizeSet: aSet
 	^ aSet size < 10
 		ifTrue: [ aSet asArray ]
 		ifFalse: [ aSet ]
+]
 
 RxMatchOptimizer >> predicateTester
-predicateTester
+[predicateTester
 	| p pred |
 	predicates isEmpty
 		ifTrue: [ ^ nil ].
@@ -148,9 +157,10 @@ predicateTester
 		ifTrue: [ pred := p first.
 			[ :char :matcher | pred value: char ] ]
 		ifFalse: [ [ :char :matcher | p contains: [ :some | some value: char ] ] ]
+]
 
 RxMatchOptimizer >> prefixTester
-prefixTester
+[prefixTester
 	| p prefixChar |
 	prefixes isEmpty
 		ifTrue: [ ^ nil ].
@@ -165,27 +175,31 @@ prefixTester
 		ifFalse: [ ignoreCase
 				ifTrue: [ [ :char :matcher | p includes: char asUppercase ] ]
 				ifFalse: [ [ :char :matcher | p includes: char ] ] ]	"might be a pretty common case"
+]
 
 RxMatchOptimizer >> syntaxAny
-syntaxAny
+[syntaxAny
 	"Any special char is among the prefixes."
 
 	conditions add: #any
+]
 
 RxMatchOptimizer >> syntaxBeginningOfLine
-syntaxBeginningOfLine
+[syntaxBeginningOfLine
 	"Beginning of line is among the prefixes."
 
 	conditions add: #atBeginningOfLine
+]
 
 RxMatchOptimizer >> syntaxBeginningOfWord
-syntaxBeginningOfWord
+[syntaxBeginningOfWord
 	"Beginning of line is among the prefixes."
 
 	conditions add: #atBeginningOfWord
+]
 
 RxMatchOptimizer >> syntaxBranch: branchNode
-syntaxBranch: branchNode
+[syntaxBranch: branchNode
 	"If the head piece of the branch is transparent (allows 0 matches),
 	we must recurse down the branch. Otherwise, just the head atom
 	is important."
@@ -193,9 +207,10 @@ syntaxBranch: branchNode
 	(branchNode piece isNullable and: [ branchNode branch notNil ])
 		ifTrue: [ branchNode branch dispatchTo: self ].
 	branchNode piece dispatchTo: self
+]
 
 RxMatchOptimizer >> syntaxCharSet: charSetNode
-syntaxCharSet: charSetNode
+[syntaxCharSet: charSetNode
 	"All these (or none of these) characters is the prefix."
 
 	charSetNode isNegated
@@ -205,63 +220,75 @@ syntaxCharSet: charSetNode
 		ifTrue: [ charSetNode isNegated
 				ifTrue: [ nonPredicates addAll: charSetNode predicates ]
 				ifFalse: [ predicates addAll: charSetNode predicates ] ]
+]
 
 RxMatchOptimizer >> syntaxCharacter: charNode
-syntaxCharacter: charNode
+[syntaxCharacter: charNode
 	"This character is the prefix, of one of them."
 
 	prefixes add: charNode character
+]
 
 RxMatchOptimizer >> syntaxEndOfLine
-syntaxEndOfLine
+[syntaxEndOfLine
 	"Beginning of line is among the prefixes."
 
 	conditions add: #atEndOfLine
+]
 
 RxMatchOptimizer >> syntaxEndOfWord
-syntaxEndOfWord
+[syntaxEndOfWord
 	conditions add: #atEndOfWord
+]
 
 RxMatchOptimizer >> syntaxEpsilon
-syntaxEpsilon
+[syntaxEpsilon
 	"Empty string, terminate the recursion (do nothing)."
 
 	
+]
 
 RxMatchOptimizer >> syntaxLookaround: lookaroundNode
-syntaxLookaround: lookaroundNode
+[syntaxLookaround: lookaroundNode
 	lookarounds add: lookaroundNode
+]
 
 RxMatchOptimizer >> syntaxMessagePredicate: messagePredicateNode
-syntaxMessagePredicate: messagePredicateNode
+[syntaxMessagePredicate: messagePredicateNode
 	messagePredicateNode negated
 		ifTrue: [ nonMethodPredicates add: messagePredicateNode selector ]
 		ifFalse: [ methodPredicates add: messagePredicateNode selector ]
+]
 
 RxMatchOptimizer >> syntaxNonWordBoundary
-syntaxNonWordBoundary
+[syntaxNonWordBoundary
 	conditions add: #notAtWordBoundary
+]
 
 RxMatchOptimizer >> syntaxPiece: pieceNode
-syntaxPiece: pieceNode
+[syntaxPiece: pieceNode
 	"Pass on to the atom."
 
 	pieceNode atom dispatchTo: self
+]
 
 RxMatchOptimizer >> syntaxPredicate: predicateNode
-syntaxPredicate: predicateNode
+[syntaxPredicate: predicateNode
 	predicates add: predicateNode predicate
+]
 
 RxMatchOptimizer >> syntaxRegex: regexNode
-syntaxRegex: regexNode
+[syntaxRegex: regexNode
 	"All prefixes of the regex's branches should be combined.
 	Therefore, just recurse."
 
 	regexNode branch dispatchTo: self.
 	regexNode regex notNil
 		ifTrue: [ regexNode regex dispatchTo: self ]
+]
 
 RxMatchOptimizer >> syntaxWordBoundary
-syntaxWordBoundary
+[syntaxWordBoundary
 	conditions add: #atWordBoundary
+]
 

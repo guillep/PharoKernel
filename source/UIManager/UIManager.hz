@@ -3,108 +3,125 @@ UIManager
 	package: #UIManager.
 
 UIManager >> abort: aStringOrText
-abort: aStringOrText
+[abort: aStringOrText
 	"Open an error dialog."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> abort: aStringOrText title: aString
-abort: aStringOrText title: aString
+[abort: aStringOrText title: aString
 	"Open an error dialog."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> activate
-activate
+[activate
 	
+]
 
 UIManager >> alert: aStringOrText
-alert: aStringOrText
+[alert: aStringOrText
 	"Open an alert dialog."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> alert: aStringOrText title: aString
-alert: aStringOrText title: aString
+[alert: aStringOrText title: aString
 	"Open an alert dialog."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> alert: aStringOrText title: aString configure: aBlock
-alert: aStringOrText title: aString configure: aBlock
+[alert: aStringOrText title: aString configure: aBlock
 	"Open an alert dialog.
 	Configure the dialog with the 1 argument block
 	before opening modally."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> beDefault
-beDefault
+[beDefault
 	self class default: self
+]
 
 UIManager >> boot: bootingFromDisk during: aBlock
-boot: bootingFromDisk during: aBlock
+[boot: bootingFromDisk during: aBlock
 	bootingFromDisk
 		ifTrue: [ "use non-interactive manager while processing startup list"
 			self class default: (StartupUIManager replacing: self) ].
 	aBlock
 		ensure: [ self class default: self ].
 	self onSnapshot: bootingFromDisk
+]
 
 UIManager >> checkForNewDisplaySize
-checkForNewDisplaySize
+[checkForNewDisplaySize
 	self subclassResponsibility
+]
 
 UIManager >> chooseDirectory
-chooseDirectory
+[chooseDirectory
 	"Let the user choose a directory"
 
 	^ self chooseDirectoryFrom: FileSystem workingDirectory
+]
 
 UIManager >> chooseDirectory: label
-chooseDirectory: label
+[chooseDirectory: label
 	"Let the user choose a directory"
 
 	^ self chooseDirectory: label from: FileSystem workingDirectory
+]
 
 UIManager >> chooseDirectory: label from: dir
-chooseDirectory: label from: dir
+[chooseDirectory: label from: dir
 	"Let the user choose a directory"
 
 	^ self subclassResponsibility
+]
 
 UIManager >> chooseDirectoryFrom: dir
-chooseDirectoryFrom: dir
+[chooseDirectoryFrom: dir
 	"Let the user choose a directory"
 
 	^ self chooseDirectory: nil from: dir
+]
 
 UIManager >> chooseFileMatching: patterns
-chooseFileMatching: patterns
+[chooseFileMatching: patterns
 	"Let the user choose a file matching the given patterns"
 
 	^ self chooseFileMatching: patterns label: nil
+]
 
 UIManager >> chooseFileMatching: patterns label: labelString
-chooseFileMatching: patterns label: labelString
+[chooseFileMatching: patterns label: labelString
 	"Let the user choose a file matching the given patterns"
 
 	^ self subclassResponsibility
+]
 
 UIManager >> chooseFrom: aList
-chooseFrom: aList
+[chooseFrom: aList
 	"Choose an item from the given list. Answer the index of the selected item."
 
 	^ self chooseFrom: aList lines: #()
+]
 
 UIManager >> chooseFrom: aList lines: linesArray
-chooseFrom: aList lines: linesArray
+[chooseFrom: aList lines: linesArray
 	"Choose an item from the given list. Answer the index of the selected item."
 
 	^ self chooseFrom: aList lines: linesArray title: ''
+]
 
 UIManager >> chooseFrom: aList lines: linesArray message: messageString
-chooseFrom: aList lines: linesArray message: messageString
+[chooseFrom: aList lines: linesArray message: messageString
 	"Choose an item from the given list. Answer the index of the selected item."
 
 	^ self
@@ -112,30 +129,34 @@ chooseFrom: aList lines: linesArray message: messageString
 		lines: linesArray
 		message: messageString
 		title: ''
+]
 
 UIManager >> chooseFrom: aList lines: linesArray message: messageString title: aString
-chooseFrom: aList lines: linesArray message: messageString title: aString
+[chooseFrom: aList lines: linesArray message: messageString title: aString
 	"Choose an item from the given list. Answer the selected item."
 
 	^ self
 		chooseFrom: aList
 		lines: linesArray
 		title: (aString ifEmpty: [ messageString ] ifNotEmpty: [ aString , String cr , messageString ])
+]
 
 UIManager >> chooseFrom: aList lines: linesArray title: aString
-chooseFrom: aList lines: linesArray title: aString
+[chooseFrom: aList lines: linesArray title: aString
 	"Choose an item from the given list. Answer the index of the selected item."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> chooseFrom: aList message: messageString
-chooseFrom: aList message: messageString
+[chooseFrom: aList message: messageString
 	"Choose an item from the given list. Answer the index of the selected item."
 
 	^ self chooseFrom: aList lines: #() message: messageString
+]
 
 UIManager >> chooseFrom: aList message: messageString title: aString
-chooseFrom: aList message: messageString title: aString
+[chooseFrom: aList message: messageString title: aString
 	"Choose an item from the given list. Answer the index of the selected item."
 
 	^ self
@@ -143,21 +164,24 @@ chooseFrom: aList message: messageString title: aString
 		lines: #()
 		message: messageString
 		title: aString
+]
 
 UIManager >> chooseFrom: aList title: aString
-chooseFrom: aList title: aString
+[chooseFrom: aList title: aString
 	"Choose an item from the given list. Answer the index of the selected item."
 
 	^ self chooseFrom: aList lines: #() title: aString
+]
 
 UIManager >> chooseFrom: labelList values: valueList
-chooseFrom: labelList values: valueList
+[chooseFrom: labelList values: valueList
 	"Choose an item from the given list. Answer the selected item."
 
 	^ self chooseFrom: labelList values: valueList lines: #()
+]
 
 UIManager >> chooseFrom: labelList values: valueList lines: linesArray
-chooseFrom: labelList values: valueList lines: linesArray
+[chooseFrom: labelList values: valueList lines: linesArray
 	"Choose an item from the given list. Answer the selected item."
 
 	^ self
@@ -165,9 +189,10 @@ chooseFrom: labelList values: valueList lines: linesArray
 		values: valueList
 		lines: linesArray
 		title: ''
+]
 
 UIManager >> chooseFrom: aList values: valueList lines: linesArray message: messageString
-chooseFrom: aList values: valueList lines: linesArray message: messageString
+[chooseFrom: aList values: valueList lines: linesArray message: messageString
 	"Choose an item from the given list. Answer the index of the selected item."
 
 	^ self
@@ -176,9 +201,10 @@ chooseFrom: aList values: valueList lines: linesArray message: messageString
 		lines: linesArray
 		message: messageString
 		title: ''
+]
 
 UIManager >> chooseFrom: labelList values: valueList lines: linesArray message: messageString title: aString
-chooseFrom: labelList values: valueList lines: linesArray message: messageString title: aString
+[chooseFrom: labelList values: valueList lines: linesArray message: messageString title: aString
 	"Choose an item from the given list. Answer the selected item."
 
 	^ self
@@ -186,15 +212,17 @@ chooseFrom: labelList values: valueList lines: linesArray message: messageString
 		values: valueList
 		lines: linesArray
 		title: (aString ifEmpty: [ messageString ] ifNotEmpty: [ aString , String cr , messageString ])
+]
 
 UIManager >> chooseFrom: labelList values: valueList lines: linesArray title: aString
-chooseFrom: labelList values: valueList lines: linesArray title: aString
+[chooseFrom: labelList values: valueList lines: linesArray title: aString
 	"Choose an item from the given list. Answer the selected item."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> chooseFrom: aList values: valueList message: messageString
-chooseFrom: aList values: valueList message: messageString
+[chooseFrom: aList values: valueList message: messageString
 	"Choose an item from the given list. Answer the index of the selected item."
 
 	^ self
@@ -202,9 +230,10 @@ chooseFrom: aList values: valueList message: messageString
 		values: valueList
 		lines: #()
 		message: messageString
+]
 
 UIManager >> chooseFrom: aList values: valueList message: messageString title: aString
-chooseFrom: aList values: valueList message: messageString title: aString
+[chooseFrom: aList values: valueList message: messageString title: aString
 	"Choose an item from the given list. Answer the index of the selected item."
 
 	^ self
@@ -213,9 +242,10 @@ chooseFrom: aList values: valueList message: messageString title: aString
 		lines: #()
 		message: messageString
 		title: aString
+]
 
 UIManager >> chooseFrom: labelList values: valueList title: aString
-chooseFrom: labelList values: valueList title: aString
+[chooseFrom: labelList values: valueList title: aString
 	"Choose an item from the given list. Answer the selected item."
 
 	^ self
@@ -223,89 +253,103 @@ chooseFrom: labelList values: valueList title: aString
 		values: valueList
 		lines: #()
 		title: aString
+]
 
 UIManager >> chooseFullFileNameMatching: patterns
-chooseFullFileNameMatching: patterns
+[chooseFullFileNameMatching: patterns
 	"Let the user choose a file matching the given patterns"
 
 	^ self chooseFullFileNameMatching: patterns label: nil
+]
 
 UIManager >> chooseFullFileNameMatching: patterns label: labelString
-chooseFullFileNameMatching: patterns label: labelString
+[chooseFullFileNameMatching: patterns label: labelString
 	"Let the user choose a file matching the given patterns"
 
 	^ self subclassResponsibility
+]
 
 UIManager >> chooseOrRequestFrom: aList title: aString
-chooseOrRequestFrom: aList title: aString
+[chooseOrRequestFrom: aList title: aString
 	"Choose an item from the given list. Answer the index of the selected item."
 
 	^ self chooseOrRequestFrom: aList lines: #() title: aString
+]
 
 UIManager >> chooseOrRequestFrom: labelList values: valueList lines: linesArray title: aString
-chooseOrRequestFrom: labelList values: valueList lines: linesArray title: aString
+[chooseOrRequestFrom: labelList values: valueList lines: linesArray title: aString
 	self subclassResponsibility
+]
 
 UIManager >> confirm: queryString
-confirm: queryString
+[confirm: queryString
 	"Put up a yes/no menu with caption queryString. Answer true if the 
 	response is yes, false if no. This is a modal question--the user must 
 	respond yes or no."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> confirm: queryString label: titleString
-confirm: queryString label: titleString
+[confirm: queryString label: titleString
 	^ self subclassResponsibility
+]
 
 UIManager >> confirm: aString orCancel: cancelBlock
-confirm: aString orCancel: cancelBlock
+[confirm: aString orCancel: cancelBlock
 	"Put up a yes/no/cancel menu with caption aString. Answer true if  
 	the response is yes, false if no. If cancel is chosen, evaluate  
 	cancelBlock. This is a modal question--the user must respond yes or no."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> confirm: queryString trueChoice: trueChoice falseChoice: falseChoice
-confirm: queryString trueChoice: trueChoice falseChoice: falseChoice
+[confirm: queryString trueChoice: trueChoice falseChoice: falseChoice
 	"Put up a yes/no menu with caption queryString. The actual wording for the two choices will be as provided in the trueChoice and falseChoice parameters. Answer true if the response is the true-choice, false if it's the false-choice.
 	This is a modal question -- the user must respond one way or the other."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> confirm: queryString trueChoice: trueChoice falseChoice: falseChoice cancelChoice: cancelChoice default: aSymbol
-confirm: queryString trueChoice: trueChoice falseChoice: falseChoice cancelChoice: cancelChoice default: aSymbol
+[confirm: queryString trueChoice: trueChoice falseChoice: falseChoice cancelChoice: cancelChoice default: aSymbol
 	"Put up a yes/no/cancel menu with caption queryString. The actual wording for the choices will be as provided in the trueChoice, falseChoice and cancelChoice parameters.
 	Default should be one of #yes, #no or #cancel to set the default button.
 	Answer true if the response is the true-choice, false if it's the false-choice, nil if the cancelChoice.
 	This is a modal question -- the user must respond."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> deactivate
-deactivate
+[deactivate
 	
+]
 
 UIManager >> defer: aBlock
-defer: aBlock
+[defer: aBlock
 	" Evaluate the given Block in the UI thread as soon as there is nothing scheduled."
 
 	WorldState defer: aBlock
+]
 
 UIManager >> deny: aStringOrText
-deny: aStringOrText
+[deny: aStringOrText
 	"Open a denial dialog."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> deny: aStringOrText title: aString
-deny: aStringOrText title: aString
+[deny: aStringOrText title: aString
 	"Open a denial dialog."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> displayProgress: titleString at: aPoint from: minVal to: maxVal during: workBlock
-displayProgress: titleString at: aPoint from: minVal to: maxVal during: workBlock
+[displayProgress: titleString at: aPoint from: minVal to: maxVal during: workBlock
 	"Display titleString as a caption over a progress bar while workBlock is evaluated."
 
 	^ self
@@ -313,9 +357,10 @@ displayProgress: titleString at: aPoint from: minVal to: maxVal during: workBloc
 		from: minVal
 		to: maxVal
 		during: workBlock
+]
 
 UIManager >> displayProgress: titleString from: minVal to: maxVal during: workBlock
-displayProgress: titleString from: minVal to: maxVal during: workBlock
+[displayProgress: titleString from: minVal to: maxVal during: workBlock
 	"SystemProgressMorph show: titleString from: minVal to:  during: "
 
 	^ workBlock asJob
@@ -323,58 +368,68 @@ displayProgress: titleString from: minVal to: maxVal during: workBlock
 		min: minVal;
 		max: maxVal;
 		run
+]
 
 UIManager >> edit: aText
-edit: aText
+[edit: aText
 	"Open an editor on the given string/text"
 
 	^ self edit: aText label: nil
+]
 
 UIManager >> edit: aText label: labelString
-edit: aText label: labelString
+[edit: aText label: labelString
 	"Open an editor on the given string/text"
 
 	^ self edit: aText label: labelString accept: nil
+]
 
 UIManager >> edit: aText label: labelString accept: anAction
-edit: aText label: labelString accept: anAction
+[edit: aText label: labelString accept: anAction
 	"Open an editor on the given string/text"
 
 	^ self subclassResponsibility
+]
 
 UIManager >> enterOrRequestFrom: aList title: aString
-enterOrRequestFrom: aList title: aString
+[enterOrRequestFrom: aList title: aString
 	"Choose an item from the given list. Answer the index of the selected item."
 
 	^ self enterOrRequestFrom: aList lines: #() title: aString
+]
 
 UIManager >> fileDoesNotExistsDefaultAction: anException
-fileDoesNotExistsDefaultAction: anException
+[fileDoesNotExistsDefaultAction: anException
 	^ self subclassResponsibility
+]
 
 UIManager >> fileExistsDefaultAction: anException
-fileExistsDefaultAction: anException
+[fileExistsDefaultAction: anException
 	^ self subclassResponsibility
+]
 
 UIManager >> fontFromUser: priorFont
-fontFromUser: priorFont
+[fontFromUser: priorFont
 	self subclassResponsibility
+]
 
 UIManager >> headlessManager
-headlessManager
+[headlessManager
 	" Answer an instance of headless manager, which will be used when image runs headless and non-interactive.
 	  We put it here, so subclasses can override it. "
 
 	^ CommandLineUIManager replacing: self
+]
 
 UIManager >> inform: aString
-inform: aString
+[inform: aString
 	"Display a message for the user to read and then dismiss"
 
 	^ self subclassResponsibility
+]
 
 UIManager >> informUser: aString during: aBlock
-informUser: aString during: aBlock
+[informUser: aString during: aBlock
 	"Display a message above (or below if insufficient room) the cursor 
 	during execution of the given block.
 		UIManager default informUser: 'Just a sec!' during: [(Delay forSeconds: 1) wait].
@@ -382,9 +437,10 @@ informUser: aString during: aBlock
 
 	^ self informUserDuring: [ :bar | bar label: aString.
 			aBlock value ]
+]
 
 UIManager >> informUserDuring: aBlock
-informUserDuring: aBlock
+[informUserDuring: aBlock
 	"Display a message above (or below if insufficient room) the cursor 
 	during execution of the given block.
 		UIManager default informUserDuring:[:bar|
@@ -393,26 +449,30 @@ informUserDuring: aBlock
 				(Delay forSeconds: 1) wait]]"
 
 	^ self subclassResponsibility
+]
 
 UIManager >> interactiveParserFor: requestor
-interactiveParserFor: requestor
+[interactiveParserFor: requestor
 	requestor ifNil: [ ^ false ].
 	(requestor respondsTo: #interactive)
 		ifTrue: [ ^ requestor interactive ].
 	^ true
+]
 
 UIManager >> interruptName: labelString preemptedProcess: theInterruptedProcess
-interruptName: labelString preemptedProcess: theInterruptedProcess
+[interruptName: labelString preemptedProcess: theInterruptedProcess
 	"Create a Notifier on the active scheduling process with the given label."
 
 	^ self error: 'Cannot perform a given request'
+]
 
 UIManager >> lowSpaceWatcherDefaultAction: preemptedProcess
-lowSpaceWatcherDefaultAction: preemptedProcess
+[lowSpaceWatcherDefaultAction: preemptedProcess
 	
+]
 
 UIManager >> multiLineRequest: queryString initialAnswer: defaultAnswer answerHeight: answerHeight
-multiLineRequest: queryString initialAnswer: defaultAnswer answerHeight: answerHeight
+[multiLineRequest: queryString initialAnswer: defaultAnswer answerHeight: answerHeight
 	"Create a multi-line instance of me whose question is queryString with
 	the given initial answer. Invoke it centered at the given point, and
 	answer the string the user accepts.  Answer nil if the user cancels.  An
@@ -422,202 +482,235 @@ multiLineRequest: queryString initialAnswer: defaultAnswer answerHeight: answerH
 	submit; that way, the return key can be typed to move to the next line."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> newDisplayDepthNoRestore: pixelSize
-newDisplayDepthNoRestore: pixelSize
+[newDisplayDepthNoRestore: pixelSize
 	self subclassResponsibility
+]
 
 UIManager >> newMenuIn: aThemedMorph for: aModel
-newMenuIn: aThemedMorph for: aModel
+[newMenuIn: aThemedMorph for: aModel
 	"Answer a new menu."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> nonInteractiveManager
-nonInteractiveManager
+[nonInteractiveManager
 	" Answer an instance of non-interactive manager, which will be used when image runs headless.
 	  We put it here, so subclasses can override it. "
 
 	^ NonInteractiveUIManager replacing: self
+]
 
 UIManager >> onDebug: process context: context title: title full: bool
-onDebug: process context: context title: title full: bool
+[onDebug: process context: context title: title full: bool
 	
+]
 
 UIManager >> onEventSensorStartup: anEventSensor
-onEventSensorStartup: anEventSensor
+[onEventSensorStartup: anEventSensor
 	
+]
 
 UIManager >> onFontsChanged
-onFontsChanged
+[onFontsChanged
 	
+]
 
 UIManager >> onPrimitiveError: aString
-onPrimitiveError: aString
+[onPrimitiveError: aString
 	
+]
 
 UIManager >> onSnapshot: resuming
-onSnapshot: resuming
+[onSnapshot: resuming
 	"The resuming argument is true when image boots from disk,
 	and false, if user just did an image snapshot."
 
 	" do nothing by default "
 
 	
+]
 
 UIManager >> openComparisionFrom: targetMethodSource to: originalMethodSource belongingTo: aClass from: aChange
-openComparisionFrom: targetMethodSource to: originalMethodSource belongingTo: aClass from: aChange
+[openComparisionFrom: targetMethodSource to: originalMethodSource belongingTo: aClass from: aChange
 	^ self subclassResponsibility
+]
 
 UIManager >> proceed: aStringOrText
-proceed: aStringOrText
+[proceed: aStringOrText
 	"Open a proceed dialog."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> proceed: aStringOrText title: aString
-proceed: aStringOrText title: aString
+[proceed: aStringOrText title: aString
 	"Open a proceed dialog and answer true if not cancelled, false otherwise."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> question: aStringOrText
-question: aStringOrText
+[question: aStringOrText
 	"Open a question dialog."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> question: aStringOrText title: aString
-question: aStringOrText title: aString
+[question: aStringOrText title: aString
 	"Open a question dialog and answer true if yes,
 	false if no and nil if cancelled."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> questionWithoutCancel: aStringOrText
-questionWithoutCancel: aStringOrText
+[questionWithoutCancel: aStringOrText
 	"Open a question dialog."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> questionWithoutCancel: aStringOrText title: aString
-questionWithoutCancel: aStringOrText title: aString
+[questionWithoutCancel: aStringOrText title: aString
 	"Open a question dialog and answer true if yes,
 	false if no and nil if cancelled."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> request: queryString
-request: queryString
+[request: queryString
 	"Create an instance of me whose question is queryString. Invoke it 
 	centered at the cursor, and answer the string the user accepts. Answer 
 	the empty string if the user cancels."
 
 	^ self request: queryString initialAnswer: ''
+]
 
 UIManager >> request: queryString entryCompletion: anEntryCompletion
-request: queryString entryCompletion: anEntryCompletion
+[request: queryString entryCompletion: anEntryCompletion
 	"Create an instance of me whose question is queryString. Invoke it 
 	centered at the cursor, and answer the string the user accepts. Answer 
 	the empty string if the user cancels."
 
 	^ self request: queryString initialAnswer: '' entryCompletion: anEntryCompletion
+]
 
 UIManager >> request: queryString initialAnswer: defaultAnswer
-request: queryString initialAnswer: defaultAnswer
+[request: queryString initialAnswer: defaultAnswer
 	"Create an instance of me whose question is queryString with the given initial answer. Answer the string the user accepts. Answer the empty string if the user cancels."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> request: queryString initialAnswer: defaultAnswer centerAt: aPoint
-request: queryString initialAnswer: defaultAnswer centerAt: aPoint
+[request: queryString initialAnswer: defaultAnswer centerAt: aPoint
 	"Create an instance of me whose question is queryString with the given
 	initial answer. Invoke it centered at the given point, and answer the
 	string the user accepts. Answer the empty string if the user cancels."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> request: queryString initialAnswer: defaultAnswer entryCompletion: anEntryCompletion
-request: queryString initialAnswer: defaultAnswer entryCompletion: anEntryCompletion
+[request: queryString initialAnswer: defaultAnswer entryCompletion: anEntryCompletion
 	"Create an instance of me whose question is queryString with the given 
 	initial answer. Invoke it centered at the given point, and answer the 
 	string the user accepts. Answer the empty string if the user cancels."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> request: aStringOrText initialAnswer: defaultAnswer title: aTitle
-request: aStringOrText initialAnswer: defaultAnswer title: aTitle
+[request: aStringOrText initialAnswer: defaultAnswer title: aTitle
 	"Create an instance of me whose question is queryString with the given 
 	initial answer. Invoke it centered at the given point, and answer the 
 	string the user accepts. Answer the empty string if the user cancels."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> request: aStringOrText initialAnswer: defaultAnswer title: aTitle entryCompletion: anEntryCompletion
-request: aStringOrText initialAnswer: defaultAnswer title: aTitle entryCompletion: anEntryCompletion
+[request: aStringOrText initialAnswer: defaultAnswer title: aTitle entryCompletion: anEntryCompletion
 	"Create an instance of me whose question is queryString with the given 
 	initial answer. Invoke it centered at the given point, and answer the 
 	string the user accepts. Answer the empty string if the user cancels."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> requestPassword: queryString
-requestPassword: queryString
+[requestPassword: queryString
 	"Create an instance of me whose question is queryString. Invoke it centered
 	at the cursor, and answer the string the user accepts. Answer the empty 
 	string if the user cancels."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> restoreDisplay
-restoreDisplay
+[restoreDisplay
 	self subclassResponsibility
+]
 
 UIManager >> restoreDisplayAfter: aBlock
-restoreDisplayAfter: aBlock
+[restoreDisplayAfter: aBlock
 	self subclassResponsibility
+]
 
 UIManager >> spawnNewProcess
-spawnNewProcess
+[spawnNewProcess
 	
+]
 
 UIManager >> spawnNewProcessIfThisIsUI: suspendedProcess
-spawnNewProcessIfThisIsUI: suspendedProcess
+[spawnNewProcessIfThisIsUI: suspendedProcess
 	self uiProcess == suspendedProcess
 		ifTrue: [ self spawnNewProcess.
 			^ true ].
 	^ false	"no new process was created"
+]
 
 UIManager >> syntaxErrorNotificationDefaultAction: anException
-syntaxErrorNotificationDefaultAction: anException
+[syntaxErrorNotificationDefaultAction: anException
 	^ self subclassResponsibility
+]
 
 UIManager >> terminateUIProcess
-terminateUIProcess
+[terminateUIProcess
 	"do nothing by default "
 
 	
+]
 
 UIManager >> textEntry: aStringOrText
-textEntry: aStringOrText
+[textEntry: aStringOrText
 	"Open a text entry dialog."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> textEntry: aStringOrText title: aString
-textEntry: aStringOrText title: aString
+[textEntry: aStringOrText title: aString
 	"Open a text entry dialog."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> textEntry: aStringOrText title: aString entryText: defaultEntryText
-textEntry: aStringOrText title: aString entryText: defaultEntryText
+[textEntry: aStringOrText title: aString entryText: defaultEntryText
 	"Open a text entry dialog."
 
 	^ self subclassResponsibility
+]
 
 UIManager >> unhandledErrorDefaultAction: anException
-unhandledErrorDefaultAction: anException
+[unhandledErrorDefaultAction: anException
 	"Provide a default handling for unhandled error. 
 	We should never reach this code, because it should be overridden by subclasses. 
 	(but we can't put 'self subclassResponsibility' , because it will cause infinite loop,
@@ -625,15 +718,17 @@ unhandledErrorDefaultAction: anException
 	This method is only for documentation purposes."
 
 	Smalltalk snapshot: false andQuit: true
+]
 
 UIManager >> warningDefaultAction: aWarning
-warningDefaultAction: aWarning
+[warningDefaultAction: aWarning
 	"Handle warning notification. Should be overidden by subclass"
 
 	self subclassResponsibility
+]
 
 UIManager class >> createPageTestWorkspace
-createPageTestWorkspace
+[createPageTestWorkspace
 	"Used to generate a workspace window for testing page up and page down stuff."
 
 	"self createPageTestWorkspace"
@@ -676,32 +771,37 @@ createPageTestWorkspace
 			lineNumber = numberOfLines
 				ifFalse: [ stream cr ] ].
 	self default edit: stream contents label: 'Test Data'
+]
 
 UIManager class >> default
-default
+[default
 	^ Default
 		ifNil: [ "Note: The way the following is phrased ensures that you can always make 'more specific' managers merely by subclassing a tool builder and implementing a more specific way of reacting to #isActiveManager. For example, a BobsUIManager can subclass MorphicUIManager and will be considered before the parent (generic MorphicUIManager)."
 			self allSubclasses
 				detect: [ :any | any isActiveManager and: [ any subclasses noneSatisfy: [ :sub | sub isActiveManager ] ] ]
 				ifFound: [ :mgrClass | Default := mgrClass new ] ]
+]
 
 UIManager class >> default: aUIManager
-default: aUIManager
+[default: aUIManager
 	Default deactivate.
 	Default := aUIManager.
 	Default activate
+]
 
 UIManager class >> isActiveManager
-isActiveManager
+[isActiveManager
 	"Answer whether I should act as the active ui manager"
 
 	^ false
+]
 
 UIManager class >> nonInteractiveDuring: aBlock
-nonInteractiveDuring: aBlock
+[nonInteractiveDuring: aBlock
 	| currentManager |
 	currentManager := self default.
 	currentManager nonInteractiveManager.
 	aBlock
 		ensure: [ currentManager beDefault ]
+]
 

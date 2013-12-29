@@ -3,11 +3,12 @@ Termcap
 	package: #'System-CommandLine'.
 
 Termcap >> flush
-flush
+[flush
 	cache removeAll
+]
 
 Termcap >> getent: aString
-getent: aString
+[getent: aString
 	"The tgetent routine loads the entry for name. 
 	It returns 1 on success, 
 	0 if there is no such entry,
@@ -19,33 +20,38 @@ getent: aString
 	result = -1 ifTrue: [ Error signal: 'Could not find terminfo database' ]."
 
 	Error signal: 'Cannot interact with tput yet'
+]
 
 Termcap >> getflag: aString
-getflag: aString
+[getflag: aString
 	"^ (PipeableOSProcess command: 'tput ', aString) output"
 
 	Error signal: 'Cannot interact with tput yet'
+]
 
 Termcap >> getnum: aString
-getnum: aString
+[getnum: aString
 	"^ (PipeableOSProcess command: 'tput ', aString) output asInteger"
 
 	^ Error signal: 'Cannot interact with the terminal yet'
+]
 
 Termcap >> getstr: aString
-getstr: aString
+[getstr: aString
 	^ cache
 		at: aString
 		ifAbsentPut: [ "(PipeableOSProcess command: 'tput ', aString) output"
 			^ Error signal: 'Terminal capability ' , aString , ' not found' ]
+]
 
 Termcap >> initialize
-initialize
+[initialize
 	cache := Dictionary new.
 	self initializeDefaultSequences
+]
 
 Termcap >> initializeDefaultSequences
-initializeDefaultSequences
+[initializeDefaultSequences
 	"Until we have decent OSProcess support we precache the most common sequences"
 
 	| esc |
@@ -61,8 +67,10 @@ initializeDefaultSequences
 	cache at: #al put: esc , 'L'.
 	cache at: #dl put: esc , 'M'.
 	cache at: #cr put: esc , String cr
+]
 
 Termcap >> reset
-reset
+[reset
 	self flag: 'TODO implement once we have OSProcess'	"self getent: (OSProcess thisOSProcess environmentAt: #TERM)"
+]
 

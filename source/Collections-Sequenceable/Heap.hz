@@ -8,7 +8,7 @@ Heap class
 	instanceVariables: #(#sortBlock ).
 
 Heap >> = anObject
-= anObject
+[= anObject
 	"Heap are considered equals only if they have same sort order and same elements."
 
 	self == anObject
@@ -20,9 +20,10 @@ Heap >> = anObject
 	self size = anObject size
 		ifFalse: [ ^ false ].
 	^ (self asArray sort: sortBlock) = (anObject asArray sort: sortBlock)
+]
 
 Heap >> add: anObject
-add: anObject
+[add: anObject
 	"Include newObject as one of the receiver's elements. Answer newObject."
 
 	tally = array size
@@ -31,46 +32,54 @@ add: anObject
 	self updateObjectIndex: tally.
 	self upHeap: tally.
 	^ anObject
+]
 
 Heap >> array
-array
+[array
 	^ array
+]
 
 Heap >> at: index
-at: index
+[at: index
 	"Heap are not designed to be accessed sequentially."
 
 	self shouldNotImplement
+]
 
 Heap >> at: index put: newObject
-at: index put: newObject
+[at: index put: newObject
 	"Heap are not designed to be accessed sequentially.
 	Please consider using #add: instead."
 
 	self shouldNotImplement
+]
 
 Heap >> collect: aBlock
-collect: aBlock
+[collect: aBlock
 	^ self collect: aBlock as: Array
+]
 
 Heap >> copyEmpty
-copyEmpty
+[copyEmpty
 	"Answer a copy of the receiver without any of the receiver's elements."
 
 	^ self class sortBlock: sortBlock
+]
 
 Heap >> defaultSortBlock
-defaultSortBlock
+[defaultSortBlock
 	^ self class defaultSortBlock
+]
 
 Heap >> do: aBlock
-do: aBlock
+[do: aBlock
 	"Evaluate aBlock with each of the receiver's elements as the argument."
 
 	1 to: tally do: [ :i | aBlock value: (array at: i) ]
+]
 
 Heap >> downHeap: anIndex
-downHeap: anIndex
+[downHeap: anIndex
 	"Check the heap downwards for correctness starting at anIndex.
 	 Everything above (i.e. left of) anIndex is ok."
 
@@ -93,9 +102,10 @@ downHeap: anIndex
 					k := j ] ].
 	array at: k put: value.
 	self updateObjectIndex: k
+]
 
 Heap >> downHeapSingle: anIndex
-downHeapSingle: anIndex
+[downHeapSingle: anIndex
 	"This version is optimized for the case when only one element in the receiver can be at a wrong position. It avoids one comparison at each node when travelling down the heap and checks the heap upwards after the element is at a bottom position. Since the probability for being at the bottom of the heap is much larger than for being somewhere in the middle this version should be faster."
 
 	| value k n j |
@@ -114,35 +124,40 @@ downHeapSingle: anIndex
 	array at: k put: value.
 	self updateObjectIndex: k.
 	self upHeap: k
+]
 
 Heap >> first
-first
+[first
 	"Return the first element in the receiver"
 
 	^ array at: 1
+]
 
 Heap >> fullySort
-fullySort
+[fullySort
 	"Fully sort the heap.
 	This method preserves the heap invariants and can thus be sent safely"
 
 	self privateReverseSort.
 	1 to: tally // 2 do: [ :i | array swap: i with: 1 + tally - i ]
+]
 
 Heap >> grow
-grow
+[grow
 	"Become larger."
 
 	self growTo: self size + self growSize
+]
 
 Heap >> growSize
-growSize
+[growSize
 	"Return the size by which the receiver should grow if there are no empty slots left."
 
 	^ array size max: 5
+]
 
 Heap >> growTo: newSize
-growTo: newSize
+[growTo: newSize
 	"Grow to the requested size."
 
 	| newArray |
@@ -153,28 +168,33 @@ growTo: newSize
 		with: array
 		startingAt: 1.
 	array := newArray
+]
 
 Heap >> indexUpdateBlock: aBlockOrNil
-indexUpdateBlock: aBlockOrNil
+[indexUpdateBlock: aBlockOrNil
 	indexUpdateBlock := aBlockOrNil
+]
 
 Heap >> isEmpty
-isEmpty
+[isEmpty
 	"Answer whether the receiver contains any elements."
 
 	^ tally = 0
+]
 
 Heap >> isHeap
-isHeap
+[isHeap
 	^ true
+]
 
 Heap >> postCopy
-postCopy
+[postCopy
 	super postCopy.
 	array := array copy
+]
 
 Heap >> privateRemoveAt: index
-privateRemoveAt: index
+[privateRemoveAt: index
 	"Remove the element at the given index and make sure the sorting order is okay"
 
 	| removed |
@@ -186,9 +206,10 @@ privateRemoveAt: index
 		ifFalse: [ "Use #downHeapSingle: since only one element has been removed"
 			self downHeapSingle: index ].
 	^ removed
+]
 
 Heap >> privateReverseSort
-privateReverseSort
+[privateReverseSort
 	"Arrange to have the array sorted in reverse order.
 	WARNING: this method breaks the heap invariants. It's up to the sender to restore them afterwards."
 
@@ -198,17 +219,19 @@ privateReverseSort
 			tally := tally - 1.
 			self downHeapSingle: 1 ].
 	tally := oldTally
+]
 
 Heap >> reSort
-reSort
+[reSort
 	"Resort the entire heap"
 
 	self isEmpty
 		ifTrue: [ ^ self ].
 	tally // 2 to: 1 by: -1 do: [ :i | self downHeap: i ]
+]
 
 Heap >> remove: oldObject ifAbsent: aBlock
-remove: oldObject ifAbsent: aBlock
+[remove: oldObject ifAbsent: aBlock
 	"Remove oldObject as one of the receiver's elements. If several of the 
 	elements are equal to oldObject, only one is removed. If no element is 
 	equal to oldObject, answer the result of evaluating anExceptionBlock. 
@@ -217,61 +240,71 @@ remove: oldObject ifAbsent: aBlock
 	1 to: tally do: [ :i | (array at: i) = oldObject
 			ifTrue: [ ^ self privateRemoveAt: i ] ].
 	^ aBlock value
+]
 
 Heap >> removeAll
-removeAll
+[removeAll
 	array atAllPut: nil.
 	tally := 0
+]
 
 Heap >> removeFirst
-removeFirst
+[removeFirst
 	"Remove the first element from the receiver"
 
 	self emptyCheck.
 	^ self privateRemoveAt: 1
+]
 
 Heap >> setCollection: aCollection
-setCollection: aCollection
+[setCollection: aCollection
 	array := aCollection.
 	tally := 0
+]
 
 Heap >> setCollection: aCollection tally: newTally
-setCollection: aCollection tally: newTally
+[setCollection: aCollection tally: newTally
 	array := aCollection.
 	tally := newTally
+]
 
 Heap >> size
-size
+[size
 	"Answer how many elements the receiver contains."
 
 	^ tally
+]
 
 Heap >> sortBlock
-sortBlock
+[sortBlock
 	^ sortBlock ifNil: [ sortBlock := self defaultSortBlock ]
+]
 
 Heap >> sortBlock: aBlock
-sortBlock: aBlock
+[sortBlock: aBlock
 	sortBlock := aBlock.
 	self reSort
+]
 
 Heap >> sorts: element1 before: element2
-sorts: element1 before: element2
+[sorts: element1 before: element2
 	"Return true if element1 should be sorted before element2.
 	This method defines the sort order in the receiver"
 
 	^ sortBlock == nil
 		ifTrue: [ element1 <= element2 ]
 		ifFalse: [ sortBlock value: element1 value: element2 ]
+]
 
 Heap >> trim
-trim
+[trim
 	"Remove any empty slots in the receiver."
 
 	self growTo: self size
+]
 
 Heap >> upHeap: anIndex
-upHeap: anIndex
+[upHeap: anIndex
 	"Check the heap upwards for correctness starting at anIndex.
 	 Everything below anIndex is ok."
 
@@ -286,49 +319,57 @@ upHeap: anIndex
 			k := kDiv2 ].
 	array at: k put: value.
 	self updateObjectIndex: k
+]
 
 Heap >> updateObjectIndex: index
-updateObjectIndex: index
+[updateObjectIndex: index
 	"If indexUpdateBlock is not nil, notify the object at index of its new position in the heap array."
 
 	indexUpdateBlock ifNotNil: [ indexUpdateBlock value: (array at: index) value: index ]
+]
 
 Heap class >> defaultSortBlock
-defaultSortBlock
+[defaultSortBlock
 	"Cache the default sort block here.
 	Since the sortBlock is used to compare instances, a single instance for the default block helps us.."
 
 	^ sortBlock ifNil: [ sortBlock := [ :a :b | a <= b ] ]
+]
 
 Heap class >> new
-new
+[new
 	^ self new: 10
+]
 
 Heap class >> new: n
-new: n
+[new: n
 	^ super new setCollection: (Array new: n)
+]
 
 Heap class >> sortBlock: aBlock
-sortBlock: aBlock
+[sortBlock: aBlock
 	"Create a new heap sorted by the given block"
 
 	^ self new sortBlock: aBlock
+]
 
 Heap class >> withAll: aCollection
-withAll: aCollection
+[withAll: aCollection
 	"Create a new heap with all the elements from aCollection"
 
 	^ self basicNew
 		setCollection: aCollection asArray copy tally: aCollection size;
 		reSort;
 		yourself
+]
 
 Heap class >> withAll: aCollection sortBlock: aBlock
-withAll: aCollection sortBlock: aBlock
+[withAll: aCollection sortBlock: aBlock
 	"Create a new heap with all the elements from aCollection"
 
 	^ self basicNew
 		setCollection: aCollection asArray copy tally: aCollection size;
 		sortBlock: aBlock;
 		yourself
+]
 

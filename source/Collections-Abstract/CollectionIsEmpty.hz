@@ -3,33 +3,38 @@ CollectionIsEmpty
 	package: #'Collections-Abstract'.
 
 CollectionIsEmpty >> collection
-collection
+[collection
 	"Return the collection where something is not found in"
 
 	^ self signaler
+]
 
 CollectionIsEmpty >> collection: aCollection
-collection: aCollection
+[collection: aCollection
 	"Set the collection where something is not found in"
 
 	self signaler: aCollection
+]
 
 CollectionIsEmpty >> messageText
-messageText
+[messageText
 	"Overwritten to initialiaze the message text to a standard text if it has not yet been set"
 
 	^ messageText ifNil: [ messageText := self standardMessageText ]
+]
 
 CollectionIsEmpty >> standardMessageText
-standardMessageText
+[standardMessageText
 	"Generate a standard textual description"
 
 	^ String streamContents: [ :stream | stream print: self collection.
 			stream << ' is empty' ]
+]
 
 CollectionIsEmpty class >> signalWith: aCollection
-signalWith: aCollection
+[signalWith: aCollection
 	^ self new
 		collection: aCollection;
 		signal
+]
 

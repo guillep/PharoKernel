@@ -3,19 +3,22 @@ FLDictionaryCollectionCluster
 	package: #Fuel.
 
 FLDictionaryCollectionCluster >> materializeReferencesOf: anObject with: aDecoder
-materializeReferencesOf: anObject with: aDecoder
+[materializeReferencesOf: anObject with: aDecoder
 	aDecoder nextEncodedPositiveInteger
 		timesRepeat: [ anObject add: aDecoder nextEncodedReference -> aDecoder nextEncodedReference ]	"anObject size"
+]
 
 FLDictionaryCollectionCluster >> referencesOf: anObject do: aBlock
-referencesOf: anObject do: aBlock
+[referencesOf: anObject do: aBlock
 	aBlock value: anObject size.
 	anObject keysAndValuesDo: [ :key :value | aBlock value: key.
 			aBlock value: value ]
+]
 
 FLDictionaryCollectionCluster >> serializeReferencesOf: anObject with: anEncoder
-serializeReferencesOf: anObject with: anEncoder
+[serializeReferencesOf: anObject with: anEncoder
 	anEncoder encodePositiveInteger: anObject size.
 	anObject keysAndValuesDo: [ :key :value | anEncoder encodeReferenceTo: key.
 			anEncoder encodeReferenceTo: value ]
+]
 

@@ -3,18 +3,20 @@ AtomicQueueItem
 	package: #'Collections-Atomic'.
 
 AtomicQueueItem >> initialize
-initialize
+[initialize
 	"make circular"
 
 	super initialize.
 	next := self
+]
 
 AtomicQueueItem >> isCircular
-isCircular
+[isCircular
 	^ next == self
+]
 
 AtomicQueueItem >> makeCircular
-makeCircular
+[makeCircular
 	"Make a receiver circular, i.e. point to itself,
 	answer the old value of next variable. 
 	Note, this operation should be atomic"
@@ -24,28 +26,33 @@ makeCircular
 	temp := next.
 	next := self.
 	^ temp
+]
 
 AtomicQueueItem >> next
-next
+[next
 	"Answer the value of next"
 
 	^ next
+]
 
 AtomicQueueItem >> next: anObject
-next: anObject
+[next: anObject
 	"Set the value of next"
 
 	next := anObject
+]
 
 AtomicQueueItem >> object
-object
+[object
 	"Answer the value of object"
 
 	^ object
+]
 
 AtomicQueueItem >> object: anObject
-object: anObject
+[object: anObject
 	"Set the value of object"
 
 	object := anObject
+]
 

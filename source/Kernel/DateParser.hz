@@ -3,100 +3,120 @@ DateParser
 	package: #Kernel.
 
 DateParser >> convertTwoDigitsYear
-convertTwoDigitsYear
+[convertTwoDigitsYear
 	(year between: 0 and: 99)
 		ifTrue: [ year := self currentMillenium + year ]
+]
 
 DateParser >> createDate
-createDate
+[createDate
 	^ Date year: year month: month day: day
+]
 
 DateParser >> currentMillenium
-currentMillenium
+[currentMillenium
 	^ (Date current year / 100) asInteger * 100
+]
 
 DateParser >> initializeParsing
-initializeParsing
+[initializeParsing
 	invalidPattern := false.
 	patternStream := pattern readStream
+]
 
 DateParser >> initializeReadingFrom: anInputStream pattern: aPattern
-initializeReadingFrom: anInputStream pattern: aPattern
+[initializeReadingFrom: anInputStream pattern: aPattern
 	inputStream := anInputStream.
 	pattern := aPattern
+]
 
 DateParser >> isDayPattern
-isDayPattern
+[isDayPattern
 	^ char = $d
+]
 
 DateParser >> isDoneParsing
-isDoneParsing
+[isDoneParsing
 	^ patternStream atEnd or: [ inputStream atEnd or: [ invalidPattern ] ]
+]
 
 DateParser >> isEscape
-isEscape
+[isEscape
 	^ char = $\
+]
 
 DateParser >> isFourDigitYearPattern
-isFourDigitYearPattern
+[isFourDigitYearPattern
 	^ patternStream nextMatchAll: 'yyy'
+]
 
 DateParser >> isInvalidPattern
-isInvalidPattern
+[isInvalidPattern
 	^ year isNil or: [ month isNil or: [ day isNil or: [ invalidPattern ] ] ]
+]
 
 DateParser >> isMonthPattern
-isMonthPattern
+[isMonthPattern
 	^ char = $m
+]
 
 DateParser >> isTwoDigitDayPattern
-isTwoDigitDayPattern
+[isTwoDigitDayPattern
 	^ patternStream peekFor: $d
+]
 
 DateParser >> isTwoDigitMonthPattern
-isTwoDigitMonthPattern
+[isTwoDigitMonthPattern
 	^ patternStream peekFor: $m
+]
 
 DateParser >> isTwoDigitYearPattern
-isTwoDigitYearPattern
+[isTwoDigitYearPattern
 	^ patternStream peekFor: $y
+]
 
 DateParser >> isYearPattern
-isYearPattern
+[isYearPattern
 	^ char = $y
+]
 
 DateParser >> parse
-parse
+[parse
 	self initializeParsing.
 	[ self isDoneParsing ] whileFalse: [ self parseNextPattern ].
 	self isInvalidPattern
 		ifTrue: [ ^ nil ].
 	self convertTwoDigitsYear.
 	^ self createDate
+]
 
 DateParser >> parseDay
-parseDay
+[parseDay
 	self isTwoDigitDayPattern
 		ifTrue: [ ^ self parseTwoDigitDay ].
 	self parseVariableDigitDay
+]
 
 DateParser >> parseEscapePattern
-parseEscapePattern
+[parseEscapePattern
 	inputStream next = patternStream next
 		ifFalse: [ invalidPattern := true ]
+]
 
 DateParser >> parseFourDigitYear
-parseFourDigitYear
+[parseFourDigitYear
 	year := (inputStream next: 4) asInteger
+]
 
 DateParser >> parseMonth
-parseMonth
+[parseMonth
 	self isTwoDigitMonthPattern
 		ifTrue: [ ^ self parseTwoDigitMonth ].
 	self parseVariableDigitMonth
+]
 
 DateParser >> parseNextPattern
-parseNextPattern
+[parseNextPattern
 	self readNextChar.
 	self isEscape
 		ifTrue: [ ^ self parseEscapePattern ].
@@ -107,52 +127,63 @@ parseNextPattern
 	self isDayPattern
 		ifTrue: [ ^ self parseDay ].
 	self parseSameChar
+]
 
 DateParser >> parseSameChar
-parseSameChar
+[parseSameChar
 	inputStream next = char
 		ifFalse: [ invalidPattern := true ]
+]
 
 DateParser >> parseTwoDigitDay
-parseTwoDigitDay
+[parseTwoDigitDay
 	day := (inputStream next: 2) asInteger
+]
 
 DateParser >> parseTwoDigitMonth
-parseTwoDigitMonth
+[parseTwoDigitMonth
 	month := (inputStream next: 2) asInteger
+]
 
 DateParser >> parseTwoDigitYear
-parseTwoDigitYear
+[parseTwoDigitYear
 	year := (inputStream next: 2) asInteger
+]
 
 DateParser >> parseVariableDigitDay
-parseVariableDigitDay
+[parseVariableDigitDay
 	day := Integer readFrom: inputStream
+]
 
 DateParser >> parseVariableDigitMonth
-parseVariableDigitMonth
+[parseVariableDigitMonth
 	month := Integer readFrom: inputStream
+]
 
 DateParser >> parseVariableDigitYear
-parseVariableDigitYear
+[parseVariableDigitYear
 	year := Integer readFrom: inputStream
+]
 
 DateParser >> parseYear
-parseYear
+[parseYear
 	self isFourDigitYearPattern
 		ifTrue: [ ^ self parseFourDigitYear ].
 	self isTwoDigitYearPattern
 		ifTrue: [ ^ self parseTwoDigitYear ].
 	self parseVariableDigitYear
+]
 
 DateParser >> readNextChar
-readNextChar
+[readNextChar
 	char := patternStream next
+]
 
 DateParser class >> readingFrom: anInputStream pattern: aPattern
-readingFrom: anInputStream pattern: aPattern
+[readingFrom: anInputStream pattern: aPattern
 	"See class comment for pattern description
 	self comment"
 
 	^ self new initializeReadingFrom: anInputStream pattern: aPattern
+]
 

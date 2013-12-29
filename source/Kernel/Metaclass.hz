@@ -5,7 +5,7 @@ Metaclass
 	package: #Kernel.
 
 Metaclass >> adoptInstance: oldInstance from: oldMetaClass
-adoptInstance: oldInstance from: oldMetaClass
+[adoptInstance: oldInstance from: oldMetaClass
 	"Recreate any existing instances of the argument, oldClass, as instances of 
 	the receiver, which is a newly changed class. Permute variables as 
 	necessary."
@@ -21,29 +21,34 @@ adoptInstance: oldInstance from: oldMetaClass
 		variable: self isVariable
 		size: self instSize
 		map: (self instVarMappingFrom: oldMetaClass)
+]
 
 Metaclass >> baseClass
-baseClass
+[baseClass
 	^ thisClass
+]
 
 Metaclass >> basicLocalSelectors
-basicLocalSelectors
+[basicLocalSelectors
 	"Direct accessor for the instance variable localSelectors.
 	Since localSelectors is lazily initialized, this may 
 	return nil, which means that all selectors are local."
 
 	^ localSelectors
+]
 
 Metaclass >> basicLocalSelectors: aSetOrNil
-basicLocalSelectors: aSetOrNil
+[basicLocalSelectors: aSetOrNil
 	localSelectors := aSetOrNil
+]
 
 Metaclass >> classClass
-classClass
+[classClass
 	^ self
+]
 
 Metaclass >> definition
-definition
+[definition
 	"Refer to the comment in ClassDescription|definition."
 
 	^ String
@@ -57,81 +62,94 @@ definition
 				crtab;
 				nextPutAll: 'instanceVariableNames: ';
 				store: self instanceVariablesString ]
+]
 
 Metaclass >> environment
-environment
+[environment
 	^ thisClass environment
+]
 
 Metaclass >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex
-fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex
+[fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex
 	^ self
 		fileOutOn: aFileStream
 		moveSource: moveSource
 		toFile: fileIndex
 		initializing: true
+]
 
 Metaclass >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex initializing: aBool
-fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex initializing: aBool
+[fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex initializing: aBool
 	super fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex.
 	(aBool and: [ moveSource not and: [ self includesSelector: #initialize ] ])
 		ifTrue: [ aFileStream cr.
 			aFileStream cr.
 			aFileStream nextChunkPut: thisClass name , ' initialize'.
 			aFileStream cr ]
+]
 
 Metaclass >> instanceVariableNames: instVarString
-instanceVariableNames: instVarString
+[instanceVariableNames: instVarString
 	"Declare additional named variables for my instance."
 
 	^ thisClass classBuilder class: self instanceVariableNames: instVarString
+]
 
 Metaclass >> isClass
-isClass
+[isClass
 	^ true
+]
 
 Metaclass >> name
-name
+[name
 	"Answer a String that is the name of the receiver, either 'Metaclass' or 
 	the name of the receiver's class followed by ' class'."
 
 	thisClass == nil
 		ifTrue: [ ^ 'a Metaclass' ]
 		ifFalse: [ ^ thisClass name , ' class' ]
+]
 
 Metaclass >> new
-new
+[new
 	"The receiver can only have one instance. Create it or complain that
 	one already exists."
 
 	thisClass class ~~ self
 		ifTrue: [ ^ thisClass := self basicNew ]
 		ifFalse: [ self error: 'A Metaclass should only have one instance!' ]
+]
 
 Metaclass >> postCopy
-postCopy
+[postCopy
 	"Don't share the reference to the sole instance."
 
 	super postCopy.
 	thisClass := nil
+]
 
 Metaclass >> soleInstance
-soleInstance
+[soleInstance
 	"The receiver has only one instance. Answer it."
 
 	^ thisClass
+]
 
 Metaclass >> traitComposition
-traitComposition
+[traitComposition
 	traitComposition ifNil: [ traitComposition := TraitComposition new ].
 	^ traitComposition
+]
 
 Metaclass >> traitComposition: aTraitComposition
-traitComposition: aTraitComposition
+[traitComposition: aTraitComposition
 	traitComposition := aTraitComposition
+]
 
 Metaclass >> veryDeepCopyWith: deepCopier
-veryDeepCopyWith: deepCopier
+[veryDeepCopyWith: deepCopier
 	"Return self.  Must be created, not copied.  Do not record me."
 
 	
+]
 

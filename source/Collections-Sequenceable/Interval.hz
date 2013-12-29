@@ -4,59 +4,67 @@ Interval
 	package: #'Collections-Sequenceable'.
 
 Interval >> + number
-+ number
+[+ number
 	^ start + number to: stop + number by: step
+]
 
 Interval >> - number
-- number
+[- number
 	^ start - number to: stop - number by: step
+]
 
 Interval >> = anObject
-= anObject
+[= anObject
 	^ self == anObject
 		ifTrue: [ true ]
 		ifFalse: [ anObject isInterval
 				ifTrue: [ start = anObject first and: [ step = anObject increment and: [ self last = anObject last ] ] ]
 				ifFalse: [ super = anObject ] ]
+]
 
 Interval >> add: newObject
-add: newObject
+[add: newObject
 	"Adding to an Interval is not allowed."
 
 	self shouldNotImplement
+]
 
 Interval >> anyOne
-anyOne
+[anyOne
 	"This message will fail for an empty Interval, super would not.
 	(2 to: 1) anyOne should fail because empty."
 
 	^ self at: 1
+]
 
 Interval >> at: anInteger
-at: anInteger
+[at: anInteger
 	"Answer the anInteger'th element."
 
 	(anInteger >= 1 and: [ anInteger <= self size ])
 		ifTrue: [ ^ start + (step * (anInteger - 1)) ]
 		ifFalse: [ self errorSubscriptBounds: anInteger ]
+]
 
 Interval >> at: anInteger put: anObject
-at: anInteger put: anObject
+[at: anInteger put: anObject
 	"Storing into an Interval is not allowed."
 
 	self error: 'you can not store into an interval'
+]
 
 Interval >> collect: aBlock
-collect: aBlock
+[collect: aBlock
 	| nextValue result |
 	result := self species new: self size.
 	nextValue := start.
 	1 to: result size do: [ :i | result at: i put: (aBlock value: nextValue).
 		nextValue := nextValue + step ].
 	^ result
+]
 
 Interval >> do: aBlock
-do: aBlock
+[do: aBlock
 	"Evaluate aBlock for each value of the interval.
 	Implementation note: instead of repeatedly incrementing the value
 		aValue := aValue + step.
@@ -72,35 +80,40 @@ do: aBlock
 	[ index < size ] whileTrue: [ aValue := start + (index * step).
 			index := index + 1.
 			aBlock value: aValue ]
+]
 
 Interval >> extent
-extent
+[extent
 	"Answer the max - min of the receiver interval."
 
 	"(10 to: 50) extent"
 
 	^ stop - start
+]
 
 Interval >> first
-first
+[first
 	"Refer to the comment in SequenceableCollection|first."
 
 	^ start
+]
 
 Interval >> hash
-hash
+[hash
 	"Hash is reimplemented because = is implemented."
 
 	^ (((start hash bitShift: 2) bitOr: stop hash) bitShift: 1) bitOr: self size
+]
 
 Interval >> increment
-increment
+[increment
 	"Answer the receiver's interval increment."
 
 	^ step
+]
 
 Interval >> indexOf: anElement startingAt: startIndex ifAbsent: exceptionBlock
-indexOf: anElement startingAt: startIndex ifAbsent: exceptionBlock
+[indexOf: anElement startingAt: startIndex ifAbsent: exceptionBlock
 	"startIndex is an positive integer, the collection index where the search is started."
 
 	"during the computation of val , floats are only used when the receiver contains floats"
@@ -119,32 +132,37 @@ indexOf: anElement startingAt: startIndex ifAbsent: exceptionBlock
 	^ (index between: startIndex and: self size)
 		ifTrue: [ index ]
 		ifFalse: [ exceptionBlock value ]
+]
 
 Interval >> isInterval
-isInterval
+[isInterval
 	^ true
+]
 
 Interval >> isSelfEvaluating
-isSelfEvaluating
+[isSelfEvaluating
 	^ self class == Interval
+]
 
 Interval >> last
-last
+[last
 	"Refer to the comment in SequenceableCollection|last."
 
 	^ stop - ((stop - start) \\ step)
+]
 
 Interval >> permutationsDo: aBlock
-permutationsDo: aBlock
+[permutationsDo: aBlock
 	"Repeatly value aBlock with a single copy of the receiver. Reorder the copy
 	so that aBlock is presented all (self size factorial) possible permutations."
 
 	"(1 to: 4) permutationsDo: [:each | Transcript cr; show: each printString]"
 
 	self asArray permutationsDo: aBlock
+]
 
 Interval >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	aStream
 		nextPut: $(;
 		print: start;
@@ -155,23 +173,26 @@ printOn: aStream
 				nextPutAll: ' by: ';
 				print: step ].
 	aStream nextPut: $)
+]
 
 Interval >> rangeIncludes: aNumber
-rangeIncludes: aNumber
+[rangeIncludes: aNumber
 	"Return true if the number lies in the interval between start and stop."
 
 	step >= 0
 		ifTrue: [ ^ aNumber between: start and: stop ]
 		ifFalse: [ ^ aNumber between: stop and: start ]
+]
 
 Interval >> remove: newObject
-remove: newObject
+[remove: newObject
 	"Removing from an Interval is not allowed."
 
 	self error: 'elements cannot be removed from an Interval'
+]
 
 Interval >> reverseDo: aBlock
-reverseDo: aBlock
+[reverseDo: aBlock
 	"Evaluate aBlock for each element of my interval, in reverse order.
 	Implementation notes: see do: for an explanation on loop detail"
 
@@ -180,15 +201,17 @@ reverseDo: aBlock
 	[ index > 0 ] whileTrue: [ index := index - 1.
 			aValue := start + (index * step).
 			aBlock value: aValue ]
+]
 
 Interval >> setFrom: startInteger to: stopInteger by: stepInteger
-setFrom: startInteger to: stopInteger by: stepInteger
+[setFrom: startInteger to: stopInteger by: stepInteger
 	start := startInteger.
 	stop := stopInteger.
 	step := stepInteger
+]
 
 Interval >> size
-size
+[size
 	"Answer how many elements the receiver contains."
 
 	step < 0
@@ -198,25 +221,29 @@ size
 		ifFalse: [ stop < start
 				ifTrue: [ ^ 0 ]
 				ifFalse: [ ^ (stop - start) // step + 1 ] ]
+]
 
 Interval >> sorted
-sorted
+[sorted
 	^ self increment >= 0
 		ifTrue: [ self copy ]
 		ifFalse: [ self last to: self first by: self increment negated ]
+]
 
 Interval >> sorted: aSortBlockOrNil
-sorted: aSortBlockOrNil
+[sorted: aSortBlockOrNil
 	"Return a new sequenceable collection which contains the same elements as self but its elements are sorted by aSortBlockOrNil. The block should take two arguments and return true if the first element should preceed the second one. If aSortBlock is nil then <= is used for comparison. We convert the interval to an array because intervals can't be changed."
 
 	^ self asArray sort: aSortBlockOrNil
+]
 
 Interval >> species
-species
+[species
 	^ Array
+]
 
 Interval >> storeOn: aStream
-storeOn: aStream
+[storeOn: aStream
 	aStream
 		nextPut: $(;
 		store: start;
@@ -227,23 +254,26 @@ storeOn: aStream
 				nextPutAll: ' by: ';
 				store: step ].
 	aStream nextPut: $)
+]
 
 Interval class >> from: startInteger to: stopInteger
-from: startInteger to: stopInteger
+[from: startInteger to: stopInteger
 	"Answer an instance of me, starting at startNumber, ending at 
 	stopNumber, and with an interval increment of 1."
 
 	^ self new setFrom: startInteger to: stopInteger by: 1
+]
 
 Interval class >> from: startInteger to: stopInteger by: stepInteger
-from: startInteger to: stopInteger by: stepInteger
+[from: startInteger to: stopInteger by: stepInteger
 	"Answer an instance of me, starting at startNumber, ending at 
 	stopNumber, and with an interval increment of stepNumber."
 
 	^ self new setFrom: startInteger to: stopInteger by: stepInteger
+]
 
 Interval class >> new
-new
+[new
 	"Primitive. Create and answer with a new instance of the receiver
 	(a class) with no indexable fields. Fail if the class is indexable. Override
 	SequenceableCollection new. Essential. See Object documentation
@@ -254,9 +284,10 @@ new
 		ifTrue: [ ^ self new: 0 ].	"space must be low"
 	OutOfMemory signal.
 	^ self new	"retry if user proceeds"
+]
 
 Interval class >> newFrom: aCollection
-newFrom: aCollection
+[newFrom: aCollection
 	"Answer an instance of me containing the same elements as aCollection."
 
 	| newInterval n |
@@ -270,8 +301,10 @@ newFrom: aCollection
 			(newInterval hasEqualElements: aCollection)
 				ifFalse: [ self error: 'The argument is not an arithmetic progression' ] ].
 	^ newInterval	"	Interval newFrom: {1. 2. 3}	{33. 5. -23} as: Interval	{33. 5. -22} as: Interval    (an error)	(-4 to: -12 by: -1) as: Interval	#(2 4 6) asByteArray as: Interval."
+]
 
 Interval class >> streamSpecies
-streamSpecies
+[streamSpecies
 	^ Array
+]
 

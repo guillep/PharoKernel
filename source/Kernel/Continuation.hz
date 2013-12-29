@@ -3,7 +3,7 @@ Continuation
 	package: #Kernel.
 
 Continuation >> initializeFromContext: aContext
-initializeFromContext: aContext
+[initializeFromContext: aContext
 	| valueStream context |
 	valueStream := WriteStream on: (Array new: 20).
 	context := aContext.
@@ -13,54 +13,64 @@ initializeFromContext: aContext
 			1 to: context size do: [ :i | valueStream nextPut: (context at: i) ].
 			context := context sender ].
 	values := valueStream contents
+]
 
 Continuation >> numArgs
-numArgs
+[numArgs
 	^ 1
+]
 
 Continuation >> restoreValues
-restoreValues
+[restoreValues
 	| valueStream context |
 	valueStream := values readStream.
 	[ valueStream atEnd ]
 		whileFalse: [ context := valueStream next.
 			1 to: context class instSize do: [ :i | context instVarAt: i put: valueStream next ].
 			1 to: context size do: [ :i | context at: i put: valueStream next ] ]
+]
 
 Continuation >> terminate: aContext
-terminate: aContext
+[terminate: aContext
 	| context |
 	context := aContext.
 	[ context notNil ] whileTrue: [ context := context swapSender: nil ]
+]
 
 Continuation >> value
-value
+[value
 	self value: nil
+]
 
 Continuation >> value: anObject
-value: anObject
+[value: anObject
 	"Invoke the continuation and answer anObject as return value."
 
 	self terminate: thisContext.
 	self restoreValues.
 	thisContext swapSender: values first.
 	^ anObject
+]
 
 Continuation >> valueWithArguments: anArray
-valueWithArguments: anArray
+[valueWithArguments: anArray
 	anArray size = 1
 		ifFalse: [ ^ self error: 'continuations can only be resumed with one argument' ].
 	self value: anArray first
+]
 
 Continuation class >> current
-current
+[current
 	^ self fromContext: thisContext sender
+]
 
 Continuation class >> currentDo: aBlock
-currentDo: aBlock
+[currentDo: aBlock
 	^ aBlock value: (self fromContext: thisContext sender)
+]
 
 Continuation class >> fromContext: aStack
-fromContext: aStack
+[fromContext: aStack
 	^ self new initializeFromContext: aStack
+]
 

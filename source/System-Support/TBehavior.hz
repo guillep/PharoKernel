@@ -1,34 +1,39 @@
 TBehavior >> allCallsOn
-allCallsOn
+[allCallsOn
 	"Answer a SortedCollection of all the methods that refer to me by name or as part of an association in a global dict."
 
 	^ self allCallsOnIn: self systemNavigation
+]
 
 TBehavior >> allCallsOn: aSymbol
-allCallsOn: aSymbol
+[allCallsOn: aSymbol
 	"Answer a SortedCollection of all the methods that call on aSymbol."
 
 	^ self systemNavigation allCallsOn: aSymbol from: self
+]
 
 TBehavior >> allCallsOnIn: aSystemNavigation
-allCallsOnIn: aSystemNavigation
+[allCallsOnIn: aSystemNavigation
 	"Answer a SortedCollection of all the methods that refer to me by name or as part of an association in a global dict."
 
 	^ (aSystemNavigation allReferencesTo: (self environment associationAt: self theNonMetaClass name))
 		, (aSystemNavigation allCallsOn: self theNonMetaClass name)
+]
 
 TBehavior >> allUnsentMessages
-allUnsentMessages
+[allUnsentMessages
 	"Answer an array of all the messages defined by the receiver that are not sent anywhere in the system."
 
 	^ SystemNavigation new allUnsentMessagesIn: self selectors
+]
 
 TBehavior >> referencedClasses
-referencedClasses
+[referencedClasses
 	"Return the set of classes that are directly referenced by my methods"
 
 	| answer |
 	answer := Set new.
 	self methods do: [ :cm | answer addAll: (cm literals select: [ :l | l isKindOf: Association ] thenCollect: #value) ].
 	^ answer
+]
 

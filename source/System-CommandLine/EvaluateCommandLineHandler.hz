@@ -3,7 +3,7 @@ EvaluateCommandLineHandler
 	package: #'System-CommandLine'.
 
 EvaluateCommandLineHandler >> activate
-activate
+[activate
 	self activateHelp
 		ifTrue: [ ^ self ].
 	self arguments ifEmpty: [ ^ self evaluateStdIn ].
@@ -12,9 +12,10 @@ activate
 		ifTrue: [ ^ Smalltalk snapshot: true andQuit: (self hasOption: 'no-quit') not ].
 	(self hasOption: 'no-quit')
 		ifFalse: [ self quit ]
+]
 
 EvaluateCommandLineHandler >> argumentString
-argumentString
+[argumentString
 	| arguments skipArguments |
 	"Now this is ugly... Coral would be nice here! Basically we strip skipArguments if, and only if they appear at the beginning of arguments"
 	skipArguments := #('--no-quit' '--save' '-e').
@@ -24,9 +25,10 @@ argumentString
 				ifTrue: [ self arguments allButFirst: 2 ]
 				ifFalse: [ self arguments allButFirst ] ].
 	^ arguments joinUsing: Character space
+]
 
 EvaluateCommandLineHandler >> evaluate: aStream
-evaluate: aStream
+[evaluate: aStream
 	| result exceptionClassToUse |
 	"workaround to make old Compiler unloadable"
 	exceptionClassToUse := Smalltalk compilerClass == OpalCompiler
@@ -39,16 +41,18 @@ evaluate: aStream
 				lf ] ]
 		on: Error , ParserNotification
 		do: [ :error | self handleError: error ]
+]
 
 EvaluateCommandLineHandler >> evaluateArguments
-evaluateArguments
+[evaluateArguments
 	| argumentString |
 	argumentString := self argumentString.
 	argumentString ifEmpty: [ ^ self ].
 	self evaluate: argumentString
+]
 
 EvaluateCommandLineHandler >> evaluateStdIn
-evaluateStdIn
+[evaluateStdIn
 	| stdin |
 	stdin := FileStream stdin ifNil: [ ^ self ].
 	stdin atEnd
@@ -57,20 +61,24 @@ evaluateStdIn
 	self
 		evaluate:
 			(String streamContents: [ :s | [ stdin atEnd ] whileFalse: [ stdin next ifNotNil: [ :char | s nextPut: char ] ] ])
+]
 
 EvaluateCommandLineHandler class >> commandName
-commandName
+[commandName
 	^ 'eval'
+]
 
 EvaluateCommandLineHandler class >> description
-description
+[description
 	^ 'Directly evaluates passed in one line scripts'
+]
 
 EvaluateCommandLineHandler class >> isResponsibleFor: commandLineArguments
-isResponsibleFor: commandLineArguments
+[isResponsibleFor: commandLineArguments
 	"directly handle top-level -e and --evaluate options"
 
 	commandLineArguments withFirstArgument: [ :arg | (#('-e' '--evaluate') includes: arg)
 				ifTrue: [ ^ true ] ].
 	^ commandLineArguments includesSubCommand: self commandName
+]
 

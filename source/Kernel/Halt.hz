@@ -6,67 +6,77 @@ Halt class
 	instanceVariables: #(#isHaltOnceEnabled #callsUntilHaltOnCount ).
 
 Halt >> defaultAction
-defaultAction
+[defaultAction
 	"No one has handled this error, but now give them a chance to decide how to debug it.  If none handle this either then open debugger (see UnhandedError-defaultAction)"
 
 	^ UIManager default unhandledErrorDefaultAction: self	"^ UnhandledError signalForException: self"
+]
 
 Halt >> signalerContext
-signalerContext
+[signalerContext
 	"specialized version to find the proper context to open the debugger on.
 	This will find the first context whose method is no longer on Halt or Halt class nor is #halt method iteself."
 
 	^ signalContext
 		findContextSuchThat: [ :context | (context receiver == self or: [ context receiver == self class or: [ context method selector = #halt ] ]) not ]
+]
 
 Halt class >> callsUntilHaltOnCount
-callsUntilHaltOnCount
+[callsUntilHaltOnCount
 	^ callsUntilHaltOnCount
+]
 
 Halt class >> callsUntilHaltOnCount: anInteger
-callsUntilHaltOnCount: anInteger
+[callsUntilHaltOnCount: anInteger
 	callsUntilHaltOnCount := anInteger
+]
 
 Halt class >> disableHaltOnce
-disableHaltOnce
+[disableHaltOnce
 	isHaltOnceEnabled := false
+]
 
 Halt class >> enableHaltOnce
-enableHaltOnce
+[enableHaltOnce
 	"self enableHaltOnce"
 
 	isHaltOnceEnabled := true
+]
 
 Halt class >> halt
-halt
+[halt
 	"backward compatible method with self halt"
 
 	self signal
+]
 
 Halt class >> halt: aString
-halt: aString
+[halt: aString
 	"backward compatible method with self halt:"
 
 	self signal: aString
+]
 
 Halt class >> haltIfBlockWithCallingObject: aBlock
-haltIfBlockWithCallingObject: aBlock
+[haltIfBlockWithCallingObject: aBlock
 	| callingObject |
 	callingObject := thisContext sender sender receiver.
 	(aBlock cull: callingObject)
 		ifTrue: [ self signal ]
 		ifFalse: [ ^ self ]
+]
 
 Halt class >> haltIfCallChainContains: aSelector
-haltIfCallChainContains: aSelector
+[haltIfCallChainContains: aSelector
 	| cntxt |
 	cntxt := thisContext.
 	[ cntxt sender isNil ] whileFalse: [ cntxt := cntxt sender.
 			cntxt selector = aSelector
 				ifTrue: [ self signal ] ]
+]
 
 Halt class >> if: condition
-if: condition
+[if: condition
 	"This is the typical message to use for inserting breakpoints during 
 	debugging.
 	
@@ -81,36 +91,43 @@ if: condition
 		ifTrue: [ ^ self haltIfBlockWithCallingObject: condition ].
 	condition
 		ifTrue: [ self signal ]
+]
 
 Halt class >> ifShiftPressed
-ifShiftPressed
+[ifShiftPressed
 	self if: [ Sensor shiftPressed ]
+]
 
 Halt class >> initialize
-initialize
+[initialize
 	isHaltOnceEnabled := false.
 	callsUntilHaltOnCount := 1
+]
 
 Halt class >> isCounting
-isCounting
+[isCounting
 	^ callsUntilHaltOnCount > 0
+]
 
 Halt class >> isHaltOnceEnabled
-isHaltOnceEnabled
+[isHaltOnceEnabled
 	^ isHaltOnceEnabled ifNil: [ isHaltOnceEnabled := false ]
+]
 
 Halt class >> now
-now
+[now
 	self signal
+]
 
 Halt class >> now: aString
-now: aString
+[now: aString
 	"set a breakpoint with some explanation"
 
 	self signal: aString
+]
 
 Halt class >> onCount: anInteger
-onCount: anInteger
+[onCount: anInteger
 	"Halt on the anInteger-th time through"
 
 	| currentCount |
@@ -120,16 +137,19 @@ onCount: anInteger
 	self callsUntilHaltOnCount: currentCount - 1.
 	self callsUntilHaltOnCount = 0
 		ifTrue: [ self signal ]
+]
 
 Halt class >> once
-once
+[once
 	"To enable, use self enableHaltOnce"
 
 	self isHaltOnceEnabled
 		ifTrue: [ self disableHaltOnce.
 			^ self signal ]
+]
 
 Halt class >> stopCounting
-stopCounting
+[stopCounting
 	callsUntilHaltOnCount := 0
+]
 

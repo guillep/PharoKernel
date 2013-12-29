@@ -5,15 +5,16 @@ Beeper class
 	instanceVariables: #(#default ).
 
 Beeper >> play
-play
+[play
 	"This is how the default Beeper makes a beep,
 	by sending beep to the default sound service.
 	The sound system will check if sounds are enabled."
 
 	(#SoundService asClassIfAbsent: [ ^ self ]) default new beep
+]
 
 Beeper class >> beep
-beep
+[beep
 	"The preferred way of producing an audible feedback.
 	The default playable entity (an instance of Beeper)
 	also uses the pluggable SoundService
@@ -21,9 +22,10 @@ beep
 	if there is no other sound mechanism available."
 
 	self default ifNil: [ self beepPrimitive ] ifNotNil: [ self default play ]
+]
 
 Beeper class >> beepPrimitive
-beepPrimitive
+[beepPrimitive
 	"Make a primitive beep. Only use this if
 	you want to force this to be a primitive beep.
 	Otherwise use Beeper class>>beep
@@ -32,31 +34,35 @@ beepPrimitive
 
 	(#SoundService asClassIfAbsent: [ ^ self primitiveBeep ]) soundEnabled
 		ifTrue: [ self primitiveBeep ]
+]
 
 Beeper class >> clearDefault
-clearDefault
+[clearDefault
 	"Clear the default playable.
 	Will be lazily initialized in Beeper class >>default."
 
 	default := nil
+]
 
 Beeper class >> default
-default
+[default
 	"When the default is not defined it is
 	initialized using #newDefault."
 
 	^ default ifNil: [ default := self newDefault ]
+]
 
 Beeper class >> newDefault
-newDefault
+[newDefault
 	"Subclasses may override me to provide a default beep.
 	This base implementation returns an instance of Beeper
 	which uses the pluggable sound service."
 
 	^ self new
+]
 
 Beeper class >> primitiveBeep
-primitiveBeep
+[primitiveBeep
 	"Make a primitive beep. Not to be called directly.
 	It is much better to use Beeper class>>beep
 	or Beeper class>>beepPrimitive
@@ -66,11 +72,13 @@ primitiveBeep
 
 	<primitive: 140>
 	self primitiveFailed
+]
 
 Beeper class >> setDefault: aPlayableEntity
-setDefault: aPlayableEntity
+[setDefault: aPlayableEntity
 	"Set the playable entity used when making a beep.
 	The playable entity should implement the message #play."
 
 	default := aPlayableEntity
+]
 

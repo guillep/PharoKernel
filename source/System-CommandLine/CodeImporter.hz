@@ -1,5 +1,5 @@
 CodeImporter >> evaluate
-evaluate
+[evaluate
 	" stripped down version of evaluateDeclarations"
 
 	| value |
@@ -8,20 +8,23 @@ evaluate
 			value := declaration importFor: requestor ].
 	self flushChangesFile.
 	^ value
+]
 
 CodeImporter >> shebang
-shebang
+[shebang
 	readStream position: 0.
 	(readStream next: 2) = '#!'
 		ifFalse: [ readStream position: 0.
 			^ self ].	"here we found the shebang, so skip the first line"
 	^ readStream nextLine
+]
 
 CodeImporter >> skipShebang
-skipShebang
+[skipShebang
 	"Skip the shebang sequnce #! at the beginning of a bash file"
 
 	readStream position = 0
 		ifFalse: [ ^ self	"#! can only be skipped at the beginning" ].
 	self shebang
+]
 

@@ -1,12 +1,13 @@
 Trait named: #TApplyingOnClassSide
 	package: #'Traits-Kernel-Traits'.TApplyingOnClassSide >> acceptsLoggingOfCompilation
-acceptsLoggingOfCompilation
+[acceptsLoggingOfCompilation
 	"Answer whether the receiver's method submisions and class defintions should be logged to the changes file and to the current change set.  The metaclass follows the rule of the class itself."
 
 	^ self theNonMetaClass acceptsLoggingOfCompilation
+]
 
 TApplyingOnClassSide >> addInstVarNamed: aString
-addInstVarNamed: aString
+[addInstVarNamed: aString
 	"Add the argument, aString, as one of the receiver's instance variables."
 
 	| fullString |
@@ -16,25 +17,29 @@ addInstVarNamed: aString
 						space ].
 			strm nextPutAll: aString ].
 	self instanceVariableNames: fullString
+]
 
 TApplyingOnClassSide >> addObsoleteSubclass: aClass
-addObsoleteSubclass: aClass
+[addObsoleteSubclass: aClass
 	"Do nothing."
 
 	
+]
 
 TApplyingOnClassSide >> addSubclass: aClass
-addSubclass: aClass
+[addSubclass: aClass
 	"Do nothing."
 
 	
+]
 
 TApplyingOnClassSide >> adoptInstance: oldInstance from: oldMetaClass
-adoptInstance: oldInstance from: oldMetaClass
+[adoptInstance: oldInstance from: oldMetaClass
 	^ self explicitRequirement
+]
 
 TApplyingOnClassSide >> assertConsistantCompositionsForNew: aTraitComposition
-assertConsistantCompositionsForNew: aTraitComposition
+[assertConsistantCompositionsForNew: aTraitComposition
 	"Applying or modifying a trait composition on the class side
 	of a behavior has some restrictions."
 
@@ -58,103 +63,122 @@ assertConsistantCompositionsForNew: aTraitComposition
 			^ TraitCompositionException
 				signal:
 					'You can not add or remove class side traits on				the class side of a composition. (But you can specify aliases or exclusions				for existing traits or add a trait which does not have any methods on the class side.)' ]
+]
 
 TApplyingOnClassSide >> binding
-binding
+[binding
 	"return an association that can be used as the binding
 	 To share it between methods, reuse an existing one if possible"
 
 	^ self methodDict ifEmpty: [ nil -> self ] ifNotEmpty: [ :dict | dict anyOne classBinding ]
+]
 
 TApplyingOnClassSide >> bindingOf: varName
-bindingOf: varName
+[bindingOf: varName
 	^ self theNonMetaClass classBindingOf: varName
+]
 
 TApplyingOnClassSide >> canZapMethodDictionary
-canZapMethodDictionary
+[canZapMethodDictionary
 	"Return true if it is safe to zap the method dictionary on #obsolete"
 
 	self soleInstance == nil
 		ifTrue: [ ^ true ]
 		ifFalse: [ ^ self soleInstance canZapMethodDictionary ]
+]
 
 TApplyingOnClassSide >> category
-category
+[category
 	^ self theNonMetaClass category
+]
 
 TApplyingOnClassSide >> classPool
-classPool
+[classPool
 	"Answer the dictionary of class variables."
 
 	^ self theNonMetaClass classPool
+]
 
 TApplyingOnClassSide >> classVarNames
-classVarNames
+[classVarNames
 	"Answer a set of the names of the class variables defined in the receiver's instance."
 
 	self theNonMetaClass ifNil: [ ^ Set new ].
 	^ self theNonMetaClass classVarNames
+]
 
 TApplyingOnClassSide >> definition
-definition
+[definition
 	^ self explicitRequirement
+]
 
 TApplyingOnClassSide >> fileOutInitializerOn: aStream
-fileOutInitializerOn: aStream
+[fileOutInitializerOn: aStream
 	(self includesSelector: #initialize)
 		ifTrue: [ aStream cr.
 			aStream nextChunkPut: self soleInstance name , ' initialize' ]
+]
 
 TApplyingOnClassSide >> hasClassSide
-hasClassSide
+[hasClassSide
 	^ false
+]
 
 TApplyingOnClassSide >> initializeFrom: anotherClassTrait
-initializeFrom: anotherClassTrait
+[initializeFrom: anotherClassTrait
 	self traitComposition: self traitComposition copyTraitExpression.
 	self methodDict: self methodDict copy.
 	self localSelectors: self localSelectors copy.
 	self basicOrganization: self organization copy
+]
 
 TApplyingOnClassSide >> instanceVariableNames: instVarString
-instanceVariableNames: instVarString
+[instanceVariableNames: instVarString
 	^ self explicitRequirement
+]
 
 TApplyingOnClassSide >> isAnonymous
-isAnonymous
+[isAnonymous
 	^ self soleInstance isAnonymous
+]
 
 TApplyingOnClassSide >> isMeta
-isMeta
+[isMeta
 	^ true
+]
 
 TApplyingOnClassSide >> isObsolete
-isObsolete
+[isObsolete
 	"Return true if the receiver is obsolete"
 
 	^ self soleInstance == nil
 		or: [ self soleInstance classSide ~~ self or: [ self soleInstance isObsolete ]	"or I am not the class of thisClass" ]	"Either no thisClass"	"or my instance is obsolete"
+]
 
 TApplyingOnClassSide >> isSelfEvaluating
-isSelfEvaluating
+[isSelfEvaluating
 	^ self isObsolete not
+]
 
 TApplyingOnClassSide >> name
-name
+[name
 	^ self explicitRequirement
+]
 
 TApplyingOnClassSide >> new
-new
+[new
 	^ self explicitRequirement
+]
 
 TApplyingOnClassSide >> nonTrivial
-nonTrivial
+[nonTrivial
 	"Answer whether the receiver has any methods or instance variables."
 
 	^ self instVarNames notEmpty or: [ self hasMethods or: [ self hasTraitComposition ] ]
+]
 
 TApplyingOnClassSide >> noteNewBaseTraitCompositionApplied: aTraitComposition
-noteNewBaseTraitCompositionApplied: aTraitComposition
+[noteNewBaseTraitCompositionApplied: aTraitComposition
 	"The argument is the new trait composition of my base trait - add
 	the new traits or remove non existing traits on my class side composition.
 	(Each class trait in my composition has its base trait on the instance side
@@ -170,9 +194,10 @@ noteNewBaseTraitCompositionApplied: aTraitComposition
 		do: [ :each | newComposition removeFromComposition: each classTrait ].
 	(aTraitComposition traits copyWithoutAll: traitsFromInstanceSide) do: [ :each | newComposition add: each classTrait ].
 	self setTraitComposition: newComposition
+]
 
 TApplyingOnClassSide >> obsoleteSubclasses
-obsoleteSubclasses
+[obsoleteSubclasses
 	"Answer the receiver's subclasses."
 
 	self theNonMetaClass == nil
@@ -180,13 +205,15 @@ obsoleteSubclasses
 	^ self theNonMetaClass obsoleteSubclasses
 		select: [ :aSubclass | aSubclass isMeta not ]
 		thenCollect: [ :aSubclass | aSubclass class ]	"Metaclass allInstancesDo:		[:m | Compiler evaluate: 'subclasses:=nil' for: m logged: false]"
+]
 
 TApplyingOnClassSide >> possibleVariablesFor: misspelled continuedFrom: oldResults
-possibleVariablesFor: misspelled continuedFrom: oldResults
+[possibleVariablesFor: misspelled continuedFrom: oldResults
 	^ self theNonMetaClass possibleVariablesFor: misspelled continuedFrom: oldResults
+]
 
 TApplyingOnClassSide >> removeInstVarNamed: aString
-removeInstVarNamed: aString
+[removeInstVarNamed: aString
 	"Remove the argument, aString, as one of the receiver's instance variables."
 
 	| newArray newString |
@@ -196,23 +223,27 @@ removeInstVarNamed: aString
 	newString := ''.
 	newArray do: [ :aString2 | newString := aString2 , ' ' , newString ].
 	self instanceVariableNames: newString
+]
 
 TApplyingOnClassSide >> removeSubclass: aClass
-removeSubclass: aClass
+[removeSubclass: aClass
 	"Do nothing."
 
 	
+]
 
 TApplyingOnClassSide >> sharedPools
-sharedPools
+[sharedPools
 	^ OrderedCollection new
+]
 
 TApplyingOnClassSide >> soleInstance
-soleInstance
+[soleInstance
 	^ self explicitRequirement
+]
 
 TApplyingOnClassSide >> subclasses
-subclasses
+[subclasses
 	"Answer the receiver's subclasses."
 
 	self theNonMetaClass == nil
@@ -220,9 +251,10 @@ subclasses
 	^ self theNonMetaClass subclasses
 		select: [ :aSubclass | aSubclass isMeta not ]
 		thenCollect: [ :aSubclass | aSubclass class ]	"Metaclass allInstancesDo:		[:m | Compiler evaluate: 'subclasses:=nil' for: m logged: false]"
+]
 
 TApplyingOnClassSide >> subclassesDo: aBlock
-subclassesDo: aBlock
+[subclassesDo: aBlock
 	"Evaluate aBlock for each of the receiver's immediate subclasses."
 
 	self theNonMetaClass
@@ -230,18 +262,20 @@ subclassesDo: aBlock
 			"The following test is for Class class which has to exclude		the Metaclasses being subclasses of Class."
 			aSubclass isMeta
 				ifFalse: [ aBlock value: aSubclass class ] ]
+]
 
 TApplyingOnClassSide >> uses: aTraitCompositionOrArray
-uses: aTraitCompositionOrArray
+[uses: aTraitCompositionOrArray
 	| copyOfOldTrait newComposition |
 	copyOfOldTrait := self copy.
 	newComposition := aTraitCompositionOrArray asTraitComposition.
 	self assertConsistantCompositionsForNew: newComposition.
 	self setTraitComposition: newComposition.
 	SystemAnnouncer uniqueInstance traitDefinitionChangedFrom: copyOfOldTrait to: self
+]
 
 TApplyingOnClassSide >> uses: aTraitCompositionOrArray instanceVariableNames: instVarString
-uses: aTraitCompositionOrArray instanceVariableNames: instVarString
+[uses: aTraitCompositionOrArray instanceVariableNames: instVarString
 	| newComposition newMetaClass copyOfOldMetaClass |
 	copyOfOldMetaClass := self copy.
 	newMetaClass := self instanceVariableNames: instVarString.
@@ -249,16 +283,19 @@ uses: aTraitCompositionOrArray instanceVariableNames: instVarString
 	newMetaClass assertConsistantCompositionsForNew: newComposition.
 	newMetaClass setTraitComposition: newComposition.
 	SystemAnnouncer uniqueInstance classDefinitionChangedFrom: copyOfOldMetaClass to: newMetaClass
+]
 
 TApplyingOnClassSide >> wantsChangeSetLogging
-wantsChangeSetLogging
+[wantsChangeSetLogging
 	"Answer whether code submitted for the receiver should be remembered by the changeSet mechanism.The metaclass follows the rule of the class itself."
 
 	^ self theNonMetaClass wantsChangeSetLogging
+]
 
 TApplyingOnClassSide >> wantsRecompilationProgressReported
-wantsRecompilationProgressReported
+[wantsRecompilationProgressReported
 	"The metaclass follows the rule of the class itself."
 
 	^ self theNonMetaClass wantsRecompilationProgressReported
+]
 

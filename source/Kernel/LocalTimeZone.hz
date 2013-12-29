@@ -4,33 +4,38 @@ LocalTimeZone
 	package: #Kernel.
 
 LocalTimeZone >> abbreviation
-abbreviation
+[abbreviation
 	^ String
 		streamContents: [ :s | s
 				nextPutAll: 'LT';
 				print: self offset hours;
 				nextPut: $:.
 			s nextPutAll: (self offset minutes printPaddedWith: $0 to: 2) ]
+]
 
 LocalTimeZone >> asFixedTimeZone
-asFixedTimeZone
+[asFixedTimeZone
 	"Convert this dynamic timezone to one with a fixed offset."
 
 	^ TimeZone offset: self offset name: 'Fixed Local Time' abbreviation: self abbreviation
+]
 
 LocalTimeZone >> name
-name
+[name
 	^ 'Local Time'
+]
 
 LocalTimeZone >> offset
-offset
+[offset
 	^ self primOffset minutes
+]
 
 LocalTimeZone >> primOffset
-primOffset
+[primOffset
 	"The offset from UTC in minutes, with positive offsets being towards the east.
 	(San Francisco is in UTC -07*60 and Paris is in UTC +02*60 (daylight savings is not in effect)."
 
 	<primitive: 'primitiveTimezoneOffset' module: 'LocalePlugin'>
 	^ 0
+]
 

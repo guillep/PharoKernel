@@ -5,7 +5,7 @@ ContextPart
 	package: #Kernel.
 
 ContextPart >> activateMethod: newMethod withArgs: args receiver: rcvr class: class
-activateMethod: newMethod withArgs: args receiver: rcvr class: class
+[activateMethod: newMethod withArgs: args receiver: rcvr class: class
 	"Answer a ContextPart initialized with the arguments."
 
 	^ MethodContext
@@ -13,9 +13,10 @@ activateMethod: newMethod withArgs: args receiver: rcvr class: class
 		receiver: rcvr
 		method: newMethod
 		arguments: args
+]
 
 ContextPart >> activateReturn: aContext value: value
-activateReturn: aContext value: value
+[activateReturn: aContext value: value
 	"Activate 'aContext return: value' in place of self, so execution will return to aContext's sender"
 
 	^ self
@@ -23,9 +24,10 @@ activateReturn: aContext value: value
 		withArgs: {value}
 		receiver: aContext
 		class: aContext class
+]
 
 ContextPart >> arguments
-arguments
+[arguments
 	"returns the arguments of a message invocation"
 
 	| arguments numargs |
@@ -33,9 +35,10 @@ arguments
 	arguments := Array new: numargs.
 	1 to: numargs do: [ :i | arguments at: i put: (self tempAt: i) ].
 	^ arguments
+]
 
 ContextPart >> at: index
-at: index
+[at: index
 	"Primitive. Assumes receiver is indexable. Answer the value of an
 	 indexable element in the receiver. Fail if the argument index is not an
 	 Integer or is out of bounds. Essential. See Object documentation
@@ -48,9 +51,10 @@ at: index
 	index isNumber
 		ifTrue: [ ^ self at: index asInteger ]
 		ifFalse: [ self errorNonIntegerIndex ]
+]
 
 ContextPart >> at: index put: value
-at: index put: value
+[at: index put: value
 	"Primitive. Assumes receiver is indexable. Answer the value of an
 	 indexable element in the receiver. Fail if the argument index is not
 	 an Integer or is out of bounds. Essential. See Object documentation
@@ -63,9 +67,10 @@ at: index put: value
 	index isNumber
 		ifTrue: [ ^ self at: index asInteger put: value ]
 		ifFalse: [ self errorNonIntegerIndex ]
+]
 
 ContextPart >> basicAt: index
-basicAt: index
+[basicAt: index
 	"Primitive. Assumes receiver is indexable. Answer the value of an
 	 indexable element in the receiver. Fail if the argument index is not an
 	 Integer or is out of bounds. Essential. See Object documentation
@@ -78,9 +83,10 @@ basicAt: index
 	index isNumber
 		ifTrue: [ ^ self at: index asInteger ]
 		ifFalse: [ self errorNonIntegerIndex ]
+]
 
 ContextPart >> basicAt: index put: value
-basicAt: index put: value
+[basicAt: index put: value
 	"Primitive. Assumes receiver is indexable. Answer the value of an
 	 indexable element in the receiver. Fail if the argument index is not
 	 an Integer or is out of bounds. Essential. See Object documentation
@@ -93,9 +99,10 @@ basicAt: index put: value
 	index isNumber
 		ifTrue: [ ^ self at: index asInteger put: value ]
 		ifFalse: [ self errorNonIntegerIndex ]
+]
 
 ContextPart >> basicSize
-basicSize
+[basicSize
 	"Primitive. Answer the number of indexable variables in the receiver. 
 	This value is the same as the largest legal subscript. Essential. Do not 
 	override in any subclass. See Object documentation whatIsAPrimitive.  Override the default primitive to give latitude to
@@ -105,37 +112,42 @@ basicSize
 
 	<primitive: 212>
 	^ self primitiveFail
+]
 
 ContextPart >> bottomContext
-bottomContext
+[bottomContext
 	"Return the last context (the first context invoked) in my sender chain"
 
 	^ self findContextSuchThat: [ :context | context sender isNil ]
+]
 
 ContextPart >> canHandleSignal: exception
-canHandleSignal: exception
+[canHandleSignal: exception
 	"Sent to handler (on:do:) contexts only.  If my exception class (first arg) handles exception then return true, otherwise forward this message to the next handler context.  If none left, return false (see nil>>canHandleSignal:)"
 
 	^ ((self exceptionClass handles: exception) and: [ self exceptionHandlerIsActive ])
 		or: [ self nextHandlerContext canHandleSignal: exception ]
+]
 
 ContextPart >> cannotReturn: result to: homeContext
-cannotReturn: result to: homeContext
+[cannotReturn: result to: homeContext
 	"The receiver tried to return result to homeContext that no longer exists."
 
 	^ BlockCannotReturn new
 		result: result;
 		deadHome: homeContext;
 		signal
+]
 
 ContextPart >> client
-client
+[client
 	"Answer the client, that is, the object that sent the message that created this context."
 
 	^ sender receiver
+]
 
 ContextPart >> closureCopy: numArgs copiedValues: anArray
-closureCopy: numArgs copiedValues: anArray
+[closureCopy: numArgs copiedValues: anArray
 	"Distinguish a block of code from its enclosing method by 
 	creating a BlockClosure for that block. The compiler inserts into all 
 	methods that contain blocks the bytecodes to send the message 
@@ -150,9 +162,10 @@ closureCopy: numArgs copiedValues: anArray
 		startpc: pc + 2
 		numArgs: numArgs
 		copiedValues: anArray
+]
 
 ContextPart >> completeCallee: aContext
-completeCallee: aContext
+[completeCallee: aContext
 	"Simulate the execution of bytecodes until a return to the receiver."
 
 	| context current nextContext |
@@ -163,25 +176,29 @@ completeCallee: aContext
 			nextContext ifNil: [ self halt ].
 			context := nextContext ].
 	^ self stepToSendOrReturn
+]
 
 ContextPart >> contextStack
-contextStack
+[contextStack
 	"Answer an Array of the contexts on the receiver's sender chain."
 
 	^ self stackOfSize: 100000
+]
 
 ContextPart >> copyStack
-copyStack
+[copyStack
 	^ self copyTo: nil
+]
 
 ContextPart >> copyTo: aContext
-copyTo: aContext
+[copyTo: aContext
 	"Copy self and my sender chain down to, but not including, aContext.  End of copied chain will have nil sender.  BlockContexts whose home is also copied will point to the copy.  However, blockContexts that are not on the stack but may be later will not have their home pointing in the new copied thread.  So an error will be raised if one of these tries to return directly to its home.  It is best to use BlockClosures instead.  They only hold a ContextTag, which will work for all copies of the original home context."
 
 	^ self copyTo: aContext blocks: IdentityDictionary new
+]
 
 ContextPart >> copyTo: aContext blocks: dict
-copyTo: aContext blocks: dict
+[copyTo: aContext blocks: dict
 	"Copy self and my sender chain down to, but not including, aContext.  End of copied chain will have nil sender.  BlockContexts whose home is also copied will point to the copy.  However, blockContexts that are not on the stack but may be later will not have their home pointing in the new copied thread.  So an error will be raised if one of these tries to return directly to its home."
 
 	| copy |
@@ -191,9 +208,10 @@ copyTo: aContext blocks: dict
 	dict at: self ifPresent: [ :blocks | blocks do: [ :block | block privHome: copy ] ].
 	self sender ifNotNil: [ copy privSender: (self sender copyTo: aContext blocks: dict) ].
 	^ copy
+]
 
 ContextPart >> cut: aContext
-cut: aContext
+[cut: aContext
 	"Cut aContext and its senders from my sender chain"
 
 	| context callee |
@@ -203,26 +221,30 @@ cut: aContext
 			context := context sender.
 			context ifNil: [ aContext ifNotNil: [ self error: 'aContext not a sender' ] ] ].
 	callee privSender: nil
+]
 
 ContextPart >> debug
-debug
+[debug
 	^ Smalltalk tools debugger openContext: self label: self printString contents: nil
+]
 
 ContextPart >> debugStack: stackSize on: aStream
-debugStack: stackSize on: aStream
+[debugStack: stackSize on: aStream
 	"print a condensed version of the stack up to stackSize on aStream"
 
 	(self stackOfSize: stackSize) do: [ :item | item printDebugOn: aStream.
 			aStream cr ]
+]
 
 ContextPart >> debugStackOn: aStream
-debugStackOn: aStream
+[debugStackOn: aStream
 	"print the top ten contexts on my sender chain."
 
 	^ self debugStack: 100 on: aStream
+]
 
 ContextPart >> depthBelow: aContext
-depthBelow: aContext
+[depthBelow: aContext
 	"Answer how many calls there are between this and aContext."
 
 	| context depth |
@@ -231,21 +253,24 @@ depthBelow: aContext
 	[ context == aContext or: [ context == nil ] ] whileFalse: [ context := context sender.
 			depth := depth + 1 ].
 	^ depth
+]
 
 ContextPart >> doDup
-doDup
+[doDup
 	"Simulate the action of a 'duplicate top of stack' bytecode."
 
 	self push: self top
+]
 
 ContextPart >> doPop
-doPop
+[doPop
 	"Simulate the action of a 'remove top of stack' bytecode."
 
 	self pop
+]
 
 ContextPart >> doPrimitive: primitiveIndex method: method receiver: receiver args: arguments
-doPrimitive: primitiveIndex method: method receiver: receiver args: arguments
+[doPrimitive: primitiveIndex method: method receiver: receiver args: arguments
 	"Simulate a primitive method whose index is primitiveIndex. The simulated receiver and arguments are given as arguments to this message. Any primitive which provikes execution needs to be intercepted and simulated to avoid execution running away."
 
 	<primitive: 19>
@@ -310,9 +335,10 @@ doPrimitive: primitiveIndex method: method receiver: receiver args: arguments
 	^ (self isFailToken: value)
 		ifTrue: [ value ]
 		ifFalse: [ self push: value ]
+]
 
 ContextPart >> errorReportOn: stream
-errorReportOn: stream
+[errorReportOn: stream
 	"Write a detailed error report on the stack (above me) on a  
 	stream.  For both the error file, and emailing a bug report.   
 	Suppress any errors while getting printStrings.  Limit the length."
@@ -375,33 +401,38 @@ errorReportOn: stream
 				ifTrue: [ stream nextPutAll: '-- and more not shown --'.
 					^ self ].
 			aContext := aContext sender ]
+]
 
 ContextPart >> exceptionClass
-exceptionClass
+[exceptionClass
 	"handlercontext only. access temporaries from BlockClosure>>#on:do:"
 
 	^ self tempAt: 1
+]
 
 ContextPart >> exceptionHandlerBlock
-exceptionHandlerBlock
+[exceptionHandlerBlock
 	"handlercontext only. access temporaries from BlockClosure>>#on:do:"
 
 	^ self tempAt: 2
+]
 
 ContextPart >> exceptionHandlerIsActive
-exceptionHandlerIsActive
+[exceptionHandlerIsActive
 	"handlercontext only. access temporaries from BlockClosure>>#on:do:"
 
 	^ self tempAt: 3
+]
 
 ContextPart >> exceptionHandlerIsActive: aBoolean
-exceptionHandlerIsActive: aBoolean
+[exceptionHandlerIsActive: aBoolean
 	"handlercontext only. access temporaries from BlockClosure>>#on:do:"
 
 	self tempAt: 3 put: aBoolean
+]
 
 ContextPart >> findContextSuchThat: testBlock
-findContextSuchThat: testBlock
+[findContextSuchThat: testBlock
 	"Search self and my sender chain for first one that satisfies testBlock.  Return nil if none satisfy"
 
 	| context |
@@ -410,9 +441,10 @@ findContextSuchThat: testBlock
 				ifTrue: [ ^ context ].
 			context := context sender ].
 	^ nil
+]
 
 ContextPart >> findNextHandlerContextStarting
-findNextHandlerContextStarting
+[findNextHandlerContextStarting
 	"Return the next handler marked context, returning nil if there is none.  Search starts with self and proceeds up to nil."
 
 	<primitive: 197>
@@ -422,9 +454,10 @@ findNextHandlerContextStarting
 		ifTrue: [ ^ context ].
 	(context := context sender) == nil ] whileFalse.
 	^ nil
+]
 
 ContextPart >> findNextUnwindContextUpTo: aContext
-findNextUnwindContextUpTo: aContext
+[findNextUnwindContextUpTo: aContext
 	"Return the next unwind marked above the receiver, returning nil if there is none.  Search proceeds up to but not including aContext."
 
 	<primitive: 195>
@@ -434,9 +467,10 @@ findNextUnwindContextUpTo: aContext
 		whileFalse: [ context isUnwindContext
 				ifTrue: [ ^ context ] ].
 	^ nil
+]
 
 ContextPart >> findSecondToOldestSimilarSender
-findSecondToOldestSimilarSender
+[findSecondToOldestSimilarSender
 	"Search the stack for the second-to-oldest occurance of self's method.  Very useful for an infinite recursion.  Gets back to the second call so you can see one complete recursion cycle, and how it was called at the beginning."
 
 	| secondContext context lastContext |
@@ -447,17 +481,19 @@ findSecondToOldestSimilarSender
 		whileFalse: [ secondContext := context.
 			context := lastContext ].
 	^ secondContext
+]
 
 ContextPart >> findSimilarSender
-findSimilarSender
+[findSimilarSender
 	"Return the closest sender with the same method, return nil if none found"
 
 	| method |
 	method := self method.
 	^ self sender findContextSuchThat: [ :context | context method == method ]
+]
 
 ContextPart >> handleSignal: exception
-handleSignal: exception
+[handleSignal: exception
 	"Sent to handler (on:do:) contexts only.  If my exception class (first arg) handles exception then execute my handle block (second arg), otherwise forward this message to the next handler context.  If none left, execute exception's defaultAction (see nil>>handleSignal:)."
 
 	| value |
@@ -468,15 +504,17 @@ handleSignal: exception
 	value := [ self exceptionHandlerBlock cull: exception ]
 		ensure: [ self exceptionHandlerIsActive: true ].	"return from self if not otherwise directed in handle block"
 	self return: value
+]
 
 ContextPart >> hasContext: aContext
-hasContext: aContext
+[hasContext: aContext
 	"Answer whether aContext is me or one of my senders"
 
 	^ (self findContextSuchThat: [ :context | context == aContext ]) notNil
+]
 
 ContextPart >> hasSender: context
-hasSender: context
+[hasSender: context
 	"Answer whether the receiver is strictly above context on the stack."
 
 	| senderContext |
@@ -488,15 +526,17 @@ hasSender: context
 				ifTrue: [ ^ true ].
 			senderContext := senderContext sender ].
 	^ false
+]
 
 ContextPart >> home
-home
+[home
 	"Answer the context in which the receiver was defined."
 
 	self subclassResponsibility
+]
 
 ContextPart >> insertSender: aContext
-insertSender: aContext
+[insertSender: aContext
 	"Insert aContext and its sender chain between me and my sender.  Return new callee of my original sender."
 
 	| context |
@@ -504,37 +544,44 @@ insertSender: aContext
 	context privSender: self sender.
 	self privSender: aContext.
 	^ context
+]
 
 ContextPart >> isBottomContext
-isBottomContext
+[isBottomContext
 	"Answer if this is the last context (the first context invoked) in my sender chain"
 
 	^ sender isNil
+]
 
 ContextPart >> isContext
-isContext
+[isContext
 	^ true
+]
 
 ContextPart >> isDead
-isDead
+[isDead
 	"Has self finished"
 
 	^ pc isNil
+]
 
 ContextPart >> isFailToken: anObject
-isFailToken: anObject
+[isFailToken: anObject
 	^ anObject class == Array and: [ anObject size = 2 and: [ (anObject at: 1) == PrimitiveFailToken ] ]
+]
 
 ContextPart >> isHandlerContext
-isHandlerContext
+[isHandlerContext
 	^ false
+]
 
 ContextPart >> isUnwindContext
-isUnwindContext
+[isUnwindContext
 	^ false
+]
 
 ContextPart >> jump
-jump
+[jump
 	"Abandon thisContext and resume self instead (using the same current process).  You may want to save thisContext's sender before calling this so you can jump back to it.
 	Self MUST BE a top context (ie. a suspended context or a abandoned context that was jumped out of).  A top context already has its return value on its stack (see Interpreter>>primitiveSuspend and other suspending primitives).
 	thisContext's sender is converted to a top context (by pushing a nil return value on its stack) so it can be jump back to."
@@ -549,16 +596,18 @@ jump
 	top := self pop.
 	thisContext privSender: self.
 	^ top
+]
 
 ContextPart >> jump: distance
-jump: distance
+[jump: distance
 	"Simulate the action of a 'unconditional jump' bytecode whose offset is 
 	the argument, distance."
 
 	pc := pc + distance
+]
 
 ContextPart >> jump: distance if: condition
-jump: distance if: condition
+[jump: distance if: condition
 	"Simulate the action of a 'conditional jump' bytecode whose offset is the 
 	argument, distance, and whose condition is the argument, condition."
 
@@ -572,82 +621,95 @@ jump: distance if: condition
 				super: false ].
 	(bool eqv: condition)
 		ifTrue: [ self jump: distance ]
+]
 
 ContextPart >> longStack
-longStack
+[longStack
 	"Answer a String showing the top 100 contexts on my sender chain."
 
 	^ String streamContents: [ :stream | (self stackOfSize: 100) do: [ :item | stream
 						print: item;
 						cr ] ]
+]
 
 ContextPart >> method
-method
+[method
 	"Answer the method of this context."
 
 	self subclassResponsibility
+]
 
 ContextPart >> methodClass
-methodClass
+[methodClass
 	"Answer the class in which the receiver's method was found."
 
 	^ self method methodClass ifNil: [ self receiver class ]
+]
 
 ContextPart >> methodNode
-methodNode
+[methodNode
 	^ self method methodNode
+]
 
 ContextPart >> methodReturnConstant: value
-methodReturnConstant: value
+[methodReturnConstant: value
 	"Simulate the action of a 'return constant' bytecode whose value is the
 	 argument, value. This corresponds to a source expression like '^0'."
 
 	^ self return: value from: self methodReturnContext
+]
 
 ContextPart >> methodReturnContext
-methodReturnContext
+[methodReturnContext
 	"Answer the context from which an ^-return should return from."
 
 	self subclassResponsibility
+]
 
 ContextPart >> methodReturnReceiver
-methodReturnReceiver
+[methodReturnReceiver
 	"Simulate the action of a 'return receiver' bytecode. This corresponds to
 	 the source expression '^self'."
 
 	^ self return: self receiver from: self methodReturnContext
+]
 
 ContextPart >> methodReturnTop
-methodReturnTop
+[methodReturnTop
 	"Simulate the action of a 'return top of stack' bytecode. This corresponds
 	 to source expressions like '^something'."
 
 	^ self return: self pop from: self methodReturnContext
+]
 
 ContextPart >> methodSelector
-methodSelector
+[methodSelector
 	^ self method selector
+]
 
 ContextPart >> namedTempAt: index
-namedTempAt: index
+[namedTempAt: index
 	"Answer the value of the temp at index in the receiver's sequence of tempNames."
 
 	^ self debuggerMap namedTempAt: index in: self
+]
 
 ContextPart >> namedTempAt: index put: aValue
-namedTempAt: index put: aValue
+[namedTempAt: index put: aValue
 	"Set the value of the temp at index in the receiver's sequence of tempNames.
 	 (Note that if the value is a copied value it is also set out along the lexical chain,
 	  but alas not in along the lexical chain.)."
 
 	^ self debuggerMap namedTempAt: index put: aValue in: self
+]
 
 ContextPart >> nextHandlerContext
-nextHandlerContext
+[nextHandlerContext
 	^ self sender findNextHandlerContextStarting
+]
 
 ContextPart >> objectSize: anObject
-objectSize: anObject
+[objectSize: anObject
 	"Answer the number of indexable variables in the argument anObject without sending
 	it a message. This mimics the action of the VM when it fetches an object's variable size.
 	Used to simulate the execution machinery by, for example, the debugger.
@@ -657,46 +719,52 @@ objectSize: anObject
 
 	<primitive: 62>
 	^ 0
+]
 
 ContextPart >> pop
-pop
+[pop
 	"Answer the top of the receiver's stack and remove the top of the stack."
 
 	| value |
 	value := self at: stackp.
 	self stackp: stackp - 1.
 	^ value
+]
 
 ContextPart >> popIntoLiteralVariable: value
-popIntoLiteralVariable: value
+[popIntoLiteralVariable: value
 	"Simulate the action of bytecode that removes the top of the stack and 
 	stores it into a literal variable of my method."
 
 	value value: self pop
+]
 
 ContextPart >> popIntoReceiverVariable: offset
-popIntoReceiverVariable: offset
+[popIntoReceiverVariable: offset
 	"Simulate the action of bytecode that removes the top of the stack and 
 	stores it into an instance variable of my receiver."
 
 	self receiver instVarAt: offset + 1 put: self pop
+]
 
 ContextPart >> popIntoRemoteTemp: remoteTempIndex inVectorAt: tempVectorIndex
-popIntoRemoteTemp: remoteTempIndex inVectorAt: tempVectorIndex
+[popIntoRemoteTemp: remoteTempIndex inVectorAt: tempVectorIndex
 	"Simulate the action of bytecode that removes the top of the stack and  stores
 	 it into an offset in one of my local variables being used as a remote temp vector."
 
 	(self at: tempVectorIndex + 1) at: remoteTempIndex + 1 put: self pop
+]
 
 ContextPart >> popIntoTemporaryVariable: offset
-popIntoTemporaryVariable: offset
+[popIntoTemporaryVariable: offset
 	"Simulate the action of bytecode that removes the top of the stack and 
 	stores it into one of my temporary variables."
 
 	self at: offset + 1 put: self pop
+]
 
 ContextPart >> print: anObject on: aStream
-print: anObject on: aStream
+[print: anObject on: aStream
 	"Safely print anObject in the face of direct ProtoObject subclasses"
 
 	| title |
@@ -708,17 +776,19 @@ print: anObject on: aStream
 						ifTrue: [ 'an ' ]
 						ifFalse: [ 'a ' ]);
 		nextPutAll: title
+]
 
 ContextPart >> printDebugOn: aStream
-printDebugOn: aStream
+[printDebugOn: aStream
 	"print a condensed for of the stack.
 		For methods simply print Class >> selector
 		For blocks only print the first line"
 
 	self printOn: aStream
+]
 
 ContextPart >> printDetails: stream
-printDetails: stream
+[printDetails: stream
 	"Put my class>>selector and arguments and temporaries on the stream.  Protect against errors during printing."
 
 	| string |
@@ -732,9 +802,10 @@ printDetails: stream
 	stream nextPutAll: string.
 	stream peekLast == Character cr
 		ifFalse: [ stream cr ]
+]
 
 ContextPart >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	| selector class mclass |
 	self method == nil
 		ifTrue: [ ^ super printOn: aStream ].
@@ -751,34 +822,39 @@ printOn: aStream
 	selector = #doesNotUnderstand:
 		ifTrue: [ aStream space.
 			(self tempAt: 1) selector printOn: aStream ]
+]
 
 ContextPart >> privSender: aContext
-privSender: aContext
+[privSender: aContext
 	sender := aContext
+]
 
 ContextPart >> push: value
-push: value
+[push: value
 	"Push value on the receiver's stack."
 
 	self stackp: stackp + 1.
 	self at: stackp put: value
+]
 
 ContextPart >> push: numObjects fromIndexable: anIndexableCollection
-push: numObjects fromIndexable: anIndexableCollection
+[push: numObjects fromIndexable: anIndexableCollection
 	"Push the elements of anIndexableCollection onto the receiver's stack.
 	 Do not call directly.  Called indirectly by {1. 2. 3} constructs."
 
 	1 to: numObjects do: [ :i | self push: (anIndexableCollection at: i) ]
+]
 
 ContextPart >> pushActiveContext
-pushActiveContext
+[pushActiveContext
 	"Simulate the action of bytecode that pushes the the active context on the 
 	top of its own stack."
 
 	self push: self
+]
 
 ContextPart >> pushClosureCopyNumCopiedValues: numCopied numArgs: numArgs blockSize: blockSize
-pushClosureCopyNumCopiedValues: numCopied numArgs: numArgs blockSize: blockSize
+[pushClosureCopyNumCopiedValues: numCopied numArgs: numArgs blockSize: blockSize
 	"Simulate the action of a 'closure copy' bytecode whose result is the
 	 new BlockClosure for the following code"
 
@@ -793,57 +869,65 @@ pushClosureCopyNumCopiedValues: numCopied numArgs: numArgs blockSize: blockSize
 				numArgs: numArgs
 				copiedValues: copiedValues).
 	self jump: blockSize
+]
 
 ContextPart >> pushConstant: value
-pushConstant: value
+[pushConstant: value
 	"Simulate the action of bytecode that pushes the constant, value, on the 
 	top of the stack."
 
 	self push: value
+]
 
 ContextPart >> pushLiteralVariable: value
-pushLiteralVariable: value
+[pushLiteralVariable: value
 	"Simulate the action of bytecode that pushes the contents of the literal 
 	variable whose index is the argument, index, on the top of the stack."
 
 	self push: value value
+]
 
 ContextPart >> pushNewArrayOfSize: arraySize
-pushNewArrayOfSize: arraySize
+[pushNewArrayOfSize: arraySize
 	self push: (Array new: arraySize)
+]
 
 ContextPart >> pushReceiver
-pushReceiver
+[pushReceiver
 	"Simulate the action of bytecode that pushes the active context's receiver 
 	on the top of the stack."
 
 	self push: self receiver
+]
 
 ContextPart >> pushReceiverVariable: offset
-pushReceiverVariable: offset
+[pushReceiverVariable: offset
 	"Simulate the action of bytecode that pushes the contents of the receiver's 
 	instance variable whose index is the argument, index, on the top of the 
 	stack."
 
 	self push: (self receiver instVarAt: offset + 1)
+]
 
 ContextPart >> pushRemoteTemp: remoteTempIndex inVectorAt: tempVectorIndex
-pushRemoteTemp: remoteTempIndex inVectorAt: tempVectorIndex
+[pushRemoteTemp: remoteTempIndex inVectorAt: tempVectorIndex
 	"Simulate the action of bytecode that pushes the value at remoteTempIndex
 	 in one of my local variables being used as a remote temp vector."
 
 	self push: ((self at: tempVectorIndex + 1) at: remoteTempIndex + 1)
+]
 
 ContextPart >> pushTemporaryVariable: offset
-pushTemporaryVariable: offset
+[pushTemporaryVariable: offset
 	"Simulate the action of bytecode that pushes the contents of the 
 	temporary variable whose index is the argument, index, on the top of 
 	the stack."
 
 	self push: (self at: offset + 1)
+]
 
 ContextPart >> quickSend: selector to: receiver with: arguments super: superFlag
-quickSend: selector to: receiver with: arguments super: superFlag
+[quickSend: selector to: receiver with: arguments super: superFlag
 	"Send the given selector with arguments in an environment which closely resembles the non-simulating environment, with an interjected unwind-protected block to catch nonlocal returns.
 	Attention: don't get lost!"
 
@@ -867,31 +951,35 @@ quickSend: selector to: receiver with: arguments super: superFlag
 			contextToReturnTo ].
 	contextToReturnTo push: result.
 	^ contextToReturnTo
+]
 
 ContextPart >> quickStep
-quickStep
+[quickStep
 	"If the next instruction is a send, just perform it.
 	Otherwise, do a normal step."
 
 	self willSend
 		ifTrue: [ QuickStep := self ].
 	^ self step
+]
 
 ContextPart >> receiver
-receiver
+[receiver
 	"Answer the receiver of the message that created this context."
 
 	self subclassResponsibility
+]
 
 ContextPart >> release
-release
+[release
 	"Remove information from the receiver and all of the contexts on its 
 	sender chain in order to break circularities."
 
 	self releaseTo: nil
+]
 
 ContextPart >> releaseTo: caller
-releaseTo: caller
+[releaseTo: caller
 	"Remove information from the receiver and the contexts on its sender 
 	chain up to caller in order to break circularities."
 
@@ -901,9 +989,10 @@ releaseTo: caller
 		whileFalse: [ senderContext := contex sender.
 			contex singleRelease.
 			contex := senderContext ]
+]
 
 ContextPart >> restart
-restart
+[restart
 	"Unwind thisContext to self and resume from beginning.  Execute unwind blocks when unwinding.  ASSUMES self is a sender of thisContext"
 
 	| context unwindBlock |
@@ -920,21 +1009,24 @@ restart
 					unwindBlock value ] ].
 	thisContext terminateTo: self.
 	self jump
+]
 
 ContextPart >> resume
-resume
+[resume
 	"Roll back thisContext to self and resume.  Execute unwind blocks when rolling back.  ASSUMES self is a sender of thisContext"
 
 	self resume: nil
+]
 
 ContextPart >> resume: value
-resume: value
+[resume: value
 	"Unwind thisContext to self and resume with value as result of last send.  Execute unwind blocks when unwinding.  ASSUMES self is a sender of thisContext"
 
 	self resume: value through: (thisContext findNextUnwindContextUpTo: self)
+]
 
 ContextPart >> resume: value through: firstUnwindContext
-resume: value through: firstUnwindContext
+[resume: value through: firstUnwindContext
 	"Unwind thisContext to self and resume with value as result of last send.
 	 Execute any unwind blocks while unwinding.
 	 ASSUMES self is a sender of thisContext."
@@ -952,22 +1044,25 @@ resume: value through: firstUnwindContext
 			context := context findNextUnwindContextUpTo: self ].
 	thisContext terminateTo: self.
 	^ value
+]
 
 ContextPart >> return
-return
+[return
 	"Unwind until my sender is on top"
 
 	self return: self receiver
+]
 
 ContextPart >> return: value
-return: value
+[return: value
 	"Unwind thisContext to self and return value to self's sender.  Execute any unwind blocks while unwinding.  ASSUMES self is a sender of thisContext"
 
 	sender ifNil: [ self cannotReturn: value to: sender ].
 	sender resume: value
+]
 
 ContextPart >> return: value from: aSender
-return: value from: aSender
+[return: value from: aSender
 	"For simulation.  Roll back self to aSender and return value from it.  Execute any unwind blocks on the way.  ASSUMES aSender is a sender of self"
 
 	| newTop context |
@@ -989,26 +1084,29 @@ return: value from: aSender
 	self releaseTo: newTop.
 	newTop ifNotNil: [ newTop push: value ].
 	^ newTop
+]
 
 ContextPart >> return: value through: firstUnwindContext
-return: value through: firstUnwindContext
+[return: value through: firstUnwindContext
 	"Unwind thisContext to self and return value to self's sender.
 	 Execute any unwind blocks while unwinding.
 	 ASSUMES self is a sender of thisContext."
 
 	sender ifNil: [ self cannotReturn: value to: sender ].
 	sender resume: value through: firstUnwindContext
+]
 
 ContextPart >> return: value to: aSender
-return: value to: aSender
+[return: value to: aSender
 	"Simulate the return of value to aSender."
 
 	self releaseTo: aSender.
 	aSender ifNil: [ ^ nil ].
 	^ aSender push: value
+]
 
 ContextPart >> runSimulated: aBlock contextAtEachStep: block2
-runSimulated: aBlock contextAtEachStep: block2
+[runSimulated: aBlock contextAtEachStep: block2
 	"Simulate the execution of the argument, aBlock, until it ends. aBlock 
 	MUST NOT contain an '^'. Evaluate block2 with the current context 
 	prior to each instruction executed. Answer the simulated value of aBlock."
@@ -1031,9 +1129,10 @@ runSimulated: aBlock contextAtEachStep: block2
 	exception class == SimulationExceptionWrapper
 		ifTrue: [ ^ exception exception signal ].
 	^ exception
+]
 
 ContextPart >> runUntilErrorOrReturnFrom: aSender
-runUntilErrorOrReturnFrom: aSender
+[runUntilErrorOrReturnFrom: aSender
 	"ASSUMES aSender is a sender of self.  Execute self's stack until aSender returns or an unhandled exception is raised.  Return a pair containing the new top context and a possibly nil exception.  The exception is not nil if it was raised before aSender returned and it was not handled.  The exception is returned rather than openning the debugger, giving the caller the choice of how to handle it."
 
 	"Self is run by jumping directly to it (the active process abandons thisContext and executes self).  However, before jumping to self we insert an ensure block under aSender that jumps back to thisContext when evaluated.  We also insert an exception handler under aSender that jumps back to thisContext when an unhandled exception is raised.  In either case, the inserted ensure and exception handler are removed once control jumps back to thisContext."
@@ -1067,22 +1166,25 @@ runUntilErrorOrReturnFrom: aSender
 			aSender terminateTo: context sender.
 			{topContext.
 			error} ]
+]
 
 ContextPart >> secondFromBottom
-secondFromBottom
+[secondFromBottom
 	"Return the second from bottom of my sender chain"
 
 	self sender ifNil: [ ^ nil ].
 	^ self findContextSuchThat: [ :context | context sender sender isNil ]
+]
 
 ContextPart >> selector
-selector
+[selector
 	"Answer the selector of the method that created the receiver."
 
 	^ self method selector ifNil: [ self method defaultSelector ]
+]
 
 ContextPart >> send: selector super: superFlag numArgs: numArgs
-send: selector super: superFlag numArgs: numArgs
+[send: selector super: superFlag numArgs: numArgs
 	"Simulate the action of bytecodes that send a message with selector, 
 	selector. The argument, superFlag, tells whether the receiver of the 
 	message was specified with 'super' in the source method. The arguments 
@@ -1105,9 +1207,10 @@ send: selector super: superFlag numArgs: numArgs
 		to: receiver
 		with: arguments
 		super: superFlag
+]
 
 ContextPart >> send: selector to: receiver with: arguments super: superFlag
-send: selector to: receiver with: arguments super: superFlag
+[send: selector to: receiver with: arguments super: superFlag
 	"Simulate the action of sending a message with selector, selector, and 
 	arguments, args, to receiver. The argument, superFlag, tells whether the 
 	receiver of the message was specified with 'super' in the source method."
@@ -1136,15 +1239,17 @@ send: selector to: receiver with: arguments super: superFlag
 	(context method at: context pc) = 129
 		ifTrue: [ context at: context stackPtr put: value last ].
 	^ context
+]
 
 ContextPart >> sender
-sender
+[sender
 	"Answer the context that sent the message that created the receiver."
 
 	^ sender
+]
 
 ContextPart >> setNamedPrimitiveInformationFrom: fromMethod toMethod: toMethod
-setNamedPrimitiveInformationFrom: fromMethod toMethod: toMethod
+[setNamedPrimitiveInformationFrom: fromMethod toMethod: toMethod
 	"For named primitives, the first literal contains a special object that has information of the primitive. Example:
 (StandardFileStream >> #primOpen:writable:) literalAt: 1 ----->>>>   #(#FilePlugin #primitiveFileOpen 0 147).
 In this method we cope such information from one to another one."
@@ -1156,9 +1261,10 @@ In this method we cope such information from one to another one."
 		to: spec size
 		with: (fromMethod literalAt: 1)
 		startingAt: 1
+]
 
 ContextPart >> setNumArgs: numArgs toMethod: theMethod
-setNumArgs: numArgs toMethod: theMethod
+[setNumArgs: numArgs toMethod: theMethod
 	"All that line is to change the argument count of a CompiledMethod header. The argument count is 4 bits starting in the 24 and finishign in 27.
 16r787FFFFF is the hexa representation of a number that is all 1 and only those 4 bits in 0. Hence, when doing (theMethod header bitAnd: 16r787FFFFF) what we do is just to put zeros in those 4 bits.
 
@@ -1176,29 +1282,33 @@ Since in the previous step we cleaned those 4 bits doing now a bitOr: with the s
 	(theMethod at: xpc) = 129
 		ifTrue: [ theMethod at: xpc + 1 put: 16r40 + numArgs.
 			theMethod at: xpc + 3 put: 16r10 + numArgs ]
+]
 
 ContextPart >> shortDebugStack
-shortDebugStack
+[shortDebugStack
 	"Answer a String showing the top ten contexts on my sender chain."
 
 	^ String streamContents: [ :stream | self debugStack: 10 on: stream ]
+]
 
 ContextPart >> shortDebugStackOn: aStream
-shortDebugStackOn: aStream
+[shortDebugStackOn: aStream
 	"print the top 30 contexts on my sender chain."
 
 	^ self debugStack: 30 on: aStream
+]
 
 ContextPart >> shortStack
-shortStack
+[shortStack
 	"Answer a String showing the top ten contexts on my sender chain."
 
 	^ String streamContents: [ :stream | (self stackOfSize: 10) do: [ :item | stream
 						print: item;
 						cr ] ]
+]
 
 ContextPart >> simulatePrimitive: primitiveIndex in: method receiver: receiver arguments: arguments
-simulatePrimitive: primitiveIndex in: method receiver: receiver arguments: arguments
+[simulatePrimitive: primitiveIndex in: method receiver: receiver arguments: arguments
 	| key simulator |
 	key := primitiveIndex = 117
 		ifTrue: [ | literal |
@@ -1219,17 +1329,19 @@ simulatePrimitive: primitiveIndex in: method receiver: receiver arguments: argum
 		receiver: receiver
 		arguments: arguments
 		context: self
+]
 
 ContextPart >> singleRelease
-singleRelease
+[singleRelease
 	"Remove information from the receiver in order to break circularities."
 
 	stackp ifNotNil: [ 1 to: stackp do: [ :i | self at: i put: nil ] ].
 	sender := nil.
 	pc := nil
+]
 
 ContextPart >> size
-size
+[size
 	"Primitive. Answer the number of indexable variables in the receiver. 
 	This value is the same as the largest legal subscript. Essential. See Object 
 	documentation whatIsAPrimitive.  Override the default primitive to give latitude to
@@ -1239,19 +1351,22 @@ size
 
 	<primitive: 212>
 	^ self primitiveFail
+]
 
 ContextPart >> sourceCode
-sourceCode
+[sourceCode
 	^ self method sourceCode
+]
 
 ContextPart >> stack
-stack
+[stack
 	"Answer an Array of the contexts on the receiver's sender chain."
 
 	^ self stackOfSize: 9999
+]
 
 ContextPart >> stackOfSize: limit
-stackOfSize: limit
+[stackOfSize: limit
 	"Answer an OrderedCollection of the top 'limit' contexts
 	 on the receiver's sender chain."
 
@@ -1260,15 +1375,17 @@ stackOfSize: limit
 	stack addLast: (context := self).
 	[ (context := context sender) ~~ nil and: [ stack size < limit ] ] whileTrue: [ stack addLast: context ].
 	^ stack
+]
 
 ContextPart >> stackPtr
-stackPtr
+[stackPtr
 	"For use only by the SystemTracer and the Debugger, Inspectors etc"
 
 	^ stackp
+]
 
 ContextPart >> stackp: newStackp
-stackp: newStackp
+[stackp: newStackp
 	"Storing into the stack pointer is a potentially dangerous thing.
 	This primitive stores nil into any cells that become accessible as a result,
 	and it performs the entire operation atomically."
@@ -1277,25 +1394,28 @@ stackp: newStackp
 
 	<primitive: 76>
 	self error: 'stackp store failure'	"	stackp == nil ifTrue: [stackp := 0].	newStackp > stackp  'effectively checks that it is a number'		ifTrue: [oldStackp := stackp.				stackp := newStackp.				'Nil any newly accessible cells'				oldStackp + 1 to: stackp do: [:i | self at: i put: nil]]		ifFalse: [stackp := newStackp]"
+]
 
 ContextPart >> step
-step
+[step
 	"Simulate the execution of the receiver's next bytecode. Answer the 
 	context that would be the active context after this bytecode."
 
 	^ self interpretNextInstructionFor: self
+]
 
 ContextPart >> stepToCallee
-stepToCallee
+[stepToCallee
 	"Step to callee or sender"
 
 	| context |
 	context := self.
 	[ (context := context step) == self ] whileTrue.
 	^ context
+]
 
 ContextPart >> stepToSendOrReturn
-stepToSendOrReturn
+[stepToSendOrReturn
 	"Simulate the execution of bytecodes until either sending a message or 
 	returning a value to the receiver (that is, until switching contexts)."
 
@@ -1305,37 +1425,42 @@ stepToSendOrReturn
 			context == self
 				ifFalse: [ "Caused by mustBeBoolean handling"
 					^ context ] ]
+]
 
 ContextPart >> storeIntoLiteralVariable: value
-storeIntoLiteralVariable: value
+[storeIntoLiteralVariable: value
 	"Simulate the action of bytecode that stores the top of the stack into a 
 	literal variable of my method."
 
 	value value: self top
+]
 
 ContextPart >> storeIntoReceiverVariable: offset
-storeIntoReceiverVariable: offset
+[storeIntoReceiverVariable: offset
 	"Simulate the action of bytecode that stores the top of the stack into an 
 	instance variable of my receiver."
 
 	self receiver instVarAt: offset + 1 put: self top
+]
 
 ContextPart >> storeIntoRemoteTemp: remoteTempIndex inVectorAt: tempVectorIndex
-storeIntoRemoteTemp: remoteTempIndex inVectorAt: tempVectorIndex
+[storeIntoRemoteTemp: remoteTempIndex inVectorAt: tempVectorIndex
 	"Simulate the action of bytecode that stores the top of the stack at
 	 an offset in one of my local variables being used as a remote temp vector."
 
 	(self at: tempVectorIndex + 1) at: remoteTempIndex + 1 put: self top
+]
 
 ContextPart >> storeIntoTemporaryVariable: offset
-storeIntoTemporaryVariable: offset
+[storeIntoTemporaryVariable: offset
 	"Simulate the action of bytecode that stores the top of the stack into one 
 	of my temporary variables."
 
 	self at: offset + 1 put: self top
+]
 
 ContextPart >> swapSender: coroutine
-swapSender: coroutine
+[swapSender: coroutine
 	"Replace the receiver's sender with coroutine and answer the receiver's 
 	previous sender. For use in coroutining."
 
@@ -1343,44 +1468,50 @@ swapSender: coroutine
 	oldSender := sender.
 	sender := coroutine.
 	^ oldSender
+]
 
 ContextPart >> tempAt: index
-tempAt: index
+[tempAt: index
 	"Answer the value of the temporary variable whose index is the 
 	argument, index."
 
 	self subclassResponsibility
+]
 
 ContextPart >> tempAt: index put: value
-tempAt: index put: value
+[tempAt: index put: value
 	"Store the argument, value, as the temporary variable whose index is the 
 	argument, index."
 
 	self subclassResponsibility
+]
 
 ContextPart >> tempNamed: aName
-tempNamed: aName
+[tempNamed: aName
 	"Answer the value of the temporary variable whose name is the 
 	argument, aName."
 
 	self subclassResponsibility
+]
 
 ContextPart >> tempNamed: aName put: value
-tempNamed: aName put: value
+[tempNamed: aName put: value
 	"Store the argument, value, as the temporary variable whose name is the 
 	argument, aName."
 
 	self subclassResponsibility
+]
 
 ContextPart >> tempNames
-tempNames
+[tempNames
 	"Answer a SequenceableCollection of the names of the receiver's temporary 
 	 variables, which are strings."
 
 	^ self debuggerMap tempNamesForContext: self
+]
 
 ContextPart >> tempsAndValues
-tempsAndValues
+[tempsAndValues
 	"Return a string of the temporary variabls and their current values"
 
 	^ String
@@ -1392,9 +1523,10 @@ tempsAndValues
 						tab.
 					self print: (self namedTempAt: index) on: aStream.
 					aStream cr ] ]
+]
 
 ContextPart >> tempsAndValuesLimitedTo: sizeLimit indent: indent
-tempsAndValuesLimitedTo: sizeLimit indent: indent
+[tempsAndValuesLimitedTo: sizeLimit indent: indent
 	"Return a string of the temporary variabls and their current values"
 
 	^ String
@@ -1407,16 +1539,18 @@ tempsAndValuesLimitedTo: sizeLimit indent: indent
 						tab.
 					aStream nextPutAll: ((self namedTempAt: index) printStringLimitedTo: (sizeLimit - 3 - title size max: 1)).
 					aStream cr ] ]
+]
 
 ContextPart >> terminate
-terminate
+[terminate
 	"Make myself unresumable."
 
 	sender := nil.
 	pc := nil
+]
 
 ContextPart >> terminateTo: previousContext
-terminateTo: previousContext
+[terminateTo: previousContext
 	"Terminate all the Contexts between me and previousContext, if previousContext is on my Context stack. Make previousContext my sender."
 
 	<primitive: 196>
@@ -1428,15 +1562,17 @@ terminateTo: previousContext
 					currentContext terminate.
 					currentContext := sendingContext ] ].
 	sender := previousContext
+]
 
 ContextPart >> top
-top
+[top
 	"Answer the top of the receiver's stack."
 
 	^ self at: stackp
+]
 
 ContextPart >> tryNamedPrimitiveIn: aCompiledMethod for: aReceiver withArgs: arguments
-tryNamedPrimitiveIn: aCompiledMethod for: aReceiver withArgs: arguments
+[tryNamedPrimitiveIn: aCompiledMethod for: aReceiver withArgs: arguments
 	<primitive: 218 error: #errorCode>
 	errorCode
 		ifNotNil: [ 
@@ -1447,9 +1583,10 @@ tryNamedPrimitiveIn: aCompiledMethod for: aReceiver withArgs: arguments
 						ifFalse: [ self primitiveFailed ] ].
 			^ self class primitiveFailTokenFor: errorCode ].	"Assume a nil error code implies the primitive is not implemented and fall back on the old code."	"The primitive doesn't exist or there was an error. Hence, we follow another solution without the primitive"
 	^ self withoutPrimitiveTryNamedPrimitiveIn: aCompiledMethod for: aReceiver withArgs: arguments
+]
 
 ContextPart >> tryPrimitiveFor: method receiver: receiver args: arguments
-tryPrimitiveFor: method receiver: receiver args: arguments
+[tryPrimitiveFor: method receiver: receiver args: arguments
 	"If this method has a primitive index, then run the primitive and return its result.
 	Otherwise (and also if the primitive fails) return PrimitiveFailToken,
 	as an indication that the method should be activated and run as bytecodes."
@@ -1462,27 +1599,31 @@ tryPrimitiveFor: method receiver: receiver args: arguments
 		method: method
 		receiver: receiver
 		args: arguments
+]
 
 ContextPart >> unwindBlock
-unwindBlock
+[unwindBlock
 	"unwindContext only. access temporaries from BlockClosure>>#ensure: and BlockClosure>>#ifCurtailed:"
 
 	^ self tempAt: 1
+]
 
 ContextPart >> unwindComplete
-unwindComplete
+[unwindComplete
 	"unwindContext only. access temporaries from BlockClosure>>#ensure: and BlockClosure>>#ifCurtailed:"
 
 	^ self tempAt: 2
+]
 
 ContextPart >> unwindComplete: aBoolean
-unwindComplete: aBoolean
+[unwindComplete: aBoolean
 	"unwindContext only. access temporaries from BlockClosure>>#ensure: and BlockClosure>>#ifCurtailed:"
 
 	self tempAt: 2 put: aBoolean
+]
 
 ContextPart >> unwindTo: aContext
-unwindTo: aContext
+[unwindTo: aContext
 	| context unwindBlock |
 	context := self.
 	[ (context := context findNextUnwindContextUpTo: aContext) isNil ]
@@ -1490,9 +1631,10 @@ unwindTo: aContext
 				ifNil: [ context unwindComplete: true.
 					unwindBlock := context unwindBlock.
 					unwindBlock value ] ]
+]
 
 ContextPart >> withoutPrimitiveTryNamedPrimitiveIn: aCompiledMethod for: aReceiver withArgs: arguments
-withoutPrimitiveTryNamedPrimitiveIn: aCompiledMethod for: aReceiver withArgs: arguments
+[withoutPrimitiveTryNamedPrimitiveIn: aCompiledMethod for: aReceiver withArgs: arguments
 	"When using the debugger we want to run a method step by step. What what happens when we do a step into a CompiledMethod which has a primitive? If such a method is executed form outside the Debugger (normal scenario) the VM knows that such CompiledMethod has a primitive declaration and hence executes it. If it fails then it continues executing all the bytecode of the method. Otherwise, it just returns. 
 
 Now, what is the problem with the Debugger? The problem is that if the primitive fail, we don't want that the VM directly executes all the remaining bytecodes of the method. Instead, we would like to go step by step witht he Debugger, just as happens with normal methods. 
@@ -1517,19 +1659,22 @@ Then what we do is to run that compiled method with the receiver and arguments w
 	self setNamedPrimitiveInformationFrom: aCompiledMethod toMethod: theMethod.
 	theMethod flushCache.
 	^ theMethod valueWithReceiver: aReceiver arguments: arguments
+]
 
 ContextPart class >> basicNew: size
-basicNew: size
+[basicNew: size
 	self error: 'Contexts must only be created with newForMethod:'
+]
 
 ContextPart class >> carefullyPrint: anObject on: aStream
-carefullyPrint: anObject on: aStream
+[carefullyPrint: anObject on: aStream
 	aStream nextPutAll: ([ anObject printString ]
 				on: Error
 				do: [ 'unprintable ' , anObject class name ])
+]
 
 ContextPart class >> contextEnsure: block
-contextEnsure: block
+[contextEnsure: block
 	"Create an #ensure: context that is ready to return from executing its receiver"
 
 	| ctxt chain |
@@ -1538,9 +1683,10 @@ contextEnsure: block
 	ctxt jump ]
 		ensure: block.	"jump above will resume here without unwinding chain"
 	^ chain
+]
 
 ContextPart class >> contextOn: exceptionClass do: block
-contextOn: exceptionClass do: block
+[contextOn: exceptionClass do: block
 	"Create an #on:do: context that is ready to return from executing its receiver"
 
 	| ctxt chain |
@@ -1550,18 +1696,20 @@ contextOn: exceptionClass do: block
 		on: exceptionClass
 		do: block.	"jump above will resume here without unwinding chain"
 	^ chain
+]
 
 ContextPart class >> initialize
-initialize
+[initialize
 	"A unique object to be returned when a primitive fails during simulation"
 
 	PrimitiveFailToken := Object new.
 	self initializeTryNamedPrimitiveTemplateMethod.
 	SpecialPrimitiveSimulators := nil.
 	QuickStep := nil
+]
 
 ContextPart class >> initializePrimitiveSimulators
-initializePrimitiveSimulators
+[initializePrimitiveSimulators
 	"extra primitive simulators can be registered by implementing
 	#registerPrimitiveSimulators method in class side of your class.
 	 "
@@ -1570,9 +1718,10 @@ initializePrimitiveSimulators
 	Class
 		allSubclassesDo: [ :metaclass | (metaclass includesSelector: #registerPrimitiveSimulators)
 				ifTrue: [ metaclass theNonMetaClass registerPrimitiveSimulators ] ]
+]
 
 ContextPart class >> initializeTryNamedPrimitiveTemplateMethod
-initializeTryNamedPrimitiveTemplateMethod
+[initializeTryNamedPrimitiveTemplateMethod
 	| source method |
 	source := 'tryNamedPrimitive	"This method is a template that the Smalltalk simulator uses to 	execute primitives. See Object documentation whatIsAPrimitive."	<primitive:'' module:'' error: errorCode>	^ ContextPart primitiveFailTokenFor: errorCode'.
 	method := Smalltalk compiler
@@ -1580,17 +1729,20 @@ initializeTryNamedPrimitiveTemplateMethod
 		source: source;
 		compile.
 	TryNamedPrimitiveTemplateMethod := method copyWithSource: source
+]
 
 ContextPart class >> new
-new
+[new
 	self error: 'Contexts must only be created with newForMethod:'
+]
 
 ContextPart class >> new: size
-new: size
+[new: size
 	self error: 'Contexts must only be created with newForMethod:'
+]
 
 ContextPart class >> newForMethod: aMethod
-newForMethod: aMethod
+[newForMethod: aMethod
 	"This is the only method for creating new contexts, other than primitive cloning.
 	Any other attempts, such as inherited methods like shallowCopy, should be
 	avoided or must at least be rewritten to determine the proper size from the
@@ -1599,39 +1751,46 @@ newForMethod: aMethod
 	accessible, as determined by stackp."
 
 	^ super basicNew: aMethod frameSize
+]
 
 ContextPart class >> primitiveFailToken
-primitiveFailToken
+[primitiveFailToken
 	^ self primitiveFailTokenFor: nil
+]
 
 ContextPart class >> primitiveFailTokenFor: errorCode
-primitiveFailTokenFor: errorCode
+[primitiveFailTokenFor: errorCode
 	^ {PrimitiveFailToken.
 	errorCode}
+]
 
 ContextPart class >> runSimulated: aBlock
-runSimulated: aBlock
+[runSimulated: aBlock
 	"Simulate the execution of the argument, current. Answer the result it 
 	returns."
 
 	^ thisContext sender runSimulated: aBlock contextAtEachStep: [ :ignored |  ]	"ContextPart runSimulated: [Pen new defaultNib: 5; go: 100]"
+]
 
 ContextPart class >> simulatePrimitive: primName module: moduleName with: simulator
-simulatePrimitive: primName module: moduleName with: simulator
+[simulatePrimitive: primName module: moduleName with: simulator
 	^ self specialPrimitiveSimulators at: {primName.
 			moduleName} put: simulator
+]
 
 ContextPart class >> simulatePrimitiveNumber: num with: simulator
-simulatePrimitiveNumber: num with: simulator
+[simulatePrimitiveNumber: num with: simulator
 	^ self specialPrimitiveSimulators at: num put: simulator
+]
 
 ContextPart class >> specialPrimitiveSimulators
-specialPrimitiveSimulators
+[specialPrimitiveSimulators
 	SpecialPrimitiveSimulators ifNil: [ self initializePrimitiveSimulators ].
 	^ SpecialPrimitiveSimulators
+]
 
 ContextPart class >> tallyInstructions: aBlock
-tallyInstructions: aBlock
+[tallyInstructions: aBlock
 	"This method uses the simulator to count the number of occurrences of
 	each of the Smalltalk instructions executed during evaluation of aBlock.
 	Results appear in order of the byteCode set."
@@ -1640,9 +1799,10 @@ tallyInstructions: aBlock
 	tallies := Bag new.
 	thisContext sender runSimulated: aBlock contextAtEachStep: [ :current | tallies add: current nextByte ].
 	^ tallies sortedElements	"ContextPart tallyInstructions: [3.14159 printString]"
+]
 
 ContextPart class >> tallyMethods: aBlock
-tallyMethods: aBlock
+[tallyMethods: aBlock
 	"This method uses the simulator to count the number of calls on each method
 	invoked in evaluating aBlock. Results are given in order of decreasing counts."
 
@@ -1657,26 +1817,29 @@ tallyMethods: aBlock
 							tallies add: current printString ].
 					prev := current ] ].
 	^ tallies sortedCounts	"ContextPart tallyMethods: [3.14159 printString]"
+]
 
 ContextPart class >> theReturnMethod
-theReturnMethod
+[theReturnMethod
 	| meth |
 	meth := self lookupSelector: #return:.
 	meth isPrimitive
 		ifTrue: [ ^ self error: 'expected #return: to not be a primitive' ].
 	^ meth
+]
 
 ContextPart class >> trace: aBlock
-trace: aBlock
+[trace: aBlock
 	"ContextPart trace: [3 factorial]"
 
 	"This method uses the simulator to print calls and returned values in the Transcript."
 
 	Transcript clear.
 	^ self trace: aBlock on: Transcript
+]
 
 ContextPart class >> trace: aBlock on: aStream
-trace: aBlock on: aStream
+[trace: aBlock on: aStream
 	"ContextPart trace: [3 factorial]"
 
 	"This method uses the simulator to print calls to a file."
@@ -1703,9 +1866,10 @@ trace: aBlock on: aStream
 						nextPutAll: current selector;
 						flush.
 					prev := current ] ]
+]
 
 ContextPart class >> trace: aBlock onFileNamed: fileName
-trace: aBlock onFileNamed: fileName
+[trace: aBlock onFileNamed: fileName
 	"ContextPart trace: [3 factorial] onFileNamed: 'trace'"
 
 	"This method uses the simulator to print calls to a file."
@@ -1714,8 +1878,10 @@ trace: aBlock onFileNamed: fileName
 	^ [ aStream := FileStream fileNamed: fileName.
 	self trace: aBlock on: aStream ]
 		ensure: [ aStream close ]
+]
 
 ContextPart class >> tryNamedPrimitiveTemplateMethod
-tryNamedPrimitiveTemplateMethod
+[tryNamedPrimitiveTemplateMethod
 	^ TryNamedPrimitiveTemplateMethod
+]
 

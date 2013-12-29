@@ -3,80 +3,98 @@ FileSystemPermission
 	package: #'FileSystem-Core'.
 
 FileSystemPermission >> < other
-< other
+[< other
 	^ posixPermission < other posixPermission
+]
 
 FileSystemPermission >> <= other
-<= other
+[<= other
 	^ (posixPermission > other posixPermission) not
+]
 
 FileSystemPermission >> > other
-> other
+[> other
 	^ other posixPermission < posixPermission
+]
 
 FileSystemPermission >> >= other
->= other
+[>= other
 	^ other posixPermission <= posixPermission
+]
 
 FileSystemPermission >> groupExecute
-groupExecute
+[groupExecute
 	^ self permissionBitAt: 4
+]
 
 FileSystemPermission >> groupRead
-groupRead
+[groupRead
 	^ self permissionBitAt: 6
+]
 
 FileSystemPermission >> groupWrite
-groupWrite
+[groupWrite
 	^ self permissionBitAt: 5
+]
 
 FileSystemPermission >> initialize: aNumber
-initialize: aNumber
+[initialize: aNumber
 	posixPermission := aNumber.
 	self initialize
+]
 
 FileSystemPermission >> isReadable
-isReadable
+[isReadable
 	^ self ownerRead
+]
 
 FileSystemPermission >> isWritable
-isWritable
+[isWritable
 	^ self ownerWrite
+]
 
 FileSystemPermission >> otherExecute
-otherExecute
+[otherExecute
 	^ self permissionBitAt: 1
+]
 
 FileSystemPermission >> otherRead
-otherRead
+[otherRead
 	^ self permissionBitAt: 3
+]
 
 FileSystemPermission >> otherWrite
-otherWrite
+[otherWrite
 	^ self permissionBitAt: 2
+]
 
 FileSystemPermission >> ownerExecute
-ownerExecute
+[ownerExecute
 	^ self permissionBitAt: 7
+]
 
 FileSystemPermission >> ownerRead
-ownerRead
+[ownerRead
 	^ self permissionBitAt: 9
+]
 
 FileSystemPermission >> ownerWrite
-ownerWrite
+[ownerWrite
 	^ self permissionBitAt: 8
+]
 
 FileSystemPermission >> permissionBitAt: bitIndex
-permissionBitAt: bitIndex
+[permissionBitAt: bitIndex
 	^ (posixPermission bitAt: bitIndex) == 1
+]
 
 FileSystemPermission >> posixPermission
-posixPermission
+[posixPermission
 	^ posixPermission
+]
 
 FileSystemPermission >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	aStream
 		nextPut: (self ownerRead
 						ifTrue: [ $r ]
@@ -105,18 +123,22 @@ printOn: aStream
 		nextPut: (self otherExecute
 						ifTrue: [ $x ]
 						ifFalse: [ $- ])	"Owner"	"Group"	"Other"
+]
 
 FileSystemPermission class >> default
-default
+[default
 	^ self posixPermissions: 8r777
+]
 
 FileSystemPermission class >> new
-new
+[new
 	self error: 'Should not be called. Use #posixPermission: instead'
+]
 
 FileSystemPermission class >> posixPermissions: aNumber
-posixPermissions: aNumber
+[posixPermissions: aNumber
 	^ self basicNew
 		initialize: aNumber;
 		yourself
+]
 

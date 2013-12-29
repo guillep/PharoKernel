@@ -5,14 +5,15 @@ FileHandle
 	package: #'FileSystem-Disk'.
 
 FileHandle >> assureOpen
-assureOpen
+[assureOpen
 	"compatibility method to make the FileHandle Tests pass"
 
 	self isOpen
 		ifFalse: [ id := self basicOpen ]
+]
 
 FileHandle >> at: index read: buffer startingAt: start count: count
-at: index read: buffer startingAt: start count: count
+[at: index read: buffer startingAt: start count: count
 	self flag: 'TODO: remove once FileHandles are really used!'.
 	self assureOpen.
 	^ Primitives
@@ -21,9 +22,10 @@ at: index read: buffer startingAt: start count: count
 			into: buffer
 			startingAt: start
 			count: count
+]
 
 FileHandle >> at: index write: buffer startingAt: start count: count
-at: index write: buffer startingAt: start count: count
+[at: index write: buffer startingAt: start count: count
 	self flag: 'TODO: remove once FileHandles are really used!'.
 	self assureOpen.
 	Primitives
@@ -32,48 +34,57 @@ at: index write: buffer startingAt: start count: count
 			from: buffer
 			startingAt: start
 			count: count
+]
 
 FileHandle >> close
-close
+[close
 	Primitives close: id.
 	id := nil
+]
 
 FileHandle >> finalize
-finalize
+[finalize
 	self primCloseNoError: id
+]
 
 FileHandle >> flush
-flush
+[flush
 	self flag: 'TODO: remove once FileHandles are really used!'.
 	self assureOpen.
 	Primitives flush: id
+]
 
 FileHandle >> isOpen
-isOpen
+[isOpen
 	^ (Primitives sizeOrNil: id) notNil
+]
 
 FileHandle >> open
-open
+[open
 	self flag: 'TODO: for now we solely rely on the old FileStreams'	"id := self basicOpen.	id ifNil: 	[		reference exists ifFalse: [FileDoesNotExist signalWith: reference].		self error: 'Unable to open file ' , reference printString]"
+]
 
 FileHandle >> readStream
-readStream
+[readStream
 	^ (FileStream onHandle: self) ifNil: [ self streamError ]
+]
 
 FileHandle >> register
-register
+[register
 	"register the instance for proper clreanup on garbage collection"
 
 	^ self class register: self
+]
 
 FileHandle >> size
-size
+[size
 	self flag: 'TODO: remove once FileHandles are really used!'.
 	self assureOpen.
 	^ Primitives size: id
+]
 
 FileHandle >> startUp
-startUp
+[startUp
 	"This functionality is disabled for now, to avoid doing lots of processing
 	on start up."
 
@@ -82,45 +93,54 @@ startUp
 	answer false, and we'll raise an error if anyone tries to do IO."
 
 	self basicOpen
+]
 
 FileHandle >> streamError
-streamError
+[streamError
 	reference exists
 		ifFalse: [ FileDoesNotExist signalWith: reference ].
 	self error: 'Unable to open file ' , reference printString
+]
 
 FileHandle >> truncateTo: anInteger
-truncateTo: anInteger
+[truncateTo: anInteger
 	Primitives truncate: id to: anInteger.
 	self reopen
+]
 
 FileHandle >> writeStream
-writeStream
+[writeStream
 	^ (FileStream onHandle: self) ifNil: [ self streamError ]
+]
 
 FileHandle class >> initialize
-initialize
+[initialize
 	self useFilePlugin
+]
 
 FileHandle class >> register: aFileHandle
-register: aFileHandle
+[register: aFileHandle
 	"properly register the given FileHandle for being closed on garbage collection"
 
 	^ self registry add: aFileHandle
+]
 
 FileHandle class >> registry
-registry
+[registry
 	^ Registry ifNil: [ Registry := WeakRegistry new ]
+]
 
 FileHandle class >> startUp: resuming
-startUp: resuming
+[startUp: resuming
 	"This functionality is disabled for now, to avoid doing a lot of processing at
 	image start up. To reenable, add this class to the start up list."
 
 	resuming
 		ifTrue: [ self allInstancesDo: [ :ea | ea startUp ] ]
+]
 
 FileHandle class >> useFilePlugin
-useFilePlugin
+[useFilePlugin
 	Primitives := FilePluginPrims new
+]
 

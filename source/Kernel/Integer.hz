@@ -3,19 +3,21 @@ Integer
 	package: #Kernel.
 
 Integer >> & aNumber
-& aNumber
+[& aNumber
 	^ self bitAnd: aNumber
+]
 
 Integer >> * aNumber
-* aNumber
+[* aNumber
 	"Refer to the comment in Number * "
 
 	aNumber isInteger
 		ifTrue: [ ^ self digitMultiply: aNumber neg: self negative ~~ aNumber negative ].
 	^ aNumber adaptToInteger: self andSend: #*
+]
 
 Integer >> + aNumber
-+ aNumber
+[+ aNumber
 	"Refer to the comment in Number + "
 
 	aNumber isInteger
@@ -25,9 +27,10 @@ Integer >> + aNumber
 	aNumber isFraction
 		ifTrue: [ ^ Fraction numerator: self * aNumber denominator + aNumber numerator denominator: aNumber denominator ].
 	^ aNumber adaptToInteger: self andSend: #+
+]
 
 Integer >> - aNumber
-- aNumber
+[- aNumber
 	"Refer to the comment in Number - "
 
 	aNumber isInteger
@@ -37,9 +40,10 @@ Integer >> - aNumber
 	aNumber isFraction
 		ifTrue: [ ^ Fraction numerator: self * aNumber denominator - aNumber numerator denominator: aNumber denominator ].
 	^ aNumber adaptToInteger: self andSend: #-
+]
 
 Integer >> / aNumber
-/ aNumber
+[/ aNumber
 	"Refer to the comment in Number / "
 
 	| quoRem |
@@ -49,9 +53,10 @@ Integer >> / aNumber
 				ifTrue: [ ^ (quoRem at: 1) normalize ]
 				ifFalse: [ ^ (Fraction numerator: self denominator: aNumber) reduced ] ].
 	^ aNumber adaptToInteger: self andSend: #/
+]
 
 Integer >> // aNumber
-// aNumber
+[// aNumber
 	| q |
 	aNumber = 0
 		ifTrue: [ ^ (ZeroDivide dividend: self) signal	"<- Chg" ].
@@ -63,9 +68,10 @@ Integer >> // aNumber
 		ifFalse: [ q = 0 and: [ self negative ~= aNumber negative ] ])
 		ifTrue: [ ^ q - 1	"Truncate towards minus infinity." ]
 		ifFalse: [ ^ q ]
+]
 
 Integer >> < aNumber
-< aNumber
+[< aNumber
 	aNumber isInteger
 		ifTrue: [ self negative == aNumber negative
 				ifTrue: [ self negative
@@ -73,17 +79,19 @@ Integer >> < aNumber
 						ifFalse: [ ^ (self digitCompare: aNumber) < 0 ] ]
 				ifFalse: [ ^ self negative ] ].
 	^ aNumber adaptToInteger: self andCompare: #<
+]
 
 Integer >> << shiftAmount
-<< shiftAmount
+[<< shiftAmount
 	"left shift"
 
 	shiftAmount < 0
 		ifTrue: [ self error: 'negative arg' ].
 	^ self bitShift: shiftAmount
+]
 
 Integer >> <= aNumber
-<= aNumber
+[<= aNumber
 	aNumber isInteger
 		ifTrue: [ self negative == aNumber negative
 				ifTrue: [ self negative
@@ -91,9 +99,10 @@ Integer >> <= aNumber
 						ifFalse: [ ^ (self digitCompare: aNumber) <= 0 ] ]
 				ifFalse: [ ^ self negative ] ].
 	^ aNumber adaptToInteger: self andCompare: #<=
+]
 
 Integer >> = aNumber
-= aNumber
+[= aNumber
 	aNumber isNumber
 		ifFalse: [ ^ false ].
 	aNumber isInteger
@@ -101,9 +110,10 @@ Integer >> = aNumber
 				ifTrue: [ ^ (self digitCompare: aNumber) = 0 ]
 				ifFalse: [ ^ false ] ].
 	^ aNumber adaptToInteger: self andCompare: #=
+]
 
 Integer >> > aNumber
-> aNumber
+[> aNumber
 	aNumber isInteger
 		ifTrue: [ self negative == aNumber negative
 				ifTrue: [ self negative
@@ -111,9 +121,10 @@ Integer >> > aNumber
 						ifFalse: [ ^ (self digitCompare: aNumber) > 0 ] ]
 				ifFalse: [ ^ aNumber negative ] ].
 	^ aNumber adaptToInteger: self andCompare: #>
+]
 
 Integer >> >= aNumber
->= aNumber
+[>= aNumber
 	aNumber isInteger
 		ifTrue: [ self negative == aNumber negative
 				ifTrue: [ self negative
@@ -121,42 +132,48 @@ Integer >> >= aNumber
 						ifFalse: [ ^ (self digitCompare: aNumber) >= 0 ] ]
 				ifFalse: [ ^ aNumber negative ] ].
 	^ aNumber adaptToInteger: self andCompare: #>=
+]
 
 Integer >> >> shiftAmount
->> shiftAmount
+[>> shiftAmount
 	"right shift"
 
 	shiftAmount < 0
 		ifTrue: [ self error: 'negative arg' ].
 	^ self bitShift: 0 - shiftAmount
+]
 
 Integer >> \\\ anInteger
-\\\ anInteger
+[\\\ anInteger
 	"a modulo method for use in DSA. Be careful if you try to use this elsewhere."
 
 	^ self \\ anInteger
+]
 
 Integer >> adaptToFraction: rcvr andSend: selector
-adaptToFraction: rcvr andSend: selector
+[adaptToFraction: rcvr andSend: selector
 	"If I am involved in arithmetic with a Fraction, convert me to a Fraction."
 
 	^ rcvr perform: selector with: (Fraction numerator: self denominator: 1)
+]
 
 Integer >> alignedTo: anInteger
-alignedTo: anInteger
+[alignedTo: anInteger
 	"Answer the smallest number not less than receiver that is a multiple of anInteger."
 
 	^ (self + anInteger - 1) // anInteger * anInteger	"5 alignedTo: 2"	"12 alignedTo: 3"
+]
 
 Integer >> allMask: mask
-allMask: mask
+[allMask: mask
 	"Treat the argument as a bit mask. Answer whether all of the bits that 
 	are 1 in the argument are 1 in the receiver."
 
 	^ mask = (self bitAnd: mask)
+]
 
 Integer >> anyBitOfMagnitudeFrom: start to: stopArg
-anyBitOfMagnitudeFrom: start to: stopArg
+[anyBitOfMagnitudeFrom: start to: stopArg
 	"Tests for any magnitude bits in the interval from start to stopArg."
 
 	"Primitive fixed in LargeIntegers v1.2. If you have an earlier version 
@@ -186,30 +203,34 @@ anyBitOfMagnitudeFrom: start to: stopArg
 	(((magnitude digitAt: lastDigitIx) bitShift: leftShift) bitAnd: 255) ~= 0
 		ifTrue: [ ^ true ].
 	^ false
+]
 
 Integer >> anyMask: mask
-anyMask: mask
+[anyMask: mask
 	"Treat the argument as a bit mask. Answer whether any of the bits that 
 	are 1 in the argument are 1 in the receiver."
 
 	^ 0 ~= (self bitAnd: mask)
+]
 
 Integer >> asArray
-asArray
+[asArray
 	| stream |
 	stream := Array new writeStream.
 	self digitLength to: 1 by: -1 do: [ :digitIndex | stream nextPut: (self digitAt: digitIndex) ].
 	^ stream contents
+]
 
 Integer >> asByteArray
-asByteArray
+[asByteArray
 	| stream |
 	stream := ByteArray new writeStream.
 	self digitLength to: 1 by: -1 do: [ :digitIndex | stream nextPut: (self digitAt: digitIndex) ].
 	^ stream contents
+]
 
 Integer >> asByteArrayOfSize: aSize
-asByteArrayOfSize: aSize
+[asByteArrayOfSize: aSize
 	"Answer a ByteArray of aSize with my value, most-significant byte first."
 
 	| answer digitPos |
@@ -220,38 +241,44 @@ asByteArrayOfSize: aSize
 	aSize to: aSize - self digitLength + 1 by: -1 do: [ :pos | answer at: pos put: (self digitAt: digitPos).
 		digitPos := digitPos + 1 ].
 	^ answer
+]
 
 Integer >> asCharacter
-asCharacter
+[asCharacter
 	"Answer the Character whose value is the receiver."
 
 	^ Character value: self
+]
 
 Integer >> asCharacterDigit
-asCharacterDigit
+[asCharacterDigit
 	"Answer the Character whose string representation is the receiver."
 
 	^ Character digitValue: self
+]
 
 Integer >> asFraction
-asFraction
+[asFraction
 	"Answer a Fraction that represents the value of the receiver.
 	Since an Integer already behaves as a special kind of Fraction, no conversion is required, see #isFraction."
 
 	^ self
+]
 
 Integer >> asHexDigit
-asHexDigit
+[asHexDigit
 	^ '0123456789ABCDEF' at: self + 1
+]
 
 Integer >> asInteger
-asInteger
+[asInteger
 	"Answer with the receiver itself."
 
 	^ self
+]
 
 Integer >> asLargerPowerOfTwo
-asLargerPowerOfTwo
+[asLargerPowerOfTwo
 	"Convert the receiver into a power of two which is not less than the receiver"
 
 	^ self isPowerOfTwo
@@ -259,25 +286,29 @@ asLargerPowerOfTwo
 		ifFalse: [ self > 0
 				ifTrue: [ 1 bitShift: self highBit ]
 				ifFalse: [ DomainError signal: 'Value outside (0 , infinity)' from: 0 ] ]
+]
 
 Integer >> asPowerOfTwo
-asPowerOfTwo
+[asPowerOfTwo
 	"Convert the receiver into a power of two"
 
 	^ self asSmallerPowerOfTwo
+]
 
 Integer >> asScaledDecimal
-asScaledDecimal
+[asScaledDecimal
 	"The number of significant digits of the answer is the same as the number of decimal digits in the receiver."
 
 	^ ScaledDecimal newFromNumber: self scale: 0
+]
 
 Integer >> asSeconds
-asSeconds
+[asSeconds
 	^ Duration seconds: self
+]
 
 Integer >> asSmallerPowerOfTwo
-asSmallerPowerOfTwo
+[asSmallerPowerOfTwo
 	"Convert the receiver into a power of two which is not larger than the receiver"
 
 	^ self isPowerOfTwo
@@ -285,25 +316,28 @@ asSmallerPowerOfTwo
 		ifFalse: [ self > 0
 				ifTrue: [ 1 bitShift: self highBit - 1 ]
 				ifFalse: [ DomainError signal: 'Value outside (0 , infinity)' from: 0 ] ]
+]
 
 Integer >> asStringWithCommas
-asStringWithCommas
+[asStringWithCommas
 	"123456789 asStringWithCommas"
 
 	"-123456789 asStringWithCommas"
 
 	^ String streamContents: [ :stream | self printWithCommasOn: stream ]
+]
 
 Integer >> asStringWithCommasSigned
-asStringWithCommasSigned
+[asStringWithCommasSigned
 	"123456789 asStringWithCommasSigned"
 
 	"-123456789 asStringWithCommasSigned"
 
 	^ String streamContents: [ :stream | self printWithCommasSignedOn: stream ]
+]
 
 Integer >> asTwoCharacterString
-asTwoCharacterString
+[asTwoCharacterString
 	"Answer a two-character string representing the receiver, with leading zero if required.  Intended for use with integers in the range 0 to 99, but plausible replies given for other values too
 	Examples:
 		2 asTwoCharacterString
@@ -316,9 +350,10 @@ asTwoCharacterString
 	^ (self >= 0 and: [ self < 10 ])
 		ifTrue: [ '0' , self printString ]
 		ifFalse: [ self printString copyFrom: 1 to: 2 ]
+]
 
 Integer >> asWords
-asWords
+[asWords
 	"SmallInteger maxVal asWords"
 
 	| mils minus three num answer milCount |
@@ -341,13 +376,15 @@ asWords
 					answer := three , (mils at: milCount) , answer ].
 			milCount := milCount + 1 ].
 	^ minus , answer
+]
 
 Integer >> asYear
-asYear
+[asYear
 	^ Year year: self
+]
 
 Integer >> atRandom
-atRandom
+[atRandom
 	"Answer a random integer from 1 to self.  This implementation uses a
 	shared generator. Heavy users should their own implementation or use
 	Interval>atRandom: directly."
@@ -357,15 +394,17 @@ atRandom
 	self < 0
 		ifTrue: [ ^ self negated atRandom negated ].
 	^ Collection mutexForPicking critical: [ self atRandom: Collection randomForPicking ]
+]
 
 Integer >> atRandom: aGenerator
-atRandom: aGenerator
+[atRandom: aGenerator
 	"Answer a random integer from 1 to self picked from aGenerator."
 
 	^ aGenerator nextInt: self
+]
 
 Integer >> benchFib
-benchFib
+[benchFib
 	"Handy send-heavy benchmark"
 
 	"(result // seconds to run) = approx calls per second"
@@ -379,9 +418,10 @@ benchFib
 	^ self < 2
 		ifTrue: [ 1 ]
 		ifFalse: [ (self - 1) benchFib + (self - 2) benchFib + 1 ]
+]
 
 Integer >> benchmark
-benchmark
+[benchmark
 	"Handy bytecode-heavy benchmark"
 
 	"(500000 // time to run) = approx bytecodes per second"
@@ -401,9 +441,10 @@ benchmark
 							k := k + prime ].
 					count := count + 1 ] ] ].
 	^ count
+]
 
 Integer >> bitAnd: n
-bitAnd: n
+[bitAnd: n
 	"Answer an Integer whose bits are the logical AND of the receiver's bits  
 	and those of the argument, n."
 
@@ -411,9 +452,10 @@ bitAnd: n
 	| norm |
 	norm := n normalize.
 	^ self digitLogic: norm op: #bitAnd: length: (self digitLength max: norm digitLength)
+]
 
 Integer >> bitAt: anInteger
-bitAt: anInteger
+[bitAt: anInteger
 	"Answer 1 if the bit at position anInteger is set to 1, 0 otherwise.
 	self is considered an infinite sequence of bits, so anInteger can be any strictly positive integer.
 	Bit at position 1 is the least significant bit.
@@ -422,9 +464,10 @@ bitAt: anInteger
 	This is a naive implementation that can be refined in subclass for speed"
 
 	^ (self bitShift: 1 - anInteger) bitAnd: 1
+]
 
 Integer >> bitAt: anInteger put: value
-bitAt: anInteger put: value
+[bitAt: anInteger put: value
 	"Answer a new Integer that has the bit of rank anInteger set to value.
 	The bit value should be 0 or 1, otherwise raise an Error.
 	The bits are indexed starting at 1 for the least significant bit.
@@ -439,28 +482,32 @@ bitAt: anInteger put: value
 	1 = value
 		ifTrue: [ ^ self bitOr: (1 bitShift: anInteger - 1) ].
 	self error: 'bit value should be 0 or 1'
+]
 
 Integer >> bitClear: aMask
-bitClear: aMask
+[bitClear: aMask
 	"Answer an Integer equal to the receiver, except with all bits cleared that are set in aMask."
 
 	^ (self bitOr: aMask) - aMask
+]
 
 Integer >> bitInvert
-bitInvert
+[bitInvert
 	"Answer an Integer whose bits are the logical negation of the receiver's bits.
 	Numbers are interpreted as having 2's-complement representation."
 
 	^ -1 - self
+]
 
 Integer >> bitInvert32
-bitInvert32
+[bitInvert32
 	"Answer the 32-bit complement of the receiver."
 
 	^ self bitXor: 16rFFFFFFFF
+]
 
 Integer >> bitOr: n
-bitOr: n
+[bitOr: n
 	"Answer an Integer whose bits are the logical OR of the receiver's bits  
 	and those of the argument, n."
 
@@ -468,9 +515,10 @@ bitOr: n
 	| norm |
 	norm := n normalize.
 	^ self digitLogic: norm op: #bitOr: length: (self digitLength max: norm digitLength)
+]
 
 Integer >> bitShift: shiftCount
-bitShift: shiftCount
+[bitShift: shiftCount
 	"Answer an Integer whose value (in twos-complement representation) is  
 	the receiver's value (in twos-complement representation) shifted left by 
 	the number of bits indicated by the argument. Negative arguments  
@@ -481,9 +529,10 @@ bitShift: shiftCount
 	^ ((self negative and: [ shiftCount negative ]) and: [ self anyBitOfMagnitudeFrom: 1 to: shiftCount negated ])
 		ifTrue: [ magnitudeShift - 1 ]
 		ifFalse: [ magnitudeShift ]
+]
 
 Integer >> bitShiftMagnitude: shiftCount
-bitShiftMagnitude: shiftCount
+[bitShiftMagnitude: shiftCount
 	"Answer an Integer whose value (in magnitude representation) is  
 	the receiver's value (in magnitude representation) shifted left by  
 	the number of bits indicated by the argument. Negative arguments
@@ -495,9 +544,10 @@ bitShiftMagnitude: shiftCount
 		ifTrue: [ ^ self digitLshift: shiftCount ].
 	rShift := 0 - shiftCount.
 	^ (self digitRshift: (rShift bitAnd: 7) bytes: (rShift bitShift: -3) lookfirst: self digitLength) normalize
+]
 
 Integer >> bitString
-bitString
+[bitString
 	"Returns a string representing the receiver in binary form"
 
 	"2 bitString 
@@ -511,15 +561,17 @@ bitString
 	"
 
 	^ (self bitStringLength to: 1 by: -1) collect: [ :i | Character value: $0 charCode + (self bitAt: i) ] as: String
+]
 
 Integer >> bitStringLength
-bitStringLength
+[bitStringLength
 	^ self digitLength * 8 + (self positive
 				ifTrue: [ 1 ]
 				ifFalse: [ 0 ])	"make sure positive integer bitString always begins with 0"
+]
 
 Integer >> bitXor: n
-bitXor: n
+[bitXor: n
 	"Answer an Integer whose bits are the logical XOR of the receiver's bits  
 	and those of the argument, n."
 
@@ -527,15 +579,17 @@ bitXor: n
 	| norm |
 	norm := n normalize.
 	^ self digitLogic: norm op: #bitXor: length: (self digitLength max: norm digitLength)
+]
 
 Integer >> ceiling
-ceiling
+[ceiling
 	"Refer to the comment in Number|ceiling."
 
 	
+]
 
 Integer >> copyto: x
-copyto: x
+[copyto: x
 	| stop |
 	stop := self digitLength min: x digitLength.
 	^ x
@@ -543,9 +597,10 @@ copyto: x
 		to: stop
 		with: self
 		startingAt: 1
+]
 
 Integer >> crossSumBase: aBase
-crossSumBase: aBase
+[crossSumBase: aBase
 	| aResult |
 	"Precondition"
 	[ aBase isInteger and: [ aBase >= 2 ] ] assert.
@@ -556,29 +611,34 @@ crossSumBase: aBase
 	aResult := self \\ aBase + (self // aBase crossSumBase: aBase).	"Postcondition	E.g. 18 crossSumBase: 10 -> 9 => 18\\(10-1) = 0"
 	[ aResult \\ (aBase - 1) = 0 = (self \\ (aBase - 1) = 0) ] assert.
 	^ aResult
+]
 
 Integer >> decimalDigitAt: anExponent
-decimalDigitAt: anExponent
+[decimalDigitAt: anExponent
 	^ self digitAt: anExponent base: 10
+]
 
 Integer >> decimalDigitLength
-decimalDigitLength
+[decimalDigitLength
 	^ self numberOfDigitsInBase: 10
+]
 
 Integer >> denominator
-denominator
+[denominator
 	"Let an Integer be polymorphic to a Fraction. See #isFraction."
 
 	^ 1
+]
 
 Integer >> destinationBuffer: digitLength
-destinationBuffer: digitLength
+[destinationBuffer: digitLength
 	digitLength <= 1
 		ifTrue: [ self ]
 		ifFalse: [ LargePositiveInteger new: digitLength ]
+]
 
 Integer >> digitAdd: arg
-digitAdd: arg
+[digitAdd: arg
 	<primitive: 'primDigitAdd' module: 'LargeIntegers'>
 	| len arglen accum sum |
 	accum := 0.
@@ -591,17 +651,20 @@ digitAdd: arg
 		ifTrue: [ sum := sum growby: 1.
 			sum at: sum digitLength put: (accum bitShift: -8) ].
 	^ sum
+]
 
 Integer >> digitAt: anExponent base: base
-digitAt: anExponent base: base
+[digitAt: anExponent base: base
 	^ self // (base raisedToInteger: anExponent - 1) \\ base
+]
 
 Integer >> digitBuffer: digitLength
-digitBuffer: digitLength
+[digitBuffer: digitLength
 	^ Array new: digitLength * 8
+]
 
 Integer >> digitCompare: arg
-digitCompare: arg
+[digitCompare: arg
 	"Compare the magnitude of self with that of arg.   
 	Return a code of 1, 0, -1 for self >, = , < arg"
 
@@ -619,9 +682,10 @@ digitCompare: arg
 						ifFalse: [ ^ -1 ] ].
 			len := len - 1 ].
 	^ 0
+]
 
 Integer >> digitDiv: arg neg: ng
-digitDiv: arg neg: ng
+[digitDiv: arg neg: ng
 	"Answer with an array of (quotient, remainder)."
 
 	<primitive: 'primDigitDivNegative' module: 'LargeIntegers'>
@@ -696,9 +760,10 @@ digitDiv: arg neg: ng
 		quo digitAt: quo digitLength + 1 - k put: (qhi bitShift: 4) + qlo ].
 	rem := rem digitRshift: d bytes: 0 lookfirst: dl.
 	^ Array with: quo with: rem
+]
 
 Integer >> digitLogic: arg op: op length: len
-digitLogic: arg op: op length: len
+[digitLogic: arg op: op length: len
 	| i result neg1 neg2 rneg z1 z2 rz b1 b2 b |
 	neg1 := self negative.
 	neg2 := arg negative.
@@ -743,9 +808,10 @@ digitLogic: arg op: op length: len
 								ifFalse: [ 255 - b ] ]
 						ifFalse: [ b ]) ].
 	^ result normalize
+]
 
 Integer >> digitLshift: shiftCount
-digitLshift: shiftCount
+[digitLshift: shiftCount
 	| carry rShift mask len result digit byteShift bitShift highBit |
 	(highBit := self highBitOfMagnitude) = 0
 		ifTrue: [ ^ 0 ].
@@ -768,9 +834,10 @@ digitLshift: shiftCount
 		result digitAt: i + byteShift put: (((digit bitAnd: mask) bitShift: bitShift) bitOr: carry).
 		carry := digit bitShift: rShift ].
 	^ result
+]
 
 Integer >> digitMultiply: arg neg: ng
-digitMultiply: arg neg: ng
+[digitMultiply: arg neg: ng
 	<primitive: 'primDigitMultiplyNegative' module: 'LargeIntegers'>
 	| prod prodLen carry digit k ab |
 	(arg digitLength = 1 and: [ (arg digitAt: 1) = 0 ])
@@ -788,9 +855,10 @@ digitMultiply: arg neg: ng
 					k := k + 1 ].
 				prod digitAt: k put: carry ] ].
 	^ prod normalize
+]
 
 Integer >> digitRshift: anInteger bytes: b lookfirst: a
-digitRshift: anInteger bytes: b lookfirst: a
+[digitRshift: anInteger bytes: b lookfirst: a
 	"Shift right 8*b+anInteger bits, 0<=n<8.
 	Discard all digits beyond a, and all zeroes at or below a."
 
@@ -814,9 +882,10 @@ digitRshift: anInteger bytes: b lookfirst: a
 		r digitAt: j - b put: (((digit bitAnd: m) bitShift: f) bitOr: x).	"Avoid values > 8 bits"
 		x := digit bitShift: n ].
 	^ r
+]
 
 Integer >> digitSubtract: arg
-digitSubtract: arg
+[digitSubtract: arg
 	<primitive: 'primDigitSubtract' module: 'LargeIntegers'>
 	| smaller larger z sum sl al ng |
 	sl := self digitLength.
@@ -839,15 +908,17 @@ digitSubtract: arg
 		sum digitAt: i put: z - (z // 256 * 256).	"sign-tolerant form of (z bitAnd: 255)"
 		z := z // 256 ].
 	^ sum normalize
+]
 
 Integer >> even
-even
+[even
 	"Refer to the comment in Number|even."
 
 	^ ((self digitAt: 1) bitAnd: 1) = 0
+]
 
 Integer >> factorial
-factorial
+[factorial
 	"Answer the factorial of the receiver."
 
 	self = 0
@@ -855,15 +926,17 @@ factorial
 	self > 0
 		ifTrue: [ ^ self * (self - 1) factorial ].
 	self error: 'Not valid for negative integers'
+]
 
 Integer >> floor
-floor
+[floor
 	"Refer to the comment in Number|floor."
 
 	
+]
 
 Integer >> gcd: anInteger
-gcd: anInteger
+[gcd: anInteger
 	"See Knuth, Vol 2, 4.5.2, Algorithm L"
 
 	"Initialize"
@@ -893,17 +966,20 @@ gcd: anInteger
 					v := u * c + (v * d).
 					u := t ] ].
 	^ v gcd: u
+]
 
 Integer >> growby: n
-growby: n
+[growby: n
 	^ self growto: self digitLength + n
+]
 
 Integer >> growto: n
-growto: n
+[growto: n
 	^ self copyto: (self species new: n)
+]
 
 Integer >> hex
-hex
+[hex
 	"Print the receiver as hex, prefixed with 16r.  DO NOT CHANGE THIS!  The Cog VMMaker depends on this.
 	 Consider using any of
 		printStringHex
@@ -914,9 +990,10 @@ hex
 		storeStringBase: 16 length: 11 padded: true"
 
 	^ self storeStringBase: 16
+]
 
 Integer >> highBit
-highBit
+[highBit
 	"Answer the index of the high order bit of the receiver, or zero if the  
 	receiver is zero. Raise an error if the receiver is negative, since  
 	negative integers are defined to have an infinite number of leading 1's 
@@ -924,34 +1001,39 @@ highBit
 	get the highest bit of the magnitude."
 
 	^ self subclassResponsibility
+]
 
 Integer >> highBitOfMagnitude
-highBitOfMagnitude
+[highBitOfMagnitude
 	"Answer the index of the high order bit of the magnitude of the  
 	receiver, or zero if the receiver is zero."
 
 	^ self subclassResponsibility
+]
 
 Integer >> isFraction
-isFraction
+[isFraction
 	"Each Integer is considered as a special kind of Fraction with self as numerator and a unit denominator.
 	Rationale: A Fraction with a unit denominator will be automatically reduced to an Integer.
 	Hence Integer has to be polymorphic to Fraction."
 
 	^ true
+]
 
 Integer >> isInteger
-isInteger
+[isInteger
 	"True for all subclasses of Integer."
 
 	^ true
+]
 
 Integer >> isLiteral
-isLiteral
+[isLiteral
 	^ true
+]
 
 Integer >> isMostLikelyPrime
-isMostLikelyPrime
+[isMostLikelyPrime
 	"See isProbablyPrimeWithK:andQ: for the algoritm description."
 
 	| k q |
@@ -966,15 +1048,17 @@ isMostLikelyPrime
 	25 timesRepeat: [ (self isProbablyPrimeWithK: k andQ: q)
 				ifFalse: [ ^ false ] ].
 	^ true
+]
 
 Integer >> isPowerOfTwo
-isPowerOfTwo
+[isPowerOfTwo
 	"Return true if the receiver is an integral power of two."
 
 	^ self ~= 0 and: [ (self bitAnd: self - 1) = 0 ]
+]
 
 Integer >> isPrime
-isPrime
+[isPrime
 	"Answer true if the receiver is a prime number. See isProbablyPrime for a probabilistic
 	implementation that is much faster for large integers, and that is correct to an extremely
 	high statistical level of confidence (effectively deterministic)."
@@ -986,9 +1070,10 @@ isPrime
 	3 to: self sqrtFloor by: 2 do: [ :each | self \\ each = 0
 			ifTrue: [ ^ false ] ].
 	^ true
+]
 
 Integer >> isProbablyPrime
-isProbablyPrime
+[isProbablyPrime
 	"See isProbablyPrimeWithK:andQ: for the algoritm description."
 
 	| k q |
@@ -1002,9 +1087,10 @@ isProbablyPrime
 	25 timesRepeat: [ (self isProbablyPrimeWithK: k andQ: q)
 				ifFalse: [ ^ false ] ].	"The probability of false positive after 25 iterations is less than (1/4 raisedTo: 25) < 1.0e-15"
 	^ true
+]
 
 Integer >> isProbablyPrimeWithK: k andQ: q
-isProbablyPrimeWithK: k andQ: q
+[isProbablyPrimeWithK: k andQ: q
 	"Algorithm P, probabilistic primality test, from
 	Knuth, Donald E. 'The Art of Computer Programming', Vol 2,
 	Third Edition, section 4.5.4, page 395, P1-P5 refer to Knuth description..
@@ -1024,21 +1110,24 @@ isProbablyPrimeWithK: k andQ: q
 	(j := j + 1) < k ]
 		whileTrue: [ y := y squared \\ self ].	"P5"
 	^ false
+]
 
 Integer >> lastDigit
-lastDigit
+[lastDigit
 	"Answer the last digit of the integer base 256.  LargePositiveInteger uses bytes of base two number, and each is a 'digit'."
 
 	^ self digitAt: self digitLength
+]
 
 Integer >> lcm: n
-lcm: n
+[lcm: n
 	"Answer the least common multiple of the receiver and n."
 
 	^ self // (self gcd: n) * n
+]
 
 Integer >> lowBit
-lowBit
+[lowBit
 	"Answer the index of the low order bit of this number."
 
 	| index |
@@ -1047,9 +1136,10 @@ lowBit
 	index := 1.
 	[ (self digitAt: index) = 0 ] whileTrue: [ index := index + 1 ].
 	^ (self digitAt: index) lowBit + (8 * (index - 1))
+]
 
 Integer >> montgomeryRaisedTo: n times: y modulo: m mInvModB: mInv
-montgomeryRaisedTo: n times: y modulo: m mInvModB: mInv
+[montgomeryRaisedTo: n times: y modulo: m mInvModB: mInv
 	"Private - do a Montgomery exponentiation of self modulo m.
 	The operation is equivalent to (self/y raisedTo: n)*y \\ m,
 	with y is (256 raisedTo: m digitLength),
@@ -1080,9 +1170,10 @@ montgomeryRaisedTo: n times: y modulo: m mInvModB: mInv
 					pow := pow montgomeryTimes: (oddPowersOfSelf at: index + 1) modulo: m mInvModB: mInv ].
 			k := k - 1 ].
 	^ pow
+]
 
 Integer >> montgomeryTimes: a modulo: m mInvModB: mInv
-montgomeryTimes: a modulo: m mInvModB: mInv
+[montgomeryTimes: a modulo: m mInvModB: mInv
 	"Answer the result of a Montgomery multiplication
 	self * a * (256 raisedTo: m digitLength) inv \\ m
 	NOTE: it is assumed that:
@@ -1094,22 +1185,25 @@ montgomeryTimes: a modulo: m mInvModB: mInv
 
 	<primitive: 'primMontgomeryTimesModulo' module: 'LargeIntegers'>
 	^ nil
+]
 
 Integer >> noMask: mask
-noMask: mask
+[noMask: mask
 	"Treat the argument as a bit mask. Answer whether none of the bits that 
 	are 1 in the argument are 1 in the receiver."
 
 	^ 0 = (self bitAnd: mask)
+]
 
 Integer >> normalize
-normalize
+[normalize
 	"SmallInts OK; LgInts override"
 
 	^ self
+]
 
 Integer >> nthRoot: aPositiveInteger
-nthRoot: aPositiveInteger
+[nthRoot: aPositiveInteger
 	"Answer the nth root of the receiver.
 	See #nthRootAlt: for an alternative implementation."
 
@@ -1151,9 +1245,10 @@ nthRoot: aPositiveInteger
 						ifTrue: [ higher := guess ]
 						ifFalse: [ lower := guess ] ] ].	"We need an approximate result"
 	^ floatResult
+]
 
 Integer >> nthRootTruncated: aPositiveInteger
-nthRootTruncated: aPositiveInteger
+[nthRootTruncated: aPositiveInteger
 	"Answer the integer part of the nth root of the receiver."
 
 	| guess guessToTheNthMinusOne delta |
@@ -1171,16 +1266,18 @@ nthRootTruncated: aPositiveInteger
 	((guess := guess - 1) raisedTo: aPositiveInteger) > self
 		ifTrue: [ guess := guess - 1 ].
 	^ guess
+]
 
 Integer >> numberOfDigits
-numberOfDigits
+[numberOfDigits
 	"Return how many digits are necessary to print this number in base 10.
 	This does not count any place for minus sign, radix prefix or whatever."
 
 	^ self numberOfDigitsInBase: 10
+]
 
 Integer >> numberOfDigitsInBase: b
-numberOfDigitsInBase: b
+[numberOfDigitsInBase: b
 	"Return how many digits are necessary to print this number in base b.
 	This does not count any place for minus sign, radix prefix or whatever.
 	Note that this algorithm may cost a few operations on LargeInteger."
@@ -1204,23 +1301,26 @@ numberOfDigitsInBase: b
 	^ q = 0
 		ifTrue: [ total ]
 		ifFalse: [ total + 1 ]
+]
 
 Integer >> numerator
-numerator
+[numerator
 	"Let an Integer be polymorphic to a Fraction. See #isFraction."
 
 	^ self
+]
 
 Integer >> primeFactors
-primeFactors
+[primeFactors
 	"Return all primeFactors of myself"
 
 	"( 106260 primeFactors fold: [ :a :b | a * b ]) = 106260"
 
 	^ Array streamContents: [ :s | self primeFactorsOn: s ]
+]
 
 Integer >> primeFactorsOn: aStream
-primeFactorsOn: aStream
+[primeFactorsOn: aStream
 	"Recursively calculate the primefactors of myself and put the factors into the given stream"
 
 	self = 1
@@ -1232,9 +1332,10 @@ primeFactorsOn: aStream
 			ifTrue: [ aStream nextPut: each.
 				^ self / each primeFactorsOn: aStream ] ].
 	aStream nextPut: self
+]
 
 Integer >> print: positiveNumberString on: aStream prefix: prefix length: minimum padded: zeroFlag
-print: positiveNumberString on: aStream prefix: prefix length: minimum padded: zeroFlag
+[print: positiveNumberString on: aStream prefix: prefix length: minimum padded: zeroFlag
 	| padLength |
 	padLength := minimum - positiveNumberString size - prefix size.
 	padLength > 0
@@ -1247,13 +1348,15 @@ print: positiveNumberString on: aStream prefix: prefix length: minimum padded: z
 						nextPutAll: prefix ] ]
 		ifFalse: [ aStream nextPutAll: prefix ].
 	aStream nextPutAll: positiveNumberString
+]
 
 Integer >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	^ self printOn: aStream base: 10
+]
 
 Integer >> printOn: aStream base: base length: minimum padded: zeroFlag
-printOn: aStream base: base length: minimum padded: zeroFlag
+[printOn: aStream base: base length: minimum padded: zeroFlag
 	| prefix |
 	prefix := self negative
 		ifTrue: [ '-' ]
@@ -1264,16 +1367,18 @@ printOn: aStream base: base length: minimum padded: zeroFlag
 		prefix: prefix
 		length: minimum
 		padded: zeroFlag
+]
 
 Integer >> printOn: aStream base: b nDigits: n
-printOn: aStream base: b nDigits: n
+[printOn: aStream base: b nDigits: n
 	"Append a representation of this number in base b on aStream using nDigits.
 	self must be positive."
 
 	self subclassResponsibility
+]
 
 Integer >> printOn: outputStream base: baseInteger showRadix: flagBoolean
-printOn: outputStream base: baseInteger showRadix: flagBoolean
+[printOn: outputStream base: baseInteger showRadix: flagBoolean
 	"Write a sequence of characters that describes the receiver in radix 
 	baseInteger with optional radix specifier. 
 	The result is undefined if baseInteger less than 2 or greater than 36."
@@ -1286,9 +1391,10 @@ printOn: outputStream base: baseInteger showRadix: flagBoolean
 	self negative
 		ifTrue: [ outputStream nextPut: $- ].
 	outputStream nextPutAll: (tempString copyFrom: startPos to: tempString size)
+]
 
 Integer >> printOn: aStream showingDecimalPlaces: placesDesired
-printOn: aStream showingDecimalPlaces: placesDesired
+[printOn: aStream showingDecimalPlaces: placesDesired
 	"Same as super, but provides a faster implementation because fraction part and rounding are trivial."
 
 	self printOn: aStream base: 10.
@@ -1296,16 +1402,18 @@ printOn: aStream showingDecimalPlaces: placesDesired
 		ifTrue: [ ^ self ].
 	aStream nextPut: $..
 	placesDesired timesRepeat: [ aStream nextPut: $0 ]
+]
 
 Integer >> printPaddedWith: aCharacter to: anInteger
-printPaddedWith: aCharacter to: anInteger
+[printPaddedWith: aCharacter to: anInteger
 	"Answer the string containing the ASCII representation of the receiver 
 	padded on the left with aCharacter to be at least anInteger characters."
 
 	^ self printPaddedWith: aCharacter to: anInteger base: 10
+]
 
 Integer >> printPaddedWith: aCharacter to: anInteger base: aRadix
-printPaddedWith: aCharacter to: anInteger base: aRadix
+[printPaddedWith: aCharacter to: anInteger base: aRadix
 	"Answer the string containing the ASCII representation of the receiver 
 	padded on the left with aCharacter to be at least anInteger characters."
 
@@ -1319,9 +1427,10 @@ printPaddedWith: aCharacter to: anInteger base: aRadix
 	^ ((String new: padding)
 		atAllPut: aCharacter;
 		yourself) , digits
+]
 
 Integer >> printSeparatedBy: aDelimiter every: offset signed: printSigned base: base on: aStream
-printSeparatedBy: aDelimiter every: offset signed: printSigned base: base on: aStream
+[printSeparatedBy: aDelimiter every: offset signed: printSigned base: base on: aStream
 	| digits |
 	digits := self abs printStringBase: base.
 	self sign = -1
@@ -1331,32 +1440,36 @@ printSeparatedBy: aDelimiter every: offset signed: printSigned base: base on: aS
 	1 to: digits size do: [ :i | aStream nextPut: (digits at: i).
 		(i < digits size and: [ (i - digits size) \\ offset = 0 ])
 			ifTrue: [ aStream nextPut: $, ] ]
+]
 
 Integer >> printSeparatedBy: aDelimiter every: offset signed: printSigned on: aStream
-printSeparatedBy: aDelimiter every: offset signed: printSigned on: aStream
+[printSeparatedBy: aDelimiter every: offset signed: printSigned on: aStream
 	^ self
 		printSeparatedBy: aDelimiter
 		every: offset
 		signed: printSigned
 		base: 10
 		on: aStream
+]
 
 Integer >> printString
-printString
+[printString
 	"For Integer, prefer the stream version to the string version for efficiency"
 
 	^ String streamContents: [ :str | self printOn: str base: 10 ]
+]
 
 Integer >> printStringBase: base length: minimum padded: zeroFlag
-printStringBase: base length: minimum padded: zeroFlag
+[printStringBase: base length: minimum padded: zeroFlag
 	^ String streamContents: [ :s | self
 				printOn: s
 				base: base
 				length: minimum
 				padded: zeroFlag ]
+]
 
 Integer >> printStringHex
-printStringHex
+[printStringHex
 	"returns the hex digit part of the integer when printed in hexadecimal format.
 	30 printStringHex 
 		'1E'
@@ -1364,21 +1477,25 @@ printStringHex
 		 '16r1E' "
 
 	^ self printStringBase: 16
+]
 
 Integer >> printStringLength: minimal
-printStringLength: minimal
+[printStringLength: minimal
 	^ self printStringLength: minimal padded: false
+]
 
 Integer >> printStringLength: minimal padded: zeroFlag
-printStringLength: minimal padded: zeroFlag
+[printStringLength: minimal padded: zeroFlag
 	^ self printStringBase: 10 length: minimal padded: zeroFlag
+]
 
 Integer >> printStringPadded: minimal
-printStringPadded: minimal
+[printStringPadded: minimal
 	^ self printStringLength: minimal padded: true
+]
 
 Integer >> printStringRadix: baseInteger
-printStringRadix: baseInteger
+[printStringRadix: baseInteger
 	"Return a string containing a sequence of characters that represents the 
 	numeric value of the receiver in the radix specified by the argument.  
 	If the receiver is negative, a minus sign ('-') is prepended to the 
@@ -1392,9 +1509,10 @@ printStringRadix: baseInteger
 				ifTrue: [ ^ '-10r' , (tempString copyFrom: 2 to: tempString size) ]
 				ifFalse: [ ^ '10r' , tempString ] ].
 	^ self storeStringBase: baseInteger
+]
 
 Integer >> printStringRoman
-printStringRoman
+[printStringRoman
 	| stream integer |
 	stream := String new writeStream.
 	integer := self negative
@@ -1407,9 +1525,10 @@ printStringRoman
 		romanDigits: 'CLX' for: 10 on: stream;
 		romanDigits: 'XVI' for: 1 on: stream.
 	^ stream contents
+]
 
 Integer >> printWithCommasOn: aStream
-printWithCommasOn: aStream
+[printWithCommasOn: aStream
 	"123456789 asStringWithCommas"
 
 	"-123456789 asStringWithCommas"
@@ -1419,9 +1538,10 @@ printWithCommasOn: aStream
 		every: 3
 		signed: false
 		on: aStream
+]
 
 Integer >> printWithCommasSignedOn: aStream
-printWithCommasSignedOn: aStream
+[printWithCommasSignedOn: aStream
 	"123456789 asStringWithCommasSigned"
 
 	"-123456789 asStringWithCommasSigned"
@@ -1431,15 +1551,17 @@ printWithCommasSignedOn: aStream
 		every: 3
 		signed: true
 		on: aStream
+]
 
 Integer >> putOn: aStream
-putOn: aStream
+[putOn: aStream
 	(aStream isBinary
 		ifTrue: [ self asByteArray ]
 		ifFalse: [ self asString ]) putOn: aStream
+]
 
 Integer >> quo: aNumber
-quo: aNumber
+[quo: aNumber
 	"Refer to the comment in Number quo: "
 
 	| ng quo |
@@ -1448,13 +1570,15 @@ quo: aNumber
 			quo := (self digitDiv: aNumber neg: ng) at: 1.
 			^ quo normalize ].
 	^ aNumber adaptToInteger: self andSend: #quo:
+]
 
 Integer >> radix: base
-radix: base
+[radix: base
 	^ self printStringBase: base
+]
 
 Integer >> raisedTo: n modulo: m
-raisedTo: n modulo: m
+[raisedTo: n modulo: m
 	"Answer the modular exponential.
 	Note: this implementation is optimized for case of large integers raised to large powers."
 
@@ -1479,17 +1603,19 @@ raisedTo: n modulo: m
 		modulo: m
 		mInvModB: mInv.	"Demontgomerize the result (divide by R)"
 	^ a montgomeryTimes: 1 modulo: m mInvModB: mInv
+]
 
 Integer >> raisedToInteger: exp modulo: m
-raisedToInteger: exp modulo: m
+[raisedToInteger: exp modulo: m
 	exp = 0
 		ifTrue: [ ^ 1 ].
 	exp even
 		ifTrue: [ ^ (self raisedToInteger: exp // 2 modulo: m) squared \\ m ]
 		ifFalse: [ ^ self * (self raisedToInteger: exp - 1 modulo: m) \\ m ]
+]
 
 Integer >> reciprocalModulo: n
-reciprocalModulo: n
+[reciprocalModulo: n
 	"Answer an integer x such that (self * x) \\ n = 1, x > 0, x < n.
 	Raise an error if there is no such integer.
 	The algorithm is a non extended euclidean modular inversion called NINV.
@@ -1514,17 +1640,19 @@ reciprocalModulo: n
 	^ result positive
 		ifTrue: [ result ]
 		ifFalse: [ result2 ]
+]
 
 Integer >> replaceFrom: start to: stop with: replacement startingAt: repStart
-replaceFrom: start to: stop with: replacement startingAt: repStart
+[replaceFrom: start to: stop with: replacement startingAt: repStart
 	| j |
 	"Catches failure if LgInt replace primitive fails"
 	j := repStart.
 	start to: stop do: [ :i | self digitAt: i put: (replacement digitAt: j).
 		j := j + 1 ]
+]
 
 Integer >> romanDigits: digits for: base on: aStream
-romanDigits: digits for: base on: aStream
+[romanDigits: digits for: base on: aStream
 	| n |
 	n := self \\ (base * 10) // base.
 	n = 9
@@ -1538,19 +1666,22 @@ romanDigits: digits for: base on: aStream
 	n > 4
 		ifTrue: [ aStream nextPut: digits second ].
 	n \\ 5 timesRepeat: [ aStream nextPut: digits last ]
+]
 
 Integer >> round: numberOfWishedDecimal
-round: numberOfWishedDecimal
+[round: numberOfWishedDecimal
 	^ self
+]
 
 Integer >> rounded
-rounded
+[rounded
 	"Refer to the comment in Number|rounded."
 
 	
+]
 
 Integer >> slidingLeftRightRaisedTo: n modulo: m
-slidingLeftRightRaisedTo: n modulo: m
+[slidingLeftRightRaisedTo: n modulo: m
 	"Private - compute (self raisedTo: n) \\ m,
 	Note: this method has to be fast because it is generally used with large integers in cryptography.
 	It thus operate on exponent bits from left to right by packets with a sliding window rather than bit by bit (see below)."
@@ -1579,9 +1710,10 @@ slidingLeftRightRaisedTo: n modulo: m
 					pow := pow * (oddPowersOfSelf at: index + 1) \\\ m ].
 			k := k - 1 ].
 	^ pow normalize
+]
 
 Integer >> sqrt
-sqrt
+[sqrt
 	"Answer the square root of the receiver."
 
 	| selfAsFloat floatResult guess |
@@ -1599,9 +1731,10 @@ sqrt
 			guess := (self * 4) sqrtFloor.
 			^ (guess // 2 + (guess \\ 2)) asFloat ].	"We need an approximate result"
 	^ floatResult
+]
 
 Integer >> sqrtFloor
-sqrtFloor
+[sqrtFloor
 	"Return the integer part of the square root of self"
 
 	| guess guessSquared delta |
@@ -1613,9 +1746,10 @@ sqrtFloor
 	guessSquared = self
 		ifFalse: [ guess := guess - 1 ].
 	^ guess
+]
 
 Integer >> storeOn: aStream base: base
-storeOn: aStream base: base
+[storeOn: aStream base: base
 	"Print a representation of the receiver on the stream
 	<aStream> in base <base> where
 	2 <= <baseInteger> <= 16. If <base> is other than 10
@@ -1632,9 +1766,10 @@ storeOn: aStream base: base
 				nextPutAll: base printString;
 				nextPut: $r ].
 	aStream nextPutAll: (integer printStringBase: base)
+]
 
 Integer >> storeOn: aStream base: base length: minimum padded: zeroFlag
-storeOn: aStream base: base length: minimum padded: zeroFlag
+[storeOn: aStream base: base length: minimum padded: zeroFlag
 	| prefix |
 	prefix := self negative
 		ifTrue: [ '-' ]
@@ -1647,21 +1782,24 @@ storeOn: aStream base: base length: minimum padded: zeroFlag
 		prefix: prefix
 		length: minimum
 		padded: zeroFlag
+]
 
 Integer >> storeStringBase: base length: minimum padded: zeroFlag
-storeStringBase: base length: minimum padded: zeroFlag
+[storeStringBase: base length: minimum padded: zeroFlag
 	^ String streamContents: [ :s | self
 				storeOn: s
 				base: base
 				length: minimum
 				padded: zeroFlag ]
+]
 
 Integer >> storeStringHex
-storeStringHex
+[storeStringHex
 	^ self storeStringBase: 16
+]
 
 Integer >> take: kk
-take: kk
+[take: kk
 	"Return the number of combinations of (self) elements taken kk at a time.  
 	For 6 take 3, this is 6*5*4 / (1*2*3).  Zero outside of Pascal's triangle.  Use a trick to go faster."
 
@@ -1677,9 +1815,10 @@ take: kk
 	denom := 1.
 	1 to: (kk min: self - kk) do: [ :factor | denom := denom * factor ].
 	^ num // denom
+]
 
 Integer >> timesRepeat: aBlock
-timesRepeat: aBlock
+[timesRepeat: aBlock
 	"Evaluate the argument, aBlock, the number of times represented by the 
 	receiver."
 
@@ -1687,9 +1826,10 @@ timesRepeat: aBlock
 	count := 1.
 	[ count <= self ] whileTrue: [ aBlock value.
 			count := count + 1 ]
+]
 
 Integer >> tinyBenchmarks
-tinyBenchmarks
+[tinyBenchmarks
 	"Report the results of running the two tiny Squeak benchmarks.
 	ar 9/10/1999: Adjusted to run at least 1 sec to get more stable results"
 
@@ -1707,25 +1847,29 @@ tinyBenchmarks
 	[ t2 := Time millisecondsToRun: [ r := n2 benchFib ].
 	t2 < 1000 ] whileTrue: [ n2 := n2 + 1 ].	"Note: #benchFib's runtime is about O(n^2)."
 	^ (n1 * 500000 * 1000 // t1) printString , ' bytecodes/sec; ' , (r * 1000 // t2) printString , ' sends/sec'
+]
 
 Integer >> truncated
-truncated
+[truncated
 	"Refer to the comment in Number|truncated."
 
 	
+]
 
 Integer >> | aNumber
-| aNumber
+[| aNumber
 	^ self bitOr: aNumber
+]
 
 Integer class >> basicNew
-basicNew
+[basicNew
 	self == Integer
 		ifTrue: [ ^ self error: 'Integer is an abstract class.  Make a concrete subclass.' ].
 	^ super basicNew
+]
 
 Integer class >> byte1: byte1 byte2: byte2 byte3: byte3 byte4: byte4
-byte1: byte1 byte2: byte2 byte3: byte3 byte4: byte4
+[byte1: byte1 byte2: byte2 byte3: byte3 byte4: byte4
 	"Depending on high-order byte copy directly into a LargeInteger,
 	or build up a SmallInteger by shifting"
 
@@ -1738,9 +1882,10 @@ byte1: byte1 byte2: byte2 byte3: byte3 byte4: byte4
 	value digitAt: 2 put: byte2.
 	value digitAt: 1 put: byte1.
 	^ value
+]
 
 Integer class >> initialize
-initialize
+[initialize
 	"Integer initialize"
 
 	"Ensure we have the right compact class index"
@@ -1755,15 +1900,17 @@ initialize
 		ifFalse: [ (Smalltalk compactClassesArray at: 4)
 				ifNil: [ LargeNegativeInteger becomeCompactSimplyAt: 4 ]
 				ifNotNil: [ self error: 'Unexpected compact class setup' ] ]
+]
 
 Integer class >> largePrimesUpTo: maxValue
-largePrimesUpTo: maxValue
+[largePrimesUpTo: maxValue
 	"Compute and return all the prime numbers up to maxValue"
 
 	^ Array streamContents: [ :s | self largePrimesUpTo: maxValue do: [ :prime | s nextPut: prime ] ]
+]
 
 Integer class >> largePrimesUpTo: max do: aBlock
-largePrimesUpTo: max do: aBlock
+[largePrimesUpTo: max do: aBlock
 	"Evaluate aBlock with all primes up to maxValue.
 	The Algorithm is adapted from http://www.rsok.com/~jrm/printprimes.html
 	It encodes prime numbers much more compactly than #primesUpTo: 
@@ -1812,32 +1959,36 @@ largePrimesUpTo: max do: aBlock
 												maskBit := 255 - (1 bitShift: (maskBit bitAnd: 7)).
 												flags at: byteIndex put: ((flags at: byteIndex) bitAnd: maskBit) ].
 										index := index + (2 * n) ] ] ] ] ]
+]
 
 Integer class >> new
-new
+[new
 	self == Integer
 		ifTrue: [ ^ self error: 'Integer is an abstract class.  Make a concrete subclass.' ].
 	^ super new
+]
 
 Integer class >> new: length neg: neg
-new: length neg: neg
+[new: length neg: neg
 	"Answer an instance of a large integer whose size is length. neg is a flag 
 	determining whether the integer is negative or not."
 
 	neg
 		ifTrue: [ ^ LargeNegativeInteger new: length ]
 		ifFalse: [ ^ LargePositiveInteger new: length ]
+]
 
 Integer class >> primesUpTo: max
-primesUpTo: max
+[primesUpTo: max
 	"Return a list of prime integers up to the given integer."
 
 	"Integer primesUpTo: 100"
 
 	^ Array streamContents: [ :s | self primesUpTo: max do: [ :prime | s nextPut: prime ] ]
+]
 
 Integer class >> primesUpTo: max do: aBlock
-primesUpTo: max do: aBlock
+[primesUpTo: max do: aBlock
 	"Compute aBlock with all prime integers up to the given integer."
 
 	"Integer primesUpTo: 100"
@@ -1853,16 +2004,18 @@ primesUpTo: max do: aBlock
 				[ k <= limit ] whileTrue: [ flags at: k put: false.
 						k := k + prime ].
 				aBlock value: prime ] ]
+]
 
 Integer class >> readFrom: aStringOrStream
-readFrom: aStringOrStream
+[readFrom: aStringOrStream
 	"Answer a new Integer as described on the stream, aStream.
 	Embedded radix specifiers not allowed - use Number readFrom: for that."
 
 	^ self readFrom: aStringOrStream base: 10
+]
 
 Integer class >> readFrom: aStringOrStream base: base
-readFrom: aStringOrStream base: base
+[readFrom: aStringOrStream base: base
 	"Answer an instance of one of the concrete subclasses if Integer. 
 	Initial minus sign accepted, and bases > 10 use letters A-Z.
 	Imbedded radix specifiers not allowed;  use Number 
@@ -1871,9 +2024,10 @@ readFrom: aStringOrStream base: base
 	If stringOrStream dos not start with a valid number description, answer 0 for backward compatibility. This is not clever and should better be changed."
 
 	^ (NumberParser on: aStringOrStream) nextIntegerBase: base
+]
 
 Integer class >> readFrom: aStringOrStream ifFail: aBlock
-readFrom: aStringOrStream ifFail: aBlock
+[readFrom: aStringOrStream ifFail: aBlock
 	"Answer an instance of one of the concrete subclasses if Integer. 
 	Initial minus sign accepted.
 	Imbedded radix specifiers not allowed;  use Number 
@@ -1881,13 +2035,15 @@ readFrom: aStringOrStream ifFail: aBlock
 	Execute aBlock if there are no digits."
 
 	^ (NumberParser on: aStringOrStream) nextIntegerBase: 10 ifFail: aBlock
+]
 
 Integer class >> readFrom: aStream radix: radix
-readFrom: aStream radix: radix
+[readFrom: aStream radix: radix
 	^ self readFrom: aStream base: radix
+]
 
 Integer class >> verbosePrimesUpTo: max
-verbosePrimesUpTo: max
+[verbosePrimesUpTo: max
 	"Integer verbosePrimesUpTo: SmallInteger maxVal"
 
 	"<- heh, heh"
@@ -1895,9 +2051,10 @@ verbosePrimesUpTo: max
 	"Compute primes up to max, but be verbose about it"
 
 	^ Array streamContents: [ :s | self verbosePrimesUpTo: max do: [ :prime | s nextPut: prime ] ]
+]
 
 Integer class >> verbosePrimesUpTo: max do: aBlock
-verbosePrimesUpTo: max do: aBlock
+[verbosePrimesUpTo: max do: aBlock
 	"Compute primes up to max, but be verbose about it"
 
 	| lastTime |
@@ -1912,4 +2069,5 @@ verbosePrimesUpTo: max do: aBlock
 					nowTime - lastTime > 1000
 						ifTrue: [ lastTime := nowTime.
 							bar label: 'Last prime found: ' , prime printString ] ] ]
+]
 

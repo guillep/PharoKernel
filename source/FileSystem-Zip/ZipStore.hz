@@ -4,7 +4,7 @@ ZipStore
 	package: #'FileSystem-Zip'.
 
 ZipStore >> close
-close
+[close
 	| archive fs stream |
 	archive := ZipArchive new.
 	fs := FileSystem store: self.
@@ -15,14 +15,16 @@ close
 		writeTo: (stream := WriteStream on: ByteArray new);
 		close.
 	self reference writeStreamDo: [ :output | output nextPutAll: stream contents ]
+]
 
 ZipStore >> initializeWithReference: aReference
-initializeWithReference: aReference
+[initializeWithReference: aReference
 	self initialize.
 	reference := aReference
+]
 
 ZipStore >> open
-open
+[open
 	| archive output |
 	self reference exists
 		ifFalse: [ ^ self ].
@@ -43,20 +45,24 @@ open
 									member copyRawDataTo: output.
 									output contents ] ] ] ].
 	^ self
+]
 
 ZipStore >> pathFromMember: anArchiveMember
-pathFromMember: anArchiveMember
+[pathFromMember: anArchiveMember
 	| path |
 	path := Path root resolve: anArchiveMember fileName.
 	^ path basename isEmpty
 		ifTrue: [ path parent ]
 		ifFalse: [ path ]
+]
 
 ZipStore >> reference
-reference
+[reference
 	^ reference
+]
 
 ZipStore class >> reference: aReference
-reference: aReference
+[reference: aReference
 	^ self basicNew initializeWithReference: aReference yourself
+]
 

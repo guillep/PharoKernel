@@ -3,12 +3,13 @@ Win32Environment
 	package: #'System-Platforms'.
 
 Win32Environment >> environmentStrings
-environmentStrings
+[environmentStrings
 	<primitive: #primitiveNativeCall module: #NativeBoostPlugin error: #errorCode>
 	^ self nbCall: #(#void #* #GetEnvironmentStrings #()) module: #Kernel32
+]
 
 Win32Environment >> getEnv: aVariableName
-getEnv: aVariableName
+[getEnv: aVariableName
 	| valueSize buffer |
 	valueSize := self getEnvSize: aVariableName.
 	valueSize = 0
@@ -17,9 +18,10 @@ getEnv: aVariableName
 	(self getEnv: aVariableName buffer: buffer size: valueSize) = (valueSize - 1)
 		ifFalse: [ ^ nil ].
 	^ buffer allButLast
+]
 
 Win32Environment >> getEnv: nameString buffer: aBuffer size: anInteger
-getEnv: nameString buffer: aBuffer size: anInteger
+[getEnv: nameString buffer: aBuffer size: anInteger
 	"If the function succeeds, the return value is the number of characters stored in the buffer pointed to by aBuffer, not including the terminating null character.
 	
 If aBuffer is not large enough to hold the data, the return value is the buffer size, in characters, required to hold the string and its terminating null character and the contents of aBuffer are undefined.
@@ -30,14 +32,16 @@ If the function fails, the return value is zero. If the specified environment va
 	^ self
 		nbCall: #(#int #GetEnvironmentVariableA #(#String #nameString #, #char #* #aBuffer #, #int #anInteger))
 		module: #Kernel32
+]
 
 Win32Environment >> getEnvSize: nameString
-getEnvSize: nameString
+[getEnvSize: nameString
 	<primitive: #primitiveNativeCall module: #NativeBoostPlugin error: #errorCode>
 	^ self nbCall: #(#int #GetEnvironmentVariableA #(#String #nameString #, nil #, 0)) module: #Kernel32
+]
 
 Win32Environment >> keysAndValuesDo: aBlock
-keysAndValuesDo: aBlock
+[keysAndValuesDo: aBlock
 	"Under windows the environemtn variables are a single big String."
 
 	"Lines starting with an equal sign are invalid per    
@@ -51,9 +55,10 @@ keysAndValuesDo: aBlock
 		ifFalse: [ self keysAndValuesDo: aBlock withAssociationString: nexString ].
 	environmentStrings := NBExternalAddress value: environmentStrings value + nexString size + 1 ]
 		repeat
+]
 
 Win32Environment >> setEnv: nameString value: valueString
-setEnv: nameString value: valueString
+[setEnv: nameString value: valueString
 	"This method calls the Standard C Library getenv() function"
 
 	<primitive: #primitiveNativeCall module: #NativeBoostPlugin error: #errorCode>
@@ -61,8 +66,10 @@ setEnv: nameString value: valueString
 		nbCall: #(#int #SetEnvironmentVariableA #(#String #nameString #, #String #valueString))
 		module: #Kernel32
 		options: #(#optStringOrNull)
+]
 
 Win32Environment >> unsetEnv: aString
-unsetEnv: aString
+[unsetEnv: aString
 	^ self setEnv: aString value: nil
+]
 

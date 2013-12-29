@@ -5,29 +5,34 @@ FileLocator
 	package: #'FileSystem-Core'.
 
 FileLocator >> = other
-= other
+[= other
 	^ self species = other species and: [ origin = other origin and: [ path = other path ] ]
+]
 
 FileLocator >> absolutePath
-absolutePath
+[absolutePath
 	"Return the absolute path"
 
 	^ self resolve path
+]
 
 FileLocator >> asAbsolute
-asAbsolute
+[asAbsolute
 	^ self
+]
 
 FileLocator >> asFileReference
-asFileReference
+[asFileReference
 	^ self resolve
+]
 
 FileLocator >> copyWithPath: newPath
-copyWithPath: newPath
+[copyWithPath: newPath
 	^ self class origin: origin path: newPath
+]
 
 FileLocator >> doesNotUnderstand: aMessage
-doesNotUnderstand: aMessage
+[doesNotUnderstand: aMessage
 	"Redirect message to the resolved version of this FileLocator.
 	If FileReference won't understand the message send a normal DNU."
 
@@ -36,39 +41,47 @@ doesNotUnderstand: aMessage
 	(resolved respondsTo: aMessage selector)
 		ifTrue: [ ^ resolved perform: aMessage selector withArguments: aMessage arguments ].
 	^ super doesNotUnderstand: aMessage
+]
 
 FileLocator >> fullPath
-fullPath
+[fullPath
 	^ self resolve path
+]
 
 FileLocator >> hash
-hash
+[hash
 	^ origin hash bitXor: path hash
+]
 
 FileLocator >> initializeWithOrigin: aSymbol path: aPath
-initializeWithOrigin: aSymbol path: aPath
+[initializeWithOrigin: aSymbol path: aPath
 	self initialize.
 	origin := aSymbol.
 	path := aPath
+]
 
 FileLocator >> isAbsolute
-isAbsolute
+[isAbsolute
 	^ true
+]
 
 FileLocator >> isRelative
-isRelative
+[isRelative
 	^ false
+]
 
 FileLocator >> origin
-origin
+[origin
 	^ origin
+]
 
 FileLocator >> path
-path
+[path
 	^ path
+]
 
 FileLocator >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	| fs |
 	aStream
 		nextPut: ${;
@@ -79,249 +92,307 @@ printOn: aStream
 	fs := self fileSystem.
 	aStream nextPut: fs delimiter.
 	fs printPath: path on: aStream
+]
 
 FileLocator >> readStream
-readStream
+[readStream
 	^ self resolve readStream
+]
 
 FileLocator >> renameTo: newBasename
-renameTo: newBasename
+[renameTo: newBasename
 	| result |
 	result := self resolve renameTo: newBasename.
 	path size > 0
 		ifTrue: [ path basename: newBasename ]
 		ifFalse: [ path := result path ]
+]
 
 FileLocator >> resolve
-resolve
+[resolve
 	^ (Resolver resolve: origin) resolve: path
+]
 
 FileLocator >> resolveString: aString
-resolveString: aString
+[resolveString: aString
 	| filesystem thePath |
 	filesystem := (Resolver resolve: origin) fileSystem.
 	thePath := filesystem pathFromString: aString.
 	^ self withPath: (path resolvePath: thePath)
+]
 
 FileLocator >> writeStream
-writeStream
+[writeStream
 	^ self resolve writeStream
+]
 
 FileLocator class >> A
-A
+[A
 	^ self driveNamed: #A
+]
 
 FileLocator class >> B
-B
+[B
 	^ self driveNamed: #B
+]
 
 FileLocator class >> C
-C
+[C
 	^ self driveNamed: #C
+]
 
 FileLocator class >> D
-D
+[D
 	^ self driveNamed: #D
+]
 
 FileLocator class >> E
-E
+[E
 	^ self driveNamed: #E
+]
 
 FileLocator class >> F
-F
+[F
 	^ self driveNamed: #F
+]
 
 FileLocator class >> G
-G
+[G
 	^ self driveNamed: #G
+]
 
 FileLocator class >> H
-H
+[H
 	^ self driveNamed: #H
+]
 
 FileLocator class >> I
-I
+[I
 	^ self driveNamed: #I
+]
 
 FileLocator class >> J
-J
+[J
 	^ self driveNamed: #J
+]
 
 FileLocator class >> K
-K
+[K
 	^ self driveNamed: #K
+]
 
 FileLocator class >> L
-L
+[L
 	^ self driveNamed: #L
+]
 
 FileLocator class >> M
-M
+[M
 	^ self driveNamed: #M
+]
 
 FileLocator class >> N
-N
+[N
 	^ self driveNamed: #N
+]
 
 FileLocator class >> O
-O
+[O
 	^ self driveNamed: #O
+]
 
 FileLocator class >> P
-P
+[P
 	^ self driveNamed: #P
+]
 
 FileLocator class >> Q
-Q
+[Q
 	^ self driveNamed: #Q
+]
 
 FileLocator class >> R
-R
+[R
 	^ self driveNamed: #R
+]
 
 FileLocator class >> S
-S
+[S
 	^ self driveNamed: #S
+]
 
 FileLocator class >> T
-T
+[T
 	^ self driveNamed: #T
+]
 
 FileLocator class >> U
-U
+[U
 	^ self driveNamed: #U
+]
 
 FileLocator class >> V
-V
+[V
 	^ self driveNamed: #V
+]
 
 FileLocator class >> W
-W
+[W
 	^ self driveNamed: #W
+]
 
 FileLocator class >> X
-X
+[X
 	^ self driveNamed: #X
+]
 
 FileLocator class >> Y
-Y
+[Y
 	^ self driveNamed: #Y
+]
 
 FileLocator class >> Z
-Z
+[Z
 	^ self driveNamed: #Z
+]
 
 FileLocator class >> addResolver: aResolver
-addResolver: aResolver
+[addResolver: aResolver
 	Resolver addResolver: aResolver
+]
 
 FileLocator class >> cache
-cache
+[cache
 	^ self origin: #cache
+]
 
 FileLocator class >> changes
-changes
+[changes
 	^ self origin: #changes
+]
 
 FileLocator class >> cwd
-cwd
+[cwd
 	^ self workingDirectory
+]
 
 FileLocator class >> desktop
-desktop
+[desktop
 	^ self origin: #desktop
+]
 
 FileLocator class >> documents
-documents
+[documents
 	^ self origin: #documents
+]
 
 FileLocator class >> driveNamed: driveName
-driveNamed: driveName
+[driveNamed: driveName
 	^ FileReference fileSystem: FileSystem disk path: Path / (driveName , ':')
+]
 
 FileLocator class >> flushCaches
-flushCaches
+[flushCaches
 	Resolver flushCaches
+]
 
 FileLocator class >> home
-home
+[home
 	^ self origin: #home
+]
 
 FileLocator class >> image
-image
+[image
 	^ self origin: #image
+]
 
 FileLocator class >> imageDirectory
-imageDirectory
+[imageDirectory
 	^ self origin: #imageDirectory
+]
 
 FileLocator class >> initialize
-initialize
+[initialize
 	Smalltalk addToStartUpList: self.
 	self startUp: true
+]
 
 FileLocator class >> origin: aSymbol
-origin: aSymbol
+[origin: aSymbol
 	^ self origin: aSymbol path: Path workingDirectory
+]
 
 FileLocator class >> origin: aSymbol path: aPath
-origin: aSymbol path: aPath
+[origin: aSymbol path: aPath
 	^ self basicNew initializeWithOrigin: aSymbol path: aPath
+]
 
 FileLocator class >> preferences
-preferences
+[preferences
 	^ self origin: #preferences
+]
 
 FileLocator class >> root
-root
+[root
 	^ FileSystem disk root
+]
 
 FileLocator class >> startUp: resuming
-startUp: resuming
+[startUp: resuming
 	resuming
 		ifFalse: [ ^ self ].
 	Resolver := InteractiveResolver new.
 	Resolver addResolver: SystemResolver new.
 	Resolver addResolver: PlatformResolver forCurrentPlatform
+]
 
 FileLocator class >> supportedOrigins
-supportedOrigins
+[supportedOrigins
 	| origins current |
 	origins := IdentitySet new.
 	current := Resolver.
 	[ current notNil ] whileTrue: [ origins addAll: current supportedOrigins.
 			current := current next ].
 	^ origins
+]
 
 FileLocator class >> systemApplicationSupport
-systemApplicationSupport
+[systemApplicationSupport
 	^ self origin: #systemApplicationSupport
+]
 
 FileLocator class >> systemLibrary
-systemLibrary
+[systemLibrary
 	^ self origin: #systemLibrary
+]
 
 FileLocator class >> userApplicationSupport
-userApplicationSupport
+[userApplicationSupport
 	^ self origin: #userApplicationSupport
+]
 
 FileLocator class >> userData
-userData
+[userData
 	^ self origin: #userData
+]
 
 FileLocator class >> userLibrary
-userLibrary
+[userLibrary
 	^ self origin: #userLibrary
+]
 
 FileLocator class >> vmBinary
-vmBinary
+[vmBinary
 	^ self origin: #vmBinary
+]
 
 FileLocator class >> vmDirectory
-vmDirectory
+[vmDirectory
 	^ self origin: #vmDirectory
+]
 
 FileLocator class >> workingDirectory
-workingDirectory
+[workingDirectory
 	^ FileSystem disk referenceTo: RelativePath new
+]
 

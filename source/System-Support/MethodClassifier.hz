@@ -3,7 +3,7 @@ MethodClassifier
 	package: #'System-Support'.
 
 MethodClassifier >> buildPrefixDictionary
-buildPrefixDictionary
+[buildPrefixDictionary
 	prefixMapping := Dictionary new.
 	prefixMapping
 		at: 'test' put: 'tests';
@@ -18,9 +18,10 @@ buildPrefixDictionary
 		at: 'is' put: 'testing';
 		at: 'as' put: 'converting';
 		at: 'new' put: 'instance-creation'
+]
 
 MethodClassifier >> classify: aMethod
-classify: aMethod
+[classify: aMethod
 	(self classifyAccessor: aMethod)
 		ifTrue: [ ^ aMethod category ].
 	(self classifyInSuperclassProtocol: aMethod)
@@ -29,9 +30,10 @@ classify: aMethod
 		ifTrue: [ ^ aMethod category ].
 	(self classifyByOtherImplementors: aMethod)
 		ifTrue: [ ^ aMethod category ]
+]
 
 MethodClassifier >> classifyAccessor: aMethod
-classifyAccessor: aMethod
+[classifyAccessor: aMethod
 	" If the method is a setter or getter for a  "
 
 	| names selector |
@@ -44,21 +46,24 @@ classifyAccessor: aMethod
 		ifFalse: [ ^ false ].
 	aMethod protocol: 'accessing'.
 	^ true
+]
 
 MethodClassifier >> classifyAll: aCollectionOfMethods
-classifyAll: aCollectionOfMethods
+[classifyAll: aCollectionOfMethods
 	aCollectionOfMethods do: [ :method | self classify: method ]
+]
 
 MethodClassifier >> classifyByKnownPrefix: aMethod
-classifyByKnownPrefix: aMethod
+[classifyByKnownPrefix: aMethod
 	prefixMapping
 		keysAndValuesDo: [ :prefix :protocol | (aMethod selector beginsWith: prefix)
 				ifTrue: [ aMethod protocol: protocol.
 					^ true ] ].
 	^ false
+]
 
 MethodClassifier >> classifyByOtherImplementors: aMethod
-classifyByOtherImplementors: aMethod
+[classifyByOtherImplementors: aMethod
 	| protocolBag |
 	protocolBag := Bag new.
 	aMethod implementors
@@ -71,9 +76,10 @@ classifyByOtherImplementors: aMethod
 	protocolBag ifEmpty: [ ^ false ].
 	aMethod protocol: protocolBag sortedCounts first value.
 	^ true
+]
 
 MethodClassifier >> classifyInSuperclassProtocol: aMethod
-classifyInSuperclassProtocol: aMethod
+[classifyInSuperclassProtocol: aMethod
 	| currentClass |
 	currentClass := aMethod methodClass.
 	[ currentClass superclass isNil ]
@@ -82,16 +88,20 @@ classifyInSuperclassProtocol: aMethod
 				ifTrue: [ aMethod protocol: (currentClass >> aMethod selector) protocol.
 					^ true ] ].
 	^ false
+]
 
 MethodClassifier >> initialize
-initialize
+[initialize
 	self buildPrefixDictionary
+]
 
 MethodClassifier class >> classify: aMethod
-classify: aMethod
+[classify: aMethod
 	^ self new classify: aMethod
+]
 
 MethodClassifier class >> classifyAll: aCollectionOfMethods
-classifyAll: aCollectionOfMethods
+[classifyAll: aCollectionOfMethods
 	^ self new classifyAll: aCollectionOfMethods
+]
 

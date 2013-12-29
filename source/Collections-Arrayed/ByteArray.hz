@@ -4,53 +4,62 @@ ByteArray
 	package: #'Collections-Arrayed'.
 
 ByteArray >> asByteArray
-asByteArray
+[asByteArray
 	^ self
+]
 
 ByteArray >> asByteArrayPointer
-asByteArrayPointer
+[asByteArrayPointer
 	"Return a ByteArray describing a pointer to the contents of the receiver."
 
 	^ self shouldNotImplement
+]
 
 ByteArray >> asString
-asString
+[asString
 	"Convert to a String with Characters for each byte.
 	Fast code uses primitive that avoids character conversion"
 
 	^ (String new: self size) replaceFrom: 1 to: self size with: self
+]
 
 ByteArray >> asWideString
-asWideString
+[asWideString
 	^ WideString fromByteArray: self
+]
 
 ByteArray >> atAllPut: value
-atAllPut: value
+[atAllPut: value
 	"Fill the receiver with the given value"
 
 	<primitive: 145>
 	super atAllPut: value
+]
 
 ByteArray >> byteAt: index
-byteAt: index
+[byteAt: index
 	<primitive: 60>
 	^ self at: index
+]
 
 ByteArray >> byteAt: index put: value
-byteAt: index put: value
+[byteAt: index put: value
 	<primitive: 61>
 	^ self at: index put: value
+]
 
 ByteArray >> byteSize
-byteSize
+[byteSize
 	^ self size
+]
 
 ByteArray >> defaultElement
-defaultElement
+[defaultElement
 	^ 0
+]
 
 ByteArray >> doubleAt: index bigEndian: bool
-doubleAt: index bigEndian: bool
+[doubleAt: index bigEndian: bool
 	"Return a 64 bit float starting from the given byte index"
 
 	| w1 w2 dbl |
@@ -63,9 +72,10 @@ doubleAt: index bigEndian: bool
 		ifFalse: [ dbl basicAt: 1 put: w2.
 			dbl basicAt: 2 put: w1 ].
 	^ dbl
+]
 
 ByteArray >> doubleAt: index put: value bigEndian: bool
-doubleAt: index put: value bigEndian: bool
+[doubleAt: index put: value bigEndian: bool
 	"Store a 64 bit float starting from the given byte index"
 
 	| w1 w2 |
@@ -77,19 +87,22 @@ doubleAt: index put: value bigEndian: bool
 	self unsignedLongAt: index put: w1 bigEndian: bool.
 	self unsignedLongAt: index + 4 put: w2 bigEndian: bool.
 	^ value
+]
 
 ByteArray >> floatAt: index bigEndian: boolean
-floatAt: index bigEndian: boolean
+[floatAt: index bigEndian: boolean
 	^ Float fromIEEE32Bit: (self unsignedLongAt: index bigEndian: boolean)
+]
 
 ByteArray >> hash
-hash
+[hash
 	"#hash is implemented, because #= is implemented"
 
 	^ self class hashBytes: self startingWith: self species hash
+]
 
 ByteArray >> hex
-hex
+[hex
 	" an alternate implementation was | result stream |
 	result := String new: self size * 2.
 	stream := result writeStream.
@@ -110,23 +123,26 @@ hex
 		string at: (index := index + 1) put: (map at: (v bitShift: -4) + 1).
 		string at: (index := index + 1) put: (map at: (v bitAnd: 15) + 1) ].
 	^ string
+]
 
 ByteArray >> indexOf: anInteger startingAt: start
-indexOf: anInteger startingAt: start
+[indexOf: anInteger startingAt: start
 	(anInteger isInteger and: [ anInteger >= 0 and: [ anInteger <= 255 ] ])
 		ifFalse: [ ^ 0 ].
 	^ ByteString indexOfAscii: anInteger inString: self startingAt: start
+]
 
 ByteArray >> isLiteral
-isLiteral
+[isLiteral
 	"so that #(1 #[1 2 3] 5) prints itself"
 
 	""
 
 	^ self class == ByteArray
+]
 
 ByteArray >> longAt: index bigEndian: aBool
-longAt: index bigEndian: aBool
+[longAt: index bigEndian: aBool
 	"Return a 32bit integer quantity starting from the given byte index"
 
 	| b0 b1 b2 w h |
@@ -145,9 +161,10 @@ longAt: index bigEndian: aBool
 	h = 0
 		ifFalse: [ w := (h bitShift: 16) + w ].
 	^ w
+]
 
 ByteArray >> longAt: index put: value bigEndian: aBool
-longAt: index put: value bigEndian: aBool
+[longAt: index put: value bigEndian: aBool
 	"Return a 32bit integer quantity starting from the given byte index"
 
 	| b0 b1 b2 b3 |
@@ -168,15 +185,17 @@ longAt: index put: value bigEndian: aBool
 			self at: index + 2 put: b1.
 			self at: index + 3 put: b0 ].
 	^ value
+]
 
 ByteArray >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	aStream nextPutAll: '#['.
 	self do: [ :each | each printOn: aStream ] separatedBy: [ aStream nextPut: $  ].
 	aStream nextPut: $]
+]
 
 ByteArray >> readHexFrom: aStream
-readHexFrom: aStream
+[readHexFrom: aStream
 	"Initialize the receiver from a hexadecimal string representation"
 
 	| map v ch value |
@@ -199,9 +218,10 @@ readHexFrom: aStream
 						'Hex digit expected' ].
 		value := value + v.
 		self at: i put: value ]
+]
 
 ByteArray >> replaceFrom: start to: stop with: replacement startingAt: repStart
-replaceFrom: start to: stop with: replacement startingAt: repStart
+[replaceFrom: start to: stop with: replacement startingAt: repStart
 	"Primitive. This destructively replaces elements from start to stop in the receiver starting at index, repStart, in the collection, replacement. Answer the receiver. Range checks are performed in the primitive only. Optional. See Object documentation whatIsAPrimitive."
 
 	<primitive: 105>
@@ -210,30 +230,34 @@ replaceFrom: start to: stop with: replacement startingAt: repStart
 		to: stop
 		with: replacement
 		startingAt: repStart
+]
 
 ByteArray >> shortAt: index bigEndian: aBool
-shortAt: index bigEndian: aBool
+[shortAt: index bigEndian: aBool
 	"Return a 16 bit integer quantity starting from the given byte index"
 
 	| uShort |
 	uShort := self unsignedShortAt: index bigEndian: aBool.
 	^ (uShort bitAnd: 16r7FFF) - (uShort bitAnd: 16r8000)
+]
 
 ByteArray >> shortAt: index put: value bigEndian: aBool
-shortAt: index put: value bigEndian: aBool
+[shortAt: index put: value bigEndian: aBool
 	"Store a 16 bit integer quantity starting from the given byte index"
 
 	self unsignedShortAt: index put: (value bitAnd: 16r7FFF) - (value bitAnd: -16r8000) bigEndian: aBool.
 	^ value
+]
 
 ByteArray >> storeOn: aStream
-storeOn: aStream
+[storeOn: aStream
 	aStream nextPutAll: '#['.
 	self do: [ :each | each storeOn: aStream ] separatedBy: [ aStream nextPut: $  ].
 	aStream nextPut: $]
+]
 
 ByteArray >> unsignedLongAt: index bigEndian: aBool
-unsignedLongAt: index bigEndian: aBool
+[unsignedLongAt: index bigEndian: aBool
 	"Return a 32bit unsigned integer quantity starting from the given byte index"
 
 	| b0 b1 b2 w |
@@ -253,9 +277,10 @@ unsignedLongAt: index bigEndian: aBool
 	b0 = 0
 		ifFalse: [ w := (b0 bitShift: 24) + w ].
 	^ w
+]
 
 ByteArray >> unsignedLongAt: index put: value bigEndian: aBool
-unsignedLongAt: index put: value bigEndian: aBool
+[unsignedLongAt: index put: value bigEndian: aBool
 	"Store a 32bit unsigned integer quantity starting from the given byte index"
 
 	| b0 b1 b2 b3 |
@@ -273,17 +298,19 @@ unsignedLongAt: index put: value bigEndian: aBool
 			self at: index + 2 put: b1.
 			self at: index + 3 put: b0 ].
 	^ value
+]
 
 ByteArray >> unsignedShortAt: index bigEndian: aBool
-unsignedShortAt: index bigEndian: aBool
+[unsignedShortAt: index bigEndian: aBool
 	"Return a 16 bit unsigned integer quantity starting from the given byte index"
 
 	^ aBool
 		ifTrue: [ ((self at: index) bitShift: 8) + (self at: index + 1) ]
 		ifFalse: [ ((self at: index + 1) bitShift: 8) + (self at: index) ]
+]
 
 ByteArray >> unsignedShortAt: index put: value bigEndian: aBool
-unsignedShortAt: index put: value bigEndian: aBool
+[unsignedShortAt: index put: value bigEndian: aBool
 	"Store a 16 bit unsigned integer quantity starting from the given byte index"
 
 	aBool
@@ -292,9 +319,10 @@ unsignedShortAt: index put: value bigEndian: aBool
 		ifFalse: [ self at: index + 1 put: (value bitShift: -8).
 			self at: index put: (value bitAnd: 255) ].
 	^ value
+]
 
 ByteArray class >> hashBytes: aByteArray startingWith: speciesHash
-hashBytes: aByteArray startingWith: speciesHash
+[hashBytes: aByteArray startingWith: speciesHash
 	"Answer the hash of a byte-indexed collection,
 	using speciesHash as the initial value.
 	See SmallInteger>>hashMultiply.
@@ -312,10 +340,12 @@ hashBytes: aByteArray startingWith: speciesHash
 		low := hash bitAnd: 16383.
 		hash := 16r260D * low + ((16r260D * (hash bitShift: -14) + (16r0065 * low) bitAnd: 16383) * 16384) bitAnd: 16r0FFFFFFF ].
 	^ hash
+]
 
 ByteArray class >> readHexFrom: aString
-readHexFrom: aString
+[readHexFrom: aString
 	"Create a byte array from a hexadecimal representation"
 
 	^ (self new: aString size // 2) readHexFrom: aString readStream
+]
 

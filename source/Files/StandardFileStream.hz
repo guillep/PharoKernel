@@ -5,27 +5,30 @@ StandardFileStream
 	package: #Files.
 
 StandardFileStream >> actAsExecutor
-actAsExecutor
+[actAsExecutor
 	super actAsExecutor.
 	name := nil
+]
 
 StandardFileStream >> ascii
-ascii
+[ascii
 	"opposite of binary"
 
 	buffer1 := String new: 1.
 	collection ifNotNil: [ collection := collection asString ]
+]
 
 StandardFileStream >> atEnd
-atEnd
+[atEnd
 	"Answer whether the receiver is at its end.  "
 
 	collection ifNotNil: [ position < readLimit
 				ifTrue: [ ^ false ] ].
 	^ self primAtEnd: fileID
+]
 
 StandardFileStream >> basicNext
-basicNext
+[basicNext
 	"Answer the next byte from this file, or nil if at the end of the file."
 
 	<primitive: 65>
@@ -49,14 +52,16 @@ basicNext
 	count = 1
 		ifTrue: [ ^ buffer1 at: 1 ]
 		ifFalse: [ ^ nil ]
+]
 
 StandardFileStream >> binary
-binary
+[binary
 	buffer1 := ByteArray new: 1.
 	collection ifNotNil: [ collection := collection asByteArray ]
+]
 
 StandardFileStream >> close
-close
+[close
 	"Close this file."
 
 	fileID
@@ -64,27 +69,31 @@ close
 			self primClose: fileID.
 			self unregister.
 			fileID := nil ]
+]
 
 StandardFileStream >> closed
-closed
+[closed
 	"Answer true if this file is closed."
 
 	^ fileID == nil or: [ (self primSizeNoError: fileID) == nil ]
+]
 
 StandardFileStream >> collectionSpecies
-collectionSpecies
+[collectionSpecies
 	"Answer the species of collection into which the receiver can stream"
 
 	^ buffer1 species
+]
 
 StandardFileStream >> directory
-directory
+[directory
 	"Return the directory containing this file."
 
 	^ self fullName asFileReference parent
+]
 
 StandardFileStream >> disableReadBuffering
-disableReadBuffering
+[disableReadBuffering
 	collection
 		ifNotNil: [ position < readLimit
 				ifTrue: [ | currentPosition |
@@ -92,33 +101,38 @@ disableReadBuffering
 					collection := readLimit := position := nil.
 					self position: currentPosition ]
 				ifFalse: [ collection := readLimit := position := nil ] ]
+]
 
 StandardFileStream >> enableReadBuffering
-enableReadBuffering
+[enableReadBuffering
 	collection ifNil: [ buffer1 ifNotNil: [ collection := self collectionSpecies new: 2048 ] ].
 	readLimit := position := 0
+]
 
 StandardFileStream >> ensureOpen
-ensureOpen
+[ensureOpen
 	"Make sure that this file really is open."
 
 	self closed
 		ifTrue: [ ^ self reopen ].
 	(self primSizeNoError: fileID) ifNotNil: [ ^ self ].
 	self reopen
+]
 
 StandardFileStream >> file
-file
+[file
 	"Answer the object representing the receiver's file.  Need for compatibility with some calls -- check senders. "
 
 	^ self
+]
 
 StandardFileStream >> finalize
-finalize
+[finalize
 	self primCloseNoError: fileID
+]
 
 StandardFileStream >> findString: string
-findString: string
+[findString: string
 	"Fast version of #upToAll: to find a String in a file starting from the beginning.
 	Returns the position and also sets the position there.
 	If string is not found 0 is returned and position is unchanged."
@@ -141,9 +155,10 @@ findString: string
 		whileFalse.	"Never found it, and hit end of file"
 	self position: oldPos.
 	^ 0
+]
 
 StandardFileStream >> findStringFromEnd: string
-findStringFromEnd: string
+[findStringFromEnd: string
 	"Fast version to find a String in a file starting from the end.
 	Returns the position and also sets the position there.
 	If string is not found 0 is returned and position is unchanged."
@@ -164,36 +179,41 @@ findStringFromEnd: string
 		whileFalse.	"Never found it, and hit beginning of file"
 	self position: oldPos.
 	^ 0
+]
 
 StandardFileStream >> flush
-flush
+[flush
 	"Flush pending changes"
 
 	^ self primFlush: fileID
+]
 
 StandardFileStream >> flushReadBuffer
-flushReadBuffer
+[flushReadBuffer
 	collection
 		ifNotNil: [ position < readLimit
 				ifTrue: [ | currentPosition |
 					currentPosition := self position.
 					position := readLimit := 0.
 					self primSetPosition: fileID to: currentPosition ] ]
+]
 
 StandardFileStream >> fullName
-fullName
+[fullName
 	"Answer this file's full path name."
 
 	^ name
+]
 
 StandardFileStream >> getFileType
-getFileType
+[getFileType
 	"On the Macintosh, get the file type and creator of this file. On other platforms, do nothing."
 
 	^ self fullName asFileReference macTypeAndCreator
+]
 
 StandardFileStream >> insertLineFeeds
-insertLineFeeds
+[insertLineFeeds
 	"(FileStream oldFileNamed: 'BBfix2.st') insertLineFeeds"
 
 	| s crLf f |
@@ -205,45 +225,53 @@ insertLineFeeds
 				nextPutAll: line;
 				nextPutAll: crLf ].
 	f close
+]
 
 StandardFileStream >> isBinary
-isBinary
+[isBinary
 	^ buffer1 class == ByteArray
+]
 
 StandardFileStream >> isDirectory
-isDirectory
+[isDirectory
 	"Answer whether the receiver represents a directory.  For the post-transition case, uncertain what to do."
 
 	^ false
+]
 
 StandardFileStream >> isReadOnly
-isReadOnly
+[isReadOnly
 	^ rwmode not
+]
 
 StandardFileStream >> localName
-localName
+[localName
 	^ name ifNotNil: [ (name findTokens: FileSystem disk delimiter asString) last ]
+]
 
 StandardFileStream >> name
-name
+[name
 	"Answer this file's full path name."
 
 	^ name
+]
 
 StandardFileStream >> next
-next
+[next
 	"Answer the next byte from this file, or nil if at the end of the file."
 
 	^ self basicNext
+]
 
 StandardFileStream >> next: n
-next: n
+[next: n
 	"Return a string with the next n characters of the filestream in it."
 
 	^ self nextInto: (self collectionSpecies new: n)
+]
 
 StandardFileStream >> next: n into: aString startingAt: startIndex
-next: n into: aString startingAt: startIndex
+[next: n into: aString startingAt: startIndex
 	"Read n bytes into the given string.
 	Return aString or a partial copy if less than
 	n elements have been read."
@@ -253,9 +281,10 @@ next: n into: aString startingAt: startIndex
 	^ read = n
 		ifTrue: [ aString ]
 		ifFalse: [ aString copyFrom: 1 to: startIndex + read - 1 ]
+]
 
 StandardFileStream >> next: anInteger putAll: aString startingAt: startIndex
-next: anInteger putAll: aString startingAt: startIndex
+[next: anInteger putAll: aString startingAt: startIndex
 	"Store the next anInteger elements from the given collection."
 
 	rwmode
@@ -268,9 +297,10 @@ next: anInteger putAll: aString startingAt: startIndex
 		startingAt: startIndex
 		count: anInteger.
 	^ aString
+]
 
 StandardFileStream >> nextPut: char
-nextPut: char
+[nextPut: char
 	"Write the given character to this file."
 
 	rwmode
@@ -284,9 +314,10 @@ nextPut: char
 		startingAt: 1
 		count: 1.
 	^ char
+]
 
 StandardFileStream >> nextPutAll: stringOrByteArray
-nextPutAll: stringOrByteArray
+[nextPutAll: stringOrByteArray
 	"Write all the characters of the given string to this file."
 
 	rwmode
@@ -299,23 +330,26 @@ nextPutAll: stringOrByteArray
 		startingAt: 1
 		count: stringOrByteArray basicSize.
 	^ stringOrByteArray
+]
 
 StandardFileStream >> nextWordsInto: aBitmap
-nextWordsInto: aBitmap
+[nextWordsInto: aBitmap
 	"Note: The file primitives automatically adjust for word based objects."
 
 	self next: aBitmap basicSize into: aBitmap startingAt: 1.
 	aBitmap restoreEndianness.
 	^ aBitmap
+]
 
 StandardFileStream >> open
-open
+[open
 	"For compatibility with a few existing things."
 
 	^ self reopen
+]
 
 StandardFileStream >> open: fileName forWrite: writeMode
-open: fileName forWrite: writeMode
+[open: fileName forWrite: writeMode
 	"Open the file with the given name. If writeMode is true, allow writing, otherwise open the file in read-only mode."
 
 	| f |
@@ -330,9 +364,10 @@ open: fileName forWrite: writeMode
 	rwmode := writeMode.
 	buffer1 := String new: 1.
 	self enableReadBuffering
+]
 
 StandardFileStream >> openOnHandle: aFileID name: streamName forWrite: writeMode
-openOnHandle: aFileID name: streamName forWrite: writeMode
+[openOnHandle: aFileID name: streamName forWrite: writeMode
 	"Initialize the file with the given handle. If writeMode is true then
 	 allow writing, otherwise put the file in read-only mode.
 	 N.B. Do _not_ register the stream.  We do not want it to be
@@ -344,15 +379,17 @@ openOnHandle: aFileID name: streamName forWrite: writeMode
 	rwmode := writeMode.
 	buffer1 := String new: 1.
 	self enableReadBuffering
+]
 
 StandardFileStream >> openReadOnly
-openReadOnly
+[openReadOnly
 	"Open the receiver as a read-only file."
 
 	^ self open: name forWrite: false
+]
 
 StandardFileStream >> padToEndWith: aChar
-padToEndWith: aChar
+[padToEndWith: aChar
 	"On the Mac, files do not truncate.  One can delete the old file and write a new one, but sometime deletion fails (file still open? file stale?).  This is a sad compromise.  Just let the file be the same length but pad it with a harmless character."
 
 	| pad |
@@ -362,9 +399,10 @@ padToEndWith: aChar
 		ifTrue: [ aChar asCharacter asciiValue ]
 		ifFalse: [ aChar asCharacter ].	"ok for char or number"
 	self nextPutAll: (self collectionSpecies new: (self size - self position min: 20000) withAll: pad)
+]
 
 StandardFileStream >> peek
-peek
+[peek
 	"Answer what would be returned if the message next were sent to the receiver. If the receiver is at the end, answer nil.  "
 
 	| next |
@@ -373,9 +411,10 @@ peek
 	next := self basicNext.
 	self position: self position - 1.
 	^ next
+]
 
 StandardFileStream >> peekFor: item
-peekFor: item
+[peekFor: item
 	"Answer false and do not advance if the next element is not equal to item, or if this stream is at the end.  If the next element is equal to item, then advance over it and return true"
 
 	| next |
@@ -385,25 +424,28 @@ peekFor: item
 		ifTrue: [ ^ true ].
 	self skip: -1.
 	^ false
+]
 
 StandardFileStream >> peekLast
-peekLast
+[peekLast
 	"Return that item just put at the end of the stream"
 
 	^ buffer1 size > 0
 		ifTrue: [ buffer1 last ]
 		ifFalse: [ nil ]
+]
 
 StandardFileStream >> position
-position
+[position
 	"Return the receiver's current file position."
 
 	collection ifNotNil: [ position < readLimit
 				ifTrue: [ ^ (self primGetPosition: fileID) - readLimit + position ] ].
 	^ self primGetPosition: fileID
+]
 
 StandardFileStream >> position: pos
-position: pos
+[position: pos
 	"Set the receiver's position as indicated."
 
 	collection
@@ -425,46 +467,52 @@ position: pos
 							^ self ]
 						ifFalse: [ readLimit := position := 0 ] ] ].
 	^ self primSetPosition: fileID to: pos
+]
 
 StandardFileStream >> primAtEnd: id
-primAtEnd: id
+[primAtEnd: id
 	"Answer true if the file position is at the end of the file."
 
 	<primitive: 'primitiveFileAtEnd' module: 'FilePlugin'>
 	self primitiveFailed
+]
 
 StandardFileStream >> primClose: id
-primClose: id
+[primClose: id
 	"Close this file."
 
 	<primitive: 'primitiveFileClose' module: 'FilePlugin'>
 	self primitiveFailed
+]
 
 StandardFileStream >> primCloseNoError: id
-primCloseNoError: id
+[primCloseNoError: id
 	"Close this file. Don't raise an error if the primitive fails."
 
 	<primitive: 'primitiveFileClose' module: 'FilePlugin'>
 	
+]
 
 StandardFileStream >> primDropRequestFileHandle: dropIndex
-primDropRequestFileHandle: dropIndex
+[primDropRequestFileHandle: dropIndex
 	"Primitive. Return the (read-only) file handle for some file that was just dropped onto the application.
 	Fail if dropIndex is out of range or the primitive is not supported."
 
 	<primitive: 'primitiveDropRequestFileHandle' module: 'DropPlugin'>
 	^ nil
+]
 
 StandardFileStream >> primDropRequestFileName: dropIndex
-primDropRequestFileName: dropIndex
+[primDropRequestFileName: dropIndex
 	"Primitive. Return the file name for some file that was just dropped onto the application.
 	Fail if dropIndex is out of range or the primitive is not supported."
 
 	<primitive: 'primitiveDropRequestFileName' module: 'DropPlugin'>
 	^ nil
+]
 
 StandardFileStream >> primFlush: id
-primFlush: id
+[primFlush: id
 	"Flush pending changes to the disk"
 
 	<primitive: 'primitiveFileFlush' module: 'FilePlugin'>
@@ -473,16 +521,18 @@ primFlush: id
 	self
 		position: 0;
 		position: p
+]
 
 StandardFileStream >> primGetPosition: id
-primGetPosition: id
+[primGetPosition: id
 	"Get this files current position."
 
 	<primitive: 'primitiveFileGetPosition' module: 'FilePlugin'>
 	self primitiveFailed
+]
 
 StandardFileStream >> primOpen: fileName writable: writableFlag
-primOpen: fileName writable: writableFlag
+[primOpen: fileName writable: writableFlag
 	"Open a file of the given name, and return the file ID obtained.
 	If writableFlag is true, then
 		if there is none with this name, then create one
@@ -493,46 +543,52 @@ primOpen: fileName writable: writableFlag
 
 	<primitive: 'primitiveFileOpen' module: 'FilePlugin'>
 	^ nil
+]
 
 StandardFileStream >> primRead: id into: byteArray startingAt: startIndex count: count
-primRead: id into: byteArray startingAt: startIndex count: count
+[primRead: id into: byteArray startingAt: startIndex count: count
 	"Read up to count bytes of data from this file into the given string or byte array starting at the given index. Answer the number of bytes actually read."
 
 	<primitive: 'primitiveFileRead' module: 'FilePlugin'>
 	self closed
 		ifTrue: [ ^ self error: 'File is closed' ].
 	self error: 'File read failed'
+]
 
 StandardFileStream >> primSetPosition: id to: anInteger
-primSetPosition: id to: anInteger
+[primSetPosition: id to: anInteger
 	"Set this file to the given position."
 
 	<primitive: 'primitiveFileSetPosition' module: 'FilePlugin'>
 	self primitiveFailed
+]
 
 StandardFileStream >> primSize: id
-primSize: id
+[primSize: id
 	"Answer the size of this file."
 
 	<primitive: 'primitiveFileSize' module: 'FilePlugin'>
 	self primitiveFailed
+]
 
 StandardFileStream >> primSizeNoError: id
-primSizeNoError: id
+[primSizeNoError: id
 	"Answer the size of this file. Answer nil if the primitive fails; this indicates that the file handle has become stale."
 
 	<primitive: 'primitiveFileSize' module: 'FilePlugin'>
 	^ nil
+]
 
 StandardFileStream >> primTruncate: id to: anInteger
-primTruncate: id to: anInteger
+[primTruncate: id to: anInteger
 	"Truncate this file to the given position."
 
 	<primitive: 'primitiveFileTruncate' module: 'FilePlugin'>
 	self primitiveFailed
+]
 
 StandardFileStream >> primWrite: id from: stringOrByteArray startingAt: startIndex count: count
-primWrite: id from: stringOrByteArray startingAt: startIndex count: count
+[primWrite: id from: stringOrByteArray startingAt: startIndex count: count
 	"Write count bytes onto this file from the given string or byte array starting at the given index. Answer the number of bytes written."
 
 	<primitive: 'primitiveFileWrite' module: 'FilePlugin'>
@@ -540,18 +596,20 @@ primWrite: id from: stringOrByteArray startingAt: startIndex count: count
 		signal: (self closed
 				ifTrue: [ 'File ' , name , ' is closed' ]
 				ifFalse: [ 'File ' , name , ' write failed' ])
+]
 
 StandardFileStream >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	"Put a printed version of the receiver onto aStream."
 
 	aStream
 		nextPutAll: self class name;
 		nextPutAll: ': ';
 		print: name
+]
 
 StandardFileStream >> readInto: byteArray startingAt: startIndex count: count
-readInto: byteArray startingAt: startIndex count: count
+[readInto: byteArray startingAt: startIndex count: count
 	"Read up to n bytes into the given byteArray.
 	Return the number of bytes actually read."
 
@@ -583,29 +641,34 @@ readInto: byteArray startingAt: startIndex count: count
 				into: byteArray
 				startingAt: newStartIndex
 				count: newN)
+]
 
 StandardFileStream >> readOnly
-readOnly
+[readOnly
 	"Make this file read-only."
 
 	rwmode := false
+]
 
 StandardFileStream >> readOnlyCopy
-readOnlyCopy
+[readOnlyCopy
 	^ self class readOnlyFileNamed: self name
+]
 
 StandardFileStream >> readWrite
-readWrite
+[readWrite
 	"Make this file writable."
 
 	rwmode := true
+]
 
 StandardFileStream >> register
-register
+[register
 	^ self class register: self
+]
 
 StandardFileStream >> reopen
-reopen
+[reopen
 	"Close and reopen this file. The file position is reset to zero."
 
 	"Details: Files that were open when a snapshot occurs are no longer valid when the snapshot is resumed. This operation re-opens the file if that has happened."
@@ -615,9 +678,10 @@ reopen
 						ifTrue: [ self flushReadBuffer ] ].
 			self primCloseNoError: fileID ].
 	self open: name forWrite: rwmode
+]
 
 StandardFileStream >> requestDropStream: dropIndex
-requestDropStream: dropIndex
+[requestDropStream: dropIndex
 	"Return a read-only stream for some file the user has just dropped onto the application."
 
 	| rawName |
@@ -630,32 +694,37 @@ requestDropStream: dropIndex
 	rwmode := false.
 	buffer1 := String new: 1.
 	self enableReadBuffering
+]
 
 StandardFileStream >> reset
-reset
+[reset
 	self ensureOpen.
 	self position: 0
+]
 
 StandardFileStream >> setFileTypeToObject
-setFileTypeToObject
+[setFileTypeToObject
 	"On the Macintosh, set the file type and creator of this file to be a Pharo object file. On other platforms, do nothing. Setting the file type allows Pharo object files to be sent as email attachments and launched by double-clicking. On other platforms, similar behavior is achieved by creating the file with the '.sqo' file name extension."
 
 	self fullName asFileReference setMacType: 'SOBJ' creator: 'FAST'
+]
 
 StandardFileStream >> setToEnd
-setToEnd
+[setToEnd
 	"Set the position of the receiver to the end of file."
 
 	self position: self size
+]
 
 StandardFileStream >> size
-size
+[size
 	"Answer the size of the file in characters."
 
 	^ self primSize: fileID
+]
 
 StandardFileStream >> skip: n
-skip: n
+[skip: n
 	"Set the character position to n characters from the current position.
 	Error if not enough characters left in the file."
 
@@ -666,26 +735,30 @@ skip: n
 						ifTrue: [ position := newPosition.
 							^ self ] ] ].
 	self position: self position + n
+]
 
 StandardFileStream >> truncate
-truncate
+[truncate
 	"Truncate to zero"
 
 	^ self truncate: 0
+]
 
 StandardFileStream >> truncate: pos
-truncate: pos
+[truncate: pos
 	"Truncate to this position"
 
 	self position: pos.
 	^ self primTruncate: fileID to: pos
+]
 
 StandardFileStream >> unregister
-unregister
+[unregister
 	^ self class unregister: self
+]
 
 StandardFileStream >> upTo: delim
-upTo: delim
+[upTo: delim
 	"Fast version to speed up nextChunk"
 
 	| pos buffer count |
@@ -702,9 +775,10 @@ upTo: delim
 		ifTrue: [ "Never found it, and hit end of file"
 			^ buffer ].	"Never found it, but there's more..."
 	^ buffer , (self upTo: delim)
+]
 
 StandardFileStream >> upToAnyOf: delimiters do: aBlock
-upToAnyOf: delimiters do: aBlock
+[upToAnyOf: delimiters do: aBlock
 	"Fast version to speed up nextChunk"
 
 	| pos buffer count result |
@@ -725,17 +799,19 @@ upToAnyOf: delimiters do: aBlock
 		ifTrue: [ "Never found it, and hit end of file"
 			^ buffer ].	"Never found it, but there's more..."
 	^ buffer , (self upToAnyOf: delimiters do: aBlock)
+]
 
 StandardFileStream >> upToEnd
-upToEnd
+[upToEnd
 	"Answer a subcollection from the current access position through the last element of the receiver."
 
 	^ self collectionSpecies
 		streamContents: [ :newStream | | next |
 			[ (next := self next) == nil ] whileFalse: [ newStream nextPut: next ] ]
+]
 
 StandardFileStream class >> fileDoesNotExistUserHandling: fullFileName
-fileDoesNotExistUserHandling: fullFileName
+[fileDoesNotExistUserHandling: fullFileName
 	| selection newName |
 	selection := UIManager default
 		chooseFrom: {('create a new file' translated).
@@ -747,9 +823,10 @@ fileDoesNotExistUserHandling: fullFileName
 	selection = 2
 		ifTrue: [ newName := UIManager default request: 'Enter a new file name' initialAnswer: fullFileName.
 			^ self oldFileNamed: (self fullName: newName) ]
+]
 
 StandardFileStream class >> fileExistsUserHandling: fullFileName
-fileExistsUserHandling: fullFileName
+[fileExistsUserHandling: fullFileName
 	| file localName choice newName newFullFileName |
 	file := fullFileName asFileReference.
 	localName := file basename.
@@ -769,15 +846,17 @@ fileExistsUserHandling: fullFileName
 			newFullFileName := self fullName: newName.
 			^ self newFileNamed: newFullFileName ].
 	Abort signal: 'Please close this to abort file opening'
+]
 
 StandardFileStream class >> fileNamed: fileName
-fileNamed: fileName
+[fileNamed: fileName
 	"Open a file with the given name for reading and writing. If the name has no directory part, then the file will be created in the default directory. If the file already exists, its prior contents may be modified or replaced, but the file will not be truncated on close."
 
 	^ self new open: (self fullName: fileName) forWrite: true
+]
 
 StandardFileStream class >> forceNewFileNamed: fileName
-forceNewFileNamed: fileName
+[forceNewFileNamed: fileName
 	"Create a new file with the given name, and answer a stream opened 
 	for writing on that file. If the file already exists, delete it without 
 	asking before creating the new file."
@@ -796,9 +875,10 @@ forceNewFileNamed: fileName
 	f := self new open: fullName forWrite: true.
 	^ f ifNil: [ "Failed to open the file"
 			(FileDoesNotExistException fileName: fullName) signal ]
+]
 
 StandardFileStream class >> isAFileNamed: fileName
-isAFileNamed: fileName
+[isAFileNamed: fileName
 	"Answer true if a file of the given name exists."
 
 	| f |
@@ -806,9 +886,10 @@ isAFileNamed: fileName
 	f ifNil: [ ^ false ].
 	f close.
 	^ true
+]
 
 StandardFileStream class >> newFileNamed: fileName
-newFileNamed: fileName
+[newFileNamed: fileName
 	"Create a new file with the given name, and answer a stream opened for writing on that file. If the file already exists, ask the user what to do."
 
 	| fullName |
@@ -817,9 +898,10 @@ newFileNamed: fileName
 		ifTrue: [ "file already exists:"
 			(FileExistsException fileName: fullName fileClass: self) signal ]
 		ifFalse: [ self new open: fullName forWrite: true ]
+]
 
 StandardFileStream class >> oldFileNamed: fileName
-oldFileNamed: fileName
+[oldFileNamed: fileName
 	"Open an existing file with the given name for reading and writing. If the name has no directory part, then the  default directory will be assumed. If the file does not exist, an exception is signaled. If the file exists, its prior contents may be modified or replaced, but the file will not be truncated on close."
 
 	| fullName |
@@ -828,9 +910,10 @@ oldFileNamed: fileName
 		ifTrue: [ self new open: fullName forWrite: true ]
 		ifFalse: [ "File does not exist..."
 			(FileDoesNotExistException fileName: fullName) signal ]
+]
 
 StandardFileStream class >> readOnlyFileDoesNotExistUserHandling: fullFileName
-readOnlyFileDoesNotExistUserHandling: fullFileName
+[readOnlyFileDoesNotExistUserHandling: fullFileName
 	| dir files choices selection newName fileName |
 	dir := fullFileName asFileReference.
 	files := dir parent fileNames.
@@ -852,9 +935,10 @@ readOnlyFileDoesNotExistUserHandling: fullFileName
 	newName = ''
 		ifFalse: [ ^ self readOnlyFileNamed: (self fullName: newName) ].
 	^ self error: 'Could not open a file'
+]
 
 StandardFileStream class >> readOnlyFileNamed: fileName
-readOnlyFileNamed: fileName
+[readOnlyFileNamed: fileName
 	"Open an existing file with the given name for reading."
 
 	| fullName f |
@@ -862,17 +946,20 @@ readOnlyFileNamed: fileName
 	f := self new open: fullName forWrite: false.
 	^ f ifNil: [ "File does not exist..."
 			((FileDoesNotExistException fileName: fullName) readOnly: true) signal ]	"StandardFileStream readOnlyFileNamed: 'kjsd.txt' "
+]
 
 StandardFileStream class >> register: anObject
-register: anObject
+[register: anObject
 	^ self registry add: anObject
+]
 
 StandardFileStream class >> registry
-registry
+[registry
 	^ Registry ifNil: [ Registry := WeakRegistry new ]
+]
 
 StandardFileStream class >> retryWithGC: execBlock until: testBlock forFileNamed: fullName
-retryWithGC: execBlock until: testBlock forFileNamed: fullName
+[retryWithGC: execBlock until: testBlock forFileNamed: fullName
 	"Re-implemented to only force GC if a file with the given name exists"
 
 	| blockValue foundIt |
@@ -888,8 +975,10 @@ retryWithGC: execBlock until: testBlock forFileNamed: fullName
 		ifTrue: [ ^ blockValue ].
 	Smalltalk garbageCollect.
 	^ execBlock value
+]
 
 StandardFileStream class >> unregister: anObject
-unregister: anObject
+[unregister: anObject
 	^ self registry remove: anObject ifAbsent: [  ]
+]
 

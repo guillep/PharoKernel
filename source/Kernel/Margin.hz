@@ -3,15 +3,17 @@ Margin
 	package: #Kernel.
 
 Margin >> asMargin
-asMargin
+[asMargin
 	^ self
+]
 
 Margin >> bottom
-bottom
+[bottom
 	^ bottom
+]
 
 Margin >> expandRectangle: aRectangle
-expandRectangle: aRectangle
+[expandRectangle: aRectangle
 	"Answer a rectangle whose size has been expanded by the receiver which represents each rectangle corner."
 
 	| l r t b |
@@ -20,31 +22,35 @@ expandRectangle: aRectangle
 	t := aRectangle top - self top.
 	b := aRectangle bottom + self bottom.
 	^ Rectangle origin: l @ t extent: (r - l) @ (b - t)
+]
 
 Margin >> extendRectangle: aRectangle
-extendRectangle: aRectangle
+[extendRectangle: aRectangle
 	"Answer a rectangle whose size has been expanded (without changing its origin) by the receiver which represents each rectangle corner."
 
 	^ Rectangle origin: aRectangle origin corner: aRectangle corner + self rightBottom
+]
 
 Margin >> fromNumber: anInteger
-fromNumber: anInteger
+[fromNumber: anInteger
 	self
 		setTop: anInteger
 		left: anInteger
 		bottom: anInteger
 		right: anInteger
+]
 
 Margin >> fromPoint: aPoint
-fromPoint: aPoint
+[fromPoint: aPoint
 	self
 		setTop: aPoint y
 		left: aPoint x
 		bottom: aPoint y
 		right: aPoint x
+]
 
 Margin >> fromRectangle: aRectangle
-fromRectangle: aRectangle
+[fromRectangle: aRectangle
 	"Pay attention do not use this method but prefer top:left:bottom:right:"
 
 	self
@@ -52,22 +58,25 @@ fromRectangle: aRectangle
 		left: aRectangle left
 		bottom: aRectangle bottom
 		right: aRectangle right
+]
 
 Margin >> height
-height
+[height
 	^ self bottom - self top
+]
 
 Margin >> initialize
-initialize
+[initialize
 	super initialize.
 	self
 		setTop: 0
 		left: 0
 		bottom: 0
 		right: 0
+]
 
 Margin >> insetRectangle: aRectangle
-insetRectangle: aRectangle
+[insetRectangle: aRectangle
 	"Answer a rectangle whose size has been reduced by the receiver. The limitation is that since a rectangle topleft is always less than its bottomright you may have a some cases that are not possible to express. For that you should use a margin object instead of a rectangle."
 
 	| l r t b |
@@ -76,17 +85,20 @@ insetRectangle: aRectangle
 	t := aRectangle top + self top.
 	b := aRectangle bottom - self bottom.
 	^ Rectangle origin: l @ t extent: (r - l) @ (b - t)
+]
 
 Margin >> isZero
-isZero
+[isZero
 	^ 0 = top and: [ 0 = left and: [ 0 = right and: [ 0 = bottom ] ] ]
+]
 
 Margin >> left
-left
+[left
 	^ left
+]
 
 Margin >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	aStream
 		nextPutAll: 'MorphMargin';
 		nextPutAll: ' top: ';
@@ -97,67 +109,78 @@ printOn: aStream
 		nextPutAll: bottom printString;
 		nextPutAll: ' right: ';
 		nextPutAll: right printString
+]
 
 Margin >> right
-right
+[right
 	^ right
+]
 
 Margin >> rightBottom
-rightBottom
+[rightBottom
 	^ right @ bottom
+]
 
 Margin >> setTop: topNumber left: leftNumber bottom: bottomNumber right: rightNumber
-setTop: topNumber left: leftNumber bottom: bottomNumber right: rightNumber
+[setTop: topNumber left: leftNumber bottom: bottomNumber right: rightNumber
 	top := topNumber.
 	left := leftNumber.
 	bottom := bottomNumber.
 	right := rightNumber
+]
 
 Margin >> top
-top
+[top
 	^ top
+]
 
 Margin >> width
-width
+[width
 	^ self right - self left
+]
 
 Margin class >> fromNumber: aNumber
-fromNumber: aNumber
+[fromNumber: aNumber
 	"Create a margin whose four values are the same and based on anInteger"
 
 	^ self new
 		fromNumber: aNumber;
 		yourself
+]
 
 Margin class >> fromPoint: aPoint
-fromPoint: aPoint
+[fromPoint: aPoint
 	"Create a margin whose values are based on the point value: top and bottom are y and left right are x."
 
 	^ self new
 		fromPoint: aPoint;
 		yourself
+]
 
 Margin class >> fromRectangle: aRectangle
-fromRectangle: aRectangle
+[fromRectangle: aRectangle
 	"Create a margin with four values based on aRectangle using exactly top, left, bottom, right semantics. Pay attention that most of the time you should not use this method but prefer top:left:bottom:right:. The reason is that using rectangle may force you to create rectangles with negative extent which is totally wrong and bogus."
 
 	^ self new
 		fromRectangle: aRectangle;
 		yourself
+]
 
 Margin class >> left: leftNumber top: topNumber right: rightNumber bottom: bottomNumber
-left: leftNumber top: topNumber right: rightNumber bottom: bottomNumber
+[left: leftNumber top: topNumber right: rightNumber bottom: bottomNumber
 	^ self new
 		setTop: topNumber
 		left: leftNumber
 		bottom: bottomNumber
 		right: rightNumber
+]
 
 Margin class >> top: topNumber left: leftNumber bottom: bottomNumber right: rightNumber
-top: topNumber left: leftNumber bottom: bottomNumber right: rightNumber
+[top: topNumber left: leftNumber bottom: bottomNumber right: rightNumber
 	^ self new
 		setTop: topNumber
 		left: leftNumber
 		bottom: bottomNumber
 		right: rightNumber
+]
 

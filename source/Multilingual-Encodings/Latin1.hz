@@ -6,15 +6,16 @@ Latin1 class
 	instanceVariables: #(#rightHalfSequence ).
 
 Latin1 class >> emitSequenceToResetStateIfNeededOn: aStream forState: state
-emitSequenceToResetStateIfNeededOn: aStream forState: state
+[emitSequenceToResetStateIfNeededOn: aStream forState: state
 	state g0Leading ~= 0
 		ifTrue: [ state charSize: 1.
 			state g0Leading: 0.
 			state g0Size: 1.
 			aStream basicNextPutAll: compoundTextSequence ]	"Actually, G1 state should go back to ISO-8859-1, too."
+]
 
 Latin1 class >> initialize
-initialize
+[initialize
 	"
 	self initialize
 "
@@ -27,9 +28,10 @@ initialize
 		streamContents: [ :s | s nextPut: (Character value: 27).
 			s nextPut: $-.
 			s nextPut: $A ]
+]
 
 Latin1 class >> isBreakableAt: index in: text
-isBreakableAt: index in: text
+[isBreakableAt: index in: text
 	| char |
 	char := text at: index.
 	char = Character space
@@ -39,27 +41,31 @@ isBreakableAt: index in: text
 	char = Character lf
 		ifTrue: [ ^ true ].
 	^ false
+]
 
 Latin1 class >> isLetter: char
-isLetter: char
+[isLetter: char
 	"Answer whether the receiver is a letter."
 
 	^ Unicode isLetter: char
+]
 
 Latin1 class >> leadingChar
-leadingChar
+[leadingChar
 	^ 0
+]
 
 Latin1 class >> nextPutRightHalfValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
-nextPutRightHalfValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
+[nextPutRightHalfValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
 	state charSize: 1.
 	state g1Leading: 0.
 	state g1Size: 1.
 	aStream basicNextPutAll: rightHalfSequence.
 	aStream basicNextPut: (Character value: ascii)
+]
 
 Latin1 class >> nextPutValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
-nextPutValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
+[nextPutValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state
 	(ascii <= 127 and: [ state g0Leading ~= 0 ])
 		ifTrue: [ state charSize: 1.
 			state g0Leading: 0.
@@ -71,8 +77,10 @@ nextPutValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterS
 		ifTrue: [ ^ self nextPutRightHalfValue: ascii toStream: aStream withShiftSequenceIfNeededForTextConverterState: state ].
 	aStream basicNextPut: (Character value: ascii).
 	^ self
+]
 
 Latin1 class >> printingDirection
-printingDirection
+[printingDirection
 	^ #right
+]
 

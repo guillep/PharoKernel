@@ -4,7 +4,7 @@ FLLargeIdentitySet
 	package: #Fuel.
 
 FLLargeIdentitySet >> add: anObject
-add: anObject
+[add: anObject
 	| hash |
 	anObject ifNil: [ includesNil
 				ifFalse: [ includesNil := true.
@@ -30,9 +30,10 @@ add: anObject
 							array at: hash put: newList ].
 					tallies at: hash put: newIndex ] ].
 	^ anObject
+]
 
 FLLargeIdentitySet >> addIfNotPresent: anObject ifPresentDo: aBlock
-addIfNotPresent: anObject ifPresentDo: aBlock
+[addIfNotPresent: anObject ifPresentDo: aBlock
 	| hash |
 	anObject ifNil: [ includesNil
 				ifFalse: [ includesNil := true.
@@ -59,9 +60,10 @@ addIfNotPresent: anObject ifPresentDo: aBlock
 							array at: hash put: newList ].
 					tallies at: hash put: newIndex ] ].
 	^ anObject
+]
 
 FLLargeIdentitySet >> do: aBlock
-do: aBlock
+[do: aBlock
 	tally = 0
 		ifTrue: [ ^ self ].
 	includesNil
@@ -69,26 +71,30 @@ do: aBlock
 	1 to: 4096 do: [ :arrayIndex | | subArray |
 		subArray := array at: arrayIndex.
 		1 to: (tallies at: arrayIndex) do: [ :index | aBlock value: (subArray at: index) ] ]
+]
 
 FLLargeIdentitySet >> includes: anObject
-includes: anObject
+[includes: anObject
 	anObject ifNil: [ ^ includesNil ].
 	^ (array at: anObject largeIdentityHash + 1) ifNil: [ false ] ifNotNil: [ :list | list fuelPointsTo: anObject ]
+]
 
 FLLargeIdentitySet >> initialize
-initialize
+[initialize
 	super initialize.
 	array := Array new: 4096.
 	includesNil := false
+]
 
 FLLargeIdentitySet >> postCopy
-postCopy
+[postCopy
 	super postCopy.
 	array := array copy.
 	1 to: 4096 do: [ :index | (array at: index) ifNotNil: [ :list | array at: index put: list copy ] ]
+]
 
 FLLargeIdentitySet >> remove: anObject ifAbsent: aBlock
-remove: anObject ifAbsent: aBlock
+[remove: anObject ifAbsent: aBlock
 	| list hash size |
 	anObject
 		ifNil: [ includesNil
@@ -116,4 +122,5 @@ remove: anObject ifAbsent: aBlock
 				tally := tally - 1.
 				^ anObject ] ].
 	^ aBlock value
+]
 

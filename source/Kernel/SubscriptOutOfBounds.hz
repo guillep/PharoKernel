@@ -4,21 +4,24 @@ SubscriptOutOfBounds
 	package: #Kernel.
 
 SubscriptOutOfBounds >> lowerBound
-lowerBound
+[lowerBound
 	^ lowerBound
+]
 
 SubscriptOutOfBounds >> lowerBound: anObject
-lowerBound: anObject
+[lowerBound: anObject
 	lowerBound := anObject
+]
 
 SubscriptOutOfBounds >> messageText
-messageText
+[messageText
 	"Overwritten to initialiaze the message text to a standard text if it has not yet been set"
 
 	^ messageText ifNil: [ messageText := self standardMessageText ]
+]
 
 SubscriptOutOfBounds >> standardMessageText
-standardMessageText
+[standardMessageText
 	"Generate a standard textual description"
 
 	^ String
@@ -28,41 +31,49 @@ standardMessageText
 					stream print: self lowerBound.
 					stream << ' and '.
 					stream print: self upperBound ] ]
+]
 
 SubscriptOutOfBounds >> subscript
-subscript
+[subscript
 	^ subscript
+]
 
 SubscriptOutOfBounds >> subscript: anObject
-subscript: anObject
+[subscript: anObject
 	subscript := anObject
+]
 
 SubscriptOutOfBounds >> upperBound
-upperBound
+[upperBound
 	^ upperBound
+]
 
 SubscriptOutOfBounds >> upperBound: anObject
-upperBound: anObject
+[upperBound: anObject
 	upperBound := anObject
+]
 
 SubscriptOutOfBounds class >> signalFor: subscript
-signalFor: subscript
+[signalFor: subscript
 	^ self signalFor: subscript lowerBound: nil upperBound: nil
+]
 
 SubscriptOutOfBounds class >> signalFor: subscript lowerBound: lowerBound upperBound: upperBound
-signalFor: subscript lowerBound: lowerBound upperBound: upperBound
+[signalFor: subscript lowerBound: lowerBound upperBound: upperBound
 	^ self
 		signalFor: subscript
 		lowerBound: lowerBound
 		upperBound: upperBound
 		in: nil
+]
 
 SubscriptOutOfBounds class >> signalFor: subscript lowerBound: lowerBound upperBound: upperBound in: object
-signalFor: subscript lowerBound: lowerBound upperBound: upperBound in: object
+[signalFor: subscript lowerBound: lowerBound upperBound: upperBound in: object
 	^ self new
 		signaler: object;
 		subscript: subscript;
 		lowerBound: lowerBound;
 		upperBound: upperBound;
 		signal
+]
 

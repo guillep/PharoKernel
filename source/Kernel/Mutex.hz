@@ -3,7 +3,7 @@ Mutex
 	package: #Kernel.
 
 Mutex >> critical: aBlock
-critical: aBlock
+[critical: aBlock
 	"Evaluate aBlock protected by the receiver."
 
 	| activeProcess |
@@ -13,9 +13,11 @@ critical: aBlock
 	^ semaphore critical: [ owner := activeProcess.
 			aBlock
 				ensure: [ owner := nil ] ]
+]
 
 Mutex >> initialize
-initialize
+[initialize
 	super initialize.
 	semaphore := Semaphore forMutualExclusion
+]
 

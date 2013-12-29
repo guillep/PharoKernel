@@ -4,11 +4,12 @@ WeakActionSequence
 	package: #Kernel.
 
 WeakActionSequence >> asActionSequence
-asActionSequence
+[asActionSequence
 	^ self
+]
 
 WeakActionSequence >> asMinimalRepresentation
-asMinimalRepresentation
+[asMinimalRepresentation
 	| valid |
 	valid := self select: [ :e | e isValid ].
 	valid size = 0
@@ -16,17 +17,19 @@ asMinimalRepresentation
 	valid size = 1
 		ifTrue: [ ^ valid first ].
 	^ valid
+]
 
 WeakActionSequence >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	self size < 2
 		ifTrue: [ ^ super printOn: aStream ].
 	aStream nextPutAll: '#('.
 	self do: [ :each | each printOn: aStream ] separatedBy: [ aStream cr ].
 	aStream nextPut: $)
+]
 
 WeakActionSequence >> value
-value
+[value
 	"Answer the result of evaluating the elements of the receiver.
 	Actually, return just the last result."
 
@@ -34,13 +37,15 @@ value
 	self do: [ :each | each isValid
 				ifTrue: [ answer := each value ] ].
 	^ answer
+]
 
 WeakActionSequence >> valueWithArguments: anArray
-valueWithArguments: anArray
+[valueWithArguments: anArray
 	"Return the last result"
 
 	| answer |
 	self do: [ :each | each isValid
 				ifTrue: [ answer := each valueWithArguments: anArray ] ].
 	^ answer
+]
 

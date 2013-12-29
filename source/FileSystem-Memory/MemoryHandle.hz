@@ -4,23 +4,26 @@ MemoryHandle
 	package: #'FileSystem-Memory'.
 
 MemoryHandle >> at: index
-at: index
+[at: index
 	^ entry at: index
+]
 
 MemoryHandle >> at: index put: anObject
-at: index put: anObject
+[at: index put: anObject
 	^ entry at: index put: anObject
+]
 
 MemoryHandle >> at: index read: aCollection startingAt: start count: count
-at: index read: aCollection startingAt: start count: count
+[at: index read: aCollection startingAt: start count: count
 	^ entry
 		at: index
 		read: aCollection
 		startingAt: start
 		count: count
+]
 
 MemoryHandle >> at: first write: aCollection startingAt: start count: count
-at: first write: aCollection startingAt: start count: count
+[at: first write: aCollection startingAt: start count: count
 	writable
 		ifFalse: [ self primitiveFailed ].
 	entry
@@ -28,63 +31,76 @@ at: first write: aCollection startingAt: start count: count
 		write: aCollection
 		startingAt: start
 		count: count
+]
 
 MemoryHandle >> close
-close
+[close
 	self isOpen
 		ifFalse: [ ^ self ].
 	self truncate.
 	entry := nil
+]
 
 MemoryHandle >> copyFrom: from to: position
-copyFrom: from to: position
+[copyFrom: from to: position
 	^ entry copyFrom: from to: position
+]
 
 MemoryHandle >> flush
-flush
+[flush
 	self truncate
+]
 
 MemoryHandle >> grow
-grow
+[grow
 	entry grow
+]
 
 MemoryHandle >> grownBy: length
-grownBy: length
+[grownBy: length
 	entry grownBy: length
+]
 
 MemoryHandle >> isOpen
-isOpen
+[isOpen
 	^ entry notNil
+]
 
 MemoryHandle >> open
-open
+[open
 	entry := self basicOpen
+]
 
 MemoryHandle >> readStream
-readStream
+[readStream
 	"Return a readstream on my contents.
 	Using myself as target collection allows to share the internal bytearray between multiple streams."
 
 	^ entry readStream
+]
 
 MemoryHandle >> size
-size
+[size
 	"return the size for the interna"
 
 	^ entry internalSize
+]
 
 MemoryHandle >> truncate
-truncate
+[truncate
 	entry truncate
+]
 
 MemoryHandle >> truncateTo: anInteger
-truncateTo: anInteger
+[truncateTo: anInteger
 	entry truncateTo: anInteger
+]
 
 MemoryHandle >> writeStream
-writeStream
+[writeStream
 	"Return a writestream on my contents.
 	Using myself as target collection allows to share the internal bytearray between multiple streams."
 
 	^ WriteStream on: self from: 1 to: entry fileSize
+]
 

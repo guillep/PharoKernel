@@ -5,43 +5,49 @@ FileStream
 	package: #Files.
 
 FileStream >> asBinaryOrTextStream
-asBinaryOrTextStream
+[asBinaryOrTextStream
 	"I can switch between binary and text data"
 
 	^ self
+]
 
 FileStream >> ascii
-ascii
+[ascii
 	"Set this file to ascii (text) mode."
 
 	self subclassResponsibility
+]
 
 FileStream >> atEnd
-atEnd
+[atEnd
 	"Answer true if the current position is >= the end of file position."
 
 	self subclassResponsibility
+]
 
 FileStream >> binary
-binary
+[binary
 	"Set this file to binary mode."
 
 	self subclassResponsibility
+]
 
 FileStream >> close
-close
+[close
 	"Close this file."
 
 	self subclassResponsibility
+]
 
 FileStream >> closed
-closed
+[closed
 	"Answer true if this file is closed."
 
 	self subclassResponsibility
+]
 
 FileStream >> contents
-contents
+[contents
 	"Return the contents of the receiver. Do not close or otherwise touch the receiver. Return data in whatever mode the receiver is in (e.g., binary or text)."
 
 	| s savePos |
@@ -50,9 +56,10 @@ contents
 	s := self next: self size.
 	self position: savePos.
 	^ s
+]
 
 FileStream >> contentsOfEntireFile
-contentsOfEntireFile
+[contentsOfEntireFile
 	"Read all of the contents of the receiver."
 
 	| s binary |
@@ -64,57 +71,67 @@ contentsOfEntireFile
 	s := self next: self size.
 	self close.
 	^ s
+]
 
 FileStream >> directoryEntry
-directoryEntry
+[directoryEntry
 	^ (self directory / self localName) entry
+]
 
 FileStream >> file
-file
+[file
 	"Answer the file for the page the receiver is streaming over."
 
 	self subclassResponsibility
+]
 
 FileStream >> flush
-flush
+[flush
 	"When writing, flush the current buffer out to disk."
 
 	self subclassResponsibility
+]
 
 FileStream >> localName
-localName
+[localName
 	^ self name asFileReference basename
+]
 
 FileStream >> longPrintOn: aStream
-longPrintOn: aStream
+[longPrintOn: aStream
 	"Do nothing, so it will print short.  Called to print the error file.  If the error was in a file operation, we can't read the contents of that file.  Just print its name instead."
 
 	
+]
 
 FileStream >> longPrintOn: aStream limitedTo: sizeLimit indent: indent
-longPrintOn: aStream limitedTo: sizeLimit indent: indent
+[longPrintOn: aStream limitedTo: sizeLimit indent: indent
 	"Do nothing, so it will print short.  Called to print the error file.  If the error was in a file operation, we can't read the contents of that file.  Just print its name instead."
 
 	aStream cr
+]
 
 FileStream >> mimeTypes
-mimeTypes
+[mimeTypes
 	^ self name asFileReference mimeTypes
+]
 
 FileStream >> name
-name
+[name
 	"Answer the name of the file for the page the receiver is streaming over."
 
 	self subclassResponsibility
+]
 
 FileStream >> next
-next
+[next
 	(position >= readLimit and: [ self atEnd ])
 		ifTrue: [ ^ nil ]
 		ifFalse: [ ^ collection at: (position := position + 1) ]
+]
 
 FileStream >> next: anInteger
-next: anInteger
+[next: anInteger
 	| newCollection howManyRead increment |
 	newCollection := self collectionSpecies new: anInteger.
 	howManyRead := 0.
@@ -130,107 +147,124 @@ next: anInteger
 				startingAt: position + 1.
 			position := position + increment ].
 	^ newCollection
+]
 
 FileStream >> nextPut: aByte
-nextPut: aByte
+[nextPut: aByte
 	"1/31/96 sw: subclassResponsibility"
 
 	self subclassResponsibility
+]
 
 FileStream >> nextPutAll: aCollection
-nextPutAll: aCollection
+[nextPutAll: aCollection
 	"1/31/96 sw: made subclass responsibility"
 
 	self subclassResponsibility
+]
 
 FileStream >> position
-position
+[position
 	"Answer the current character position in the file."
 
 	self subclassResponsibility
+]
 
 FileStream >> position: pos
-position: pos
+[position: pos
 	"Set the current character position in the file to pos."
 
 	self subclassResponsibility
+]
 
 FileStream >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	super printOn: aStream.
 	aStream nextPutAll: ' on '.
 	self file printOn: aStream
+]
 
 FileStream >> readOnly
-readOnly
+[readOnly
 	"Set this file's mode to read-only."
 
 	self subclassResponsibility
+]
 
 FileStream >> readOnlyStream
-readOnlyStream
+[readOnlyStream
 	^ self readOnly
+]
 
 FileStream >> readWrite
-readWrite
+[readWrite
 	"Set this file's mode to read-write."
 
 	self subclassResponsibility
+]
 
 FileStream >> reopen
-reopen
+[reopen
 	"Ensure that the receiver is open, re-open it if necessary."
 
 	"Details: Files that were open when a snapshot occurs are no longer valid when the snapshot is resumed. This operation re-opens the file if that has happened."
 
 	self subclassResponsibility
+]
 
 FileStream >> reset
-reset
+[reset
 	"Set the current character position to the beginning of the file."
 
 	self subclassResponsibility
+]
 
 FileStream >> setToEnd
-setToEnd
+[setToEnd
 	"Set the current character position to the end of the File. The same as
 	self position: self size."
 
 	self subclassResponsibility
+]
 
 FileStream >> size
-size
+[size
 	"Answer the size of the file in characters."
 
 	self subclassResponsibility
+]
 
 FileStream >> skip: n
-skip: n
+[skip: n
 	"Set the character position to n characters from the current position.
 	Error if not enough characters left in the file."
 
 	self subclassResponsibility
+]
 
 FileStream >> text
-text
+[text
 	"Set this file to text (ascii) mode."
 
 	self ascii
+]
 
 FileStream >> truncate: pos
-truncate: pos
+[truncate: pos
 	"Truncate file to pos"
 
 	self subclassResponsibility
+]
 
 FileStream class >> concreteStream
-concreteStream
+[concreteStream
 	"Who should we really direct class queries to?  "
 
 	^ MultiByteFileStream
+]
 
 FileStream class >> convertCRtoLF: fileName
-convertCRtoLF: fileName
+[convertCRtoLF: fileName
 	"Convert the given file to LF line endings. Put the result in a file with the extention '.lf'"
 
 	| in out c justPutCR |
@@ -247,14 +281,16 @@ convertCRtoLF: fileName
 					justPutCR := false ] ].
 	in close.
 	out close
+]
 
 FileStream class >> detectFile: aBlock do: anotherBlock
-detectFile: aBlock do: anotherBlock
+[detectFile: aBlock do: anotherBlock
 	^ aBlock value ifNil: [ nil ] ifNotNil: [ :file | [ anotherBlock value: file ]
 				ensure: [ file close ] ]
+]
 
 FileStream class >> fileIn: fullName
-fileIn: fullName
+[fileIn: fullName
 	"File in the entire contents of the file specified by the name provided"
 
 	| ff fn |
@@ -265,19 +301,22 @@ fileIn: fullName
 		ifFalse: [ fn fullName ].
 	ff := self readOnlyFileNamed: fn.
 	ff fileIn
+]
 
 FileStream class >> fileNamed: fileName
-fileNamed: fileName
+[fileNamed: fileName
 	^ self concreteStream fileNamed: (self fullName: fileName)
+]
 
 FileStream class >> fileNamed: fileName do: aBlock
-fileNamed: fileName do: aBlock
+[fileNamed: fileName do: aBlock
 	"Returns the result of aBlock."
 
 	^ self detectFile: [ self fileNamed: fileName ] do: aBlock
+]
 
 FileStream class >> flushAndVoidStdioFiles
-flushAndVoidStdioFiles
+[flushAndVoidStdioFiles
 	StdioFiles
 		ifNotNil: [ StdioFiles
 				do: [ :file | file
@@ -287,72 +326,85 @@ flushAndVoidStdioFiles
 										do: [ :ex | "care less"
 											 ] ] ] ].
 			self voidStdioFiles ]
+]
 
 FileStream class >> forceNewFileNamed: fileName
-forceNewFileNamed: fileName
+[forceNewFileNamed: fileName
 	"Create a new file with the given name, and answer a stream opened for writing on that file. If the file already exists, delete it without asking before creating the new file."
 
 	^ self concreteStream forceNewFileNamed: fileName
+]
 
 FileStream class >> forceNewFileNamed: fileName do: aBlock
-forceNewFileNamed: fileName do: aBlock
+[forceNewFileNamed: fileName do: aBlock
 	"Returns the result of aBlock."
 
 	^ self detectFile: [ self forceNewFileNamed: fileName ] do: aBlock
+]
 
 FileStream class >> fullName: fileName
-fullName: fileName
+[fullName: fileName
 	^ fileName asFileReference fullName
+]
 
 FileStream class >> initialize
-initialize
+[initialize
 	TheStdioHandles := Array new: 3.	"original comment was: the intent being before: AutoStart"
 	Smalltalk
 		addToStartUpList: self after: DiskStore;
 		addToShutDownList: self after: DiskStore
+]
 
 FileStream class >> isAFileNamed: fName
-isAFileNamed: fName
+[isAFileNamed: fName
 	"return whether a file exists with the given name"
 
 	^ self concreteStream isAFileNamed: (self fullName: fName)
+]
 
 FileStream class >> isSourceFileSuffix: suffix
-isSourceFileSuffix: suffix
+[isSourceFileSuffix: suffix
 	^ FileStream sourceFileSuffixes includes: suffix
+]
 
 FileStream class >> new
-new
+[new
 	^ self basicNew
+]
 
 FileStream class >> newFileNamed: fileName
-newFileNamed: fileName
+[newFileNamed: fileName
 	^ self concreteStream newFileNamed: (self fullName: fileName)
+]
 
 FileStream class >> newFileNamed: fileName do: aBlock
-newFileNamed: fileName do: aBlock
+[newFileNamed: fileName do: aBlock
 	"Returns the result of aBlock."
 
 	^ self detectFile: [ self newFileNamed: fileName ] do: aBlock
+]
 
 FileStream class >> newForStdio
-newForStdio
+[newForStdio
 	"This is a hook for subclasses to initialize themselves properly."
 
 	^ self new
+]
 
 FileStream class >> oldFileNamed: fileName
-oldFileNamed: fileName
+[oldFileNamed: fileName
 	^ self concreteStream oldFileNamed: (self fullName: fileName)
+]
 
 FileStream class >> oldFileNamed: fileName do: aBlock
-oldFileNamed: fileName do: aBlock
+[oldFileNamed: fileName do: aBlock
 	"Returns the result of aBlock."
 
 	^ self detectFile: [ self oldFileNamed: fileName ] do: aBlock
+]
 
 FileStream class >> oldFileOrNoneNamed: fileName
-oldFileOrNoneNamed: fileName
+[oldFileOrNoneNamed: fileName
 	"If the file exists, answer a read-only FileStream on it. If it doesn't, answer nil."
 
 	| fullName |
@@ -360,43 +412,50 @@ oldFileOrNoneNamed: fileName
 	^ (self concreteStream isAFileNamed: fullName)
 		ifTrue: [ self concreteStream readOnlyFileNamed: fullName ]
 		ifFalse: [ nil ]
+]
 
 FileStream class >> readOnlyFileNamed: fileName
-readOnlyFileNamed: fileName
+[readOnlyFileNamed: fileName
 	^ self concreteStream readOnlyFileNamed: (self fullName: fileName)
+]
 
 FileStream class >> readOnlyFileNamed: fileName do: aBlock
-readOnlyFileNamed: fileName do: aBlock
+[readOnlyFileNamed: fileName do: aBlock
 	"Open the existing file with the given name for read-only access and pass it as argument to aBlock.
 	Returns the result of aBlock."
 
 	^ self detectFile: [ self readOnlyFileNamed: fileName ] do: aBlock
+]
 
 FileStream class >> removeLineFeeds: fullName
-removeLineFeeds: fullName
+[removeLineFeeds: fullName
 	| fileContents |
 	fileContents := ((FileStream readOnlyFileNamed: fullName) wantsLineEndConversion: true) contentsOfEntireFile.
 	(FileStream newFileNamed: fullName)
 		nextPutAll: fileContents;
 		close
+]
 
 FileStream class >> requestDropStream: dropIndex
-requestDropStream: dropIndex
+[requestDropStream: dropIndex
 	"Request a read-only stream for some file that was dropped onto the application"
 
 	^ self concreteStream new requestDropStream: dropIndex
+]
 
 FileStream class >> shutDown: quitting
-shutDown: quitting
+[shutDown: quitting
 	quitting
 		ifTrue: [ self flushAndVoidStdioFiles ]
+]
 
 FileStream class >> sourceFileSuffixes
-sourceFileSuffixes
+[sourceFileSuffixes
 	^ #('st' 'cs')
+]
 
 FileStream class >> standardIOStreamNamed: moniker forWrite: forWrite
-standardIOStreamNamed: moniker forWrite: forWrite
+[standardIOStreamNamed: moniker forWrite: forWrite
 	"Create if necessary and store default stdin, stdout and other files based on the their names"
 
 	| index |
@@ -415,47 +474,55 @@ standardIOStreamNamed: moniker forWrite: forWrite
 					((TheStdioHandles at: index)
 						ifNil: [ ^ self error: moniker , ' is unavailable' ]
 						ifNotNil: [ :handle | MultiByteFileStream newForStdio openOnHandle: handle name: moniker forWrite: forWrite ]) ]
+]
 
 FileStream class >> startUp: resuming
-startUp: resuming
+[startUp: resuming
 	resuming
 		ifTrue: [ self voidStdioFiles.
 			[ TheStdioHandles := self stdioHandles ]
 				on: Error
 				do: [ :ex | TheStdioHandles isArray
 						ifFalse: [ TheStdioHandles := Array new: 3 ] ] ]
+]
 
 FileStream class >> stderr
-stderr
+[stderr
 	^ Stderr ifNil: [ Stderr := self standardIOStreamNamed: #stderr forWrite: true ]
+]
 
 FileStream class >> stdin
-stdin
+[stdin
 	^ Stdin
 		ifNil: [ Stdin := self standardIOStreamNamed: #stdin forWrite: false.
 			Stdin
 				disableReadBuffering;
 				yourself ]
+]
 
 FileStream class >> stdioHandles
-stdioHandles
+[stdioHandles
 	<primitive: 'primitiveFileStdioHandles' module: 'FilePlugin' error: #ec>
 	self primitiveFailed
+]
 
 FileStream class >> stdout
-stdout
+[stdout
 	^ Stdout ifNil: [ Stdout := self standardIOStreamNamed: #stdout forWrite: true ]
+]
 
 FileStream class >> unload
-unload
+[unload
 	FileServices unregisterFileReader: self
+]
 
 FileStream class >> voidStdioFiles
-voidStdioFiles
+[voidStdioFiles
 	Stdin := Stdout := Stderr := StdioFiles := nil
+]
 
 FileStream class >> writeSourceCodeFrom: aStream baseName: baseName isSt: stOrCsFlag
-writeSourceCodeFrom: aStream baseName: baseName isSt: stOrCsFlag
+[writeSourceCodeFrom: aStream baseName: baseName isSt: stOrCsFlag
 	| extension converter fileName |
 	extension := stOrCsFlag
 		ifTrue: [ '.st' ]
@@ -477,4 +544,5 @@ writeSourceCodeFrom: aStream baseName: baseName isSt: stOrCsFlag
 				close ] ]
 		on: Abort
 		do: [ :e |  ]
+]
 

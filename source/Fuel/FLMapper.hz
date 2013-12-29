@@ -3,47 +3,57 @@ FLMapper
 	package: #Fuel.
 
 FLMapper >> analysis: anAnalysis
-analysis: anAnalysis
+[analysis: anAnalysis
 	analysis := anAnalysis.
 	next ifNotNil: [ next analysis: anAnalysis ]
+]
 
 FLMapper >> clusterInstanceOf: aClusterClass keyInBucket: clusterKey factory: clusterFactory
-clusterInstanceOf: aClusterClass keyInBucket: clusterKey factory: clusterFactory
+[clusterInstanceOf: aClusterClass keyInBucket: clusterKey factory: clusterFactory
 	| bucket |
 	bucket := aClusterClass clusterBucketIn: analysis clusterization.
 	^ bucket at: clusterKey ifAbsentPut: [ clusterFactory value
 				traceWith: analysis;
 				yourself ]
+]
 
 FLMapper >> clusterKeyedByClusterName: aClusterClass
-clusterKeyedByClusterName: aClusterClass
+[clusterKeyedByClusterName: aClusterClass
 	^ self clusterKeyedByClusterName: aClusterClass factory: [ aClusterClass newAnalyzing ]
+]
 
 FLMapper >> clusterKeyedByClusterName: aClusterClass factory: clusterFactory
-clusterKeyedByClusterName: aClusterClass factory: clusterFactory
+[clusterKeyedByClusterName: aClusterClass factory: clusterFactory
 	^ self clusterInstanceOf: aClusterClass keyInBucket: aClusterClass name factory: clusterFactory
+]
 
 FLMapper >> clusterKeyedByObjectClass: clusterClass class: objectClass
-clusterKeyedByObjectClass: clusterClass class: objectClass
+[clusterKeyedByObjectClass: clusterClass class: objectClass
 	^ self clusterInstanceOf: clusterClass keyInBucket: objectClass factory: [ clusterClass newAnalyzing: objectClass ]
+]
 
 FLMapper >> fuelAccept: aGeneralMapper
-fuelAccept: aGeneralMapper
+[fuelAccept: aGeneralMapper
 	^ aGeneralMapper visitSubstitution: self by: nil
+]
 
 FLMapper >> mapAndTrace: anObject
-mapAndTrace: anObject
+[mapAndTrace: anObject
 	self subclassResponsibility
+]
 
 FLMapper >> mapAndTraceByClusterName: anObject to: aClusterClass
-mapAndTraceByClusterName: anObject to: aClusterClass
+[mapAndTraceByClusterName: anObject to: aClusterClass
 	(self clusterKeyedByClusterName: aClusterClass) add: anObject traceWith: analysis
+]
 
 FLMapper >> mapAndTraceByObjectClass: anObject to: aClusterClass
-mapAndTraceByObjectClass: anObject to: aClusterClass
+[mapAndTraceByObjectClass: anObject to: aClusterClass
 	(self clusterKeyedByObjectClass: aClusterClass class: anObject class) add: anObject traceWith: analysis
+]
 
 FLMapper >> next: anObject
-next: anObject
+[next: anObject
 	next := anObject
+]
 

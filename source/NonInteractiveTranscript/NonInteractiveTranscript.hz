@@ -3,73 +3,85 @@ NonInteractiveTranscript
 	package: #NonInteractiveTranscript.
 
 NonInteractiveTranscript >> << anObject
-<< anObject
+[<< anObject
 	self show: anObject
+]
 
 NonInteractiveTranscript >> clear
-clear
+[clear
 	
+]
 
 NonInteractiveTranscript >> close
-close
+[close
 	self
 		critical: [ stream
 				ifNotNil: [ (self isStdout or: [ self isStderr ])
 						ifTrue: [ stream flush ]
 						ifFalse: [ stream close ].
 					stream := nil ] ]
+]
 
 NonInteractiveTranscript >> cr
-cr
+[cr
 	self critical: [ self stream cr ]
+]
 
 NonInteractiveTranscript >> crShow: anObject
-crShow: anObject
+[crShow: anObject
 	self critical: [ self
 				cr;
 				show: anObject ]
+]
 
 NonInteractiveTranscript >> critical: block
-critical: block
+[critical: block
 	^ accessSemaphore critical: block
+]
 
 NonInteractiveTranscript >> endEntry
-endEntry
+[endEntry
 	self flush
+]
 
 NonInteractiveTranscript >> ensureCr
-ensureCr
+[ensureCr
 	
+]
 
 NonInteractiveTranscript >> fileName
-fileName
+[fileName
 	"The file name that I will write to.
 	Lazy initialized to a default.
 	When I connect to the standard output stream of the 
 	virtual machine process I return #stdout."
 
 	^ fileName ifNil: [ fileName := self class defaultLogFileName ]
+]
 
 NonInteractiveTranscript >> fileName: anObject
-fileName: anObject
+[fileName: anObject
 	"Initialize me to write to a file stream described by anObject.
 	anObject is either a String naming a file or the special #stdout value
 	for using the standard output stream of the virtual machine process."
 
 	self close.
 	fileName := anObject
+]
 
 NonInteractiveTranscript >> flush
-flush
+[flush
 	self critical: [ self stream flush ]
+]
 
 NonInteractiveTranscript >> initialize
-initialize
+[initialize
 	super initialize.
 	accessSemaphore := Mutex new
+]
 
 NonInteractiveTranscript >> initializeStream
-initializeStream
+[initializeStream
 	"Open the file stream that I write to or connect to #stdout.
 	I use the proper line end convention.
 	I will append to regular files."
@@ -84,123 +96,145 @@ initializeStream
 		ifTrue: [ stream converter	"Force lazy initialization of converter" ]
 		ifFalse: [ stream setToEnd ].
 	^ stream
+]
 
 NonInteractiveTranscript >> install
-install
+[install
 	"Install me as a replacement for Transcript"
 
 	Smalltalk globals at: #Transcript put: self
+]
 
 NonInteractiveTranscript >> isSelfEvaluating
-isSelfEvaluating
+[isSelfEvaluating
 	self == Transcript
 		ifTrue: [ ^ true ].
 	^ super isSelfEvaluating
+]
 
 NonInteractiveTranscript >> isStderr
-isStderr
+[isStderr
 	^ fileName = #stderr
+]
 
 NonInteractiveTranscript >> isStdout
-isStdout
+[isStdout
 	"Answer true when I am setup to be connected to the special
 	standard output stream of the virtual machine process."
 
 	^ fileName = #stdout
+]
 
 NonInteractiveTranscript >> nextPut: aCharacter
-nextPut: aCharacter
+[nextPut: aCharacter
 	^ self critical: [ self stream nextPut: aCharacter ]
+]
 
 NonInteractiveTranscript >> nextPutAll: aCollection
-nextPutAll: aCollection
+[nextPutAll: aCollection
 	^ self critical: [ self stream nextPutAll: aCollection ]
+]
 
 NonInteractiveTranscript >> print: anObject
-print: anObject
+[print: anObject
 	self nextPutAll: anObject asString
+]
 
 NonInteractiveTranscript >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	self == Transcript
 		ifFalse: [ ^ super printOn: aStream ].
 	aStream nextPutAll: 'Transcript'
+]
 
 NonInteractiveTranscript >> reset
-reset
+[reset
 	
+]
 
 NonInteractiveTranscript >> show: anObject
-show: anObject
+[show: anObject
 	self critical: [ self
 				print: anObject;
 				endEntry ]
+]
 
 NonInteractiveTranscript >> space
-space
+[space
 	^ self critical: [ self stream space ]
+]
 
 NonInteractiveTranscript >> stream
-stream
+[stream
 	"The file stream I am writing to.
 	Lazy initialized so as not to create the file when it is not used."
 
 	^ stream ifNil: [ self initializeStream ]
+]
 
 NonInteractiveTranscript >> tab
-tab
+[tab
 	^ self critical: [ self stream tab ]
+]
 
 NonInteractiveTranscript class >> defaultLogFileName
-defaultLogFileName
+[defaultLogFileName
 	"The default file name that will be used to write to.
 	This should probably become a system setting."
 
 	^ 'PharoTranscript.log'
+]
 
 NonInteractiveTranscript class >> file
-file
+[file
 	"Create a new NonInteractiveTranscript that will output 
 	to the default file named by #defaultLogFileName."
 
 	^ self onFileNamed: self defaultLogFileName
+]
 
 NonInteractiveTranscript class >> initialize
-initialize
+[initialize
 	"Make sure to cleanup on shutdown"
 
 	Smalltalk addToShutDownList: self
+]
 
 NonInteractiveTranscript class >> isInstalled
-isInstalled
+[isInstalled
 	^ Transcript class = self
+]
 
 NonInteractiveTranscript class >> onFileNamed: fileName
-onFileNamed: fileName
+[onFileNamed: fileName
 	"Create a NonInteractiveTranscript that will write to fileName."
 
 	^ self new
 		fileName: fileName;
 		yourself
+]
 
 NonInteractiveTranscript class >> shutDown
-shutDown
+[shutDown
 	"Send close to all our instances.
 	Their streams will be reopened on first use later on."
 
 	self allInstances do: [ :each | each close ]
+]
 
 NonInteractiveTranscript class >> stderr
-stderr
+[stderr
 	"Create a new NonInteractiveTranscript that will output 
 	to the special standard error output stream of the virtual machine process."
 
 	^ self onFileNamed: #stderr
+]
 
 NonInteractiveTranscript class >> stdout
-stdout
+[stdout
 	"Create a new NonInteractiveTranscript that will output 
 	to the special standard output stream of the virtual machine process."
 
 	^ self onFileNamed: #stdout
+]
 

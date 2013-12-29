@@ -4,30 +4,35 @@ FLHookPrimitiveCluster
 	package: #Fuel.
 
 FLHookPrimitiveCluster >> clusterMaterializeStepWith: aMaterialization
-clusterMaterializeStepWith: aMaterialization
+[clusterMaterializeStepWith: aMaterialization
 	super clusterMaterializeStepWith: aMaterialization.
 	theClass := aMaterialization decoder nextEncodedReference
+]
 
 FLHookPrimitiveCluster >> clusterReferencesDo: aBlock
-clusterReferencesDo: aBlock
+[clusterReferencesDo: aBlock
 	aBlock value: theClass
+]
 
 FLHookPrimitiveCluster >> clusterSerializeStepWith: aSerialization
-clusterSerializeStepWith: aSerialization
+[clusterSerializeStepWith: aSerialization
 	super clusterSerializeStepWith: aSerialization.
 	aSerialization encoder encodeReferenceTo: theClass
+]
 
 FLHookPrimitiveCluster >> initializeAnalyzing: aClass
-initializeAnalyzing: aClass
+[initializeAnalyzing: aClass
 	self initializeAnalyzing.
 	theClass := aClass
+]
 
 FLHookPrimitiveCluster >> materializeInstanceWith: aDecoder
-materializeInstanceWith: aDecoder
+[materializeInstanceWith: aDecoder
 	^ theClass materializeFrom: aDecoder
+]
 
 FLHookPrimitiveCluster >> printNameOn: aStream
-printNameOn: aStream
+[printNameOn: aStream
 	"Append to the argument, aStream, a sequence of characters that  
 	identifies the receiver."
 
@@ -35,14 +40,17 @@ printNameOn: aStream
 	aStream nextPut: $[.
 	theClass printOn: aStream.
 	aStream nextPut: $]
+]
 
 FLHookPrimitiveCluster >> serializeInstance: anObject with: anEncoder
-serializeInstance: anObject with: anEncoder
+[serializeInstance: anObject with: anEncoder
 	anObject serializeOn: anEncoder
+]
 
 FLHookPrimitiveCluster class >> newAnalyzing: aClass
-newAnalyzing: aClass
+[newAnalyzing: aClass
 	^ self basicNew
 		initializeAnalyzing: aClass;
 		yourself
+]
 

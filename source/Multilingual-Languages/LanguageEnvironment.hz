@@ -4,65 +4,78 @@ LanguageEnvironment
 	package: #'Multilingual-Languages'.
 
 LanguageEnvironment >> isoCountry
-isoCountry
+[isoCountry
 	^ self localeID isoCountry
+]
 
 LanguageEnvironment >> isoLanguage
-isoLanguage
+[isoLanguage
 	^ self localeID isoLanguage
+]
 
 LanguageEnvironment >> leadingChar
-leadingChar
+[leadingChar
 	^ self class leadingChar
+]
 
 LanguageEnvironment >> localeID
-localeID
+[localeID
 	^ id
+]
 
 LanguageEnvironment >> localeID: anID
-localeID: anID
+[localeID: anID
 	id := anID
+]
 
 LanguageEnvironment class >> canBeGlobalVarInitial: char
-canBeGlobalVarInitial: char
+[canBeGlobalVarInitial: char
 	^ Unicode canBeGlobalVarInitial: char
+]
 
 LanguageEnvironment class >> canBeNonGlobalVarInitial: char
-canBeNonGlobalVarInitial: char
+[canBeNonGlobalVarInitial: char
 	^ Unicode canBeNonGlobalVarInitial: char
+]
 
 LanguageEnvironment class >> clearDefault
-clearDefault
+[clearDefault
 	SystemConverter := nil.
 	FileNameConverter := nil
+]
 
 LanguageEnvironment class >> currentPlatform
-currentPlatform
+[currentPlatform
 	^ Locale currentPlatform languageEnvironment
+]
 
 LanguageEnvironment class >> defaultFileNameConverter
-defaultFileNameConverter
+[defaultFileNameConverter
 	FileNameConverter ifNil: [ FileNameConverter := self currentPlatform class fileNameConverterClass new ].
 	^ FileNameConverter
+]
 
 LanguageEnvironment class >> defaultSystemConverter
-defaultSystemConverter
+[defaultSystemConverter
 	SystemConverter ifNil: [ SystemConverter := self currentPlatform class systemConverterClass new ].
 	^ SystemConverter
+]
 
 LanguageEnvironment class >> digitValueOf: char
-digitValueOf: char
+[digitValueOf: char
 	"Answer 0-9 if the receiver is $0-$9, 10-35 if it is $A-$Z, and < 0
 	otherwise. This is used to parse literal numbers of radix 2-36."
 
 	^ Unicode digitValueOf: char
+]
 
 LanguageEnvironment class >> fileNameConverterClass
-fileNameConverterClass
+[fileNameConverterClass
 	^ UTF8TextConverter
+]
 
 LanguageEnvironment class >> initKnownEnvironments
-initKnownEnvironments
+[initKnownEnvironments
 	"LanguageEnvironment initKnownEnvironments"
 
 	| known |
@@ -75,15 +88,17 @@ initKnownEnvironments
 					env localeID: id.
 					known at: id put: env ] ].
 	^ known
+]
 
 LanguageEnvironment class >> initialize
-initialize
+[initialize
 	"LanguageEnvironment initialize"
 
 	Smalltalk addToStartUpList: LanguageEnvironment
+]
 
 LanguageEnvironment class >> isBreakableAt: index in: text
-isBreakableAt: index in: text
+[isBreakableAt: index in: text
 	| char |
 	char := text at: index.
 	char = Character space
@@ -91,59 +106,70 @@ isBreakableAt: index in: text
 	char = Character cr
 		ifTrue: [ ^ true ].
 	^ false
+]
 
 LanguageEnvironment class >> isCharset
-isCharset
+[isCharset
 	^ false
+]
 
 LanguageEnvironment class >> isDigit: char
-isDigit: char
+[isDigit: char
 	^ Unicode isDigit: char
+]
 
 LanguageEnvironment class >> isLetter: char
-isLetter: char
+[isLetter: char
 	^ Unicode isLetter: char
+]
 
 LanguageEnvironment class >> isLowercase: char
-isLowercase: char
+[isLowercase: char
 	^ Unicode isLowercase: char
+]
 
 LanguageEnvironment class >> isUppercase: char
-isUppercase: char
+[isUppercase: char
 	^ Unicode isUppercase: char
+]
 
 LanguageEnvironment class >> knownEnvironments
-knownEnvironments
+[knownEnvironments
 	"LanguageEnvironment knownEnvironments"
 
 	"KnownEnvironments := nil"
 
 	^ KnownEnvironments ifNil: [ KnownEnvironments := self initKnownEnvironments ]
+]
 
 LanguageEnvironment class >> leadingChar
-leadingChar
+[leadingChar
 	self subclassResponsibility.
 	^ 0
+]
 
 LanguageEnvironment class >> localeChanged
-localeChanged
+[localeChanged
 	self startUp
+]
 
 LanguageEnvironment class >> localeID: localeID
-localeID: localeID
+[localeID: localeID
 	self knownEnvironments at: localeID ifPresent: [ :value | ^ value ].
 	^ self knownEnvironments
 		at: (LocaleID isoLanguage: localeID isoLanguage)
 		ifAbsent: [ self localeID: (LocaleID isoLanguage: 'en') ]
+]
 
 LanguageEnvironment class >> resetKnownEnvironments
-resetKnownEnvironments
+[resetKnownEnvironments
 	"LanguageEnvironment resetKnownEnvironments"
 
 	KnownEnvironments := nil
+]
 
 LanguageEnvironment class >> scanMultibyteCharactersFrom: startIndex to: stopIndex in: aWideString with: aCharacterScanner rightX: rightX font: aFont
-scanMultibyteCharactersFrom: startIndex to: stopIndex in: aWideString with: aCharacterScanner rightX: rightX font: aFont
+[scanMultibyteCharactersFrom: startIndex to: stopIndex in: aWideString with: aCharacterScanner rightX: rightX font: aFont
 	"the default for scanning multibyte characters- other more specific encodings may do something else"
 
 	^ aFont
@@ -152,24 +178,29 @@ scanMultibyteCharactersFrom: startIndex to: stopIndex in: aWideString with: aCha
 		in: aWideString
 		with: aCharacterScanner
 		rightX: rightX
+]
 
 LanguageEnvironment class >> scanSelector
-scanSelector
+[scanSelector
 	^ #scanMultiCharactersFrom:to:in:rightX:stopConditions:kern:
+]
 
 LanguageEnvironment class >> startUp
-startUp
+[startUp
 	self clearDefault
+]
 
 LanguageEnvironment class >> supportedLanguages
-supportedLanguages
+[supportedLanguages
 	"Return the languages that this class supports. 
 	Any translations for those languages will use this class as their environment."
 
 	self subclassResponsibility
+]
 
 LanguageEnvironment class >> systemConverterClass
-systemConverterClass
+[systemConverterClass
 	self subclassResponsibility.
 	^ Latin1TextConverter
+]
 

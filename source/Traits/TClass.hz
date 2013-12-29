@@ -1,7 +1,7 @@
 Trait named: #TClass
 	traitComposition: TBehaviorCategorization;
 	package: #'Traits-Kernel-Traits'.TClass >> addClassVarNamed: aString
-addClassVarNamed: aString
+[addClassVarNamed: aString
 	"Add the argument, aString, as a class variable of the receiver.
 	Signal an error if the first character of aString is not capitalized,
 	or if it is already a variable named in the class."
@@ -18,9 +18,10 @@ addClassVarNamed: aString
 		ifFalse: [ "Pick up any refs in Undeclared"
 			self classPool declare: symbol from: Undeclared.
 			SystemAnnouncer uniqueInstance classDefinitionChangedFrom: oldState to: self ]
+]
 
 TClass >> addSharedPool: aSharedPool
-addSharedPool: aSharedPool
+[addSharedPool: aSharedPool
 	"Add the argument, aSharedPool, as one of the receiver's shared pools. 
 	Create an error if the shared pool is already one of the pools.
 	This method will work with shared pools that are plain Dictionaries or thenewer SharedPool subclasses"
@@ -30,9 +31,10 @@ addSharedPool: aSharedPool
 	self sharedPools == nil
 		ifTrue: [ self sharedPools: (OrderedCollection with: aSharedPool) ]
 		ifFalse: [ self sharedPools add: aSharedPool ]
+]
 
 TClass >> addSubclass: aSubclass
-addSubclass: aSubclass
+[addSubclass: aSubclass
 	"Make the argument, aSubclass, be one of the subclasses of the receiver. 
 	Create an error notification if the argument's superclass is not the receiver."
 
@@ -44,9 +46,10 @@ addSubclass: aSubclass
 	self subclasses do: [ :cl | cl == aSubclass
 				ifTrue: [ ^ self ] ].	"Already my subclass"
 	self subclasses: (self subclasses copyWith: aSubclass)
+]
 
 TClass >> allClassVarNames
-allClassVarNames
+[allClassVarNames
 	"Answer a Set of the names of the receiver's class variables, including those
 	defined in the superclasses of the receiver."
 
@@ -56,9 +59,10 @@ allClassVarNames
 		ifFalse: [ aSet := self superclass allClassVarNames.
 			aSet addAll: self classVarNames.
 			^ aSet ]	"This is the keys so it is a new Set."
+]
 
 TClass >> allSharedPools
-allSharedPools
+[allSharedPools
 	"Answer an ordered collection of the pools the receiver shares, including those defined  in the superclasses of the receiver."
 
 	| aSet |
@@ -67,16 +71,18 @@ allSharedPools
 		ifFalse: [ aSet := self superclass allSharedPools.
 			aSet addAll: self sharedPools.
 			aSet ]
+]
 
 TClass >> applyChangesOfNewTraitCompositionReplacing: oldComposition
-applyChangesOfNewTraitCompositionReplacing: oldComposition
+[applyChangesOfNewTraitCompositionReplacing: oldComposition
 	| changedSelectors |
 	changedSelectors := super applyChangesOfNewTraitCompositionReplacing: oldComposition.
 	self classSide noteNewBaseTraitCompositionApplied: self traitComposition.
 	^ changedSelectors
+]
 
 TClass >> binding
-binding
+[binding
 	"Answer a binding for the receiver, sharing if possible"
 
 	| binding |
@@ -84,9 +90,10 @@ binding
 	^ binding value == self
 		ifTrue: [ binding ]
 		ifFalse: [ nil -> self ]
+]
 
 TClass >> bindingOf: varName
-bindingOf: varName
+[bindingOf: varName
 	"Answer the binding of some variable resolved in the scope of the receiver, or nil
 	if variable with such name is not defined"
 
@@ -99,35 +106,41 @@ bindingOf: varName
 	| aSymbol |
 	aSymbol := varName asSymbol.
 	^ (self innerBindingOf: aSymbol) ifNil: [ self environment bindingOf: aSymbol ]
+]
 
 TClass >> classBuilder
-classBuilder
+[classBuilder
 	"Answer the object responsible of creating subclasses of myself in the system."
 
 	^ Smalltalk classBuilder
+]
 
 TClass >> classPool
-classPool
+[classPool
 	^ self explicitRequirement
+]
 
 TClass >> classPool: aDictionary
-classPool: aDictionary
+[classPool: aDictionary
 	^ self explicitRequirement
+]
 
 TClass >> classPoolFrom: aClass
-classPoolFrom: aClass
+[classPoolFrom: aClass
 	"share the classPool with aClass."
 
 	self classPool: aClass classPool
+]
 
 TClass >> classVarNamed: aString
-classVarNamed: aString
+[classVarNamed: aString
 	"Answer the content of the Class Variable"
 
 	^ self classPool at: aString asSymbol ifAbsent: [ self error: 'no such lass var' ]
+]
 
 TClass >> classVarNamed: aString put: anObject
-classVarNamed: aString put: anObject
+[classVarNamed: aString put: anObject
 	"Store anObject in the class variable."
 
 	| symbol |
@@ -135,32 +148,37 @@ classVarNamed: aString put: anObject
 	(self classPool includesKey: symbol)
 		ifFalse: [ ^ self error: 'no such lass var' ].
 	self classPool at: symbol put: anObject
+]
 
 TClass >> classVarNames
-classVarNames
+[classVarNames
 	"Answer a collection of the names of the class variables defined in the receiver."
 
 	^ self classPool keys asArray sort
+]
 
 TClass >> compileAll
-compileAll
+[compileAll
 	super compileAll.
 	self class compileAll
+]
 
 TClass >> compileAllFrom: oldClass
-compileAllFrom: oldClass
+[compileAllFrom: oldClass
 	"Recompile all the methods in the receiver's method dictionary (not the
 	subclasses). Also recompile the methods in the metaclass."
 
 	super compileAllFrom: oldClass.
 	self class compileAllFrom: oldClass class
+]
 
 TClass >> copy
-copy
+[copy
 	^ self explicitRequirement
+]
 
 TClass >> declare: varString
-declare: varString
+[declare: varString
 	"Declare class variables common to all instances. Answer whether 
 	recompilation is advisable."
 
@@ -180,9 +198,10 @@ declare: varString
 		ifTrue: [ self classPool: self classPool.	"in case it was nil"
 			newVars do: [ :var | self classPool declare: var from: Undeclared ] ].
 	^ conflicts
+]
 
 TClass >> duplicateClassWithNewName: aSymbol
-duplicateClassWithNewName: aSymbol
+[duplicateClassWithNewName: aSymbol
 	| copysName class newDefinition |
 	copysName := aSymbol asSymbol.
 	copysName = self name
@@ -199,27 +218,32 @@ duplicateClassWithNewName: aSymbol
 	class class copyAllCategoriesFrom: self class.
 	class comment: self comment stamp: self organization commentStamp.
 	^ class
+]
 
 TClass >> ensureClassPool
-ensureClassPool
+[ensureClassPool
 	^ self classPool
+]
 
 TClass >> environment
-environment
+[environment
 	^ self explicitRequirement
+]
 
 TClass >> environment: anEnvironment
-environment: anEnvironment
+[environment: anEnvironment
 	^ self explicitRequirement
+]
 
 TClass >> externalName
-externalName
+[externalName
 	"Answer a name by which the receiver can be known."
 
 	^ self name
+]
 
 TClass >> fileOut
-fileOut
+[fileOut
 	"Create a file whose name is the name of the receiver with '.st' as the 
 	extension, and file a description of the receiver onto it."
 
@@ -234,13 +258,15 @@ fileOut
 	self fileOutOn: internalStream moveSource: false toFile: 0.
 	internalStream trailer.
 	FileStream writeSourceCodeFrom: internalStream baseName: self name isSt: true
+]
 
 TClass >> fileOutInitializerOn: aStream
-fileOutInitializerOn: aStream
+[fileOutInitializerOn: aStream
 	^ self class fileOutInitializerOn: aStream
+]
 
 TClass >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex
-fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex
+[fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex
 	"File a description of the receiver on aFileStream. If the boolean argument,
 	moveSource, is true, then set the trailing bytes to the position of aFileStream and
 	to fileIndex in order to indicate where to find the source code."
@@ -250,13 +276,15 @@ fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex
 		moveSource: moveSource
 		toFile: fileIndex
 		initializing: true
+]
 
 TClass >> fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex initializing: aBool
-fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex initializing: aBool
+[fileOutOn: aFileStream moveSource: moveSource toFile: fileIndex initializing: aBool
 	^ self explicitRequirement
+]
 
 TClass >> fileOutPool: aPool onFileStream: aFileStream
-fileOutPool: aPool onFileStream: aFileStream
+[fileOutPool: aPool onFileStream: aFileStream
 	| aPoolName |
 	(aPool isKindOf: SharedPool class)
 		ifTrue: [ ^ self notify: 'we do not fileout SharedPool type shared pools for now' ].
@@ -281,52 +309,60 @@ fileOutPool: aPool onFileStream: aFileStream
 				nextPutAll: '!';
 				cr ].
 	aFileStream cr
+]
 
 TClass >> fileOutSharedPoolsOn: aFileStream
-fileOutSharedPoolsOn: aFileStream
+[fileOutSharedPoolsOn: aFileStream
 	"file out the shared pools of this class after prompting the user about each pool"
 
 	| poolsToFileOut |
 	poolsToFileOut := self sharedPools
 		select: [ :aPool | self shouldFileOutPool: (self environment keyAtIdentityValue: aPool) ].
 	poolsToFileOut do: [ :aPool | self fileOutPool: aPool onFileStream: aFileStream ]
+]
 
 TClass >> getName
-getName
+[getName
 	^ self name
+]
 
 TClass >> hasAbstractMethods
-hasAbstractMethods
+[hasAbstractMethods
 	"Tells whether the receiver locally defines an abstract method, i.e., a method sending subclassResponsibility"
 
 	^ super hasAbstractMethods or: [ self class hasAbstractMethods ]
+]
 
 TClass >> hasClassSide
-hasClassSide
+[hasClassSide
 	^ self classSide notNil
+]
 
 TClass >> hasClassVarNamed: aString
-hasClassVarNamed: aString
+[hasClassVarNamed: aString
 	"Return whether the receiver has a class variables (shared variables among its class and subclasses) named: aString"
 
 	^ self classVarNames includes: aString
+]
 
 TClass >> hasMethods
-hasMethods
+[hasMethods
 	"Answer a Boolean according to whether any methods are defined for the 
 	receiver (includes whether there are methods defined in the receiver's 
 	metaclass)."
 
 	^ super hasMethods or: [ self class hasMethods ]
+]
 
 TClass >> hasSharedPools
-hasSharedPools
+[hasSharedPools
 	"Returns whether the receiver uses shared pools directly (Does not take into account that it may inherit shared pool uses."
 
 	^ self sharedPools notEmpty
+]
 
 TClass >> innerBindingOf: aSymbol
-innerBindingOf: aSymbol
+[innerBindingOf: aSymbol
 	"Answer the binding of some variable resolved in the scope of the receiver, or one of its superclass
 	but do not look up binding in receiver's environment.
 	Use #bindingOf: for looking up the variable binding in a full scope, including receiver's environment"
@@ -337,40 +373,48 @@ innerBindingOf: aSymbol
 	self sharedPools do: [ :pool | (pool bindingOf: aSymbol) ifNotNil: [ :binding | ^ binding ] ].
 	self superclass ifNotNil: [ :supercl | ^ supercl innerBindingOf: aSymbol ].
 	^ nil
+]
 
 TClass >> isAnonymous
-isAnonymous
+[isAnonymous
 	^ self getName isNil
+]
 
 TClass >> isClassOrTrait
-isClassOrTrait
+[isClassOrTrait
 	^ true
+]
 
 TClass >> isObsolete
-isObsolete
+[isObsolete
 	"Return true if the receiver is obsolete."
 
 	^ (self environment at: self name ifAbsent: [ nil ]) ~~ self
+]
 
 TClass >> isSelfEvaluating
-isSelfEvaluating
+[isSelfEvaluating
 	^ self isObsolete not
+]
 
 TClass >> isValidTraitName: aSymbol
-isValidTraitName: aSymbol
+[isValidTraitName: aSymbol
 	^ (aSymbol isEmptyOrNil
 		or: [ aSymbol first isLetter not or: [ aSymbol anySatisfy: [ :character | character isAlphaNumeric not ] ] ]) not
+]
 
 TClass >> name
-name
+[name
 	^ self explicitRequirement
+]
 
 TClass >> name: aString
-name: aString
+[name: aString
 	^ self explicitRequirement
+]
 
 TClass >> name: aString traitComposition: aComposition methodDict: aMethodDict localSelectors: aSet organization: aClassOrganization
-name: aString traitComposition: aComposition methodDict: aMethodDict localSelectors: aSet organization: aClassOrganization
+[name: aString traitComposition: aComposition methodDict: aMethodDict localSelectors: aSet organization: aClassOrganization
 	"Used by copy"
 
 	self name: aString.
@@ -378,9 +422,10 @@ name: aString traitComposition: aComposition methodDict: aMethodDict localSelect
 	self methodDict: aMethodDict.
 	self traitComposition: aComposition.
 	self organization: aClassOrganization
+]
 
 TClass >> newSubclass
-newSubclass
+[newSubclass
 	| i className |
 	i := 1.
 	[ className := (self name , i printString) asSymbol.
@@ -392,9 +437,10 @@ newSubclass
 		classVariableNames: ''
 		poolDictionaries: ''
 		category: 'Unclassified'	"Point newSubclass new"
+]
 
 TClass >> obsolete
-obsolete
+[obsolete
 	"Change the receiver and all of its subclasses to an obsolete class."
 
 	self == Object
@@ -406,26 +452,29 @@ obsolete
 	self hasClassSide
 		ifTrue: [ self theMetaClass obsolete ].
 	super obsolete
+]
 
 TClass >> possibleVariablesFor: misspelled continuedFrom: oldResults
-possibleVariablesFor: misspelled continuedFrom: oldResults
+[possibleVariablesFor: misspelled continuedFrom: oldResults
 	| results |
 	results := misspelled correctAgainstDictionary: self classPool continuedFrom: oldResults.
 	self sharedPools do: [ :pool | results := misspelled correctAgainstDictionary: pool continuedFrom: results ].
 	self superclass == nil
 		ifTrue: [ ^ misspelled correctAgainstDictionary: self environment continuedFrom: results ]
 		ifFalse: [ ^ self superclass possibleVariablesFor: misspelled continuedFrom: results ]
+]
 
 TClass >> reformatAll
-reformatAll
+[reformatAll
 	"Reformat all methods in this class.
 	Leaves old code accessible to version browsing"
 
 	super reformatAll.	"me..."
 	self class reformatAll	"...and my metaclass"
+]
 
 TClass >> removeClassVarNamed: aString
-removeClassVarNamed: aString
+[removeClassVarNamed: aString
 	"Remove the class variable whose name is the argument, aString, from 
 	the names defined in the receiver, a class. Create an error notification if 
 	aString is not a class variable or if it is still being used in the code of 
@@ -449,22 +498,25 @@ removeClassVarNamed: aString
 	self classPool removeKey: aSymbol.
 	self classPool isEmpty
 		ifTrue: [ self classPool: nil ]
+]
 
 TClass >> removeFromChanges
-removeFromChanges
+[removeFromChanges
 	"References to the receiver, a class, and its metaclass should no longer be included in the system ChangeSet."
 
 	ChangeSet current removeClassAndMetaClassChanges: self
+]
 
 TClass >> removeFromSystem
-removeFromSystem
+[removeFromSystem
 	"Forget the receiver from the Smalltalk global dictionary. Any existing 
 	instances will refer to an obsolete version of the receiver."
 
 	self removeFromSystem: true
+]
 
 TClass >> removeFromSystem: logged
-removeFromSystem: logged
+[removeFromSystem: logged
 	"Forget the receiver from the Smalltalk global dictionary. Any existing 
 	instances will refer to an obsolete version of the receiver."
 
@@ -479,15 +531,17 @@ removeFromSystem: logged
 			self superclass addObsoleteSubclass: self ].
 	self environment forgetClass: self logged: logged.
 	self obsolete
+]
 
 TClass >> removeFromSystemUnlogged
-removeFromSystemUnlogged
+[removeFromSystemUnlogged
 	"Forget the receiver from the Smalltalk global dictionary. Any existing instances will refer to an obsolete version of the receiver.  Do not log the removal either to the current change set nor to the system changes log"
 
 	^ self removeFromSystem: false
+]
 
 TClass >> removeInstVarNamed: aString
-removeInstVarNamed: aString
+[removeInstVarNamed: aString
 	"Remove the argument, aString, as one of the receiver's instance variables."
 
 	| newInstVarString |
@@ -504,9 +558,10 @@ removeInstVarNamed: aString
 		classVariableNames: self classVariablesString
 		poolDictionaries: self sharedPoolsString
 		category: self category
+]
 
 TClass >> removeSharedPool: aDictionary
-removeSharedPool: aDictionary
+[removeSharedPool: aDictionary
 	"Remove the pool dictionary, aDictionary, as one of the receiver's pool 
 	dictionaries. Create an error notification if the dictionary is not one of 
 	the pools.
@@ -535,18 +590,20 @@ removeSharedPool: aDictionary
 	self sharedPools remove: aDictionary.
 	self sharedPools isEmpty
 		ifTrue: [ self sharedPools: nil ]
+]
 
 TClass >> removeSubclass: aSubclass
-removeSubclass: aSubclass
+[removeSubclass: aSubclass
 	"If the argument, aSubclass, is one of the receiver's subclasses, remove it."
 
 	self subclasses == nil
 		ifFalse: [ self subclasses: (self subclasses copyWithout: aSubclass).
 			self subclasses isEmpty
 				ifTrue: [ self subclasses: nil ] ]
+]
 
 TClass >> rename: aString
-rename: aString
+[rename: aString
 	"The new name of the receiver is the argument, aString."
 
 	| oldName newName |
@@ -563,13 +620,15 @@ rename: aString
 					'There are references to, ' , aString printString
 						,
 							'from Undeclared. Check them after this change.' ]
+]
 
 TClass >> setName: aSymbol
-setName: aSymbol
+[setName: aSymbol
 	self name: aSymbol
+]
 
 TClass >> setName: aSymbol andRegisterInCategory: categorySymbol environment: aSystemDictionary
-setName: aSymbol andRegisterInCategory: categorySymbol environment: aSystemDictionary
+[setName: aSymbol andRegisterInCategory: categorySymbol environment: aSystemDictionary
 	(self isValidTraitName: aSymbol)
 		ifFalse: [ TraitException signal: 'Invalid trait name' ].
 	(self environment == aSystemDictionary and: [ self name = aSymbol and: [ self category = categorySymbol ] ])
@@ -583,9 +642,10 @@ setName: aSymbol andRegisterInCategory: categorySymbol environment: aSystemDicti
 	self environment at: self name put: self.
 	self environment organization classify: self name under: categorySymbol.
 	^ true
+]
 
 TClass >> sharedPoolOfVarNamed: aString
-sharedPoolOfVarNamed: aString
+[sharedPoolOfVarNamed: aString
 	"Returns the SharedPool or nil from which the pool variable named aString is coming from."
 
 	^ self sharedPools
@@ -593,17 +653,20 @@ sharedPoolOfVarNamed: aString
 		ifNone: [ self superclass == nil
 				ifTrue: [ nil ]
 				ifFalse: [ self superclass sharedPoolOfVarNamed: aString ] ]
+]
 
 TClass >> sharedPools
-sharedPools
+[sharedPools
 	^ self explicitRequirement
+]
 
 TClass >> sharedPools: aCollection
-sharedPools: aCollection
+[sharedPools: aCollection
 	^ self explicitRequirement
+]
 
 TClass >> sharing: poolString
-sharing: poolString
+[sharing: poolString
 	"Set up sharedPools. Answer whether recompilation is advisable."
 
 	| oldPools |
@@ -625,43 +688,49 @@ sharing: poolString
 			found
 				ifFalse: [ ^ true	"A pool got deleted" ] ].
 	^ false
+]
 
 TClass >> shouldFileOutPool: aPoolName
-shouldFileOutPool: aPoolName
+[shouldFileOutPool: aPoolName
 	"respond with true if the user wants to file out aPoolName"
 
 	^ self confirm: 'FileOut the sharedPool ' , aPoolName , '?'
+]
 
 TClass >> shouldFileOutPools
-shouldFileOutPools
+[shouldFileOutPools
 	"respond with true if the user wants to file out the shared pools"
 
 	^ self confirm: 'FileOut selected sharedPools?'
+]
 
 TClass >> subclass: t
-subclass: t
+[subclass: t
 	^ self
 		subclass: t
 		instanceVariableNames: ''
 		classVariableNames: ''
 		poolDictionaries: ''
 		category: 'Unclassified'
+]
 
 TClass >> subclass: t instanceVariableNames: ins
-subclass: t instanceVariableNames: ins
+[subclass: t instanceVariableNames: ins
 	^ self
 		subclass: t
 		instanceVariableNames: ins
 		classVariableNames: ''
 		poolDictionaries: ''
 		category: 'Unclassified'
+]
 
 TClass >> subclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
-subclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+[subclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
 	^ self explicitRequirement
+]
 
 TClass >> subclass: t uses: aTraitComposition
-subclass: t uses: aTraitComposition
+[subclass: t uses: aTraitComposition
 	| cls |
 	cls := self
 		subclass: t
@@ -671,9 +740,10 @@ subclass: t uses: aTraitComposition
 		category: 'Unclassified'.
 	cls setTraitComposition: aTraitComposition asTraitComposition.
 	^ cls
+]
 
 TClass >> subclass: t uses: aTraitCompositionOrArray instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
-subclass: t uses: aTraitCompositionOrArray instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+[subclass: t uses: aTraitCompositionOrArray instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
 	| newClass copyOfOldClass |
 	copyOfOldClass := self copy.
 	newClass := self
@@ -685,24 +755,28 @@ subclass: t uses: aTraitCompositionOrArray instanceVariableNames: f classVariabl
 	newClass setTraitComposition: aTraitCompositionOrArray asTraitComposition.
 	SystemAnnouncer uniqueInstance classDefinitionChangedFrom: copyOfOldClass to: newClass.
 	^ newClass
+]
 
 TClass >> subclasses
-subclasses
+[subclasses
 	^ self explicitRequirement
+]
 
 TClass >> subclasses: aCollection
-subclasses: aCollection
+[subclasses: aCollection
 	^ self explicitRequirement
+]
 
 TClass >> subclassesDo: aBlock
-subclassesDo: aBlock
+[subclassesDo: aBlock
 	"Evaluate the argument, aBlock, for each of the receiver's immediate subclasses."
 
 	self subclasses size == 0
 		ifFalse: [ self subclasses do: aBlock ]
+]
 
 TClass >> superclass: sup methodDict: md format: ft name: nm organization: org instVarNames: nilOrArray classPool: pool sharedPools: poolSet
-superclass: sup methodDict: md format: ft name: nm organization: org instVarNames: nilOrArray classPool: pool sharedPools: poolSet
+[superclass: sup methodDict: md format: ft name: nm organization: org instVarNames: nilOrArray classPool: pool sharedPools: poolSet
 	"Answer an instance of me, a new class, using the arguments of the 
 	message as the needed information.
 	Must only be sent to a new instance; else we would need Object flushCache."
@@ -715,28 +789,32 @@ superclass: sup methodDict: md format: ft name: nm organization: org instVarName
 	self classPool: pool.
 	self sharedPools: poolSet.
 	self organization: org
+]
 
 TClass >> superclass: aClass methodDictionary: mDict format: fmt
-superclass: aClass methodDictionary: mDict format: fmt
+[superclass: aClass methodDictionary: mDict format: fmt
 	"Basic initialization of the receiver"
 
 	super superclass: aClass methodDictionary: mDict format: fmt.
 	self subclasses: nil
+]
 
 TClass >> unload
-unload
+[unload
 	"Sent when a the class is removed.  Does nothing, but may be overridden by (class-side) subclasses."
 
 	
+]
 
 TClass >> usesClassVarNamed: aString
-usesClassVarNamed: aString
+[usesClassVarNamed: aString
 	"Return whether the receiver or its superclasses have a class variable named: aString"
 
 	^ self allClassVarNames includes: aString
+]
 
 TClass >> usesLocalPoolVarNamed: aString
-usesLocalPoolVarNamed: aString
+[usesLocalPoolVarNamed: aString
 	"Return whether the receiver uses a pool variable named: aString which is defined locally"
 
 	self hasSharedPools
@@ -744,17 +822,19 @@ usesLocalPoolVarNamed: aString
 						ifTrue: [ ^ true ] ] ]
 		ifFalse: [ ^ false ].
 	^ false
+]
 
 TClass >> usesPoolVarNamed: aString
-usesPoolVarNamed: aString
+[usesPoolVarNamed: aString
 	"Return whether the receiver has a pool variable named: aString, taking into account superclasses too"
 
 	self allSharedPools do: [ :each | (each usesClassVarNamed: aString)
 				ifTrue: [ ^ true ] ].
 	^ false
+]
 
 TClass >> variableByteSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
-variableByteSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+[variableByteSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
 	"This is the standard initialization message for creating a new class as a 
 	subclass of an existing class (the receiver) in which the subclass is to 
 	have indexable byte-sized nonpointer variables."
@@ -766,9 +846,10 @@ variableByteSubclass: t instanceVariableNames: f classVariableNames: d poolDicti
 		classVariableNames: d
 		poolDictionaries: s
 		category: cat
+]
 
 TClass >> variableByteSubclass: t uses: aTraitCompositionOrArray instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
-variableByteSubclass: t uses: aTraitCompositionOrArray instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+[variableByteSubclass: t uses: aTraitCompositionOrArray instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
 	"This is the standard initialization message for creating a new class as a 
 	subclass of an existing class (the receiver) in which the subclass is to 
 	have indexable byte-sized nonpointer variables."
@@ -784,9 +865,10 @@ variableByteSubclass: t uses: aTraitCompositionOrArray instanceVariableNames: f 
 	newClass setTraitComposition: aTraitCompositionOrArray asTraitComposition.
 	SystemAnnouncer uniqueInstance classDefinitionChangedFrom: copyOfOldClass to: newClass.
 	^ newClass
+]
 
 TClass >> variableSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
-variableSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+[variableSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
 	"This is the standard initialization message for creating a new class as a 
 	subclass of an existing class (the receiver) in which the subclass is to 
 	have indexable pointer variables."
@@ -798,9 +880,10 @@ variableSubclass: t instanceVariableNames: f classVariableNames: d poolDictionar
 		classVariableNames: d
 		poolDictionaries: s
 		category: cat
+]
 
 TClass >> variableSubclass: t uses: aTraitCompositionOrArray instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
-variableSubclass: t uses: aTraitCompositionOrArray instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+[variableSubclass: t uses: aTraitCompositionOrArray instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
 	"This is the standard initialization message for creating a new class as a 
 	subclass of an existing class (the receiver) in which the subclass is to 
 	have indexable pointer variables."
@@ -816,9 +899,10 @@ variableSubclass: t uses: aTraitCompositionOrArray instanceVariableNames: f clas
 	newClass setTraitComposition: aTraitCompositionOrArray asTraitComposition.
 	SystemAnnouncer uniqueInstance classDefinitionChangedFrom: copyOfOldClass to: newClass.
 	^ newClass
+]
 
 TClass >> variableWordSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
-variableWordSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+[variableWordSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
 	"This is the standard initialization message for creating a new class as a 
 	subclass of an existing class (the receiver) in which the subclass is to 
 	have indexable word-sized nonpointer variables."
@@ -830,9 +914,10 @@ variableWordSubclass: t instanceVariableNames: f classVariableNames: d poolDicti
 		classVariableNames: d
 		poolDictionaries: s
 		category: cat
+]
 
 TClass >> variableWordSubclass: t uses: aTraitCompositionOrArray instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
-variableWordSubclass: t uses: aTraitCompositionOrArray instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+[variableWordSubclass: t uses: aTraitCompositionOrArray instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
 	"This is the standard initialization message for creating a new class as a 
 	subclass of an existing class (the receiver) in which the subclass is to 
 	have indexable word-sized nonpointer variables."
@@ -848,9 +933,10 @@ variableWordSubclass: t uses: aTraitCompositionOrArray instanceVariableNames: f 
 	newClass setTraitComposition: aTraitCompositionOrArray asTraitComposition.
 	SystemAnnouncer uniqueInstance classDefinitionChangedFrom: copyOfOldClass to: newClass.
 	^ newClass
+]
 
 TClass >> weakSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
-weakSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+[weakSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
 	"This is the standard initialization message for creating a new class as a subclass of an existing class (the receiver) in which the subclass is to have weak indexable pointer variables."
 
 	^ self classBuilder
@@ -860,9 +946,10 @@ weakSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries:
 		classVariableNames: d
 		poolDictionaries: s
 		category: cat
+]
 
 TClass >> weakSubclass: t uses: aTraitCompositionOrArray instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
-weakSubclass: t uses: aTraitCompositionOrArray instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+[weakSubclass: t uses: aTraitCompositionOrArray instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
 	"This is the standard initialization message for creating a new class as a 
 	subclass of an existing class (the receiver) in which the subclass is to 
 	have weak indexable pointer variables."
@@ -878,4 +965,5 @@ weakSubclass: t uses: aTraitCompositionOrArray instanceVariableNames: f classVar
 	newClass setTraitComposition: aTraitCompositionOrArray asTraitComposition.
 	SystemAnnouncer uniqueInstance classDefinitionChangedFrom: copyOfOldClass to: newClass.
 	^ newClass
+]
 

@@ -4,33 +4,38 @@ RxsBranch
 	package: #'Regex-Core'.
 
 RxsBranch >> branch
-branch
+[branch
 	^ branch
+]
 
 RxsBranch >> dispatchTo: aMatcher
-dispatchTo: aMatcher
+[dispatchTo: aMatcher
 	"Inform the matcher of the kind of the node, and it
 	will do whatever it has to."
 
 	^ aMatcher syntaxBranch: self
+]
 
 RxsBranch >> initializePiece: aPiece branch: aBranch
-initializePiece: aPiece branch: aBranch
+[initializePiece: aPiece branch: aBranch
 	"See class comment for instance variables description."
 
 	piece := aPiece.
 	branch := aBranch
+]
 
 RxsBranch >> isNullable
-isNullable
+[isNullable
 	^ piece isNullable and: [ branch isNil or: [ branch isNullable ] ]
+]
 
 RxsBranch >> piece
-piece
+[piece
 	^ piece
+]
 
 RxsBranch >> tryMergingInto: aStream
-tryMergingInto: aStream
+[tryMergingInto: aStream
 	"Concatenation of a few simple characters can be optimized
 	to be a plain substring match. Answer the node to resume
 	syntax tree traversal at. Epsilon node used to terminate the branch
@@ -43,4 +48,5 @@ tryMergingInto: aStream
 	^ branch isNil
 		ifTrue: [ branch ]
 		ifFalse: [ branch tryMergingInto: aStream ]
+]
 

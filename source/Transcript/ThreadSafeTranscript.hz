@@ -4,35 +4,40 @@ ThreadSafeTranscript
 	package: #Transcript.
 
 ThreadSafeTranscript >> << aString
-<< aString
+[<< aString
 	self show: aString
+]
 
 ThreadSafeTranscript >> black
-black
+[black
 	"copied from Transcripter"
 
 	Display depth = 1
 		ifTrue: [ ^ Bitmap with: 16rFFFFFFFF	"Works without color support" ].
 	^ Color black
+]
 
 ThreadSafeTranscript >> characterLimit
-characterLimit
+[characterLimit
 	^ 20000
+]
 
 ThreadSafeTranscript >> clear
-clear
+[clear
 	"Clear all characters and redisplay the view"
 
 	self changed: #clearText.
 	accessSemaphore critical: [ stream reset ]
+]
 
 ThreadSafeTranscript >> close
-close
+[close
 	self flush.
 	accessSemaphore critical: [ stream close ]
+]
 
 ThreadSafeTranscript >> codePaneMenu: aMenu shifted: shifted
-codePaneMenu: aMenu shifted: shifted
+[codePaneMenu: aMenu shifted: shifted
 	"Note that unless we override perform:orSendTo:, 
 	PluggableTextController will respond to all menu items in a 
 	text pane"
@@ -40,118 +45,140 @@ codePaneMenu: aMenu shifted: shifted
 	^ shifted
 		ifTrue: [ SmalltalkEditor shiftedYellowButtonMenu ]
 		ifFalse: [ SmalltalkEditor yellowButtonMenu ]
+]
 
 ThreadSafeTranscript >> contents
-contents
+[contents
 	^ accessSemaphore critical: [ stream contents ]
+]
 
 ThreadSafeTranscript >> cr
-cr
+[cr
 	accessSemaphore critical: [ stream cr ]
+]
 
 ThreadSafeTranscript >> crShow: anObject
-crShow: anObject
+[crShow: anObject
 	self
 		cr;
 		show: anObject
+]
 
 ThreadSafeTranscript >> endEntry
-endEntry
+[endEntry
 	"Display all the characters since the last endEntry, and reset the
   stream "
 
 	accessSemaphore critical: [ self changed: #appendEntry.
 			stream resetContents ]
+]
 
 ThreadSafeTranscript >> ensureCr
-ensureCr
+[ensureCr
 	"do nothing, its here only for compatibility"
 
 	
+]
 
 ThreadSafeTranscript >> flush
-flush
+[flush
 	self endEntry
+]
 
 ThreadSafeTranscript >> initialExtent
-initialExtent
+[initialExtent
 	^ 447 @ 300
+]
 
 ThreadSafeTranscript >> initialize
-initialize
+[initialize
 	super initialize.
 	accessSemaphore := Mutex new.
 	stream := String new writeStream
+]
 
 ThreadSafeTranscript >> isSelfEvaluating
-isSelfEvaluating
+[isSelfEvaluating
 	self == Transcript
 		ifTrue: [ ^ true ].
 	^ super isSelfEvaluating
+]
 
 ThreadSafeTranscript >> nextPut: value
-nextPut: value
+[nextPut: value
 	accessSemaphore critical: [ stream nextPut: value ].
 	^ value
+]
 
 ThreadSafeTranscript >> nextPutAll: value
-nextPutAll: value
+[nextPutAll: value
 	accessSemaphore critical: [ stream nextPutAll: value ].
 	^ value
+]
 
 ThreadSafeTranscript >> pastEndPut: anObject
-pastEndPut: anObject
+[pastEndPut: anObject
 	"If the stream reaches its limit, just output the contents and reset."
 
 	self endEntry.
 	^ self nextPut: anObject
+]
 
 ThreadSafeTranscript >> print: anObject
-print: anObject
+[print: anObject
 	self nextPutAll: anObject asString
+]
 
 ThreadSafeTranscript >> printOn: aStream
-printOn: aStream
+[printOn: aStream
 	self == Transcript
 		ifFalse: [ ^ super printOn: aStream ].
 	aStream nextPutAll: 'Transcript'
+]
 
 ThreadSafeTranscript >> reset
-reset
+[reset
 	
+]
 
 ThreadSafeTranscript >> show: anObject
-show: anObject
+[show: anObject
 	self
 		print: anObject;
 		endEntry
+]
 
 ThreadSafeTranscript >> space
-space
+[space
 	accessSemaphore critical: [ stream space ]
+]
 
 ThreadSafeTranscript >> tab
-tab
+[tab
 	accessSemaphore critical: [ stream tab ]
+]
 
 ThreadSafeTranscript >> title
-title
+[title
 	^ 'Transcript'
+]
 
 ThreadSafeTranscript >> white
-white
+[white
 	"copied from Transcripter"
 
 	Display depth = 1
 		ifTrue: [ ^ Bitmap with: 0	"Works without color support" ].
 	^ Color white
+]
 
 ThreadSafeTranscript >> with: aBlock
-with: aBlock
+[with: aBlock
 	^ accessSemaphore critical: [ aBlock value: stream ]
+]
 
 ThreadSafeTranscript class >> examples
-examples
+[examples
 	"self examples"
 
 	| tt |
@@ -176,9 +203,10 @@ examples
 	tt
 		show: ' is really cool';
 		cr
+]
 
 ThreadSafeTranscript class >> examplesConcurrent
-examplesConcurrent
+[examplesConcurrent
 	"self examplesConcurrent"
 
 	| tt |
@@ -195,9 +223,10 @@ examplesConcurrent
 			nextPutAll: '-'.
 		Processor yield ].
 	tt flush ] fork
+]
 
 ThreadSafeTranscript class >> examplesForegroundUpdate
-examplesForegroundUpdate
+[examplesForegroundUpdate
 	"self examplesForegroundUpdate"
 
 	| tt length |
@@ -210,25 +239,30 @@ examplesForegroundUpdate
 		show: 'STARTING----->'.	"Foreground updates"
 	1000 to: 1000 + length do: [ :i | tt show: '---' , i printString , '---'.
 		(Delay forSeconds: 1) wait ]
+]
 
 ThreadSafeTranscript class >> install
-install
+[install
 	self installThreadSafeAsTranscript
+]
 
 ThreadSafeTranscript class >> installThreadSafeAsSTranscript
-installThreadSafeAsSTranscript
+[installThreadSafeAsSTranscript
 	Smalltalk globals at: #STranscript put: self new	"ThreadSafeTranscript open"
+]
 
 ThreadSafeTranscript class >> installThreadSafeAsTranscript
-installThreadSafeAsTranscript
+[installThreadSafeAsTranscript
 	Smalltalk globals at: #Transcript put: self new	"ThreadSafeTranscript open"
+]
 
 ThreadSafeTranscript class >> menuCommandOn: aBuilder
-menuCommandOn: aBuilder
+[menuCommandOn: aBuilder
 	<worldMenu>
 	(aBuilder item: #Transcript)
 		action: [ Smalltalk tools transcript open ];
 		parent: #Tools;
 		help: 'Transcript';
 		icon: self taskbarIcon
+]
 

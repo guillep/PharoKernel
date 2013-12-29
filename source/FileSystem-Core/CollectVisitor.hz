@@ -3,34 +3,42 @@ CollectVisitor
 	package: #'FileSystem-Core'.
 
 CollectVisitor >> visitReference: anEntry
-visitReference: anEntry
+[visitReference: anEntry
 	out nextPut: (block value: anEntry)
+]
 
 CollectVisitor class >> breadthFirst: aReference
-breadthFirst: aReference
+[breadthFirst: aReference
 	^ self breadthFirst: aReference collect: [ :entry | entry ]
+]
 
 CollectVisitor class >> breadthFirst: aReference collect: aBlock
-breadthFirst: aReference collect: aBlock
+[breadthFirst: aReference collect: aBlock
 	^ (self collect: aBlock) breadthFirst: aReference
+]
 
 CollectVisitor class >> collect: aBlock
-collect: aBlock
+[collect: aBlock
 	^ self basicNew initializeWithBlock: aBlock
+]
 
 CollectVisitor class >> postorder: aReference
-postorder: aReference
+[postorder: aReference
 	^ self postorder: aReference collect: [ :entry | entry ]
+]
 
 CollectVisitor class >> postorder: aReference collect: aBlock
-postorder: aReference collect: aBlock
+[postorder: aReference collect: aBlock
 	^ (self collect: aBlock) postorder: aReference
+]
 
 CollectVisitor class >> preorder: aReference
-preorder: aReference
+[preorder: aReference
 	^ self preorder: aReference collect: [ :entry | entry ]
+]
 
 CollectVisitor class >> preorder: aReference collect: aBlock
-preorder: aReference collect: aBlock
+[preorder: aReference collect: aBlock
 	^ (self collect: aBlock) preorder: aReference
+]
 

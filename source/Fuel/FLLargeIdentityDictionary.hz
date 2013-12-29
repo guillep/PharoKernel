@@ -4,31 +4,34 @@ FLLargeIdentityDictionary
 	package: #Fuel.
 
 FLLargeIdentityDictionary >> at: key
-at: key
+[at: key
 	| hash |
 	(keys at: (hash := key largeIdentityHash + 1))
 		ifNotNil: [ :keyList | 1 to: (tallies at: hash) do: [ :index | (keyList at: index) == key
 					ifTrue: [ ^ (values at: hash) at: index ] ] ].
 	self errorKeyNotFound: key
+]
 
 FLLargeIdentityDictionary >> at: key ifAbsent: aBlock
-at: key ifAbsent: aBlock
+[at: key ifAbsent: aBlock
 	| hash |
 	(keys at: (hash := key largeIdentityHash + 1))
 		ifNotNil: [ :keyList | 1 to: (tallies at: hash) do: [ :index | (keyList at: index) == key
 					ifTrue: [ ^ (values at: hash) at: index ] ] ].
 	^ aBlock value
+]
 
 FLLargeIdentityDictionary >> at: key ifPresent: presentBlock ifAbsent: absentBlock
-at: key ifPresent: presentBlock ifAbsent: absentBlock
+[at: key ifPresent: presentBlock ifAbsent: absentBlock
 	| hash |
 	(keys at: (hash := key largeIdentityHash + 1))
 		ifNotNil: [ :keyList | 1 to: (tallies at: hash) do: [ :index | (keyList at: index) == key
 					ifTrue: [ ^ presentBlock value: ((values at: hash) at: index) ] ] ].
 	^ absentBlock value
+]
 
 FLLargeIdentityDictionary >> at: key put: value
-at: key put: value
+[at: key put: value
 	| hash |
 	(keys at: (hash := key largeIdentityHash + 1))
 		ifNil: [ keys at: hash put: (Array with: key).
@@ -59,17 +62,20 @@ at: key put: value
 					values at: hash put: newList ].
 			tallies at: hash put: newIndex ].
 	^ value
+]
 
 FLLargeIdentityDictionary >> do: aBlock
-do: aBlock
+[do: aBlock
 	^ self valuesDo: aBlock
+]
 
 FLLargeIdentityDictionary >> errorKeyNotFound: aKey
-errorKeyNotFound: aKey
+[errorKeyNotFound: aKey
 	KeyNotFound signalFor: aKey
+]
 
 FLLargeIdentityDictionary >> includesKey: key
-includesKey: key
+[includesKey: key
 	| hash |
 	^ (keys at: (hash := key largeIdentityHash + 1))
 		ifNil: [ false ]
@@ -78,44 +84,50 @@ includesKey: key
 				ifNil: [ 1 to: (tallies at: hash) do: [ :index | (keyList at: index) == key
 							ifTrue: [ ^ true ] ].
 					false ] ]
+]
 
 FLLargeIdentityDictionary >> initialize
-initialize
+[initialize
 	super initialize.
 	keys := Array new: 4096.
 	values := Array new: 4096
+]
 
 FLLargeIdentityDictionary >> keys
-keys
+[keys
 	^ Array new: tally streamContents: [ :stream | self keysDo: [ :key | stream nextPut: key ] ]
+]
 
 FLLargeIdentityDictionary >> keysAndValuesDo: aBlock
-keysAndValuesDo: aBlock
+[keysAndValuesDo: aBlock
 	tally = 0
 		ifTrue: [ ^ self ].
 	1 to: 4096 do: [ :arrayIndex | | keyArray valueArray |
 		keyArray := keys at: arrayIndex.
 		valueArray := values at: arrayIndex.
 		1 to: (tallies at: arrayIndex) do: [ :index | aBlock value: (keyArray at: index) value: (valueArray at: index) ] ]
+]
 
 FLLargeIdentityDictionary >> keysDo: aBlock
-keysDo: aBlock
+[keysDo: aBlock
 	tally = 0
 		ifTrue: [ ^ self ].
 	1 to: 4096 do: [ :arrayIndex | | keyArray |
 		keyArray := keys at: arrayIndex.
 		1 to: (tallies at: arrayIndex) do: [ :index | aBlock value: (keyArray at: index) ] ]
+]
 
 FLLargeIdentityDictionary >> postCopy
-postCopy
+[postCopy
 	super postCopy.
 	keys := keys copy.
 	values := values copy.
 	1 to: 4096 do: [ :index | (keys at: index) ifNotNil: [ :list | keys at: index put: list copy.
 				values at: index put: (values at: index) copy ] ]
+]
 
 FLLargeIdentityDictionary >> removeKey: key ifAbsent: aBlock
-removeKey: key ifAbsent: aBlock
+[removeKey: key ifAbsent: aBlock
 	| hash |
 	(keys at: (hash := key largeIdentityHash + 1))
 		ifNotNil: [ :keyList | | size |
@@ -147,16 +159,19 @@ removeKey: key ifAbsent: aBlock
 						tally := tally - 1.
 						^ key ] ] ].
 	^ aBlock value
+]
 
 FLLargeIdentityDictionary >> values
-values
+[values
 	^ Array new: tally streamContents: [ :stream | self valuesDo: [ :value | stream nextPut: value ] ]
+]
 
 FLLargeIdentityDictionary >> valuesDo: aBlock
-valuesDo: aBlock
+[valuesDo: aBlock
 	tally = 0
 		ifTrue: [ ^ self ].
 	1 to: 4096 do: [ :arrayIndex | | valueArray |
 		valueArray := values at: arrayIndex.
 		1 to: (tallies at: arrayIndex) do: [ :index | aBlock value: (valueArray at: index) ] ]
+]
 
