@@ -130,17 +130,3 @@ WeakAnnouncementSubscription class >> new
 		ifFalse: [ LegacyWeakSubscription ]) basicNew: 1) initialize
 ]
 
-
-
-	WeakArray
-		removeWeakDependent: self;
-		addWeakDependent: self	"Make sure that it is not added twice."
-]
-
-WeakAnnouncementSubscription class >> new
-[new
-	^ ((WeakFinalizationList hasNewFinalization
-		ifTrue: [ self ]
-		ifFalse: [ LegacyWeakSubscription ]) basicNew: 1) initialize
-]
-

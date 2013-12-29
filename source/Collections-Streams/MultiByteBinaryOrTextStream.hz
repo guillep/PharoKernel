@@ -315,26 +315,3 @@ MultiByteBinaryOrTextStream class >> with: aCollection encoding: encodingName
 	^ (self with: aCollection) converter: aTextConverter
 ]
 
-Converter
-[defaultConverter
-	^ Latin1TextConverter new
-]
-
-MultiByteBinaryOrTextStream class >> on: aCollection encoding: encodingName
-[on: aCollection encoding: encodingName
-	| aTextConverter |
-	encodingName
-		ifNil: [ aTextConverter := TextConverter default ]
-		ifNotNil: [ aTextConverter := TextConverter newForEncoding: encodingName ].
-	^ (self on: aCollection) converter: aTextConverter
-]
-
-MultiByteBinaryOrTextStream class >> with: aCollection encoding: encodingName
-[with: aCollection encoding: encodingName
-	| aTextConverter |
-	encodingName
-		ifNil: [ aTextConverter := TextConverter default ]
-		ifNotNil: [ aTextConverter := TextConverter newForEncoding: encodingName ].
-	^ (self with: aCollection) converter: aTextConverter
-]
-

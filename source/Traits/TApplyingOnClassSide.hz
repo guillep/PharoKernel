@@ -299,25 +299,3 @@ TApplyingOnClassSide >> wantsRecompilationProgressReported
 	^ self theNonMetaClass wantsRecompilationProgressReported
 ]
 
-= self copy.
-	newMetaClass := self instanceVariableNames: instVarString.
-	newComposition := aTraitCompositionOrArray asTraitComposition.
-	newMetaClass assertConsistantCompositionsForNew: newComposition.
-	newMetaClass setTraitComposition: newComposition.
-	SystemAnnouncer uniqueInstance classDefinitionChangedFrom: copyOfOldMetaClass to: newMetaClass
-]
-
-TApplyingOnClassSide >> wantsChangeSetLogging
-[wantsChangeSetLogging
-	"Answer whether code submitted for the receiver should be remembered by the changeSet mechanism.The metaclass follows the rule of the class itself."
-
-	^ self theNonMetaClass wantsChangeSetLogging
-]
-
-TApplyingOnClassSide >> wantsRecompilationProgressReported
-[wantsRecompilationProgressReported
-	"The metaclass follows the rule of the class itself."
-
-	^ self theNonMetaClass wantsRecompilationProgressReported
-]
-

@@ -333,35 +333,3 @@ Monitor >> waitWhile: aBlock maxSeconds: aNumber
 	^ self waitWhile: aBlock maxMilliseconds: (aNumber * 1000) asInteger
 ]
 
-l) maxMilliseconds: anIntegerOrNil
-]
-
-Monitor >> waitWhile: aBlock for: aSymbolOrNil maxSeconds: aNumber
-[waitWhile: aBlock for: aSymbolOrNil maxSeconds: aNumber
-	"Same as Monitor>>waitWhile:for:, but the process gets automatically woken up when the 
-	specified time has passed."
-
-	^ self waitWhile: aBlock for: aSymbolOrNil maxMilliseconds: (aNumber * 1000) asInteger
-]
-
-Monitor >> waitWhile: aBlock inQueue: anOrderedCollection maxMilliseconds: anIntegerOrNil
-[waitWhile: aBlock inQueue: anOrderedCollection maxMilliseconds: anIntegerOrNil
-	[ aBlock value ] whileTrue: [ self exitAndWaitInQueue: anOrderedCollection maxMilliseconds: anIntegerOrNil ]
-]
-
-Monitor >> waitWhile: aBlock maxMilliseconds: anIntegerOrNil
-[waitWhile: aBlock maxMilliseconds: anIntegerOrNil
-	"Same as Monitor>>waitWhile:, but the process gets automatically woken up when the 
-	specified time has passed."
-
-	^ self waitWhile: aBlock for: nil maxMilliseconds: anIntegerOrNil
-]
-
-Monitor >> waitWhile: aBlock maxSeconds: aNumber
-[waitWhile: aBlock maxSeconds: aNumber
-	"Same as Monitor>>waitWhile:, but the process gets automatically woken up when the 
-	specified time has passed."
-
-	^ self waitWhile: aBlock maxMilliseconds: (aNumber * 1000) asInteger
-]
-

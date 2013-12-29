@@ -1290,34 +1290,3 @@ RxParser class >> signalSyntaxException: errorString at: errorPosition
 	RegexSyntaxError signal: errorString at: errorPosition
 ]
 
->> safelyParse: aString
-[safelyParse: aString
-	"Parse the argument and return the result (the parse tree).
-	In case of a syntax error, return nil.
-	Exception handling here is dialect-dependent."
-
-	^ [ self new parse: aString ]
-		on: RegexSyntaxError
-		do: [ :ex | nil ]
-]
-
-RxParser class >> signalCompilationException: errorString
-[signalCompilationException: errorString
-	RegexCompilationError new signal: errorString
-]
-
-RxParser class >> signalMatchException: errorString
-[signalMatchException: errorString
-	RegexMatchingError new signal: errorString
-]
-
-RxParser class >> signalSyntaxException: errorString
-[signalSyntaxException: errorString
-	RegexSyntaxError new signal: errorString
-]
-
-RxParser class >> signalSyntaxException: errorString at: errorPosition
-[signalSyntaxException: errorString at: errorPosition
-	RegexSyntaxError signal: errorString at: errorPosition
-]
-

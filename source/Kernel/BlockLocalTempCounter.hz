@@ -251,32 +251,3 @@ BlockLocalTempCounter class >> tempCountForBlockAt: pc in: method
 	^ self new tempCountForBlockAt: pc in: method
 ]
 
-kPointer := 0.
-	scanner := InstructionStream new method: method pc: startPc.
-	scanner interpretNextInstructionFor: self.
-	blockEnd ifNil: [ self error: 'pc is not that of a block' ].
-	scanner nextByte = Encoder pushNilCode
-		ifTrue: [ joinOffsets := Dictionary new.
-			[ scanner pc < blockEnd ]
-				whileTrue: [ line := symbolicLines at: scanner pc.
-					prior := stackPointer.
-					thePc := scanner pc.
-					scanner interpretNextInstructionFor: self.
-					Transcript
-						cr;
-						print: prior;
-						nextPutAll: '->';
-						print: stackPointer;
-						tab;
-						print: thePc;
-						tab;
-						nextPutAll: line;
-						flush ] ].
-	^ stackPointer
-]
-
-BlockLocalTempCounter class >> tempCountForBlockAt: pc in: method
-[tempCountForBlockAt: pc in: method
-	^ self new tempCountForBlockAt: pc in: method
-]
-

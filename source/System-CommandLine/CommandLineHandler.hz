@@ -249,27 +249,3 @@ CommandLineHandler class >> selectHandlersFor: aCommandLine
 	^ self allHandlers select: [ :handlerClass | handlerClass isResponsibleFor: aCommandLine ]
 ]
 
-ndLineArguments
-	^ aCommandLineArguments includesSubCommand: self commandName
-]
-
-CommandLineHandler class >> prepareSubcommand: commandLineArguments
-[prepareSubcommand: commandLineArguments
-	"strip the subcommand name from the arguments"
-
-	commandLineArguments
-		withFirstArgument: [ :arg | arg = self commandName
-				ifTrue: [ ^ commandLineArguments copySubcommand ] ].	"not a subcommand hence we keep the same args"
-	^ commandLineArguments
-]
-
-CommandLineHandler class >> priority
-[priority
-	^ 0
-]
-
-CommandLineHandler class >> selectHandlersFor: aCommandLine
-[selectHandlersFor: aCommandLine
-	^ self allHandlers select: [ :handlerClass | handlerClass isResponsibleFor: aCommandLine ]
-]
-

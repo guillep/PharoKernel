@@ -273,32 +273,3 @@ PragmaCollector class >> filter: aOneArgValuable
 	^ self new filter: aOneArgValuable
 ]
 
-Updated pragma: aPragma)
-]
-
-PragmaCollector >> whenChangedSend: aSelector to: anObject
-[whenChangedSend: aSelector to: anObject
-	"record a change listener"
-
-	self subscribe: PragmaAnnouncement send: aSelector to: anObject
-]
-
-PragmaCollector >> whenResetSend: aSelector to: anObject
-[whenResetSend: aSelector to: anObject
-	"record a change listener"
-
-	self subscribe: PragmaCollectorReset send: aSelector to: anObject
-]
-
-PragmaCollector class >> allSystemPragmas
-[allSystemPragmas
-	^ Array
-		streamContents: [ :stream | SystemNavigation new
-				allBehaviorsDo: [ :behavior | Pragma withPragmasIn: behavior do: [ :pragma | stream nextPut: pragma ] ] ]
-]
-
-PragmaCollector class >> filter: aOneArgValuable
-[filter: aOneArgValuable
-	^ self new filter: aOneArgValuable
-]
-

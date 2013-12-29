@@ -206,30 +206,3 @@ TextConverter class >> newForEncoding: aString
 		ifNone: [ nil ]
 ]
 
- latin1Encodings
-[latin1Encodings
-	"Answer an Array mapping latin1 characters to conversion string"
-
-	^ latin1Encodings ifNil: [ self initializeLatin1MapAndEncodings.
-			latin1Encodings ]
-]
-
-TextConverter class >> latin1Map
-[latin1Map
-	"Answer a ByteArray map telling if latin1 characters needs conversion or not"
-
-	^ latin1Map ifNil: [ self initializeLatin1MapAndEncodings.
-			latin1Map ]
-]
-
-TextConverter class >> newForEncoding: aString
-[newForEncoding: aString
-	| encoding |
-	aString ifNil: [ ^ Latin1TextConverter new ].
-	encoding := aString asLowercase.
-	^ self allSubclasses
-		detect: [ :each | each encodingNames includes: encoding ]
-		ifFound: [ :class | class new ]
-		ifNone: [ nil ]
-]
-

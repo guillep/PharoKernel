@@ -161,31 +161,3 @@ FLLightGeneralMapper >> visitWordsObject: anObject
 	self mapAndTraceByObjectClass: anObject to: FLWordObjectCluster
 ]
 
-t by: anotherObject onRecursionDo: aBlock
-	| cluster |
-	cluster := self clusterKeyedByClusterName: FLSubstitutionCluster.
-	(cluster isSubstitute: anObject)
-		ifTrue: aBlock
-		ifFalse: [ cluster add: anObject substitutedBy: anotherObject traceWith: analysis ]
-]
-
-FLLightGeneralMapper >> visitTrait: aTrait
-[visitTrait: aTrait
-	self mapAndTraceInstanceSideGlobal: aTrait
-]
-
-FLLightGeneralMapper >> visitVariableObject: anObject
-[visitVariableObject: anObject
-	self mapAndTraceByObjectClass: anObject to: FLVariableObjectCluster
-]
-
-FLLightGeneralMapper >> visitWeakObject: anObject
-[visitWeakObject: anObject
-	self mapAndTraceByObjectClass: anObject to: FLWeakVariableObjectCluster
-]
-
-FLLightGeneralMapper >> visitWordsObject: anObject
-[visitWordsObject: anObject
-	self mapAndTraceByObjectClass: anObject to: FLWordObjectCluster
-]
-

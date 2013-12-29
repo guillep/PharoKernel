@@ -347,36 +347,3 @@ AdditionalMethodState class >> selector: aSelector with: aPropertyOrPragma
 		yourself
 ]
 
-tor
-	^ selector
-]
-
-AdditionalMethodState >> selector: aSymbol
-[selector: aSymbol
-	selector := aSymbol
-]
-
-AdditionalMethodState >> setMethod: aMethod
-[setMethod: aMethod
-	method := aMethod.
-	1 to: self basicSize do: [ :i | | propertyOrPragma "<Association|Pragma>" |
-		(propertyOrPragma := self basicAt: i) isVariableBinding
-			ifFalse: [ propertyOrPragma setMethod: aMethod ] ]
-]
-
-AdditionalMethodState class >> forMethod: aMethod selector: aSelector
-[forMethod: aMethod selector: aSelector
-	^ (self new: 0)
-		selector: aSelector;
-		setMethod: aMethod;
-		yourself
-]
-
-AdditionalMethodState class >> selector: aSelector with: aPropertyOrPragma
-[selector: aSelector with: aPropertyOrPragma
-	^ (self new: 1)
-		selector: aSelector;
-		basicAt: 1 put: aPropertyOrPragma;
-		yourself
-]
-

@@ -523,35 +523,3 @@ InputEventSensor class >> swapMouseButtons
 	^ Smalltalk os isWindows not
 ]
 
-wSensor.	"done"	"Register the interrupt handler"
-	UserInterruptHandler new registerIn: InputEventFetcher default.
-	Smalltalk addToStartUpList: Sensor class after: fetcherClass.
-	Smalltalk addToShutDownList: Sensor class after: Form	"Project spawnNewProcessAndTerminateOld: true"
-]
-
-InputEventSensor class >> installMouseDecodeTable
-[installMouseDecodeTable
-	"Create a decode table that swaps the lowest-order 2 bits"
-
-	ButtonDecodeTable := self swapMouseButtons
-		ifTrue: [ ByteArray
-				withAll: ((0 to: 255) collect: [ :ea | ((ea bitAnd: 1) << 1 bitOr: (ea bitAnd: 2) >> 1) bitOr: (ea bitAnd: 16rFC) ]) ]
-		ifFalse: [ ByteArray withAll: (0 to: 255) ]
-]
-
-InputEventSensor class >> shutDown
-[shutDown
-	self default shutDown
-]
-
-InputEventSensor class >> startUp
-[startUp
-	self installMouseDecodeTable.
-	self default startUp
-]
-
-InputEventSensor class >> swapMouseButtons
-[swapMouseButtons
-	^ Smalltalk os isWindows not
-]
-

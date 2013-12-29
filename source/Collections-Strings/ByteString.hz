@@ -257,20 +257,3 @@ ByteString class >> translate: aString from: start to: stop table: table
 	start to: stop do: [ :i | aString at: i put: (table at: (aString at: i) asciiValue + 1) ]
 ]
 
-FFFFF.
-	1 to: stringSize do: [ :pos | hash := hash + (aString at: pos) asciiValue.	"Begin hashMultiply"
-		low := hash bitAnd: 16383.
-		hash := 16r260D * low + ((16r260D * (hash bitShift: -14) + (16r0065 * low) bitAnd: 16383) * 16384) bitAnd: 16r0FFFFFFF ].
-	^ hash
-]
-
-ByteString class >> translate: aString from: start to: stop table: table
-[translate: aString from: start to: stop table: table
-	"translate the characters in the string by the given table, in place"
-
-	<primitive: 'primitiveTranslateStringWithTable' module: 'MiscPrimitivePlugin'>
-	<var: #table declareC: 'unsigned char *table'>
-	<var: #aString declareC: 'unsigned char *aString'>
-	start to: stop do: [ :i | aString at: i put: (table at: (aString at: i) asciiValue + 1) ]
-]
-

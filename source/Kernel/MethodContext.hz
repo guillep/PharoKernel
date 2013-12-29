@@ -443,39 +443,3 @@ MethodContext class >> sender: s receiver: r method: m arguments: args
 		arguments: args
 ]
 
-elf asContext pc we get 17, which is *before* the nil is pushed. Therefore we should pay attention when querying a temporary if the temporary allocation was executed."
-
-	| index |
-	index := self tempNames indexOf: aName.
-	^ index > stackp
-		ifTrue: [ nil ]
-		ifFalse: [ self namedTempAt: index ]
-]
-
-MethodContext >> tempNamed: aName put: anObject
-[tempNamed: aName put: anObject
-	^ self namedTempAt: (self tempNames indexOf: aName) put: anObject
-]
-
-MethodContext class >> allInstancesDo: aBlock
-[allInstancesDo: aBlock
-	"Only count until thisContext"
-
-	| inst next |
-	inst := self someInstance.
-	[ inst == thisContext ] whileFalse: [ next := inst nextInstance.
-			aBlock value: inst.
-			inst := next ]
-]
-
-MethodContext class >> sender: s receiver: r method: m arguments: args
-[sender: s receiver: r method: m arguments: args
-	"Answer an instance of me with attributes set to the arguments."
-
-	^ (self newForMethod: m)
-		setSender: s
-		receiver: r
-		method: m
-		arguments: args
-]
-

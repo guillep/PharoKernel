@@ -211,15 +211,3 @@ ISOLanguageDefinition class >> readISOLanguagesFrom: stream
 	^ languages
 ]
 
-line upTo: Character tab.
-			(index := code3 indexOf: $/) > 0
-				ifTrue: [ language iso3: (code3 copyFrom: 1 to: index - 1).
-					language iso3Alternate: (code3 copyFrom: index + 1 to: code3 size) ]
-				ifFalse: [ language iso3: code3 ].
-			language
-				iso2: (line upTo: Character tab);
-				language: line upToEnd.
-			languages at: language iso3 put: language ].
-	^ languages
-]
-

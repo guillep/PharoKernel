@@ -292,30 +292,3 @@ RxMatchOptimizer >> syntaxWordBoundary
 	conditions add: #atWordBoundary
 ]
 
-taxPiece: pieceNode
-[syntaxPiece: pieceNode
-	"Pass on to the atom."
-
-	pieceNode atom dispatchTo: self
-]
-
-RxMatchOptimizer >> syntaxPredicate: predicateNode
-[syntaxPredicate: predicateNode
-	predicates add: predicateNode predicate
-]
-
-RxMatchOptimizer >> syntaxRegex: regexNode
-[syntaxRegex: regexNode
-	"All prefixes of the regex's branches should be combined.
-	Therefore, just recurse."
-
-	regexNode branch dispatchTo: self.
-	regexNode regex notNil
-		ifTrue: [ regexNode regex dispatchTo: self ]
-]
-
-RxMatchOptimizer >> syntaxWordBoundary
-[syntaxWordBoundary
-	conditions add: #atWordBoundary
-]
-

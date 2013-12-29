@@ -710,59 +710,3 @@ OrderedCollection class >> streamSpecies
 	^ Array
 ]
 
-tIndex do: [ :index | newCollection addLast: (elementAndIndexBlock value: (array at: index) value: index - firstIndex + 1) ].
-	^ newCollection
-]
-
-OrderedCollection class >> arrayType
-[arrayType
-	^ Array
-]
-
-OrderedCollection class >> new
-[new
-	^ self new: 10
-]
-
-OrderedCollection class >> new: anInteger
-[new: anInteger
-	^ self basicNew setCollection: (self arrayType new: anInteger)
-]
-
-OrderedCollection class >> new: size streamContents: aBlock
-[new: size streamContents: aBlock
-	^ self withAll: (super new: size streamContents: aBlock)
-]
-
-OrderedCollection class >> new: anInteger withAll: anObject
-[new: anInteger withAll: anObject
-	^ self basicNew setContents: (self arrayType new: anInteger withAll: anObject)
-]
-
-OrderedCollection class >> newFrom: aCollection
-[newFrom: aCollection
-	"Answer an instance of me containing the same elements as aCollection."
-
-	| newCollection |
-	newCollection := self new: aCollection size.
-	newCollection addAll: aCollection.
-	^ newCollection	"	OrderedCollection newFrom: {1. 2. 3}	{1. 2. 3} as: OrderedCollection	{4. 2. 7} as: SortedCollection"
-]
-
-OrderedCollection class >> ofSize: n
-[ofSize: n
-	"Create a new collection of size n with nil as its elements.
-	This method exists because OrderedCollection new: n creates an
-	empty collection,  not one of size n."
-
-	| collection |
-	collection := self new: n.
-	collection setContents: collection collector.
-	^ collection
-]
-
-OrderedCollection class >> streamSpecies
-[streamSpecies
-	^ Array
-]
-

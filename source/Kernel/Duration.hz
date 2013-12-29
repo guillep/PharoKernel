@@ -385,37 +385,3 @@ Duration class >> zero
 	^ self basicNew seconds: 0 nanoSeconds: 0
 ]
 
-ek isDigit ] ] whileTrue: [ nanos nextPut: aStream next ].
-	^ self
-		days: days
-		hours: hours
-		minutes: minutes
-		seconds: seconds
-		nanoSeconds: (nanosBuffer asInteger sign: sign)
-]
-
-Duration class >> seconds: seconds
-[seconds: seconds
-	^ self seconds: seconds nanoSeconds: 0
-]
-
-Duration class >> seconds: seconds nanoSeconds: nanos
-[seconds: seconds nanoSeconds: nanos
-	^ self basicNew seconds: seconds truncated nanoSeconds: seconds fractionPart * NanosInSecond + nanos
-]
-
-Duration class >> weeks: aNumber
-[weeks: aNumber
-	^ self days: aNumber * 7 seconds: 0
-]
-
-Duration class >> years: aNumber
-[years: aNumber
-	^ self days: aNumber * 365 seconds: 0
-]
-
-Duration class >> zero
-[zero
-	^ self basicNew seconds: 0 nanoSeconds: 0
-]
-

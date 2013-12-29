@@ -396,38 +396,3 @@ Locale class >> switchToID: localeID
 	self switchTo: (Locale localeID: localeID)
 ]
 
-e: [ ^ self ].
-	DateAndTime localTimeZone: self localTimeZone.
-	self activated
-		ifTrue: [ newID := self current determineLocaleID.
-			newID ~= LocaleID current
-				ifTrue: [ self switchToID: newID ] ]
-]
-
-Locale class >> stringForLanguageNameIs: localeID
-[stringForLanguageNameIs: localeID
-	"Answer a string for a menu determining whether the given  
-	symbol is the project's natural language"
-
-	^ (self current localeID = localeID
-		ifTrue: [ '<yes>' ]
-		ifFalse: [ '<no>' ]) , localeID displayLanguage
-]
-
-Locale class >> switchTo: locale
-[switchTo: locale
-	"Locale switchTo: Locale isoLanguage: 'de'"
-
-	Current localeID = locale localeID
-		ifFalse: [ Current := locale.
-			CurrentPlatform := locale.
-			self localeChanged ]
-]
-
-Locale class >> switchToID: localeID
-[switchToID: localeID
-	"Locale switchToID: (LocaleID isoLanguage: 'de') "
-
-	self switchTo: (Locale localeID: localeID)
-]
-

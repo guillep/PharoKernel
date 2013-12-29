@@ -260,29 +260,3 @@ HashedCollection class >> sizeFor: nElements
 	^ HashTableSizes atLeast: (nElements + 1) * 4 // 3
 ]
 
-ibility
-]
-
-HashedCollection class >> rehashAll
-[rehashAll
-	"HashedCollection rehashAll"
-
-	self allSubclassesDo: #rehashAllInstances
-]
-
-HashedCollection class >> rehashAllInstances
-[rehashAllInstances
-	"Do not use #allInstancesDo: because rehash may create new instances."
-
-	self allInstances do: [ :each | each rehash ]
-]
-
-HashedCollection class >> sizeFor: nElements
-[sizeFor: nElements
-	"Large enough size to hold nElements with some slop (see fullCheck)"
-
-	nElements < 4
-		ifTrue: [ ^ 5 ].
-	^ HashTableSizes atLeast: (nElements + 1) * 4 // 3
-]
-

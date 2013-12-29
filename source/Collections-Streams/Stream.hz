@@ -213,33 +213,3 @@ Stream class >> new
 	self error: 'Streams are created with on: and with:'
 ]
 
-	"Have anObject print itself on the receiver."
-
-	anObject printOn: self
-]
-
-Stream >> readOnly
-[readOnly
-	^ self
-]
-
-Stream >> upToEnd
-[upToEnd
-	"answer the remaining elements in the string"
-
-	| elements |
-	elements := OrderedCollection new.
-	[ self atEnd ] whileFalse: [ elements add: self next ].
-	^ elements
-]
-
-Stream >> write: encodedObject
-[write: encodedObject
-	^ encodedObject putOn: self
-]
-
-Stream class >> new
-[new
-	self error: 'Streams are created with on: and with:'
-]
-

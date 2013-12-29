@@ -178,28 +178,3 @@ FLEncoder class >> on: aStream globalEnvironment: aDictionary do: aBlock
 		ensure: [ anEncoder flush ]
 ]
 
-r.
-	objectsIndexes := FLLargeIdentityDictionary new.
-	indexStream := FLIndexStream on: stream digits: aNumber digitLength
-]
-
-FLEncoder >> objectsIndexes
-[objectsIndexes
-	^ objectsIndexes
-]
-
-FLEncoder class >> on: aStream globalEnvironment: aDictionary
-[on: aStream globalEnvironment: aDictionary
-	^ self basicNew
-		initializeOn: aStream globalEnvironment: aDictionary;
-		yourself
-]
-
-FLEncoder class >> on: aStream globalEnvironment: aDictionary do: aBlock
-[on: aStream globalEnvironment: aDictionary do: aBlock
-	| anEncoder |
-	anEncoder := self on: aStream globalEnvironment: aDictionary.
-	^ [ aBlock value: anEncoder ]
-		ensure: [ anEncoder flush ]
-]
-

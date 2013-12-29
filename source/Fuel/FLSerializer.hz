@@ -190,23 +190,3 @@ FLSerializer class >> serializeToByteArray: anObject
 	^ aStream contents
 ]
 
-r class >> serialize: anObject on: aStream
-[serialize: anObject on: aStream
-	self newDefault serialize: anObject on: aStream
-]
-
-FLSerializer class >> serialize: anObject toFileNamed: aFilename
-[serialize: anObject toFileNamed: aFilename
-	self newDefault serialize: anObject toFileNamed: aFilename
-]
-
-FLSerializer class >> serializeToByteArray: anObject
-[serializeToByteArray: anObject
-	"No stream is needed by the user. An internal in-memory stream will be used. This method returns a ByteArray representing the serialization"
-
-	| aStream |
-	aStream := WriteStream on: (ByteArray new: 100).
-	self newDefault serialize: anObject on: aStream.
-	^ aStream contents
-]
-

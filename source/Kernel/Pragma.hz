@@ -229,31 +229,3 @@ Pragma class >> withPragmasIn: aClass do: aBlock
 	aClass selectorsAndMethodsDo: [ :selector :method | method pragmas do: aBlock ]
 ]
 
-lock
-	"Answer a collection of all pragmas found in methods of aClass whose keyword is aSymbol, sorted according to aSortBlock."
-
-	^ (self allNamed: aSymbol in: aClass) sort: aSortBlock
-]
-
-Pragma class >> for: aMethod selector: aSelector arguments: anArray
-[for: aMethod selector: aSelector arguments: anArray
-	^ self new
-		setMethod: aMethod;
-		setKeyword: aSelector;
-		setArguments: anArray;
-		yourself
-]
-
-Pragma class >> keyword: aSymbol arguments: anArray
-[keyword: aSymbol arguments: anArray
-	^ self new
-		setKeyword: aSymbol;
-		setArguments: anArray;
-		yourself
-]
-
-Pragma class >> withPragmasIn: aClass do: aBlock
-[withPragmasIn: aClass do: aBlock
-	aClass selectorsAndMethodsDo: [ :selector :method | method pragmas do: aBlock ]
-]
-

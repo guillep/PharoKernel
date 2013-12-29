@@ -194,23 +194,3 @@ KeyedTree >> subtrees
 	^ (self select: [ :v | v isKindOf: KeyedTree ]) values
 ]
 
-ray allButLastDo: [ :key | element := element at: key ifAbsent: [ ^ aBlock value ] ].
-	^ element removeKey: anArray last ifAbsent: aBlock
-]
-
-KeyedTree >> sortBlock
-[sortBlock
-	"Answer the block to sort tree keys with."
-
-	^ [ :a :b | [ a <= b ]
-		on: Error
-		do: [ a class name <= b class name ] ]
-]
-
-KeyedTree >> subtrees
-[subtrees
-	"Answer the subtrees of the receiver."
-
-	^ (self select: [ :v | v isKindOf: KeyedTree ]) values
-]
-

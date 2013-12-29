@@ -636,19 +636,3 @@ Unicode class >> value: code
 	^ Character leadingChar: l code: code
 ]
 
-s where number of characters could change.
-	The algorithm would work for ByteString, however it's far from the most efficient."
-
-	^ aWideString
-		collect: [ :e | (ToUpper at: e charCode ifAbsent: [ nil ]) ifNil: [ e ] ifNotNil: [ :up | self value: up ] ]
-]
-
-Unicode class >> value: code
-[value: code
-	| l |
-	code < 256
-		ifTrue: [ ^ Character value: code ].
-	l := Locale currentPlatform languageEnvironment leadingChar.
-	^ Character leadingChar: l code: code
-]
-

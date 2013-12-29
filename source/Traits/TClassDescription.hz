@@ -1395,102 +1395,3 @@ TClassDescription >> zapOrganization
 		ifFalse: [ self classSide zapOrganization ]
 ]
 
- there are any
-	contexts having an old instance as receiver it might crash the system if
-	the new receiver in which the context is executed has a different layout.
-	See bottom below for a simple example:"
-
-	| oldInstances |
-	oldInstances := oldClass allInstances asArray.
-	oldInstances := self updateInstances: oldInstances from: oldClass isMeta: self isMeta.
-	^ oldInstances	"	| crashingBlock class |	class := Object subclass: #CrashTestDummy		instanceVariableNames: 'instVar'		classVariableNames: ''		poolDictionaries: ''		category: 'Crash-Test'.	class compile:'instVar: value instVar := value'.	class compile:'crashingBlock ^[instVar]'.	crashingBlock := (class new) instVar: 42; crashingBlock.	Object subclass: #CrashTestDummy		instanceVariableNames: ''		classVariableNames: ''		poolDictionaries: ''		category: 'Crash-Test'.	crashingBlock.	crashingBlock value.	"
-]
-
-TClassDescription >> updateOrganizationDescription: each oldCategory: newCategoryOrNil newCategory: oldCategoryOrNil changed: changedCategories
-[updateOrganizationDescription: each oldCategory: newCategoryOrNil newCategory: oldCategoryOrNil changed: changedCategories
-	| sel effectiveCategory currentCategory |
-	sel := each selector.
-	(self includesLocalSelector: sel)
-		ifTrue: [ ^ self ].
-	currentCategory := self organization categoryOfElement: sel.
-	effectiveCategory := each effectiveMethodCategoryCurrent: currentCategory new: newCategoryOrNil.
-	effectiveCategory
-		ifNil: [ currentCategory ifNotNil: [ changedCategories add: currentCategory ].
-			self organization removeElement: sel.
-			^ self ].
-	(currentCategory isNil or: [ currentCategory == Protocol ambiguous or: [ currentCategory == oldCategoryOrNil ] ])
-		ifFalse: [ ^ self ].
-	currentCategory ~~ effectiveCategory
-		ifTrue: [ currentCategory ifNotNil: [ changedCategories add: currentCategory ].
-			self organization classify: sel under: effectiveCategory suppressIfDefault: false ]
-]
-
-TClassDescription >> updateOrganizationDescription: aTraitMethodDescription oldCategory: oldCategoryOrNil newCategory: newCategoryOrNil changedCategories: changedCategories
-[updateOrganizationDescription: aTraitMethodDescription oldCategory: oldCategoryOrNil newCategory: newCategoryOrNil changedCategories: changedCategories
-	| sel effectiveCategory currentCategory |
-	sel := aTraitMethodDescription selector.
-	(self includesLocalSelector: sel)
-		ifTrue: [ ^ self ].
-	currentCategory := self organization categoryOfElement: sel.
-	effectiveCategory := aTraitMethodDescription effectiveMethodCategoryCurrent: currentCategory new: newCategoryOrNil.
-	effectiveCategory
-		ifNil: [ currentCategory ifNotNil: [ changedCategories add: currentCategory ].
-			^ self organization removeElement: sel ].
-	((currentCategory isNil or: [ currentCategory == Protocol ambiguous or: [ currentCategory == oldCategoryOrNil ] ])
-		and: [ currentCategory ~~ effectiveCategory ])
-		ifTrue: [ currentCategory ifNotNil: [ changedCategories add: currentCategory ].
-			self organization classify: sel under: effectiveCategory suppressIfDefault: false ]
-]
-
-TClassDescription >> updateOrganizationSelector: aSymbol oldCategory: oldCategoryOrNil newCategory: newCategoryOrNil
-[updateOrganizationSelector: aSymbol oldCategory: oldCategoryOrNil newCategory: newCategoryOrNil
-	^ self explicitRequirement
-]
-
-TClassDescription >> usesLocalPoolVarNamed: aString
-[usesLocalPoolVarNamed: aString
-	^ false
-]
-
-TClassDescription >> usesPoolVarNamed: aString
-[usesPoolVarNamed: aString
-	"Only classes may use a pool variable named: aString"
-
-	^ false
-]
-
-TClassDescription >> wantsChangeSetLogging
-[wantsChangeSetLogging
-	"Answer whether code submitted for the receiver should be remembered by the changeSet mechanism."
-
-	^ true
-]
-
-TClassDescription >> wantsRecompilationProgressReported
-[wantsRecompilationProgressReported
-	"Answer whether the receiver would like progress of its recompilation reported interactively to the user."
-
-	^ true
-]
-
-TClassDescription >> whichCategoryIncludesSelector: aSelector
-[whichCategoryIncludesSelector: aSelector
-	"Answer the category of the argument, aSelector, in the organization of 
-	the receiver, or answer nil if the receiver does not inlcude this selector."
-
-	(self includesSelector: aSelector)
-		ifTrue: [ ^ self organization categoryOfElement: aSelector ]
-		ifFalse: [ ^ nil ]
-]
-
-TClassDescription >> zapOrganization
-[zapOrganization
-	"Remove the organization of this class by message categories.
-	This is typically done to save space in small systems.  Classes and methods
-	created or filed in subsequently will, nonetheless, be organized"
-
-	self organization: nil.
-	self isClassSide
-		ifFalse: [ self classSide zapOrganization ]
-]
-

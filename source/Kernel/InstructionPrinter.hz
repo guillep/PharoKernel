@@ -327,37 +327,3 @@ InstructionPrinter class >> printClass: class
 	file close	"InstructionPrinter printClass: Parser."
 ]
 
-Printer >> storeIntoRemoteTemp: remoteTempIndex inVectorAt: tempVectorIndex
-[storeIntoRemoteTemp: remoteTempIndex inVectorAt: tempVectorIndex
-	self print: 'storeIntoTemp: ' , remoteTempIndex printString , ' inVectorAt: ' , tempVectorIndex printString
-]
-
-InstructionPrinter >> storeIntoTemporaryVariable: offset
-[storeIntoTemporaryVariable: offset
-	"Print the Store Top Of Stack Into Temporary Variable Of Method 
-	bytecode."
-
-	self print: 'storeIntoTemp: ' , offset printString
-]
-
-InstructionPrinter class >> on: aMethod
-[on: aMethod
-	^ self new method: aMethod
-]
-
-InstructionPrinter class >> printClass: class
-[printClass: class
-	"Create a file whose name is the argument followed by '.bytes'. Store on 
-	the file the symbolic form of the compiled methods of the class."
-
-	| file |
-	file := FileStream newFileNamed: class name , '.bytes'.
-	class
-		selectorsAndMethodsDo: [ :sel :meth | file
-				cr;
-				nextPutAll: sel;
-				cr.
-			(self on: meth) printInstructionsOn: file ].
-	file close	"InstructionPrinter printClass: Parser."
-]
-

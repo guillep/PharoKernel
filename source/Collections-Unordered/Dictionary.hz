@@ -601,39 +601,3 @@ Dictionary class >> newFromPairs: anArray
 	^ newDictionary	"  Dictionary newFromPairs: {'Red' . Color red . 'Blue' . Color blue . 'Green' . Color green}. "
 ]
 
- checks
-	merely for the sake of maximum efficiency"
-
-	tally = 0
-		ifTrue: [ ^ self ].
-	1 to: array size do: [ :eachIndex | | eachAssociation |
-		eachAssociation := array at: eachIndex.
-		nil == eachAssociation
-			ifFalse: [ aBlock value: eachAssociation value ] ]
-]
-
-Dictionary class >> newFrom: aDict
-[newFrom: aDict
-	"Answer an instance of me containing the same associations as aDict.
-	 Error if any key appears twice."
-
-	| newDictionary |
-	newDictionary := self new: aDict size.
-	aDict
-		associationsDo: [ :x | (newDictionary includesKey: x key)
-				ifTrue: [ self error: 'Duplicate key: ' , x key printString ]
-				ifFalse: [ newDictionary add: x ] ].
-	^ newDictionary	"	NewDictionary newFrom: {1->#a. 2->#b. 3->#c}	{1->#a. 2->#b. 3->#c} as: NewDictionary	NewDictionary newFrom: {1->#a. 2->#b. 1->#c}	{1->#a. 2->#b. 1->#c} as: NewDictionary"
-]
-
-Dictionary class >> newFromPairs: anArray
-[newFromPairs: anArray
-	"Answer an instance of me associating (anArray at:i) to (anArray at: i+i)
-	 for each odd i.  anArray must have an even number of entries."
-
-	| newDictionary |
-	newDictionary := self new: anArray size / 2.
-	1 to: anArray size - 1 by: 2 do: [ :i | newDictionary at: (anArray at: i) put: (anArray at: i + 1) ].
-	^ newDictionary	"  Dictionary newFromPairs: {'Red' . Color red . 'Blue' . Color blue . 'Green' . Color green}. "
-]
-

@@ -284,29 +284,3 @@ SourceFileArray class >> new: nFiles
 	^ self new initialize: nFiles
 ]
 
-.
-	preamble := self sourcedDataAt: sourcePointer.
-	(preamble includesSubstring: sourceDataPointers key)
-		ifTrue: [ tokens := preamble parseLiterals.
-			stampPosition := tokens indexOf: sourceDataPointers value.
-			stampPosition = 0
-				ifFalse: [ "New format gives change stamp and unified prior pointer"
-					stamp := tokens at: stampPosition + 1 ] ].
-	^ stamp
-]
-
-SourceFileArray class >> install
-[install
-	"Replace SourceFiles by an instance of me with the standard sources and changes files.
-	This only works if SourceFiles is either an Array or an instance of this class"
-
-	"SourceFileArray install"
-
-	^ SourceFiles := self new
-]
-
-SourceFileArray class >> new: nFiles
-[new: nFiles
-	^ self new initialize: nFiles
-]
-

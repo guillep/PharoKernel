@@ -158,28 +158,3 @@ CommandLineArguments class >> withArguments: aCollection
 		yourself
 ]
 
-x |
-	index := (arguments indexOf: '-' , aString) + 1.
-	^ (index <= 1 or: [ index > arguments size ])
-		ifFalse: [ arguments at: index ]
-		ifTrue: absentBlock
-]
-
-CommandLineArguments >> withFirstArgument: aBlock
-[withFirstArgument: aBlock
-	self arguments ifEmpty: [ ^ self ].
-	^ aBlock value: self arguments first
-]
-
-CommandLineArguments class >> default
-[default
-	^ singleton ifNil: [ singleton := self new initialize ]
-]
-
-CommandLineArguments class >> withArguments: aCollection
-[withArguments: aCollection
-	^ self basicNew
-		initializeWithArguments: aCollection;
-		yourself
-]
-

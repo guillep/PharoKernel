@@ -367,25 +367,3 @@ LargeInteger >> withAtLeastNDigits: desiredLength
 	^ new
 ]
 
-"
-
-	| powerOfTwo |
-	(powerOfTwo := (self lowBit - 1) // 2) > 1
-		ifFalse: [ ^ super sqrtFloor ].
-	^ (self bitShift: -2 * powerOfTwo) sqrtFloor bitShift: powerOfTwo
-]
-
-LargeInteger >> withAtLeastNDigits: desiredLength
-[withAtLeastNDigits: desiredLength
-	| new |
-	self size >= desiredLength
-		ifTrue: [ ^ self ].
-	new := self class new: desiredLength.
-	new
-		replaceFrom: 1
-		to: self size
-		with: self
-		startingAt: 1.
-	^ new
-]
-

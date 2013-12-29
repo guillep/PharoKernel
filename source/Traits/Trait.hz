@@ -209,33 +209,3 @@ Trait class >> newTemplateIn: categoryString
 				nextPut: $' ]
 ]
 
-
-			^ trait ].
-	SystemAnnouncer uniqueInstance traitDefinitionChangedFrom: oldTrait to: trait.
-	systemCategory ~= oldCategory
-		ifTrue: [ SystemAnnouncer uniqueInstance class: trait recategorizedFrom: oldCategory to: systemCategory ].
-	^ trait
-]
-
-Trait class >> new
-[new
-	self shouldNotImplement
-]
-
-Trait class >> newTemplateIn: categoryString
-[newTemplateIn: categoryString
-	^ String
-		streamContents: [ :stream | stream
-				nextPutAll: self name;
-				nextPutAll: ' named: #NameOfTrait';
-				cr;
-				tab;
-				nextPutAll: 'uses: {}';
-				cr;
-				tab;
-				nextPutAll: 'category: ';
-				nextPut: $';
-				nextPutAll: categoryString;
-				nextPut: $' ]
-]
-

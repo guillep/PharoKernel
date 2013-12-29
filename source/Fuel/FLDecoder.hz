@@ -183,22 +183,3 @@ FLDecoder class >> on: aStream migrations: aCollection globalEnvironment: aDicti
 		yourself
 ]
 
-ts
-	objectsWriteStream nextPutAll: someObjects
-]
-
-FLDecoder >> variablesMappingFor: aClass
-[variablesMappingFor: aClass
-	| variables |
-	variables := FLVariablesMapping materializing: aClass from: self.
-	migrations select: [ :m | m targetClass == aClass ] thenDo: [ :m | m applyTo: variables ].
-	^ variables
-]
-
-FLDecoder class >> on: aStream migrations: aCollection globalEnvironment: aDictionary
-[on: aStream migrations: aCollection globalEnvironment: aDictionary
-	^ self basicNew
-		initializeOn: aStream migrations: aCollection globalEnvironment: aDictionary;
-		yourself
-]
-
