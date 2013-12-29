@@ -4,7 +4,7 @@ WideString
 	package: #'Collections-Strings'.
 
 WideString >> asFourCode
-[
+asFourCode
 	| result |
 	self size = 1
 		ifFalse: [ ^ Error signal: 'must be exactly four octets' ].
@@ -14,56 +14,49 @@ WideString >> asFourCode
 	(result bitAnd: 16r40000000) = 0
 		ifFalse: [ ^ result - 16r80000000 ].
 	^ result
-]
 
 WideString >> asLowercase
-[
+asLowercase
 	"Answer a copy of self with all characters in a lower case.
 	This might be a difficult task, ask Unicode."
 
 	^ Unicode toLowercaseString: self
-]
-
-WideString >> asPacked
-[
-	self inject: 0 into: [ :pack :next | pack * 16r100000000 + next asInteger ]
-]
 
 WideString >> asUppercase
-[
+asUppercase
 	"Answer a copy of self with all characters in an upper case.
 	This might be a difficult task, ask Unicode."
 
 	^ Unicode toUppercaseString: self
-]
+
+WideString >> asWideString
+asWideString
+	^ self
 
 WideString >> at: index
-[
+at: index
 	"Answer the Character stored in the field of the receiver indexed by the argument."
 
 	^ Character value: (self wordAt: index)
-]
 
 WideString >> at: index put: aCharacter
-[
+at: index put: aCharacter
 	"Store the Character in the field of the receiver indicated by the index."
 
 	aCharacter isCharacter
 		ifFalse: [ self errorImproperStore ].
 	self wordAt: index put: aCharacter asInteger.
 	^ aCharacter
-]
 
 WideString >> byteAt: index
-[
+byteAt: index
 	| d r |
 	d := (index + 3) // 4.
 	r := (index - 1) \\ 4 + 1.
 	^ (self wordAt: d) digitAt: 4 - r + 1
-]
 
 WideString >> byteAt: index put: aByte
-[
+byteAt: index put: aByte
 	| d r w |
 	d := (index + 3) // 4.
 	r := (index - 1) \\ 4 + 1.
@@ -71,49 +64,43 @@ WideString >> byteAt: index put: aByte
 	w := w + (aByte << ((4 - r) * 8)).
 	self basicAt: d put: w.
 	^ aByte
-]
 
 WideString >> byteSize
-[
+byteSize
 	^ self size * 4
-]
 
 WideString >> copyFrom: start to: stop
-[
+copyFrom: start to: stop
 	| n |
 	n := super copyFrom: start to: stop.
 	n isOctetString
 		ifTrue: [ ^ n asOctetString ].
 	^ n
-]
+
+WideString >> findIn: body startingAt: start matchTable: matchTable
+findIn: body startingAt: start matchTable: matchTable
+	^ self
+		findSubstring: self
+		in: body
+		startingAt: start
+		matchTable: matchTable
 
 WideString >> includesUnifiedCharacter
-[
+includesUnifiedCharacter
 	^ self isUnicodeStringWithCJK
-]
 
 WideString >> isUnicodeStringWithCJK
-[
+isUnicodeStringWithCJK
 	^ self anySatisfy: [ :char | Unicode isUnifiedKanji: char charCode ]
-]
 
 WideString >> isWideString
-[
+isWideString
 	"Answer whether the receiver is a WideString"
 
 	^ true
-]
-
-WideString >> mutateJISX0208StringToUnicode
-[
-	| c |
-	1 to: self size do: [ :i | c := self at: i.
-		(c leadingChar = JISX0208 leadingChar or: [ c leadingChar = (JISX0208 leadingChar bitShift: 2) ])
-			ifTrue: [ self basicAt: i put: (Character leadingChar: JapaneseEnvironment leadingChar code: c asUnicode) asciiValue ] ]
-]
 
 WideString >> replaceFrom: start to: stop with: replacement startingAt: repStart
-[
+replaceFrom: start to: stop with: replacement startingAt: repStart
 	<primitive: 105>
 	replacement class == String
 		ifTrue: [ ^ self
@@ -126,32 +113,28 @@ WideString >> replaceFrom: start to: stop with: replacement startingAt: repStart
 		to: stop
 		with: replacement
 		startingAt: repStart
-]
 
 WideString >> wordAt: index
-[
+wordAt: index
 	<primitive: 60>
 	^ self basicAt: index
-]
 
 WideString >> wordAt: index put: anInteger
-[
+wordAt: index put: anInteger
 	<primitive: 61>
 	self basicAt: index put: anInteger
-]
 
 WideString class >> from: aString
-[
+from: aString
 	| newString |
 	(aString isMemberOf: self)
 		ifTrue: [ ^ aString copy ].
 	newString := self new: aString size.
 	1 to: aString size do: [ :index | newString basicAt: index put: (aString basicAt: index) ].
 	^ newString
-]
 
 WideString class >> fromByteArray: aByteArray
-[
+fromByteArray: aByteArray
 	| inst |
 	aByteArray size \\ 4 = 0
 		ifFalse: [ ^ ByteString fromByteArray: aByteArray ].
@@ -161,22 +144,9 @@ WideString class >> fromByteArray: aByteArray
 			put:
 				((aByteArray at: i - 3) << 24) + ((aByteArray at: i - 2) << 16) + ((aByteArray at: i - 1) << 8) + (aByteArray at: i) ].
 	^ inst
-]
-
-WideString class >> fromPacked: aLong
-[
-	"Convert from a longinteger to a String of length 4."
-
-	| s val |
-	s := self new: 1.
-	val := ((aLong digitAt: 4) << 24 bitOr: (aLong digitAt: 3) << 16)
-		bitOr: ((aLong digitAt: 2) << 8 bitOr: (aLong digitAt: 1)).
-	s basicAt: 1 put: val.
-	^ s	"WideString fromPacked: 'TEXT' asPacked"
-]
 
 WideString class >> fromString: aString
-[
+fromString: aString
 	"Answer an instance of me that is a copy of the argument, aString."
 
 	| inst |
@@ -185,5 +155,4 @@ WideString class >> fromString: aString
 	inst := self new: aString size.
 	1 to: aString size do: [ :pos | inst basicAt: pos put: (aString basicAt: pos) ].
 	^ inst
-]
 

@@ -4,32 +4,28 @@ RxmSubstring
 	package: #'Regex-Core'.
 
 RxmSubstring >> beCaseInsensitive
-[
+beCaseInsensitive
 	compare := [ :char1 :char2 | char1 sameAs: char2 ]
-]
 
 RxmSubstring >> beCaseSensitive
-[
+beCaseSensitive
 	compare := [ :char1 :char2 | char1 = char2 ]
-]
 
 RxmSubstring >> character: aCharacter ignoreCase: aBoolean
-[
+character: aCharacter ignoreCase: aBoolean
 	"Match exactly this character."
 
 	sample := String with: aCharacter.
 	aBoolean
 		ifTrue: [ self beCaseInsensitive ]
-]
 
 RxmSubstring >> initialize
-[
+initialize
 	super initialize.
 	self beCaseSensitive
-]
 
 RxmSubstring >> matchAgainst: aMatcher
-[
+matchAgainst: aMatcher
 	"Match if my sample stream is exactly the current prefix
 	of the matcher stream's contents."
 
@@ -44,19 +40,16 @@ RxmSubstring >> matchAgainst: aMatcher
 		ifTrue: [ ^ true ]
 		ifFalse: [ aMatcher restoreState: originalState.
 			^ false ]
-]
 
 RxmSubstring >> sampleStream
-[
+sampleStream
 	^ sample readStream
-]
 
 RxmSubstring >> substring: aString ignoreCase: aBoolean
-[
+substring: aString ignoreCase: aBoolean
 	"Match exactly this string."
 
 	sample := aString.
 	aBoolean
 		ifTrue: [ self beCaseInsensitive ]
-]
 

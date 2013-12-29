@@ -1,0 +1,70 @@
+FLClusterization
+	instanceVariables: #(#baselevelBucket #substitutionsBucket #globalsBucket #metalevelInstanceSideBucket #metalevelClassSideBucket #primitivesBucket #postBaselevelBucket );
+	package: #Fuel.
+
+FLClusterization >> baselevelBucket
+baselevelBucket
+	^ baselevelBucket
+
+FLClusterization >> clusterBuckets
+clusterBuckets
+	"Answer a new collection with all the clusters that have been collected in trace. Note that order is imporant."
+
+	^ OrderedCollection new
+		add: globalsBucket;
+		add: primitivesBucket;
+		add: metalevelClassSideBucket;
+		add: metalevelInstanceSideBucket;
+		add: baselevelBucket;
+		add: postBaselevelBucket;
+		add: substitutionsBucket;
+		yourself
+
+FLClusterization >> clusters
+clusters
+	^ self clusterBuckets gather: [ :c | c ]
+
+FLClusterization >> fuelAccept: aGeneralMapper
+fuelAccept: aGeneralMapper
+	^ aGeneralMapper visitSubstitution: self by: nil
+
+FLClusterization >> globalsBucket
+globalsBucket
+	^ globalsBucket
+
+FLClusterization >> initialize
+initialize
+	super initialize.
+	primitivesBucket := IdentityDictionary new.
+	baselevelBucket := IdentityDictionary new.
+	globalsBucket := IdentityDictionary new.
+	metalevelInstanceSideBucket := IdentityDictionary new.
+	metalevelClassSideBucket := IdentityDictionary new.
+	substitutionsBucket := IdentityDictionary new.
+	postBaselevelBucket := IdentityDictionary new
+
+FLClusterization >> metalevelClassSideBucket
+metalevelClassSideBucket
+	^ metalevelClassSideBucket
+
+FLClusterization >> metalevelInstanceSideBucket
+metalevelInstanceSideBucket
+	^ metalevelInstanceSideBucket
+
+FLClusterization >> objectCount
+objectCount
+	^ self clusterBuckets
+		sum: [ :aClusterBucket | aClusterBucket inject: 0 into: [ :sum :aCluster | sum + aCluster objects size ] ]
+
+FLClusterization >> postBaselevelBucket
+postBaselevelBucket
+	^ postBaselevelBucket
+
+FLClusterization >> primitivesBucket
+primitivesBucket
+	^ primitivesBucket
+
+FLClusterization >> substitutionsBucket
+substitutionsBucket
+	^ substitutionsBucket
+

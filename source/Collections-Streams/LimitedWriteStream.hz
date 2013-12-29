@@ -4,17 +4,16 @@ LimitedWriteStream
 	package: #'Collections-Streams'.
 
 LimitedWriteStream >> nextPut: anObject
-[
+nextPut: anObject
 	"Ensure that the limit is not exceeded"
 
 	position >= limit
 		ifTrue: [ limitBlock value ]
 		ifFalse: [ super nextPut: anObject ].
 	^ anObject
-]
 
 LimitedWriteStream >> nextPutAll: aCollection
-[
+nextPutAll: aCollection
 	| newEnd |
 	collection class == aCollection class
 		ifFalse: [ ^ super nextPutAll: aCollection ].
@@ -32,20 +31,17 @@ LimitedWriteStream >> nextPutAll: aCollection
 		startingAt: 1.
 	position := newEnd.
 	^ aCollection
-]
 
 LimitedWriteStream >> pastEndPut: anObject
-[
+pastEndPut: anObject
 	collection size >= limit
 		ifTrue: [ limitBlock value ].	"Exceptional return"
 	^ super pastEndPut: anObject
-]
 
 LimitedWriteStream >> setLimit: sizeLimit limitBlock: aBlock
-[
+setLimit: sizeLimit limitBlock: aBlock
 	"Limit the numer of elements this stream will write..."
 
 	limit := sizeLimit.	"Execute this (typically ^ contents) when that limit is exceded"
 	limitBlock := aBlock
-]
 

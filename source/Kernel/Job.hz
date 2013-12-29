@@ -1,0 +1,251 @@
+Job
+	instanceVariables: #(#block #currentValue #min #max #title #children #isRunning #parent #process );
+	package: #Kernel.
+
+Job class
+	instanceVariables: #(#jobAnnouncer ).
+
+Job >> addChild: aJob
+addChild: aJob
+	children add: aJob.
+	aJob parent: self
+
+Job >> announce: anAnnouncementClass
+announce: anAnnouncementClass
+	| announcement |
+	announcement := anAnnouncementClass on: self.
+	self announcer announce: announcement
+
+Job >> announceChange
+announceChange
+	isRunning
+		ifFalse: [ ^ self ].
+	self announce: JobChange
+
+Job >> announcer
+announcer
+	^ Job jobAnnouncer
+
+Job >> basicProgress: aNormalizedFloat
+basicProgress: aNormalizedFloat
+	"Set the progress: 0.0 - 1.0 without triggering an update"
+
+	currentValue := min + ((max - min) * aNormalizedFloat)
+
+Job >> block
+block
+	^ block
+
+Job >> block: aBlock
+block: aBlock
+	block := aBlock
+
+Job >> children
+children
+	^ children copy
+
+Job >> cleanupAfterRunning
+cleanupAfterRunning
+	isRunning := false.
+	process := nil.
+	self announce: JobEnd.
+	parent ifNotNil: [ :job | job removeChild: self ]
+
+Job >> current
+current
+	^ self currentValue
+
+Job >> current: aNumber
+current: aNumber
+	self currentValue: aNumber
+
+Job >> currentValue
+currentValue
+	^ currentValue
+
+Job >> currentValue: aNumber
+currentValue: aNumber
+	currentValue := aNumber.
+	self announceChange
+
+Job >> debug
+debug
+	^ process debug
+
+Job >> decrement
+decrement
+	self currentValue: self currentValue - 1
+
+Job >> handleJobProgress: notification
+handleJobProgress: notification
+	notification title ifNotNil: [ title := notification title ].
+	notification progress ifNotNil: [ self basicProgress: notification progress ].
+	self announceChange
+
+Job >> handleJobStart: aJobStartNotification
+handleJobStart: aJobStartNotification
+	self addChild: aJobStartNotification job
+
+Job >> increment
+increment
+	self currentValue: self currentValue + 1
+
+Job >> initialize
+initialize
+	super initialize.
+	min := 0.
+	max := 100.
+	currentValue := 0.
+	title := ''.
+	isRunning := false.
+	children := OrderedCollection new
+
+Job >> isRunning
+isRunning
+	^ isRunning
+
+Job >> label
+label
+	^ self title
+
+Job >> label: aString
+label: aString
+	self title: aString
+
+Job >> max
+max
+	^ max
+
+Job >> max: aNumber
+max: aNumber
+	self migrateProgressWhileUpdatingBounds: [ max := aNumber ]
+
+Job >> migrateProgressWhileUpdatingBounds: aBlockChangingBounds
+migrateProgressWhileUpdatingBounds: aBlockChangingBounds
+	"Keep the progress value consistent while we change min / max"
+
+	| progress |
+	progress := self progress.
+	aBlockChangingBounds value.
+	self progress: progress
+
+Job >> min
+min
+	^ min
+
+Job >> min: aNumber
+min: aNumber
+	self migrateProgressWhileUpdatingBounds: [ min := aNumber ].
+	self announceChange
+
+Job >> parent: aJob
+parent: aJob
+	parent := aJob
+
+Job >> prepareForRunning
+prepareForRunning
+	isRunning := true.
+	JobStartNotification on: self.
+	process := Processor activeProcess.
+	self announce: JobStart
+
+Job >> progress
+progress
+	"Avoid negative progress and divideByZero."
+
+	^ min >= max
+		ifTrue: [ 1 ]
+		ifFalse: [ (currentValue - min) / (max - min) ]
+
+Job >> progress: aNormalizedFloat
+progress: aNormalizedFloat
+	"Set the progress: 0.0 - 1.0"
+
+	self basicProgress: aNormalizedFloat.
+	self announceChange
+
+Job >> removeChild: aJob
+removeChild: aJob
+	children remove: aJob
+
+Job >> run
+run
+	| result |
+	[ self prepareForRunning.
+	[ result := block cull: self ]
+		on: JobNotification
+		do: [ :notification | notification handle: self ] ]
+		ensure: [ self cleanupAfterRunning ].
+	^ result
+
+Job >> title
+title
+	^ title
+
+Job >> title: anObject
+title: anObject
+	title := anObject.
+	self announceChange
+
+Job >> value
+value
+	^ self currentValue
+
+Job >> value: aNumber
+value: aNumber
+	self currentValue: aNumber
+
+Job class >> basicExample
+basicExample
+	"Job basicExample"
+
+	[ :job | job title: 'Simulating some progress for 1 Second'.
+	1 second asDelay wait.	"simulate some work"
+	job currentValue: 50.
+	1 second asDelay wait.	"simulate some more work"
+	job currentValue: 100.
+	1 second asDelay wait	"simulate some more work" ]
+		asJob run
+
+Job class >> basicExample2
+basicExample2
+	"Job basicExample2"
+
+	[ [ :job | job max: 10.
+	1 to: 10 do: [ :i | job title: 'Fib ' , i asString.	"do some hard work"
+		40 benchFib.	"update the job progress"
+		job currentValue: i ] ]
+		asJob run ]
+		fork
+
+Job class >> block: aBlock
+block: aBlock
+	^ self new block: aBlock
+
+Job class >> current
+current
+	"Answer the current job or nil if none."
+
+	^ JobDetector signal
+
+Job class >> exampleDebug
+exampleDebug
+	"Job exampleDebug"
+
+	| aJob |
+	aJob := [ :job | "Set some job properties"
+	job
+		title: 'aTitle';
+		max: 10.
+	1 to: 10 do: [ :i | job title: 'Fib ' , i asString.	"do some hard work"
+		40 benchFib.	"update the job progress"
+		job currentValue: i ] ]
+		asJob.	"run a different thread to interrupt the job"
+	[ aJob run ] forkAt: Processor userBackgroundPriority.
+	1 second asDelay wait.	"wait for the job to start properly"
+	aJob debug
+
+Job class >> jobAnnouncer
+jobAnnouncer
+	^ jobAnnouncer ifNil: [ jobAnnouncer := Announcer new ]
+

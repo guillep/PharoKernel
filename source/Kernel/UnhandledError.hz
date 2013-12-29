@@ -1,0 +1,31 @@
+UnhandledError
+	superclass: #Exception;
+	instanceVariables: #(#exception );
+	package: #Kernel.
+
+UnhandledError >> defaultAction
+defaultAction
+	<reflective: #unhandledErrorDefaultAction:message:>
+	^ Smalltalk globals
+		at: #UIManager
+		ifPresent: [ :class | class default unhandledErrorDefaultAction: self exception ]
+		ifAbsent: [ Transcript show: 'unhandled error' ]
+
+UnhandledError >> exception
+exception
+	^ exception
+
+UnhandledError >> exception: anError
+exception: anError
+	exception := anError
+
+UnhandledError >> isResumable
+isResumable
+	^ false
+
+UnhandledError class >> signalForException: anError
+signalForException: anError
+	^ self new
+		exception: anError;
+		signal
+

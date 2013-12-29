@@ -1,10 +1,10 @@
 SmalltalkImage
-	instanceVariables: #(#globals #deferredStartupActions #specialObjectsArray #session );
-	classVariables: #(#CompilerClass #MemoryHogs #EndianCache #ShouldDownloadSourcesFile #ShutDownList #Tools #CheckSourcesFileAvailability #CheckChangesFileAvailability #StartUpList #LowSpaceProcess #LastQuitLogPosition #SpecialSelectors #SourceFileVersionString #LowSpaceSemaphore #LastImagePath );
+	instanceVariables: #(#globals #deferredStartupActions #specialObjectsArray #session #vm );
+	classVariables: #(#CompilerClass #LastQuitLogPosition #LastImagePath #StartUpList #ShouldDownloadSourcesFile #EndianCache #SpecialSelectors #MemoryHogs #LowSpaceProcess #Tools #ShutDownList #SourceFileVersionString #LowSpaceSemaphore );
 	package: #'System-Support'.
 
 SmalltalkImage >> add: aClass toList: startUpOrShutDownList after: predecessor
-[
+add: aClass toList: startUpOrShutDownList after: predecessor
 	"Add the name of aClass to the startUp or shutDown list.
 	Add it after the name of predecessor"
 
@@ -16,10 +16,9 @@ SmalltalkImage >> add: aClass toList: startUpOrShutDownList after: predecessor
 		ifFalse: [ self error: predecessor name , ' cannot be found in the list.' ].
 	startUpOrShutDownList remove: aClass name ifAbsent: [  ].
 	startUpOrShutDownList add: aClass name after: predecessor name
-]
 
 SmalltalkImage >> add: aClass toList: startUpOrShutDownList before: successor
-[
+add: aClass toList: startUpOrShutDownList before: successor
 	"Add the name of aClass to the startUp or shutDown list.
 	Add it before the name of successor"
 
@@ -31,92 +30,50 @@ SmalltalkImage >> add: aClass toList: startUpOrShutDownList before: successor
 		ifFalse: [ self error: successor name , ' cannot be found in the list.' ].
 	startUpOrShutDownList remove: aClass name ifAbsent: [  ].
 	startUpOrShutDownList add: aClass name before: successor name
-]
 
 SmalltalkImage >> addDeferredStartupAction: aBlock
-[
+addDeferredStartupAction: aBlock
 	"Add the monadic or nulladic block to the list of actions that we will be performed immediately after the startup is totally executed."
 
 	deferredStartupActions ifNil: [ deferredStartupActions := OrderedCollection new ].
 	deferredStartupActions add: aBlock
-]
-
-SmalltalkImage >> addSnapshotRecord: save andQuit: quit
-[
-	"Originally this code were in #snapshot:andQuit: .
-	Just moved it to separate method to make caller more readable
-	and don't look like swiss army knife which tries to do everything by own "
-
-	| msg |
-	(SourceFiles at: 2)
-		ifNotNil: [ msg := String
-				streamContents: [ :s | s
-						nextPutAll: '----';
-						nextPutAll:
-								(save
-										ifTrue: [ quit
-												ifTrue: [ 'QUIT' ]
-												ifFalse: [ 'SNAPSHOT' ] ]
-										ifFalse: [ quit
-												ifTrue: [ 'QUIT/NOSAVE' ]
-												ifFalse: [ 'NOP' ] ]);
-						nextPutAll: '----';
-						print: Date dateAndTimeNow;
-						space;
-						nextPutAll: self imageFile basename;
-						nextPutAll: ' priorSource: ';
-						print: LastQuitLogPosition ].
-			self assureStartupStampLogged.
-			save
-				ifTrue: [ LastQuitLogPosition := (SourceFiles at: 2)
-						setToEnd;
-						position ].
-			self logChange: msg.
-			self traceCr: msg ]
-]
 
 SmalltalkImage >> addToShutDownList: aClass
-[
+addToShutDownList: aClass
 	"This will add a ref to this class at the BEGINNING of the shutDown list."
 
 	"No-op if already in the list."
 
 	(ShutDownList includes: aClass name)
 		ifFalse: [ ShutDownList addFirst: aClass name ]
-]
 
 SmalltalkImage >> addToShutDownList: aClass after: predecessor
-[
+addToShutDownList: aClass after: predecessor
 	self add: aClass toList: ShutDownList after: predecessor
-]
 
 SmalltalkImage >> addToShutDownList: aClass before: predecessor
-[
+addToShutDownList: aClass before: predecessor
 	self add: aClass toList: ShutDownList before: predecessor
-]
 
 SmalltalkImage >> addToStartUpList: aClass
-[
+addToStartUpList: aClass
 	"This will add a ref to this class at the END of the startUp list."
 
 	"No-op if already in the list."
 
 	(StartUpList includes: aClass name)
 		ifFalse: [ StartUpList addLast: aClass name ]
-]
 
 SmalltalkImage >> addToStartUpList: aClass after: predecessor
-[
+addToStartUpList: aClass after: predecessor
 	self add: aClass toList: StartUpList after: predecessor
-]
 
 SmalltalkImage >> addToStartUpList: aClass before: predecessor
-[
+addToStartUpList: aClass before: predecessor
 	self add: aClass toList: StartUpList before: predecessor
-]
 
 SmalltalkImage >> allClasses
-[
+allClasses
 	"Return all the class defines in the SmalltalkImage"
 
 	"Smalltalk allClasses"
@@ -124,43 +81,37 @@ SmalltalkImage >> allClasses
 	"May be we could discard this one in the future"
 
 	^ globals allClasses
-]
 
 SmalltalkImage >> allClassesAndTraits
-[
+allClassesAndTraits
 	"Return all the classes and traits defined in the Smalltalk SmalltalkImage"
 
 	^ globals allClassesAndTraits
-]
 
 SmalltalkImage >> allClassesAndTraitsDo: aBlock
-[
+allClassesAndTraitsDo: aBlock
 	^ globals allClassesAndTraitsDo: aBlock
-]
 
 SmalltalkImage >> allClassesDo: aBlock
-[
+allClassesDo: aBlock
 	"Evaluate the argument, aBlock, for each class in the system."
 
 	globals allClassesDo: aBlock
-]
 
 SmalltalkImage >> allTraits
-[
+allTraits
 	"Return all traits defined in the Smalltalk SmalltalkImage"
 
 	^ globals allTraits
-]
 
 SmalltalkImage >> argumentAt: i
-[
+argumentAt: i
 	"Answer the i-th argument of the command line, or nil if not so many argument."
 
 	^ self vm getSystemAttribute: 2 + i
-]
 
 SmalltalkImage >> arguments
-[
+arguments
 	"Answer an array with all the command line arguments.
 	This does not include imagePath, documentPath nor any option."
 
@@ -169,80 +120,65 @@ SmalltalkImage >> arguments
 	^ Array
 		streamContents: [ :str | | arg i |
 			i := 1.
-			[ i > 998 or: [ (arg := self argumentAt: i) == nil ] ] whileFalse: [ str nextPut: arg.
+			[ i > 998 or: [ (arg := self argumentAt: i) isNil ] ] whileFalse: [ str nextPut: arg.
 					i := i + 1 ] ]
-]
 
 SmalltalkImage >> associationAt: key ifAbsent: aBlock
-[
+associationAt: key ifAbsent: aBlock
 	"Obsoleted."
 
 	self flag: #tobeprecated.	"self deprecated: 'Use Smalltalk globals'."
 	^ globals associationAt: key ifAbsent: aBlock
-]
-
-SmalltalkImage >> associationOrUndeclaredAt: key
-[
-	"return an association or install in undeclared.  Used for mating up ImageSegments."
-
-	^ globals associationOrUndeclaredAt: key
-]
 
 SmalltalkImage >> assureStartupStampLogged
-[
+assureStartupStampLogged
 	"If there is a startup stamp not yet actually logged to disk, do it now."
 
 	ChangesLog default assureStartupStampLogged
-]
 
 SmalltalkImage >> at: aKey
-[
+at: aKey
 	"Answer the global associated with the key."
 
 	^ globals at: aKey
-]
 
 SmalltalkImage >> at: key ifAbsent: aBlock
-[
+at: key ifAbsent: aBlock
 	"Answer the global associated with the key or, if key isn't found,
 	answer the result of evaluating aBlock."
 
 	^ globals at: key ifAbsent: aBlock
-]
 
 SmalltalkImage >> at: aKey ifAbsentPut: aBlock
-[
+at: aKey ifAbsentPut: aBlock
 	"Return the global at the given key. 
 	If key is not included in the receiver store the result 
 	of evaluating aBlock as new value."
 
 	^ globals at: aKey ifAbsentPut: aBlock
-]
 
 SmalltalkImage >> at: key ifPresent: aBlock
-[
+at: key ifPresent: aBlock
 	"Lookup the given key in the globals. If it is present, answer the value of evaluating the given block with the value associated with the key. Otherwise, answer nil."
 
 	^ globals at: key ifPresent: aBlock
-]
 
 SmalltalkImage >> at: aKey put: anObject
-[
+at: aKey put: anObject
 	"Set the global at key to be anObject.  If key is not found, create a
 	new entry for key and set is value to anObject. Answer anObject."
 
 	^ globals at: aKey put: anObject
-]
 
 SmalltalkImage >> backupImageInFileNamed: aFileReference
-[
+backupImageInFileNamed: aFileReference
 	"Save the  the image under the given file. 
 	Unlike #saveImageInFileNamed: this method continues evaluation in the original image after saving a backup copy.
 	Note: This method does not save the .changes file, use #saveAs:"
 
 	| imageFile previousFullImageName isNewSession |
 	imageFile := aFileReference asFileReference.
-	imageFile parent ensureDirectory.
+	imageFile parent ensureCreateDirectory.
 	previousFullImageName := self imagePath.
 	isNewSession := false.
 	[ "change to the new image name "
@@ -259,10 +195,9 @@ SmalltalkImage >> backupImageInFileNamed: aFileReference
 						closeSourceFiles;
 						openSourceFiles ] ].
 	^ isNewSession
-]
 
 SmalltalkImage >> backupTo: newNameWithoutSuffix
-[
+backupTo: newNameWithoutSuffix
 	"Create a new backup of this image. 
 	Unlike #saveAs: do not transfer the default execution to the new image. 
 	Results:
@@ -274,32 +209,28 @@ SmalltalkImage >> backupTo: newNameWithoutSuffix
 				closeSourceFiles;
 				saveChangesInFileNamed: (self fullNameForChangesNamed: newNameWithoutSuffix)	"so copying the changes file will always work" ].
 	^ self backupImageInFileNamed: (self fullNameForImageNamed: newNameWithoutSuffix)
-]
 
 SmalltalkImage >> bindingOf: varName
-[
+bindingOf: varName
 	"Answer the binding of some variable resolved in the scope of the receiver"
 
 	^ globals bindingOf: varName
-]
 
 SmalltalkImage >> bytesLeft
-[
+bytesLeft
 	"Answer the number of bytes of space available. Does a full garbage collection."
 
 	^ self garbageCollect
-]
 
 SmalltalkImage >> bytesLeft: aBool
-[
+bytesLeft: aBool
 	"Return the amount of available space. If aBool is true, include possibly available swap space. If aBool is false, include possibly available physical memory. For a report on the largest free block currently availabe within Pharo memory but not counting extra memory use #primBytesLeft."
 
 	<primitive: 112>
 	^ self primBytesLeft
-]
 
 SmalltalkImage >> calcEndianness
-[
+calcEndianness
 	| bytes word blt |
 	"What endian-ness is the current hardware?  The String '1234' will be stored into a machine word.  On BigEndian machines (the Mac), $1 will be the high byte if the word.  On LittleEndian machines (the PC), $4 will be the high byte."
 	"SmalltalkImage current endianness"
@@ -321,120 +252,64 @@ SmalltalkImage >> calcEndianness
 	bytes first = 4
 		ifTrue: [ ^ #little ].
 	self error: 'Ted is confused'
-]
 
 SmalltalkImage >> changeImagePathTo: aString
-[
-	self imagePath: aString asSqueakPathName.
+changeImagePathTo: aString
+	self imagePath: aString.
 	LastImagePath := self imagePath
-]
 
 SmalltalkImage >> changesFile
-[
+changesFile
 	"Answer the file containing the current changes."
 
 	^ FileLocator changes
-]
 
 SmalltalkImage >> changesName
-[
+changesName
 	"Answer the name for the changes file corresponding to the image file name."
 
 	"Smalltalk changesName"
 
 	^ self changesFile fullName
-]
 
 SmalltalkImage >> changesSuffix
-[
+changesSuffix
 	^ 'changes'
-]
 
-SmalltalkImage >> checkAndOpenSourcesAndChanges
-[
-	"Open the changes and sources files and install them in SourceFiles. 
-	Inform the user of problems regarding write permissions or CR/CRLF mixups."
+SmalltalkImage >> classBuilder
+classBuilder
+	"Answer the object responsible of creating classes in the system."
 
-	"Note: SourcesName and imageName are full paths; 
-	changesName is a  local name."
-
-	| sources changes msg wmsg |
-	msg := 'Pharo cannot locate &fileRef.Please check that the file is named properly and is in thesame directory as this image.'.
-	wmsg := 'Pharo cannot write to &fileRef.Please check that you have write permission for this file.You won''t be able to save this image correctly until you fix this.'.
-	(sources := self openSources: self sourcesName forImage: LastImagePath)
-		ifNil: [ [ self downloadSources ]
-				on: MessageNotUnderstood
-				do: [ :exception | "ignore"
-					 ].
-			sources := self openSources: self sourcesName forImage: LastImagePath ].
-	changes := self openChanges: self changesName forImage: LastImagePath.
-	((sources == nil or: [ sources atEnd ]) and: [ self checkSourcesFileAvailability ])
-		ifTrue: [ 
-			OSPlatform isMacOS
-				ifTrue: [ 
-					msg := msg
-						,
-							'Make sure the sources file is not an Alias.' ].
-			self inform: (msg copyReplaceAll: '&fileRef' with: 'the sources file named ' , self sourcesName) ].
-	(changes == nil and: [ self checkChangesFileAvailability ])
-		ifTrue: [ self inform: (msg copyReplaceAll: '&fileRef' with: 'the changes file named ' , self changesName) ].
-	(self checkChangesFileAvailability and: [ changes notNil ])
-		ifTrue: [ 
-			changes isReadOnly
-				ifTrue: [ self inform: (wmsg copyReplaceAll: '&fileRef' with: 'the changes file named ' , self changesName) ].
-			((changes next: 200) includesSubstring: String crlf)
-				ifTrue: [ 
-					self
-						inform:
-							'The changes file named ' , self changesName
-								,
-									'has been injured by an unpacking utility.  Crs were changed to CrLfs.Please set the preferences in your decompressing program to "do not convert text files" and unpack the system again.' ] ].
-	SourceFiles := Array with: sources with: changes
-]
-
-SmalltalkImage >> checkChangesFileAvailability
-[
-	^ self class checkChangesFileAvailability
-]
-
-SmalltalkImage >> checkSourcesFileAvailability
-[
-	^ self class checkSourcesFileAvailability
-]
+	^ OldClassBuilderAdapter new
 
 SmalltalkImage >> classNamed: className
-[
+classNamed: className
 	^ globals classOrTraitNamed: className
-]
 
 SmalltalkImage >> classNames
-[
+classNames
 	^ globals classNames
-]
 
 SmalltalkImage >> classOrTraitNamed: aString
-[
+classOrTraitNamed: aString
 	"aString is either a class or trait name or a class or trait name followed by ' class' or 'classTrait' respectively. Answer the class or metaclass it names."
 
 	^ globals classOrTraitNamed: aString
-]
 
 SmalltalkImage >> cleanOutUndeclared
-[
+cleanOutUndeclared
 	Undeclared removeUnreferencedKeys
-]
 
 SmalltalkImage >> cleanUp
-[
+cleanUp
 	"Smalltalk cleanUp"
 
 	"Gently clean up"
 
 	^ self cleanUp: false
-]
 
 SmalltalkImage >> cleanUp: aggressive
-[
+cleanUp: aggressive
 	"Clean up. When aggressive is true, this will destroy change sets, etc."
 
 	"Smalltalk cleanUp: false"
@@ -442,20 +317,18 @@ SmalltalkImage >> cleanUp: aggressive
 	"Smalltalk cleanUp: true"
 
 	^ self cleanUp: aggressive except: #()
-]
 
 SmalltalkImage >> cleanUp: aggressive except: exclusions
-[
+cleanUp: aggressive except: exclusions
 	"Clean up. When aggressive is true, this will destroy resources, change sets, etc.
 	Leave out any classes specifically listed in exclusions."
 
 	"Smalltalk cleanUp: true except: {Point . ChangeSet}"
 
 	^ self cleanUp: aggressive except: exclusions confirming: aggressive
-]
 
 SmalltalkImage >> cleanUp: aggressive except: exclusions confirming: aBool
-[
+cleanUp: aggressive except: exclusions confirming: aBool
 	"Clean up. When aggressive is true, this will destroy resources, change sets, etc.
 	Leave out any classes specifically listed in exclusions."
 
@@ -471,71 +344,61 @@ SmalltalkImage >> cleanUp: aggressive except: exclusions confirming: aBool
 			"Give the user a chance to bail"
 			(self
 				confirm:
-					'Cleanup will destroy projects, change sets and more.Are you sure you want to proceed?')
+					'Cleanup will destroy change sets and more.Are you sure you want to proceed?')
 				ifFalse: [ ^ self ] ].	"Find all classes implementing #cleanUp or cleanUp:"
 	classes := Smalltalk allClasses
 		select: [ :aClass | (aClass class includesSelector: #cleanUp) or: [ aClass class includesSelector: #cleanUp: ] ].	"Leave out the classes in the exclusion set"
 	classes := classes reject: [ :aClass | exclusions includes: aClass ].	"Arrange classes in superclass order, superclasses before subclasses.	This will ensure that specific cleanup (like MethodDictionary compaction)	will run after generic superclass cleanup (HashedCollection rehashing).	Otherwise generic superclass cleanup might undo specific one (in this	case rehashing will undo a good bit of MD compaction)."
 	classes := Class superclassOrder: classes.	"Run the cleanup code"
 	classes do: [ :aClass | aClass cleanUp: aggressive ] displayingProgress: [ :aClass | 'Cleaning up in ' , aClass name ]
-]
 
 SmalltalkImage >> clearExternalObjects
-[
+clearExternalObjects
 	"Clear the array of objects that have been registered for use in non-Smalltalk code."
 
 	"Smalltalk clearExternalObjects"
 
 	ExternalSemaphoreTable clearExternalObjects
-]
 
 SmalltalkImage >> closeLog: logger
-[
+closeLog: logger
 	"This is a _private_ method,
 	Because it really belongs to logging facility,
 	we should delegate to it at some point "
 
 	logger ifNotNil: [ logger close ]
-]
 
 SmalltalkImage >> closeSourceFiles
-[
-	"Shut down the source files if appropriate. Closing and nilification only take place if the entry was a FileStream, thus allowing stringified sources to remain in the saved image file"
+closeSourceFiles
+	"Shut down the source files if appropriate."
 
-	1 to: 2 do: [ :i | ((SourceFiles at: i) isKindOf: FileStream)
-			ifTrue: [ (SourceFiles at: i) close.
-				SourceFiles at: i put: nil ] ]
-]
+	SourceFiles close
 
 SmalltalkImage >> commandLine
-[
+commandLine
 	"Answer the object to query about command line."
 
 	^ self
-]
 
 SmalltalkImage >> compactClassesArray
-[
+compactClassesArray
 	"Smalltalk compactClassesArray"
 
 	"Return the array of 31 classes whose instances may be
 	represented compactly"
 
 	^ self specialObjectsArray at: 29
-]
 
 SmalltalkImage >> compiler
-[
-	^ self compilerClass new
-]
+compiler
+	^ self compilerClass new environment: self
 
 SmalltalkImage >> compilerClass
-[
-	^ CompilerClass ifNil: [ CompilerClass := Compiler ]
-]
+compilerClass
+	^ CompilerClass ifNil: [ CompilerClass := OpalCompiler ]
 
 SmalltalkImage >> condenseChanges
-[
+condenseChanges
 	"Move all the changes onto a compacted sources file."
 
 	"Smalltalk condenseChanges"
@@ -567,19 +430,17 @@ SmalltalkImage >> condenseChanges
 	f name asFileReference renameTo: file basename.
 	self setMacFileInfoOn: oldChanges name.
 	SourceFiles at: 2 put: (FileStream oldFileNamed: oldChanges name)
-]
 
 SmalltalkImage >> condenseSources
-[
+condenseSources
 	"Move all the changes onto a compacted sources file."
 
 	"Smalltalk condenseSources"
 
-	| f dir newVersionString |
-	VirtualMachine isRunningCogit
+	| f newVersionString |
+	Smalltalk vm isRunningCogit
 		ifTrue: [ self error: 'Sources cannot be condensed in a Cog (JIT enabled) Virtual Machine. Try a Stack VM.' ].
 	self fixUpProblemsWithAllCategory.	"The above removes any concrete, spurious '-- all --' categories, which mess up the process."
-	dir := FileSystem workingDirectory.
 	newVersionString := UIManager default
 		request:
 			'Please designate the versionfor the new source code file...'
@@ -616,64 +477,45 @@ SmalltalkImage >> condenseSources
 	self
 		inform:
 			'Source files have been rewritten!Check that all is well,and then save/quit.'
-]
 
 SmalltalkImage >> createStackOverflow
-[
+createStackOverflow
 	"For testing the low space handler..."
 
 	"Smalltalk installLowSpaceWatcher; createStackOverflow"
 
 	self createStackOverflow	"infinite recursion"
-]
 
 SmalltalkImage >> datedVersion
-[
+datedVersion
 	"Answer the version of this release."
 
 	^ SystemVersion current datedVersion
-]
-
-SmalltalkImage >> disableModuleLoading
-[
-	"Primitive. Disable a new module loading mechanism for the rest of current session.
-	This operation is not reversable.
-	Any subsequent attempts to load either external or internal module(s) will fail"
-
-	<primitive: 'primitiveDisableModuleLoading' module: ''>
-	
-]
 
 SmalltalkImage >> do: aBlock
-[
+do: aBlock
 	"Obsoleted."
 
 	self flag: #tobeprecated.	"self deprecated: 'Use Smalltalk globals'."
 	^ globals do: aBlock
-]
 
 SmalltalkImage >> endianness
-[
+endianness
 	EndianCache ifNil: [ EndianCache := self calcEndianness ].
 	^ EndianCache
-]
 
 SmalltalkImage >> environment
-[
+environment
 	"For conversion from Smalltalk to SystemDictionary"
 
 	^ globals
-]
 
-SmalltalkImage >> event: anEvent
-[
-	"Hook for SystemChangeNotifier"
-
-	ChangesLog default logEvent: anEvent
-]
+SmalltalkImage >> evaluate: aString
+evaluate: aString
+	^ self compiler evaluate: aString
 
 SmalltalkImage >> executeDeferredStartupActions: resuming
-[
+executeDeferredStartupActions: resuming
 	"Execute the deferred actions which where added during startup, resuming is true if the iage was started fresh, false if we just saved an image"
 
 	| errors |
@@ -682,10 +524,9 @@ SmalltalkImage >> executeDeferredStartupActions: resuming
 	deferredStartupActions
 		do: [ :each | self logStartUpErrorDuring: [ each cull: resuming ] into: errors tryDebugger: self isInteractive ].
 	^ errors
-]
 
 SmalltalkImage >> exit: exitStatus
-[
+exit: exitStatus
 	"Primitive. Exit to another operating system on the host machine, if one
 	exists. All state changes in the object space since the last snapshot are lost.
 	Essential. See Object documentation whatIsAPrimitive.
@@ -696,44 +537,39 @@ SmalltalkImage >> exit: exitStatus
 
 	<primitive: 113>
 	self primitiveFailed
-]
 
 SmalltalkImage >> exitFailure
-[
+exitFailure
 	"Quit the VM with a failing signal.
 	Will lose all current changes."
 
 	self exit: 1
-]
 
 SmalltalkImage >> exitSuccess
-[
+exitSuccess
 	"Quit the VM with a success signal.
 	Will lose all current changes."
 
 	self exit: 0
-]
 
 SmalltalkImage >> exitToDebugger
-[
+exitToDebugger
 	"Primitive. Enter the machine language debugger, if one exists. Essential.
 	See Object documentation whatIsAPrimitive."
 
 	<primitive: 114>
 	self primitiveFailed
-]
 
 SmalltalkImage >> externalObjects
-[
+externalObjects
 	"Return an array of objects that have been registered for use in non-Smalltalk code. Smalltalk objects should be referrenced by external code only via indirection through this array, thus allowing the objects to move during compaction. This array can be cleared when the VM re-starts, since variables in external code do not survive snapshots. Note that external code should not attempt to access a Smalltalk object, even via this mechanism, while garbage collection is in progress."
 
 	"Smalltalk externalObjects"
 
 	^ ExternalSemaphoreTable externalObjects
-]
 
 SmalltalkImage >> extractMinusParameters
-[
+extractMinusParameters
 	"Returns a dictionary matching parameters beginning by a minus character and the list of the next parameters.
 	Here is an example: 
 		I suppose I run pharo with: `pharo myImage.image -minus1 'Hello' -minus2 -minus3 'Hello' 'World'`.
@@ -751,7 +587,7 @@ SmalltalkImage >> extractMinusParameters
 			str := self vm getSystemAttribute: (index := index + 1) ].
 	args ifEmpty: [ ^ dict ].
 	previous := previousWithMinus := args detect: [ :each | each first = $- ].
-	[ args first = previous & args isEmpty not ] whileFalse: [ args removeFirst ].
+	[ args first = previous and: [ args isEmpty not ] ] whileFalse: [ args removeFirst ].
 	args
 		do: [ :each | each first = $-
 				ifTrue: [ previous first = $-
@@ -764,10 +600,9 @@ SmalltalkImage >> extractMinusParameters
 	previous first = $-
 		ifTrue: [ dict at: previous allButFirst put: #() ].
 	^ dict
-]
 
 SmalltalkImage >> extractParameters
-[
+extractParameters
 	| pName value index dict |
 	dict := Dictionary new.
 	index := 3.	"Muss bei 3 starten, da 2 documentName ist"
@@ -779,29 +614,24 @@ SmalltalkImage >> extractParameters
 			dict at: pName asUppercase put: value.
 			index := index + 1 ].
 	^ dict
-]
 
-SmalltalkImage >> fileForChangesNamed: aName
-[
-	^ (self imageDirectory resolve: aName) , self changesSuffix
-]
+SmalltalkImage >> fileForChangesNamed: aString
+fileForChangesNamed: aString
+	^ (self imageDirectory resolve: aString) , self changesSuffix
 
 SmalltalkImage >> fileForImageNamed: aString
-[
+fileForImageNamed: aString
 	^ (self imageDirectory resolve: aString) , self imageSuffix
-]
 
 SmalltalkImage >> fixObsoleteReferences
-[
+fixObsoleteReferences
 	"SmalltalkImage current fixObsoleteReferences.
 	SystemNavigation new obsoleteBehaviors size > 0
 		ifTrue: [ SystemNavigation new obsoleteBehaviors inspect.
 			self error:'Still have obsolete behaviors. See inspector']"
 
-	| informee obsoleteBindings obsName realName realClass |
-	Smalltalk
-		garbageCollect;
-		garbageCollect.
+	| obsoleteBindings obsName realName realClass |
+	Smalltalk garbageCollect.
 	CompiledMethod allInstances
 		do: [ :method | obsoleteBindings := method literals
 				select: [ :literal | literal isVariableBinding and: [ literal value isBehavior and: [ literal value isObsolete ] ] ].
@@ -812,15 +642,12 @@ SmalltalkImage >> fixObsoleteReferences
 						traceCr: obsName.
 					realName := obsName copyReplaceAll: 'AnObsolete' with: ''.
 					realClass := Smalltalk globals at: realName asSymbol ifAbsent: [ UndefinedObject ].
-					binding key: binding key value: realClass ] ].
-	Behavior flushObsoleteSubclasses.
-	Smalltalk
-		garbageCollect;
-		garbageCollect
-]
+					binding key: binding key value: realClass ].	"do not forget to flush the JIT cache"
+			obsoleteBindings ifNotEmpty: [ method flushCache ] ].
+	Behavior flushObsoleteSubclasses
 
 SmalltalkImage >> fixUpProblemsWithAllCategory
-[
+fixUpProblemsWithAllCategory
 	"Moves all methods that are in formally classified a category named '-- all --' into the default 'as yet unclassified' category"
 
 	"Smalltalk fixUpProblemsWithAllCategory"
@@ -838,7 +665,7 @@ SmalltalkImage >> fixUpProblemsWithAllCategory
 						selectorsDo: [ :aSelector | | aCategory |
 							aCategory := org categoryOfElement: aSelector.
 							aCategory = #'-- all --'
-								ifTrue: [ org classify: aSelector under: ClassOrganizer default suppressIfDefault: false.
+								ifTrue: [ org classify: aSelector under: Protocol unclassified suppressIfDefault: false.
 									self crTrace: aClass name , ' >> ' , aSelector.
 									methodCount := methodCount + 1.
 									any := true ] ].
@@ -849,104 +676,89 @@ SmalltalkImage >> fixUpProblemsWithAllCategory
 		crTrace:
 			methodCount printString , ' methods in ' , classCount printString
 				, ' classes moved from "-- all --" to "as yet unclassified"'
-]
 
 SmalltalkImage >> flushClassNameCache
-[
+flushClassNameCache
 	"Smalltalk flushClassNameCache"
 
 	"Force recomputation of the cached list of class names."
 
 	globals flushClassNameCache
-]
 
 SmalltalkImage >> forceChangesToDisk
-[
+forceChangesToDisk
 	"Ensure that the changes file has been fully written to disk by closing and re-opening it. This makes the system more robust in the face of a power failure or hard-reboot."
 
 	| changesFile |
 	changesFile := SourceFiles at: 2.
 	(changesFile isKindOf: FileStream)
-		ifTrue: [ changesFile flush.
-			changesFile close.
-			changesFile open: changesFile name forWrite: true.
-			changesFile setToEnd ]
-]
+		ifFalse: [ ^ self ].
+	changesFile flush.
+	changesFile close.
+	changesFile open: changesFile name forWrite: true.
+	changesFile setToEnd
 
 SmalltalkImage >> forceTenure
-[
+forceTenure
 	"Primitive. Tell the GC logic to force a tenure on the next increment GC."
 
 	<primitive: 'primitiveForceTenure'>
 	^ self primitiveFailed
-]
 
-SmalltalkImage >> forgetModule: aString
-[
-	"Primitive. If the module named aString is loaded, unloaded. If not, and it is marked an unloadable, unmark it so the VM will try to load it again next time. See comment for #unloadModule:."
-
-	<primitive: 571>
-	^ self primitiveFailed
-]
-
-SmalltalkImage >> fullNameForChangesNamed: aName
-[
-	^ (self fileForChangesNamed: aName) fullName
-]
+SmalltalkImage >> fullNameForChangesNamed: aString
+fullNameForChangesNamed: aString
+	^ (self fileForChangesNamed: aString) fullName
 
 SmalltalkImage >> fullNameForImageNamed: aString
-[
+fullNameForImageNamed: aString
 	^ (self fileForImageNamed: aString) fullName
-]
 
 SmalltalkImage >> garbageCollect
-[
+garbageCollect
 	"Primitive. Reclaims all garbage and answers the number of bytes of available space."
 
 	Object flushDependents.
 	Object flushEvents.
 	^ self primitiveGarbageCollect
-]
 
 SmalltalkImage >> garbageCollectMost
-[
+garbageCollectMost
 	"Primitive. Reclaims recently created garbage (which is usually most of it) fairly quickly and answers the number of bytes of available space."
 
 	<primitive: 131>
 	^ self primBytesLeft
-]
 
 SmalltalkImage >> getFileNameFromUser
-[
-	| newName |
-	newName := UIManager default
+getFileNameFromUser
+	| givenName strippedName imageFile changesFile |
+	givenName := UIManager default
 		request: 'New File Name?' translated
 		initialAnswer: (self imageFile basename copyUpToLast: Path extensionDelimiter).
-	newName isEmptyOrNil
+	strippedName := self stripImageExtensionFrom: givenName.
+	strippedName isEmptyOrNil
 		ifTrue: [ ^ nil ].
-	((self fileForImageNamed: newName) exists or: [ (self fileForChangesNamed: newName) exists ])
-		ifTrue: [ (self confirm: ('{1} already exists. Overwrite?' translated format: {newName}))
-				ifFalse: [ ^ nil ] ].
-	^ newName
-]
+	imageFile := self fileForImageNamed: strippedName.
+	changesFile := self fileForChangesNamed: strippedName.
+	((imageFile exists or: [ changesFile exists ])
+		and: [ (self confirm: ('{1} already exists. Overwrite?' translated format: {strippedName})) not ])
+		ifTrue: [ ^ nil ].
+	^ strippedName
 
 SmalltalkImage >> globals
-[
+globals
 	"Answer the global SystemDictionary"
 
 	^ globals
-]
 
 SmalltalkImage >> globals: aSystemDictionary
-[
+globals: aSystemDictionary
 	"Sets the system-wide globals"
 
 	globals ifNotNil: [ self error: 'Cannot overwrite existing globals' ].
 	globals := aSystemDictionary
-]
 
 SmalltalkImage >> handleStartupErrors: startupErrors
-[
+handleStartupErrors: startupErrors
 	"Handle the errors produced during startup.
 	
 	Resume to open a non-interactive debugger on the recorded errors"
@@ -956,28 +768,27 @@ SmalltalkImage >> handleStartupErrors: startupErrors
 	self isInteractive
 		ifFalse: [ self exitFailure ]
 		ifTrue: [ | answer |
-			answer := UIManager default
-				confirm: 'Got startup errors, proceed to open debuggers'
-				trueChoice: 'Debug'
-				falseChoice: 'Cancel'.
+			Smalltalk tools userManager canRunStartupScript
+				ifTrue: [ answer := UIManager default
+						confirm: 'Got startup errors, proceed to open debuggers'
+						trueChoice: 'Debug'
+						falseChoice: 'Cancel' ]
+				ifFalse: [ answer := false ].
 			answer == true
 				ifTrue: [ startupErrors do: #debug ] ]
-]
 
 SmalltalkImage >> hasBindingThatBeginsWith: aString
-[
+hasBindingThatBeginsWith: aString
 	^ globals hasBindingThatBeginsWith: aString
-]
 
 SmalltalkImage >> hasClassNamed: aString
-[
+hasClassNamed: aString
 	"Answer whether there is a class of the given name, but don't intern aString if it's not alrady interned."
 
 	^ globals hasClassNamed: aString
-]
 
 SmalltalkImage >> hasSpecialSelector: aLiteral ifTrueSetByte: aBlock
-[
+hasSpecialSelector: aLiteral ifTrueSetByte: aBlock
 	"Some basic messages such as #+ have their own bytecode for speed.
 	To gain some space, the literal array of compiled methods does not contain such message selectors.
 	This implies that the cross referencer and other tools have to check if a selector is of the optimized one 
@@ -988,33 +799,29 @@ SmalltalkImage >> hasSpecialSelector: aLiteral ifTrueSetByte: aBlock
 			ifTrue: [ aBlock value: index + 16rAF.
 				^ true ] ].
 	^ false
-]
 
 SmalltalkImage >> image
-[
+image
 	"Answer the object to query about the current object memory and execution environment."
 
 	^ self
-]
 
 SmalltalkImage >> imageDirectory
-[
+imageDirectory
 	"Answer the directory containing the current image."
 
 	^ FileLocator imageDirectory
-]
 
 SmalltalkImage >> imageFile
-[
+imageFile
 	"Answer the file for the current image."
 
 	"SmalltalkImage current imageName"
 
 	^ FileLocator image
-]
 
 SmalltalkImage >> imageFormatVersion
-[
+imageFormatVersion
 	"Answer an integer identifying the type of image. The image version number may
 	identify the format of the image (e.g. 32 or 64-bit word size) or specific requirements
 	of the image (e.g. block closure support required). This invokes an optional primitive
@@ -1025,98 +832,79 @@ SmalltalkImage >> imageFormatVersion
 	<primitive: 'primitiveImageFormatVersion'>
 	self notify: 'This virtual machine does not support the optional primitive #primitiveImageFormatVersion' translated.
 	^ ''
-]
 
 SmalltalkImage >> imageName
-[
+imageName
 	"Answer the full path name for the current image."
 
 	"SmalltalkImage current imageName"
 
-	| str |
-	str := self primImageName.
-	^ (FilePath pathName: str isEncoded: true) asSqueakPathName
-]
+	^ FilePathEncoder decode: self primImageName
 
 SmalltalkImage >> imageName: newName
-[
+imageName: newName
 	"Set the the full path name for the current image.  All further snapshots will use this."
 
-	| encoded |
-	encoded := (FilePath pathName: newName isEncoded: false) asVmPathName.
-	self primImageName: encoded
-]
+	self primImageName: (FilePathEncoder encode: newName)
 
 SmalltalkImage >> imagePath
-[
+imagePath
 	"Answer the full path name for the current image."
 
 	"SmalltalkImage current imageName"
 
-	| str |
-	str := self primImagePath.
-	^ (FilePath pathName: str isEncoded: true) asSqueakPathName
-]
+	^ FilePathEncoder decode: self primImagePath
 
 SmalltalkImage >> imagePath: newPath
-[
+imagePath: newPath
 	"Set the the full path name for the current image.  All further snapshots will use this."
 
-	| encoded |
-	encoded := (FilePath pathName: newPath isEncoded: false) asVmPathName.
-	self primImagePath: encoded
-]
+	self primImagePath: (FilePathEncoder encode: newPath)
 
 SmalltalkImage >> imageSuffix
-[
+imageSuffix
 	^ 'image'
-]
 
 SmalltalkImage >> includes: element
-[
+includes: element
 	"Obsoleted."
 
 	self flag: #tobeprecated.	"self deprecated: 'Use Smalltalk globals'."
 	^ globals includes: element
-]
 
 SmalltalkImage >> includesKey: key
-[
+includesKey: key
 	"Answer whether the receiver has a key equal to the argument, key."
 
 	^ globals includesKey: key
-]
 
 SmalltalkImage >> informSpaceLeftAfterGarbageCollection
-[
+informSpaceLeftAfterGarbageCollection
 	"Do a garbage collection, and report results to the user."
 
 	"SmalltalkImage current informSpaceLeftAfterGarbageCollection"
 
 	self inform: self spaceLeftAfterGarbageCollection
-]
 
 SmalltalkImage >> installLowSpaceWatcher
-[
+installLowSpaceWatcher
 	"Start a process to watch for low-space conditions."
 
 	"Smalltalk installLowSpaceWatcher"
 
 	self primSignalAtBytesLeft: 0.	"disable low-space interrupts"
-	LowSpaceProcess == nil
-		ifFalse: [ LowSpaceProcess terminate ].
+	LowSpaceProcess ifNotNil: [ LowSpaceProcess terminate ].
 	LowSpaceProcess := [ self lowSpaceWatcher ] newProcess.
+	LowSpaceProcess name: 'Low Space Watcher'.
 	LowSpaceProcess priority: Processor lowIOPriority.
 	LowSpaceProcess resume
-]
 
 SmalltalkImage >> isBigEndian
-[
+isBigEndian
 	^ self endianness == #big
-]
 
 SmalltalkImage >> isHeadless
-[
+isHeadless
 	"Check if vm were run with headless parameter.
 	Different VMs for different platform have different multiple way(s) to indicate that"
 
@@ -1124,10 +912,9 @@ SmalltalkImage >> isHeadless
 			includes: (self vm getSystemAttribute: n))
 			ifTrue: [ ^ true ] ].
 	^ false
-]
 
 SmalltalkImage >> isInteractive
-[
+isInteractive
 	"Check if vm were run with headless parameter.
 	Different VMs for different platform have different multiple way(s) to indicate that"
 
@@ -1135,180 +922,103 @@ SmalltalkImage >> isInteractive
 
 	self isHeadless
 		ifFalse: [ ^ true ].
-	-1000 to: 1000 do: [ :n | (#('-interactive' '--interactive') includes: (self vm getSystemAttribute: n))
+	-1000 to: 1000 do: [ :n | (#('-interactive') includes: (self vm getSystemAttribute: n))
 			ifTrue: [ ^ true ] ].
 	^ false
-]
 
 SmalltalkImage >> isLittleEndian
-[
+isLittleEndian
 	^ self endianness == #little
-]
 
 SmalltalkImage >> isRoot: oop
-[
+isRoot: oop
 	"Primitive. Answer whether the object is currently a root for youngSpace."
 
 	<primitive: 'primitiveIsRoot'>
 	^ self primitiveFailed
-]
 
 SmalltalkImage >> isSelfEvaluating
-[
+isSelfEvaluating
 	self == Smalltalk
 		ifTrue: [ ^ true ].
 	^ super isSelfEvaluating
-]
 
 SmalltalkImage >> isYoung: oop
-[
+isYoung: oop
 	"Primitive. Answer whether the object currently resides in youngSpace."
 
 	<primitive: 'primitiveIsYoung'>
 	^ self primitiveFailed
-]
-
-SmalltalkImage >> kernelPackageNames
-[
-	^ #('Announcements-Core' 'Announcements-Core' 'Collections-Abstract' 'Collections-Arithmetic' 'Collections-Arrayed' 'Collections-Atomic' 'Collections-Native' 'Collections-Sequenceable' 'Collections-Stack' 'Collections-Streams' 'Collections-Strings' 'Collections-Support' 'Collections-Text' 'Collections-Traits' 'Collections-Unordered' 'Collections-Weak' 'Compiler' 'Compression' 'Files' 'Graphics-Display Objects' 'Graphics-Primitives' 'Graphics-Transformations' 'Kernel' 'Multilingual-Encodings' 'Multilingual-ImmPlugin' 'Multilingual-Languages' 'Multilingual-TextConversion' 'System-Change Notification' 'System-Changes' 'System-CommandLine' 'System-Clipboard' 'System-FileRegistry' 'System-Finalization' 'System-Localization' 'System-Object Events' 'System-Platforms' 'System-Support' 'Text-Core' 'Traits' 'UIManager' 'Transcript' 'FileSystem-AnsiStreams' 'FileSystem-Core' 'FileSystem-Disk' 'FileSystem-Memory' 'CodeImport' 'Regex-Core' 'SystemProgress' 'System-Announcements' 'Ring-Core-Kernel' 'Ring-Core-Containers' 'Kernel-Pragmas' 'Kernel-Pragmas' 'System-PragmaCollector')
-]
 
 SmalltalkImage >> keyAtIdentityValue: anObject ifAbsent: aBlock
-[
+keyAtIdentityValue: anObject ifAbsent: aBlock
 	"Obsoleted."
 
 	self flag: #tobeprecated.	"self deprecated: 'Use Smalltalk globals'."
 	^ globals keyAtIdentityValue: anObject ifAbsent: aBlock
-]
 
 SmalltalkImage >> keyAtValue: anObject
-[
+keyAtValue: anObject
 	"Obsoleted."
 
 	self flag: #tobeprecated.	"self deprecated: 'Use Smalltalk globals'."
 	^ globals keyAtValue: anObject
-]
 
 SmalltalkImage >> keys
-[
+keys
 	"Obsoleted."
 
 	self flag: #tobeprecated.	"self deprecated: 'Use Smalltalk globals'."
 	^ globals keys
-]
 
 SmalltalkImage >> keysAndValuesDo: aBlock
-[
+keysAndValuesDo: aBlock
 	"Obsoleted."
 
 	self flag: #tobeprecated.	"self deprecated: 'Use Smalltalk globals'."
 	^ globals keysAndValuesDo: aBlock
-]
+
+SmalltalkImage >> lastImagePath
+lastImagePath
+	^ LastImagePath
 
 SmalltalkImage >> lastQuitLogPosition
-[
+lastQuitLogPosition
 	^ LastQuitLogPosition
-]
 
 SmalltalkImage >> lastQuitLogPosition: aNumber
-[
+lastQuitLogPosition: aNumber
 	"should be only use to ensure the transition from SystemDictionary to SmalltalkImage, then  	be removed"
 
 	LastQuitLogPosition := aNumber
-]
 
 SmalltalkImage >> lastUpdateString
-[
+lastUpdateString
 	"SmalltalkImage current lastUpdateString"
 
 	^ 'Latest update: #' translated , SystemVersion current highestUpdate printString
-]
 
 SmalltalkImage >> licenseString
-[
-	^ 'LICENSE	Licensed under the MIT License with parts under the Apache License.Copyright (c) 2008-2013 The Pharo Project, and ContributorsCopyright (c) 2008-2013 InriaCopyright (c) 1996-2008 Viewpoints Research Institute, and Contributors Copyright (c) 1996 Apple Computer, Inc.Permission is hereby granted, free of charge, to any person obtaining a copy of thissoftware and associated documentation files (the "Software"), to deal in the Softwarewithout restriction, including without limitation the rights to use, copy, modify, merge,publish, distribute, sublicense, and/or sell copies of the Software, and to permit personsto whom the Software is furnished to do so, subject to the following conditions: Theabove copyright notice and this permission notice shall be included in all copies orsubstantial portions of the Software.THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS ORIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESSFOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORSOR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR INCONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.You may obtain a copy of the Apache License athttp://www.apache.org/licenses/LICENSE-2.0Pharo uses icons by Mark James (http://www.famfamfam.com) under Creative Commons Attribution 2.5 License.'
-]
-
-SmalltalkImage >> listBuiltinModule: index
-[
-	"Return the name of the n-th builtin module.
-	This list is not sorted!"
-
-	<primitive: 572>
-	^ self primitiveFailed
-]
-
-SmalltalkImage >> listBuiltinModules
-[
-	"SmalltalkImage current listBuiltinModules"
-
-	"Return a list of all builtin modules (e.g., plugins). Builtin plugins are those that are 	compiled with the VM directly, as opposed to plugins residing in an external shared library. 	The list will include all builtin plugins regardless of whether they are currently loaded 
-	or not. Note that the list returned is not sorted!"
-
-	| modules index name |
-	modules := Array new writeStream.
-	index := 1.
-	[ true ]
-		whileTrue: [ name := self listBuiltinModule: index.
-			name ifNil: [ ^ modules contents ].
-			modules nextPut: name.
-			index := index + 1 ]
-]
-
-SmalltalkImage >> listLoadedModule: index
-[
-	"Return the name of the n-th loaded module.
-	This list is not sorted!"
-
-	<primitive: 573>
-	^ self primitiveFailed
-]
-
-SmalltalkImage >> listLoadedModules
-[
-	"SmalltalkImage current listLoadedModules"
-
-	"Return a list of all currently loaded modules (e.g., plugins). Loaded modules are those that currently in use (e.g., active). The list returned will contain all currently active modules regardless of whether they're builtin (that is compiled with the VM) or external (e.g., residing in some external shared library). Note that the returned list is not sorted!"
-
-	| modules index name |
-	modules := Array new writeStream.
-	index := 1.
-	[ true ]
-		whileTrue: [ name := self listLoadedModule: index.
-			name ifNil: [ ^ modules contents ].
-			modules nextPut: name.
-			index := index + 1 ]
-]
-
-SmalltalkImage >> loadModule: aModuleName
-[
-	"Primitive. Attempt to load a module of the given name.
-	Fail if module cannot be found, or cannot be loaded,
-	or failed to initialize"
-
-	<primitive: 'primLoadModule' module: '' error: #errorCode>
-	^ self primitiveFailed
-]
+licenseString
+	^ 'LICENSE	Licensed under the MIT License with parts under the Apache License.Copyright (c) 2008-2013 The Pharo Project, and ContributorsCopyright (c) 2008-2013 InriaCopyright (c) 1996-2008 Viewpoints Research Institute, and Contributors Copyright (c) 1996 Apple Computer, Inc.Permission is hereby granted, free of charge, to any person obtaining a copy of thissoftware and associated documentation files (the "Software"), to deal in the Softwarewithout restriction, including without limitation the rights to use, copy, modify, merge,publish, distribute, sublicense, and/or sell copies of the Software, and to permit personsto whom the Software is furnished to do so, subject to the following conditions: Theabove copyright notice and this permission notice shall be included in all copies orsubstantial portions of the Software.THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS ORIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESSFOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORSOR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR INCONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.You may obtain a copy of the Apache License athttp://www.apache.org/licenses/LICENSE-2.0Pharo uses icons by Mark James (http://www.famfamfam.com) under Creative Commons Attribution 2.5 License.Pharo uses icons by Eclipse under Eclipse Public License - v 1.0http://www.eclipse.org/legal/epl-v10.htmlPharo uses Source Code Pro Fonts by Adobe under SIL Open Font License, v 1.1http://scripts.sil.org/OFLPharo uses Open Sans by Steve Matteson under Apache License, 2.0http://www.apache.org/licenses/LICENSE-2.0.html'
 
 SmalltalkImage >> logChange: aStringOrText
-[
+logChange: aStringOrText
 	"Write the argument, aString, onto the changes file."
 
 	ChangesLog default logChange: aStringOrText
-]
 
 SmalltalkImage >> logDuring: aMonadicBlock
-[
+logDuring: aMonadicBlock
 	" for safe use, if stream is a file, it needs to be closed after use "
 
 	| logStream |
 	[ logStream := self openLog.
 	aMonadicBlock value: logStream ]
 		ensure: [ self closeLog: logStream ]
-]
 
 SmalltalkImage >> logError: errMsg inContext: aContext
-[
+logError: errMsg inContext: aContext
 	" we should think about integrating a toothpick here someday"
 
 	self
@@ -1330,34 +1040,33 @@ SmalltalkImage >> logError: errMsg inContext: aContext
 				nextPutAll: (String new: 79 withAll: $-);
 				cr;
 				cr ]
-]
 
 SmalltalkImage >> logStartUpErrorDuring: aBlock into: aCollection tryDebugger: tryDebugger
-[
+logStartUpErrorDuring: aBlock into: aCollection tryDebugger: tryDebugger
 	"handle errors thrown by the given block and log a freezed version of them in aCollection"
 
 	aBlock
 		on: Error , Halt
 		do: [ :err | self logStartupError: err into: aCollection tryDebugger: tryDebugger ]
-]
 
 SmalltalkImage >> logStartupError: anError into: aCollection tryDebugger: tryDebugger
-[
+logStartupError: anError into: aCollection tryDebugger: tryDebugger
 	"try to debug the given error or add a freezed version to aCollection"
 
 	tryDebugger
 		ifTrue: [ 
-			[ ^ anError debug ]
+			[ ^ (anError isKindOf: Halt)
+				ifTrue: [ anError pass ]
+				ifFalse: [ anError debug ] ]
 				on: Error
 				do: [ 
 					"an error occured during error handling... 				treat the error as a normal startup error "
 					 ] ].
 	self logError: '==== Startup Error: ' , anError description inContext: anError signalerContext.	"freeze the error"
 	aCollection add: anError freeze
-]
 
 SmalltalkImage >> logStdErrorDuring: aBlock
-[
+logStdErrorDuring: aBlock
 	| stderr |
 	[ "install the line end conversion and force initialize the converter"
 	stderr := FileStream stderr
@@ -1374,17 +1083,15 @@ SmalltalkImage >> logStdErrorDuring: aBlock
 		on: Error
 		do: [ :e | "we don't care if the logging to stdout fails..."
 			 ]
-]
 
 SmalltalkImage >> lowSpaceThreshold
-[
+lowSpaceThreshold
 	"Return the low space threshold. When the amount of free memory (after garbage collection) falls below this limit, the system is in serious danger of completely exhausting memory and crashing. This limit should be made high enough to allow the user open a debugger to diagnose a problem or to save the image."
 
 	^ 400000	"Enough for JIT compiler"
-]
 
 SmalltalkImage >> lowSpaceWatcher
-[
+lowSpaceWatcher
 	"Wait until the low space semaphore is signalled, then take appropriate
 	actions. "
 
@@ -1394,7 +1101,7 @@ SmalltalkImage >> lowSpaceWatcher
 			self garbageCollect <= self lowSpaceThreshold
 				ifTrue: [ 
 					"free space must be above threshold before					starting low space watcher"
-					^ Beeper beep ] ].
+					^ self inform: 'Not enough memory to launch the lowSpaceWatcher.' ] ].
 	self specialObjectsArray at: 23 put: nil.	"process causing low space will be saved here"
 	LowSpaceSemaphore := Semaphore new.
 	self primLowSpaceSemaphore: LowSpaceSemaphore.
@@ -1407,50 +1114,34 @@ SmalltalkImage >> lowSpaceWatcher
 	Smalltalk specialObjectsArray at: 23 put: nil.	"Note: user now unprotected until the low space watcher is re-installed"
 	self memoryHogs isEmpty
 		ifFalse: [ free := self bytesLeft.
-			self memoryHogs do: [ :hog | hog freeSomeSpace ].
 			self bytesLeft > free
 				ifTrue: [ ^ self installLowSpaceWatcher ] ].
 	UIManager default lowSpaceWatcherDefaultAction: preemptedProcess
-]
 
 SmalltalkImage >> lowSpaceWatcherProcess
-[
+lowSpaceWatcherProcess
 	^ LowSpaceProcess
-]
 
 SmalltalkImage >> maxFilenameLength
-[
+maxFilenameLength
 	^ self vm maxFilenameLength
-]
 
 SmalltalkImage >> memoryHogs
-[
+memoryHogs
 	"Answer the list of objects to notify with #freeSomeSpace if memory gets full."
 
 	^ MemoryHogs ifNil: [ MemoryHogs := OrderedCollection new ]
-]
 
 SmalltalkImage >> metacelloPlatformAttributes
-[
+metacelloPlatformAttributes
 	"Returns the tags for the conditional platform loading in Metacello. Pay attention the order is important: from most  to least general."
 
 	"For release integrators, we should not have #'pharo1.3x' **and** #'pharo1.4.x'"
 
-	^ #(#squeakCommon #pharo #'pharo2.x' #'pharo2.0.x')
-]
-
-SmalltalkImage >> newSessionObject
-[
-	"Just answer unique object, which can never be identical to any
-previous session object, this is all what we need for detecting session change.
-A session object don't needs to carry any state, it just needs to be unique (we have plenty of
-other objects in image which can do this for us). "
-
-	^ Object new
-]
+	^ #(#squeakCommon #pharo #'pharo3.x' #'pharo3.0.x')
 
 SmalltalkImage >> newSpecialObjectsArray
-[
+newSpecialObjectsArray
 	"Smalltalk recreateSpecialObjectsArray"
 
 	"To external package developers:
@@ -1463,7 +1154,7 @@ SmalltalkImage >> newSpecialObjectsArray
 	 think of playing here unless you know what you are doing."
 
 	| newArray |
-	newArray := Array new: 56.	"Nil false and true get used throughout the interpreter"
+	newArray := Array new: 59.	"Nil false and true get used throughout the interpreter"
 	newArray at: 1 put: nil.
 	newArray at: 2 put: false.
 	newArray at: 3 put: true.	"This association holds the active process (a ProcessScheduler)"
@@ -1530,11 +1221,13 @@ SmalltalkImage >> newSpecialObjectsArray
 	newArray at: 54 put: #invokeCallback:stack:registers:jmpbuf:.
 	newArray at: 55 put: (self at: #UnsafeAlien ifAbsent: [  ]).	"Weak reference finalization"
 	newArray at: 56 put: (self at: #WeakFinalizationList ifAbsent: [  ]).
+	newArray at: 57 put: nil.	"Reserved for ForeignCallbackProcess"
+	newArray at: 58 put: #respondsToUnknownBytecode.
+	newArray at: 59 put: #conditionalBranchCounterTrippedOn:.	"Reserved for SistaStackToRegisterCogit"
 	^ newArray
-]
 
 SmalltalkImage >> okayToProceedEvenIfSpaceIsLow
-[
+okayToProceedEvenIfSpaceIsLow
 	"Return true if either there is enough memory to do so safely or if the user gives permission after being given fair warning."
 
 	self garbageCollectMost > self lowSpaceThreshold
@@ -1544,31 +1237,9 @@ SmalltalkImage >> okayToProceedEvenIfSpaceIsLow
 	^ self
 		confirm:
 			'WARNING: There is not enough space to start the low space watcher.If you proceed, you will not be warned again, and the system mayrun out of memory and crash. If you do proceed, you can start thelow space notifier when more space becomes available simply byopening and then closing a debugger (e.g., by hitting Cmd-period.)Do you want to proceed?'
-]
-
-SmalltalkImage >> openChanges: changesPath forImage: imageName
-[
-	"find the changes file by looking in
-a) the directory derived from the image name
-b) the DefaultDirectory (which will normally be the directory derived from the image name or the SecurityManager's choice)
-If an old file is not found in either place, check for a read-only file in the same places. If that fails, return nil"
-
-	| changes fd changesFile changesName |
-	changesFile := changesPath asFileReference.
-	changesName := changesFile basename.	"look for the changes file or an alias to it in the image directory"
-	changesFile exists
-		ifTrue: [ changesFile writeStream ifNotNilDo: [ :stream | ^ stream ] ].	"look for the changes in the default directory"
-	(changesFile := FileSystem workingDirectory / changesName) exists
-		ifTrue: [ changesFile writeStream ifNotNilDo: [ :stream | ^ stream ] ].	"look for read-only changes in the image directory"
-	(changesFile := changesPath asFileReference) exists
-		ifTrue: [ changesFile readStream ifNotNilDo: [ :stream | ^ stream ] ].	"look for read-only changes in the default directory"
-	(changesFile := FileSystem workingDirectory / changesName) exists
-		ifTrue: [ changesFile readStream ifNotNilDo: [ :stream | ^ stream ] ].	"failed to open a changes file"
-	^ nil
-]
 
 SmalltalkImage >> openLog
-[
+openLog
 	"This is a _private_ method,
 	Because it really belongs to logging facility,
 	we should delegate to it at some point "
@@ -1577,48 +1248,23 @@ SmalltalkImage >> openLog
 		wantsLineEndConversion: true;
 		setToEnd;
 		yourself
-]
 
 SmalltalkImage >> openSourceFiles
-[
+openSourceFiles
 	self imagePath = LastImagePath
 		ifFalse: [ "Reset the author full name to blank when the image gets moved"
 			LastImagePath := self imagePath.
-			Author fullName: '' ].
-	self checkAndOpenSourcesAndChanges.
-	SourceFileArray install
-]
-
-SmalltalkImage >> openSources: fullSourcesName forImage: imagePath
-[
-	"We first do a check to see if a compressed version ofthe sources file is present.
-Open the .sources file read-only after searching in:
-a) the directory where the VM lives
-b) the directory where the image came from
-c) the DefaultDirectory (which is likely the same as b unless the SecurityManager has changed it).
-"
-
-	| sources fd sourcesFile sourcesName |
-	sourcesFile := fullSourcesName asFileReference.
-	sourcesName := sourcesFile basename.	"look for the sources file or an alias to it in the VM's directory"
-	(sourcesFile := self vmDirectory / sourcesName) exists
-		ifTrue: [ sourcesFile readStream ifNotNilDo: [ :stream | ^ stream ] ].	"look for the sources file or an alias to it in the image directory"
-	(sourcesFile := imagePath asFileReference parent / sourcesName) exists
-		ifTrue: [ ^ sourcesFile readStream ifNotNilDo: [ :stream | ^ stream ] ].	"look for the sources in the current directory"
-	(sourcesFile := sourcesName asFileReference) exists
-		ifTrue: [ ^ sourcesFile readStream ifNotNilDo: [ :stream | ^ stream ] ].
-	^ nil
-]
+			Author reset ].
+	SourceFiles ensureOpen
 
 SmalltalkImage >> optionAt: i
-[
+optionAt: i
 	"Answer the i-th option of the command line, or nil if not so many options."
 
 	^ self vm optionAt: i
-]
 
 SmalltalkImage >> options
-[
+options
 	"Answer an array with all the command line options."
 
 	"Smalltalk commandLine options"
@@ -1626,33 +1272,29 @@ SmalltalkImage >> options
 	^ Array
 		streamContents: [ :str | | arg i |
 			i := 1.
-			[ i > 1000 or: [ (arg := self optionAt: i) == nil ] ] whileFalse: [ str nextPut: arg.
+			[ i > 1000 or: [ (arg := self optionAt: i) isNil ] ] whileFalse: [ str nextPut: arg.
 					i := i + 1 ] ]
-]
 
 SmalltalkImage >> organization
-[
+organization
 	"Return the organizer for the receiver"
 
 	^ globals organization
-]
 
 SmalltalkImage >> os
-[
+os
 	"Answer the object to query about os."
 
-	^ OSPlatform
-]
+	^ OSPlatform current
 
 SmalltalkImage >> platform
-[
+platform
 	"Answer the object to query about os."
 
-	^ OSPlatform
-]
+	^ self os
 
 SmalltalkImage >> primBytesLeft
-[
+primBytesLeft
 	"Primitive. Answer the number of bytes available for new object data.
 	Not accurate unless preceded by
 		Smalltalk garbageCollectMost (for reasonable accuracy), or
@@ -1661,56 +1303,50 @@ SmalltalkImage >> primBytesLeft
 
 	<primitive: 112>
 	^ 0
-]
 
 SmalltalkImage >> primImageName
-[
+primImageName
 	"Answer the full path name for the current image."
 
 	"Smalltalk imageName"
 
 	<primitive: 121>
 	self primitiveFailed
-]
 
 SmalltalkImage >> primImageName: newName
-[
+primImageName: newName
 	"Set the the full path name for the current image.  All further snapshots will use this."
 
 	<primitive: 121>
 	^ self primitiveFailed
-]
 
 SmalltalkImage >> primImagePath
-[
+primImagePath
 	"Answer the full path name for the current image."
 
 	"Smalltalk imageName"
 
 	<primitive: 121>
 	self primitiveFailed
-]
 
 SmalltalkImage >> primImagePath: newName
-[
+primImagePath: newName
 	"Set the the full path name for the current image.  All further snapshots will use this."
 
 	<primitive: 121>
 	^ self primitiveFailed
-]
 
 SmalltalkImage >> primLowSpaceSemaphore: aSemaphore
-[
+primLowSpaceSemaphore: aSemaphore
 	"Primitive. Register the given Semaphore to be signalled when the
 	number of free bytes drops below some threshold. Disable low-space
 	interrupts if the argument is nil."
 
 	<primitive: 124>
 	self primitiveFailed
-]
 
 SmalltalkImage >> primSignalAtBytesLeft: numBytes
-[
+primSignalAtBytesLeft: numBytes
 	"Tell the interpreter the low-space threshold in bytes. When the free
 	space falls below this threshold, the interpreter will signal the low-space
 	semaphore, if one has been registered.  Disable low-space interrupts if the
@@ -1718,194 +1354,37 @@ SmalltalkImage >> primSignalAtBytesLeft: numBytes
 
 	<primitive: 125>
 	self primitiveFailed
-]
 
 SmalltalkImage >> primitiveGarbageCollect
-[
+primitiveGarbageCollect
 	"Primitive. Reclaims all garbage and answers the number of bytes of available space."
 
 	<primitive: 130>
 	^ self primBytesLeft
-]
 
 SmalltalkImage >> primitiveGetSpecialObjectsArray
-[
+primitiveGetSpecialObjectsArray
 	<primitive: 129>
 	^ self primitiveFailed
-]
 
 SmalltalkImage >> printElementsOn: aStream
-[
+printElementsOn: aStream
 	aStream nextPutAll: '(lots of globals)'
-]
 
 SmalltalkImage >> printOn: aStream
-[
+printOn: aStream
 	self == Smalltalk
 		ifFalse: [ ^ super printOn: aStream ].
 	aStream nextPutAll: 'Smalltalk'
-]
-
-SmalltalkImage >> privCleanChangeSets
-[
-	(ChangeSet allChangeSets reject: [ :cs | cs = ChangeSet current ]) do: [ :cs | ChangeSet removeChangeSet: cs ].
-	ChangeSet current clear.
-	ChangeSet current name: 'Unnamed1'
-]
-
-SmalltalkImage >> privCleanGlobals
-[
-	#(#ActiveEvent #World #ActiveWorld #ActiveHand) do: [ :sym | Smalltalk at: sym put: nil.
-			Smalltalk removeKey: sym ]
-]
-
-SmalltalkImage >> privCleanMonticello
-[
-	(Smalltalk classNamed: #MCFileBasedRepository) flushAllCaches.
-	(Smalltalk classNamed: #MCDefinition) clearInstances.
-	(Smalltalk classNamed: #MCWorkingCopy)
-		allInstancesDo: [ :wc | SystemAnnouncer uniqueInstance unsubscribe: wc.
-			wc unregister ].
-	SystemAnnouncer uniqueInstance
-		unsubscribe: (Smalltalk classNamed: #MCPackageManager);
-		unsubscribe: (Smalltalk classNamed: #MCWorkingCopy)
-]
-
-SmalltalkImage >> privCleanProcesses
-[
-	UIManager default terminateUIProcess.
-	(Process allInstances
-		select: [ :p | ({(InputEventFetcher default instVarNamed: #fetcherProcess).
-			(Processor activeProcess).
-			(WeakArray runningFinalizationProcess).
-			(Processor backgroundProcess)} includes: p) not ])
-		do: [ :p | p suspend.
-			p terminate ].
-	Delay startTimerEventLoop
-]
-
-SmalltalkImage >> privCleanShutDownList
-[
-	#(#FreeTypeSettings #FreeTypeCache #FT2Handle #LogicalFont #MCMethodDefinition #InternetConfiguration #TTCFont #CPUWatcher #ProcessBrowser #SecurityManager #CommandHistory #Password #HttpUrl #StrikeFont #PasteUpMorph #Form #ZnServer)
-		do: [ :className | Smalltalk removeFromShutDownList: (Smalltalk classNamed: className) ]
-]
-
-SmalltalkImage >> privCleanStartUpList
-[
-	#(#NaturalLanguageTranslator #ShortIntegerArray #ShortRunArray #PasteUpMorph #SecurityManager #FreeTypeFontProvider #UUIDGenerator #ProcessBrowser #CPUWatcher #DateAndTime #HostSystemMenus #MenuIcons #InternetConfiguration #CommandHistory #HostWindowProxy #FreeTypeSettings #UITheme #CodeLoader #ZnServer #MCWorkingCopy #RecentMessageList #EditorFindReplaceDialogWindow #CodeUpdate)
-		do: [ :className | Smalltalk removeFromStartUpList: (Smalltalk classNamed: className) ]
-]
-
-SmalltalkImage >> privCleanTextConstants
-[
-	TextConstants TextSharedInformation removeKey: #DefaultTextStyle.
-	TextConstants TextSharedInformation removeKey: #DefaultMultiStyle.
-	TextConstants TextSharedInformation removeKey: #DefaultFixedTextStyle.
-	TextConstants TextSharedInformation removeKey: (Smalltalk classNamed: #StrikeFont) defaultFontKey.
-	Smalltalk allClasses select: [ :c | c sharedPools includes: TextConstants ] thenDo: [ :c | c compileAll ]
-]
-
-SmalltalkImage >> privCleanUnloadMethods
-[
-	" remove class unload methods to avoid their calling during removing of this classes "
-
-	#(#Browser #ChangeList #DummySoundSystem #FT2Handle #FileContentsBrowser #GZipReadStream #GZipWriteStream #MCVersionReader #MailComposition #Morph #FreeTypeFontProvider #DefaultExternalDropHandler #FileStream #Form)
-		do: [ :className | (Smalltalk at: className) class removeSelector: #unload ]
-]
-
-SmalltalkImage >> privRecompileAll
-[
-	Smalltalk allClassesAndTraits do: [ :classOrTrait | classOrTrait compileAll ]
-]
 
 SmalltalkImage >> privSaveImageWithCleanup
-[
+privSaveImageWithCleanup
 	" Do not use this method for common image saving. This method is designated for saving the image during the shrinking process in headless images."
 
-	| report |
 	(Delay forMilliseconds: 1000) wait.
 	Processor yield.
 	13 timesRepeat: [ Smalltalk garbageCollect ].	"a magic number (Camillo) "
 	[ self snapshot: true andQuit: true ]
-		ifError: [ :e | [ report := FileStream forceNewFileNamed: 'PharoDebug.log'.
-			report
-				nextPutAll: e asString;
-				cr ]
-				ensure: [ report ifNotNil: [ report close ] ] ]
-]
-
-SmalltalkImage >> privShrinkUnicodeTables
-[
-	#(#GB2312Table #JISX0208Table #KSX1001Table) do: [ :table | UCSTable classPool at: table put: nil ].
-	Unicode classPool
-		at: #DecimalProperty
-		put:
-			#(-1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 0 1 2 3 4 5 6 7 8 9 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1).
-	Unicode classPool
-		at: #GeneralCategory
-		put:
-			#(1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 29 21 21 21 23 21 21 21 22 18 21 25 21 17 21 21 13 13 13 13 13 13 13 13 13 13 21 21 25 25 25 21 21 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 22 21 18 24 16 24 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 22 25 18 25 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 29 21 23 23 23 23 26 26 24 26 5 20 25 17 26 24 26 25 15 15 24 5 26 21 24 15 5 19 15 15 15 21 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 9 25 9 9 9 9 9 9 9 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 25 5 5 5 5 5 5 5)
-]
-
-SmalltalkImage >> privShrinkingProcess
-[
-	self privShrinkingProcessWith: #()
-]
-
-SmalltalkImage >> privShrinkingProcessWith: additionalPackageNames
-[
-	[ 
-	| packages |
-	10 timesRepeat: [ (Delay forMilliseconds: 100) wait.
-			Processor yield ].
-	Author fullName: 'Mr.Shrinker'.
-	self privCleanMonticello.
-	UIManager default: DummyUIManager new.
-	UIManager default progressBarEnabled: false.
-	self privCleanProcesses.
-	self privCleanGlobals.
-	5 timesRepeat: [ Smalltalk garbageCollect ].
-	(Smalltalk classNamed: #MCDataStream) initialize.
-	Beeper instVarNamed: #default put: nil.
-	Smalltalk cleanOutUndeclared.
-	5 timesRepeat: [ Smalltalk garbageCollect ].
-	Author reset.
-	(Smalltalk classNamed: #KMPragmaKeymapBuilder) release.
-	self privShrinkUnicodeTables.
-	Display newDepth: 1.
-	self privCleanStartUpList.
-	self privCleanShutDownList.	"    CommandLine removeRegistrationNamed: #BasicCodeLoader.    SimpleCodeLoader register."	"move class Model to different category"
-	Object
-		subclass: #Model
-		instanceVariableNames: 'dependents'
-		classVariableNames: ''
-		poolDictionaries: ''
-		category: 'Kernel-Objects'.
-	self privCleanTextConstants.
-	(Smalltalk classNamed: #SoundService) default: nil.
-	(Smalltalk classNamed: #SoundService) unregister: (Smalltalk classNamed: #DummySoundSystem).
-	ThreadSafeTranscript install.
-	self privCleanUnloadMethods.
-	(Smalltalk classNamed: #RPackageOrganizer) unregisterInterestToSystemAnnouncement.
-	SystemNavigation new removeAllButPackages: self kernelPackageNames , additionalPackageNames.
-	Smalltalk flushClassNameCache.
-	3 timesRepeat: [ Smalltalk garbageCollect.
-			Symbol compactSymbolTable ].
-	Undeclared removeUnreferencedKeys.
-	self privRecompileAll.
-	self privCleanChangeSets.
-	FileServices removeObsolete.
-	Object flushEvents.
-	(Smalltalk classNamed: #MCDataStream) initialize.
-	Locale classPool at: #LocaleChangeListeners put: nil.
-	SmalltalkImage classPool at: #Tools put: nil.
-	Behavior flushObsoleteSubclasses.
-	Smalltalk flushClassNameCache.
-	Smalltalk organization removeEmptyCategories.
-	WeakArray restartFinalizationProcess.
-	ContextPart initializePrimitiveSimulators.
-	SmalltalkImage current fixObsoleteReferences.	"UIManager default progressBarEnabled: true."	"Smalltalk condenseChanges."
-	Smalltalk saveImageInNewContext ]
 		ifError: [ :e | | rep |
 			rep := FileStream forceNewFileNamed: 'PharoDebug.log'.
 			rep
@@ -1926,42 +1405,43 @@ SmalltalkImage >> privShrinkingProcessWith: additionalPackageNames
 						cr ] ifError: [  ] ].
 			rep close.
 			Smalltalk exitFailure ]
-]
 
 SmalltalkImage >> processShutDownList: quitting
-[
+processShutDownList: quitting
 	"Send #shutDown to each class that needs to wrap up before a snapshot.
 	Also void the endianness chace; this can't safely be done on start-up because
 	Smalltalk is too late in the start-up sequence."
 
 	EndianCache := nil.
 	^ self send: #shutDown: toClassesNamedIn: ShutDownList with: quitting
-]
 
 SmalltalkImage >> processStartUpList: resuming
-[
+processStartUpList: resuming
 	"Send #startUp to each class that needs to run initialization after a snapshot."
 
 	^ self send: #startUp: toClassesNamedIn: StartUpList with: resuming
-]
 
 SmalltalkImage >> quitPrimitive
-[
+quitPrimitive
 	"Primitive. Exit to another operating system on the host machine, if one
 	exists. All state changes in the object space since the last snapshot are lost.
 	Essential. See Object documentation whatIsAPrimitive."
 
 	<primitive: 113>
 	self primitiveFailed
-]
+
+SmalltalkImage >> recompile
+recompile
+	Smalltalk globals allClassesAndTraits
+		do: [ :classOrTrait | classOrTrait recompile ]
+		displayingProgress: 'Recompiling all classes and traits'
 
 SmalltalkImage >> recordStartupStamp
-[
+recordStartupStamp
 	ChangesLog default recordStartupStamp
-]
 
 SmalltalkImage >> recreateSpecialObjectsArray
-[
+recreateSpecialObjectsArray
 	"Smalltalk recreateSpecialObjectsArray"
 
 	"To external package developers:
@@ -1976,17 +1456,15 @@ SmalltalkImage >> recreateSpecialObjectsArray
 	"Replace the interpreter's reference in one atomic operation"
 
 	self specialObjectsArray becomeForward: self newSpecialObjectsArray
-]
 
 SmalltalkImage >> registerExternalObject: anObject
-[
+registerExternalObject: anObject
 	"Register the given object in the external objects array and return its index. If it is already there, just return its index."
 
 	^ ExternalSemaphoreTable registerExternalObject: anObject
-]
 
 SmalltalkImage >> removeAllLineFeeds
-[
+removeAllLineFeeds
 	"Smalltalk removeAllLineFeeds"
 
 	"Scan all methods for source code with lineFeeds.
@@ -2010,10 +1488,9 @@ SmalltalkImage >> removeAllLineFeeds
 	self crTrace: totalOK printString , ' methods still correctly contain LFs.'.
 	(self confirm: 'Do you want to see the affected methods?')
 		ifTrue: [ authors inspect ]
-]
 
 SmalltalkImage >> removeAllLineFeedsQuietly
-[
+removeAllLineFeedsQuietly
 	"Smalltalk removeAllLineFeedsQuietly"
 
 	"Scan all methods for source code with lineFeeds.
@@ -2022,10 +1499,9 @@ SmalltalkImage >> removeAllLineFeedsQuietly
 	as well as (at the key 'OK') a list of methods that still contain LF characters inside literal strings or characters."
 
 	^ self removeAllLineFeedsQuietlyCalling: [  ]
-]
 
 SmalltalkImage >> removeAllLineFeedsQuietlyCalling: aBlock
-[
+removeAllLineFeedsQuietlyCalling: aBlock
 	"Smalltalk removeAllLineFeedsQuietly"
 
 	"Scan all methods for source code with lineFeeds.
@@ -2058,51 +1534,45 @@ SmalltalkImage >> removeAllLineFeedsQuietlyCalling: aBlock
 										withStamp: oldStamp
 										notifying: nil ] ] ] ].
 	^ authors
-]
 
 SmalltalkImage >> removeClassNamed: aName
-[
+removeClassNamed: aName
 	"Invoked from fileouts:  if there is currently a class in the system named aName, then remove it.  If anything untoward happens, report it in the Transcript.  "
 
 	globals removeClassNamed: aName
-]
 
 SmalltalkImage >> removeEmptyMessageCategories
-[
+removeEmptyMessageCategories
 	"Smalltalk removeEmptyMessageCategories"
 
 	self garbageCollect.
-	(ClassOrganizer allInstances copyWith: SystemOrganization) do: [ :org | org removeEmptyCategories ]
-]
+	ClassOrganization allInstancesDo: [ :org | org removeEmptyCategories ].
+	SystemOrganization removeEmptyCategories
 
 SmalltalkImage >> removeFromShutDownList: aClass
-[
+removeFromShutDownList: aClass
 	ShutDownList remove: aClass name ifAbsent: [  ]
-]
 
 SmalltalkImage >> removeFromStartUpList: aClass
-[
+removeFromStartUpList: aClass
 	StartUpList remove: aClass name ifAbsent: [  ]
-]
 
 SmalltalkImage >> removeKey: key
-[
+removeKey: key
 	"Obsoleted."
 
 	self flag: #tobeprecated.	"self deprecated: 'Use Smalltalk globals'."
 	^ globals removeKey: key
-]
 
 SmalltalkImage >> removeKey: key ifAbsent: aBlock
-[
+removeKey: key ifAbsent: aBlock
 	"Obsoleted."
 
 	self flag: #tobeprecated.	"self deprecated: 'Use Smalltalk globals'."
 	^ globals removeKey: key ifAbsent: aBlock
-]
 
 SmalltalkImage >> removeSelector: descriptor
-[
+removeSelector: descriptor
 	"Safely remove a selector from a class (or metaclass). If the
 	class or the method doesn't exist anymore, never mind and
 	answer nil.
@@ -2116,35 +1586,31 @@ SmalltalkImage >> removeSelector: descriptor
 			sel := descriptor third ]
 		ifFalse: [ sel := descriptor second ].
 	^ class removeSelector: sel
-]
 
 SmalltalkImage >> renameClass: aClass as: newName
-[
+renameClass: aClass as: newName
 	"Rename the class, aClass, to have the title newName."
 
 	^ globals renameClass: aClass as: newName
-]
 
 SmalltalkImage >> renameClass: aClass from: oldName
-[
+renameClass: aClass from: oldName
 	"Rename the class, aClass, to have the title newName."
 
 	^ globals renameClass: aClass from: oldName
-]
 
 SmalltalkImage >> renameClassNamed: oldName as: newName
-[
+renameClassNamed: oldName as: newName
 	"Invoked from fileouts:  if there is currently a class in the system named oldName, then rename it to newName.  If anything untoward happens, report it in the Transcript.  "
 
 	| oldClass |
-	(oldClass := self at: oldName asSymbol ifAbsent: [ nil ]) == nil
-		ifTrue: [ self crTrace: 'Class-rename for ' , oldName , ' ignored because ' , oldName , ' does not exist.'.
+	(oldClass := self at: oldName asSymbol ifAbsent: [ nil ])
+		ifNil: [ self crTrace: 'Class-rename for ' , oldName , ' ignored because ' , oldName , ' does not exist.'.
 			^ self ].
 	oldClass rename: newName
-]
 
 SmalltalkImage >> renamedClass: aClass from: oldName to: newName
-[
+renamedClass: aClass from: oldName to: newName
 	"Inform Smalltalk that aClass has been renamed"
 
 	(Array with: StartUpList with: ShutDownList)
@@ -2152,34 +1618,30 @@ SmalltalkImage >> renamedClass: aClass from: oldName to: newName
 			index := list indexOf: oldName ifAbsent: [ 0 ].
 			index > 0
 				ifTrue: [ list at: index put: newName ] ]
-]
 
 SmalltalkImage >> rootTable
-[
+rootTable
 	"Primitive. Answer a snapshot of the VMs root table. 
 	Keep in mind that the primitive may itself cause GC."
 
 	<primitive: 'primitiveRootTable'>
 	^ self primitiveFailed
-]
 
 SmalltalkImage >> rootTableAt: index
-[
+rootTableAt: index
 	"Primitive. Answer the nth element of the VMs root table"
 
 	<primitive: 'primitiveRootTableAt'>
 	^ nil
-]
 
 SmalltalkImage >> saveAs
-[
+saveAs
 	"Put up the 'saveAs' prompt, obtain a name, and save the image  under that new name."
 
 	self saveAs: self getFileNameFromUser
-]
 
 SmalltalkImage >> saveAs: newNameWithoutSuffix
-[
+saveAs: newNameWithoutSuffix
 	"Results:
 		true  when continuing in the new session
 		false for the current session "
@@ -2190,81 +1652,76 @@ SmalltalkImage >> saveAs: newNameWithoutSuffix
 				closeSourceFiles;
 				saveChangesInFileNamed: (self fullNameForChangesNamed: newNameWithoutSuffix)	"so copying the changes file will always work" ].
 	^ self saveImageInFileNamed: (self fullNameForImageNamed: newNameWithoutSuffix)
-]
 
 SmalltalkImage >> saveAsNewVersion
-[
+saveAsNewVersion
 	"Save the image/changes using the next available version number."
 
 	"SmalltalkImage current saveAsNewVersion"
 
-	| newImageFile newChangesFile |
+	| newImageFile newChangesFile strippedName |
 	newImageFile := self imageFile nextVersion.
-	newChangesFile := newImageFile withExtension: self changesSuffix.	"Check to see if there is a .changes file that would cause a problem if we saved a new .image file with the new version number"
+	newChangesFile := newImageFile withExtension: self changesSuffix.
 	newChangesFile exists
 		ifTrue: [ 
 			^ self
 				inform:
 					'There is already .changes file of the desired name,' , newChangesFile fullName
 						,
-							'curiously already present, even though there isno corresponding .image file.   Please remedymanually and then repeat your request.' ].	"strip awaay the image extension"
-	^ self saveAs: (newImageFile fullName copyUpToLast: $.)
-]
+							'curiously already present, even though there isno corresponding .' , self imageSuffix
+						,
+							' file.   Please remedymanually and then repeat your request.' ].
+	strippedName := self stripImageExtensionFrom: newImageFile fullName.
+	^ self saveAs: strippedName
 
 SmalltalkImage >> saveChangesInFileNamed: aString
-[
+saveChangesInFileNamed: aString
 	| changesFile |
 	changesFile := aString asFileReference.
-	changesFile parent ensureDirectory.	"Ensure that the destination file is not the same as the original one"
+	changesFile parent ensureCreateDirectory.	"Ensure that the destination file is not the same as the original one"
 	Smalltalk changesFile absolutePath = changesFile absolutePath
 		ifFalse: [ changesFile deleteIfAbsent: [  ].
 			Smalltalk changesFile copyTo: changesFile ].
 	self setMacFileInfoOn: changesFile fullName
-]
 
 SmalltalkImage >> saveImageInFileNamed: aFile
-[
+saveImageInFileNamed: aFile
 	"Save the image in the given file.
 	Unlike #backupImageInFileNamed: this method continues evaluation in the new image after saving.
 	Note: This method does not save the .changes file, use #saveAs:"
 
-	| imageFile previousFullImageName |
+	| imageFile |
 	imageFile := aFile asFileReference.
-	imageFile parent ensureDirectory.
-	previousFullImageName := self imagePath.
+	imageFile parent ensureCreateDirectory.
 	^ self
 		changeImagePathTo: imageFile fullName;
 		closeSourceFiles;
 		openSourceFiles;
 		snapshot: true andQuit: false	"so SNAPSHOT appears in new changes file"
-]
 
 SmalltalkImage >> saveImageInNewContext
-[
+saveImageInNewContext
 	" This method is used for saving the Smalltalk image in a new process so the current process with all stack information may be forgotten.
 	
 	Do not use this method for common image saving. This method is designated for saving the image during the shrinking process in headless images. "
 
 	[ self privSaveImageWithCleanup ] forkAt: 40
-]
 
 SmalltalkImage >> saveSession
-[
+saveSession
 	"Save the current image without quitting and return it resuming status (whether it was restarted or in the same flow)."
 
 	^ self snapshot: true andQuit: false
-]
 
 SmalltalkImage >> select: aBlock
-[
+select: aBlock
 	"Obsoleted."
 
 	self flag: #tobeprecated.	"self deprecated: 'Use Smalltalk globals'."
 	^ globals select: aBlock
-]
 
 SmalltalkImage >> send: startUpOrShutDown toClassesNamedIn: startUpOrShutDownList with: argument
-[
+send: startUpOrShutDown toClassesNamedIn: startUpOrShutDownList with: argument
 	"Send the message #startUp: or #shutDown: to each class named in the list.
 	The argument indicates if the system is about to quit (for #shutDown:) or if
 	the image is resuming (for #startUp:).
@@ -2276,118 +1733,86 @@ SmalltalkImage >> send: startUpOrShutDown toClassesNamedIn: startUpOrShutDownLis
 	startUpOrShutDownList
 		do: [ :name | | class |
 			class := self at: name ifAbsent: [ nil ].
-			class isNil
-				ifTrue: [ removals add: name ]
-				ifFalse: [ self logStartUpErrorDuring: [ class perform: startUpOrShutDown with: argument ] into: errors tryDebugger: false ] ].	"Remove any obsolete entries, but after the iteration"
+			class
+				ifNil: [ removals add: name ]
+				ifNotNil: [ self logStartUpErrorDuring: [ class perform: startUpOrShutDown with: argument ] into: errors tryDebugger: false ] ].	"Remove any obsolete entries, but after the iteration"
 	startUpOrShutDownList removeAll: removals.
 	^ errors
-]
 
 SmalltalkImage >> session
-[
-	"Answer the current session object.
-	Currently, there is no assumptions about what protocol(s) a session object should conform to.
-	The only valid use of session object is to compare it using identity comparison, i.e. #== 
-	with another session object retrieved before, in order to detect session change. 
-	
-	A session changes every time image boots from disk. It doesn't changes on snapshot.
-	"
+session
+	"Answer the current session object."
 
-	^ session ifNil: [ session := self newSessionObject ]
-]
+	^ Session current
 
 SmalltalkImage >> setMacFileInfoOn: aString
-[
+setMacFileInfoOn: aString
 	"On Mac, set the file type and creator (noop on other platforms)"
 
 	aString asFileReference setMacType: 'STch' creator: 'FAST'
-]
 
 SmalltalkImage >> shortImageName
-[
+shortImageName
 	"Answer the current image name but only that name and not the full path as with imageName."
 
 	"SmalltalkImage current shortImageName"
 
 	^ self imageFile basename
-]
 
 SmalltalkImage >> shouldDownloadSourcesFile
-[
+shouldDownloadSourcesFile
 	"If true, when no sources file can be found, the file will be downloaded.
 	The default is false."
 
 	^ self class shouldDownloadSourcesFile
-]
-
-SmalltalkImage >> shrinkToKernel
-[
-	self shrinkToKernelWith: #()
-]
-
-SmalltalkImage >> shrinkToKernelWith: additionalPackageNames
-[
-	"
-  WARNING:  THIS METHOD WILL DESTROY YOUR IMAGE
-
-  Use with cation and only on fresh Pharo images 
-  "
-
-	[ self privShrinkingProcessWith: additionalPackageNames ] forkAt: 40.
-	Processor terminateActive
-]
 
 SmalltalkImage >> shutDown
-[
-	^ Smalltalk closeSourceFiles
-]
+shutDown
+	^ self closeSourceFiles
 
 SmalltalkImage >> shutDownImage: quitting
-[
+shutDownImage: quitting
 	Object flushDependents.
 	Object flushEvents.
 	self processShutDownList: quitting
-]
 
 SmalltalkImage >> signalLowSpace
-[
+signalLowSpace
 	"Signal the low-space semaphore to alert the user that space is running low."
 
 	LowSpaceSemaphore signal
-]
 
 SmalltalkImage >> size
-[
+size
 	"Obsoleted."
 
 	self flag: #tobeprecated.	"self deprecated: 'Use Smalltalk globals'."
 	^ globals size
-]
 
 SmalltalkImage >> snapshot: save andQuit: quit
-[
+snapshot: save andQuit: quit
 	"Mark the changes file and close all files as part of #processShutdownList.
 	If save is true, save the current state of this Smalltalk in the image file.
 	If quit is true, then exit to the outer OS shell.
 	The latter part of this method runs when resuming a previously saved image. This resume logic checks for a document file to process when starting up."
 
-	| snapshotResult isNewImage startupErrors |
-	self addSnapshotRecord: save andQuit: quit.
+	| snapshotResult isNewImage |
+	ChangesLog default logSnapshot: save andQuit: quit.
 	self shutDownImage: quit.
 	save
 		ifTrue: [ snapshotResult := self snapshotPrimitive.	"<-- PC frozen here on image file"
-			isNewImage := snapshotResult == true ]
+			isNewImage := snapshotResult == true.
+			SystemAnnouncer uniqueInstance snapshotDone: isNewImage ]
 		ifFalse: [ isNewImage := false ].
 	(quit and: [ isNewImage not ])
 		ifTrue: [ self quitPrimitive ].	"create a new session object if we're booting"
 	isNewImage
-		ifTrue: [ session := self newSessionObject ].
+		ifTrue: [ Session reset ].
 	self startupImage: isNewImage snapshotWorked: snapshotResult.	"We return the resuming state, which may be useful for users to know the state of the image"
 	^ isNewImage
-]
 
 SmalltalkImage >> snapshotPrimitive
-[
+snapshotPrimitive
 	"Primitive. Write the current state of the object memory on a file in the
 	same format as the Smalltalk-80 release. The file can later be resumed,
 	returning you to this exact state. Return normally after writing the file.
@@ -2395,39 +1820,33 @@ SmalltalkImage >> snapshotPrimitive
 
 	<primitive: 97>
 	^ nil	"indicates error writing image file"
-]
 
 SmalltalkImage >> sourceFileVersionString
-[
+sourceFileVersionString
 	^ SourceFileVersionString
-]
 
 SmalltalkImage >> sourceFileVersionString: aString
-[
+sourceFileVersionString: aString
 	SourceFileVersionString := aString
-]
 
 SmalltalkImage >> sourcesFile
-[
+sourcesFile
 	"Answer the full path to the version-stable source code"
 
 	^ self vmDirectory / SourceFileVersionString , self sourcesSuffix
-]
 
 SmalltalkImage >> sourcesName
-[
+sourcesName
 	"Answer the full path to the version-stable source code"
 
 	^ self sourcesFile fullName
-]
 
 SmalltalkImage >> sourcesSuffix
-[
+sourcesSuffix
 	^ 'sources'
-]
 
 SmalltalkImage >> spaceLeftAfterGarbageCollection
-[
+spaceLeftAfterGarbageCollection
 	"Return a string describing the amount of memory available"
 
 	| availInternal availPhysical availTotal |
@@ -2448,48 +1867,41 @@ SmalltalkImage >> spaceLeftAfterGarbageCollection
 				cr.
 			availTotal printWithCommasOn: s.
 			s nextPutAll: ' bytes (total)     ' ]
-]
 
 SmalltalkImage >> specialNargsAt: anInteger
-[
+specialNargsAt: anInteger
 	"Answer the number of arguments for the special selector at: anInteger."
 
 	^ (self specialObjectsArray at: 24) at: anInteger * 2
-]
 
 SmalltalkImage >> specialObjectsArray
-[
+specialObjectsArray
 	^ specialObjectsArray ifNil: [ specialObjectsArray := self primitiveGetSpecialObjectsArray ]
-]
 
 SmalltalkImage >> specialObjectsArray: anArray
-[
+specialObjectsArray: anArray
 	specialObjectsArray := anArray
-]
 
 SmalltalkImage >> specialSelectorAt: anInteger
-[
+specialSelectorAt: anInteger
 	"Answer the special message selector from the interleaved specialSelectors array."
 
 	^ (self specialObjectsArray at: 24) at: anInteger * 2 - 1
-]
 
 SmalltalkImage >> specialSelectorSize
-[
+specialSelectorSize
 	"Answer the number of special selectors in the system."
 
 	^ (self specialObjectsArray at: 24) size // 2
-]
 
 SmalltalkImage >> specialSelectors
-[
+specialSelectors
 	"Used by SystemTracer only."
 
 	^ SpecialSelectors
-]
 
 SmalltalkImage >> startupImage: isNewImage snapshotWorked: snapshotResult
-[
+startupImage: isNewImage snapshotWorked: snapshotResult
 	| startupErrors |
 	self vm setGCParameters.
 	deferredStartupActions := nil.
@@ -2504,106 +1916,95 @@ SmalltalkImage >> startupImage: isNewImage snapshotWorked: snapshotResult
 	startupErrors addAll: (self executeDeferredStartupActions: isNewImage).
 	startupErrors isEmpty
 		ifFalse: [ self handleStartupErrors: startupErrors ].
-	snapshotResult == nil
-		ifTrue: [ self error: 'Failed to write image file (disk full?)' ]
-]
+	snapshotResult ifNil: [ self error: 'Failed to write image file (disk full?)' ]
+
+SmalltalkImage >> stripImageExtensionFrom: aString
+stripImageExtensionFrom: aString
+	| answer imageExtension delimitedImageExtension |
+	answer := aString.
+	imageExtension := Path extensionDelimiter asString , self imageSuffix.
+	delimitedImageExtension := imageExtension copyWith: Path extensionDelimiter.
+	[ answer isNil not and: [ (answer endsWith: imageExtension) or: [ answer endsWith: delimitedImageExtension ] ] ]
+		whileTrue: [ answer := answer copyUpToLast: Path extensionDelimiter ].
+	^ answer
 
 SmalltalkImage >> systemInformationString
-[
+systemInformationString
 	^ String cr , SystemVersion current version , String cr , self lastUpdateString , String cr , String cr , String cr
 		, self licenseString
-]
 
 SmalltalkImage >> timeStamp: aStream
-[
+timeStamp: aStream
 	"Writes system version and current time on stream aStream."
 
 	| dateTime |
-	dateTime := Time dateAndTimeNow.
+	dateTime := DateAndTime now.
 	aStream
-		nextPutAll:
-			'From ' , self datedVersion , ' [' , self lastUpdateString , '] on ' , (dateTime at: 1) printString , ' at '
-				, (dateTime at: 2) printString
-]
+		nextPutAll: 'From ' , self datedVersion , ' [' , self lastUpdateString , '] on ' , dateTime asDate printString;
+		nextPutAll: ' at ';
+		nextPutAll: dateTime asTime printString
 
 SmalltalkImage >> traitNames
-[
+traitNames
 	"Answer a SortedCollection of all traits (not including class-traits) names."
 
 	^ globals traitNames
-]
+
+SmalltalkImage >> ui
+ui
+	^ UIThemeRegistry
 
 SmalltalkImage >> unbindExternalPrimitives
-[
+unbindExternalPrimitives
 	"Primitive. Force all external primitives to be looked up again afterwards. Since external primitives that have not found are bound for fast failure this method will force the lookup of all primitives again so that after adding some plugin the primitives may be found."
 
 	"Do nothing if the primitive fails for compatibility with older VMs"
 
 	<primitive: 570>
 	
-]
-
-SmalltalkImage >> unloadModule: aString
-[
-	"Primitive. Unload the given module.
-	This primitive is intended for development only since some
-	platform do not implement unloading of DLL's accordingly.
-	Also, the mechanism for unloading may not be supported
-	on all platforms."
-
-	<primitive: 571>
-	^ self primitiveFailed
-]
 
 SmalltalkImage >> unregisterExternalObject: anObject
-[
+unregisterExternalObject: anObject
 	"Unregister the given object in the external objects array. Do nothing if it isn't registered."
 
 	ExternalSemaphoreTable unregisterExternalObject: anObject
-]
 
 SmalltalkImage >> verifyChanges
-[
+verifyChanges
 	"Smalltalk verifyChanges"
 
 	"Recompile all methods in the changes file."
 
 	self systemNavigation allBehaviorsDo: [ :class | class recompileChanges ]
-]
 
 SmalltalkImage >> version
-[
+version
 	"Answer the version of this release."
 
 	^ SystemVersion current version
-]
 
 SmalltalkImage >> veryDeepCopyWith: deepCopier
-[
+veryDeepCopyWith: deepCopier
 	"Return self.  I can't be copied.  Do not record me."
 
 	
-]
 
 SmalltalkImage >> vm
-[
+vm
 	"Answer the object to query about virtual machine."
 
-	^ VirtualMachine
-]
+	^ vm ifNil: [ vm := VirtualMachine new ]
 
 SmalltalkImage >> vmBinary
-[
+vmBinary
 	^ self vm binary
-]
 
 SmalltalkImage >> vmDirectory
-[
+vmDirectory
 	^ self vm directory
-]
 
 SmalltalkImage >> wordSize
-[
+wordSize
 	"Answer the size in bytes of an object pointer or word in the object memory.
 	The value does not change for a given image, but may be modified by a SystemTracer
 	when converting the image to another format. The value is cached in WordSize to
@@ -2612,78 +2013,51 @@ SmalltalkImage >> wordSize
 	"this method is deprecated"
 
 	^ self vm wordSize
-]
-
-SmalltalkImage class >> checkChangesFileAvailability
-[
-	^ CheckChangesFileAvailability ifNil: [ CheckChangesFileAvailability := true ]
-]
-
-SmalltalkImage class >> checkChangesFileAvailability: aBoolean
-[
-	CheckChangesFileAvailability := aBoolean
-]
-
-SmalltalkImage class >> checkSourcesFileAvailability
-[
-	^ CheckSourcesFileAvailability ifNil: [ CheckSourcesFileAvailability := true ]
-]
-
-SmalltalkImage class >> checkSourcesFileAvailability: aBoolean
-[
-	CheckSourcesFileAvailability := aBoolean
-]
 
 SmalltalkImage class >> cleanUp
-[
+cleanUp
 	"Flush caches"
 
 	"should probably distribute cleaning to systemDictionary"
 
 	Smalltalk globals flushClassNameCache.
 	Undeclared removeUnreferencedKeys
-]
 
 SmalltalkImage class >> compilerClass
-[
+compilerClass
 	^ CompilerClass
-]
 
 SmalltalkImage class >> compilerClass: aClass
-[
+compilerClass: aClass
 	CompilerClass := aClass
-]
 
 SmalltalkImage class >> current
-[
+current
 	^ Smalltalk
-]
 
 SmalltalkImage class >> initialize
-[
+initialize
 	"SmalltalkImage initialize"
 
 	self initializeStartUpList.
 	self initializeShutDownList.
 	Smalltalk addToStartUpList: SmalltalkImage
-]
 
 SmalltalkImage class >> initializeShutDownList
-[
+initializeShutDownList
 	"SmalltalkImage initializeShutDownList"
 
 	| oldList |
 	oldList := ShutDownList.
 	ShutDownList := OrderedCollection new.	"These get processed from the bottom up..."
-	#(#Delay #DisplayScreen #InputEventFetcher #Form #PasteUpMorph #StrikeFont #Color #SoundPlayer #HttpUrl #Password)
+	#(#Delay #DisplayScreen #InputEventFetcher #Form #WorldMorph #StrikeFont #Color #SoundPlayer #Password)
 		do: [ :clsName | Smalltalk globals at: clsName ifPresent: [ :cls | Smalltalk addToShutDownList: cls ] ].
 	oldList
 		ifNotNil: [ oldList
 				reverseDo: [ :className | Smalltalk globals at: className ifPresent: [ :theClass | Smalltalk addToShutDownList: theClass ] ] ]
-]
 
 SmalltalkImage class >> initializeStartUpList
-[
+initializeStartUpList
 	"SmalltalkImage initializeStartUpList"
 
 	| oldList |
@@ -2694,39 +2068,33 @@ SmalltalkImage class >> initializeStartUpList
 	oldList
 		ifNotNil: [ oldList
 				do: [ :className | Smalltalk globals at: className ifPresent: [ :theClass | Smalltalk addToStartUpList: theClass ] ] ].
-	#(#PasteUpMorph) do: [ :clsName | Smalltalk globals at: clsName ifPresent: [ :cls | Smalltalk addToStartUpList: cls ] ]
-]
+	#(#WorldMorph) do: [ :clsName | Smalltalk globals at: clsName ifPresent: [ :cls | Smalltalk addToStartUpList: cls ] ]
 
 SmalltalkImage class >> new
-[
+new
 	self error: 'Use current'
-]
 
 SmalltalkImage class >> shouldDownloadSourcesFile
-[
+shouldDownloadSourcesFile
 	"If true, when no sources file can be found, the file will be downloaded.
 	The default is false."
 
 	^ ShouldDownloadSourcesFile ifNil: [ ShouldDownloadSourcesFile := false ]
-]
 
 SmalltalkImage class >> shouldDownloadSourcesFile: boolean
-[
+shouldDownloadSourcesFile: boolean
 	"Set whether, when no sources file can be found, the file will be downloaded.
 	The default is false."
 
 	ShouldDownloadSourcesFile := boolean
-]
 
 SmalltalkImage class >> startUp: resuming
-[
+startUp: resuming
 	ChangesLog default.
 	resuming
 		ifTrue: [ Smalltalk openSourceFiles ]
-]
 
 SmalltalkImage class >> wordSize
-[
+wordSize
 	^ Smalltalk vm wordSize
-]
 

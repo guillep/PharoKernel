@@ -3,18 +3,19 @@ SaveCommandLineHandler
 	package: #'System-CommandLine'.
 
 SaveCommandLineHandler >> activate
-[
-	self activateHelp.
+activate
+	self activateHelp
+		ifTrue: [ ^ self ].
 	((self hasOption: 'delete-old')
 		ifTrue: [ self arguments size = 2 ]
 		ifFalse: [ self arguments size = 1 ])
-		ifFalse: [ ^ self exitFailure: 'Invalid Arguments' ].
+		ifFalse: [ self printHelp.
+			^ self exitFailure: 'Missing Arguments' ].
 	self saveImage
-]
 
 SaveCommandLineHandler >> saveImage
-[
-	| imageName oldImageFile oldChangesFile res |
+saveImage
+	| imageName oldImageFile oldChangesFile |
 	imageName := self arguments detect: [ :arg | arg ~= '--delete-old' ].
 	oldImageFile := Smalltalk imageFile resolve.
 	oldChangesFile := Smalltalk changesFile resolve.
@@ -26,15 +27,12 @@ SaveCommandLineHandler >> saveImage
 	oldImageFile delete.
 	oldChangesFile delete.
 	self exitSuccess
-]
 
 SaveCommandLineHandler class >> commandName
-[
+commandName
 	^ 'save'
-]
 
 SaveCommandLineHandler class >> description
-[
+description
 	^ 'Rename the image and changes file'
-]
 

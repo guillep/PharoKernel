@@ -1,0 +1,22 @@
+IllegalName
+	superclass: #FileSystemError;
+	instanceVariables: #(#name );
+	package: #'FileSystem-Core'.
+
+IllegalName >> initializeWithName: aName
+initializeWithName: aName
+	name := aName.
+	self messageText: aName
+
+IllegalName >> name
+name
+	^ name
+
+IllegalName class >> name: aName
+name: aName
+	^ self basicNew initializeWithName: aName
+
+IllegalName class >> signalWith: aName
+signalWith: aName
+	^ (self name: aName) signal
+

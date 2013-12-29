@@ -1,0 +1,56 @@
+ProcessSpecificVariable
+	instanceVariables: #(#index );
+	package: #Kernel.
+
+ProcessSpecificVariable class
+	instanceVariables: #(#hash #soleInstance ).
+
+ProcessSpecificVariable >> default
+default
+	"Answer the default value for the variable. The default for the default value is nil."
+
+	^ nil
+
+ProcessSpecificVariable >> index: anInteger
+index: anInteger
+	index := anInteger
+
+ProcessSpecificVariable >> value
+value
+	^ (Processor activeProcess psValueAt: index) ifNil: [ self default ]
+
+ProcessSpecificVariable >> valueOrNil
+valueOrNil
+	"a faster version, which doesn't using ifAbsent: to  avoid using block closure"
+
+	^ Processor activeProcess psValueAt: index
+
+ProcessSpecificVariable class >> initialize
+initialize
+	"Add Process::env if it is missing"
+
+	(Process instVarNames includes: 'env')
+		ifFalse: [ Process addInstVarNamed: 'env' ].
+	self resetSoleInstance
+
+ProcessSpecificVariable class >> new
+new
+	| instance |
+	instance := super new.
+	instance index: (Process allocatePSKey: instance).
+	^ instance
+
+ProcessSpecificVariable class >> resetSoleInstance
+resetSoleInstance
+	soleInstance := nil
+
+ProcessSpecificVariable class >> soleInstance
+soleInstance
+	^ soleInstance ifNil: [ soleInstance := self new ]
+
+ProcessSpecificVariable class >> value
+value
+	"Answer the current value for this variable in the current context."
+
+	^ self soleInstance value
+

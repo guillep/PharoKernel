@@ -1,0 +1,45 @@
+TimeStamp
+	superclass: #DateAndTime;
+	package: #Kernel.
+
+TimeStamp >> asTimeStamp
+asTimeStamp
+	"Answer the receiver as an instance of TimeStamp."
+
+	^ self
+
+TimeStamp >> printOn: stream
+printOn: stream
+	^ self printSeparateDateAndTimeOn: stream
+
+TimeStamp >> species
+species
+	^ DateAndTime
+
+TimeStamp >> storeOn: aStream
+storeOn: aStream
+	aStream
+		nextPut: $';
+		print: self;
+		nextPut: $';
+		nextPutAll: ' asTimeStamp'
+
+TimeStamp class >> fromMethodTimeStamp: aString
+fromMethodTimeStamp: aString
+	| stream |
+	stream := aString readStream.
+	stream
+		skipSeparators;
+		skipTo: Character space.
+	^ self readFrom: stream
+
+TimeStamp class >> now
+now
+	"Answer the date and time now, rounded to the nearest whole second, as a TimeStamp."
+
+	^ super now rounded asTimeStamp
+
+TimeStamp class >> readFrom: stream
+readFrom: stream
+	^ self readSeparateDateAndTimeFrom: stream
+

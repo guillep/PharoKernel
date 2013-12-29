@@ -4,7 +4,7 @@ FLFuelCommandLineHandler
 	package: #FuelCommandLineHandler.
 
 FLFuelCommandLineHandler >> activate
-[
+activate
 	self manageFiles.
 	(self commandLine hasOption: 'save')
 		ifTrue: [ ThreadSafeTranscript install.
@@ -13,15 +13,13 @@ FLFuelCommandLineHandler >> activate
 					NonInteractiveTranscript new install ] ].
 	(self commandLine hasOption: 'quit')
 		ifTrue: [ self exitSuccess ]
-]
 
 FLFuelCommandLineHandler >> fileExtension
-[
+fileExtension
 	^ self class fileExtension
-]
 
 FLFuelCommandLineHandler >> manageFile: aFileReference
-[
+manageFile: aFileReference
 	aFileReference
 		readStreamDo: [ :stream | stream binary.
 			FileStream stdout
@@ -31,39 +29,33 @@ FLFuelCommandLineHandler >> manageFile: aFileReference
 			FileStream stdout
 				nextPutAll: 'Materialization finished';
 				lf ]
-]
 
 FLFuelCommandLineHandler >> manageFiles
-[
+manageFiles
 	"Load all the source files in the given array."
 
 	files := (self commandLine allFilesWithExtension: self fileExtension)
 		collect: [ :each | (FileSystem disk resolve: each) asFileReference ].
 	files ifNil: [ ^ self ].
 	files do: [ :reference | self manageFile: reference ]
-]
 
 FLFuelCommandLineHandler class >> commandName
-[
+commandName
 	^ 'Fuel'
-]
 
 FLFuelCommandLineHandler class >> description
-[
+description
 	^ 'Loads fuel files'
-]
 
 FLFuelCommandLineHandler class >> fileExtension
-[
+fileExtension
 	^ '.fuel'
-]
 
 FLFuelCommandLineHandler class >> isResponsibleFor: aCommandLine
-[
+isResponsibleFor: aCommandLine
 	"This handler is reponsible only for .fuel files"
 
 	(aCommandLine hasFileWithExtension: self fileExtension)
 		ifTrue: [ ^ true ].
 	^ super isResponsibleFor: aCommandLine
-]
 

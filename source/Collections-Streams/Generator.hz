@@ -4,32 +4,29 @@ Generator
 	package: #'Collections-Streams'.
 
 Generator >> atEnd
-[
+atEnd
 	"Answer whether the receiver can access any more objects."
 
 	^ continue isNil
-]
 
 Generator >> close
-[
+close
 	"Close the receiving generator and unwind its ensure-blocks."
 
 	continue ifNotNil: [ continue unwindTo: home ].
 	continue := block := next := nil
-]
 
 Generator >> contents
-[
+contents
 	"Answer the contents of this generator. Do not call this method on infinite generators."
 
 	| stream |
 	stream := (Array new: 10) writeStream.
 	[ self atEnd ] whileFalse: [ stream nextPut: self next ].
 	^ stream contents
-]
 
 Generator >> fork
-[
+fork
 	| result |
 	home := thisContext.
 	block reentrant value: self.
@@ -37,25 +34,22 @@ Generator >> fork
 	result := next.
 	continue := next := home := nil.
 	^ result
-]
 
 Generator >> initializeOn: aBlock
-[
+initializeOn: aBlock
 	block := aBlock.
 	self reset
-]
 
 Generator >> next
-[
+next
 	"Generate and answer the next object in the receiver."
 
 	^ self atEnd
 		ifFalse: [ home swapSender: thisContext sender.
 			continue := thisContext swapSender: continue ]
-]
 
 Generator >> nextPut: anObject
-[
+nextPut: anObject
 	"Add anObject into the generator. A synonym to #yield: and value:."
 
 	| previous |
@@ -63,58 +57,50 @@ Generator >> nextPut: anObject
 	next := anObject.
 	continue := thisContext swapSender: continue.
 	^ previous
-]
 
 Generator >> peek
-[
+peek
 	"Answer the upcoming object of the receiver."
 
 	^ next
-]
 
 Generator >> printOn: aStream
-[
+printOn: aStream
 	aStream
 		nextPutAll: self class name;
 		nextPutAll: ' on: ';
 		print: block
-]
 
 Generator >> reset
-[
+reset
 	"Reset the generator, i.e., start it over"
 
 	continue ifNotNil: [ continue unwindTo: home ].
 	next := nil.
 	continue := thisContext.
 	[ self fork ] value
-]
 
 Generator >> size
-[
+size
 	"A generator does not know its size."
 
 	^ self shouldNotImplement
-]
 
 Generator >> value: anObject
-[
+value: anObject
 	"Allows passing generators as arguments to methods expecting blocks.
 	A synonym for #yield: / #nextPut:."
 
 	^ self nextPut: anObject
-]
 
 Generator >> yield: anObject
-[
+yield: anObject
 	"Yield the next value to the consumer of the generator.
 	A synonym for #nextPut:"
 
 	^ self nextPut: anObject
-]
 
 Generator class >> on: aBlock
-[
+on: aBlock
 	^ self basicNew initializeOn: aBlock
-]
 

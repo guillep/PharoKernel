@@ -1,22 +1,20 @@
 Matrix >> +* aCollection
-[
++* aCollection
 	"Premultiply aCollection by self.  aCollection should be an Array or Matrix.
 	 The name of this method is APL's +.x squished into Smalltalk syntax."
 
 	^ aCollection preMultiplyByMatrix: self
-]
 
 Matrix >> preMultiplyByArray: a
-[
+preMultiplyByArray: a
 	"Answer a +* self where a is an Array."
 
 	nrows = 1
 		ifFalse: [ self error: 'dimensions do not conform' ].
 	^ Matrix rows: a size columns: ncols tabulate: [ :row :col | (a at: row) * (contents at: col) ]
-]
 
 Matrix >> preMultiplyByMatrix: m
-[
+preMultiplyByMatrix: m
 	"Answer m +* self where m is a Matrix."
 
 	| s |
@@ -28,5 +26,4 @@ Matrix >> preMultiplyByMatrix: m
 		tabulate: [ :row :col | s := 0.
 			1 to: nrows do: [ :k | s := (m at: row at: k) * (self at: k at: col) + s ].
 			s ]
-]
 

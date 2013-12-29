@@ -1,0 +1,12 @@
+FLGlobalValueCluster
+	superclass: #FLGlobalCluster;
+	package: #Fuel.
+
+FLGlobalValueCluster >> materializeInstanceWith: aDecoder
+materializeInstanceWith: aDecoder
+	^ (self materializeGlobalAssociationFrom: aDecoder) value
+
+FLGlobalValueCluster >> serializeInstance: anObject with: anEncoder
+serializeInstance: anObject with: anEncoder
+	self serializeGlobalAssociationKeyed: (anEncoder globalEnvironment keyAtValue: anObject) on: anEncoder
+

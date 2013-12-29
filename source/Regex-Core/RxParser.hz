@@ -4,7 +4,7 @@ RxParser
 	package: #'Regex-Core'.
 
 RxParser >> atom
-[
+atom
 	"An atom is one of a lot of possibilities, see below."
 
 	| atom |
@@ -55,10 +55,9 @@ RxParser >> atom
 	atom := RxsCharacter with: lookahead.
 	self next.
 	^ atom
-]
 
 RxParser >> branch
-[
+branch
 	"<branch> ::= e | <piece> <branch>"
 
 	| piece branch |
@@ -67,10 +66,9 @@ RxParser >> branch
 		ifTrue: [ branch := nil ]
 		ifFalse: [ branch := self branch ].
 	^ RxsBranch new initializePiece: piece branch: branch
-]
 
 RxParser >> characterSet
-[
+characterSet
 	"Match a range of characters: something between `[' and `]'.
 	Opening bracked has already been seen, and closing should
 	not be consumed as well. Set spec is as usual for
@@ -84,10 +82,9 @@ RxParser >> characterSet
 			self next.
 			spec := spec , ']' , (self inputUpTo: $] nestedOn: $[ errorMessage: errorMessage) ].
 	^ self characterSetFrom: spec
-]
 
 RxParser >> characterSetFrom: setSpec
-[
+characterSetFrom: setSpec
 	"<setSpec> is what goes between the brackets in a charset regex
 	(a String). Make a string containing all characters the spec specifies.
 	Spec is never empty."
@@ -99,10 +96,9 @@ RxParser >> characterSetFrom: setSpec
 			spec next ]
 		ifFalse: [ negated := false ].
 	^ RxsCharSet new initializeElements: (RxCharSetParser on: spec) parse negated: negated
-]
 
 RxParser >> ifSpecial: aCharacter then: aBlock
-[
+ifSpecial: aCharacter then: aBlock
 	"If the character is such that it defines a special node when follows a $\,
 	then create that node and evaluate aBlock with the node as the parameter.
 	Otherwise just return."
@@ -110,10 +106,9 @@ RxParser >> ifSpecial: aCharacter then: aBlock
 	| classAndSelector |
 	classAndSelector := BackslashSpecials at: aCharacter ifAbsent: [ ^ self ].
 	^ aBlock value: (classAndSelector key new perform: classAndSelector value)
-]
 
 RxParser >> inputUpTo: aCharacter errorMessage: aString
-[
+inputUpTo: aCharacter errorMessage: aString
 	"Accumulate input stream until <aCharacter> is encountered
 	and answer the accumulated chars as String, not including
 	<aCharacter>. Signal error if end of stream is encountered,
@@ -126,10 +121,9 @@ RxParser >> inputUpTo: aCharacter errorMessage: aString
 	lookahead = #epsilon
 		ifTrue: [ self signalParseError: aString ].
 	^ accumulator contents
-]
 
 RxParser >> inputUpTo: aCharacter nestedOn: anotherCharacter errorMessage: aString
-[
+inputUpTo: aCharacter nestedOn: anotherCharacter errorMessage: aString
 	"Accumulate input stream until <aCharacter> is encountered
 	and answer the accumulated chars as String, not including
 	<aCharacter>. Signal error if end of stream is encountered,
@@ -148,20 +142,48 @@ RxParser >> inputUpTo: aCharacter nestedOn: anotherCharacter errorMessage: aStri
 				ifTrue: [ nestLevel := nestLevel - 1 ].
 			self next ].
 	^ accumulator contents
-]
+
+RxParser >> inputUpToAny: aDelimiterString errorMessage: aString
+inputUpToAny: aDelimiterString errorMessage: aString
+	"Accumulate input stream until any character from <aDelimiterString> is encountered
+	and answer the accumulated chars as String, not including the matched characters from the
+	<aDelimiterString>. Signal error if end of stream is encountered,
+	passing <aString> as the error description."
+
+	| accumulator |
+	accumulator := WriteStream on: (String new: 20).
+	[ (aDelimiterString includes: lookahead) not and: [ lookahead ~= #epsilon ] ]
+		whileTrue: [ accumulator nextPut: lookahead.
+			self next ].
+	lookahead = #epsilon
+		ifTrue: [ self signalParseError: aString ].
+	^ accumulator contents
+
+RxParser >> lookAround
+lookAround
+	"Parse a lookaround expression after: (?<lookround>) 
+	<lookround> ::= !<regex> | =<regex>"
+
+	| lookaround |
+	(lookahead = $! or: [ lookahead = $= ])
+		ifFalse: [ ^ self signalParseError: 'Invalid lookaround expression ?' , lookahead asString ].
+	self next.
+	lookaround := RxsLookaround with: self regex.
+	lookahead = $!
+		ifTrue: [ lookaround beNegative ].
+	^ lookaround
 
 RxParser >> match: aCharacter
-[
+match: aCharacter
 	"<aCharacter> MUST match the current lookeahead.
 	If this is the case, advance the input. Otherwise, blow up."
 
 	aCharacter ~= lookahead
 		ifTrue: [ ^ self signalParseError ].	"does not return"
 	self next
-]
 
 RxParser >> messagePredicate
-[
+messagePredicate
 	"Match a message predicate specification: a selector (presumably
 	understood by a Character) enclosed in :'s ."
 
@@ -172,30 +194,27 @@ RxParser >> messagePredicate
 		ifTrue: [ negated := true.
 			spec := spec copyFrom: 2 to: spec size ].
 	^ RxsMessagePredicate new initializeSelector: spec asSymbol negated: negated
-]
 
 RxParser >> next
-[
+next
 	"Advance the input storing the just read character
 	as the lookahead."
 
 	input atEnd
 		ifTrue: [ lookahead := #epsilon ]
 		ifFalse: [ lookahead := input next ]
-]
 
 RxParser >> parse: aString
-[
+parse: aString
 	"Parse input from a string <aString>.
 	On success, answers an RxsRegex -- parse tree root.
 	On error, raises `RxParser syntaxErrorSignal' with the current
 	input stream position as the parameter."
 
 	^ self parseStream: (ReadStream on: aString)
-]
 
 RxParser >> parseStream: aStream
-[
+parseStream: aStream
 	"Parse an input from a character stream <aStream>.
 	On success, answers an RxsRegex -- parse tree root.
 	On error, raises `RxParser syntaxErrorSignal' with the current
@@ -208,35 +227,57 @@ RxParser >> parseStream: aStream
 	tree := self regex.
 	self match: #epsilon.
 	^ tree
-]
 
 RxParser >> piece
-[
-	"<piece> ::= <atom> | <atom>* | <atom>+ | <atom>?"
+piece
+	"<piece> ::= <atom> | <atom>* | <atom>+ | <atom>? | <atom>{<number>,<number>}"
 
-	| atom errorMessage |
-	errorMessage := ' nullable closure'.
+	| atom |
 	atom := self atom.
 	lookahead = $*
 		ifTrue: [ self next.
 			atom isNullable
-				ifTrue: [ self signalParseError: errorMessage ].
+				ifTrue: [ self signalNullableClosureParserError ].
 			^ RxsPiece new initializeStarAtom: atom ].
 	lookahead = $+
 		ifTrue: [ self next.
 			atom isNullable
-				ifTrue: [ self signalParseError: errorMessage ].
+				ifTrue: [ self signalNullableClosureParserError ].
 			^ RxsPiece new initializePlusAtom: atom ].
 	lookahead = $?
 		ifTrue: [ self next.
 			atom isNullable
-				ifTrue: [ self signalParseError: errorMessage ].
+				ifTrue: [ ^ self lookAround ].
 			^ RxsPiece new initializeOptionalAtom: atom ].
+	lookahead = ${
+		ifTrue: [ ^ self quantifiedAtom: atom ].
 	^ RxsPiece new initializeAtom: atom
-]
+
+RxParser >> quantifiedAtom: atom
+quantifiedAtom: atom
+	"Parse a quanitifer expression which can have one of the following forms
+		{<min>,<max>}    match <min> to <max> occurences
+		{<minmax>}       which is the same as with repeated limits: {<number>,<number>}
+		{<min>,}         match at least <min> occurences
+		{,<max>}         match maximally <max> occurences, which is the same as {0,<max>}"
+
+	| min max |
+	self next.
+	lookahead = $,
+		ifTrue: [ min := 0 ]
+		ifFalse: [ max := min := (self inputUpToAny: ',}' errorMessage: ' no terminating "}"') asUnsignedInteger ].
+	lookahead = $,
+		ifTrue: [ self next.
+			max := (self inputUpToAny: ',}' errorMessage: ' no terminating "}"') asUnsignedInteger ].
+	self match: $}.
+	atom isNullable
+		ifTrue: [ self signalNullableClosureParserError ].
+	(max isNotNil and: [ max < min ])
+		ifTrue: [ self signalParseError: 'wrong quantifier, expected ' , min asString , ' <= ' , max asString ].
+	^ RxsPiece new initializeAtom: atom min: min max: max
 
 RxParser >> regex
-[
+regex
 	"<regex> ::= e | <branch> `|' <regex>"
 
 	| branch regex |
@@ -246,20 +287,21 @@ RxParser >> regex
 		ifFalse: [ self match: $|.
 			regex := self regex ].
 	^ RxsRegex new initializeBranch: branch regex: regex
-]
+
+RxParser >> signalNullableClosureParserError
+signalNullableClosureParserError
+	self signalParseError: ' nullable closure'
 
 RxParser >> signalParseError
-[
+signalParseError
 	self class signalSyntaxException: 'Regex syntax error' at: input position
-]
 
 RxParser >> signalParseError: aString
-[
+signalParseError: aString
 	self class signalSyntaxException: aString at: input position
-]
 
 RxParser class >> a: x introduction: xx
-[
+a: x introduction: xx
 	" 
 A regular expression is a template specifying a class of strings. A
 regular expression matcher is an tool that determines whether a string
@@ -299,10 +341,9 @@ April 4, 1999
 "
 
 	self error: 'comment only'
-]
 
 RxParser class >> b: x whatsNewInThisRelease: xx
-[
+b: x whatsNewInThisRelease: xx
 	"
 VERSION 1.3.1 (September 2008)
 1. Updated documentation of character classes, making clear the problems of locale - an area for future improvement
@@ -466,10 +507,9 @@ October 3, 1999
 "
 
 	self error: 'comment only'
-]
 
 RxParser class >> c: x syntax: xx
-[
+c: x syntax: xx
 	" 
 
 [You can select and `print it' examples in this method. Just don't
@@ -727,10 +767,9 @@ general number format: anything like 999, or 999.999, or -999.999e+21.
 "
 
 	self error: 'comment only'
-]
 
 RxParser class >> d: x usage: xx
-[
+d: x usage: xx
 	" 
 The preceding section covered the syntax of regular expressions. It
 used the simplest possible interface to the matcher: sending
@@ -1017,20 +1056,18 @@ VisualAge:
 "
 
 	self error: 'comment only'
-]
 
 RxParser class >> doHandlingMessageNotUnderstood: aBlock
-[
+doHandlingMessageNotUnderstood: aBlock
 	"MNU should be trapped and resignaled as a match error in a few places in the matcher.
 	This method factors out this dialect-dependent code to make porting easier."
 
 	^ aBlock
 		on: MessageNotUnderstood
 		do: [ :ex | RxParser signalMatchException: 'invalid predicate selector' ]
-]
 
 RxParser class >> e: x implementationNotes: xx
-[
+e: x implementationNotes: xx
 	"	
 	Version:		1.1
 	Released:		October 1999
@@ -1094,10 +1131,9 @@ comp.lang.smalltalk or comp.lang.lisp.
 "
 
 	self error: 'comment only'
-]
 
 RxParser class >> f: x boringStuff: xx
-[
+f: x boringStuff: xx
 	"
 The Regular Expression Matcher (``The Software'') 
 is Copyright (C) 1996, 1999 Vassili Bykov.  
@@ -1134,19 +1170,17 @@ It is provided to the Smalltalk community in hope it will be useful.
    copyright notices of any modified version.  "
 
 	self error: 'comment only'
-]
 
 RxParser class >> initialize
-[
+initialize
 	"self initialize"
 
 	self
 		initializeBackslashConstants;
 		initializeBackslashSpecials
-]
 
 RxParser class >> initializeBackslashConstants
-[
+initializeBackslashConstants
 	"self initializeBackslashConstants"
 
 	(BackslashConstants := Dictionary new)
@@ -1155,10 +1189,9 @@ RxParser class >> initializeBackslashConstants
 		at: $r put: Character cr;
 		at: $f put: Character newPage;
 		at: $t put: Character tab
-]
 
 RxParser class >> initializeBackslashSpecials
-[
+initializeBackslashSpecials
 	"Keys are characters that normally follow a \, the values are
 	associations of classes and initialization selectors on the instance side
 	of the classes."
@@ -1176,18 +1209,16 @@ RxParser class >> initializeBackslashSpecials
 		at: $B put: (Association key: RxsContextCondition value: #beNonWordBoundary);
 		at: $< put: (Association key: RxsContextCondition value: #beBeginningOfWord);
 		at: $> put: (Association key: RxsContextCondition value: #beEndOfWord)
-]
 
 RxParser class >> parse: aString
-[
+parse: aString
 	"Parse the argument and return the result (the parse tree).
 	In case of a syntax error, the corresponding exception is signaled."
 
 	^ self new parse: aString
-]
 
 RxParser class >> preferredMatcherClass
-[
+preferredMatcherClass
 	"The matcher to use. For now just one is available, but in
 	principle this determines the matchers built implicitly,
 	such as by String>>asRegex, or String>>matchesRegex:.
@@ -1195,10 +1226,9 @@ RxParser class >> preferredMatcherClass
 	Parser is still more or less `central' thing in the whole package."
 
 	^ RxMatcher
-]
 
 RxParser class >> safelyParse: aString
-[
+safelyParse: aString
 	"Parse the argument and return the result (the parse tree).
 	In case of a syntax error, return nil.
 	Exception handling here is dialect-dependent."
@@ -1206,25 +1236,20 @@ RxParser class >> safelyParse: aString
 	^ [ self new parse: aString ]
 		on: RegexSyntaxError
 		do: [ :ex | nil ]
-]
 
 RxParser class >> signalCompilationException: errorString
-[
+signalCompilationException: errorString
 	RegexCompilationError new signal: errorString
-]
 
 RxParser class >> signalMatchException: errorString
-[
+signalMatchException: errorString
 	RegexMatchingError new signal: errorString
-]
 
 RxParser class >> signalSyntaxException: errorString
-[
+signalSyntaxException: errorString
 	RegexSyntaxError new signal: errorString
-]
 
 RxParser class >> signalSyntaxException: errorString at: errorPosition
-[
+signalSyntaxException: errorString at: errorPosition
 	RegexSyntaxError signal: errorString at: errorPosition
-]
 

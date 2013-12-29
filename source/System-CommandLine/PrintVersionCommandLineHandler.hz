@@ -3,31 +3,51 @@ PrintVersionCommandLineHandler
 	package: #'System-CommandLine'.
 
 PrintVersionCommandLineHandler >> activate
-[
-	self activateHelp.
-	self printVersion.
-	self quit
-]
+activate
+	self activateHelp
+		ifTrue: [ ^ self ].
+	(self hasOption: 'numeric')
+		ifTrue: [ self printNumericVersion.
+			^ self exitSuccess ].
+	(self hasOption: 'release')
+		ifTrue: [ self printRelease.
+			^ self exitSuccess ].
+	self hasArguments
+		ifFalse: [ self printVersion.
+			^ self exitSuccess ].
+	self printHelp.
+	^ self exitFailure
+
+PrintVersionCommandLineHandler >> printNumericVersion
+printNumericVersion
+	self stdout
+		print: SystemVersion current highestUpdate;
+		lf
+
+PrintVersionCommandLineHandler >> printRelease
+printRelease
+	self stdout
+		print: SystemVersion current major;
+		nextPutAll: '.';
+		print: SystemVersion current minor;
+		lf
 
 PrintVersionCommandLineHandler >> printVersion
-[
-	FileStream stdout
+printVersion
+	self stdout
 		nextPutAll: '[version] ';
-		nextPutAll: SystemVersion current major asString;
+		print: SystemVersion current major;
 		nextPutAll: '.';
-		nextPutAll: SystemVersion current minor asString;
+		print: SystemVersion current minor;
 		nextPutAll: ' #';
-		nextPutAll: SystemVersion current highestUpdate asString;
-		cr
-]
+		print: SystemVersion current highestUpdate;
+		lf
 
 PrintVersionCommandLineHandler class >> commandName
-[
+commandName
 	^ 'printVersion'
-]
 
 PrintVersionCommandLineHandler class >> description
-[
+description
 	^ 'Print image version'
-]
 

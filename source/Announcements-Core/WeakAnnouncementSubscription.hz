@@ -5,60 +5,50 @@ WeakAnnouncementSubscription
 	package: #'Announcements-Core'.
 
 WeakAnnouncementSubscription >> action
-[
+action
 	^ action
-]
 
 WeakAnnouncementSubscription >> action: anObject
-[
+action: anObject
 	action := anObject
-]
 
 WeakAnnouncementSubscription >> announcementClass
-[
+announcementClass
 	^ announcementClass
-]
 
 WeakAnnouncementSubscription >> announcementClass: anObject
-[
+announcementClass: anObject
 	announcementClass := anObject
-]
 
 WeakAnnouncementSubscription >> announcer
-[
+announcer
 	^ announcer
-]
 
 WeakAnnouncementSubscription >> announcer: anAnnouncer
-[
+announcer: anAnnouncer
 	announcer := anAnnouncer
-]
 
 WeakAnnouncementSubscription >> deliver: anAnnouncement
-[
+deliver: anAnnouncement
 	" deliver an announcement to receiver. In case of failure, it will be handled in separate process"
 
-	^ (self handles: anAnnouncement class)
+	^ (self handlesAnnouncement: anAnnouncement)
 		ifTrue: [ [ action cull: anAnnouncement cull: announcer ] on: UnhandledError fork: [ :ex | ex pass ] ]
-]
 
 WeakAnnouncementSubscription >> finalize
-[
+finalize
 	announcer removeSubscription: self
-]
 
-WeakAnnouncementSubscription >> handles: anAnnouncementClass
-[
-	^ announcementClass handles: anAnnouncementClass
-]
+WeakAnnouncementSubscription >> handlesAnnouncement: anAnnouncement
+handlesAnnouncement: anAnnouncement
+	^ announcementClass handlesAnnouncement: anAnnouncement
 
 WeakAnnouncementSubscription >> initialize
-[
+initialize
 	list := self class finalizationList
-]
 
 WeakAnnouncementSubscription >> makeStrong
-[
+makeStrong
 	| sub |
 	sub := self subscriber.
 	sub ifNil: [ ^ self error: 'Subscriber is nil, cannot make strong subscription' ].
@@ -70,63 +60,53 @@ WeakAnnouncementSubscription >> makeStrong
 				action: action asMessageSend;
 				subscriber: sub;
 				announcementClass: announcementClass)
-]
 
 WeakAnnouncementSubscription >> makeWeak
-[
+makeWeak
 	^ self
-]
 
 WeakAnnouncementSubscription >> next
-[
+next
 	^ next
-]
 
 WeakAnnouncementSubscription >> subscriber
-[
+subscriber
 	^ self basicAt: 1
-]
 
 WeakAnnouncementSubscription >> subscriber: anObject
-[
+subscriber: anObject
 	self subscriber ifNotNil: [ self error: 'subscriber already set' ].
 	self basicAt: 1 put: anObject
-]
 
 WeakAnnouncementSubscription >> valuable: aValuable
-[
+valuable: aValuable
 	"Used when subscriber should be extracted from valuable object"
 
 	self action: aValuable.
 	self subscriber: aValuable receiver
-]
 
 WeakAnnouncementSubscription class >> finalizationList
-[
+finalizationList
 	^ FinalizationList ifNil: [ FinalizationList := WeakFinalizationList new ]
-]
 
 WeakAnnouncementSubscription class >> finalizeValues
-[
+finalizeValues
 	| head |
 	head := self finalizationList swapWithNil.
 	[ head notNil ] whileTrue: [ head finalize.
 			head := head next ]
-]
 
 WeakAnnouncementSubscription class >> initialize
-[
+initialize
 	"self initialize"
 
 	WeakArray
 		removeWeakDependent: self;
 		addWeakDependent: self	"Make sure that it is not added twice."
-]
 
 WeakAnnouncementSubscription class >> new
-[
+new
 	^ ((WeakFinalizationList hasNewFinalization
 		ifTrue: [ self ]
 		ifFalse: [ LegacyWeakSubscription ]) basicNew: 1) initialize
-]
 

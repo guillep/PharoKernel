@@ -1,0 +1,846 @@
+BlockClosure
+	instanceSpecification: #(#variable #pointers #words );
+	instanceVariables: #(#outerContext #startpc #numArgs );
+	package: #Kernel.
+
+BlockClosure >> abstractBytecodeMessagesDo: aBlock
+abstractBytecodeMessagesDo: aBlock
+	"Evaluate aBlock with the sequence of abstract bytecodes in the receiver."
+
+	self method abstractBytecodeMessagesFrom: startpc to: self endPC do: aBlock	"| msgs |	 msgs := OrderedCollection new.	 (SortedCollection sortBlock: [:a :b| a compare: b caseSensitive: false]) sortBlock		abstractBytecodeMessagesDo: [:msg| msgs add: msg selector].	 msgs"
+
+BlockClosure >> argumentCount
+argumentCount
+	"Answer the number of arguments that must be used to evaluate this block"
+
+	^ numArgs
+
+BlockClosure >> argumentNames
+argumentNames
+	^ self sourceNode arguments collect: [ :each | each name ]
+
+BlockClosure >> asContext
+asContext
+	"Create a MethodContext that is ready to execute self.  Assumes self takes no args (if it does the args will be nil)"
+
+	^ self asContextWithSender: nil
+
+BlockClosure >> asContextWithSender: aContext
+asContextWithSender: aContext
+	"Inner private support method for evaluation.  Do not use unless you know what you're doing."
+
+	^ (MethodContext newForMethod: outerContext method)
+		setSender: aContext
+			receiver: outerContext receiver
+			method: outerContext method
+			closure: self
+			startpc: startpc;
+		privRefresh
+
+BlockClosure >> asJob
+asJob
+	^ Job block: self
+
+BlockClosure >> asMinimalRepresentation
+asMinimalRepresentation
+	"Answer the receiver."
+
+	^ self
+
+BlockClosure >> assert
+assert
+	self value
+		ifFalse: [ AssertionFailure signal: 'Assertion failed' ]
+
+BlockClosure >> assertWithDescription: aStringOrABlock
+assertWithDescription: aStringOrABlock
+	self value
+		ifFalse: [ | value |
+			value := aStringOrABlock value.
+			AssertionFailure signal: value ]
+
+BlockClosure >> bench
+bench
+	"Return how many times the receiver can get executed in 5 seconds.  Answer a meaningful description."
+
+	"[3.14 printString] bench"
+
+	| startTime endTime count roundTo3Digits |
+	roundTo3Digits := [ :num | | rounded lowDigit |
+	rounded := (num * 1000) rounded.	"round to 1/1000"
+	lowDigit := (rounded numberOfDigitsInBase: 10) - 3.	"keep only first 3 digits"
+	rounded := rounded roundTo: (10 raisedTo: lowDigit).
+	(lowDigit >= 3 or: [ rounded \\ 1000 = 0 ])
+		ifTrue: [ (rounded // 1000) asStringWithCommas ]
+		ifFalse: [ (rounded / 1000.0) printString ]	"display fractional part only when needed" ].
+	count := 0.
+	endTime := Time millisecondClockValue + 5000.
+	self assert: endTime < SmallInteger maxVal.
+	startTime := Time millisecondClockValue.
+	[ Time millisecondClockValue > endTime ] whileFalse: [ self value.
+			count := count + 1 ].
+	endTime := Time millisecondClockValue.
+	^ count = 1
+		ifTrue: [ (roundTo3Digits value: (endTime - startTime) / 1000) , ' seconds.' ]
+		ifFalse: [ (roundTo3Digits value: count * 1000 / (endTime - startTime)) , ' per second.' ]
+
+BlockClosure >> blockCreationBytecodeMessage
+blockCreationBytecodeMessage
+	"Answer the abstract bytecode message that created the receiver."
+
+	| blockCreationBytecodeSize |
+	^ self method abstractBytecodeMessageAt: startpc - (blockCreationBytecodeSize := 4)	"(SortedCollection sortBlock: [:a :b| a compare: b caseSensitive: false]) sortBlock blockCreationBytecodeMessage"
+
+BlockClosure >> copiedValueAt: i
+copiedValueAt: i
+	<primitive: 60>
+	^ self basicAt: i
+
+BlockClosure >> copyForSaving
+copyForSaving
+	"Answer a copy of the receiver suitable for serialization.
+	 Notionally, if the receiver's outerContext has been returned from then nothing
+	 needs to be done and we can use the receiver. But there's a race condition
+	 determining if the receiver has been returned from (it could be executing in a
+	 different process). So answer a copy anyway."
+
+	^ self shallowCopy postCopy
+
+BlockClosure >> cull: anArg
+cull: anArg
+	^ numArgs = 0
+		ifTrue: [ self value ]
+		ifFalse: [ self value: anArg ]
+
+BlockClosure >> cull: firstArg cull: secondArg
+cull: firstArg cull: secondArg
+	^ numArgs < 2
+		ifTrue: [ self cull: firstArg ]
+		ifFalse: [ self value: firstArg value: secondArg ]
+
+BlockClosure >> cull: firstArg cull: secondArg cull: thirdArg
+cull: firstArg cull: secondArg cull: thirdArg
+	^ numArgs < 3
+		ifTrue: [ self cull: firstArg cull: secondArg ]
+		ifFalse: [ self value: firstArg value: secondArg value: thirdArg ]
+
+BlockClosure >> cull: firstArg cull: secondArg cull: thirdArg cull: fourthArg
+cull: firstArg cull: secondArg cull: thirdArg cull: fourthArg
+	"Execute the receiver with four or less arguments. Check cull:cull: for examples"
+
+	^ numArgs < 4
+		ifTrue: [ self cull: firstArg cull: secondArg cull: thirdArg ]
+		ifFalse: [ self
+				value: firstArg
+				value: secondArg
+				value: thirdArg
+				value: fourthArg ]
+
+BlockClosure >> doWhileFalse: conditionBlock
+doWhileFalse: conditionBlock
+	"Evaluate the receiver once, then again as long the value of conditionBlock is false."
+
+	| result |
+	[ result := self value.
+	conditionBlock value ] whileFalse.
+	^ result
+
+BlockClosure >> doWhileTrue: conditionBlock
+doWhileTrue: conditionBlock
+	"Evaluate the receiver once, then again as long the value of conditionBlock is true."
+
+	| result |
+	[ result := self value.
+	conditionBlock value ] whileTrue.
+	^ result
+
+BlockClosure >> durationToRun
+durationToRun
+	"Answer the duration taken to execute this block."
+
+	^ self timeToRun
+
+BlockClosure >> endPC
+endPC
+	^ self blockCreationBytecodeMessage arguments last + startpc - 1
+
+BlockClosure >> ensure: aBlock
+ensure: aBlock
+	"Evaluate a termination block after evaluating the receiver, regardless of
+	 whether the receiver's evaluation completes.  N.B.  This method is *not*
+	 implemented as a primitive.  Primitive 198 always fails.  The VM uses prim
+	 198 in a context's method as the mark for an ensure:/ifCurtailed: activation."
+
+	<primitive: 198>
+	| complete returnValue |
+	returnValue := self valueNoContextSwitch.
+	complete ifNil: [ complete := true.
+			aBlock value ].
+	^ returnValue
+
+BlockClosure >> fork
+fork
+	"Create and schedule a Process running the code in the receiver."
+
+	^ self newProcess resume
+
+BlockClosure >> forkAndWait
+forkAndWait
+	"Suspend current process and execute self in new process, when it completes resume current process"
+
+	| semaphore |
+	semaphore := Semaphore new.
+	[ self
+		ensure: [ semaphore signal ] ] fork.
+	semaphore wait
+
+BlockClosure >> forkAt: priority
+forkAt: priority
+	"Create and schedule a Process running the code in the receiver at the given priority. Answer the newly created process."
+
+	^ self newProcess
+		priority: priority;
+		resume
+
+BlockClosure >> forkAt: priority named: name
+forkAt: priority named: name
+	"Create and schedule a Process running the code in the receiver at the
+
+	given priority and having the given name. Answer the newly created 
+
+	process."
+
+	| forkedProcess |
+	forkedProcess := self newProcess.
+	forkedProcess priority: priority.
+	forkedProcess name: name.
+	^ forkedProcess resume
+
+BlockClosure >> forkNamed: aString
+forkNamed: aString
+	"Create and schedule a Process running the code in the receiver and
+
+	having the given name."
+
+	^ self newProcess
+		name: aString;
+		resume
+
+BlockClosure >> hasMethodReturn
+hasMethodReturn
+	"Answer whether the receiver has a method-return ('^') in its code."
+
+	| scanner endpc |
+	scanner := InstructionStream new method: outerContext method pc: startpc.
+	endpc := self endPC.
+	scanner scanFor: [ :byte | (byte between: 120 and: 124) or: [ scanner pc > endpc ] ].
+	^ scanner pc <= endpc
+
+BlockClosure >> home
+home
+	^ outerContext home
+
+BlockClosure >> ifCurtailed: aBlock
+ifCurtailed: aBlock
+	"Evaluate the receiver with an abnormal termination action.
+	 Evaluate aBlock only if execution is unwound during execution
+	 of the receiver.  If execution of the receiver finishes normally do
+	 not evaluate aBlock.  N.B.  This method is *not* implemented as a
+	 primitive.  Primitive 198 always fails.  The VM uses prim 198 in a
+	 context's method as the mark for an ensure:/ifCurtailed: activation."
+
+	<primitive: 198>
+	| complete result |
+	result := self valueNoContextSwitch.
+	complete := true.
+	^ result
+
+BlockClosure >> ifError: errorHandlerBlock
+ifError: errorHandlerBlock
+	"Evaluate the block represented by the receiver, and normally return it's value.  If an error occurs, the errorHandlerBlock is evaluated, and it's value is instead returned.  The errorHandlerBlock must accept zero, one, or two parameters (the error message and the receiver)."
+
+	"Examples:
+		[1 whatsUpDoc] ifError: [:err :rcvr | 'huh?'].
+		[1 / 0] ifError: [:err :rcvr |
+			'ZeroDivide' = err
+				ifTrue: [Float infinity]
+				ifFalse: [self error: err]]
+"
+
+	^ self
+		on: Error
+		do: [ :ex | errorHandlerBlock cull: ex description cull: ex receiver ]
+
+BlockClosure >> isBlock
+isBlock
+	^ true
+
+BlockClosure >> isClean
+isClean
+	"Answer if the receiver does not close-over any variables other than globals, and does
+	 not ^-return (does not close over the home context).  Clean blocks are amenable to
+	 being created at compile-time."
+
+	self numCopiedValues > 0
+		ifTrue: [ ^ false ].
+	self
+		abstractBytecodeMessagesDo: [ :msg | (#(#pushReceiver #pushReceiverVariable: #popIntoReceiverVariable: #storeIntoReceiverVariable: #methodReturnConstant: #methodReturnReceiver #methodReturnTop)
+				includes: msg selector)
+				ifTrue: [ ^ false ] ].
+	^ true	"clean:"	"[] isClean"	"[:a :b| a < b] isClean"	"unclean"	"[^nil] isClean"	"[self class] isClean"	"| v | v := 0.		 [v class] isClean"
+
+BlockClosure >> isClosure
+isClosure
+	^ true
+
+BlockClosure >> isDead
+isDead
+	"Has self finished"
+
+	^ false
+
+BlockClosure >> isValid
+isValid
+	"Answer the receiver."
+
+	^ true
+
+BlockClosure >> method
+method
+	^ outerContext method
+
+BlockClosure >> newProcess
+newProcess
+	"Answer a Process running the code in the receiver. The process is not 
+	scheduled."
+
+	"Simulation guard"
+
+	<primitive: 19>
+	^ Process forContext: [ self value.
+			Processor terminateActive ] asContext priority: Processor activePriority
+
+BlockClosure >> newProcessWith: anArray
+newProcessWith: anArray
+	"Answer a Process running the code in the receiver. The receiver's block 
+	arguments are bound to the contents of the argument, anArray. The 
+	process is not scheduled."
+
+	"Simulation guard"
+
+	<primitive: 19>
+	^ Process
+		forContext: [ self valueWithArguments: anArray.
+			Processor terminateActive ] asContext
+		priority: Processor activePriority
+
+BlockClosure >> numArgs
+numArgs
+	"Answer the number of arguments that must be used to evaluate this block"
+
+	^ numArgs
+
+BlockClosure >> numArgsError: numArgsForInvocation
+numArgsError: numArgsForInvocation
+	| printNArgs |
+	printNArgs := [ :n | n printString , ' argument' , (n = 1
+				ifTrue: [ '' ]
+				ifFalse: [ 's' ]) ].
+	self
+		error:
+			'This block accepts ' , (printNArgs value: numArgs) , ', but was called with '
+				, (printNArgs value: numArgsForInvocation) , '.'
+
+BlockClosure >> numCopiedValues
+numCopiedValues
+	"Answer the number of copied values of the receiver.  Since these are
+	 stored in the receiver's indexable fields this is the receiver's basic size.
+	 Primitive. Answer the number of indexable variables in the receiver. 
+	 This value is the same as the largest legal subscript."
+
+	<primitive: 62>
+	^ self basicSize
+
+BlockClosure >> numTemps
+numTemps
+	"Answer the number of temporaries for the receiver; this includes
+	 the number of arguments and the number of copied values."
+
+	| blockCreationBytecodeSize |
+	^ self numCopiedValues + self numArgs
+		+ (BlockLocalTempCounter tempCountForBlockAt: startpc - (blockCreationBytecodeSize := 4) in: self method)
+
+BlockClosure >> on: exception do: handlerAction
+on: exception do: handlerAction
+	"Evaluate the receiver in the scope of an exception handler.
+	"
+
+	<primitive: 199>
+	| handlerActive |
+	"The following primitive is just a marker used to find the error handling context. 	see MethodContext>>#isHandlerContext "
+	handlerActive := true.	"...it will always fail and execute the following code"
+	^ self value
+
+BlockClosure >> on: exception fork: handlerAction
+on: exception fork: handlerAction
+	"Activate the receiver. In case of exception, fork a new process, which will handle an error.
+	An original process will continue running as if receiver evaluation finished and answered nil,
+	i.e., an expression like:
+	
+	[ self error: 'some error'] on: Error fork: [:ex |  123 ] 
+	
+	will always answer nil for original process, not 123.
+
+	The context stack , starting from context which sent this message to receiver and
+	up to the top of the stack will be transferred to forked process, with handlerAction on top.
+	(so when the forked process will be resuming, it will enter the handlerAction)
+	 "
+
+	^ self
+		on: exception
+		do: [ :ex | 
+			| copy onDoCtx process handler bottom thisCtx |
+			onDoCtx := thisContext.
+			thisCtx := onDoCtx home.	"find the context on stack for which this method's is sender"
+			[ onDoCtx sender == thisCtx ]
+				whileFalse: [ 
+					onDoCtx := onDoCtx sender.
+					onDoCtx
+						ifNil: [ 
+							"Can't find our home context. seems like we're already forked				and handling another exception in new thread. In this case, just pass it through handler."
+							^ handlerAction cull: ex ] ].
+			bottom := [ Processor terminateActive ] asContext.
+			onDoCtx privSender: bottom.
+			handler := [ handlerAction cull: ex ] asContext.
+			handler privSender: thisContext sender.
+			(Process forContext: handler priority: Processor activePriority) resume.	"cut the stack of current process"
+			thisContext privSender: thisCtx.
+			nil ]
+
+BlockClosure >> onDNU: selector do: handleBlock
+onDNU: selector do: handleBlock
+	"Catch MessageNotUnderstood exceptions but only those of the given selector (DNU stands for doesNotUnderstand:)"
+
+	^ self
+		on: MessageNotUnderstood
+		do: [ :exception | exception message selector = selector
+				ifTrue: [ handleBlock cull: exception ]
+				ifFalse: [ exception pass ] ]
+
+BlockClosure >> outerContext
+outerContext
+	^ outerContext
+
+BlockClosure >> outerContext: aContext startpc: aStartpc numArgs: argCount copiedValues: anArrayOrNil
+outerContext: aContext startpc: aStartpc numArgs: argCount copiedValues: anArrayOrNil
+	outerContext := aContext.
+	startpc := aStartpc.
+	numArgs := argCount.
+	1 to: self numCopiedValues do: [ :i | self at: i put: (anArrayOrNil at: i) ]
+
+BlockClosure >> printOn: aStream
+printOn: aStream
+	OpalCompiler isActive
+		ifTrue: [ aStream nextPutAll: self sourceNode formattedCode ]
+		ifFalse: [ aStream nextPutAll: '[...]' ]
+
+BlockClosure >> receiver
+receiver
+	^ outerContext receiver
+
+BlockClosure >> reentrant
+reentrant
+	"Answer a version of the recever that can be reentered.
+	 Closures are reentrant (unlike BlockContect) so simply answer self."
+
+	^ self
+
+BlockClosure >> repeat
+repeat
+	"Evaluate the receiver repeatedly, ending only if the block explicitly returns."
+
+	[ self value.
+	true ] whileTrue
+
+BlockClosure >> repeatWithGCIf: testBlock
+repeatWithGCIf: testBlock
+	| ans |
+	"run the receiver, and if testBlock returns true, garbage collect and run the receiver again"
+	ans := self value.
+	(testBlock value: ans)
+		ifTrue: [ Smalltalk garbageCollect.
+			ans := self value ].
+	^ ans
+
+BlockClosure >> sender
+sender
+	"Answer the context that sent the message that created the receiver."
+
+	^ outerContext sender
+
+BlockClosure >> simulateValueWithArguments: anArray caller: aContext
+simulateValueWithArguments: anArray caller: aContext
+	| newContext sz |
+	(anArray class ~~ Array or: [ numArgs ~= anArray size ])
+		ifTrue: [ ^ ContextPart primitiveFailToken ].
+	newContext := (MethodContext newForMethod: outerContext method)
+		setSender: aContext
+		receiver: outerContext receiver
+		method: outerContext method
+		closure: self
+		startpc: startpc.
+	sz := self basicSize.
+	newContext stackp: sz + numArgs.
+	1 to: numArgs do: [ :i | newContext at: i put: (anArray at: i) ].
+	1 to: sz do: [ :i | newContext at: i + numArgs put: (self at: i) ].
+	^ newContext
+
+BlockClosure >> startpc
+startpc
+	^ startpc
+
+BlockClosure >> timeToRun
+timeToRun
+	"Answer the number of milliseconds taken to execute this block."
+
+	^ Duration milliSeconds: (Time millisecondsToRun: self)
+
+BlockClosure >> value
+value
+	"Activate the receiver, creating a closure activation (MethodContext)
+	 whose closure is the receiver and whose caller is the sender of this message.
+	 Supply the copied values to the activation as its arguments and copied temps.
+	 Primitive. Optional (but you're going to want this for performance)."
+
+	<primitive: 201>
+	| newContext ncv |
+	numArgs ~= 0
+		ifTrue: [ self numArgsError: 0 ].
+	^ self primitiveFailed
+
+BlockClosure >> value: anArg
+value: anArg
+	"Activate the receiver, creating a closure activation (MethodContext)
+	 whose closure is the receiver and whose caller is the sender of this message.
+	 Supply the argument and copied values to the activation as its arguments and copied temps.
+	 Primitive. Optional (but you're going to want this for performance)."
+
+	<primitive: 202>
+	| newContext ncv |
+	numArgs ~= 1
+		ifTrue: [ self numArgsError: 1 ].
+	self primitiveFailed
+
+BlockClosure >> value: firstArg value: secondArg
+value: firstArg value: secondArg
+	"Activate the receiver, creating a closure activation (MethodContext)
+	 whose closure is the receiver and whose caller is the sender of this message.
+	 Supply the arguments and copied values to the activation as its arguments and copied temps.
+	 Primitive. Optional (but you're going to want this for performance)."
+
+	<primitive: 203>
+	| newContext ncv |
+	numArgs ~= 2
+		ifTrue: [ self numArgsError: 2 ].
+	^ self primitiveFailed
+
+BlockClosure >> value: firstArg value: secondArg value: thirdArg
+value: firstArg value: secondArg value: thirdArg
+	"Activate the receiver, creating a closure activation (MethodContext)
+	 whose closure is the receiver and whose caller is the sender of this message.
+	 Supply the arguments and copied values to the activation as its arguments and copied temps.
+	 Primitive. Optional (but you're going to want this for performance)."
+
+	<primitive: 204>
+	| newContext ncv |
+	numArgs ~= 3
+		ifTrue: [ self numArgsError: 3 ].
+	^ self primitiveFailed
+
+BlockClosure >> value: firstArg value: secondArg value: thirdArg value: fourthArg
+value: firstArg value: secondArg value: thirdArg value: fourthArg
+	"Activate the receiver, creating a closure activation (MethodContext)
+	 whose closure is the receiver and whose caller is the sender of this message.
+	 Supply the arguments and copied values to the activation as its arguments and copied temps.
+	 Primitive. Optional (but you're going to want this for performance)."
+
+	<primitive: 205>
+	| newContext ncv |
+	numArgs ~= 4
+		ifTrue: [ self numArgsError: 4 ].
+	^ self primitiveFailed
+
+BlockClosure >> valueAfterWaiting: aDelay
+valueAfterWaiting: aDelay
+	"Waits for a delay, then executes the block. Answers the process so you can terminate it"
+
+	^ [ aDelay wait.
+	self value ]
+		forkAt: Processor userBackgroundPriority
+		named: (String streamContents: [ :s | s
+						<< 'After ';
+						print: aDelay;
+						<< ' do: ';
+						print: self ])
+
+BlockClosure >> valueAt: blockPriority
+valueAt: blockPriority
+	"Evaluate the receiver (block), with another priority as the actual one 
+	and restore it afterwards. The caller should be careful with using 
+	higher priorities."
+
+	| activeProcess result outsidePriority |
+	activeProcess := Processor activeProcess.
+	outsidePriority := activeProcess priority.
+	activeProcess priority: blockPriority.
+	result := self
+		ensure: [ activeProcess priority: outsidePriority ].	"Yield after restoring lower priority to give the preempted processes a  	chance to run."
+	blockPriority > outsidePriority
+		ifTrue: [ Processor yield ].
+	^ result
+
+BlockClosure >> valueNoContextSwitch
+valueNoContextSwitch
+	"An exact copy of BlockClosure>>value except that this version will not preempt
+	 the current process on block activation if a higher-priority process is runnable.
+	 Primitive. Essential."
+
+	<primitive: 221>
+	numArgs ~= 0
+		ifTrue: [ self numArgsError: 0 ].
+	self primitiveFailed
+
+BlockClosure >> valueNoContextSwitch: anArg
+valueNoContextSwitch: anArg
+	"An exact copy of BlockClosure>>value: except that this version will not preempt
+	 the current process on block activation if a higher-priority process is runnable.
+	 Primitive. Essential."
+
+	<primitive: 222>
+	numArgs ~= 1
+		ifTrue: [ self numArgsError: 1 ].
+	self primitiveFailed
+
+BlockClosure >> valueSupplyingAnswer: anObject
+valueSupplyingAnswer: anObject
+	^ (anObject isCollection and: [ anObject isString not ])
+		ifTrue: [ self valueSupplyingAnswers: {anObject} ]
+		ifFalse: [ self valueSupplyingAnswers: {{'*'.
+					anObject}} ]
+
+BlockClosure >> valueSupplyingAnswers: aListOfPairs
+valueSupplyingAnswers: aListOfPairs
+	"evaluate the block using a list of questions / answers that might be called upon to
+	automatically respond to Object>>confirm: or FillInTheBlank requests"
+
+	^ self
+		on: ProvideAnswerNotification
+		do: [ :notify | | answer caption |
+			caption := notify messageText withSeparatorsCompacted.	"to remove new lines"
+			answer := aListOfPairs
+				detect: [ :each | caption = each first
+						or: [ (caption includesSubstring: each first caseSensitive: false)
+								or: [ (each first match: caption)
+										or: [ (String includesSelector: #matchesRegex:)
+												and: [ [ caption matchesRegex: each first ]
+														on: Error
+														do: [ :ignored | false ] ] ] ] ] ]
+				ifNone: [ nil ].
+			answer
+				ifNotNil: [ notify resume: answer second ]
+				ifNil: [ | outerAnswer |
+					outerAnswer := ProvideAnswerNotification signal: notify messageText.
+					outerAnswer ifNil: [ notify resume ] ifNotNil: [ notify resume: outerAnswer ] ] ]
+
+BlockClosure >> valueSuppressingAllMessages
+valueSuppressingAllMessages
+	^ self valueSuppressingMessages: #('*')
+
+BlockClosure >> valueSuppressingMessages: aListOfStrings
+valueSuppressingMessages: aListOfStrings
+	^ self valueSuppressingMessages: aListOfStrings supplyingAnswers: #()
+
+BlockClosure >> valueSuppressingMessages: aListOfStrings supplyingAnswers: aListOfPairs
+valueSuppressingMessages: aListOfStrings supplyingAnswers: aListOfPairs
+	^ self valueSupplyingAnswers: aListOfPairs , (aListOfStrings collect: [ :each | {each.
+							true} ])
+
+BlockClosure >> valueUninterruptably
+valueUninterruptably
+	"Prevent remote returns from escaping the sender.  Even attempts to terminate (unwind) this process will be halted and the process will resume here.  A terminate message is needed for every one of these in the sender chain to get the entire process unwound."
+
+	^ self
+		ifCurtailed: [ ^ self ]
+
+BlockClosure >> valueUnpreemptively
+valueUnpreemptively
+	"Evaluate the receiver (block), without the possibility of preemption by higher priority processes. Use this facility VERY sparingly!"
+
+	"Think about using Block>>valueUninterruptably first, and think about using Semaphore>>critical: before that, and think about redesigning your application even before that! 
+	After you've done all that thinking, go right ahead and use it..."
+
+	| activeProcess oldPriority result semaphore |
+	activeProcess := Processor activeProcess.
+	oldPriority := activeProcess priority.
+	activeProcess priority: Processor highestPriority.
+	result := self
+		ensure: [ activeProcess priority: oldPriority ].	"Yield after restoring priority to give the preempted processes a chance to run.	We inline the code of Processor yield here, but without the primitive.	The reason: the yield primitive does not take into account a change of priority as done above"
+	semaphore := Semaphore new.
+	[ semaphore signal ] fork.
+	semaphore wait.
+	^ result
+
+BlockClosure >> valueWithArguments: anArray
+valueWithArguments: anArray
+	"Activate the receiver, creating a closure activation (MethodContext)
+	 whose closure is the receiver and whose caller is the sender of this message.
+	 Supply the arguments in an anArray and copied values to the activation as its arguments and copied temps.
+	 Primitive. Optional (but you're going to want this for performance)."
+
+	<primitive: 206>
+	| newContext ncv |
+	numArgs ~= anArray size
+		ifTrue: [ self numArgsError: anArray size ].
+	newContext := self asContextWithSender: thisContext sender.
+	ncv := self numCopiedValues.
+	newContext stackp: ncv + numArgs.
+	1 to: numArgs do: [ :i | newContext at: i put: (anArray at: i) ].
+	1 to: ncv do: [ :i | newContext at: i + numArgs put: (self at: i) ].
+	thisContext privSender: newContext
+
+BlockClosure >> valueWithEnoughArguments: anArray
+valueWithEnoughArguments: anArray
+	"call me with enough arguments from anArray"
+
+	| args |
+	anArray size == self numArgs
+		ifTrue: [ ^ self valueWithArguments: anArray ].
+	args := Array new: self numArgs.
+	args
+		replaceFrom: 1
+		to: (anArray size min: args size)
+		with: anArray
+		startingAt: 1.
+	^ self valueWithArguments: args
+
+BlockClosure >> valueWithExit
+valueWithExit
+	self value: [ ^ nil ]
+
+BlockClosure >> valueWithInterval: aDelay
+valueWithInterval: aDelay
+	"Executes the block every x milliseconds specified in arguments. Answers the process, so you can terminate it"
+
+	^ [ [ self value.
+	aDelay wait ] repeat ]
+		forkAt: Processor userBackgroundPriority
+		named: (String streamContents: [ :s | s
+						<< 'every ';
+						print: aDelay;
+						<< ' do: ';
+						print: self ])
+
+BlockClosure >> valueWithPossibleArgs: anArray
+valueWithPossibleArgs: anArray
+	^ numArgs = 0
+		ifTrue: [ self value ]
+		ifFalse: [ self
+				valueWithArguments:
+					(numArgs = anArray size
+						ifTrue: [ anArray ]
+						ifFalse: [ numArgs > anArray size
+								ifTrue: [ anArray , (Array new: numArgs - anArray size) ]
+								ifFalse: [ anArray copyFrom: 1 to: numArgs ] ]) ]
+
+BlockClosure >> valueWithPossibleArgument: anArg
+valueWithPossibleArgument: anArg
+	"Evaluate the block represented by the receiver. 
+	 If the block requires one argument, use anArg, if it requires more than one,
+	 fill up the rest with nils."
+
+	| a |
+	numArgs = 0
+		ifTrue: [ ^ self value ].
+	numArgs = 1
+		ifTrue: [ ^ self value: anArg ].
+	a := Array new: numArgs.
+	a at: 1 put: anArg.
+	^ self valueWithArguments: a
+
+BlockClosure >> valueWithin: aDuration onTimeout: timeoutBlock
+valueWithin: aDuration onTimeout: timeoutBlock
+	"Evaluate the receiver.
+	If the evaluation does not complete in less than aDuration evaluate the timeoutBlock instead"
+
+	| theProcess delay watchdog tag |
+	aDuration <= Duration zero
+		ifTrue: [ ^ timeoutBlock value ].	"the block will be executed in the current process"
+	theProcess := Processor activeProcess.
+	delay := aDuration asDelay.
+	tag := self.	"make a watchdog process"
+	watchdog := [ delay wait.	"wait for timeout or completion"
+	theProcess ifNotNil: [ theProcess signalException: (TimedOut new tag: tag) ] ]
+		newProcess.	"Watchdog needs to run at high priority to do its job (but not at timing priority)"
+	watchdog priority: Processor timingPriority - 1.	"catch the timeout signal"
+	^ [ watchdog resume.	"start up the watchdog"
+	self
+		ensure: [ "evaluate the receiver"
+			theProcess := nil.	"it has completed, so ..."
+			delay delaySemaphore signal	"arrange for the watchdog to exit" ] ]
+		on: TimedOut
+		do: [ :e | e tag == tag
+				ifTrue: [ timeoutBlock value ]
+				ifFalse: [ e pass ] ]
+
+BlockClosure >> whileFalse
+whileFalse
+	"Ordinarily compiled in-line, and therefore not overridable.
+	This is in case the message is sent to other than a literal block.
+	Evaluate the receiver, as long as its value is false."
+
+	^ [ self value ] whileFalse: [  ]
+
+BlockClosure >> whileFalse: aBlock
+whileFalse: aBlock
+	"Ordinarily compiled in-line, and therefore not overridable.
+	This is in case the message is sent to other than a literal block.
+	Evaluate the argument, aBlock, as long as the value of the receiver is false."
+
+	^ [ self value ] whileFalse: [ aBlock value ]
+
+BlockClosure >> whileNil: aBlock
+whileNil: aBlock
+	"Unlike #whileTrue/False: this is not compiled inline."
+
+	^ [ self value isNil ] whileTrue: [ aBlock value ]
+
+BlockClosure >> whileNotNil: aBlock
+whileNotNil: aBlock
+	"Unlike #whileTrue/False: this is not compiled inline."
+
+	^ [ self value notNil ] whileTrue: [ aBlock value ]
+
+BlockClosure >> whileTrue
+whileTrue
+	"Ordinarily compiled in-line, and therefore not overridable.
+	This is in case the message is sent to other than a literal block.
+	Evaluate the receiver, as long as its value is true."
+
+	^ [ self value ] whileTrue: [  ]
+
+BlockClosure >> whileTrue: aBlock
+whileTrue: aBlock
+	"Ordinarily compiled in-line, and therefore not overridable.
+	This is in case the message is sent to other than a literal block.
+	Evaluate the argument, aBlock, as long as the value of the receiver is true."
+
+	^ [ self value ] whileTrue: [ aBlock value ]
+
+BlockClosure class >> outerContext: aContext startpc: aStartpc numArgs: argCount copiedValues: anArrayOrNil
+outerContext: aContext startpc: aStartpc numArgs: argCount copiedValues: anArrayOrNil
+	^ (self new: anArrayOrNil basicSize)
+		outerContext: aContext
+		startpc: aStartpc
+		numArgs: argCount
+		copiedValues: anArrayOrNil
+

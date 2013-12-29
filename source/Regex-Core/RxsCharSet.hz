@@ -4,24 +4,22 @@ RxsCharSet
 	package: #'Regex-Core'.
 
 RxsCharSet >> dispatchTo: aMatcher
-[
+dispatchTo: aMatcher
 	"Inform the matcher of the kind of the node, and it
 	will do whatever it has to."
 
 	^ aMatcher syntaxCharSet: self
-]
 
 RxsCharSet >> enumerablePartPredicateIgnoringCase: aBoolean
-[
+enumerablePartPredicateIgnoringCase: aBoolean
 	| enumeration |
 	enumeration := self optimalSetIgnoringCase: aBoolean.
 	^ negated
 		ifTrue: [ [ :char | (enumeration includes: char) not ] ]
 		ifFalse: [ [ :char | enumeration includes: char ] ]
-]
 
 RxsCharSet >> enumerableSetIgnoringCase: aBoolean
-[
+enumerableSetIgnoringCase: aBoolean
 	"Answer a collection of characters that make up the portion of me
 	that can be enumerated."
 
@@ -30,34 +28,28 @@ RxsCharSet >> enumerableSetIgnoringCase: aBoolean
 	elements do: [ :each | each isEnumerable
 				ifTrue: [ each enumerateTo: set ignoringCase: aBoolean ] ].
 	^ set
-]
 
 RxsCharSet >> hasPredicates
-[
+hasPredicates
 	^ elements contains: [ :some | some isEnumerable not ]
-]
 
 RxsCharSet >> initializeElements: aCollection negated: aBoolean
-[
+initializeElements: aCollection negated: aBoolean
 	"See class comment for instance variables description."
 
 	elements := aCollection.
 	negated := aBoolean
-]
 
 RxsCharSet >> isEnumerable
-[
-	elements detect: [ :some | some isEnumerable not ] ifNone: [ ^ true ].
-	^ false
-]
+isEnumerable
+	^ elements anySatisfy: [ :some | some isEnumerable ]
 
 RxsCharSet >> isNegated
-[
+isNegated
 	^ negated
-]
 
 RxsCharSet >> optimalSetIgnoringCase: aBoolean
-[
+optimalSetIgnoringCase: aBoolean
 	"Assuming the client with search the `set' using #includes:,
 	answer a collection with the contents of `set', of the class
 	that will provide the fastest lookup. Strings are faster than
@@ -68,10 +60,9 @@ RxsCharSet >> optimalSetIgnoringCase: aBoolean
 	^ set size < 10
 		ifTrue: [ set asArray ]
 		ifFalse: [ set ]
-]
 
 RxsCharSet >> predicateIgnoringCase: aBoolean
-[
+predicateIgnoringCase: aBoolean
 	| predicate enumerable |
 	enumerable := self enumerablePartPredicateIgnoringCase: aBoolean.
 	^ self hasPredicates
@@ -80,10 +71,9 @@ RxsCharSet >> predicateIgnoringCase: aBoolean
 			negated
 				ifTrue: [ [ :char | (enumerable value: char) and: [ predicate value: char ] ] ]
 				ifFalse: [ [ :char | (enumerable value: char) or: [ predicate value: char ] ] ] ]
-]
 
 RxsCharSet >> predicatePartPredicate
-[
+predicatePartPredicate
 	"Answer a predicate that tests all of my elements that cannot be
 	enumerated."
 
@@ -99,10 +89,8 @@ RxsCharSet >> predicatePartPredicate
 	^ negated
 		ifFalse: [ [ :char | predicates contains: [ :some | some value: char ] ] ]
 		ifTrue: [ [ :char | (predicates contains: [ :some | some value: char ]) not ] ]
-]
 
 RxsCharSet >> predicates
-[
+predicates
 	^ (elements reject: [ :some | some isEnumerable ]) collect: [ :each | each predicate ]
-]
 

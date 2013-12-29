@@ -1,0 +1,1665 @@
+Trait named: #TBehavior
+	package: #'Traits-Kernel-Traits'.TBehavior >> >> selector
+>> selector
+	"Answer the compiled method associated with the argument, selector (a 
+	Symbol), a message selector in the receiver's method dictionary. If the 
+	selector is not in the dictionary, create an error notification."
+
+	^ self compiledMethodAt: selector
+
+TBehavior >> addExclusionOf: aSymbol to: aTrait
+addExclusionOf: aSymbol to: aTrait
+	self setTraitComposition: (self traitComposition copyWithExclusionOf: aSymbol to: aTrait)
+
+TBehavior >> addObsoleteSubclass: aClass
+addObsoleteSubclass: aClass
+	"Weakly remember that aClass was a subclass of the receiver and is now obsolete"
+
+	| obs |
+	obs := self basicObsoleteSubclasses at: self ifAbsent: [ WeakArray new ].
+	(obs includes: aClass)
+		ifTrue: [ ^ self ].
+	obs := obs copyWithout: nil.
+	obs := obs copyWith: aClass.
+	self basicObsoleteSubclasses at: self put: obs
+
+TBehavior >> addSelector: selector withMethod: compiledMethod
+addSelector: selector withMethod: compiledMethod
+	^ self addSelector: selector withMethod: compiledMethod notifying: nil
+
+TBehavior >> addSelector: selector withMethod: compiledMethod notifying: requestor
+addSelector: selector withMethod: compiledMethod notifying: requestor
+	^ self addSelectorSilently: selector withMethod: compiledMethod
+
+TBehavior >> addSelectorSilently: selector withMethod: compiledMethod
+addSelectorSilently: selector withMethod: compiledMethod
+	self methodDictAddSelectorSilently: selector withMethod: compiledMethod.
+	self registerLocalSelector: selector.
+	self isTrait
+		ifTrue: [ self notifyUsersOfChangedSelector: selector ]
+
+TBehavior >> addToComposition: aTrait
+addToComposition: aTrait
+	self setTraitComposition: (self traitComposition copyTraitExpression
+				add: aTrait;
+				yourself)
+
+TBehavior >> addTraitSelector: aSymbol withMethod: aCompiledMethod
+addTraitSelector: aSymbol withMethod: aCompiledMethod
+	"Add aMethod with selector aSymbol to my
+	methodDict. aMethod must not be defined locally."
+
+	| source method |
+	[ (self includesLocalSelector: aSymbol) not ] assert.
+	self ensureLocalSelectors.
+	source := aCompiledMethod getSourceReplacingSelectorWith: aSymbol.
+	method := self compiler
+		source: source;
+		category: aCompiledMethod category;
+		failBlock: [ ^ nil ];
+		compile.
+	method
+		putSource: source
+		inFile: 2
+		withPreamble: [ :f | f
+				cr;
+				nextPut: $!;
+				nextChunkPut: 'Trait method';
+				cr ].
+	self isTrait
+		ifFalse: [ method properties at: #traitSource put: aCompiledMethod ].
+	self basicAddSelector: aSymbol withMethod: method
+
+TBehavior >> addUser: aClassOrTrait
+addUser: aClassOrTrait
+	self users add: aClassOrTrait
+
+TBehavior >> adoptInstance: anInstance
+adoptInstance: anInstance
+	"Change the class of anInstance to me.
+	Primitive (found in Cog and new VMs)  follows the same rules as primitiveChangeClassTo:, but returns the 	class rather than the modified instance"
+
+	<primitive: 160 error: #ec>
+	anInstance primitiveChangeClassTo: self basicNew.
+	^ self
+
+TBehavior >> allClassVarNames
+allClassVarNames
+	"Answer a Set of the names of the receiver's and the receiver's ancestor's 
+	class variables."
+
+	^ self superclass allClassVarNames
+
+TBehavior >> allInstVarNames
+allInstVarNames
+	"Answer an Array of the names of the receiver's instance variables. The 
+	Array ordering is the order in which the variables are stored and 
+	accessed by the interpreter."
+
+	| vars |
+	self superclass == nil
+		ifTrue: [ vars := self instVarNames copy ]
+		ifFalse: [ vars := self superclass allInstVarNames , self instVarNames ].	"Guarantee a copy is answered."
+	^ vars
+
+TBehavior >> allInstances
+allInstances
+	"Answer a collection of all current instances of the receiver."
+
+	| all inst next |
+	all := OrderedCollection new.
+	inst := self someInstance.
+	[ inst == nil ]
+		whileFalse: [ next := inst nextInstance.
+			inst == all
+				ifFalse: [ all add: inst ].
+			inst := next ].
+	^ all asArray
+
+TBehavior >> allInstancesDo: aBlock
+allInstancesDo: aBlock
+	"Evaluate the argument, aBlock, for each of the current instances of the 
+	receiver.
+	
+	Because aBlock might change the class of inst (for example, using become:),
+	it is essential to compute next before aBlock value: inst."
+
+	| inst next |
+	inst := self someInstance.
+	[ inst == nil ] whileFalse: [ next := inst nextInstance.
+			aBlock value: inst.
+			inst := next ]
+
+TBehavior >> allLocalCallsOn: aSymbol
+allLocalCallsOn: aSymbol
+	"Answer a SortedCollection of all the methods that call on aSymbol, anywhere in my class hierarchy."
+
+	^ SystemNavigation new allLocalCallsOn: aSymbol ofClass: self theNonMetaClass
+
+TBehavior >> allMethods
+allMethods
+	"Return the collection of compiled method I and my superclasses are defining"
+
+	"asArray is used to not bump into a bug when comparing compiled methods."
+
+	^ self allSelectors asArray collect: [ :s | self lookupSelector: s ]
+
+TBehavior >> allSelectors
+allSelectors
+	"Answer all selectors understood by instances of the receiver"
+
+	^ self allSelectorsBelow: nil
+
+TBehavior >> allSelectorsAbove
+allSelectorsAbove
+	^ self allSelectorsAboveUntil: ProtoObject
+
+TBehavior >> allSelectorsAboveUntil: aRootClass
+allSelectorsAboveUntil: aRootClass
+	| coll |
+	coll := IdentitySet new.
+	(self allSuperclassesIncluding: aRootClass) do: [ :aClass | aClass selectorsDo: [ :sel | coll add: sel ] ].
+	^ coll
+
+TBehavior >> allSelectorsBelow: topClass
+allSelectorsBelow: topClass
+	| coll |
+	coll := IdentitySet new.
+	self
+		withAllSuperclassesDo: [ :aClass | aClass = topClass
+				ifTrue: [ ^ coll ]
+				ifFalse: [ aClass selectorsDo: [ :sel | coll add: sel ] ] ].
+	^ coll
+
+TBehavior >> allSelectorsWithout: behaviors
+allSelectorsWithout: behaviors
+	"Returns all the selectors of the receiver and its superclasses, except the ones define in behaviors"
+
+	| selectors |
+	selectors := IdentitySet new.
+	self withAllSuperclassesDo: [ :class | (behaviors includes: class)
+				ifFalse: [ selectors addAll: class selectors ] ].
+	^ selectors
+
+TBehavior >> allSharedPools
+allSharedPools
+	"Answer an ordered collection of the shared pools that the receiver and the receiver's ancestors share."
+
+	^ self superclass allSharedPools
+
+TBehavior >> allSubInstances
+allSubInstances
+	"Answer a list of all current instances of the receiver and all of its subclasses."
+
+	| aCollection |
+	aCollection := OrderedCollection new.
+	self allSubInstancesDo: [ :x | x == aCollection
+				ifFalse: [ aCollection add: x ] ].
+	^ aCollection
+
+TBehavior >> allSubInstancesDo: aBlock
+allSubInstancesDo: aBlock
+	"Evaluate the argument, aBlock, for each of the current instances of the 
+	receiver and all its subclasses."
+
+	self allInstancesDo: aBlock.
+	self allSubclassesDo: [ :sub | sub allInstancesDo: aBlock ]
+
+TBehavior >> allSubclasses
+allSubclasses
+	"Answer an orderedCollection of the receiver's and the receiver's descendent's subclasses. "
+
+	| scan scanTop |
+	scan := OrderedCollection withAll: self subclasses.
+	scanTop := 1.
+	[ scanTop > scan size ] whileFalse: [ scan addAll: (scan at: scanTop) subclasses.
+			scanTop := scanTop + 1 ].
+	^ scan
+
+TBehavior >> allSubclassesDo: aBlock
+allSubclassesDo: aBlock
+	"Evaluate the argument, aBlock, for each of the receiver's subclasses."
+
+	self subclassesDo: [ :cl | aBlock value: cl.
+			cl allSubclassesDo: aBlock ]
+
+TBehavior >> allSubclassesWithLevelDo: classAndLevelBlock startingLevel: level
+allSubclassesWithLevelDo: classAndLevelBlock startingLevel: level
+	"Walk the tree of subclasses, giving the class and its level"
+
+	| subclassNames |
+	classAndLevelBlock value: self value: level.
+	self == Class
+		ifTrue: [ ^ self ].	"Don't visit all the metaclasses"	"Visit subclasses in alphabetical order"
+	subclassNames := SortedCollection new.
+	self subclassesDo: [ :subC | subclassNames add: subC name ].
+	subclassNames
+		do: [ :name | (self environment at: name) allSubclassesWithLevelDo: classAndLevelBlock startingLevel: level + 1 ]
+
+TBehavior >> allSuperclasses
+allSuperclasses
+	"Answer an OrderedCollection of the receiver's and the receiver's  
+	ancestor's superclasses. The first element is the receiver's immediate  
+	superclass, followed by its superclass; the last element is Object."
+
+	| temp |
+	^ self superclass == nil
+		ifTrue: [ OrderedCollection new ]
+		ifFalse: [ temp := self superclass allSuperclasses.
+			temp addFirst: self superclass.
+			temp ]
+
+TBehavior >> allSuperclassesDo: aBlock
+allSuperclassesDo: aBlock
+	"Evaluate the argument, aBlock, for each of the receiver's superclasses."
+
+	self superclass == nil
+		ifFalse: [ aBlock value: self superclass.
+			self superclass allSuperclassesDo: aBlock ]
+
+TBehavior >> allSuperclassesIncluding: aClass
+allSuperclassesIncluding: aClass
+	"Answer an OrderedCollection of the receiver's and the receiver's  ancestor's superclasses
+	up to aClass included. If aClass is not part of the receiver's superclass, returns up to the root."
+
+	| temp |
+	self class == ProtoObject class
+		ifTrue: [ ^ OrderedCollection new ].
+	^ self superclass == aClass
+		ifTrue: [ OrderedCollection with: aClass ]
+		ifFalse: [ temp := self superclass allSuperclassesIncluding: aClass.
+			temp addFirst: self superclass.
+			temp ]
+
+TBehavior >> allUnreferencedInstanceVariables
+allUnreferencedInstanceVariables
+	"Return a list of the instance variables known to the receiver which are not referenced in the receiver or any of its subclasses OR superclasses"
+
+	^ self allInstVarNames
+		reject: [ :ivn | | definingClass |
+			definingClass := self classThatDefinesInstanceVariable: ivn.
+			definingClass withAllSubclasses anySatisfy: [ :class | (class whichSelectorsAccess: ivn asSymbol) notEmpty ] ]
+
+TBehavior >> applyChangesOfNewTraitCompositionReplacing: oldComposition
+applyChangesOfNewTraitCompositionReplacing: oldComposition
+	| changedSelectors |
+	changedSelectors := self traitComposition changedSelectorsComparedTo: oldComposition.
+	changedSelectors isEmpty
+		ifFalse: [ self noteChangedSelectors: changedSelectors ].
+	self traitComposition isEmpty
+		ifTrue: [ self purgeLocalSelectors ].
+	^ changedSelectors
+
+TBehavior >> basicAddSelector: selector withMethod: compiledMethod
+basicAddSelector: selector withMethod: compiledMethod
+	"Add the message selector with the corresponding compiled method to the 
+	receiver's method dictionary.
+	Do this without sending system change notifications"
+
+	| oldMethodOrNil |
+	oldMethodOrNil := self lookupSelector: selector.
+	self methodDict at: selector put: compiledMethod.
+	compiledMethod methodClass: self.
+	compiledMethod selector: selector.	"Now flush Pharo's method cache, either by selector or by method"
+	oldMethodOrNil ifNotNil: [ oldMethodOrNil flushCache ].
+	selector flushCache
+
+TBehavior >> basicNew
+basicNew
+	^ self explicitRequirement
+
+TBehavior >> basicNew: sizeRequested
+basicNew: sizeRequested
+	^ self explicitRequirement
+
+TBehavior >> basicObsoleteSubclasses
+basicObsoleteSubclasses
+	^ self explicitRequirement
+
+TBehavior >> basicRemoveSelector: selector
+basicRemoveSelector: selector
+	"Assuming that the argument, selector (a Symbol), is a message selector 
+	in my method dictionary, remove it and its method."
+
+	| oldMethod |
+	oldMethod := self methodDict at: selector ifAbsent: [ ^ self ].
+	self methodDict removeKey: selector.	"Now flush the method cache"
+	oldMethod flushCache.
+	selector flushCache
+
+TBehavior >> becomeCompact
+becomeCompact
+	"Make me compact.
+	This means: 
+	- find a free slot in 'Smalltalk compactClassArray'
+	- add me in that array
+	- update my format with the index
+	- update my instances
+	"
+
+	self classBuilder becomeCompact: self
+
+TBehavior >> becomeCompactSimplyAt: index
+becomeCompactSimplyAt: index
+	"The same as #becomeCompact but without updating my instances."
+
+	self classBuilder becomeCompact: self simplyAt: index
+
+TBehavior >> becomeUncompact
+becomeUncompact
+	"The inverse of #becomeCompact. However, some classes can not be uncompact: see #checkCanBeUncompact."
+
+	self classBuilder becomeUncompact: self
+
+TBehavior >> binding
+binding
+	^ nil -> self
+
+TBehavior >> bindingOf: varName
+bindingOf: varName
+	^ self explicitRequirement
+
+TBehavior >> canPerform: selector
+canPerform: selector
+	"Answer whether the receiver can safely perform to the message whose selector 
+	is the argument: it is not an abstract or cancelled method"
+
+	^ self classAndMethodFor: selector do: [ :c :m | m isProvided ] ifAbsent: [ false ]
+
+TBehavior >> canUnderstand: selector
+canUnderstand: selector
+	"Answer whether the receiver can respond to the message whose selector 
+	is the argument."
+
+	^ self classAndMethodFor: selector do: [ :c :m | m isProvided ] ifAbsent: [ false ]
+
+TBehavior >> canZapMethodDictionary
+canZapMethodDictionary
+	"Return true if it is safe to zap the method dictionary on #obsolete"
+
+	^ true
+
+TBehavior >> changeRecordsAt: selector
+changeRecordsAt: selector
+	"Return a list of ChangeRecords for all versions of the method at selector. Source code can be retrieved by sending string to any one.  Return nil if the method is absent."
+
+	"(Pen changeRecordsAt: #go:) collect: [:cRec | cRec string]"
+
+	^ ChangeSet
+		scanVersionsOf: (self compiledMethodAt: selector ifAbsent: [ ^ nil ])
+		class: self
+		meta: self isMeta
+		category: (self whichCategoryIncludesSelector: selector)
+		selector: selector
+
+TBehavior >> checkCanBeUncompact
+checkCanBeUncompact
+	"Certain classes cannot be uncompacted in CogVM.  If you download VMMaker and see the VM code, these are as defined by StackInterpreter>>#checkAssumedCompactClasses and the ones that can't be uncompacted are the following: "
+
+	({Array.
+	LargeNegativeInteger.
+	LargePositiveInteger.
+	Float.
+	MethodContext} includes: self)
+		ifTrue: [ self error: 'Class ' , self name , ' cannot be uncompact. ' ]
+
+TBehavior >> classAndMethodFor: aSymbol do: binaryBlock ifAbsent: absentBlock
+classAndMethodFor: aSymbol do: binaryBlock ifAbsent: absentBlock
+	"Looks up the selector aSymbol in the class chain. If it is found, binaryBlock is evaluated
+	with the class that defines the selector and the associated method. Otherwise
+	absentBlock is evaluated."
+
+	self
+		withAllSuperclassesDo: [ :class | | method |
+			method := class compiledMethodAt: aSymbol ifAbsent: [ nil ].
+			method ifNotNil: [ ^ binaryBlock value: class value: method ] ].
+	^ absentBlock value
+
+TBehavior >> classBindingOf: varName
+classBindingOf: varName
+	"Answer the binding of some variable resolved in the scope of the receiver's class"
+
+	^ self bindingOf: varName
+
+TBehavior >> classDepth
+classDepth
+	self superclass ifNil: [ ^ 1 ].
+	^ self superclass classDepth + 1
+
+TBehavior >> classVarNames
+classVarNames
+	"Answer a collection of the receiver's class variable names."
+
+	^ #()
+
+TBehavior >> classesComposedWithMe
+classesComposedWithMe
+	self isTrait
+		ifTrue: [ ^ self users gather: [ :u | u classesComposedWithMe ] ]
+		ifFalse: [ ^ {self} ]
+
+TBehavior >> cleanUp
+cleanUp
+	"Clean out any caches and other state that should be flushed when trying to get an image into a pristine state. Subclasses may override #cleanUp: to provide different levels of cleanliness"
+
+	
+
+TBehavior >> cleanUp: aggressive
+cleanUp: aggressive
+	"Clean out any caches and other state that should be flushed when trying to get an image into a pristine state. The argument should be used to indicate how aggressive the cleanup should be. Some subclasses may act differently depending on its value - for example, ChangeSet will only delete all unused and reinitialize the current change set if we're asking it to be aggressive."
+
+	^ self cleanUp
+
+TBehavior >> commentsAt: selector
+commentsAt: selector
+	"Answer a string representing the first comment in the method associated with selector.  Return an empty string if the relevant source file is not available, or if the method's source code does not contain a comment.  Not smart enough to bypass quotes in string constants, but does map doubled quote into a single quote."
+
+	^ self commentsIn: (self sourceCodeAt: selector) asString	"Behavior commentsAt: #commentsAt:"
+
+TBehavior >> commentsIn: sourceString
+commentsIn: sourceString
+	| commentStart nextQuotePos someComments aPos |
+	('*"*' match: sourceString)
+		ifFalse: [ ^ #() ].
+	someComments := OrderedCollection new.
+	sourceString size = 0
+		ifTrue: [ ^ someComments ].
+	aPos := 1.
+	nextQuotePos := 0.
+	[ commentStart := sourceString findString: '"' startingAt: aPos.
+	nextQuotePos := self nextQuotePosIn: sourceString startingFrom: commentStart.
+	commentStart ~= 0 and: [ nextQuotePos > commentStart ] ]
+		whileTrue: [ commentStart ~= nextQuotePos
+				ifTrue: [ someComments add: ((sourceString copyFrom: commentStart + 1 to: nextQuotePos - 1) copyReplaceAll: '""' with: '"') ].
+			aPos := nextQuotePos + 1 ].
+	^ someComments
+
+TBehavior >> compiledMethodAt: selector
+compiledMethodAt: selector
+	"Answer the compiled method associated with the argument, selector (a 
+	Symbol), a message selector in the receiver's method dictionary. If the 
+	selector is not in the dictionary, create an error notification."
+
+	^ self methodDict at: selector
+
+TBehavior >> compiledMethodAt: selector ifAbsent: aBlock
+compiledMethodAt: selector ifAbsent: aBlock
+	"Answer the compiled method associated with the argument, selector (a Symbol), a message selector in the receiver's method dictionary. If the selector is not in the dictionary, return the value of aBlock"
+
+	^ self methodDict at: selector ifAbsent: aBlock
+
+TBehavior >> compiledMethodAt: selector ifPresent: anotherBlock ifAbsent: aBlock
+compiledMethodAt: selector ifPresent: anotherBlock ifAbsent: aBlock
+	"Answer the compiled method associated with the argument, selector (a Symbol), a message selector in the receiver's method dictionary. If the selector is not in the dictionary, return the value of aBlock"
+
+	^ self methodDict at: selector ifPresent: anotherBlock ifAbsent: aBlock
+
+TBehavior >> compress
+compress
+	"Compact the method dictionary of the receiver."
+
+	self methodDict rehash
+
+TBehavior >> copiedFromSuperclass: method
+copiedFromSuperclass: method
+	"Returns the methods that the receiver copied with its ancestors"
+
+	self
+		allSuperclassesDo: [ :cls | (cls includesSelector: method selector)
+				ifTrue: [ (cls >> method selector) sourceCode = method sourceCode
+						ifTrue: [ ^ {(cls >> method selector)} ]
+						ifFalse: [ ^ #() ] ] ].
+	^ #()
+
+TBehavior >> copiedMethodsFromSuperclass
+copiedMethodsFromSuperclass
+	"Returns the methods that the receiver copied with its ancestors"
+
+	| methods |
+	methods := OrderedCollection new.
+	self methodsDo: [ :method | methods addAll: (self copiedFromSuperclass: method) ].
+	^ methods
+
+TBehavior >> copiesFromSuperclass: method
+copiesFromSuperclass: method
+	"Checks whether the receiver copied the argument,  method, from its superclasses"
+
+	self
+		allSuperclassesDo: [ :cls | (cls includesSelector: method selector)
+				ifTrue: [ ^ (cls >> method selector) sourceCode = method sourceCode ] ].
+	^ false
+
+TBehavior >> copiesMethodsFromSuperclass
+copiesMethodsFromSuperclass
+	"Checks whether the receiver copied some method from its superclass"
+
+	self methodsDo: [ :method | (self copiesFromSuperclass: method)
+				ifTrue: [ ^ true ] ].
+	^ false
+
+TBehavior >> copyOfMethodDictionary
+copyOfMethodDictionary
+	"Return a copy of the receiver's method dictionary"
+
+	^ self methodDict copy
+
+TBehavior >> deepCopy
+deepCopy
+	"Classes should only be shallowCopied or made anew."
+
+	^ self shallowCopy
+
+TBehavior >> deregisterLocalSelector: aSymbol
+deregisterLocalSelector: aSymbol
+	self basicLocalSelectors notNil
+		ifTrue: [ self basicLocalSelectors remove: aSymbol ifAbsent: [  ] ]
+
+TBehavior >> emptyMethodDictionary
+emptyMethodDictionary
+	^ MethodDictionary new
+
+TBehavior >> ensureLocalSelectors
+ensureLocalSelectors
+	"Ensures that the instance variable localSelectors is effectively used to maintain
+	the set of local selectors.
+	This method must be called before any non-local selectors are added to the
+	method dictionary!"
+
+	self basicLocalSelectors ifNil: [ self basicLocalSelectors: self selectors asSet ]
+
+TBehavior >> environment
+environment
+	"Return the environment in which the receiver is visible"
+
+	^ Smalltalk globals
+
+TBehavior >> firstCommentAt: selector
+firstCommentAt: selector
+	"Answer a string representing the first comment in the method associated with selector.  Return an empty string if the relevant source file is not available, or if the method's source code does not contain a comment.  Not smart enough to bypass quotes in string constants, but does map doubled quote into a single quote."
+
+	| someComments |
+	someComments := self commentsAt: selector.
+	^ someComments isEmpty
+		ifTrue: [ '' ]
+		ifFalse: [ someComments first ]	"Behavior firstCommentAt: #firstCommentAt:"
+
+TBehavior >> firstPrecodeCommentFor: selector
+firstPrecodeCommentFor: selector
+	"If there is a comment in the source code at the given selector that preceeds the body of the method, return it here, else return nil"
+
+	| method |
+	"Behavior firstPrecodeCommentFor: #firstPrecodeCommentFor:"
+	(#(#Comment #Definition #Hierarchy) includes: selector)
+		ifTrue: [ ^ nil ].
+	method := self compiledMethodAt: selector asSymbol ifAbsent: [ ^ nil ].
+	^ method ast firstPrecodeComment
+
+TBehavior >> flattenDown: aTrait
+flattenDown: aTrait
+	| selectors |
+	[ self hasTraitComposition and: [ self traitComposition allTraits includes: aTrait ] ] assert.
+	selectors := (self traitComposition transformationOfTrait: aTrait) selectors.
+	self basicLocalSelectors: self basicLocalSelectors , selectors.
+	self removeFromComposition: aTrait
+
+TBehavior >> flattenDownAllTraits
+flattenDownAllTraits
+	self traitComposition allTraits do: [ :each | self flattenDown: each ].
+	[ self traitComposition isEmpty ] assert.
+	self traitComposition: nil
+
+TBehavior >> flushCache
+flushCache
+	"Tell the interpreter to remove the contents of its method lookup cache, if it has 
+	one.  Essential.  See Object documentation whatIsAPrimitive."
+
+	<primitive: 89>
+	self primitiveFailed
+
+TBehavior >> hasAbstractMethods
+hasAbstractMethods
+	"Tells whether the receiver locally defines an abstract method, i.e., a method sending subclassResponsibility"
+
+	^ self methods anySatisfy: [ :cm | cm sendsSelector: #subclassResponsibility ]
+
+TBehavior >> hasMethods
+hasMethods
+	"Answer whether the receiver has any methods in its method dictionary."
+
+	^ self methodDict notEmpty
+
+TBehavior >> hasTraitComposition
+hasTraitComposition
+	^ self traitComposition notEmpty
+
+TBehavior >> includesBehavior: aClass
+includesBehavior: aClass
+	self isTrait
+		ifTrue: [ ^ false ].
+	^ self == aClass or: [ self inheritsFrom: aClass ]
+
+TBehavior >> includesLocalSelector: aSymbol
+includesLocalSelector: aSymbol
+	^ self basicLocalSelectors
+		ifNil: [ self includesSelector: aSymbol ]
+		ifNotNil: [ self localSelectors includes: aSymbol ]
+
+TBehavior >> includesSelector: aSymbol
+includesSelector: aSymbol
+	"Answer whether the message whose selector is the argument is in the 
+	method dictionary of the receiver's class."
+
+	^ self methodDict includesKey: aSymbol
+
+TBehavior >> includesSharedPoolNamed: aSharedPoolString
+includesSharedPoolNamed: aSharedPoolString
+	"Answer whether the receiver uses the shared pool named aSharedPoolString"
+
+	^ self sharedPools anySatisfy: [ :each | each name = aSharedPoolString ]
+
+TBehavior >> indexIfCompact
+indexIfCompact
+	"If these 5 bits are non-zero, then instances of this class
+	will be compact.  It is crucial that there be an entry in
+	Smalltalk compactClassesArray for any class so optimized.
+	See the msgs becomeCompact and becomeUncompact."
+
+	^ (self format bitShift: -11) bitAnd: 16r1F	"Array indexIfCompactVerify if the compactClassesArray and indexIfCompact are coherenSmalltalk compactClassesArray doWithIndex: 	[:c :i | c == nil ifFalse:		[c indexIfCompact = i ifFalse: [self halt]]]"
+
+TBehavior >> inheritsFrom: aClass
+inheritsFrom: aClass
+	"Answer whether the argument, aClass, is on the receiver's superclass 
+	chain."
+
+	| aSuperclass |
+	aSuperclass := self superclass.
+	[ aSuperclass == nil ]
+		whileFalse: [ aSuperclass == aClass
+				ifTrue: [ ^ true ].
+			aSuperclass := aSuperclass superclass ].
+	^ false
+
+TBehavior >> initialize
+initialize
+	"moved here from the class side's #new"
+
+	super initialize.
+	self superclass: Object.	"no longer sending any messages, some of them crash the VM"
+	self methodDict: self emptyMethodDictionary.
+	self setFormat: Object format.
+	self traitComposition: nil.
+	self users: IdentitySet new
+
+TBehavior >> instSize
+instSize
+	^ self explicitRequirement
+
+TBehavior >> instSpec
+instSpec
+	^ (self format bitShift: -7) bitAnd: 16rF
+
+TBehavior >> instVarNames
+instVarNames
+	"Answer an Array of the instance variable names. Behaviors must make 
+	up fake local instance variable names because Behaviors have instance 
+	variables for the purpose of compiling methods, but these are not named 
+	instance variables."
+
+	| mySize superSize |
+	mySize := self instSize.
+	superSize := self superclass == nil
+		ifTrue: [ 0 ]
+		ifFalse: [ self superclass instSize ].
+	mySize = superSize
+		ifTrue: [ ^ #() ].
+	^ (superSize + 1 to: mySize) collect: [ :i | 'inst' , i printString ]
+
+TBehavior >> instVarNamesAndOffsetsDo: aBinaryBlock
+instVarNamesAndOffsetsDo: aBinaryBlock
+	"This is part of the interface between the compiler and a class's instance or field names.
+	 The class should enumerate aBinaryBlock with the instance variable name strings and
+	 their integer offsets.  The order is important. Names evaluated later will override the
+	 same names occurring earlier."
+
+	"Nothing to do here; ClassDescription introduces named instance variables"
+
+	^ self
+
+TBehavior >> instanceCount
+instanceCount
+	"Answer the number of instances of the receiver that are currently in 
+	use."
+
+	| count |
+	count := 0.
+	self allInstancesDo: [ :x | count := count + 1 ].
+	^ count
+
+TBehavior >> instancesSizeInMemory
+instancesSizeInMemory
+	"Answers the number of bytes consumed by all its instances including their object header"
+
+	| bytes |
+	bytes := 0.
+	self allInstancesDo: [ :each | bytes := bytes + each sizeInMemory ].
+	^ bytes
+
+TBehavior >> isAliasSelector: aSymbol
+isAliasSelector: aSymbol
+	"Return true if the selector aSymbol is an alias defined
+	in my or in another composition somewhere deeper in 
+	the tree of traits compositions."
+
+	^ (self includesLocalSelector: aSymbol) not
+		and: [ self hasTraitComposition and: [ self traitComposition isAliasSelector: aSymbol ] ]
+
+TBehavior >> isAnonymous
+isAnonymous
+	^ true
+
+TBehavior >> isBits
+isBits
+	"Answer whether the receiver contains just bits (not pointers)."
+
+	^ self instSpec >= 6
+
+TBehavior >> isBytes
+isBytes
+	"Answer whether the receiver has 8-bit instance variables."
+
+	^ self instSpec >= 8
+
+TBehavior >> isCompact
+isCompact
+	^ self indexIfCompact ~= 0
+
+TBehavior >> isComposedBy: aTrait
+isComposedBy: aTrait
+	"Answers if this object includes trait aTrait into its composition"
+
+	aTrait isTrait
+		ifFalse: [ ^ false ].
+	^ self hasTraitComposition
+		ifTrue: [ self traitComposition includesTrait: aTrait ]
+		ifFalse: [ false ]
+
+TBehavior >> isDisabledSelector: selector
+isDisabledSelector: selector
+	^ self classAndMethodFor: selector do: [ :c :m | m isDisabled ] ifAbsent: [ false ]
+
+TBehavior >> isFixed
+isFixed
+	"Answer whether the receiver does not have a variable (indexable) part."
+
+	^ self isVariable not
+
+TBehavior >> isLocalAliasSelector: aSymbol
+isLocalAliasSelector: aSymbol
+	"Return true if the selector aSymbol is an alias defined
+	in my trait composition."
+
+	^ (self includesLocalSelector: aSymbol) not
+		and: [ self hasTraitComposition and: [ self traitComposition isLocalAliasSelector: aSymbol ] ]
+
+TBehavior >> isMeta
+isMeta
+	^ false
+
+TBehavior >> isObsolete
+isObsolete
+	"Return true if the receiver is obsolete."
+
+	^ self instanceCount = 0
+
+TBehavior >> isPointers
+isPointers
+	"Answer whether the receiver contains just pointers (not bits)."
+
+	^ self isBits not
+
+TBehavior >> isVariable
+isVariable
+	"Answer whether the receiver has indexable variables."
+
+	^ self instSpec >= 2
+
+TBehavior >> isWeak
+isWeak
+	"Answer whether the receiver has contains weak references."
+
+	^ self instSpec = 4
+
+TBehavior >> isWords
+isWords
+	"Answer true if the receiver is made of 32-bit instance variables."
+
+	^ self isBytes not
+
+TBehavior >> kindOfSubclass
+kindOfSubclass
+	"Answer a String that is the keyword that describes the receiver's kind 
+	of subclass, either a regular subclass, a variableSubclass, a  
+	variableByteSubclass, a variableWordSubclass, or a weakSubclass."
+
+	self isWeak
+		ifTrue: [ ^ ' weakSubclass: ' ].
+	^ self isVariable
+		ifTrue: [ self isBits
+				ifTrue: [ self isBytes
+						ifTrue: [ ' variableByteSubclass: ' ]
+						ifFalse: [ ' variableWordSubclass: ' ] ]
+				ifFalse: [ ' variableSubclass: ' ] ]
+		ifFalse: [ ' subclass: ' ]
+
+TBehavior >> literalScannedAs: scannedLiteral notifying: requestor
+literalScannedAs: scannedLiteral notifying: requestor
+	"Postprocesses a literal scanned by Scanner scanToken (esp. xLitQuote).
+	If scannedLiteral is not an association, answer it.
+	Else, if it is of the form:
+		nil->#NameOfMetaclass
+	answer nil->theMetaclass, if any has that name, else report an error.
+	Else, if it is of the form:
+		#NameOfGlobalVariable->anythiEng
+	answer the global, class, or pool association with that nameE, if any, else
+	add it to Undeclared a answer the new Association."
+
+	| key value |
+	scannedLiteral isVariableBinding
+		ifFalse: [ ^ scannedLiteral ].
+	key := scannedLiteral key.
+	value := scannedLiteral value.
+	key
+		ifNil: [ "###<metaclass soleInstance name>"
+			(self bindingOf: value)
+				ifNotNil: [ :assoc | (assoc value isKindOf: Behavior)
+						ifTrue: [ ^ nil -> assoc value class ] ].
+			requestor notify: 'No such metaclass'.
+			^ false ].
+	key isSymbol
+		ifTrue: [ "##<global var name>"
+			(self bindingOf: key) ifNotNil: [ :assoc | ^ assoc ].
+			Undeclared at: key put: nil.
+			^ Undeclared bindingOf: key ].
+	requestor notify: '## must be followed by a non-local variable name'.
+	^ false	"	Form literalScannedAs: 14 notifying: nil 14	Form literalScannedAs: #OneBitForm notiEfying: nil  OneBitForm	Form literalScannedAs: ##OneBitForm notifying: nil  OneBitForm->a Form	Form literalScannedAs: ##Form notifying: nil   Form->Form	Form literalScannedAs: ###Form notifying: nil   nilE->Form class"
+
+TBehavior >> localSelectors
+localSelectors
+	"Return a set of selectors defined locally.
+	The instance variable is lazily initialized. If it is nil then there
+	are no non-local selectors"
+
+	^ self basicLocalSelectors ifNil: [ self selectors asSet ] ifNotNil: [ self basicLocalSelectors ]
+
+TBehavior >> localSelectors: aSet
+localSelectors: aSet
+	self basicLocalSelectors: aSet
+
+TBehavior >> longPrintOn: aStream
+longPrintOn: aStream
+	"Append to the argument, aStream, the names and values of all of the receiver's instance variables.  But, not useful for a class with a method dictionary."
+
+	aStream
+		nextPutAll: '<<too complex to show>>';
+		cr
+
+TBehavior >> lookupSelector: selector
+lookupSelector: selector
+	"Look up the given selector in my methodDictionary.
+	Return the corresponding method if found.
+	Otherwise chase the superclass chain and try again.
+	Return nil if no method is found."
+
+	| lookupClass |
+	lookupClass := self.
+	[ lookupClass == nil ]
+		whileFalse: [ (lookupClass includesSelector: selector)
+				ifTrue: [ ^ lookupClass compiledMethodAt: selector ].
+			lookupClass := lookupClass superclass ].
+	^ nil
+
+TBehavior >> methodDict
+methodDict
+	^ self explicitRequirement
+
+TBehavior >> methodDict: aDictionary
+methodDict: aDictionary
+	^ self explicitRequirement
+
+TBehavior >> methodDictAddSelectorSilently: selector withMethod: compiledMethod
+methodDictAddSelectorSilently: selector withMethod: compiledMethod
+	self basicAddSelector: selector withMethod: compiledMethod
+
+TBehavior >> methodDictionary
+methodDictionary
+	^ self methodDict
+
+TBehavior >> methodDictionary: aDictionary
+methodDictionary: aDictionary
+	self methodDict: aDictionary
+
+TBehavior >> methods
+methods
+	^ self methodDict values
+
+TBehavior >> methodsDo: aBlock
+methodsDo: aBlock
+	"Evaluate aBlock for all the compiled methods in my method dictionary."
+
+	^ self methodDict valuesDo: aBlock
+
+TBehavior >> name
+name
+	^ self explicitRequirement
+
+TBehavior >> new
+new
+	"Answer a new initialized instance of the receiver (which is a class) with no indexable variables. Fail if the class is indexable."
+
+	^ self basicNew initialize
+
+TBehavior >> new: sizeRequested
+new: sizeRequested
+	"Answer an initialized instance of this class with the number of indexable
+	variables specified by the argument, sizeRequested."
+
+	^ (self basicNew: sizeRequested) initialize
+
+TBehavior >> nextQuotePosIn: sourceString startingFrom: commentStart
+nextQuotePosIn: sourceString startingFrom: commentStart
+	| pos nextQuotePos |
+	pos := commentStart + 1.
+	[ (nextQuotePos := sourceString findString: '"' startingAt: pos) == (sourceString findString: '""' startingAt: pos)
+		and: [ nextQuotePos ~= 0 ] ]
+		whileTrue: [ pos := nextQuotePos + 2 ].
+	^ nextQuotePos
+
+TBehavior >> nonObsoleteClass
+nonObsoleteClass
+	"Attempt to find and return the current version of this obsolete class"
+
+	| obsName |
+	obsName := self name.
+	[ obsName beginsWith: 'AnObsolete' ] whileTrue: [ obsName := obsName copyFrom: 'AnObsolete' size + 1 to: obsName size ].
+	^ self environment at: obsName asSymbol
+
+TBehavior >> noteChangedSelectors: aCollection
+noteChangedSelectors: aCollection
+	"Start update of my methodDict (after changes to traits in traitComposition
+	or after a local method was removed from my methodDict). The argument 
+	is a collection of method selectors that may have been changed. Most of the time
+	aCollection only holds one selector. But when there are aliases involved 
+	there may be several method changes that have to be propagated to users."
+
+	| affectedSelectors |
+	affectedSelectors := IdentitySet new.
+	aCollection do: [ :selector | affectedSelectors addAll: (self updateMethodDictionarySelector: selector) ].
+	self notifyUsersOfChangedSelectors: affectedSelectors.
+	^ affectedSelectors
+
+TBehavior >> notifyUsersOfChangedSelector: aSelector
+notifyUsersOfChangedSelector: aSelector
+	self notifyUsersOfChangedSelectors: (Array with: aSelector)
+
+TBehavior >> notifyUsersOfChangedSelectors: aCollection
+notifyUsersOfChangedSelectors: aCollection
+	
+
+TBehavior >> numberOfInstanceVariables
+numberOfInstanceVariables
+	^ self instVarNames size
+
+TBehavior >> obsolete
+obsolete
+	"Invalidate and recycle local methods,
+	e.g., zap the method dictionary if can be done safely."
+
+	self canZapMethodDictionary
+		ifTrue: [ self methodDict: self emptyMethodDictionary ].
+	self hasTraitComposition
+		ifTrue: [ self traitComposition traits do: [ :each | each removeUser: self ] ]
+
+TBehavior >> obsoleteSubclasses
+obsoleteSubclasses
+	"Return all the weakly remembered obsolete subclasses of the receiver"
+
+	| obs |
+	obs := self basicObsoleteSubclasses at: self ifAbsent: [ ^ #() ].
+	^ obs copyWithout: nil
+
+TBehavior >> postCopy
+postCopy
+	super postCopy.
+	self methodDict: self copyOfMethodDictionary
+
+TBehavior >> precodeCommentOrInheritedCommentFor: selector
+precodeCommentOrInheritedCommentFor: selector
+	"Answer a string representing the first comment in the method associated 
+	with selector, considering however only comments that occur before the 
+	beginning of the actual code. If the version recorded in the receiver is 
+	uncommented, look up the inheritance chain. Return nil if none found."
+
+	| aSuper aComment |
+	^ (aComment := self firstPrecodeCommentFor: selector) isEmptyOrNil
+		ifTrue: [ (self == Behavior
+				or: [ self superclass == nil or: [ (aSuper := self superclass whichClassIncludesSelector: selector) == nil ] ])
+				ifFalse: [ aSuper precodeCommentOrInheritedCommentFor: selector ] ]
+		ifFalse: [ aComment ]
+
+TBehavior >> printHierarchy
+printHierarchy
+	"Answer a description containing the names and instance variable names 
+	of all of the subclasses and superclasses of the receiver."
+
+	| aStream index |
+	index := 0.
+	aStream := (String new: 16) writeStream.
+	self allSuperclasses
+		reverseDo: [ :aClass | aStream crtab: index.
+			index := index + 1.
+			aStream nextPutAll: aClass name.
+			aStream space.
+			aStream print: aClass instVarNames ].
+	aStream cr.
+	self printSubclassesOn: aStream level: index.
+	^ aStream contents
+
+TBehavior >> printOn: aStream
+printOn: aStream
+	"Refer to the comment in Object|printOn:."
+
+	aStream nextPutAll: 'a descendent of '.
+	self superclass printOn: aStream
+
+TBehavior >> purgeLocalSelectors
+purgeLocalSelectors
+	self basicLocalSelectors: nil
+
+TBehavior >> realClass
+realClass
+	^ self
+
+TBehavior >> registerLocalSelector: aSymbol
+registerLocalSelector: aSymbol
+	self basicLocalSelectors notNil
+		ifTrue: [ self basicLocalSelectors add: aSymbol ]
+
+TBehavior >> removeAlias: aSymbol of: aTrait
+removeAlias: aSymbol of: aTrait
+	self setTraitComposition: (self traitComposition copyWithoutAlias: aSymbol of: aTrait)
+
+TBehavior >> removeAllObsoleteSubclasses
+removeAllObsoleteSubclasses
+	"Remove all the obsolete subclasses of the receiver"
+
+	self basicObsoleteSubclasses removeKey: self ifAbsent: [  ]
+
+TBehavior >> removeFromComposition: aTrait
+removeFromComposition: aTrait
+	self setTraitComposition: (self traitComposition copyTraitExpression removeFromComposition: aTrait)
+
+TBehavior >> removeSelector: aSelector
+removeSelector: aSelector
+	"Assuming that the argument, selector (a Symbol), is a message selector 
+	in my method dictionary, remove it and its method.
+	
+	If the method to remove will be replaced by a method from my trait composition,
+	the current method does not have to be removed because we mark it as non-local.
+	If it is not identical to the actual method from the trait it will be replaced automatically
+	by #noteChangedSelectors:.
+	
+	This is useful to avoid bootstrapping problems when moving methods to a trait
+	(e.g., from TBehavior to TMethodDictionaryBehavior). Manual moving (implementing
+	the method in the trait and then remove it from the class) does not work if the methods
+	themselves are used for this process (such as compiledMethodAt:, includesLocalSelector: or
+	addTraitSelector:withMethod:)"
+
+	| changeFromLocalToTraitMethod |
+	changeFromLocalToTraitMethod := (self includesLocalSelector: aSelector)
+		and: [ self hasTraitComposition and: [ self traitComposition includesMethod: aSelector ] ].
+	changeFromLocalToTraitMethod
+		ifFalse: [ self basicRemoveSelector: aSelector ]
+		ifTrue: [ self ensureLocalSelectors ].
+	self deregisterLocalSelector: aSelector.
+	self noteChangedSelectors: (Array with: aSelector).
+	self isTrait
+		ifTrue: [ self notifyUsersOfChangedSelector: aSelector ]
+
+TBehavior >> removeSelectorSilently: selector
+removeSelectorSilently: selector
+	"Remove selector without sending system change notifications"
+
+	^ SystemAnnouncer uniqueInstance suspendAllWhile: [ self removeSelector: selector ]
+
+TBehavior >> removeTraitSelector: aSymbol
+removeTraitSelector: aSymbol
+	[ (self includesLocalSelector: aSymbol) not ] assert.
+	self basicRemoveSelector: aSymbol
+
+TBehavior >> removeUser: aClassOrTrait
+removeUser: aClassOrTrait
+	self users remove: aClassOrTrait ifAbsent: [  ]
+
+TBehavior >> selectSubclasses: aBlock
+selectSubclasses: aBlock
+	"Evaluate the argument, aBlock, with each of the receiver's (next level) 
+	subclasses as its argument. Collect into a Set only those subclasses for 
+	which aBlock evaluates to true. In addition, evaluate aBlock for the 
+	subclasses of each of these successful subclasses and collect into the set 
+	those for which aBlock evaluates true. Answer the resulting set."
+
+	| aSet |
+	aSet := Set new.
+	self allSubclasses do: [ :aSubclass | (aBlock value: aSubclass)
+				ifTrue: [ aSet add: aSubclass ] ].
+	^ aSet
+
+TBehavior >> selectSuperclasses: aBlock
+selectSuperclasses: aBlock
+	"Evaluate the argument, aBlock, with the receiver's superclasses as the 
+	argument. Collect into an OrderedCollection only those superclasses for 
+	which aBlock evaluates to true. In addition, evaluate aBlock for the 
+	superclasses of each of these successful superclasses and collect into the 
+	OrderedCollection ones for which aBlock evaluates to true. Answer the 
+	resulting OrderedCollection."
+
+	| aSet |
+	aSet := Set new.
+	self allSuperclasses do: [ :aSuperclass | (aBlock value: aSuperclass)
+				ifTrue: [ aSet add: aSuperclass ] ].
+	^ aSet
+
+TBehavior >> selectors
+selectors
+	"Answer a Set of all the message selectors specified in the receiver's 
+	method dictionary."
+
+	^ self methodDict keys
+
+TBehavior >> selectorsAndMethodsDo: selectorAndMethodBlock
+selectorsAndMethodsDo: selectorAndMethodBlock
+	"Evaluate selectorAndMethodBlock with two arguments for each selector/method pair in my method dictionary."
+
+	^ self methodDict keysAndValuesDo: selectorAndMethodBlock
+
+TBehavior >> selectorsDo: selectorBlock
+selectorsDo: selectorBlock
+	"Evaluate selectorBlock for all the message selectors in my method dictionary."
+
+	^ self methodDict keysDo: selectorBlock
+
+TBehavior >> selectorsWithArgs: numberOfArgs
+selectorsWithArgs: numberOfArgs
+	"Return all selectors defined in this class that take this number of arguments"
+
+	^ self selectors select: [ :selector | selector numArgs = numberOfArgs ]
+
+TBehavior >> setFormat: aFormatInstanceDescription
+setFormat: aFormatInstanceDescription
+	^ self explicitRequirement
+
+TBehavior >> setTraitComposition: aTraitComposition
+setTraitComposition: aTraitComposition
+	| oldComposition |
+	(self hasTraitComposition not and: [ aTraitComposition isEmpty ])
+		ifTrue: [ ^ self ].
+	aTraitComposition assertValidUser: self.
+	oldComposition := self traitComposition.
+	self traitComposition: aTraitComposition.
+	self applyChangesOfNewTraitCompositionReplacing: oldComposition.
+	oldComposition traits do: [ :each | each removeUser: self ].
+	aTraitComposition traits do: [ :each | each addUser: self ]
+
+TBehavior >> setTraitCompositionFrom: aTraitExpression
+setTraitCompositionFrom: aTraitExpression
+	^ self setTraitComposition: aTraitExpression asTraitComposition
+
+TBehavior >> sharedPoolNames
+sharedPoolNames
+	^ self sharedPools collect: [ :ea | self environment keyAtIdentityValue: ea ]
+
+TBehavior >> shutDown
+shutDown
+	"This message is sent on system shutdown to registered classes"
+
+	
+
+TBehavior >> shutDown: quitting
+shutDown: quitting
+	"This message is sent on system shutdown to registered classes"
+
+	^ self shutDown
+
+TBehavior >> someInstance
+someInstance
+	"Primitive. Answer the first instance in the enumeration of all instances 
+	of the receiver. Fails if there are none. Essential. See Object 
+	documentation whatIsAPrimitive."
+
+	<primitive: 77>
+	^ nil
+
+TBehavior >> sourceCodeAt: selector
+sourceCodeAt: selector
+	^ (self compiledMethodAt: selector) sourceCode
+
+TBehavior >> sourceCodeAt: selector ifAbsent: aBlock
+sourceCodeAt: selector ifAbsent: aBlock
+	^ (self compiledMethodAt: selector ifAbsent: [ ^ aBlock value ]) sourceCode
+
+TBehavior >> sourceMatchesBytecodeAt: selector
+sourceMatchesBytecodeAt: selector
+	"Answers true if the source code at the selector compiles to the bytecode at the selector, and false
+	otherwise. Implemented to detect an error where Monticello did not recompile sources when the class
+	shape changed"
+
+	"This code was copied from #recompile:from:, with few changes. Several methods would benefit from a
+	method which turned a selector and class into a CompiledMethod, without  installing it into the 
+	methodDictionary"
+
+	| method newMethod |
+	method := self compiledMethodAt: selector.
+	newMethod := self compiler
+		source: (self sourceCodeAt: selector);
+		class: self;
+		failBlock: [ ^ false ];
+		compiledMethodTrailer: method trailer;
+		compile.	"Assume OK after proceed from SyntaxError"
+	selector == newMethod selector
+		ifFalse: [ self error: 'selector changed!!' ].
+	^ newMethod = method
+
+TBehavior >> spaceUsed
+spaceUsed
+	"Answer a rough estimate of number of bytes used by this class and its metaclass. Does not include space used by class variables."
+
+	| space |
+	space := 0.
+	self
+		methodsDo: [ :method | space := space + 16.	"dict and org'n space"
+			space := space + (method size + 6).	"hdr + avg pad"
+			method
+				literalsDo: [ :lit | (lit isMemberOf: Array)
+						ifTrue: [ space := space + ((lit size + 1) * 4) ].
+					(lit isMemberOf: Float)
+						ifTrue: [ space := space + 12 ].
+					(lit isMemberOf: ByteString)
+						ifTrue: [ space := space + (lit size + 6) ].
+					(lit isMemberOf: LargeNegativeInteger)
+						ifTrue: [ space := space + ((lit size + 1) * 4) ].
+					(lit isMemberOf: LargePositiveInteger)
+						ifTrue: [ space := space + ((lit size + 1) * 4) ] ] ].
+	^ space
+
+TBehavior >> startUp
+startUp
+	"This message is sent to registered classes when the system is coming up."
+
+	
+
+TBehavior >> startUp: resuming
+startUp: resuming
+	"This message is sent to registered classes when the system is coming up."
+
+	^ self startUp
+
+TBehavior >> storeLiteral: aCodeLiteral on: aStream
+storeLiteral: aCodeLiteral on: aStream
+	"Store aCodeLiteral on aStream, changing an Association to ##GlobalName
+	 or ###MetaclassSoleInstanceName format if appropriate"
+
+	| key value |
+	aCodeLiteral isVariableBinding
+		ifFalse: [ aCodeLiteral storeOn: aStream.
+			^ self ].
+	key := aCodeLiteral key.
+	(key isNil and: [ (value := aCodeLiteral value) isMemberOf: Metaclass ])
+		ifTrue: [ aStream
+				nextPutAll: '###';
+				nextPutAll: value soleInstance name.
+			^ self ].
+	(key isSymbol and: [ (self bindingOf: key) notNil ])
+		ifTrue: [ aStream
+				nextPutAll: '##';
+				nextPutAll: key.
+			^ self ].
+	aCodeLiteral storeOn: aStream
+
+TBehavior >> subclassDefinerClass
+subclassDefinerClass
+	^ self explicitRequirement
+
+TBehavior >> subclassInstVarNames
+subclassInstVarNames
+	"Answer a Set of the names of the receiver's subclasses' instance 
+	variables."
+
+	| vars |
+	vars := Set new.
+	self allSubclasses do: [ :aSubclass | vars addAll: aSubclass instVarNames ].
+	^ vars
+
+TBehavior >> subclassesDo: aBlock
+subclassesDo: aBlock
+	"Evaluate the argument, aBlock, for each of the receiver's immediate subclasses."
+
+	self subclasses do: aBlock
+
+TBehavior >> superclass
+superclass
+	^ self explicitRequirement
+
+TBehavior >> superclass: aClass
+superclass: aClass
+	^ self explicitRequirement
+
+TBehavior >> superclass: aClass methodDictionary: mDict format: fmt
+superclass: aClass methodDictionary: mDict format: fmt
+	"Basic initialization of the receiver.
+	Must only be sent to a new instance; else we would need Object flushCache."
+
+	self superclass: aClass.
+	self setFormat: fmt.
+	self methodDict: mDict.
+	self traitComposition: nil
+
+TBehavior >> supermostPrecodeCommentFor: selector
+supermostPrecodeCommentFor: selector
+	"Answer a string representing the precode comment in the most distant 
+	superclass's implementation of the selector. Return nil if none found."
+
+	| aSuper superComment |
+	(self == Behavior
+		or: [ self superclass == nil or: [ (aSuper := self superclass whichClassIncludesSelector: selector) == nil ] ])
+		ifFalse: [ "There is a super implementor"
+			superComment := aSuper supermostPrecodeCommentFor: selector ].
+	^ superComment ifNil: [ self firstPrecodeCommentFor: selector	"ActorState supermostPrecodeCommentFor: #printOn:" ]
+
+TBehavior >> thoroughHasSelectorReferringTo: literal special: specialFlag byte: specialByte
+thoroughHasSelectorReferringTo: literal special: specialFlag byte: specialByte
+	"Answer true if any of my methods access the argument as a 
+	literal. Dives into the compact literal notation, making it slow but 
+	thorough "
+
+	self
+		methodsDo: [ :method | ((method hasLiteralThorough: literal) or: [ specialFlag and: [ method scanFor: specialByte ] ])
+				ifTrue: [ ^ true ] ].
+	^ false
+
+TBehavior >> thoroughWhichSelectorsReferTo: literal special: specialFlag byte: specialByte
+thoroughWhichSelectorsReferTo: literal special: specialFlag byte: specialByte
+	"Answer a set of selectors whose methods access the argument as a 
+	literal. Dives into the compact literal notation, making it slow but 
+	thorough "
+
+	| selectors |
+	selectors := IdentitySet new.
+	self
+		selectorsAndMethodsDo: [ :sel :method | ((self isTrait
+				ifTrue: [ method hasLiteralThorough: literal ]
+				ifFalse: [ method refersToLiteral: literal ]) or: [ specialFlag and: [ method scanFor: specialByte ] ])
+				ifTrue: [ selectors add: sel ] ].
+	^ selectors
+
+TBehavior >> traitComposition
+traitComposition
+	^ self explicitRequirement
+
+TBehavior >> traitComposition: aTraitComposition
+traitComposition: aTraitComposition
+	^ self explicitRequirement
+
+TBehavior >> traitCompositionIncludes: aTrait
+traitCompositionIncludes: aTrait
+	^ self == aTrait or: [ self hasTraitComposition and: [ self traitComposition allTraits includes: aTrait ] ]
+
+TBehavior >> traitCompositionString
+traitCompositionString
+	^ self hasTraitComposition
+		ifTrue: [ self traitComposition asString ]
+		ifFalse: [ '{}' ]
+
+TBehavior >> traitOrClassOfSelector: aSymbol
+traitOrClassOfSelector: aSymbol
+	"Return the trait or the class which originally defines the method aSymbol
+	or return self if locally defined or if it is a conflict marker method.
+	This is primarly used by Debugger to determin the behavior in which a recompiled
+	method should be put. If a conflict method is recompiled it should be put into
+	the class, thus return self. Also see TraitComposition>>traitProvidingSelector:"
+
+	((self includesLocalSelector: aSymbol) or: [ self hasTraitComposition not ])
+		ifTrue: [ ^ self ].
+	^ (self traitComposition traitProvidingSelector: aSymbol) ifNil: [ self ]
+
+TBehavior >> traitTransformations
+traitTransformations
+	^ self traitComposition transformations
+
+TBehavior >> traits
+traits
+	"Returns a collection of all traits used by the receiver"
+
+	^ self traitComposition traits
+
+TBehavior >> traitsProvidingSelector: aSymbol
+traitsProvidingSelector: aSymbol
+	| result |
+	result := OrderedCollection new.
+	self hasTraitComposition
+		ifFalse: [ ^ result ].
+	(self traitComposition methodDescriptionsForSelector: aSymbol)
+		do: [ :methodDescription | methodDescription selector = aSymbol
+				ifTrue: [ result addAll: (methodDescription locatedMethods collect: [ :each | each methodClass ]) ] ].
+	^ result
+
+TBehavior >> typeOfClass
+typeOfClass
+	"Answer a symbol uniquely describing the type of the receiver"
+
+	self instSpec = CompiledMethod instSpec
+		ifTrue: [ ^ #compiledMethod ].	"Very special!"
+	self isBytes
+		ifTrue: [ ^ #bytes ].
+	(self isWords and: [ self isPointers not ])
+		ifTrue: [ ^ #words ].
+	self isWeak
+		ifTrue: [ ^ #weak ].
+	self isVariable
+		ifTrue: [ ^ #variable ].
+	^ #normal
+
+TBehavior >> ultimateSourceCodeAt: selector ifAbsent: aBlock
+ultimateSourceCodeAt: selector ifAbsent: aBlock
+	"Return the source code at selector, deferring to superclass if necessary"
+
+	^ self
+		sourceCodeAt: selector
+		ifAbsent: [ self superclass ifNil: [ aBlock value ] ifNotNil: [ self superclass ultimateSourceCodeAt: selector ifAbsent: aBlock ] ]
+
+TBehavior >> unreferencedInstanceVariables
+unreferencedInstanceVariables
+	"Return a list of the instance variables defined in the receiver which are not referenced in the receiver or any of its subclasses."
+
+	^ self instVarNames
+		reject: [ :ivn | self withAllSubclasses anySatisfy: [ :class | (class whichSelectorsAccess: ivn) notEmpty ] ]
+
+TBehavior >> updateMethodDictionarySelector: aSymbol
+updateMethodDictionarySelector: aSymbol
+	"A method with selector aSymbol in myself or my traitComposition has been changed.
+	Do the appropriate update to my methodDict (remove or update method) and
+	return all affected selectors of me so that my useres get notified."
+
+	| modifiedSelectors descriptions oldProtocol |
+	modifiedSelectors := IdentitySet new.
+	descriptions := self traitComposition methodDescriptionsForSelector: aSymbol.
+	descriptions
+		do: [ :methodDescription | | effectiveMethod selector |
+			selector := methodDescription selector.
+			(self includesLocalSelector: selector)
+				ifFalse: [ methodDescription isEmpty
+						ifTrue: [ self removeTraitSelector: selector.
+							modifiedSelectors add: selector ]
+						ifFalse: [ effectiveMethod := methodDescription effectiveMethod.
+							self addTraitSelector: selector withMethod: effectiveMethod.	"If the method was not categorized yet, we categorize it "
+							oldProtocol := self organization categoryOfElement: selector.
+							(oldProtocol isNil or: [ oldProtocol = Protocol unclassified ])
+								ifTrue: [ self organization classify: selector under: methodDescription effectiveMethodCategory ].
+							modifiedSelectors add: selector ] ] ].
+	^ modifiedSelectors
+
+TBehavior >> users
+users
+	^ self explicitRequirement
+
+TBehavior >> users: aCollection
+users: aCollection
+	^ self explicitRequirement
+
+TBehavior >> variablesAndOffsetsDo: aBinaryBlock
+variablesAndOffsetsDo: aBinaryBlock
+	"This is the interface between the compiler and a class's instance or field names.  The
+	 class should enumerate aBinaryBlock with the field definitions (with nil offsets) followed
+	 by the instance variable name strings and their integer offsets (1-relative).  The order is
+	 important; names evaluated later will override the same names occurring earlier."
+
+	"Only need to do instance variables here.  CProtoObject introduces field definitions."
+
+	self instVarNamesAndOffsetsDo: aBinaryBlock
+
+TBehavior >> whichClassDefinesClassVar: aString
+whichClassDefinesClassVar: aString
+	Symbol
+		hasInterned: aString
+		ifTrue: [ :aSymbol | ^ self whichSuperclassSatisfies: [ :aClass | aClass classVarNames anySatisfy: [ :each | each = aSymbol ] ] ].
+	^ #()
+
+TBehavior >> whichClassDefinesInstVar: aString
+whichClassDefinesInstVar: aString
+	^ self whichSuperclassSatisfies: [ :aClass | aClass instVarNames includes: aString ]
+
+TBehavior >> whichClassIncludesSelector: aSymbol
+whichClassIncludesSelector: aSymbol
+	"Answer the class on the receiver's superclass chain where the 
+	argument, aSymbol (a message selector), will be found. Answer nil if none found."
+
+	"Rectangle whichClassIncludesSelector: #inspect."
+
+	(self includesSelector: aSymbol)
+		ifTrue: [ ^ self ].
+	self superclass == nil
+		ifTrue: [ ^ nil ].
+	^ self superclass whichClassIncludesSelector: aSymbol
+
+TBehavior >> whichSelectorsAccess: instVarName
+whichSelectorsAccess: instVarName
+	"Answer a set of selectors whose methods access the argument, 
+	instVarName, as a named instance variable."
+
+	| instVarIndex |
+	instVarIndex := self instVarIndexFor: instVarName ifAbsent: [ ^ IdentitySet new ].
+	^ self selectors
+		select: [ :sel | ((self compiledMethodAt: sel) readsField: instVarIndex) or: [ (self compiledMethodAt: sel) writesField: instVarIndex ] ]	"Point whichSelectorsAccess: 'x'."
+
+TBehavior >> whichSelectorsAssign: instVarName
+whichSelectorsAssign: instVarName
+	"Answer a Set of selectors whose methods store into the argument, 
+	instVarName, as a named instance variable."
+
+	^ self whichSelectorsStoreInto: instVarName
+
+TBehavior >> whichSelectorsRead: aString
+whichSelectorsRead: aString
+	| index |
+	index := self instVarIndexFor: aString ifAbsent: [ ^ IdentitySet new ].
+	^ self selectors select: [ :each | (self compiledMethodAt: each) readsField: index ]
+
+TBehavior >> whichSelectorsReferTo: literal
+whichSelectorsReferTo: literal
+	"Answer a Set of selectors whose methods access the argument as a
+literal."
+
+	| special byte |
+	special := Smalltalk hasSpecialSelector: literal ifTrueSetByte: [ :b | byte := b ].
+	^ self whichSelectorsReferTo: literal special: special byte: byte	"Rectangle whichSelectorsReferTo: #+."
+
+TBehavior >> whichSelectorsReferTo: literal special: specialFlag byte: specialByte
+whichSelectorsReferTo: literal special: specialFlag byte: specialByte
+	"Answer a set of selectors whose methods access the argument as a literal."
+
+	| who |
+	who := IdentitySet new.
+	self
+		selectorsAndMethodsDo: [ :sel :method | ((method hasLiteral: literal) or: [ specialFlag and: [ method scanFor: specialByte ] ])
+				ifTrue: [ (literal isVariableBinding not or: [ method literals allButLast includes: literal ])
+						ifTrue: [ who add: sel ] ] ].
+	^ who
+
+TBehavior >> whichSelectorsStoreInto: instVarName
+whichSelectorsStoreInto: instVarName
+	"Answer a Set of selectors whose methods access the argument, 
+	instVarName, as a named instance variable."
+
+	| instVarIndex |
+	instVarIndex := self instVarIndexFor: instVarName ifAbsent: [ ^ IdentitySet new ].
+	^ self selectors select: [ :sel | (self compiledMethodAt: sel) writesField: instVarIndex ]	"Point whichSelectorsStoreInto: 'x'."
+
+TBehavior >> whichSuperclassSatisfies: aBlock
+whichSuperclassSatisfies: aBlock
+	(aBlock value: self)
+		ifTrue: [ ^ self ].
+	^ self superclass ifNotNil: [ self superclass whichSuperclassSatisfies: aBlock ]
+
+TBehavior >> withAllSubAndSuperclassesDo: aBlock
+withAllSubAndSuperclassesDo: aBlock
+	self withAllSubclassesDo: aBlock.
+	self allSuperclassesDo: aBlock
+
+TBehavior >> withAllSubclasses
+withAllSubclasses
+	"Answer a Set of the receiver, the receiver's descendent's, and the  
+	receiver's descendent's subclasses."
+
+	^ self allSubclasses
+		add: self;
+		yourself
+
+TBehavior >> withAllSubclassesDo: aBlock
+withAllSubclassesDo: aBlock
+	"Evaluate the argument, aBlock, for the receiver and each of its 
+	subclasses."
+
+	self withAllSubclasses do: [ :subclass | aBlock value: subclass ]
+
+TBehavior >> withAllSuperAndSubclassesDo: aBlock
+withAllSuperAndSubclassesDo: aBlock
+	self allSuperclassesDo: aBlock.
+	aBlock value: self.
+	self allSubclassesDo: aBlock
+
+TBehavior >> withAllSuperclasses
+withAllSuperclasses
+	"Answer an OrderedCollection of the receiver and the receiver's 
+	superclasses. The first element is the receiver, 
+	followed by its superclass; the last element is Object."
+
+	| temp |
+	temp := self allSuperclasses.
+	temp addFirst: self.
+	^ temp
+
+TBehavior >> withAllSuperclassesDo: aBlock
+withAllSuperclassesDo: aBlock
+	"Evaluate the argument, aBlock, for each of the receiver's superclasses."
+
+	aBlock value: self.
+	self superclass == nil
+		ifFalse: [ self superclass withAllSuperclassesDo: aBlock ]
+
+TBehavior >> zapAllMethods
+zapAllMethods
+	"Remove all methods in this class which is assumed to be obsolete"
+
+	self methodDict: self emptyMethodDictionary.
+	self class isMeta
+		ifTrue: [ self class zapAllMethods ]
+

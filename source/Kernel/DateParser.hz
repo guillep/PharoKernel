@@ -1,0 +1,158 @@
+DateParser
+	instanceVariables: #(#inputStream #pattern #patternStream #char #year #month #day #invalidPattern );
+	package: #Kernel.
+
+DateParser >> convertTwoDigitsYear
+convertTwoDigitsYear
+	(year between: 0 and: 99)
+		ifTrue: [ year := self currentMillenium + year ]
+
+DateParser >> createDate
+createDate
+	^ Date year: year month: month day: day
+
+DateParser >> currentMillenium
+currentMillenium
+	^ (Date current year / 100) asInteger * 100
+
+DateParser >> initializeParsing
+initializeParsing
+	invalidPattern := false.
+	patternStream := pattern readStream
+
+DateParser >> initializeReadingFrom: anInputStream pattern: aPattern
+initializeReadingFrom: anInputStream pattern: aPattern
+	inputStream := anInputStream.
+	pattern := aPattern
+
+DateParser >> isDayPattern
+isDayPattern
+	^ char = $d
+
+DateParser >> isDoneParsing
+isDoneParsing
+	^ patternStream atEnd or: [ inputStream atEnd or: [ invalidPattern ] ]
+
+DateParser >> isEscape
+isEscape
+	^ char = $\
+
+DateParser >> isFourDigitYearPattern
+isFourDigitYearPattern
+	^ patternStream nextMatchAll: 'yyy'
+
+DateParser >> isInvalidPattern
+isInvalidPattern
+	^ year isNil or: [ month isNil or: [ day isNil or: [ invalidPattern ] ] ]
+
+DateParser >> isMonthPattern
+isMonthPattern
+	^ char = $m
+
+DateParser >> isTwoDigitDayPattern
+isTwoDigitDayPattern
+	^ patternStream peekFor: $d
+
+DateParser >> isTwoDigitMonthPattern
+isTwoDigitMonthPattern
+	^ patternStream peekFor: $m
+
+DateParser >> isTwoDigitYearPattern
+isTwoDigitYearPattern
+	^ patternStream peekFor: $y
+
+DateParser >> isYearPattern
+isYearPattern
+	^ char = $y
+
+DateParser >> parse
+parse
+	self initializeParsing.
+	[ self isDoneParsing ] whileFalse: [ self parseNextPattern ].
+	self isInvalidPattern
+		ifTrue: [ ^ nil ].
+	self convertTwoDigitsYear.
+	^ self createDate
+
+DateParser >> parseDay
+parseDay
+	self isTwoDigitDayPattern
+		ifTrue: [ ^ self parseTwoDigitDay ].
+	self parseVariableDigitDay
+
+DateParser >> parseEscapePattern
+parseEscapePattern
+	inputStream next = patternStream next
+		ifFalse: [ invalidPattern := true ]
+
+DateParser >> parseFourDigitYear
+parseFourDigitYear
+	year := (inputStream next: 4) asInteger
+
+DateParser >> parseMonth
+parseMonth
+	self isTwoDigitMonthPattern
+		ifTrue: [ ^ self parseTwoDigitMonth ].
+	self parseVariableDigitMonth
+
+DateParser >> parseNextPattern
+parseNextPattern
+	self readNextChar.
+	self isEscape
+		ifTrue: [ ^ self parseEscapePattern ].
+	self isYearPattern
+		ifTrue: [ ^ self parseYear ].
+	self isMonthPattern
+		ifTrue: [ ^ self parseMonth ].
+	self isDayPattern
+		ifTrue: [ ^ self parseDay ].
+	self parseSameChar
+
+DateParser >> parseSameChar
+parseSameChar
+	inputStream next = char
+		ifFalse: [ invalidPattern := true ]
+
+DateParser >> parseTwoDigitDay
+parseTwoDigitDay
+	day := (inputStream next: 2) asInteger
+
+DateParser >> parseTwoDigitMonth
+parseTwoDigitMonth
+	month := (inputStream next: 2) asInteger
+
+DateParser >> parseTwoDigitYear
+parseTwoDigitYear
+	year := (inputStream next: 2) asInteger
+
+DateParser >> parseVariableDigitDay
+parseVariableDigitDay
+	day := Integer readFrom: inputStream
+
+DateParser >> parseVariableDigitMonth
+parseVariableDigitMonth
+	month := Integer readFrom: inputStream
+
+DateParser >> parseVariableDigitYear
+parseVariableDigitYear
+	year := Integer readFrom: inputStream
+
+DateParser >> parseYear
+parseYear
+	self isFourDigitYearPattern
+		ifTrue: [ ^ self parseFourDigitYear ].
+	self isTwoDigitYearPattern
+		ifTrue: [ ^ self parseTwoDigitYear ].
+	self parseVariableDigitYear
+
+DateParser >> readNextChar
+readNextChar
+	char := patternStream next
+
+DateParser class >> readingFrom: anInputStream pattern: aPattern
+readingFrom: anInputStream pattern: aPattern
+	"See class comment for pattern description
+	self comment"
+
+	^ self new initializeReadingFrom: anInputStream pattern: aPattern
+

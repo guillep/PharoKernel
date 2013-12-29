@@ -1,0 +1,22 @@
+JobStartNotification
+	superclass: #JobNotification;
+	instanceVariables: #(#job );
+	package: #Kernel.
+
+JobStartNotification >> handle: aJob
+handle: aJob
+	aJob handleJobStart: self.
+	self resume
+
+JobStartNotification >> job
+job
+	^ job
+
+JobStartNotification >> job: anObject
+job: anObject
+	job := anObject
+
+JobStartNotification class >> on: aJob
+on: aJob
+	^ (self new job: aJob) signal
+

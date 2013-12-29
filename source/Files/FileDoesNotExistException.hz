@@ -1,0 +1,31 @@
+FileDoesNotExistException
+	superclass: #FileStreamException;
+	instanceVariables: #(#readOnly );
+	package: #Files.
+
+FileDoesNotExistException >> defaultAction
+defaultAction
+	"The default action taken if the exception is signaled."
+
+	^ UIManager default fileDoesNotExistsDefaultAction: self
+
+FileDoesNotExistException >> readOnly
+readOnly
+	^ readOnly == true
+
+FileDoesNotExistException >> readOnly: aBoolean
+readOnly: aBoolean
+	readOnly := aBoolean
+
+FileDoesNotExistException class >> example
+example
+	"FileDoesNotExistException example"
+
+	| result |
+	result := [ (StandardFileStream readOnlyFileNamed: 'error42.log') contentsOfEntireFile ]
+		on: FileDoesNotExistException
+		do: [ :ex | 'No error log' ].
+	Transcript
+		show: result;
+		cr
+

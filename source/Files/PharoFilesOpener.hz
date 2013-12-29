@@ -1,0 +1,152 @@
+PharoFilesOpener
+	instanceVariables: #(#shouldInformAboutReadOnlyChanges );
+	classVariables: #(#Default );
+	package: #Files.
+
+PharoFilesOpener >> badContentMsg
+badContentMsg
+	^ '&fileRefhas been injured by an unpacking utility.  Crs were changed to CrLfs.Please set the preferences in your decompressing program to "do not convert text files" and unpack the system again.'
+
+PharoFilesOpener >> cannotLocateMsg
+cannotLocateMsg
+	^ 'Pharo cannot locate &fileRef.Please check that the file is named properly and is in thesame directory as this image.'
+
+PharoFilesOpener >> cannotWriteMsg
+cannotWriteMsg
+	^ 'Pharo cannot write to &fileRef.Please check that you have write permission for this file.You won''t be able to save this image correctly until you fix this.'
+
+PharoFilesOpener >> changesFileOrNil
+changesFileOrNil
+	| changes |
+	changes := self openChanges: self changesName.
+	changes ifNil: [ self informProblemInChanges: self cannotLocateMsg.
+			^ nil ].
+	(changes isReadOnly and: [ self shouldInformAboutReadOnlyChanges ])
+		ifTrue: [ self informProblemInChanges: self cannotWriteMsg ].
+	((changes next: 200) includesSubstring: String crlf)
+		ifTrue: [ self informProblemInChanges: self badContentMsg ].
+	^ changes
+
+PharoFilesOpener >> changesName
+changesName
+	^ Smalltalk changesName
+
+PharoFilesOpener >> ignoreIfFail: aBlock
+ignoreIfFail: aBlock
+	^ [ aBlock value ] ifError: [  ]
+
+PharoFilesOpener >> inform: msg withChangesRef: fileRef
+inform: msg withChangesRef: fileRef
+	self inform: msg withRef: 'the changes file named ' , fileRef
+
+PharoFilesOpener >> inform: msg withRef: fileRef
+inform: msg withRef: fileRef
+	self inform: (msg copyReplaceAll: '&fileRef' with: fileRef)
+
+PharoFilesOpener >> inform: msg withSourceRef: fileRef
+inform: msg withSourceRef: fileRef
+	self inform: msg withRef: 'the sources file named ' , fileRef
+
+PharoFilesOpener >> informCannotLocateSources
+informCannotLocateSources
+	| msg |
+	msg := self cannotLocateMsg.
+	Smalltalk os isMacOS
+		ifTrue: [ 
+			msg := msg
+				,
+					'Make sure the sources file is not an Alias.' ].
+	self inform: msg withSourceRef: self sourcesName
+
+PharoFilesOpener >> informProblemInChanges: msg
+informProblemInChanges: msg
+	self inform: msg withChangesRef: self changesName
+
+PharoFilesOpener >> lastImagePath
+lastImagePath
+	^ Smalltalk lastImagePath
+
+PharoFilesOpener >> openChanges: changesPath
+openChanges: changesPath
+	| fileColocatedWithImage fileInWorkingDirectory locations |
+	fileColocatedWithImage := changesPath asFileReference.
+	fileInWorkingDirectory := FileSystem workingDirectory / fileColocatedWithImage basename.	"locations references all possible path where to search for the .changes file."
+	locations := Array with: fileColocatedWithImage with: fileInWorkingDirectory.	"We first try to open a writeStream and, if we can't, we open a readStream. We have to use #ignoreIfFail: here because Pharo has no way to really tell us beforehand if opening a writeStream will work. Sending #isWritable is not enough because #isWritable does not check if the current user is the owner of the file or not."
+	locations do: [ :file | self ignoreIfFail: [ ^ file writeStream ] ].
+	locations do: [ :file | self ignoreIfFail: [ ^ file readStream ] ].
+	^ nil
+
+PharoFilesOpener >> openOrDownloadSources
+openOrDownloadSources
+	| sources |
+	(sources := self openSources)
+		ifNil: [ [ Smalltalk downloadSources	"this method only exists when Zinc is loaded" ]
+				on: MessageNotUnderstood
+				do: [ ^ nil ].
+			sources := self openSources ].
+	^ sources
+
+PharoFilesOpener >> openSources
+openSources
+	^ self openSources: self sourcesName forImage: self lastImagePath
+
+PharoFilesOpener >> openSources: fullSourcesName forImage: imagePath
+openSources: fullSourcesName forImage: imagePath
+	"We first do a check to see if a compressed version ofthe sources file is present.
+Open the .sources file read-only after searching in:
+a) the directory where the VM lives
+b) the directory where the image came from
+c) the DefaultDirectory (which is likely the same as b unless the SecurityManager has changed it).
+"
+
+	| sourcesFile sourcesName |
+	sourcesFile := fullSourcesName asFileReference.
+	sourcesName := sourcesFile basename.	"look for the sources file or an alias to it in the VM's directory"
+	OSPlatform current potentialLocationsOfSourcesFile
+		do: [ :dir | (sourcesFile := dir / sourcesName) exists
+				ifTrue: [ sourcesFile readStream ifNotNil: [ :stream | ^ stream ] ] ].	"look for the sources file or an alias to it in the image directory"
+	(sourcesFile := imagePath asFileReference parent / sourcesName) exists
+		ifTrue: [ ^ sourcesFile readStream ifNotNil: [ :stream | ^ stream ] ].	"look for the sources in the current directory"
+	(sourcesFile := sourcesName asFileReference) exists
+		ifTrue: [ ^ sourcesFile readStream ifNotNil: [ :stream | ^ stream ] ].
+	^ nil
+
+PharoFilesOpener >> setInformAboutReadOnlyChanges
+setInformAboutReadOnlyChanges
+	"Make sure the user is informed when the .changes file can not be written to."
+
+	shouldInformAboutReadOnlyChanges := true
+
+PharoFilesOpener >> shouldInformAboutReadOnlyChanges
+shouldInformAboutReadOnlyChanges
+	"Answer true if and only if the user must be informed when the .changes file can not be written to."
+
+	^ shouldInformAboutReadOnlyChanges ifNil: [ shouldInformAboutReadOnlyChanges := true ]
+
+PharoFilesOpener >> sourcesFileOrNil
+sourcesFileOrNil
+	| sources |
+	sources := self openOrDownloadSources.
+	^ (sources isNil or: [ sources atEnd ])
+		ifTrue: [ self informCannotLocateSources.
+			nil ]
+		ifFalse: [ sources ]
+
+PharoFilesOpener >> sourcesName
+sourcesName
+	^ Smalltalk sourcesName
+
+PharoFilesOpener >> unsetInformAboutReadOnlyChanges
+unsetInformAboutReadOnlyChanges
+	"Make sure the user is *not* informed when the .changes file can not be written to."
+
+	shouldInformAboutReadOnlyChanges := false
+
+PharoFilesOpener class >> default
+default
+	^ Default ifNil: [ Default := PharoFilesOpener new ]
+
+PharoFilesOpener class >> reset
+reset
+	Default := nil
+

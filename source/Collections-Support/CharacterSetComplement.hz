@@ -4,85 +4,74 @@ CharacterSetComplement
 	package: #'Collections-Support'.
 
 CharacterSetComplement >> = anObject
-[
+= anObject
 	"Implementation note: we do not test if equal to a WideCharacterSet,
 	because it is unlikely that WideCharacterSet is as complete as self"
 
 	^ self class == anObject class and: [ absent = anObject complement ]
-]
 
 CharacterSetComplement >> add: aCharacter
-[
+add: aCharacter
 	"a character is present if not absent, so adding a character is removing it from the absent"
 
 	(absent includes: aCharacter)
 		ifTrue: [ byteArrayMapCache := nil.
 			absent remove: aCharacter ].
 	^ aCharacter
-]
 
 CharacterSetComplement >> byteArrayMap
-[
+byteArrayMap
 	"return a ByteArray mapping each ascii value to a 1 if that ascii value is in the set, and a 0 if it isn't.  Intended for use by primitives only"
 
 	^ byteArrayMapCache ifNil: [ byteArrayMapCache := absent byteArrayMap collect: [ :i | 1 - i ] ]
-]
 
 CharacterSetComplement >> complement
-[
+complement
 	"return a character set containing precisely the characters the receiver does not"
 
 	^ absent copy
-]
 
 CharacterSetComplement >> complement: aCharacterSet
-[
+complement: aCharacterSet
 	"initialize with the complement"
 
 	byteArrayMapCache := nil.
 	absent := aCharacterSet
-]
 
 CharacterSetComplement >> do: aBlock
-[
+do: aBlock
 	"evaluate aBlock with each character in the set.
 	don't do it, there are too many..."
 
 	self shouldNotImplement
-]
 
 CharacterSetComplement >> findFirstInByteString: aByteString startingAt: startIndex
-[
+findFirstInByteString: aByteString startingAt: startIndex
 	"Double dispatching: since we know this is a ByteString, we can use a superfast primitive using a ByteArray map with 0 slots for byte characters not included and 1 for byte characters included in the receiver."
 
 	^ ByteString findFirstInString: aByteString inSet: self byteArrayMap startingAt: startIndex
-]
 
 CharacterSetComplement >> hasWideCharacters
-[
+hasWideCharacters
 	"This is a guess that absent is not holding each and every possible wideCharacter..."
 
 	^ true
-]
 
 CharacterSetComplement >> hash
-[
+hash
 	^ absent hash bitXor: self class hash
-]
 
 CharacterSetComplement >> includes: aCharacter
-[
+includes: aCharacter
 	^ (absent includes: aCharacter) not
-]
 
 CharacterSetComplement >> postCopy
-[
+postCopy
 	super postCopy.
 	absent := absent copy
-]
 
 CharacterSetComplement >> printOn: aStream
-[
+printOn: aStream
 	"Print a description of the complement rather than self.
 	Rationale: self would be too long to print."
 
@@ -92,52 +81,45 @@ CharacterSetComplement >> printOn: aStream
 		nextPut: $);
 		space;
 		nextPutAll: #complement
-]
 
 CharacterSetComplement >> reject: aBlock
-[
+reject: aBlock
 	"Implementation note: rejecting present is selecting absent"
 
 	^ (absent select: aBlock) complement
-]
 
 CharacterSetComplement >> remove: aCharacter
-[
+remove: aCharacter
 	"This means aCharacter is now absent from myself.
 	It must be added to my absent."
 
 	byteArrayMapCache := nil.
 	^ absent add: aCharacter
-]
 
 CharacterSetComplement >> remove: aCharacter ifAbsent: aBlock
-[
+remove: aCharacter ifAbsent: aBlock
 	(self includes: aCharacter)
 		ifFalse: [ ^ aBlock value ].
 	^ self remove: aCharacter
-]
 
 CharacterSetComplement >> removeAll
-[
+removeAll
 	self becomeForward: CharacterSet new
-]
 
 CharacterSetComplement >> select: aBlock
-[
+select: aBlock
 	"Implementation note: selecting present is rejecting absent"
 
 	^ (absent reject: aBlock) complement
-]
 
 CharacterSetComplement >> size
-[
+size
 	"Is this 2**32-absent size ?"
 
 	^ self shouldNotImplement
-]
 
 CharacterSetComplement >> storeOn: aStream
-[
+storeOn: aStream
 	"Store a description of the elements of the complement rather than self."
 
 	aStream nextPut: $(.
@@ -146,12 +128,10 @@ CharacterSetComplement >> storeOn: aStream
 		nextPut: $);
 		space;
 		nextPutAll: #complement
-]
 
 CharacterSetComplement class >> of: aCharacterSet
-[
+of: aCharacterSet
 	"answer the complement of aCharacterSet"
 
 	^ super new complement: aCharacterSet
-]
 

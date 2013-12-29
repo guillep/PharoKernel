@@ -1,0 +1,17 @@
+FLByteObjectCluster
+	superclass: #FLBitsObjectCluster;
+	package: #Fuel.
+
+FLByteObjectCluster >> materializeInstanceWith: aDecoder
+materializeInstanceWith: aDecoder
+	| instance size |
+	size := aDecoder nextEncodedPositiveInteger.
+	instance := theClass basicNew: size.
+	aDecoder nextEncodedBytesInto: instance.
+	^ instance
+
+FLByteObjectCluster >> serializeInstance: anObject with: anEncoder
+serializeInstance: anObject with: anEncoder
+	anEncoder encodePositiveInteger: anObject basicSize.
+	anEncoder encodeBytes: anObject
+

@@ -1,0 +1,27 @@
+Session
+	instanceVariables: #(#creationTime );
+	package: #'System-Support'.
+
+Session class
+	instanceVariables: #(#current ).
+
+Session >> age
+age
+	^ DateAndTime now - self creationTime
+
+Session >> creationTime
+creationTime
+	^ creationTime
+
+Session >> initialize
+initialize
+	creationTime := DateAndTime now
+
+Session class >> current
+current
+	^ current ifNil: [ current := self new ]
+
+Session class >> reset
+reset
+	current := nil
+

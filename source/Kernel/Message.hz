@@ -1,0 +1,127 @@
+Message
+	instanceVariables: #(#selector #args #lookupClass );
+	package: #Kernel.
+
+Message >> analogousCodeTo: anObject
+analogousCodeTo: anObject
+	"For MethodPropertires comparison."
+
+	^ self class == anObject class
+		and: [ selector == anObject selector and: [ args = anObject arguments and: [ lookupClass == anObject lookupClass ] ] ]
+
+Message >> argument
+argument
+	"Answer the first (presumably sole) argument"
+
+	^ args at: 1
+
+Message >> argument: newValue
+argument: newValue
+	"Change the first argument to newValue and answer self"
+
+	args at: 1 put: newValue
+
+Message >> arguments
+arguments
+	"Answer the arguments of the receiver."
+
+	^ args
+
+Message >> hasArguments
+hasArguments
+	^ args size > 0
+
+Message >> lookupClass
+lookupClass
+	^ lookupClass
+
+Message >> lookupClass: aClass
+lookupClass: aClass
+	lookupClass := aClass
+
+Message >> numArgs
+numArgs
+	"Answer the number of arguments in this message"
+
+	^ args size
+
+Message >> printOn: stream
+printOn: stream
+	args isEmpty
+		ifTrue: [ ^ stream nextPutAll: selector ].
+	args
+		with: selector keywords
+		do: [ :arg :word | stream nextPutAll: word.
+			stream space.
+			arg printOn: stream.
+			stream space ].
+	stream skip: -1
+
+Message >> selector
+selector
+	"Answer the selector of the receiver."
+
+	^ selector
+
+Message >> sendTo: receiver
+sendTo: receiver
+	"answer the result of sending this message to receiver"
+
+	^ receiver perform: selector withArguments: args
+
+Message >> sends: aSelector
+sends: aSelector
+	"answer whether this message's selector is aSelector"
+
+	^ selector == aSelector
+
+Message >> sentTo: receiver
+sentTo: receiver
+	"answer the result of sending this message to receiver"
+
+	lookupClass == nil
+		ifTrue: [ ^ receiver perform: selector withArguments: args ]
+		ifFalse: [ ^ receiver perform: selector withArguments: args inSuperclass: lookupClass ]
+
+Message >> setSelector: aSymbol
+setSelector: aSymbol
+	selector := aSymbol
+
+Message >> setSelector: aSymbol arguments: anArray
+setSelector: aSymbol arguments: anArray
+	selector := aSymbol.
+	args := anArray
+
+Message >> storeOn: aStream
+storeOn: aStream
+	"Refer to the comment in Object|storeOn:."
+
+	aStream
+		nextPut: $(;
+		nextPutAll: self class name;
+		nextPutAll: ' selector: ';
+		store: selector;
+		nextPutAll: ' arguments: ';
+		store: args;
+		nextPut: $)
+
+Message class >> selector: aSymbol
+selector: aSymbol
+	"Answer an instance of me with unary selector, aSymbol."
+
+	^ self new setSelector: aSymbol arguments: (Array new: 0)
+
+Message class >> selector: aSymbol argument: anObject
+selector: aSymbol argument: anObject
+	"Answer an instance of me whose selector is aSymbol and single 
+	argument is anObject."
+
+	^ self new setSelector: aSymbol arguments: (Array with: anObject)
+
+Message class >> selector: aSymbol arguments: anArray
+selector: aSymbol arguments: anArray
+	"Answer an instance of me with selector, aSymbol, and arguments, 
+	anArray."
+
+	^ self new setSelector: aSymbol arguments: anArray
+

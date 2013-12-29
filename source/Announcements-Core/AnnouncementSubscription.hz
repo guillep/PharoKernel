@@ -3,57 +3,48 @@ AnnouncementSubscription
 	package: #'Announcements-Core'.
 
 AnnouncementSubscription >> action
-[
+action
 	^ action
-]
 
 AnnouncementSubscription >> action: anObject
-[
+action: anObject
 	action := anObject
-]
 
 AnnouncementSubscription >> announcementClass
-[
+announcementClass
 	^ announcementClass
-]
 
 AnnouncementSubscription >> announcementClass: anObject
-[
+announcementClass: anObject
 	announcementClass := anObject
-]
 
 AnnouncementSubscription >> announcer
-[
+announcer
 	^ announcer
-]
 
 AnnouncementSubscription >> announcer: anAnnouncer
-[
+announcer: anAnnouncer
 	announcer := anAnnouncer
-]
 
 AnnouncementSubscription >> deliver: anAnnouncement
-[
+deliver: anAnnouncement
 	" deliver an announcement to receiver. In case of failure, it will be handled in separate process"
 
-	^ (self handles: anAnnouncement class)
+	^ (self handlesAnnouncement: anAnnouncement)
 		ifTrue: [ [ action cull: anAnnouncement cull: announcer ] on: UnhandledError fork: [ :ex | ex pass ] ]
-]
 
-AnnouncementSubscription >> handles: anAnnouncementClass
-[
-	^ announcementClass handles: anAnnouncementClass
-]
+AnnouncementSubscription >> handlesAnnouncement: anAnnouncement
+handlesAnnouncement: anAnnouncement
+	^ announcementClass handlesAnnouncement: anAnnouncement
 
 AnnouncementSubscription >> makeStrong
-[
+makeStrong
 	" i am already strong. Do nothing "
 
 	
-]
 
 AnnouncementSubscription >> makeWeak
-[
+makeWeak
 	action isBlock
 		ifTrue: [ self error: 'Not currently available due to missing ephemerons support' ].
 	^ announcer
@@ -64,23 +55,19 @@ AnnouncementSubscription >> makeWeak
 				action: action asWeakMessageSend;
 				subscriber: subscriber;
 				announcementClass: announcementClass)
-]
 
 AnnouncementSubscription >> subscriber
-[
+subscriber
 	^ subscriber
-]
 
 AnnouncementSubscription >> subscriber: aSubscriber
-[
+subscriber: aSubscriber
 	subscriber := aSubscriber
-]
 
 AnnouncementSubscription >> valuable: aValuable
-[
+valuable: aValuable
 	"Used when subscriber should be extracted from valuable object"
 
 	self action: aValuable.
 	self subscriber: aValuable receiver
-]
 

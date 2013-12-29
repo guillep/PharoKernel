@@ -1,0 +1,81 @@
+FLSerialization
+	instanceVariables: #(#encoder #root #clusters #analyzer );
+	package: #Fuel.
+
+FLSerialization >> analysisStep
+analysisStep
+	| anAnalysis |
+	anAnalysis := analyzer analysisFor: root.
+	clusters := anAnalysis clusterization clusters.
+	encoder objectCount: anAnalysis clusterization objectCount
+
+FLSerialization >> clusterInstancesStepOf: aCluster
+clusterInstancesStepOf: aCluster
+	encoder encodeClusterClass: aCluster class.
+	aCluster clusterSerializeStepWith: self.
+	aCluster serializeInstancesStepWith: encoder.
+	aCluster serializePostInstancesStepWith: encoder
+
+FLSerialization >> clusters
+clusters
+	^ clusters
+
+FLSerialization >> encoder
+encoder
+	^ encoder
+
+FLSerialization >> fuelAccept: aGeneralMapper
+fuelAccept: aGeneralMapper
+	^ aGeneralMapper visitSubstitution: self by: nil
+
+FLSerialization >> headerStep
+headerStep
+	encoder encodeYourself.
+	encoder encodePositiveInteger: clusters size
+
+FLSerialization >> initializeWith: anEncoder root: anObject analyzer: anAnalyzer
+initializeWith: anEncoder root: anObject analyzer: anAnalyzer
+	self initialize.
+	encoder := anEncoder.
+	root := anObject.
+	analyzer := anAnalyzer
+
+FLSerialization >> instancesStep
+instancesStep
+	clusters do: [ :aCluster | aCluster registerIndexesOn: encoder objectsIndexes ].
+	clusters do: [ :aCluster | self clusterInstancesStepOf: aCluster ]
+
+FLSerialization >> objects
+objects
+	"Answer a collection with the serialized objects."
+
+	^ encoder objectsIndexes keys
+
+FLSerialization >> referencesStep
+referencesStep
+	clusters do: [ :aCluster | aCluster serializeReferencesStepWith: encoder ]
+
+FLSerialization >> root
+root
+	^ root
+
+FLSerialization >> run
+run
+	"Serialize the graph starting at the root object."
+
+	self analysisStep.
+	self headerStep.
+	self instancesStep.
+	self referencesStep.
+	self trailerStep
+
+FLSerialization >> trailerStep
+trailerStep
+	encoder encodeReferenceTo: root
+
+FLSerialization class >> with: anEncoder root: anObject analyzer: anAnalyzer
+with: anEncoder root: anObject analyzer: anAnalyzer
+	^ self basicNew
+		initializeWith: anEncoder root: anObject analyzer: anAnalyzer;
+		yourself
+

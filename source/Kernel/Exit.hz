@@ -1,0 +1,69 @@
+Exit
+	superclass: #Exception;
+	instanceVariables: #(#status );
+	package: #Kernel.
+
+Exit >> defaultAction
+defaultAction
+	self messageText isEmpty
+		ifFalse: [ self printMessage ].
+	Smalltalk exit: self status
+
+Exit >> isSuccess
+isSuccess
+	^ self status = 0
+
+Exit >> printMessage
+printMessage
+	| stderr |
+	stderr := VTermOutputDriver stderr.
+	self isSuccess
+		ifFalse: [ stderr red ].
+	stderr
+		nextPutAll: self messageText;
+		lf;
+		clear
+
+Exit >> printOn: aStream
+printOn: aStream
+	super printOn: aStream.
+	aStream space print: self status
+
+Exit >> status
+status
+	^ status
+
+Exit >> status: anInteger
+status: anInteger
+	status := anInteger
+
+Exit class >> failure
+failure
+	^ self status: 1
+
+Exit class >> signalFailure
+signalFailure
+	^ self failure signal
+
+Exit class >> signalFailure: aMessage
+signalFailure: aMessage
+	^ self failure signal: aMessage
+
+Exit class >> signalSuccess
+signalSuccess
+	^ self success signal
+
+Exit class >> signalSuccess: aMessage
+signalSuccess: aMessage
+	^ self success signal: aMessage
+
+Exit class >> status: aPositiveInteger
+status: aPositiveInteger
+	^ self new
+		status: aPositiveInteger;
+		yourself
+
+Exit class >> success
+success
+	^ self status: 0
+

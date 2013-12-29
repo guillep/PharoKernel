@@ -4,7 +4,7 @@ FloatArray
 	package: #'Collections-Native'.
 
 FloatArray >> = aFloatArray
-[
+= aFloatArray
 	<primitive: 'primitiveEqual' module: 'FloatArrayPlugin'>
 	| length |
 	aFloatArray class = self class
@@ -15,94 +15,80 @@ FloatArray >> = aFloatArray
 	1 to: self size do: [ :i | (self at: i) = (aFloatArray at: i)
 			ifFalse: [ ^ false ] ].
 	^ true
-]
 
 FloatArray >> asFloatArray
-[
+asFloatArray
 	^ self
-]
 
 FloatArray >> at: index
-[
+at: index
 	<primitive: 'primitiveAt' module: 'FloatArrayPlugin'>
 	^ Float fromIEEE32Bit: (self basicAt: index)
-]
 
 FloatArray >> at: index put: value
-[
+at: index put: value
 	<primitive: 'primitiveAtPut' module: 'FloatArrayPlugin'>
 	value isFloat
 		ifTrue: [ self basicAt: index put: value asIEEE32BitWord ]
 		ifFalse: [ self at: index put: value asFloat ].
 	^ value
-]
 
 FloatArray >> defaultElement
-[
+defaultElement
 	"Return the default element of the receiver"
 
 	^ 0.0
-]
 
 FloatArray >> hash
-[
+hash
 	<primitive: 'primitiveHashArray' module: 'FloatArrayPlugin'>
 	| result |
 	result := 0.
 	1 to: self size do: [ :i | result := result + (self basicAt: i) ].
 	^ result bitAnd: 16r1FFFFFFF
-]
 
 FloatArray >> primAddArray: floatArray
-[
+primAddArray: floatArray
 	<primitive: 'primitiveAddFloatArray' module: 'FloatArrayPlugin'>
 	1 to: self size do: [ :i | self at: i put: (self at: i) + (floatArray at: i) ]
-]
 
 FloatArray >> primAddScalar: scalarValue
-[
+primAddScalar: scalarValue
 	<primitive: 'primitiveAddScalar' module: 'FloatArrayPlugin'>
 	1 to: self size do: [ :i | self at: i put: (self at: i) + scalarValue ]
-]
 
 FloatArray >> primDivArray: floatArray
-[
+primDivArray: floatArray
 	<primitive: 'primitiveDivFloatArray' module: 'FloatArrayPlugin'>
 	1 to: self size do: [ :i | self at: i put: (self at: i) / (floatArray at: i) ]
-]
 
 FloatArray >> primDivScalar: scalarValue
-[
+primDivScalar: scalarValue
 	<primitive: 'primitiveDivScalar' module: 'FloatArrayPlugin'>
 	1 to: self size do: [ :i | self at: i put: (self at: i) / scalarValue ]
-]
 
 FloatArray >> primMulArray: floatArray
-[
+primMulArray: floatArray
 	<primitive: 'primitiveMulFloatArray' module: 'FloatArrayPlugin'>
 	1 to: self size do: [ :i | self at: i put: (self at: i) * (floatArray at: i) ]
-]
 
 FloatArray >> primMulScalar: scalarValue
-[
+primMulScalar: scalarValue
 	<primitive: 'primitiveMulScalar' module: 'FloatArrayPlugin'>
 	1 to: self size do: [ :i | self at: i put: (self at: i) * scalarValue ]
-]
 
 FloatArray >> primSubArray: floatArray
-[
+primSubArray: floatArray
 	<primitive: 'primitiveSubFloatArray' module: 'FloatArrayPlugin'>
 	1 to: self size do: [ :i | self at: i put: (self at: i) - (floatArray at: i) ]
-]
 
 FloatArray >> primSubScalar: scalarValue
-[
+primSubScalar: scalarValue
 	<primitive: 'primitiveSubScalar' module: 'FloatArrayPlugin'>
 	1 to: self size do: [ :i | self at: i put: (self at: i) - scalarValue ]
-]
 
 FloatArray >> replaceFrom: start to: stop with: replacement startingAt: repStart
-[
+replaceFrom: start to: stop with: replacement startingAt: repStart
 	"Primitive. This destructively replaces elements from start to stop in the receiver starting at index, repStart, in the collection, replacement. Answer the receiver. Range checks are performed in the primitive only. Optional. See Object documentation whatIsAPrimitive."
 
 	<primitive: 105>
@@ -111,11 +97,9 @@ FloatArray >> replaceFrom: start to: stop with: replacement startingAt: repStart
 		to: stop
 		with: replacement
 		startingAt: repStart
-]
 
 FloatArray >> sum
-[
+sum
 	<primitive: 'primitiveSum' module: 'FloatArrayPlugin'>
 	^ super sum
-]
 

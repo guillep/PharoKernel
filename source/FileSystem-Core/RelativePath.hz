@@ -1,0 +1,34 @@
+RelativePath
+	superclass: #Path;
+	instanceSpecification: #(#variable #pointers #words );
+	package: #'FileSystem-Core'.
+
+RelativePath >> isAbsolute
+isAbsolute
+	^ false
+
+RelativePath >> isRoot
+isRoot
+	^ false
+
+RelativePath >> printOn: aStream
+printOn: aStream
+	aStream nextPutAll: 'Path '.
+	self isWorkingDirectory
+		ifTrue: [ aStream nextPutAll: 'workingDirectory' ]
+		ifFalse: [ aStream
+				nextPutAll: '* ''';
+				nextPutAll: (self at: 1) asString;
+				nextPut: $'.
+			2 to: self size do: [ :i | aStream
+					nextPutAll: ' / ''';
+					nextPutAll: (self at: i);
+					nextPut: $' ] ]
+
+RelativePath >> printOn: aStream delimiter: aCharacter
+printOn: aStream delimiter: aCharacter
+	self isWorkingDirectory
+		ifTrue: [ aStream nextPut: $..
+			^ self ].
+	super printOn: aStream delimiter: aCharacter
+

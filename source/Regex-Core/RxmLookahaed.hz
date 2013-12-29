@@ -1,0 +1,38 @@
+RxmLookahaed
+	superclass: #RxmLink;
+	instanceVariables: #(#lookahead #positive );
+	package: #'Regex-Core'.
+
+RxmLookahaed >> initialize
+initialize
+	super initialize.
+	positive := true
+
+RxmLookahaed >> lookahead
+lookahead
+	^ lookahead
+
+RxmLookahaed >> lookahead: anRxmLink
+lookahead: anRxmLink
+	lookahead := anRxmLink
+
+RxmLookahaed >> matchAgainst: aMatcher
+matchAgainst: aMatcher
+	"Match if the predicate block evaluates to true when given the
+	current stream character as the argument."
+
+	| original result |
+	original := aMatcher currentState.
+	result := lookahead matchAgainst: aMatcher.
+	aMatcher restoreState: original.
+	^ result not and: [ next matchAgainst: aMatcher ]
+
+RxmLookahaed >> terminateWith: aNode
+terminateWith: aNode
+	lookahead terminateWith: aNode.
+	super terminateWith: aNode
+
+RxmLookahaed class >> with: aPiece
+with: aPiece
+	^ self new lookahead: aPiece
+

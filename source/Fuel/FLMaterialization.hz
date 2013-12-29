@@ -1,0 +1,82 @@
+FLMaterialization
+	instanceVariables: #(#clusterCount #clusters #root #decoder #header );
+	package: #Fuel.
+
+FLMaterialization >> additionalObjectAt: aKey
+additionalObjectAt: aKey
+	^ header additionalObjectAt: aKey
+
+FLMaterialization >> afterMaterializationStep
+afterMaterializationStep
+	clusters do: [ :aCluster | aCluster afterMaterializationStepWith: decoder ]
+
+FLMaterialization >> clusterInstancesStep
+clusterInstancesStep
+	| aCluster |
+	aCluster := decoder nextEncodedClusterClass newMaterializing.
+	aCluster clusterMaterializeStepWith: self.
+	aCluster materializeInstancesStepWith: decoder.
+	self registerAll: aCluster objects.
+	aCluster materializePostInstancesStepWith: decoder.
+	clusters add: aCluster
+
+FLMaterialization >> decoder
+decoder
+	^ decoder
+
+FLMaterialization >> header: aHeader
+header: aHeader
+	header := aHeader
+
+FLMaterialization >> headerStep
+headerStep
+	decoder decodeYourself.
+	clusterCount := decoder nextEncodedPositiveInteger.
+	clusters := OrderedCollection new: clusterCount.
+	clusters resetTo: 1	"Hack that avoids OrderedCollection>>makeRoomAtLast"
+
+FLMaterialization >> initializeWith: aDecoder
+initializeWith: aDecoder
+	self initialize.
+	decoder := aDecoder
+
+FLMaterialization >> instancesStep
+instancesStep
+	clusterCount timesRepeat: [ self clusterInstancesStep ]
+
+FLMaterialization >> objects
+objects
+	"Answer a collection with the materialized objects."
+
+	^ decoder objects
+
+FLMaterialization >> referencesStep
+referencesStep
+	clusters do: [ :aCluster | aCluster materializeReferencesStepWith: decoder ]
+
+FLMaterialization >> registerAll: materializedObjects
+registerAll: materializedObjects
+	decoder registerAll: materializedObjects
+
+FLMaterialization >> root
+root
+	^ root
+
+FLMaterialization >> run
+run
+	self headerStep.
+	self instancesStep.
+	self referencesStep.
+	self trailerStep.
+	self afterMaterializationStep
+
+FLMaterialization >> trailerStep
+trailerStep
+	root := decoder nextEncodedReference
+
+FLMaterialization class >> with: aDecoder
+with: aDecoder
+	^ self basicNew
+		initializeWith: aDecoder;
+		yourself
+

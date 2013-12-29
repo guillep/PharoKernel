@@ -3,7 +3,7 @@ MethodClassifier
 	package: #'System-Support'.
 
 MethodClassifier >> buildPrefixDictionary
-[
+buildPrefixDictionary
 	prefixMapping := Dictionary new.
 	prefixMapping
 		at: 'test' put: 'tests';
@@ -18,10 +18,9 @@ MethodClassifier >> buildPrefixDictionary
 		at: 'is' put: 'testing';
 		at: 'as' put: 'converting';
 		at: 'new' put: 'instance-creation'
-]
 
 MethodClassifier >> classify: aMethod
-[
+classify: aMethod
 	(self classifyAccessor: aMethod)
 		ifTrue: [ ^ aMethod category ].
 	(self classifyInSuperclassProtocol: aMethod)
@@ -30,10 +29,9 @@ MethodClassifier >> classify: aMethod
 		ifTrue: [ ^ aMethod category ].
 	(self classifyByOtherImplementors: aMethod)
 		ifTrue: [ ^ aMethod category ]
-]
 
 MethodClassifier >> classifyAccessor: aMethod
-[
+classifyAccessor: aMethod
 	" If the method is a setter or getter for a  "
 
 	| names selector |
@@ -46,35 +44,36 @@ MethodClassifier >> classifyAccessor: aMethod
 		ifFalse: [ ^ false ].
 	aMethod protocol: 'accessing'.
 	^ true
-]
+
+MethodClassifier >> classifyAll: aCollectionOfMethods
+classifyAll: aCollectionOfMethods
+	aCollectionOfMethods do: [ :method | self classify: method ]
 
 MethodClassifier >> classifyByKnownPrefix: aMethod
-[
+classifyByKnownPrefix: aMethod
 	prefixMapping
 		keysAndValuesDo: [ :prefix :protocol | (aMethod selector beginsWith: prefix)
 				ifTrue: [ aMethod protocol: protocol.
 					^ true ] ].
 	^ false
-]
 
 MethodClassifier >> classifyByOtherImplementors: aMethod
-[
+classifyByOtherImplementors: aMethod
 	| protocolBag |
 	protocolBag := Bag new.
 	aMethod implementors
 		ifEmpty: [ ^ false ]
 		ifNotEmpty: [ :methods | methods
 				do: [ :method | self flag: 'TODO: at some point we should have first-class protocols which will tell whether they are extensions...'.
-					((method protocol beginsWith: '*') or: [ method protocol = ClassOrganizer default ])
+					((method protocol beginsWith: '*') or: [ method protocol = Protocol unclassified ])
 						ifFalse: [ protocolBag add: method protocol ] ]
 				without: aMethod ].
 	protocolBag ifEmpty: [ ^ false ].
 	aMethod protocol: protocolBag sortedCounts first value.
 	^ true
-]
 
 MethodClassifier >> classifyInSuperclassProtocol: aMethod
-[
+classifyInSuperclassProtocol: aMethod
 	| currentClass |
 	currentClass := aMethod methodClass.
 	[ currentClass superclass isNil ]
@@ -83,22 +82,16 @@ MethodClassifier >> classifyInSuperclassProtocol: aMethod
 				ifTrue: [ aMethod protocol: (currentClass >> aMethod selector) protocol.
 					^ true ] ].
 	^ false
-]
 
 MethodClassifier >> initialize
-[
+initialize
 	self buildPrefixDictionary
-]
 
 MethodClassifier class >> classify: aMethod
-[
+classify: aMethod
 	^ self new classify: aMethod
-]
 
 MethodClassifier class >> classifyAll: aCollectionOfMethods
-[
-	| classifier |
-	classifier := MethodClassifier new.
-	aCollectionOfMethods do: [ :method | classifier classify: method ]
-]
+classifyAll: aCollectionOfMethods
+	^ self new classifyAll: aCollectionOfMethods
 

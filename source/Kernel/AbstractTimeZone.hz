@@ -1,0 +1,26 @@
+AbstractTimeZone
+	sharedPools: #(#ChronologyConstants );
+	package: #Kernel.
+
+AbstractTimeZone >> abbreviation
+abbreviation
+	^ self subclassResponsibility
+
+AbstractTimeZone >> name
+name
+	^ self subclassResponsibility
+
+AbstractTimeZone >> offset
+offset
+	"Return a duration representing the offset from UTC for this timezone"
+
+	self subclassResponsibility
+
+AbstractTimeZone >> printOn: aStream
+printOn: aStream
+	super printOn: aStream.
+	aStream
+		nextPut: $(;
+		nextPutAll: self abbreviation;
+		nextPut: $)
+

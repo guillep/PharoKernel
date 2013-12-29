@@ -1,40 +1,31 @@
 WeakFinalizationList
 	instanceVariables: #(#first );
-	classVariables: #(#HasNewFinalization #TestItem #TestList );
+	classVariables: #(#HasNewFinalization );
 	package: #'Collections-Weak'.
 
 WeakFinalizationList >> first
-[
+first
 	^ first
-]
 
 WeakFinalizationList >> swapWithNil
-[
+swapWithNil
 	| head |
 	head := first.
 	first := nil.
 	^ head
-]
-
-WeakFinalizationList class >> checkTestPair
-[
-	HasNewFinalization := TestList swapWithNil notNil
-]
 
 WeakFinalizationList class >> hasNewFinalization
-[
+hasNewFinalization
 	^ HasNewFinalization == true
-]
-
-WeakFinalizationList class >> initTestPair
-[
-	TestItem := WeakFinalizerItem new list: TestList object: Object new
-]
 
 WeakFinalizationList class >> initialize
-[
-	TestList := self new.
-	self initTestPair.
-	self checkTestPair
-]
+initialize
+	Smalltalk
+		removeFromStartUpList: self;
+		addToStartUpList: self after: SmalltalkImage
+
+WeakFinalizationList class >> startUp: resuming
+startUp: resuming
+	resuming
+		ifTrue: [ HasNewFinalization := Smalltalk vm isPharoVM ]
 

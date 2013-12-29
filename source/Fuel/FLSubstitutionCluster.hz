@@ -1,0 +1,50 @@
+FLSubstitutionCluster
+	superclass: #FLCluster;
+	instanceVariables: #(#substitutions #substitutes );
+	package: #Fuel.
+
+FLSubstitutionCluster >> add: anObject substitutedBy: anotherObject traceWith: aAnalysis
+add: anObject substitutedBy: anotherObject traceWith: aAnalysis
+	substitutions
+		at: anObject
+		ifAbsent: [ substitutions at: anObject put: anotherObject.
+			substitutes add: anotherObject.
+			aAnalysis trace: anotherObject ]
+
+FLSubstitutionCluster >> initializeAnalyzing
+initializeAnalyzing
+	super initializeAnalyzing.
+	substitutions := IdentityDictionary new.
+	substitutes := IdentitySet new
+
+FLSubstitutionCluster >> isSubstitute: anObject
+isSubstitute: anObject
+	^ substitutes identityIncludes: anObject
+
+FLSubstitutionCluster >> objects
+objects
+	"This cluster does not have objects"
+
+	^ #()
+
+FLSubstitutionCluster >> printOn: aStream
+printOn: aStream
+	super printOn: aStream.
+	aStream nextPutAll: '->'.
+	substitutions printElementsOn: aStream
+
+FLSubstitutionCluster >> registerIndexesOn: aDictionary
+registerIndexesOn: aDictionary
+	substitutions
+		keysAndValuesDo: [ :anObject :theSubstitution | | substitutionIndex |
+			substitutionIndex := aDictionary at: theSubstitution.
+			aDictionary at: anObject put: substitutionIndex ]
+
+FLSubstitutionCluster >> substitutions
+substitutions
+	^ substitutions
+
+FLSubstitutionCluster class >> clusterBucketIn: aClusterization
+clusterBucketIn: aClusterization
+	^ aClusterization substitutionsBucket
+

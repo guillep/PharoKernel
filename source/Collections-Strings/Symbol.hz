@@ -4,7 +4,7 @@ Symbol
 	package: #'Collections-Strings'.
 
 Symbol >> = aSymbol
-[
+= aSymbol
 	"Compare the receiver and aSymbol."
 
 	self == aSymbol
@@ -12,18 +12,20 @@ Symbol >> = aSymbol
 	self class == aSymbol class
 		ifTrue: [ ^ false ].	"Use String comparison otherwise"
 	^ super = aSymbol
-]
+
+Symbol >> asAnnouncement
+asAnnouncement
+	^ self
 
 Symbol >> asMutator
-[
+asMutator
 	"Return a setter message from a getter message. For example,
 	#name asMutator returns #name:"
 
 	^ (self copyWith: $:) asSymbol
-]
 
 Symbol >> asString
-[
+asString
 	"Refer to the comment in String|asString."
 
 	| newString |
@@ -34,105 +36,100 @@ Symbol >> asString
 		with: self
 		startingAt: 1.
 	^ newString
-]
 
 Symbol >> asSymbol
-[
+asSymbol
 	"Refer to the comment in String|asSymbol."
 
 	
-]
 
 Symbol >> at: anInteger put: anObject
-[
+at: anInteger put: anObject
 	"You cannot modify the receiver."
 
 	self errorNoModification
-]
 
 Symbol >> capitalized
-[
+capitalized
 	^ self asString capitalized asSymbol
-]
 
 Symbol >> copy
-[
+copy
 	"Answer with the receiver, because Symbols are unique."
 
 	
-]
 
 Symbol >> cull: anObject
-[
+cull: anObject
 	^ anObject perform: self
-]
 
 Symbol >> errorNoModification
-[
+errorNoModification
 	self error: 'symbols can not be modified.'
-]
 
 Symbol >> flushCache
-[
+flushCache
 	"Tell the interpreter to remove all entries with this symbol as a selector from its method lookup cache, if it has one.  This primitive must be called whenever a method is redefined or removed.
 	NOTE:  Only one of the two selective flush methods (Symbol or CompiledMethod) needs to be used."
 
 	<primitive: 119>
 	
-]
+
+Symbol >> handlesAnnouncement: anAnnouncement
+handlesAnnouncement: anAnnouncement
+	"Anything else than the announcement identifier (in the case of symbol i.e. #foo for ... on: #foo send: #bar to: nil) will not 
+	be handled."
+
+	"Announcer new 
+		on: #FOO send: #bar to: nil;
+		announce: #FOO should raise DNU bar"
+
+	^ anAnnouncement == self
 
 Symbol >> includesKey: sym
-[
+includesKey: sym
 	^ self == sym
-]
 
 Symbol >> isBinary
-[
+isBinary
 	"Answer whether the receiver is a binary message selector."
 
 	^ self precedence = 2
-]
 
 Symbol >> isDoIt
-[
+isDoIt
 	^ self == #DoIt or: [ self == #DoItIn: ]
-]
 
 Symbol >> isInfix
-[
+isInfix
 	"Answer whether the receiver is an infix message selector."
 
 	^ self precedence = 2
-]
 
 Symbol >> isKeyword
-[
+isKeyword
 	"Answer whether the receiver is a message keyword."
 
 	^ self precedence = 3
-]
 
 Symbol >> isOrientedFill
-[
+isOrientedFill
 	"Needs to be implemented here because symbols can occupy 'color' slots of morphs."
 
 	^ false
-]
 
 Symbol >> isSymbol
-[
+isSymbol
 	^ true
-]
 
 Symbol >> isUnary
-[
+isUnary
 	"Answer whether the receiver is an unary message selector."
 
 	^ self precedence = 1
-]
 
 Symbol >> numArgs: n
-[
+numArgs: n
 	"Answer a string that can be used as a selector with n arguments.
 	 TODO: need to be extended to support shrinking and for selectors like #+ "
 
@@ -148,10 +145,9 @@ Symbol >> numArgs: n
 					offs := 0 ]
 				ifFalse: [ offs := 1 ].
 			2 to: n - numArgs + offs do: [ :i | stream nextPutAll: 'with:' ] ]
-]
 
 Symbol >> precedence
-[
+precedence
 	"Answer the receiver's precedence, assuming it is a valid Smalltalk
 	message selector or 0 otherwise.  The numbers are 1 for unary,
 	2 for binary and 3 for keyword selectors."
@@ -163,100 +159,91 @@ Symbol >> precedence
 	self last = $:
 		ifTrue: [ ^ 3 ].
 	^ 1
-]
 
 Symbol >> replaceFrom: start to: stop with: replacement startingAt: repStart
-[
+replaceFrom: start to: stop with: replacement startingAt: repStart
 	self errorNoModification
-]
 
 Symbol >> separateKeywords
-[
+separateKeywords
 	"#'foo:zork:'  separateKeywords -> 'foo:  zork:'"
 
-	"This implementation is faster than the one in OCompletion."
-
-	^ self isKeyword
-		ifFalse: [ self ]
-		ifTrue: [ String
-				streamContents: [ :stream | (self findTokens: $:)
-						do: [ :each | stream
-								nextPutAll: each;
-								nextPut: $: ]
-						separatedBy: [ stream nextPutAll: '  ' ] ] ]
-]
+	self isKeyword
+		ifFalse: [ ^ self ].
+	^ String
+		streamContents: [ :stream | (self findTokens: $:)
+				do: [ :each | stream
+						nextPutAll: each;
+						nextPut: $: ]
+				separatedBy: [ stream nextPutAll: '  ' ] ]
 
 Symbol >> shallowCopy
-[
+shallowCopy
 	"Answer with the receiver, because Symbols are unique."
 
 	
-]
+
+Symbol >> sorted: aSortBlockOrNil
+sorted: aSortBlockOrNil
+	"Return a new sequenceable collection which contains the same elements as self but its elements are sorted by aSortBlockOrNil. The block should take two arguments and return true if the first element should preceed the second one. If aSortBlock is nil then <= is used for comparison. We convert the symbol to an array because symbols can't be changed."
+
+	^ self asArray sort: aSortBlockOrNil
 
 Symbol >> storeOn: aStream
-[
+storeOn: aStream
 	aStream nextPut: $#.
 	self isLiteralSymbol
 		ifTrue: [ aStream nextPutAll: self ]
 		ifFalse: [ super storeOn: aStream ]
-]
 
 Symbol >> string: aString
-[
+string: aString
 	1 to: aString size do: [ :j | super at: j put: (aString at: j) ].
 	^ self
-]
 
 Symbol >> value: anObject
-[
+value: anObject
 	^ anObject perform: self
-]
 
 Symbol >> veryDeepCopyWith: deepCopier
-[
+veryDeepCopyWith: deepCopier
 	"Return self.  I am immutable in the Morphic world.  Do not record me."
 
 	
-]
 
 Symbol >> withFirstCharacterDownshifted
-[
+withFirstCharacterDownshifted
 	"Answer an object like the receiver but with first character downshifted if necesary"
 
 	^ self asString withFirstCharacterDownshifted asSymbol
-]
 
 Symbol class >> allSymbolTablesDo: aBlock
-[
+allSymbolTablesDo: aBlock
 	NewSymbols do: aBlock.
 	SymbolTable do: aBlock
-]
 
 Symbol class >> allSymbolTablesDo: aBlock after: aSymbol
-[
+allSymbolTablesDo: aBlock after: aSymbol
 	NewSymbols do: aBlock after: aSymbol.
 	SymbolTable do: aBlock after: aSymbol
-]
 
 Symbol class >> allSymbols
-[
+allSymbols
 	"Answer all interned symbols"
 
 	^ Array
 		streamContents: [ :s | s nextPutAll: NewSymbols.
 			s nextPutAll: OneCharacterSymbols.
 			s nextPutAll: SymbolTable ]
-]
 
 Symbol class >> cleanUp
-[
+cleanUp
 	"Flush caches"
 
 	self compactSymbolTable
-]
 
 Symbol class >> compactSymbolTable
-[
+compactSymbolTable
 	"Reduce the size of the symbol table so that it holds all existing symbols + 25% (changed from 1000 since sets like to have 25% free and the extra space would grow back in a hurry)"
 
 	| oldSize |
@@ -264,36 +251,31 @@ Symbol class >> compactSymbolTable
 	oldSize := SymbolTable array size.
 	SymbolTable growTo: SymbolTable size * 4 // 3 + 100.
 	^ oldSize printString , '  ' , (oldSize - SymbolTable array size) printString , ' slot(s) reclaimed'
-]
 
 Symbol class >> findInterned: aString
-[
+findInterned: aString
 	self hasInterned: aString ifTrue: [ :symbol | ^ symbol ].
 	^ nil
-]
 
 Symbol class >> hasInterned: aString ifTrue: symBlock
-[
+hasInterned: aString ifTrue: symBlock
 	"Answer with false if aString hasnt been interned (into a Symbol),  
 	otherwise supply the symbol to symBlock and return true."
 
-	| symbol |
-	^ (symbol := self lookup: aString) ifNil: [ false ] ifNotNil: [ symBlock value: symbol.
+	^ (self lookup: aString) ifNil: [ false ] ifNotNil: [ :symbol | symBlock value: symbol.
 			true ]
-]
 
 Symbol class >> initialize
-[
+initialize
 	"Symbol initialize"
 
 	Symbol rehash.
 	OneCharacterSymbols := nil.
 	OneCharacterSymbols := (1 to: 256) collect: [ :i | (i - 1) asCharacter asSymbol ].
 	Smalltalk addToShutDownList: self
-]
 
 Symbol class >> intern: aStringOrSymbol
-[
+intern: aStringOrSymbol
 	^ (self lookup: aStringOrSymbol)
 		ifNil: [ | aClass aSymbol |
 			aStringOrSymbol isSymbol
@@ -305,40 +287,34 @@ Symbol class >> intern: aStringOrSymbol
 					aSymbol string: aStringOrSymbol ].
 			NewSymbols add: aSymbol.
 			aSymbol ]
-]
 
 Symbol class >> internCharacter: aCharacter
-[
+internCharacter: aCharacter
 	aCharacter asciiValue > 256
 		ifTrue: [ ^ self intern: aCharacter asString ].
 	OneCharacterSymbols ifNil: [ ^ self intern: aCharacter asString ].
 	^ OneCharacterSymbols at: aCharacter asciiValue + 1
-]
 
 Symbol class >> lookup: aStringOrSymbol
-[
+lookup: aStringOrSymbol
 	^ (SymbolTable like: aStringOrSymbol) ifNil: [ NewSymbols like: aStringOrSymbol ]
-]
 
 Symbol class >> new: aSize
-[
+new: aSize
 	self shouldNotImplement
-]
 
 Symbol class >> new: size streamContents: aBlock
-[
+new: size streamContents: aBlock
 	^ (super new: size streamContents: aBlock) asSymbol
-]
 
 Symbol class >> newFrom: aCollection
-[
+newFrom: aCollection
 	"Answer an instance of me containing the same elements as aCollection."
 
 	^ (aCollection as: String) asSymbol	"	Symbol newFrom: {$P. $e. $n}	{$P. $e. $n} as: Symbol"
-]
 
 Symbol class >> possibleSelectorsFor: misspelled
-[
+possibleSelectorsFor: misspelled
 	"Answer an ordered collection of possible corrections
 	for the misspelled selector in order of likelyhood"
 
@@ -360,29 +336,26 @@ Symbol class >> possibleSelectorsFor: misspelled
 		ifTrue: [ binary := misspelled , ':'.	"try for missing colon"
 			Symbol hasInterned: binary ifTrue: [ :him | best addFirst: him ] ].
 	^ best
-]
 
 Symbol class >> readFrom: strm
-[
+readFrom: strm
 	"Symbol readFromString: '#abc'"
 
 	strm peek = $#
 		ifFalse: [ self error: 'Symbols must be introduced by #' ].
-	^ (Scanner new scan: strm) advance	"Just do what the code scanner does"
-]
+	^ strm contents parseLiterals first
 
 Symbol class >> rehash
-[
+rehash
 	"Symbol rehash"
 
 	"Rebuild the hash table, reclaiming unreferenced Symbols."
 
 	SymbolTable := WeakSet withAll: self allSubInstances.
 	NewSymbols := WeakSet new
-]
 
 Symbol class >> selectorsContaining: aString
-[
+selectorsContaining: aString
 	"Answer a list of selectors that contain aString within them. Case-insensitive.  Does return symbols that begin with a capital letter."
 
 	| size selectorList ascii |
@@ -409,21 +382,18 @@ Symbol class >> selectorsContaining: aString
 	^ selectorList
 		reject: [ :each | "reject non-selectors, but keep ones that begin with an uppercase"
 			each numArgs < 0 and: [ each asString withFirstCharacterDownshifted numArgs < 0 ] ]	"Symbol selectorsContaining: 'scon'"
-]
 
 Symbol class >> shutDown: aboutToQuit
-[
+shutDown: aboutToQuit
 	SymbolTable addAll: NewSymbols.
 	NewSymbols := WeakSet new
-]
 
 Symbol class >> streamSpecies
-[
+streamSpecies
 	^ String
-]
 
 Symbol class >> thatStarts: leadingCharacters skipping: skipSym
-[
+thatStarts: leadingCharacters skipping: skipSym
 	"Answer a selector symbol that starts with leadingCharacters.
 	Symbols beginning with a lower-case letter handled directly here.
 	Ignore case after first char.
@@ -444,10 +414,9 @@ Symbol class >> thatStarts: leadingCharacters skipping: skipSym
 						ifTrue: [ ^ each ] ] ]
 		after: skipSym.
 	^ nil	"Symbol thatStarts: 'sf' skipping: nil"	"Symbol thatStarts: 'sf' skipping: #sfpGetFile:with:with:with:with:with:with:with:with:"	"Symbol thatStarts: 'candidate' skipping: nil"
-]
 
 Symbol class >> thatStartsCaseSensitive: leadingCharacters skipping: skipSym
-[
+thatStartsCaseSensitive: leadingCharacters skipping: skipSym
 	"Same as thatStarts:skipping: but caseSensitive"
 
 	| size firstMatch key |
@@ -463,15 +432,12 @@ Symbol class >> thatStartsCaseSensitive: leadingCharacters skipping: skipSym
 						ifTrue: [ ^ each ] ] ]
 		after: skipSym.
 	^ nil
-]
 
 Symbol class >> with: aCharacter
-[
+with: aCharacter
 	^ self newFrom: aCharacter asOrderedCollection
-]
 
 Symbol class >> withAll: aCollection
-[
+withAll: aCollection
 	^ self newFrom: aCollection
-]
 

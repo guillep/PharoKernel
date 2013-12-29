@@ -4,7 +4,7 @@ Bag
 	package: #'Collections-Unordered'.
 
 Bag >> = aBag
-[
+= aBag
 	"Two bags are equal if
 	 (a) they are the same 'kind' of thing.
 	 (b) they have the same size.
@@ -17,47 +17,40 @@ Bag >> = aBag
 	contents associationsDo: [ :assoc | (aBag occurrencesOf: assoc key) = assoc value
 				ifFalse: [ ^ false ] ].
 	^ true
-]
 
 Bag >> add: newObject
-[
+add: newObject
 	"Include newObject as one of the receiver's elements. Answer newObject."
 
 	^ self add: newObject withOccurrences: 1
-]
 
 Bag >> add: newObject withOccurrences: anInteger
-[
+add: newObject withOccurrences: anInteger
 	"Add newObject anInteger times to the receiver. Answer newObject."
 
 	contents at: newObject put: (contents at: newObject ifAbsent: [ 0 ]) + anInteger.
 	^ newObject
-]
 
 Bag >> asBag
-[
+asBag
 	^ self
-]
 
 Bag >> asSet
-[
+asSet
 	"Answer a set with the elements of the receiver."
 
 	^ contents keys asSet
-]
 
 Bag >> at: index
-[
+at: index
 	self errorNotKeyed
-]
 
 Bag >> at: index put: anObject
-[
+at: index put: anObject
 	self errorNotKeyed
-]
 
 Bag >> cumulativeCounts
-[
+cumulativeCounts
 	"Answer with a collection of cumulative percents covered by elements so far."
 
 	| s n |
@@ -65,39 +58,46 @@ Bag >> cumulativeCounts
 	n := 0.
 	^ self sortedCounts asArray collect: [ :a | n := n + a key.
 			(n / s roundTo: 0.1) -> a value ]
-]
 
 Bag >> do: aBlock
-[
-	"Refer to the comment in Collection|do:."
+do: aBlock
+	"Evaluate aBlock with each of the receiver's elements as the argument."
 
 	contents associationsDo: [ :assoc | assoc value timesRepeat: [ aBlock value: assoc key ] ]
-]
+
+Bag >> doWithOccurrences: aTwoArgBlock
+doWithOccurrences: aTwoArgBlock
+	"Iterate over the receiver and apply a two argument block on the element and its occurrences."
+
+	contents associationsDo: [ :assoc | aTwoArgBlock value: assoc key value: assoc value ]
 
 Bag >> includes: anObject
-[
+includes: anObject
 	"Refer to the comment in Collection|includes:."
 
 	^ contents includesKey: anObject
-]
+
+Bag >> keysAndValuesDo: aTwoArgBlock
+keysAndValuesDo: aTwoArgBlock
+	"Iterate over the receiver and apply a two argument block on the element and its occurrences."
+
+	contents associationsDo: [ :assoc | aTwoArgBlock value: assoc key value: assoc value ]
 
 Bag >> occurrencesOf: anObject
-[
+occurrencesOf: anObject
 	"Refer to the comment in Collection|occurrencesOf:."
 
 	(self includes: anObject)
 		ifTrue: [ ^ contents at: anObject ]
 		ifFalse: [ ^ 0 ]
-]
 
 Bag >> postCopy
-[
+postCopy
 	super postCopy.
 	contents := contents copy
-]
 
 Bag >> remove: oldObject ifAbsent: exceptionBlock
-[
+remove: oldObject ifAbsent: exceptionBlock
 	"Refer to the comment in Collection|remove:ifAbsent:."
 
 	| count |
@@ -106,34 +106,30 @@ Bag >> remove: oldObject ifAbsent: exceptionBlock
 		ifTrue: [ contents removeKey: oldObject ]
 		ifFalse: [ contents at: oldObject put: count - 1 ].
 	^ oldObject
-]
 
 Bag >> removeAll
-[
+removeAll
 	"Implementation Note: as contents will be overwritten, a shallowCopy of self would be modified.
 	An alternative implementation preserving capacity would be to create a new contents:
 	self setContents: (self class contentsClass new: contents size)."
 
 	contents removeAll
-]
 
 Bag >> setContents: aDictionary
-[
+setContents: aDictionary
 	contents := aDictionary
-]
 
 Bag >> size
-[
+size
 	"Answer how many elements the receiver contains."
 
 	| tally |
 	tally := 0.
 	contents do: [ :each | tally := tally + each ].
 	^ tally
-]
 
 Bag >> sortedCounts
-[
+sortedCounts
 	"Answer with a collection of counts with elements, sorted by decreasing
 	count."
 
@@ -144,10 +140,9 @@ Bag >> sortedCounts
 		streamContents: [ :stream | contents associationsDo: [ :each | stream nextPut: each value -> each key ] ])
 		sort: [ :x :y | x >= y ];
 		yourself
-]
 
 Bag >> sortedElements
-[
+sortedElements
 	"Answer with a collection of elements with counts, sorted by element."
 
 	"Suggested by l. Uzonyi"
@@ -155,10 +150,9 @@ Bag >> sortedElements
 	^ contents associations
 		sort;
 		yourself
-]
 
 Bag >> sum
-[
+sum
 	"Faster than the superclass implementation when you hold many instances of the same value (which you probably do, otherwise you wouldn't be using a Bag)."
 
 	| sum first |
@@ -171,32 +165,26 @@ Bag >> sum
 	first
 		ifTrue: [ self errorEmptyCollection ].
 	^ sum
-]
 
 Bag >> valuesAndCounts
-[
+valuesAndCounts
 	^ contents
-]
 
 Bag class >> contentsClass
-[
+contentsClass
 	^ Dictionary
-]
 
 Bag class >> new
-[
+new
 	^ self new: 4
-]
 
 Bag class >> new: nElements
-[
+new: nElements
 	^ super new setContents: (self contentsClass new: nElements)
-]
 
 Bag class >> newFrom: aCollection
-[
+newFrom: aCollection
 	"Answer an instance of me containing the same elements as aCollection."
 
 	^ self withAll: aCollection	"Examples:	Bag newFrom: {1. 2. 3. 3}	{1. 2. 3. 3} as: Bag"
-]
 

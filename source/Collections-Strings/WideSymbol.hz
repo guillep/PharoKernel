@@ -3,48 +3,47 @@ WideSymbol
 	instanceSpecification: #(#variable #words );
 	package: #'Collections-Strings'.
 
+WideSymbol >> asWideString
+asWideString
+	^ self
+
 WideSymbol >> at: index
-[
+at: index
 	"Answer the Character stored in the field of the receiver indexed by the argument."
 
 	^ Character value: (self wordAt: index)
-]
 
 WideSymbol >> byteAt: index
-[
+byteAt: index
 	| d r |
 	d := (index + 3) // 4.
 	r := (index - 1) \\ 4 + 1.
 	^ (self wordAt: d) digitAt: 4 - r + 1
-]
 
 WideSymbol >> byteAt: index put: aByte
-[
+byteAt: index put: aByte
 	self errorNoModification
-]
 
 WideSymbol >> byteSize
-[
+byteSize
 	^ self size * 4
-]
+
+WideSymbol >> findIn: body startingAt: start matchTable: matchTable
+findIn: body startingAt: start matchTable: matchTable
+	^ self
+		findSubstring: self
+		in: body
+		startingAt: start
+		matchTable: matchTable
 
 WideSymbol >> isWideString
-[
+isWideString
 	"Answer whether the receiver is a WideString"
 
 	^ true
-]
-
-WideSymbol >> mutateJISX0208StringToUnicode
-[
-	| c |
-	1 to: self size do: [ :i | c := self at: i.
-		(c leadingChar = JISX0208 leadingChar or: [ c leadingChar = (JISX0208 leadingChar bitShift: 2) ])
-			ifTrue: [ self basicAt: i put: (Character leadingChar: JapaneseEnvironment leadingChar code: c asUnicode) asciiValue ] ]
-]
 
 WideSymbol >> privateAt: index put: aCharacter
-[
+privateAt: index put: aCharacter
 	"Primitive. Store the Character in the field of the receiver indicated by
 	the index. Fail if the index is not an Integer or is out of bounds, or if
 	the argument is not a Character. Essential. See Object documentation
@@ -54,45 +53,28 @@ WideSymbol >> privateAt: index put: aCharacter
 	index isInteger
 		ifTrue: [ self errorSubscriptBounds: index ]
 		ifFalse: [ self errorNonIntegerIndex ]
-]
-
-WideSymbol >> pvtAt: index put: aCharacter
-[
-	"Primitive. Store the Character in the field of the receiver indicated by
-	the index. Fail if the index is not an Integer or is out of bounds, or if
-	the argument is not a Character. Essential. See Object documentation
-	whatIsAPrimitive."
-
-	self deprecated: 'use privateAt:put:' on: '2012-09-23' in: 'Pharo 2.0'.
-	self privateAt: index put: aCharacter
-]
 
 WideSymbol >> species
-[
+species
 	"Answer the preferred class for reconstructing the receiver."
 
 	^ WideString
-]
 
 WideSymbol >> string: aString
-[
+string: aString
 	1 to: aString size do: [ :j | self privateAt: j put: (aString at: j) asInteger ].
 	^ self
-]
 
 WideSymbol >> wordAt: index
-[
+wordAt: index
 	<primitive: 60>
 	^ self basicAt: index
-]
 
 WideSymbol >> wordAt: index put: anInteger
-[
+wordAt: index put: anInteger
 	self errorNoModification
-]
 
 WideSymbol class >> initialize
-[
+initialize
 	Smalltalk removeFromShutDownList: self	"@@@ Remove this later @@@"
-]
 

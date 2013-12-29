@@ -1,0 +1,32 @@
+ExceptionSetWithExclusions
+	superclass: #ExceptionSet;
+	instanceVariables: #(#exclusions );
+	package: #Kernel.
+
+ExceptionSetWithExclusions >> - exception
+- exception
+	"Add exception as an exclusion to me.
+	I will explicitely not handle my exclusion exceptions."
+
+	self addExclusion: exception
+
+ExceptionSetWithExclusions >> addExclusion: exception
+addExclusion: exception
+	"Add exception as an exclusion to me.
+	I will explicitely not handle my exclusion exceptions."
+
+	^ exclusions add: exception
+
+ExceptionSetWithExclusions >> handles: exception
+handles: exception
+	"Return true when I will handled exception.
+	I extend my superclass behavior by explicitely 
+	not handling a number of exclusion exceptions."
+
+	^ (super handles: exception) and: [ exclusions noneSatisfy: [ :each | each handles: exception ] ]
+
+ExceptionSetWithExclusions >> initialize
+initialize
+	super initialize.
+	exclusions := OrderedCollection new
+

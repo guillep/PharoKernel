@@ -4,53 +4,41 @@ RxsCharacter
 	package: #'Regex-Core'.
 
 RxsCharacter >> character
-[
+character
 	^ character
-]
 
 RxsCharacter >> dispatchTo: aMatcher
-[
+dispatchTo: aMatcher
 	"Inform the matcher of the kind of the node, and it
 	will do whatever it has to."
 
 	^ aMatcher syntaxCharacter: self
-]
 
 RxsCharacter >> enumerateTo: aSet ignoringCase: aBoolean
-[
+enumerateTo: aSet ignoringCase: aBoolean
 	aBoolean
 		ifTrue: [ aSet
 				add: character asUppercase;
 				add: character asLowercase ]
 		ifFalse: [ aSet add: character ]
-]
 
 RxsCharacter >> initializeCharacter: aCharacter
-[
+initializeCharacter: aCharacter
 	"See class comment for instance variable description."
 
 	character := aCharacter
-]
 
 RxsCharacter >> isAtomic
-[
+isAtomic
 	"A character is always atomic."
 
 	^ true
-]
 
 RxsCharacter >> isEnumerable
-[
+isEnumerable
 	^ true
-]
-
-RxsCharacter >> isNullable
-[
-	^ false
-]
 
 RxsCharacter class >> with: aCharacter
-[
+with: aCharacter
 	^ self new initializeCharacter: aCharacter
-]
 

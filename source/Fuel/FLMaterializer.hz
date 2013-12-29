@@ -1,0 +1,152 @@
+FLMaterializer
+	instanceVariables: #(#materializationFactory #signature #version #migrations #globalEnvironment );
+	package: #Fuel.
+
+FLMaterializer >> decodeHeaderWith: aDecoder
+decodeHeaderWith: aDecoder
+	"See FLSerializer>>encodeHeaderWith:"
+
+	"todo: fix"
+
+	"Here I cannot use #materializeFrom: again because I will end up in an infinitive loop. Therefore, I use #materializationFactory."
+
+	^ aDecoder nextEncodedByte = 0
+		ifTrue: [ FLHeader new ]
+		ifFalse: [ (self class newDefault materializationFactory value: aDecoder) root ]
+
+FLMaterializer >> fuelAccept: aGeneralMapper
+fuelAccept: aGeneralMapper
+	^ aGeneralMapper visitSubstitution: self by: nil
+
+FLMaterializer >> globalEnvironment
+globalEnvironment
+	"Answer a dictionary where the look up for global symbols will be done during materialization."
+
+	^ globalEnvironment
+
+FLMaterializer >> globalEnvironment: aDictionary
+globalEnvironment: aDictionary
+	"Set the dictionary where the look up for global symbols will be done during materialization."
+
+	globalEnvironment := aDictionary
+
+FLMaterializer >> initialize
+initialize
+	super initialize.
+	self setDefaultMaterialization.
+	self signature: self class defaultSignature.
+	self version: self class currentVersion.
+	migrations := Dictionary new.
+	globalEnvironment := self class environment
+
+FLMaterializer >> materializationFactory
+materializationFactory
+	^ materializationFactory
+
+FLMaterializer >> materializeFrom: aStream
+materializeFrom: aStream
+	| aDecoder materialization header |
+	aDecoder := FLDecoder on: aStream migrations: migrations globalEnvironment: globalEnvironment.
+	self verifySignatureFrom: aDecoder.
+	self verifyVersionFrom: aDecoder.
+	header := self decodeHeaderWith: aDecoder.
+	header executePreMaterializationActions.
+	materialization := materializationFactory value: aDecoder.	"This is useful because when the user materialize something, what it is answered is the materialization objet, and not the materializer. Hence, it is difficult to query the header (like asking the additionalObjects) because materializer is lost. Therefore, we also set the header to the materialization."
+	materialization header: header.	"This is useful because the postMaterializationActions may need to have access to the state of the materialization, for example, to the root"
+	header materialization: materialization.
+	header executePostMaterializationActions.
+	^ materialization
+
+FLMaterializer >> materializeHeaderFrom: aStream
+materializeHeaderFrom: aStream
+	| aDecoder |
+	aDecoder := FLDecoder on: aStream migrations: migrations globalEnvironment: globalEnvironment.
+	self verifySignatureFrom: aDecoder.
+	self verifyVersionFrom: aDecoder.
+	^ self decodeHeaderWith: aDecoder
+
+FLMaterializer >> migrateClassNamed: aSymbol toClass: aClass
+migrateClassNamed: aSymbol toClass: aClass
+	self migrateClassNamed: aSymbol toClass: aClass variables: #()
+
+FLMaterializer >> migrateClassNamed: aSymbol toClass: aClass variables: aDictionary
+migrateClassNamed: aSymbol toClass: aClass variables: aDictionary
+	migrations at: aSymbol put: (FLMigration fromClassNamed: aSymbol toClass: aClass variables: aDictionary)
+
+FLMaterializer >> migrateClassNamed: aSymbol variables: aDictionary
+migrateClassNamed: aSymbol variables: aDictionary
+	self migrateClassNamed: aSymbol toClass: (self class environment at: aSymbol) variables: aDictionary
+
+FLMaterializer >> setDefaultMaterialization
+setDefaultMaterialization
+	materializationFactory := [ :aDecoder | (FLMaterialization with: aDecoder)
+		run;
+		yourself ]
+
+FLMaterializer >> signature
+signature
+	^ signature
+
+FLMaterializer >> signature: anObject
+signature: anObject
+	signature := anObject
+
+FLMaterializer >> verifySignatureFrom: aDecoder
+verifySignatureFrom: aDecoder
+	| streamSignature |
+	streamSignature := ByteArray new: self signature size.
+	aDecoder nextEncodedBytesInto: streamSignature.
+	self signature asByteArray = streamSignature
+		ifFalse: [ FLBadSignature signalCurrentSignature: self signature streamSignature: streamSignature ]
+
+FLMaterializer >> verifyVersionFrom: aDecoder
+verifyVersionFrom: aDecoder
+	| streamVersion |
+	streamVersion := aDecoder nextEncodedUint16.
+	self version = streamVersion
+		ifFalse: [ FLBadVersion signalCurrentVersion: self version streamVersion: streamVersion ]
+
+FLMaterializer >> version
+version
+	^ version
+
+FLMaterializer >> version: anObject
+version: anObject
+	version := anObject
+
+FLMaterializer class >> currentVersion
+currentVersion
+	"If you change this method, you should also create a version in ConfigurationOfFuel and FLSerializer >> currentVersion"
+
+	^ 19
+
+FLMaterializer class >> defaultSignature
+defaultSignature
+	^ 'FUEL'
+
+FLMaterializer class >> materializationFromFileNamed: aFilename
+materializationFromFileNamed: aFilename
+	^ StandardFileStream oldFileNamed: aFilename do: [ :aFileStream | self newDefault materializeFrom: aFileStream binary ]
+
+FLMaterializer class >> materializationHeaderFromFileNamed: aFilename
+materializationHeaderFromFileNamed: aFilename
+	^ StandardFileStream
+		oldFileNamed: aFilename
+		do: [ :aFileStream | self newDefault materializeHeaderFrom: aFileStream binary ]
+
+FLMaterializer class >> materializeFromByteArray: byteArray
+materializeFromByteArray: byteArray
+	^ (self newDefault materializeFrom: byteArray readStream) root
+
+FLMaterializer class >> materializeFromFileNamed: aFilename
+materializeFromFileNamed: aFilename
+	^ (self materializationFromFileNamed: aFilename) root
+
+FLMaterializer class >> materializeHeaderFromFileNamed: aFilename
+materializeHeaderFromFileNamed: aFilename
+	^ self materializationHeaderFromFileNamed: aFilename
+
+FLMaterializer class >> newDefault
+newDefault
+	^ self new
+

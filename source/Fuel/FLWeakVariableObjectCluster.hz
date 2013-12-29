@@ -1,0 +1,21 @@
+FLWeakVariableObjectCluster
+	superclass: #FLVariableObjectCluster;
+	package: #Fuel.
+
+FLWeakVariableObjectCluster >> clusterReferencesDo: aBlock
+clusterReferencesDo: aBlock
+	"Ensures that nil could be encoded, later in references step."
+
+	super clusterReferencesDo: aBlock.
+	aBlock value: nil
+
+FLWeakVariableObjectCluster >> serializeReferencesVariablePartOf: anObject with: anEncoder
+serializeReferencesVariablePartOf: anObject with: anEncoder
+	1 to: anObject basicSize do: [ :index | anEncoder encodeWeakReferenceTo: (anObject basicAt: index) ]
+
+FLWeakVariableObjectCluster >> variablePartReferencesOf: anObject do: aBlock
+variablePartReferencesOf: anObject do: aBlock
+	"Since the variable part of Weak classes are weak references, we should not do nothing here."
+
+	
+

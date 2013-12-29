@@ -1,0 +1,140 @@
+STCommandLineHandler
+	superclass: #CommandLineHandler;
+	instanceVariables: #(#sourceFiles );
+	package: #'System-CommandLine'.
+
+STCommandLineHandler >> activate
+activate
+	self activateHelp
+		ifTrue: [ ^ self ].
+	self loadSourceFiles: (self commandLine allFilesWithExtension: 'st').
+	self installSourceFiles.
+	self end
+
+STCommandLineHandler >> end
+end
+	| quit |
+	quit := self commandLine hasOption: 'quit'.
+	(self commandLine hasOption: 'save')
+		ifTrue: [ Smalltalk snapshot: true andQuit: quit ].
+	quit
+		ifTrue: [ self exitSuccess ]
+
+STCommandLineHandler >> handleError: error
+handleError: error
+	"for syntax errors we can used the default action"
+
+	"otherwise resignal it"
+
+	(error isKindOf: SyntaxErrorNotification)
+		ifTrue: [ error defaultAction ]
+		ifFalse: [ error pass ]
+
+STCommandLineHandler >> handleError: error reference: aReference
+handleError: error reference: aReference
+	"Print a header before failing on an errro / syntax notification from the the script loaded by the given request"
+
+	| fileReference |
+	"We ignore warnings for now"
+	(error isKindOf: OCSemanticWarning)
+		ifTrue: [ ^ error pass ].	"try to get the proper file"
+	fileReference := aReference.
+	((error isKindOf: OCSemanticError) and: [ error requestor isNotNil ])
+		ifTrue: [ fileReference := error requestor fileReference ].	"spit out a warning if in headless mode, otherwise a debugger will popup"
+	Smalltalk isHeadless
+		ifTrue: [ self inform: 'Errors in script loaded from ' , fileReference fullName ].	"for syntax errors we can use the default action"
+	(error isKindOf: SyntaxErrorNotification)
+		ifTrue: [ ^ error defaultAction ].
+	(error isKindOf: OCSemanticError)
+		ifTrue: [ self class printCompilerWarning: error.
+			^ error resume: error defaultAction ].	"otherwise resignal it"
+	error pass
+
+STCommandLineHandler >> handleErrorsDuring: aBlock reference: aReference
+handleErrorsDuring: aBlock reference: aReference
+	aBlock
+		on: Error , OCSemanticWarning , OCSemanticError
+		do: [ :e | self handleError: e reference: aReference ]
+
+STCommandLineHandler >> installSourceFile: aReference
+installSourceFile: aReference
+	"Install the the source file given by aFileReference"
+
+	| codeImporter |
+	" parse the code given in the source file"
+	aReference
+		readStreamDo: [ :stream | self
+				handleErrorsDuring: [ codeImporter := CodeImporter fileStream: stream.
+					codeImporter skipShebang parseDeclarations ]
+				reference: aReference ].	"evaluate the declarations in a second step to allow for properly closing the source file stream"
+	self handleErrorsDuring: [ codeImporter evaluate ] reference: aReference
+
+STCommandLineHandler >> installSourceFiles
+installSourceFiles
+	"Install the previously loaded source files"
+
+	sourceFiles ifNil: [ ^ self ].
+	[ sourceFiles do: [ :reference | self installSourceFile: reference ] ]
+		ensure: [ sourceFiles := nil ]
+
+STCommandLineHandler >> loadSourceFiles: anArray
+loadSourceFiles: anArray
+	"Load all the source files in the given array."
+
+	sourceFiles := anArray collect: [ :each | (FileSystem disk resolve: each) asFileReference ]
+
+STCommandLineHandler class >> commandName
+commandName
+	^ 'st'
+
+STCommandLineHandler class >> description
+description
+	^ 'Loads and executes .st source files'
+
+STCommandLineHandler class >> isResponsibleFor: aCommandLine
+isResponsibleFor: aCommandLine
+	"This handler is reponsible only for .st files"
+
+	(aCommandLine hasFileWithExtension: '.st')
+		ifTrue: [ ^ true ].
+	^ super isResponsibleFor: aCommandLine
+
+STCommandLineHandler class >> printCompilerWarning: aSyntaxErrorNotification
+printCompilerWarning: aSyntaxErrorNotification
+	| stderr position contents errorLine errorMessage maxLineNumberSize lineNumber |
+	"format the error"
+	position := aSyntaxErrorNotification location.
+	contents := aSyntaxErrorNotification errorCode.
+	errorLine := contents lineNumberCorrespondingToIndex: position.
+	stderr := VTermOutputDriver stderr.	"first gather the error title to be able to underline it properly"
+	errorMessage := String
+		streamContents: [ :s | s
+				nextPutAll: 'Syntax Error on line ';
+				print: errorLine;
+				nextPutAll: ': ';
+				print: aSyntaxErrorNotification errorMessage ].
+	stderr
+		red;
+		nextPutAll: errorMessage;
+		lf;
+		nextPutAll: ('' padLeftTo: errorMessage size with: $=);
+		lf.	"print each source line and mark the found syntax error"
+	maxLineNumberSize := contents lines size asString size.
+	lineNumber := 0.
+	contents
+		lineIndicesDo: [ :start :endWithoutDelimiters :end | lineNumber := lineNumber + 1.
+			lineNumber == errorLine
+				ifTrue: [ stderr red ]
+				ifFalse: [ stderr white ].	"0 pad the line numbers to the same size"
+			stderr
+				nextPutAll: (lineNumber asString padLeftTo: maxLineNumberSize with: $0);
+				nextPutAll: ': '.
+			stderr
+				white;
+				nextPutAll: (contents copyFrom: start to: endWithoutDelimiters);
+				lf.	"print the marker under the error line"
+			lineNumber == errorLine
+				ifTrue: [ stderr red
+						nextPutAll: ('_^_' padLeftTo: position - start + maxLineNumberSize + 4);
+						lf ] ]
+

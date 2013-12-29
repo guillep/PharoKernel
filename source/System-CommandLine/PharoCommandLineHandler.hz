@@ -1,0 +1,65 @@
+PharoCommandLineHandler
+	superclass: #BasicCommandLineHandler;
+	package: #'System-CommandLine'.
+
+PharoCommandLineHandler >> activate
+activate
+	self isChangingPreferences
+		ifTrue: [ self changePreferences ]
+		ifFalse: [ self runPreferences ].
+	^ super activate
+
+PharoCommandLineHandler >> changePreferences
+changePreferences
+	| preferenceFile |
+	self isOmittingPreferences
+		ifTrue: [ commandLine := commandLine copySubcommand.
+			^ self ].
+	preferenceFile := (self optionAt: 'preferences-file') asFileReference.
+	commandLine := commandLine copySubcommand.
+	StartupPreferencesLoader default load: {preferenceFile}
+
+PharoCommandLineHandler >> default
+default
+	Smalltalk isHeadless
+		ifFalse: [ ^ self noQuit ].
+	^ super default
+
+PharoCommandLineHandler >> isChangingPreferences
+isChangingPreferences
+	^ self isOverridingPreferences or: [ self isOmittingPreferences ]
+
+PharoCommandLineHandler >> isOmittingPreferences
+isOmittingPreferences
+	^ self hasOption: 'no-default-preferences'
+
+PharoCommandLineHandler >> isOverridingPreferences
+isOverridingPreferences
+	^ self hasOption: 'preferences-file'
+
+PharoCommandLineHandler >> runPreferences
+runPreferences
+	StartupPreferencesLoader default loadFromDefaultLocations
+
+PharoCommandLineHandler class >> activateWith: aCommandLine
+activateWith: aCommandLine
+	Smalltalk tools userManager canRunStartupScript
+		ifFalse: [ ^ self ].	"Make sure that the PharoCommandLineHandler starts at the top of the stack in the main UI thread."
+	UIManager default defer: [ super activateWith: aCommandLine ]
+
+PharoCommandLineHandler class >> description
+description
+	^ 'responsible for the default options and activating other commands'
+
+PharoCommandLineHandler class >> isResponsibleFor: aCommandLine
+isResponsibleFor: aCommandLine
+	"I do not match ever, because my activation is manual"
+
+	^ true
+
+PharoCommandLineHandler class >> priority
+priority
+	"Highest priority"
+
+	^ Float infinity
+

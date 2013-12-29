@@ -3,60 +3,49 @@ MemoryFileSystemEntry
 	package: #'FileSystem-Memory'.
 
 MemoryFileSystemEntry >> basename
-[
+basename
 	^ basename
-]
 
 MemoryFileSystemEntry >> basename: aString
-[
+basename: aString
 	basename := aString
-]
 
 MemoryFileSystemEntry >> creationTime
-[
+creationTime
 	^ creationTime
-]
 
 MemoryFileSystemEntry >> fileSize
-[
+fileSize
 	self subclassResponsibility
-]
 
 MemoryFileSystemEntry >> initialize
-[
+initialize
 	creationTime := modificationTime := DateAndTime now.
 	super initialize
-]
 
 MemoryFileSystemEntry >> isDirectory
-[
+isDirectory
 	self subclassResponsibility
-]
 
 MemoryFileSystemEntry >> isFile
-[
+isFile
 	^ self isDirectory not
-]
 
 MemoryFileSystemEntry >> modificationTime
-[
+modificationTime
 	^ modificationTime
-]
 
 MemoryFileSystemEntry >> modificationTime: anObject
-[
+modificationTime: anObject
 	modificationTime := anObject
-]
 
 MemoryFileSystemEntry >> modified
-[
+modified
 	modificationTime := DateAndTime now
-]
 
 MemoryFileSystemEntry class >> named: aFileName
-[
+named: aFileName
 	^ self new
 		basename: aFileName;
 		yourself
-]
 

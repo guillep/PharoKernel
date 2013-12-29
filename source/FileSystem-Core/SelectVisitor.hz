@@ -1,0 +1,37 @@
+SelectVisitor
+	superclass: #AbstractEnumerationVisitor;
+	package: #'FileSystem-Core'.
+
+SelectVisitor >> visitReference: anEntry
+visitReference: anEntry
+	(block value: anEntry)
+		ifTrue: [ out nextPut: anEntry ]
+
+SelectVisitor class >> breadthFirst: aReference
+breadthFirst: aReference
+	^ self breadthFirst: aReference select: [ :entry | true ]
+
+SelectVisitor class >> breadthFirst: aReference select: aBlock
+breadthFirst: aReference select: aBlock
+	^ (self select: aBlock) breadthFirst: aReference
+
+SelectVisitor class >> postorder: aReference
+postorder: aReference
+	^ self postorder: aReference select: [ :entry | true ]
+
+SelectVisitor class >> postorder: aReference select: aBlock
+postorder: aReference select: aBlock
+	^ (self select: aBlock) postorder: aReference
+
+SelectVisitor class >> preorder: aReference
+preorder: aReference
+	^ self preorder: aReference select: [ :entry | true ]
+
+SelectVisitor class >> preorder: aReference select: aBlock
+preorder: aReference select: aBlock
+	^ (self select: aBlock) preorder: aReference
+
+SelectVisitor class >> select: aBlock
+select: aBlock
+	^ self basicNew initializeWithBlock: aBlock
+

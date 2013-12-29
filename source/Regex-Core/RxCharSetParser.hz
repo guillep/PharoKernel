@@ -3,44 +3,39 @@ RxCharSetParser
 	package: #'Regex-Core'.
 
 RxCharSetParser >> addChar: aChar
-[
+addChar: aChar
 	elements add: (RxsCharacter with: aChar)
-]
 
 RxCharSetParser >> addRangeFrom: firstChar to: lastChar
-[
+addRangeFrom: firstChar to: lastChar
 	firstChar asInteger > lastChar asInteger
 		ifTrue: [ RxParser signalSyntaxException: ' bad character range' at: source position ].
 	elements add: (RxsRange from: firstChar to: lastChar)
-]
 
 RxCharSetParser >> initialize: aStream
-[
+initialize: aStream
 	source := aStream.
 	lookahead := aStream next.
 	elements := OrderedCollection new
-]
 
 RxCharSetParser >> match: aCharacter
-[
+match: aCharacter
 	aCharacter = lookahead
 		ifFalse: [ RxParser signalSyntaxException: 'unexpected character: ' , (String with: lookahead) at: source position ].
 	^ source atEnd
 		ifTrue: [ lookahead := nil ]
 		ifFalse: [ lookahead := source next ]
-]
 
 RxCharSetParser >> parse
-[
+parse
 	lookahead = $-
 		ifTrue: [ self addChar: $-.
 			self match: $- ].
 	[ lookahead isNil ] whileFalse: [ self parseStep ].
 	^ elements
-]
 
 RxCharSetParser >> parseCharOrRange
-[
+parseCharOrRange
 	| firstChar |
 	firstChar := lookahead.
 	self match: firstChar.
@@ -53,19 +48,17 @@ RxCharSetParser >> parseCharOrRange
 				ifFalse: [ self addRangeFrom: firstChar to: lookahead.
 					^ self match: lookahead ] ].
 	self addChar: firstChar
-]
 
 RxCharSetParser >> parseEscapeChar
-[
+parseEscapeChar
 	self match: $\.
 	$- = lookahead
 		ifTrue: [ elements add: (RxsCharacter with: $-) ]
 		ifFalse: [ elements add: (RxsPredicate forEscapedLetter: lookahead) ].
 	self match: lookahead
-]
 
 RxCharSetParser >> parseNamedSet
-[
+parseNamedSet
 	| name |
 	self
 		match: $[;
@@ -74,10 +67,9 @@ RxCharSetParser >> parseNamedSet
 	lookahead := source next.
 	self match: $].
 	elements add: (RxsPredicate forNamedClass: name)
-]
 
 RxCharSetParser >> parseStep
-[
+parseStep
 	lookahead = $[
 		ifTrue: [ source peek = $:
 				ifTrue: [ ^ self parseNamedSet ]
@@ -87,10 +79,8 @@ RxCharSetParser >> parseStep
 	lookahead = $-
 		ifTrue: [ RxParser signalSyntaxException: 'invalid range' at: source position ].
 	self parseCharOrRange
-]
 
 RxCharSetParser class >> on: aStream
-[
+on: aStream
 	^ self new initialize: aStream
-]
 

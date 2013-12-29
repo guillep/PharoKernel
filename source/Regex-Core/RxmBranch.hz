@@ -4,36 +4,32 @@ RxmBranch
 	package: #'Regex-Core'.
 
 RxmBranch >> alternative: aBranch
-[
+alternative: aBranch
 	"See class comment for instance variable description."
 
 	alternative := aBranch
-]
 
 RxmBranch >> beLoopback
-[
+beLoopback
 	"See class comment for instance variable description."
 
 	loopback := true
-]
 
 RxmBranch >> initialize
-[
+initialize
 	"See class comment for instance variable description."
 
 	super initialize.
 	loopback := false
-]
 
 RxmBranch >> matchAgainst: aMatcher
-[
+matchAgainst: aMatcher
 	"Match either `next' or `alternative'. Fail if the alternative is nil."
 
 	^ (next matchAgainst: aMatcher) or: [ alternative notNil and: [ alternative matchAgainst: aMatcher ] ]
-]
 
 RxmBranch >> pointTailTo: aNode
-[
+pointTailTo: aNode
 	"See superclass for explanations."
 
 	loopback
@@ -41,10 +37,9 @@ RxmBranch >> pointTailTo: aNode
 				ifTrue: [ alternative := aNode ]
 				ifFalse: [ alternative pointTailTo: aNode ] ]
 		ifFalse: [ super pointTailTo: aNode ]
-]
 
 RxmBranch >> terminateWith: aNode
-[
+terminateWith: aNode
 	"See superclass for explanations."
 
 	loopback
@@ -52,5 +47,4 @@ RxmBranch >> terminateWith: aNode
 				ifTrue: [ alternative := aNode ]
 				ifFalse: [ alternative terminateWith: aNode ] ]
 		ifFalse: [ super terminateWith: aNode ]
-]
 

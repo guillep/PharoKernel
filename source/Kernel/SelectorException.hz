@@ -1,0 +1,46 @@
+SelectorException
+	superclass: #Error;
+	instanceVariables: #(#selector );
+	package: #Kernel.
+
+SelectorException >> messageText
+messageText
+	"Overwritten to initialiaze the message text to a standard text if it has not yet been set"
+
+	^ messageText ifNil: [ messageText := self standardMessageText ]
+
+SelectorException >> selector
+selector
+	^ selector
+
+SelectorException >> selector: aSelector
+selector: aSelector
+	selector := aSelector
+
+SelectorException >> standardMessageText
+standardMessageText
+	"Generate a standard textual description"
+
+	^ String
+		streamContents: [ :stream | stream << 'for '.
+			stream print: self selector.
+			stream << ' in '.
+			stream print: self signaler class ]
+
+SelectorException class >> signalFor: aSelector
+signalFor: aSelector
+	"Create and signal an exception for aSelector in the default receiver."
+
+	^ self new
+		selector: aSelector;
+		signal
+
+SelectorException class >> signalFor: aSelector in: aReceiver
+signalFor: aSelector in: aReceiver
+	"Create and signal an exception for aSelector in aReceiver."
+
+	^ self new
+		object: aSelector;
+		signaler: aReceiver;
+		signal
+

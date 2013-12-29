@@ -1,0 +1,327 @@
+FileLocator
+	superclass: #AbstractFileReference;
+	instanceVariables: #(#origin #path );
+	classVariables: #(#Resolver );
+	package: #'FileSystem-Core'.
+
+FileLocator >> = other
+= other
+	^ self species = other species and: [ origin = other origin and: [ path = other path ] ]
+
+FileLocator >> absolutePath
+absolutePath
+	"Return the absolute path"
+
+	^ self resolve path
+
+FileLocator >> asAbsolute
+asAbsolute
+	^ self
+
+FileLocator >> asFileReference
+asFileReference
+	^ self resolve
+
+FileLocator >> copyWithPath: newPath
+copyWithPath: newPath
+	^ self class origin: origin path: newPath
+
+FileLocator >> doesNotUnderstand: aMessage
+doesNotUnderstand: aMessage
+	"Redirect message to the resolved version of this FileLocator.
+	If FileReference won't understand the message send a normal DNU."
+
+	| resolved |
+	resolved := self resolve.
+	(resolved respondsTo: aMessage selector)
+		ifTrue: [ ^ resolved perform: aMessage selector withArguments: aMessage arguments ].
+	^ super doesNotUnderstand: aMessage
+
+FileLocator >> fullPath
+fullPath
+	^ self resolve path
+
+FileLocator >> hash
+hash
+	^ origin hash bitXor: path hash
+
+FileLocator >> initializeWithOrigin: aSymbol path: aPath
+initializeWithOrigin: aSymbol path: aPath
+	self initialize.
+	origin := aSymbol.
+	path := aPath
+
+FileLocator >> isAbsolute
+isAbsolute
+	^ true
+
+FileLocator >> isRelative
+isRelative
+	^ false
+
+FileLocator >> origin
+origin
+	^ origin
+
+FileLocator >> path
+path
+	^ path
+
+FileLocator >> printOn: aStream
+printOn: aStream
+	| fs |
+	aStream
+		nextPut: ${;
+		nextPutAll: origin;
+		nextPut: $}.
+	path isWorkingDirectory
+		ifTrue: [ ^ self ].
+	fs := self fileSystem.
+	aStream nextPut: fs delimiter.
+	fs printPath: path on: aStream
+
+FileLocator >> readStream
+readStream
+	^ self resolve readStream
+
+FileLocator >> renameTo: newBasename
+renameTo: newBasename
+	| result |
+	result := self resolve renameTo: newBasename.
+	path size > 0
+		ifTrue: [ path basename: newBasename ]
+		ifFalse: [ path := result path ]
+
+FileLocator >> resolve
+resolve
+	^ (Resolver resolve: origin) resolve: path
+
+FileLocator >> resolveString: aString
+resolveString: aString
+	| filesystem thePath |
+	filesystem := (Resolver resolve: origin) fileSystem.
+	thePath := filesystem pathFromString: aString.
+	^ self withPath: (path resolvePath: thePath)
+
+FileLocator >> writeStream
+writeStream
+	^ self resolve writeStream
+
+FileLocator class >> A
+A
+	^ self driveNamed: #A
+
+FileLocator class >> B
+B
+	^ self driveNamed: #B
+
+FileLocator class >> C
+C
+	^ self driveNamed: #C
+
+FileLocator class >> D
+D
+	^ self driveNamed: #D
+
+FileLocator class >> E
+E
+	^ self driveNamed: #E
+
+FileLocator class >> F
+F
+	^ self driveNamed: #F
+
+FileLocator class >> G
+G
+	^ self driveNamed: #G
+
+FileLocator class >> H
+H
+	^ self driveNamed: #H
+
+FileLocator class >> I
+I
+	^ self driveNamed: #I
+
+FileLocator class >> J
+J
+	^ self driveNamed: #J
+
+FileLocator class >> K
+K
+	^ self driveNamed: #K
+
+FileLocator class >> L
+L
+	^ self driveNamed: #L
+
+FileLocator class >> M
+M
+	^ self driveNamed: #M
+
+FileLocator class >> N
+N
+	^ self driveNamed: #N
+
+FileLocator class >> O
+O
+	^ self driveNamed: #O
+
+FileLocator class >> P
+P
+	^ self driveNamed: #P
+
+FileLocator class >> Q
+Q
+	^ self driveNamed: #Q
+
+FileLocator class >> R
+R
+	^ self driveNamed: #R
+
+FileLocator class >> S
+S
+	^ self driveNamed: #S
+
+FileLocator class >> T
+T
+	^ self driveNamed: #T
+
+FileLocator class >> U
+U
+	^ self driveNamed: #U
+
+FileLocator class >> V
+V
+	^ self driveNamed: #V
+
+FileLocator class >> W
+W
+	^ self driveNamed: #W
+
+FileLocator class >> X
+X
+	^ self driveNamed: #X
+
+FileLocator class >> Y
+Y
+	^ self driveNamed: #Y
+
+FileLocator class >> Z
+Z
+	^ self driveNamed: #Z
+
+FileLocator class >> addResolver: aResolver
+addResolver: aResolver
+	Resolver addResolver: aResolver
+
+FileLocator class >> cache
+cache
+	^ self origin: #cache
+
+FileLocator class >> changes
+changes
+	^ self origin: #changes
+
+FileLocator class >> cwd
+cwd
+	^ self workingDirectory
+
+FileLocator class >> desktop
+desktop
+	^ self origin: #desktop
+
+FileLocator class >> documents
+documents
+	^ self origin: #documents
+
+FileLocator class >> driveNamed: driveName
+driveNamed: driveName
+	^ FileReference fileSystem: FileSystem disk path: Path / (driveName , ':')
+
+FileLocator class >> flushCaches
+flushCaches
+	Resolver flushCaches
+
+FileLocator class >> home
+home
+	^ self origin: #home
+
+FileLocator class >> image
+image
+	^ self origin: #image
+
+FileLocator class >> imageDirectory
+imageDirectory
+	^ self origin: #imageDirectory
+
+FileLocator class >> initialize
+initialize
+	Smalltalk addToStartUpList: self.
+	self startUp: true
+
+FileLocator class >> origin: aSymbol
+origin: aSymbol
+	^ self origin: aSymbol path: Path workingDirectory
+
+FileLocator class >> origin: aSymbol path: aPath
+origin: aSymbol path: aPath
+	^ self basicNew initializeWithOrigin: aSymbol path: aPath
+
+FileLocator class >> preferences
+preferences
+	^ self origin: #preferences
+
+FileLocator class >> root
+root
+	^ FileSystem disk root
+
+FileLocator class >> startUp: resuming
+startUp: resuming
+	resuming
+		ifFalse: [ ^ self ].
+	Resolver := InteractiveResolver new.
+	Resolver addResolver: SystemResolver new.
+	Resolver addResolver: PlatformResolver forCurrentPlatform
+
+FileLocator class >> supportedOrigins
+supportedOrigins
+	| origins current |
+	origins := IdentitySet new.
+	current := Resolver.
+	[ current notNil ] whileTrue: [ origins addAll: current supportedOrigins.
+			current := current next ].
+	^ origins
+
+FileLocator class >> systemApplicationSupport
+systemApplicationSupport
+	^ self origin: #systemApplicationSupport
+
+FileLocator class >> systemLibrary
+systemLibrary
+	^ self origin: #systemLibrary
+
+FileLocator class >> userApplicationSupport
+userApplicationSupport
+	^ self origin: #userApplicationSupport
+
+FileLocator class >> userData
+userData
+	^ self origin: #userData
+
+FileLocator class >> userLibrary
+userLibrary
+	^ self origin: #userLibrary
+
+FileLocator class >> vmBinary
+vmBinary
+	^ self origin: #vmBinary
+
+FileLocator class >> vmDirectory
+vmDirectory
+	^ self origin: #vmDirectory
+
+FileLocator class >> workingDirectory
+workingDirectory
+	^ FileSystem disk referenceTo: RelativePath new
+

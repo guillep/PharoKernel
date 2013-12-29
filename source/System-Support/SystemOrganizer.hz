@@ -4,28 +4,25 @@ SystemOrganizer
 	package: #'System-Support'.
 
 SystemOrganizer >> addCategory: newCategory
-[
+addCategory: newCategory
 	| r |
 	r := super addCategory: newCategory.
 	SystemAnnouncer uniqueInstance classCategoryAdded: newCategory.
 	^ r
-]
 
 SystemOrganizer >> categoriesMatching: matchString
-[
+categoriesMatching: matchString
 	"Return all matching categories"
 
 	self categories ifNil: [ ^ #() ].
 	^ self categories select: [ :c | matchString match: c ]
-]
 
 SystemOrganizer >> classesInCategory: category
-[
+classesInCategory: category
 	^ (self listAtCategoryNamed: category) collect: [ :className | self environment at: className ]
-]
 
 SystemOrganizer >> commentInventory: categoryName
-[
+commentInventory: categoryName
 	"SystemOrganization commentInventory: 'Morphic*'"
 
 	| classes commentedClasses |
@@ -37,20 +34,17 @@ SystemOrganizer >> commentInventory: categoryName
 	commentedClasses := classes select: [ :catCls | (self environment at: catCls) hasComment ].
 	^ 'There are ' , classes size asString , ' classes in ' , categoryName , ' of which ' , commentedClasses size asString
 		, ' have comments and ' , (classes size - commentedClasses size) asString , ' do not yet have comments.'
-]
 
 SystemOrganizer >> environment
-[
+environment
 	^ environment ifNil: [ environment := Smalltalk globals ]
-]
 
 SystemOrganizer >> environment: aSystemDictionary
-[
+environment: aSystemDictionary
 	environment := aSystemDictionary
-]
 
 SystemOrganizer >> fileOut
-[
+fileOut
 	"SystemOrganization fileOut"
 
 	| internalStream |
@@ -65,77 +59,68 @@ SystemOrganizer >> fileOut
 		writeSourceCodeFrom: internalStream
 		baseName: 'SystemOrganization.st' asFileReference nextVersion basenameWithoutExtension
 		isSt: true
-]
 
 SystemOrganizer >> fileOutCategory: category
-[
+fileOutCategory: category
 	"Store on the file named category (a string) concatenated with '.st' all the 
 	classes associated with the category."
 
 	| internalStream |
 	internalStream := (String new: 1000) writeStream.
-	self fileOutCategory: category on: internalStream initializing: true.
+	self fileOutCategory: category on: internalStream.
 	^ FileStream writeSourceCodeFrom: internalStream baseName: category isSt: true
-]
 
 SystemOrganizer >> fileOutCategory: category on: aFileStream
-[
+fileOutCategory: category on: aFileStream
 	"Store on the file associated with aFileStream, all the classes associated 
 	with the category and any requested shared pools."
 
 	^ self fileOutCategory: category on: aFileStream initializing: true
-]
 
 SystemOrganizer >> fileOutCategory: category on: aFileStream initializing: aBool
-[
+fileOutCategory: category on: aFileStream initializing: aBool
 	"Store on the file associated with aFileStream, all the traits and classes associated 
 	with the category and any requested shared pools in the right order."
 
-	| first poolSet tempClass classes traits |
+	| poolSet tempClass classes traits |
 	traits := self orderedTraitsIn: category.
 	classes := self superclassOrder: category.
 	poolSet := Set new.
 	classes do: [ :class | class sharedPools do: [ :eachPool | poolSet add: eachPool ] ].
-	poolSet size > 0
+	poolSet notEmpty
 		ifTrue: [ tempClass := Class new.
 			tempClass shouldFileOutPools
 				ifTrue: [ poolSet := poolSet select: [ :aPool | tempClass shouldFileOutPool: (Smalltalk globals keyAtIdentityValue: aPool) ].
 					poolSet do: [ :aPool | tempClass fileOutPool: aPool onFileStream: aFileStream ] ] ].
-	first := true.
 	traits , classes
-		do: [ :each | first
-				ifTrue: [ first := false ]
-				ifFalse: [ aFileStream
-						cr;
-						nextPut: Character newPage;
-						cr ].
-			each
+		do: [ :each | each
 				fileOutOn: aFileStream
 				moveSource: false
 				toFile: 0
-				initializing: false ].
+				initializing: false ]
+		separatedBy: [ aFileStream
+				cr;
+				nextPut: Character newPage;
+				cr ].
 	aBool
 		ifTrue: [ classes do: [ :cls | cls fileOutInitializerOn: aFileStream ] ]
-]
 
 SystemOrganizer >> includesCategory: aString
-[
+includesCategory: aString
 	"Return all matching categories"
 
 	self categories ifNil: [ ^ #() ].
 	^ self categories includes: aString
-]
 
 SystemOrganizer >> initialize
-[
+initialize
 	super initialize.
 	categoryArray := Array new.
 	categoryStops := Array new.
 	elementArray := Array new
-]
 
 SystemOrganizer >> orderedTraitsIn: category
-[
+orderedTraitsIn: category
 	"Answer an OrderedCollection containing references to the traits in the 
 	category whose name is the argument, category (a string). The traits 
 	are ordered so they can be filed in."
@@ -146,52 +131,46 @@ SystemOrganizer >> orderedTraitsIn: category
 	traits := traits
 		asSortedCollection: [ :t1 :t2 | (t2 traitComposition allTraits includes: t1) or: [ (t1 traitComposition allTraits includes: t2) not ] ].
 	^ traits asArray
-]
 
 SystemOrganizer >> removeCategoriesMatching: matchString
-[
+removeCategoriesMatching: matchString
 	"Remove all matching categories with their classes"
 
 	(self categoriesMatching: matchString) do: [ :c | self removeSystemCategory: c ]
-]
 
 SystemOrganizer >> removeCategory: category
-[
+removeCategory: category
 	| r |
 	r := super removeCategory: category.	"If the category we try to remove is the default one, due to cleansing, we don't have to announce it since it is not a valid category for a Class"
 	category = Default
 		ifFalse: [ SystemAnnouncer uniqueInstance classCategoryRemoved: category ].
 	^ r
-]
 
 SystemOrganizer >> removeMissingClasses
-[
+removeMissingClasses
 	"Remove any class names that are no longer in the Smalltalk dictionary. Used for cleaning up after garbage collecting user-generated classes."
 
 	"SystemOrganization removeMissingClasses"
 
 	elementArray copy do: [ :el | (self environment includesKey: el)
 				ifFalse: [ self removeElement: el ] ]
-]
 
 SystemOrganizer >> removeSystemCategory: category
-[
+removeSystemCategory: category
 	"remove all the classes and traits associated with the category"
 
 	(self orderedTraitsIn: category) , (self superclassOrder: category) reverseDo: [ :each | each removeFromSystem ].
 	self removeCategory: category
-]
 
 SystemOrganizer >> renameCategory: oldCatString toBe: newCatString
-[
+renameCategory: oldCatString toBe: newCatString
 	| r |
 	r := super renameCategory: oldCatString toBe: newCatString.
 	SystemAnnouncer uniqueInstance classCategoryRenamedFrom: oldCatString to: newCatString.
 	^ r
-]
 
 SystemOrganizer >> superclassOrder: category
-[
+superclassOrder: category
 	"Answer an OrderedCollection containing references to the classes in the 
 	category whose name is the argument, category (a string). The classes 
 	are ordered with superclasses first so they can be filed in."
@@ -200,10 +179,9 @@ SystemOrganizer >> superclassOrder: category
 	behaviors := (self listAtCategoryNamed: category asSymbol) collect: [ :title | self environment at: title ].
 	classes := behaviors select: [ :each | each isBehavior ].
 	^ Class superclassOrder: classes
-]
 
 SystemOrganizer >> uncommentedClassesIn: categoryName
-[
+uncommentedClassesIn: categoryName
 	"SystemOrganization uncommentedClassesIn: 'Morphic*'"
 
 	| classes |
@@ -213,20 +191,17 @@ SystemOrganizer >> uncommentedClassesIn: categoryName
 				ifTrue: [ classes addAll: (self listAtCategoryNumber: idx) ]
 				ifFalse: [ nil ] ].
 	^ (classes collect: [ :clsName | self environment at: clsName ] thenSelect: [ :cls | cls hasComment not ]) asArray
-]
 
 SystemOrganizer class >> cleanUp: agressive
-[
+cleanUp: agressive
 	"Remove empty categories when cleaning aggressively"
 
 	agressive
 		ifTrue: [ SystemOrganization removeEmptyCategories ]
-]
 
 SystemOrganizer class >> default
-[
+default
 	"look in the environment that the receiver organizes for the associated organization"
 
 	^ self environment organization
-]
 

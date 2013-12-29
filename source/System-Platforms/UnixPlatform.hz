@@ -2,13 +2,19 @@ UnixPlatform
 	superclass: #OSPlatform;
 	package: #'System-Platforms'.
 
-UnixPlatform >> platformFamily
-[
+UnixPlatform >> family
+family
 	^ #Unix
-]
+
+UnixPlatform >> isUnix
+isUnix
+	^ true
+
+UnixPlatform >> lineEnding
+lineEnding
+	^ String lf
 
 UnixPlatform class >> isActivePlatform
-[
-	^ OSPlatform isUnix
-]
+isActivePlatform
+	^ self currentPlatformName = 'unix'
 

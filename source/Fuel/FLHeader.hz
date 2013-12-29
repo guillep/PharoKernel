@@ -1,0 +1,61 @@
+FLHeader
+	instanceVariables: #(#preMaterializationActions #additionalObjects #postMaterializationActions #materialization );
+	package: #Fuel.
+
+FLHeader >> addPostMaterializationAction: aCleanBlockClosure
+addPostMaterializationAction: aCleanBlockClosure
+	"The closure may (or not) have one parameter and it will be the materialization."
+
+	aCleanBlockClosure isClean
+		ifFalse: [ self
+				error: 'Post materializaton actions have to be clean closures. For more details see method BlocKClosure >> #isClean' ].
+	postMaterializationActions add: aCleanBlockClosure
+
+FLHeader >> addPreMaterializationAction: aCleanBlockClosure
+addPreMaterializationAction: aCleanBlockClosure
+	aCleanBlockClosure isClean
+		ifFalse: [ self error: 'Pre materializaton actions have to be clean closures. For more details see method BlocKClosure >> #isClean' ].
+	preMaterializationActions add: aCleanBlockClosure
+
+FLHeader >> additionalObjectAt: key
+additionalObjectAt: key
+	^ additionalObjects at: key
+
+FLHeader >> at: key putAdditionalObject: anObject
+at: key putAdditionalObject: anObject
+	"This is useful if we want to attach objects to a package that will also be serialized. The way they are stored is key-value."
+
+	additionalObjects at: key put: anObject
+
+FLHeader >> executePostMaterializationActions
+executePostMaterializationActions
+	postMaterializationActions do: [ :each | each cull: materialization ]
+
+FLHeader >> executePreMaterializationActions
+executePreMaterializationActions
+	preMaterializationActions do: [ :each | each value ]
+
+FLHeader >> initialize
+initialize
+	additionalObjects := IdentityDictionary new.
+	preMaterializationActions := OrderedCollection new.
+	postMaterializationActions := OrderedCollection new
+
+FLHeader >> isEmpty
+isEmpty
+	^ preMaterializationActions isEmpty and: [ postMaterializationActions isEmpty and: [ additionalObjects isEmpty ] ]
+
+FLHeader >> materialization: aMaterialization
+materialization: aMaterialization
+	"This is just set once the materialization had happened"
+
+	materialization := aMaterialization
+
+FLHeader >> postMaterializationActions: listOfPostMaterializationActions
+postMaterializationActions: listOfPostMaterializationActions
+	postMaterializationActions := listOfPostMaterializationActions
+
+FLHeader >> preMaterializationActions: listOfPreMaterializationActions
+preMaterializationActions: listOfPreMaterializationActions
+	preMaterializationActions := listOfPreMaterializationActions
+

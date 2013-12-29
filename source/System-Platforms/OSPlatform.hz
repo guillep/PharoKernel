@@ -1,123 +1,158 @@
 OSPlatform
+	instanceVariables: #(#environment );
 	classVariables: #(#Current );
 	package: #'System-Platforms'.
 
-OSPlatform >> platformFamily
-[
+OSPlatform >> current
+current
+	^ self
+
+OSPlatform >> environment
+environment
+	^ environment ifNil: [ environment := NixEnvironment new ]
+
+OSPlatform >> family
+family
 	"Returns a symbol specific to the platform family (MacOSX, Windows, Unix, RiscOS).
 	This may need to be extended if there are new platforms added or significant differences within a platform family arise (as was the case between MacOS 9 and X)."
 
 	self subclassResponsibility
-]
+
+OSPlatform >> isMacOS
+isMacOS
+	^ false
+
+OSPlatform >> isMacOSX
+isMacOSX
+	^ false
+
+OSPlatform >> isUnix
+isUnix
+	^ false
+
+OSPlatform >> isWin32
+isWin32
+	^ false
+
+OSPlatform >> isWindows
+isWindows
+	^ false
+
+OSPlatform >> isX11
+isX11
+	^ self windowSystemName = 'X11'
+
+OSPlatform >> lineEnding
+lineEnding
+	^ self subclassResponsibility
+
+OSPlatform >> name
+name
+	"Return the name of the platform we're running on"
+
+	^ self class currentPlatformName
+
+OSPlatform >> platformFamily
+platformFamily
+	^ self family
+
+OSPlatform >> platformName
+platformName
+	^ self name
 
 OSPlatform >> shutDown: quitting
-[
+shutDown: quitting
 	"Pharo is shutting down. If this platform requires specific shutdown code, this is a great place to put it."
 
 	
-]
 
 OSPlatform >> startUp: resuming
-[
+startUp: resuming
 	"Pharo is starting up. If this platform requires specific intialization, this is a great place to put it."
 
 	
-]
+
+OSPlatform >> subtype
+subtype
+	"Return the subType of the platform we're running on"
+
+	^ Smalltalk vm getSystemAttribute: 1003
+
+OSPlatform >> version
+version
+	"Return the version number string of the platform we're running on"
+
+	^ self class currentVersion
 
 OSPlatform >> virtualKey: virtualKeyCode
-[
-	^ self class virtualKey: virtualKeyCode
-]
+virtualKey: virtualKeyCode
+	"Subclass responsibility to override if necessary"
+
+	^ nil
+
+OSPlatform >> windowSystemName
+windowSystemName
+	"Return the name of the window system currently being used for display."
+
+	^ Smalltalk vm getSystemAttribute: 1005
 
 OSPlatform class >> current
-[
+current
 	"Answer the current platform"
 
 	^ Current
-]
+
+OSPlatform class >> currentPlatformName
+currentPlatformName
+	"Return the name of the platform we're running on"
+
+	^ Smalltalk vm getSystemAttribute: 1001
+
+OSPlatform class >> currentVersion
+currentVersion
+	"Return the version number string of the platform we're running on"
+
+	^ (Smalltalk vm getSystemAttribute: 1002) asString
 
 OSPlatform class >> determineActivePlatformStartingAt: parentClass
-[
+determineActivePlatformStartingAt: parentClass
 	"Determine the current platform starting at parentClass.
 	This is a potentially recursive process as we want to determine the most specific (in terms of subclasses) platform available."
 
 	"OSPlatform determineActivePlatformStartingAt: OSPlatform"
 
 	| platformClass |
-	parentClass subclasses isEmpty
-		ifTrue: [ ^ parentClass ].	"Look for the matching platform class"
+	parentClass subclasses ifEmpty: [ ^ parentClass ].	"Look for the matching platform class"
 	platformClass := parentClass allSubclasses detect: [ :any | any isActivePlatform ] ifNone: [ nil ].	"Check if there is a more specific subclass"
 	^ self determineActivePlatformStartingAt: platformClass
-]
 
 OSPlatform class >> initialize
-[
+initialize
 	"Initialize the receiver"
 
 	"OSPlatform initialize"
 
-	Smalltalk removeFromStartUpList: self.
-	Smalltalk addToStartUpList: self after: Delay.
-	Smalltalk removeFromShutDownList: self.
-	Smalltalk addToShutDownList: self after: DisplayScreen.
+	Smalltalk
+		removeFromStartUpList: self;
+		addToStartUpList: self after: Delay;
+		removeFromShutDownList: self;
+		addToShutDownList: self after: DisplayScreen.
 	self startUp: true
-]
 
 OSPlatform class >> isActivePlatform
-[
+isActivePlatform
 	"Answer whether the receiver is the active platform"
 
 	^ false
-]
-
-OSPlatform class >> isMacOS
-[
-	^ self platformName = 'Mac OS'
-]
-
-OSPlatform class >> isMacOSX
-[
-	^ self isMacOS and: [ '10*' match: self version ]
-]
-
-OSPlatform class >> isUnix
-[
-	^ self platformName = 'unix'
-]
-
-OSPlatform class >> isWin32
-[
-	^ self platformName = 'Win32'
-]
-
-OSPlatform class >> isX11
-[
-	^ self isUnix and: [ self windowSystemName = 'X11' ]
-]
-
-OSPlatform class >> platformName
-[
-	"Return the name of the platform we're running on"
-
-	^ Smalltalk vm getSystemAttribute: 1001
-]
-
-OSPlatform class >> platformSubtype
-[
-	"Return the subType of the platform we're running on"
-
-	^ self subtype
-]
 
 OSPlatform class >> shutDown: quitting
-[
+shutDown: quitting
 	"The system is going down"
 
 	Current ifNotNil: [ Current shutDown: quitting ]
-]
 
 OSPlatform class >> startUp: resuming
-[
+startUp: resuming
 	"Determine the current platform.
 	Use the most specific (in terms of subclasses) platform available."
 
@@ -127,39 +162,4 @@ OSPlatform class >> startUp: resuming
 	platformClass ifNil: [ ^ self ].
 	Current := platformClass new.
 	Current startUp: resuming
-]
-
-OSPlatform class >> subtype
-[
-	"Return the subType of the platform we're running on"
-
-	"Smalltalk platformSubtype"
-
-	^ Smalltalk vm getSystemAttribute: 1003
-]
-
-OSPlatform class >> version
-[
-	"Return the version number string of the platform we're running on"
-
-	"OSPlatform osVersion"
-
-	^ (Smalltalk vm getSystemAttribute: 1002) asString
-]
-
-OSPlatform class >> virtualKey: virtualKeyCode
-[
-	"Subclass responsibility to override if necessary"
-
-	^ nil
-]
-
-OSPlatform class >> windowSystemName
-[
-	"Return the name of the window system currently being used for display."
-
-	"OSPlatform windowSystemName"
-
-	^ Smalltalk vm getSystemAttribute: 1005
-]
 

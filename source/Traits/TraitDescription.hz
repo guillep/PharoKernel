@@ -1,0 +1,148 @@
+TraitDescription
+	superclass: #TraitBehavior;
+	traitComposition: TClassDescription + TComposingDescription + TTransformationCompatibility;
+	instanceVariables: #(#organization );
+	package: #Traits.
+
+TraitDescription >> - anArrayOfSelectors
+- anArrayOfSelectors
+	^ TraitExclusion
+		with: self
+		exclusions: (anArrayOfSelectors isSymbol
+				ifTrue: [ {anArrayOfSelectors} ]
+				ifFalse: [ anArrayOfSelectors ])
+
+TraitDescription >> addAndClassifySelector: selector withMethod: compiledMethod inProtocol: category notifying: requestor
+addAndClassifySelector: selector withMethod: compiledMethod inProtocol: category notifying: requestor
+	| priorMethodOrNil priorOriginOrNil oldProtocol newProtocol |
+	priorMethodOrNil := self compiledMethodAt: selector ifAbsent: [  ].
+	priorMethodOrNil ifNotNil: [ priorOriginOrNil := priorMethodOrNil origin ].	"We categorize first, so the users can use the categorization at the add moment"
+	oldProtocol := self organization categoryOfElement: selector.
+	SystemAnnouncer uniqueInstance suspendAllWhile: [ self organization classify: selector under: category ].
+	self addSelectorSilently: selector withMethod: compiledMethod.
+	newProtocol := self organization categoryOfElement: selector.
+	(priorMethodOrNil isNil or: [ priorOriginOrNil ~= compiledMethod origin ])
+		ifTrue: [ SystemAnnouncer uniqueInstance
+				methodAdded: compiledMethod
+				selector: selector
+				inProtocol: category
+				class: self
+				requestor: requestor ]
+		ifFalse: [ SystemAnnouncer uniqueInstance
+				methodChangedFrom: priorMethodOrNil
+				to: compiledMethod
+				selector: selector
+				inClass: self
+				oldProtocol: oldProtocol
+				newProtocol: newProtocol
+				requestor: requestor ]
+
+TraitDescription >> addExclusionOf: aSymbol
+addExclusionOf: aSymbol
+	^ self - {aSymbol}
+
+TraitDescription >> addInstVarNamed: aString
+addInstVarNamed: aString
+	"Compatibility purposes"
+
+	
+
+TraitDescription >> baseTrait
+baseTrait
+	self subclassResponsibility
+
+TraitDescription >> basicOrganization
+basicOrganization
+	^ organization
+
+TraitDescription >> basicOrganization: aClassOrg
+basicOrganization: aClassOrg
+	organization := aClassOrg
+
+TraitDescription >> classTrait
+classTrait
+	self subclassResponsibility
+
+TraitDescription >> copyTraitExpression
+copyTraitExpression
+	"When recursively copying a trait expression, the primitive traits should NOT be copied
+because they are globally named 'well-known' objects"
+
+	^ self
+
+TraitDescription >> definition
+definition
+	"Answer a String that defines the receiver"
+
+	^ String
+		streamContents: [ :stream | stream nextPutAll: self class name.
+			stream
+				nextPutAll: ' named: ';
+				store: self name.
+			stream
+				cr;
+				tab;
+				nextPutAll: 'uses: ';
+				nextPutAll: self traitCompositionString.
+			stream
+				cr;
+				tab;
+				nextPutAll: 'category: ';
+				store: self category asString ]
+
+TraitDescription >> instanceVariables
+instanceVariables
+	^ #()
+
+TraitDescription >> instanceVariables: anObject
+instanceVariables: anObject
+	"Compatibility purposes"
+
+	
+
+TraitDescription >> isBaseTrait
+isBaseTrait
+	self subclassResponsibility
+
+TraitDescription >> isClassTrait
+isClassTrait
+	self subclassResponsibility
+
+TraitDescription >> noteChangesFrom: oldMethodDict
+noteChangesFrom: oldMethodDict
+	"create notifications about the changes made to the method dictionary"
+
+	"deal with additions"
+
+	self methodDict
+		keysAndValuesDo: [ :selector :currentMethod | oldMethodDict at: selector ifAbsent: [ self noteMethodAdded: currentMethod ] ].	" deal with removal / updates"
+	oldMethodDict
+		keysAndValuesDo: [ :selector :oldMethod | self methodDict
+				at: selector
+				ifPresent: [ :currentMethod | currentMethod = oldMethod
+						ifFalse: [ self noteMethodChanged: oldMethod to: currentMethod ] ]
+				ifAbsent: [ self noteMethodRemoved: oldMethod ] ]
+
+TraitDescription >> theMetaClass
+theMetaClass
+	^ self classTrait
+
+TraitDescription >> theNonMetaClass
+theNonMetaClass
+	^ self baseTrait
+
+TraitDescription >> updateOrganizationSelector: aSymbol oldCategory: oldCategoryOrNil newCategory: newCategoryOrNil
+updateOrganizationSelector: aSymbol oldCategory: oldCategoryOrNil newCategory: newCategoryOrNil
+	| changedCategories composition |
+	changedCategories := IdentitySet new.
+	composition := self hasTraitComposition
+		ifTrue: [ self traitComposition ]
+		ifFalse: [ TraitComposition new ].
+	(composition methodDescriptionsForSelector: aSymbol)
+		do: [ :each | self
+				updateOrganizationDescription: each
+				oldCategory: newCategoryOrNil
+				newCategory: oldCategoryOrNil
+				changed: changedCategories ].
+	^ changedCategories
+

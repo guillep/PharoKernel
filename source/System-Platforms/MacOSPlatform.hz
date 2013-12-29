@@ -1,0 +1,24 @@
+MacOSPlatform
+	superclass: #OSPlatform;
+	package: #'System-Platforms'.
+
+MacOSPlatform >> family
+family
+	^ #MacOS
+
+MacOSPlatform >> isMacOS
+isMacOS
+	^ true
+
+MacOSPlatform >> lineEnding
+lineEnding
+	^ String lf
+
+MacOSPlatform class >> isActivePlatform
+isActivePlatform
+	^ self isMacOS and: [ self currentVersion asNumber < 1000 ]
+
+MacOSPlatform class >> isMacOS
+isMacOS
+	^ self currentPlatformName = 'Mac OS'
+

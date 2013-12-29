@@ -3,17 +3,15 @@ ReadStream
 	package: #'Collections-Streams'.
 
 ReadStream >> ascii
-[
+ascii
 	
-]
 
 ReadStream >> localName
-[
+localName
 	^ 'ReadStream'
-]
 
 ReadStream >> next
-[
+next
 	"Primitive. Answer the next object in the Stream represented by the
 	receiver. Fail if the collection of this stream is not an Array or a String.
 	Fail if the stream is positioned at its end, or if the position is out of
@@ -24,10 +22,9 @@ ReadStream >> next
 	position >= readLimit
 		ifTrue: [ ^ nil ]
 		ifFalse: [ ^ collection at: (position := position + 1) ]
-]
 
 ReadStream >> next: anInteger
-[
+next: anInteger
 	"Answer the next anInteger elements of my collection.  overriden for efficiency"
 
 	| ans endPosition |
@@ -35,27 +32,13 @@ ReadStream >> next: anInteger
 	ans := collection copyFrom: position + 1 to: endPosition.
 	position := endPosition.
 	^ ans
-]
-
-ReadStream >> next: requestedCount into: aCollection startingAt: startIndex
-[
-	"Read requestedCount objects into the given collection. 
-	Return aCollection or a partial copy if less elements have been read."
-
-	| readCount |
-	readCount := self readInto: aCollection startingAt: startIndex count: requestedCount.
-	^ readCount = requestedCount
-		ifTrue: [ ^ aCollection ]
-		ifFalse: [ ^ aCollection copyFrom: 1 to: startIndex + readCount - 1 ]
-]
 
 ReadStream >> nextPut: anObject
-[
+nextPut: anObject
 	self shouldNotImplement
-]
 
 ReadStream >> on: aCollection from: firstIndex to: lastIndex
-[
+on: aCollection from: firstIndex to: lastIndex
 	| len |
 	collection := aCollection.
 	readLimit := lastIndex > (len := collection size)
@@ -64,10 +47,9 @@ ReadStream >> on: aCollection from: firstIndex to: lastIndex
 	position := firstIndex <= 1
 		ifTrue: [ 0 ]
 		ifFalse: [ firstIndex - 1 ]
-]
 
 ReadStream >> readInto: aCollection startingAt: startIndex count: n
-[
+readInto: aCollection startingAt: startIndex count: n
 	"Read n objects into the given collection. 
 	Return number of elements that have been read."
 
@@ -80,24 +62,21 @@ ReadStream >> readInto: aCollection startingAt: startIndex count: n
 		startingAt: position + 1.
 	position := position + max.
 	^ max
-]
 
 ReadStream >> readStream
-[
+readStream
 	"polymorphic with SequenceableCollection.  Return self"
 
 	^ self
-]
 
 ReadStream >> size
-[
+size
 	"Compatibility with other streams (e.g., FileStream)"
 
 	^ readLimit
-]
 
 ReadStream >> upTo: anObject
-[
+upTo: anObject
 	"fast version using indexOf:"
 
 	| start end |
@@ -107,10 +86,9 @@ ReadStream >> upTo: anObject
 		ifTrue: [ ^ self upToEnd ].	"skip to the end and return the data passed over"
 	position := end.
 	^ collection copyFrom: start to: end - 1
-]
 
 ReadStream >> upToAnyOf: aCollection do: aBlock
-[
+upToAnyOf: aCollection do: aBlock
 	"Overriden for speed"
 
 	| end result |
@@ -121,21 +99,18 @@ ReadStream >> upToAnyOf: aCollection do: aBlock
 	position := end.
 	aBlock value: (collection at: end).
 	^ result
-]
 
 ReadStream >> upToEnd
-[
+upToEnd
 	| start |
 	start := 1 + position.
 	position := readLimit.
 	^ collection copyFrom: start to: position
-]
 
 ReadStream class >> on: aCollection from: firstIndex to: lastIndex
-[
+on: aCollection from: firstIndex to: lastIndex
 	"Answer with a new instance streaming over a copy of aCollection from
 	firstIndex to lastIndex."
 
 	^ self basicNew on: aCollection from: firstIndex to: lastIndex
-]
 

@@ -1,0 +1,32 @@
+AbstractEnumerationVisitor
+	superclass: #FileSystemVisitor;
+	instanceVariables: #(#out #block );
+	package: #'FileSystem-Core'.
+
+AbstractEnumerationVisitor >> breadthFirst: aReference
+breadthFirst: aReference
+	^ self visit: aReference with: (BreadthFirstGuide for: self)
+
+AbstractEnumerationVisitor >> initializeWithBlock: aBlock
+initializeWithBlock: aBlock
+	self initialize.
+	block := aBlock
+
+AbstractEnumerationVisitor >> postorder: aReference
+postorder: aReference
+	^ self visit: aReference with: (PostorderGuide for: self)
+
+AbstractEnumerationVisitor >> preorder: aReference
+preorder: aReference
+	^ self visit: aReference with: (PreorderGuide for: self)
+
+AbstractEnumerationVisitor >> visit: aReference with: aGuide
+visit: aReference with: aGuide
+	out := (Array new: 10) writeStream.
+	aGuide show: aReference.
+	^ out contents
+
+AbstractEnumerationVisitor >> visitReference: anEntry
+visitReference: anEntry
+	self subclassResponsibility
+

@@ -1,0 +1,22 @@
+ResolutionRequest
+	superclass: #Notification;
+	instanceVariables: #(#origin );
+	package: #'FileSystem-Core'.
+
+ResolutionRequest >> defaultAction
+defaultAction
+	| filedir ref |
+	filedir := UIManager default chooseDirectory: 'Where is ' , origin asString , '?'.
+	ref := filedir ifNotNil: [ FileSystem disk referenceTo: filedir fullName ].
+	self resume: ref
+
+ResolutionRequest >> origin: aSymbol
+origin: aSymbol
+	origin := aSymbol
+
+ResolutionRequest class >> for: origin
+for: origin
+	^ self new
+		origin: origin;
+		signal
+

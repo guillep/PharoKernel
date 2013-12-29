@@ -1,0 +1,94 @@
+TraitBehavior
+	traitComposition: TBehavior;
+	instanceVariables: #(#methodDict #traitComposition #localSelectors #users );
+	package: #Traits.
+
+TraitBehavior >> basicLocalSelectors
+basicLocalSelectors
+	"Direct accessor for the instance variable localSelectors.
+	Since localSelectors is lazily initialized, this may 
+	return nil, which means that all selectors are local."
+
+	^ localSelectors
+
+TraitBehavior >> basicLocalSelectors: aSetOrNil
+basicLocalSelectors: aSetOrNil
+	localSelectors := aSetOrNil
+
+TraitBehavior >> basicNew
+basicNew
+	self error: 'Traits cannot create instances'
+
+TraitBehavior >> basicNew: sizeRequested
+basicNew: sizeRequested
+	self error: 'Traits cannot create instances'
+
+TraitBehavior >> basicObsoleteSubclasses
+basicObsoleteSubclasses
+	^ WeakKeyToCollectionDictionary new
+
+TraitBehavior >> bindingOf: varName
+bindingOf: varName
+	"Answer the binding of some variable resolved in the scope of the receiver"
+
+	^ self environment bindingOf: varName asSymbol
+
+TraitBehavior >> instSize
+instSize
+	^ 0
+
+TraitBehavior >> isTrait
+isTrait
+	^ true
+
+TraitBehavior >> methodDict
+methodDict
+	^ methodDict
+
+TraitBehavior >> methodDict: aDictionary
+methodDict: aDictionary
+	methodDict := aDictionary
+
+TraitBehavior >> name
+name
+	^ self subclassResponsibility
+
+TraitBehavior >> setFormat: aFormatInstanceDescription
+setFormat: aFormatInstanceDescription
+	"Compatibility purposes"
+
+	
+
+TraitBehavior >> subclassDefinerClass
+subclassDefinerClass
+	^ nil subclassDefinerClass
+
+TraitBehavior >> superclass
+superclass
+	"For compatibility with classes"
+
+	^ nil
+
+TraitBehavior >> superclass: aClass
+superclass: aClass
+	"Compatibility purposes"
+
+	
+
+TraitBehavior >> traitComposition
+traitComposition
+	traitComposition ifNil: [ traitComposition := TraitComposition new ].
+	^ traitComposition
+
+TraitBehavior >> traitComposition: aTraitComposition
+traitComposition: aTraitComposition
+	traitComposition := aTraitComposition
+
+TraitBehavior >> users
+users
+	^ users
+
+TraitBehavior >> users: aCollection
+users: aCollection
+	users := aCollection
+

@@ -3,71 +3,64 @@ MemoryFileSystemDirectory
 	instanceVariables: #(#entries );
 	package: #'FileSystem-Memory'.
 
-MemoryFileSystemDirectory >> ensureDirectory: aDirectoryName
-[
+MemoryFileSystemDirectory >> ensureCreateDirectory: aDirectoryName
+ensureCreateDirectory: aDirectoryName
 	^ self fileEntryAt: aDirectoryName put: (MemoryFileSystemDirectory named: aDirectoryName)
-]
 
-MemoryFileSystemDirectory >> ensureFile: aFileName
-[
+MemoryFileSystemDirectory >> ensureCreateFile: aFileName
+ensureCreateFile: aFileName
 	^ self fileEntryAt: aFileName put: (MemoryFileSystemFile named: aFileName)
-]
 
 MemoryFileSystemDirectory >> entries
-[
+entries
 	^ entries
-]
 
 MemoryFileSystemDirectory >> fileEntriesDo: aBlock
-[
-	entries keys sorted do: [ :fileName | aBlock value: (entries at: fileName) ]
-]
+fileEntriesDo: aBlock
+	entries keys sort do: [ :fileName | aBlock value: (entries at: fileName) ]
 
-MemoryFileSystemDirectory >> fileEntryAt: aFIleName
-[
-	^ entries at: aFIleName
-]
+MemoryFileSystemDirectory >> fileEntriesIncludes: aFileName
+fileEntriesIncludes: aFileName
+	^ entries includesKey: aFileName
+
+MemoryFileSystemDirectory >> fileEntryAt: aFileName
+fileEntryAt: aFileName
+	^ entries at: aFileName
 
 MemoryFileSystemDirectory >> fileEntryAt: aFileName ifAbsent: aBlock
-[
+fileEntryAt: aFileName ifAbsent: aBlock
 	^ entries at: aFileName ifAbsent: aBlock
-]
 
 MemoryFileSystemDirectory >> fileEntryAt: aFileName ifPresent: aBlock
-[
+fileEntryAt: aFileName ifPresent: aBlock
 	^ entries at: aFileName ifPresent: aBlock
-]
 
-MemoryFileSystemDirectory >> fileEntryAt: aFIleName put: anEntry
-[
-	^ entries at: aFIleName ifAbsentPut: [ self modified.
+MemoryFileSystemDirectory >> fileEntryAt: aFileName put: anEntry
+fileEntryAt: aFileName put: anEntry
+	^ entries at: aFileName ifAbsentPut: [ self modified.
 			anEntry ]
-]
+
+MemoryFileSystemDirectory >> fileEntryRemove: aFileName
+fileEntryRemove: aFileName
+	^ self fileEntryRemove: aFileName ifAbsent: [ FileDoesNotExist signalWith: aFileName ]
+
+MemoryFileSystemDirectory >> fileEntryRemove: aFileName ifAbsent: absentBlock
+fileEntryRemove: aFileName ifAbsent: absentBlock
+	| deletedEntry |
+	deletedEntry := entries removeKey: aFileName ifAbsent: [ ^ absentBlock value ].
+	modificationTime := DateAndTime now.
+	^ deletedEntry
 
 MemoryFileSystemDirectory >> fileSize
-[
+fileSize
 	^ 0
-]
-
-MemoryFileSystemDirectory >> includes: aFIleName
-[
-	^ entries includesKey: aFIleName
-]
 
 MemoryFileSystemDirectory >> initialize
-[
+initialize
 	super initialize.
 	entries := Dictionary new
-]
 
 MemoryFileSystemDirectory >> isDirectory
-[
+isDirectory
 	^ true
-]
-
-MemoryFileSystemDirectory >> remove: aFileName
-[
-	modificationTime := DateAndTime now.
-	^ entries removeKey: aFileName
-]
 
