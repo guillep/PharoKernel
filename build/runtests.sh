@@ -13,17 +13,18 @@ cd $RESULTS_FOLDER
 
 #Load image for this project
 
-wget -O - get.pharo.org/20+vm | bash
-./pharo Pharo.image save PharoBootstrap --delete-old
+wget -O - guillep.github.io/files/get/OzVm1.0 | bash
+wget -O - get.pharo.org/20 | bash
+./oz Pharo.image save PharoBootstrap --delete-old
 
 
 
 #Load stable version of the monticello configuration, according to this git sources
 REPO=http://smalltalkhub.com/mc/Guille/Seed/main
-./pharo PharoBootstrap.image config $REPO ConfigurationOfHazelnut --install=bleedingEdge
+./oz PharoBootstrap.image config $REPO ConfigurationOfHazelnut --install=bleedingEdge
 
 echo "Configuration Loaded. running tests"
 
-./pharo PharoBootstrap.image test --junit-xml-output "Seed.*"
+./oz PharoBootstrap.image test --junit-xml-output "Seed.*"
 
 echo "Script created and loaded. Finished! :D"
