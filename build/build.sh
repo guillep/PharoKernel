@@ -21,7 +21,7 @@ cd $RESULTS_FOLDER
 
 #Load image for this project
 
-wget -O - guillep.github.io/files/get/OzVm1.0 | bash
+wget -O - guillep.github.io/files/get/OzVmLatest | bash
 wget -O - get.pharo.org/20 | bash
 ./oz Pharo.image save PharoBootstrap --delete-old
 
@@ -49,7 +49,7 @@ objectSpace worldConfiguration: OzPharo20 world.
 objectSpace interpreter: (AtASTEvaluator new codeProvider: seed; yourself).
 
 \"Create a builder, and tell it to bootstrap. Voilá, the objectSpace will be full\"
-builder := Pharo20Builder new.
+builder := Pharo30Builder new.
 builder kernelSpec: seed.
 builder objectSpace: objectSpace.
 builder	buildKernel.
@@ -62,4 +62,3 @@ Smalltalk snapshot: true andQuit: true.
 rm script.st
 rm PharoDebug.log
 echo "Script created and loaded. Finished! :D"
-#./pharo $JOB_NAME.image test --junit-xml-output "Seed.*"
