@@ -20,7 +20,7 @@ build/build.sh
 
 Once downloaded and built, a _results_ folder will be created. The results folder will contain a complete Pharo environment, with the following files:
 - pharo_vm: a folder containing the Pharo Virtual Machine
-- pharo and pharo_ui scripts to run the VM
+- oz and oz_ui scripts to run the VM
 - PharoBootstrap.image: Pharo 2.0 image file with the pharo candle project installed
 - PharoBootstrap.changes: the changes log of the correspondent image with the same name
 - package-cache: a folder for caching Pharo's monticello packages  
@@ -32,7 +32,7 @@ To create a Pharo Kernel image from source code, we bootstrap it following the p
 
 ```bash
 cd results
-pharo-ui PharoBootstrap.image
+oz-ui PharoBootstrap.image
 ```
 
 The Pharo image will contain the Pharo 2.0 welcome workspace, and a workspace with the code to run the PharoBootstrap.
@@ -43,22 +43,27 @@ WARNING: This code is still not up to date.
 
 Load the sourcecode into the image:
 ```smalltalk
-seed := PharoCandleSeed new
-    fromDirectoryNamed: '../source';
-    buildSeed.
+"We skip some files that should actually be removed from the spec because they are inconsistently packaged"
+skipped := #('FloatArrayTest.hz' 'MatrixTest.hz' 'ArrayTest.hz' 'AppRegistry class.hz' 'MIMEDocument.hz' 'Color.hz' 'CodeImporter.hz').
+"Load a seed from the folder of the downloaded sources"
+seed := PharoSeed new
+	fromDirectoryNamed: '../source';
+	except: [ :a | skipped includes: a basename ];
+	buildSeed.
 ```
 
 Create an object space that will use an AST evaluator to run code during the bootstrap. An objectspace is an object enclosing the bootstrapped image.
 ```smalltalk
 objectSpace := AtObjectSpace new.
+objectSpace worldConfiguration: OzPharo20 world.
 objectSpace interpreter: (AtASTEvaluator new codeProvider: seed; yourself).
 ```
 
 Create a PharoCandle builder, and tell it to bootstrap. Voilá, the objectSpace will be full
 ```smalltalk
-builder := PharoCandleBuilder new.
-builder objectSpace: objectSpace.
+builder := Pharo30Builder new.
 builder kernelSpec: seed.
+builder objectSpace: objectSpace.
 builder	buildKernel.
 ```
 
@@ -70,7 +75,7 @@ objectSpace browse.
 
 You can serialize the objectSpace into an image file (Cog format) by evaluating
 ```smalltalk
-objectSpace serializeInFileNamed: 'PharoSeed.image'.
+objectSpace serializeInFileNamed: 'PharoKernel.image'.
 ```
 
 Pharo Kernel Overview
