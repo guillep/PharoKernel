@@ -1,0 +1,30 @@
+MethodModification
+	superclass: #AbstractModification;
+	instanceVariables: #(#addedSlots );
+	package: #Slot.
+
+MethodModification >> addedSlotNamed: name ifAbsent: aBlock
+[
+	^ addedSlots at: name ifAbsent: aBlock
+]
+
+MethodModification >> initialize
+[
+	addedSlots := Dictionary new
+]
+
+MethodModification >> installAddedSlot: addedSlot
+[
+	addedSlots at: addedSlot name put: addedSlot
+]
+
+MethodModification >> installModifiedSlot: modifiedSlot
+[
+	modificationMap at: modifiedSlot oldFieldIndex put: modifiedSlot
+]
+
+MethodModification >> installRemovedSlot: removedSlot
+[
+	modificationMap at: removedSlot oldFieldIndex put: removedSlot
+]
+

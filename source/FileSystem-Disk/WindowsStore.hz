@@ -20,19 +20,45 @@ WindowsStore >> checkName: aFileName fixErrors: fixing
 				ifFalse: [ char ] ]
 ]
 
+WindowsStore >> currentDisk
+[
+	^ disk ifNil: [ disk := FileSystem workingDirectory path segments first ]
+]
+
 WindowsStore >> pathFromString: aString
 [
-	| normalized pathClass |
+	"Need to distinguish '' and '/' , so tag latter with invalid character ':'  "
+
+	| normalized pathClass pathElements |
 	normalized := aString copy replaceAll: UnixStore delimiter with: self delimiter.
+	pathElements := self delimiter split: normalized.
 	pathClass := (Path isAbsoluteWindowsPath: normalized)
-		ifTrue: [ AbsolutePath ]
-		ifFalse: [ RelativePath ].
-	^ pathClass withAll: (pathClass canonicalizeElements: (self delimiter split: normalized))
+		ifTrue: [ normalized = self delimiter asString
+				ifTrue: [ pathElements := {':'} ].
+			AbsolutePath ]
+		ifFalse: [ self stripDrive: pathElements.
+			RelativePath ].
+	^ pathClass withAll: (pathClass canonicalizeElements: pathElements)
 ]
 
 WindowsStore >> printPath: aPath on: aStream
 [
-	aPath printOn: aStream delimiter: self delimiter
+	| hasDrive |
+	aPath isRoot
+		ifTrue: [ ^ self ].	"effectively Windows root is empty string"
+	aPath segments first first = $:
+		ifTrue: [ ^ aStream nextPut: self delimiter ].	"as tagged in #pathFromString:  "
+	hasDrive := aPath segments first second = $:.
+	(aPath isAbsolute and: hasDrive not)
+		ifTrue: [ aStream nextPut: self delimiter ].
+	aPath printOn: aStream delimiter: self delimiter.
+	((aPath isAbsolute and: hasDrive) and: aPath segments size = 1)
+		ifTrue: [ aStream nextPut: self delimiter ]
+]
+
+WindowsStore >> stripDrive: pathElements
+[
+	pathElements ifNotEmpty: [ pathElements at: 1 put: ($: split: pathElements first) last ]
 ]
 
 WindowsStore class >> delimiter

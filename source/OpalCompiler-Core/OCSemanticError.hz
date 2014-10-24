@@ -1,0 +1,55 @@
+OCSemanticError
+	superclass: #Error;
+	instanceVariables: #(#compilationContext #node );
+	package: #'OpalCompiler-Core'.
+
+OCSemanticError >> compilationContext
+[
+	^ compilationContext
+]
+
+OCSemanticError >> compilationContext: anObject
+[
+	compilationContext := anObject
+]
+
+OCSemanticError >> defaultAction
+[
+	^ self notify: messageText at: node start
+]
+
+OCSemanticError >> methodClass
+[
+	^ self methodNode methodClass
+]
+
+OCSemanticError >> methodNode
+[
+	^ node methodNode
+]
+
+OCSemanticError >> node
+[
+	^ node
+]
+
+OCSemanticError >> node: aNode
+[
+	node := aNode
+]
+
+OCSemanticError >> notify: aString at: location
+[
+	"Refer to the comment in Object|notify:."
+
+	^ compilationContext requestor
+		ifNil: [ SyntaxErrorNotification
+				inClass: self methodClass
+				category: self methodClass category
+				withCode: self methodNode source
+				doitFlag: false
+				errorMessage: aString
+				location: location ]
+		ifNotNil: [ compilationContext requestor notify: aString , ' ->' at: location in: compilationContext requestor text ]
+]
+

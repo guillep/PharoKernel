@@ -1,0 +1,314 @@
+IRTranslator
+	superclass: #IRInterpreter;
+	instanceVariables: #(#pending #gen #currentInstr #currentScope #trailer #tempVectorStack #compilationContext );
+	package: #'OpalCompiler-Core'.
+
+IRTranslator >> addPending: message
+[
+	pending addLast: currentInstr -> message
+]
+
+IRTranslator >> blockReturnTop
+[
+	self doPending.
+	self popScope.
+	gen blockReturnTop.
+	gen mapBytesTo: currentInstr
+]
+
+IRTranslator >> compilationContext
+[
+	^ compilationContext ifNil: [ compilationContext := CompilationContext default ]
+]
+
+IRTranslator >> compilationContext: aContext
+[
+	compilationContext := aContext
+]
+
+IRTranslator >> compiledMethod
+[
+	^ gen compiledMethodWith: trailer
+]
+
+IRTranslator >> compiledMethodWith: aTrailer
+[
+	^ gen compiledMethodWith: aTrailer
+]
+
+IRTranslator >> createTempVectorNamed: name withVars: vars
+[
+	self doPending.
+	tempVectorStack push: currentInstr.
+	self pushNewArray: vars size.
+	self storeTemp: name.
+	self popTop.
+	gen mapBytesTo: currentInstr
+]
+
+IRTranslator >> currentScope
+[
+	^ currentScope top
+]
+
+IRTranslator >> doPending
+[
+	"execute pending instructions. we hand the IR instruction over so the backend can fill the bytecode offset. (mapBytesTo:)"
+
+	| assoc |
+	[ pending isEmpty ]
+		whileFalse: [ assoc := pending removeFirst.
+			assoc value sendTo: gen.	"message"
+			gen mapBytesTo: assoc key ]
+]
+
+IRTranslator >> goto: seqNum
+[
+	self doPending.
+	gen goto: seqNum.
+	gen mapBytesTo: currentInstr
+]
+
+IRTranslator >> if: bool goto: seqNum1 otherwise: seqNum2
+[
+	self doPending.
+	gen if: bool goto: seqNum1 otherwise: seqNum2.
+	gen mapBytesTo: currentInstr
+]
+
+IRTranslator >> initialize
+[
+	gen := self compilationContext bytecodeGeneratorClass new.
+	trailer := CompiledMethodTrailer empty.
+	currentScope := Stack new.
+	tempVectorStack := Stack new
+]
+
+IRTranslator >> interpret: anIr
+[
+	self pushScope: anIr.
+	anIr optimize.
+	gen irPrimitive: anIr irPrimitive.
+	gen numArgs: anIr numArgs.
+	gen properties: anIr properties.
+	gen numTemps: anIr tempMap size.
+	gen additionalLiterals: anIr additionalLiterals.
+	gen forceLongForm: anIr forceLongForm.
+	super interpret: anIr
+]
+
+IRTranslator >> interpretAll: irSequences
+[
+	irSequences withIndexDo: [ :seq :i | seq orderNumber: i ].
+	super interpretAll: irSequences
+]
+
+IRTranslator >> interpretInstruction: irInstruction
+[
+	currentInstr := irInstruction.
+	super interpretInstruction: irInstruction
+]
+
+IRTranslator >> label: seqNum
+[
+	pending := OrderedCollection new.
+	gen label: seqNum
+]
+
+IRTranslator >> pendingSelector
+[
+	pending isEmpty
+		ifTrue: [ ^ nil ].
+	^ pending last value selector	"message"
+]
+
+IRTranslator >> pendingSelector: selector
+[
+	pending last value setSelector: selector	"message"
+]
+
+IRTranslator >> popScope
+[
+	currentScope size = 1
+		ifFalse: [ currentScope pop ]
+]
+
+IRTranslator >> popScopeIfRequired
+[
+	self currentScope isPushClosureCopy
+		ifFalse: [ ^ nil ].
+	((currentInstr = currentInstr sequence last
+		or: [ currentInstr = (currentInstr sequence at: currentInstr sequence size - 1) ])
+		and: [ currentInstr sequence = self currentScope lastBlockSequence ])
+		ifTrue: [ self popScope ]
+]
+
+IRTranslator >> popTop
+[
+	"if last was storeTemp,  storeInstVar storeIntoLiteralVariable then convert to storePopTemp, storePopInstVar storePopIntoLiteralVariable"
+
+	#storeTemp: == self pendingSelector
+		ifTrue: [ self pendingSelector: #storePopTemp:.
+			^ self doPending ].
+	#storeInstVar: == self pendingSelector
+		ifTrue: [ self pendingSelector: #storePopInstVar:.
+			^ self doPending ].
+	#storeIntoLiteralVariable: == self pendingSelector
+		ifTrue: [ self pendingSelector: #storePopIntoLiteralVariable:.
+			^ self doPending ].
+	#storeRemoteTemp:inVectorAt: == self pendingSelector
+		ifTrue: [ self pendingSelector: #storePopRemoteTemp:inVectorAt:.
+			^ self doPending ].	"otherwise do normal pop"
+	self doPending.
+	gen popTop.
+	gen mapBytesTo: currentInstr
+]
+
+IRTranslator >> pragmas: aCollection
+[
+	gen pragmas: aCollection
+]
+
+IRTranslator >> pushClosureCopyCopiedValues: copiedValues args: args jumpTo: labelSymbol
+[
+	self doPending.
+	copiedValues do: [ :name | self pushTemp: name ].
+	gen pushClosureCopyNumCopiedValues: copiedValues size numArgs: args size to: currentInstr destination orderNumber.
+	self pushScope: currentInstr.
+	currentInstr definedTemps do: [ :each | gen pushLiteral: nil ].
+	gen mapBytesTo: currentInstr
+]
+
+IRTranslator >> pushConsArray: aSize
+[
+	self doPending.
+	gen pushConsArray: aSize.
+	gen mapBytesTo: currentInstr
+]
+
+IRTranslator >> pushDup
+[
+	self doPending.
+	gen pushDup.
+	gen mapBytesTo: currentInstr
+]
+
+IRTranslator >> pushInstVar: index
+[
+	self addPending: (Message selector: #pushInstVar: argument: index)
+]
+
+IRTranslator >> pushLiteral: object
+[
+	self addPending: (Message selector: #pushLiteral: argument: object)
+]
+
+IRTranslator >> pushLiteralVariable: object
+[
+	self addPending: (Message selector: #pushLiteralVariable: argument: object)
+]
+
+IRTranslator >> pushNewArray: aSize
+[
+	self doPending.
+	gen pushNewArray: aSize.
+	gen mapBytesTo: currentInstr
+]
+
+IRTranslator >> pushReceiver
+[
+	^ self addPending: (Message selector: #pushReceiver)
+]
+
+IRTranslator >> pushRemoteTemp: name inVector: tempVectorName
+[
+	| tempIndex tempVectorIndex tempVector |
+	tempVector := tempVectorStack detect: [ :each | each name = tempVectorName ].
+	tempVectorIndex := tempVector indexForVarNamed: name.
+	tempIndex := self currentScope indexForVarNamed: tempVectorName.
+	self doPending.
+	gen pushRemoteTemp: tempVectorIndex inVectorAt: tempIndex.
+	gen mapBytesTo: currentInstr
+]
+
+IRTranslator >> pushScope: anIRBlockOrMethod
+[
+	currentScope push: anIRBlockOrMethod
+]
+
+IRTranslator >> pushTemp: aSymbol
+[
+	self doPending.
+	gen pushTemp: (self currentScope indexForVarNamed: aSymbol).
+	gen mapBytesTo: currentInstr
+]
+
+IRTranslator >> pushThisContext
+[
+	self addPending: (Message selector: #pushThisContext)
+]
+
+IRTranslator >> returnTop
+[
+	#pushReceiver == self pendingSelector
+		ifTrue: [ self pendingSelector: #returnReceiver.
+			self doPending.
+			^ self popScopeIfRequired ].
+	#pushLiteral: == self pendingSelector
+		ifTrue: [ self pendingSelector: #returnConstant:.
+			self doPending.
+			^ self popScopeIfRequired ].
+	#pushInstVar: == self pendingSelector
+		ifTrue: [ self pendingSelector: #returnInstVar:.
+			self doPending.
+			^ self popScopeIfRequired ].
+	self doPending.
+	self popScopeIfRequired.
+	gen returnTop.
+	gen mapBytesTo: currentInstr
+]
+
+IRTranslator >> send: selector
+[
+	self doPending.
+	gen send: selector.
+	gen mapBytesTo: currentInstr
+]
+
+IRTranslator >> send: selector toSuperOf: behavior
+[
+	self doPending.
+	gen send: selector toSuperOf: behavior.
+	gen mapBytesTo: currentInstr
+]
+
+IRTranslator >> storeInstVar: index
+[
+	self addPending: (Message selector: #storeInstVar: argument: index)
+]
+
+IRTranslator >> storeIntoLiteralVariable: assoc
+[
+	self addPending: (Message selector: #storeIntoLiteralVariable: argument: assoc)
+]
+
+IRTranslator >> storeRemoteTemp: name inVector: tempVectorName
+[
+	| tempIndex tempVectorIndex tempVector |
+	tempVector := tempVectorStack detect: [ :each | each name = tempVectorName ].
+	tempVectorIndex := tempVector indexForVarNamed: name.
+	tempIndex := self currentScope indexForVarNamed: tempVectorName.
+	self
+		addPending: (Message selector: #storeRemoteTemp:inVectorAt: arguments: (Array with: tempVectorIndex with: tempIndex))
+]
+
+IRTranslator >> storeTemp: aString
+[
+	self addPending: (Message selector: #storeTemp: argument: (self currentScope indexForVarNamed: aString))
+]
+
+IRTranslator >> trailer: aTrailer
+[
+	trailer := aTrailer
+]
+

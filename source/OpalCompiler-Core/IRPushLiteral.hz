@@ -1,0 +1,35 @@
+IRPushLiteral
+	superclass: #IRInstruction;
+	instanceVariables: #(#literal );
+	package: #'OpalCompiler-Core'.
+
+IRPushLiteral >> accept: aVisitor
+[
+	^ aVisitor visitPushLiteral: self
+]
+
+IRPushLiteral >> executeOn: interpreter
+[
+	interpreter pushLiteral: literal
+]
+
+IRPushLiteral >> isPushLiteral
+[
+	^ true
+]
+
+IRPushLiteral >> isPushLiteral: valueTest
+[
+	^ valueTest value: literal
+]
+
+IRPushLiteral >> literal
+[
+	^ literal
+]
+
+IRPushLiteral >> literal: object
+[
+	literal := object
+]
+

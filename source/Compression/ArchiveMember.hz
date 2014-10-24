@@ -1,0 +1,77 @@
+ArchiveMember
+	instanceVariables: #(#fileName #isCorrupt );
+	package: #Compression.
+
+ArchiveMember >> close
+[
+	
+]
+
+ArchiveMember >> fileName
+[
+	^ fileName
+]
+
+ArchiveMember >> fileName: aName
+[
+	fileName := aName
+]
+
+ArchiveMember >> initialize
+[
+	super initialize.
+	fileName := ''.
+	isCorrupt := false
+]
+
+ArchiveMember >> isCorrupt
+[
+	^ isCorrupt ifNil: [ isCorrupt := false ]
+]
+
+ArchiveMember >> isCorrupt: aBoolean
+[
+	"Mark this member as being corrupt."
+
+	isCorrupt := aBoolean
+]
+
+ArchiveMember >> localFileName: aString
+[
+	"Set my internal filename.
+	Returns the (possibly new) filename"
+
+	^ fileName := aString copyReplaceAll: FileSystem disk delimiter asString with: UnixStore delimiter asString
+]
+
+ArchiveMember >> printOn: aStream
+[
+	super printOn: aStream.
+	aStream
+		nextPut: $(;
+		nextPutAll: self fileName;
+		nextPut: $)
+]
+
+ArchiveMember >> usesFileNamed: aFileName
+[
+	"Do I require aFileName? That is, do I care if it's clobbered?"
+
+	^ false
+]
+
+ArchiveMember class >> newDirectoryNamed: aString
+[
+	self subclassResponsibility
+]
+
+ArchiveMember class >> newFromFile: aFileName
+[
+	self subclassResponsibility
+]
+
+ArchiveMember class >> newFromString: aString
+[
+	self subclassResponsibility
+]
+

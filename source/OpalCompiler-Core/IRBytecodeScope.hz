@@ -1,0 +1,73 @@
+IRBytecodeScope
+	instanceVariables: #(#temps #numArgs #ownTempVectors #copiedValues );
+	package: #'OpalCompiler-Core'.
+
+IRBytecodeScope >> args
+[
+	| args |
+	args := Array new: numArgs.
+	1 to: numArgs do: [ :idx | args at: idx put: self -> (idx - 1) ].
+	^ args
+]
+
+IRBytecodeScope >> copiedValues
+[
+	^ copiedValues
+]
+
+IRBytecodeScope >> copiedValues: someCopiedValues
+[
+	copiedValues := someCopiedValues
+]
+
+IRBytecodeScope >> initialize
+[
+	temps := 0.
+	ownTempVectors := OrderedCollection new
+]
+
+IRBytecodeScope >> newTempVector: aTempVector at: offset
+[
+	ownTempVectors add: aTempVector.
+	self tempAt: offset
+]
+
+IRBytecodeScope >> numArgs
+[
+	^ numArgs
+]
+
+IRBytecodeScope >> numArgs: anInteger
+[
+	numArgs := anInteger.
+	temps := temps max: numArgs
+]
+
+IRBytecodeScope >> ownTempVectors
+[
+	^ ownTempVectors
+]
+
+IRBytecodeScope >> tempAt: zeroBasedIndex
+[
+	temps := temps max: zeroBasedIndex + 1.
+	^ self -> zeroBasedIndex
+]
+
+IRBytecodeScope >> tempAt: remoteIndex inRemote: remoteArray
+[
+	^ remoteIndex
+]
+
+IRBytecodeScope >> temps
+[
+	| result tempOffset numTemps |
+	tempOffset := copiedValues size + numArgs.
+	numTemps := temps - tempOffset.
+	result := Array new: numTemps.
+	tempOffset := tempOffset - 1.
+	1 to: numTemps do: [ :idx | result at: idx put: self -> (tempOffset + idx) ].
+	ownTempVectors do: [ :tempVector | result at: tempVector index - tempOffset put: tempVector ].
+	^ result
+]
+

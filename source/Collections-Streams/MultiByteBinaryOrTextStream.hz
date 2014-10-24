@@ -15,7 +15,10 @@ MultiByteBinaryOrTextStream >> ascii
 
 MultiByteBinaryOrTextStream >> basicNext
 [
-	^ super next
+	| nextChar |
+	^ isBinary
+		ifTrue: [ super next ]
+		ifFalse: [ (nextChar := super next) ifNotNil: [ nextChar asCharacter ] ]
 ]
 
 MultiByteBinaryOrTextStream >> basicNext: anInteger

@@ -1,0 +1,37 @@
+EmptyLayout
+	superclass: #AbstractLayout;
+	package: #Slot.
+
+EmptyLayout class
+	instanceVariables: #(#instance ).
+
+EmptyLayout >> extend: someSlots
+[
+	^ FixedLayout new slotScope: (LayoutEmptyScope instance extend: someSlots)
+]
+
+EmptyLayout >> extendByte
+[
+	^ ByteLayout new
+]
+
+EmptyLayout >> extendVariable: someSlots
+[
+	^ VariableLayout new slotScope: (LayoutEmptyScope extend: someSlots)
+]
+
+EmptyLayout >> extendWeak
+[
+	^ WeakLayout new
+]
+
+EmptyLayout >> extendWord
+[
+	^ WordLayout new
+]
+
+EmptyLayout class >> instance
+[
+	^ instance ifNil: [ instance := self new ]
+]
+

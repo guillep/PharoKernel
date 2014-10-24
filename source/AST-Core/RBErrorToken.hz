@@ -1,0 +1,37 @@
+RBErrorToken
+	superclass: #RBValueToken;
+	instanceVariables: #(#cause #location );
+	package: #'AST-Core'.
+
+RBErrorToken >> cause
+[
+	^ cause
+]
+
+RBErrorToken >> isError
+[
+	^ true
+]
+
+RBErrorToken >> location
+[
+	^ location
+]
+
+RBErrorToken >> value: theValue start: tokenStart cause: errorCause location: errorPosition
+[
+	self value: theValue start: tokenStart.
+	location := errorPosition.
+	cause := errorCause
+]
+
+RBErrorToken class >> value: value start: tokenStart cause: errorCause location: thePosition
+[
+	^ self new
+		value: value
+			start: tokenStart
+			cause: errorCause
+			location: thePosition;
+		yourself
+]
+

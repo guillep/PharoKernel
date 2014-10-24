@@ -1,0 +1,59 @@
+AllProtocol
+	superclass: #Protocol;
+	instanceVariables: #(#protocolOrganizer );
+	package: #'ClassOrganizer-Core'.
+
+AllProtocol >> canBeRemoved
+[
+	^ false
+]
+
+AllProtocol >> canBeRenamed
+[
+	^ false
+]
+
+AllProtocol >> isVirtualProtocol
+[
+	^ true
+]
+
+AllProtocol >> methods
+[
+	^ self protocolOrganizer allMethods
+]
+
+AllProtocol >> name
+[
+	^ (self methods isEmpty and: [ protocolOrganizer protocols isEmpty ])
+		ifTrue: [ self class nullCategory ]
+		ifFalse: [ name ]
+]
+
+AllProtocol >> name: aString
+[
+	self error: 'You cannot change my name'
+]
+
+AllProtocol >> protocolOrganizer
+[
+	^ protocolOrganizer
+]
+
+AllProtocol >> protocolOrganizer: anObject
+[
+	protocolOrganizer := anObject
+]
+
+AllProtocol class >> defaultName
+[
+	^ #'-- all --'
+]
+
+AllProtocol class >> protocolOrganizer: protocolOrganizer
+[
+	^ self new
+		protocolOrganizer: protocolOrganizer;
+		yourself
+]
+

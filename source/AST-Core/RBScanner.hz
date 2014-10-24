@@ -1,0 +1,460 @@
+RBScanner
+	instanceVariables: #(#stream #buffer #tokenStart #currentCharacter #characterType #classificationTable #comments #errorBlock );
+	classVariables: #(#PatternVariableCharacter );
+	package: #'AST-Core'.
+
+RBScanner class
+	instanceVariables: #(#classificationTable ).
+
+RBScanner >> atEnd
+[
+	^ characterType = #eof
+]
+
+RBScanner >> classify: aCharacter
+[
+	| index |
+	aCharacter isNil
+		ifTrue: [ ^ nil ].
+	index := aCharacter asInteger.
+	index == 0
+		ifTrue: [ ^ #separator ].
+	index > 255
+		ifTrue: [ ^ aCharacter isLetter
+				ifTrue: [ #alphabetic ]
+				ifFalse: [ aCharacter isSeparator
+						ifTrue: [ #separator ]
+						ifFalse: [ nil ] ] ].
+	^ classificationTable at: index
+]
+
+RBScanner >> contents
+[
+	| contentsStream |
+	contentsStream := WriteStream on: (Array new: 50).
+	[ self atEnd ] whileFalse: [ contentsStream nextPut: self next ].
+	^ contentsStream contents
+]
+
+RBScanner >> errorBlock
+[
+	^ errorBlock ifNil: [ [ :message :position |  ] ] ifNotNil: [ errorBlock ]
+]
+
+RBScanner >> errorBlock: aBlock
+[
+	errorBlock := aBlock
+]
+
+RBScanner >> errorPosition
+[
+	^ stream position
+]
+
+RBScanner >> flush
+[
+	
+]
+
+RBScanner >> getComments
+[
+	| oldComments |
+	comments isEmpty
+		ifTrue: [ ^ nil ].
+	oldComments := comments.
+	comments := OrderedCollection new: 1.
+	^ oldComments
+]
+
+RBScanner >> isReadable
+[
+	^ true
+]
+
+RBScanner >> isWritable
+[
+	^ false
+]
+
+RBScanner >> next
+[
+	| token |
+	buffer reset.
+	tokenStart := stream position.
+	token := characterType = #eof
+		ifTrue: [ RBToken start: tokenStart + 1	"The EOF token should occur after the end of input" ]
+		ifFalse: [ self scanToken ].
+	self stripSeparators.
+	token comments: self getComments.
+	^ token
+]
+
+RBScanner >> nextPut: anObject
+[
+	"Provide an error notification that the receiver does not
+	implement this message."
+
+	self shouldNotImplement
+]
+
+RBScanner >> on: aStream
+[
+	buffer := WriteStream on: (String new: 60).
+	stream := aStream.
+	classificationTable := self class classificationTable.
+	comments := OrderedCollection new
+]
+
+RBScanner >> previousStepPosition
+[
+	^ characterType = #eof
+		ifTrue: [ stream position ]
+		ifFalse: [ stream position - 1 ]
+]
+
+RBScanner >> scanAnySymbol
+[
+	characterType = #alphabetic
+		ifTrue: [ ^ self scanSymbol ].
+	characterType = #binary
+		ifTrue: [ ^ self scanBinary: RBLiteralToken ].
+	^ RBToken new
+]
+
+RBScanner >> scanBinary: aClass
+[
+	| val |
+	buffer nextPut: currentCharacter.
+	self step.
+	[ characterType = #binary ] whileTrue: [ buffer nextPut: currentCharacter.
+			self step ].
+	val := buffer contents.
+	val := val asSymbol.
+	^ aClass value: val start: tokenStart
+]
+
+RBScanner >> scanError: theCause
+[
+	currentCharacter ifNotNil: [ :char | buffer nextPut: char ].
+	^ RBErrorToken
+		value: buffer contents asString
+		start: tokenStart
+		cause: theCause
+		location: stream position + 1
+]
+
+RBScanner >> scanIdentifierOrKeyword
+[
+	| name |
+	self scanName.
+	(currentCharacter = $: and: [ stream peek ~= $= ])
+		ifTrue: [ ^ self scanKeyword ].
+	name := buffer contents.
+	name = 'true'
+		ifTrue: [ ^ RBLiteralToken value: true start: tokenStart stop: self previousStepPosition ].
+	name = 'false'
+		ifTrue: [ ^ RBLiteralToken value: false start: tokenStart stop: self previousStepPosition ].
+	name = 'nil'
+		ifTrue: [ ^ RBLiteralToken value: nil start: tokenStart stop: self previousStepPosition ].
+	^ RBIdentifierToken value: name start: tokenStart
+]
+
+RBScanner >> scanKeyword
+[
+	| outputPosition inputPosition name |
+	[ currentCharacter = $: ]
+		whileTrue: [ buffer nextPut: currentCharacter.
+			outputPosition := buffer position.
+			inputPosition := stream position.
+			self step.	":"
+			[ characterType = #alphabetic ] whileTrue: [ self scanName ] ].
+	buffer position: outputPosition.
+	stream position: inputPosition.
+	self step.
+	name := buffer contents.
+	^ (name occurrencesOf: $:) == 1
+		ifTrue: [ RBKeywordToken value: name start: tokenStart ]
+		ifFalse: [ RBMultiKeywordLiteralToken value: name asSymbol start: tokenStart stop: tokenStart + name size - 1 ]
+]
+
+RBScanner >> scanLiteral
+[
+	self step.
+	self stripSeparators.
+	characterType = #alphabetic
+		ifTrue: [ ^ self scanSymbol ].
+	characterType = #binary
+		ifTrue: [ ^ (self scanBinary: RBLiteralToken) stop: self previousStepPosition ].
+	currentCharacter = $'
+		ifTrue: [ ^ self scanStringSymbol ].
+	(currentCharacter = $( or: [ currentCharacter = $[ ])
+		ifTrue: [ ^ self scanLiteralArrayToken ].	"Accept some strange literals like '#1', '# species' and '##species:'"
+	characterType = #digit
+		ifTrue: [ ^ self scanNumber ].
+	currentCharacter = $#
+		ifTrue: [ ^ self scanLiteral ].
+	^ self scanError: 'Expecting a literal type' translated
+]
+
+RBScanner >> scanLiteralArrayToken
+[
+	| token |
+	token := RBLiteralArrayToken value: (String with: $# with: currentCharacter) start: tokenStart.
+	self step.
+	^ token
+]
+
+RBScanner >> scanLiteralCharacter
+[
+	| token |
+	self step.	"$"
+	token := RBLiteralToken value: currentCharacter start: tokenStart stop: stream position.
+	self step.	"char"
+	^ token
+]
+
+RBScanner >> scanLiteralString
+[
+	self step.
+	[ currentCharacter isNil
+		ifTrue: [ ^ self scanError: 'Unmatched '' in string literal.' translated ].
+	currentCharacter = $' and: [ self step ~= $' ] ]
+		whileFalse: [ buffer nextPut: currentCharacter.
+			self step ].
+	^ RBLiteralToken value: buffer contents start: tokenStart stop: self previousStepPosition
+]
+
+RBScanner >> scanName
+[
+	[ characterType = #alphabetic or: [ characterType = #digit ] ]
+		whileTrue: [ buffer nextPut: currentCharacter.
+			self step ]
+]
+
+RBScanner >> scanNumber
+[
+	| start number stop string |
+	start := stream position.
+	stream position: start - 1.
+	number := [ NumberParser parse: stream ]
+		on: Error
+		do: [ :err | self scannerError: err messageText ].
+	stop := stream position.
+	stream position: start - 1.
+	string := stream next: stop - start + 1.
+	stream position: stop.
+	self step.
+	^ RBNumberLiteralToken
+		value: number
+		start: start
+		stop: stop
+		source: string
+]
+
+RBScanner >> scanPatternVariable
+[
+	buffer nextPut: currentCharacter.
+	self step.
+	currentCharacter = ${
+		ifTrue: [ self step.
+			^ RBPatternBlockToken value: '`{' start: tokenStart ].
+	[ characterType = #alphabetic ]
+		whileFalse: [ characterType = #eof
+				ifTrue: [ self scanError: 'Meta variable expected' ].
+			buffer nextPut: currentCharacter.
+			self step ].
+	^ self scanIdentifierOrKeyword
+]
+
+RBScanner >> scanSpecialCharacter
+[
+	| character |
+	currentCharacter = $:
+		ifTrue: [ self step.
+			^ currentCharacter = $=
+				ifTrue: [ self step.
+					RBAssignmentToken start: tokenStart ]
+				ifFalse: [ RBSpecialCharacterToken value: $: start: tokenStart ] ].
+	currentCharacter = $_
+		ifTrue: [ self step.
+			^ RBShortAssignmentToken start: tokenStart ].
+	character := currentCharacter.
+	self step.
+	^ RBSpecialCharacterToken value: character start: tokenStart
+]
+
+RBScanner >> scanStringSymbol
+[
+	| literalToken |
+	literalToken := self scanLiteralString.
+	literalToken value: literalToken value asSymbol.
+	^ literalToken
+]
+
+RBScanner >> scanSymbol
+[
+	[ characterType = #alphabetic or: [ currentCharacter = $: ] ]
+		whileTrue: [ self scanName.
+			currentCharacter = $:
+				ifTrue: [ buffer nextPut: $:.
+					self step ] ].
+	^ RBLiteralToken value: buffer contents asSymbol start: tokenStart stop: self previousStepPosition
+]
+
+RBScanner >> scanToken
+[
+	"fast-n-ugly. Don't write stuff like this. Has been found to cause cancer in laboratory rats. Basically a 
+	case statement. Didn't use Dictionary because lookup is pretty slow."
+
+	characterType = #alphabetic
+		ifTrue: [ ^ self scanIdentifierOrKeyword ].
+	(characterType = #digit or: [ currentCharacter = $- and: [ (self classify: stream peek) = #digit ] ])
+		ifTrue: [ ^ self scanNumber ].
+	characterType = #binary
+		ifTrue: [ ^ self scanBinary: RBBinarySelectorToken ].
+	characterType = #special
+		ifTrue: [ ^ self scanSpecialCharacter ].
+	currentCharacter = $'
+		ifTrue: [ ^ self scanLiteralString ].
+	currentCharacter = $#
+		ifTrue: [ ^ self scanLiteral ].
+	currentCharacter = $$
+		ifTrue: [ ^ self scanLiteralCharacter ].
+	^ self scanError: 'Unknown character' translated
+]
+
+RBScanner >> scannerError: aString
+[
+	(self errorBlock cull: aString cull: self errorPosition cull: self)
+		ifNil: [ ^ SyntaxErrorNotification
+				inClass: Object
+				category: nil
+				withCode: stream contents
+				doitFlag: false
+				errorMessage: aString
+				location: stream position + 1 ]
+]
+
+RBScanner >> step
+[
+	stream atEnd
+		ifTrue: [ characterType := #eof.
+			^ currentCharacter := nil ].
+	currentCharacter := stream next.
+	characterType := self classify: currentCharacter.
+	^ currentCharacter
+]
+
+RBScanner >> stripComment
+[
+	| start stop |
+	start := stream position.
+	[ self step = $" ]
+		whileFalse: [ characterType = #eof
+				ifTrue: [ ^ self scannerError: 'Unmatched " in comment.' translated ] ].
+	stop := stream position.
+	self step.
+	comments add: (start to: stop)
+]
+
+RBScanner >> stripSeparators
+[
+	[ [ characterType = #separator ] whileTrue: [ self step ].
+	currentCharacter = $" ] whileTrue: [ self stripComment ]
+]
+
+RBScanner class >> classificationTable
+[
+	classificationTable ifNil: [ self initializeClassificationTable ].
+	^ classificationTable
+]
+
+RBScanner class >> initialize
+[
+	self initializeClassificationTable
+]
+
+RBScanner class >> initializeChars: characters to: aSymbol
+[
+	characters do: [ :c | classificationTable at: c asInteger put: aSymbol ]
+]
+
+RBScanner class >> initializeClassificationTable
+[
+	PatternVariableCharacter := $`.
+	classificationTable := Array new: 255.
+	self initializeChars: (Character allCharacters select: [ :each | each isLetter ]) to: #alphabetic.
+	self initializeUnderscore.
+	self initializeChars: '01234567890' to: #digit.
+	self initializeChars: '!%&*+,-/<=>?@\~|' to: #binary.
+	classificationTable at: 177 put: #binary.	"plus-or-minus"
+	classificationTable at: 183 put: #binary.	"centered dot"
+	classificationTable at: 215 put: #binary.	"times"
+	classificationTable at: 247 put: #binary.	"divide"
+	self initializeChars: '().:;[]{}^' to: #special.
+	self initializeChars: (Character allCharacters select: [ :each | each isSeparator ]) to: #separator
+]
+
+RBScanner class >> initializeUnderscore
+[
+	self classificationTable at: $_ asInteger put: #alphabetic
+]
+
+RBScanner class >> isSelector: aSymbol
+[
+	| scanner token |
+	scanner := self basicNew.
+	scanner on: (ReadStream on: aSymbol asString).
+	scanner step.
+	token := scanner scanAnySymbol.
+	token isLiteralToken
+		ifFalse: [ ^ false ].
+	token value isEmpty
+		ifTrue: [ ^ false ].
+	^ scanner atEnd
+]
+
+RBScanner class >> isVariable: aString
+[
+	| scanner token |
+	scanner := self on: (ReadStream on: aString).
+	token := scanner next.
+	token isIdentifier
+		ifFalse: [ ^ false ].
+	(token start = 1 and: [ token stop = aString size ])
+		ifFalse: [ ^ false ].
+	^ (aString includes: $.) not
+]
+
+RBScanner class >> new
+[
+	self initializeUnderscore.
+	^ super new
+]
+
+RBScanner class >> on: aStream
+[
+	| str |
+	str := self new on: aStream.
+	str
+		step;
+		stripSeparators.
+	^ str
+]
+
+RBScanner class >> on: aStream errorBlock: aBlock
+[
+	| str |
+	str := self new on: aStream.
+	str
+		errorBlock: aBlock;
+		step;
+		stripSeparators.
+	^ str
+]
+
+RBScanner class >> patternVariableCharacter
+[
+	^ PatternVariableCharacter
+]
+

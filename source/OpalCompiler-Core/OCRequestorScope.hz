@@ -1,0 +1,36 @@
+OCRequestorScope
+	superclass: #OCAbstractScope;
+	instanceVariables: #(#requestor );
+	package: #'OpalCompiler-Core'.
+
+OCRequestorScope >> lookupVar: name
+[
+	name = 'self'
+		ifTrue: [ ^ outerScope lookupVar: name ].
+	name = 'super'
+		ifTrue: [ ^ outerScope lookupVar: name ].
+	name first isUppercase
+		ifTrue: [ ^ outerScope lookupVar: name ].
+	(requestor bindingOf: name asSymbol)
+		ifNotNil: [ :assoc | ^ OCLiteralVariable new
+				assoc: assoc;
+				scope: self;
+				yourself ].
+	^ super lookupVar: name
+]
+
+OCRequestorScope >> newMethodScope
+[
+	^ OCMethodScope new outerScope: (self outerScope: outerScope instanceScope)
+]
+
+OCRequestorScope >> requestor
+[
+	^ requestor
+]
+
+OCRequestorScope >> requestor: anObject
+[
+	requestor := anObject
+]
+

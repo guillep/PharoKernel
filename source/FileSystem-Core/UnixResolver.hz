@@ -36,6 +36,11 @@ UnixResolver >> supportedOrigins
 	^ super supportedOrigins , #(#userData)
 ]
 
+UnixResolver >> temp
+[
+	^ '/tmp' asFileReference
+]
+
 UnixResolver >> userData
 [
 	^ self directoryFromEnvVariableNamed: 'XDG_DATA_HOME' or: [ self home / '.local' / 'share' ]

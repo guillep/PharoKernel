@@ -1,0 +1,131 @@
+ObjectLayout
+	superclass: #AbstractLayout;
+	instanceVariables: #(#compactClassIndex );
+	package: #Slot.
+
+ObjectLayout >> = other
+[
+	^ super = other
+		ifFalse: [ false ]
+		ifTrue: [ self compactClassIndex = other compactClassIndex ]
+]
+
+ObjectLayout >> compactClassIndex
+[
+	^ compactClassIndex
+]
+
+ObjectLayout >> compactClassIndex: anIndex
+[
+	compactClassIndex := anIndex.
+	host setFormat: self format
+]
+
+ObjectLayout >> computeChangesFrom: other in: modification
+[
+	other hasSlots
+		ifTrue: [ modification removals: other allSlots asArray ]
+]
+
+ObjectLayout >> extend
+[
+	"Answer a default extension of me."
+
+	^ self subclassResponsibility
+]
+
+ObjectLayout >> extend: aScope
+[
+	IncompatibleLayoutConflict new
+		layout: self;
+		subType: #slot;
+		signal
+]
+
+ObjectLayout >> extendByte
+[
+	self hasFields
+		ifTrue: [ IncompatibleLayoutConflict new
+				layout: self;
+				subType: #byte;
+				signal ].
+	^ ByteLayout new
+]
+
+ObjectLayout >> extendCompiledMethod
+[
+	self hasFields
+		ifTrue: [ IncompatibleLayoutConflict new
+				layout: self;
+				subType: #compiledMethod;
+				signal ].
+	^ CompiledMethodLayout new
+]
+
+ObjectLayout >> extendVariable: aScope
+[
+	IncompatibleLayoutConflict new
+		layout: self;
+		subType: #variable;
+		signal
+]
+
+ObjectLayout >> extendWord
+[
+	self hasFields
+		ifTrue: [ IncompatibleLayoutConflict new
+				layout: self;
+				subType: #word;
+				signal ].
+	^ WordLayout new
+]
+
+ObjectLayout >> format
+[
+	"Answer an Integer that encodes this layout in the way that VM expects it."
+
+	| fieldSize sizeHiBits format |
+	fieldSize := self fieldSize + 1.
+	sizeHiBits := fieldSize // 64.
+	format := sizeHiBits.
+	format := (format bitShift: 5) + compactClassIndex.
+	format := (format bitShift: 4) + self instanceSpecification.
+	format := (format bitShift: 6) + (fieldSize \\ 64).
+	format := format bitShift: 1.
+	^ format
+]
+
+ObjectLayout >> hash
+[
+	^ super hash bitXor: self compactClassIndex
+]
+
+ObjectLayout >> initialize
+[
+	compactClassIndex := 0
+]
+
+ObjectLayout >> initializeInstance: anInstance
+[
+	self subclassResponsibility
+]
+
+ObjectLayout >> reshapeFrom: oldScope to: newParentLayout
+[
+	"Answer the reshaped version of me for a new parent layout."
+
+	| newScope |
+	newScope := self slotScope rebase: oldScope to: newParentLayout slotScope.
+	^ newParentLayout extendAgain: self with: newScope
+]
+
+ObjectLayout >> reshapeTo: aModification
+[
+	^ self class extending: aModification layout scope: LayoutEmptyScope instance host: self host
+]
+
+ObjectLayout class >> extending: superLayout scope: aScope host: aClass
+[
+	self subclassResponsibility
+]
+

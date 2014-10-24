@@ -1,0 +1,20 @@
+TextPrintIt
+	superclass: #TextDoIt;
+	package: #'Text-Core'.
+
+TextPrintIt >> actOnClick: anEvent for: anObject in: paragraph editor: editor
+[
+	| result |
+	result := Smalltalk compiler evaluate: evalString for: anObject logged: false.
+	UIManager inform: result printString.
+	^ true
+]
+
+TextPrintIt >> writeScanOn: strm
+[
+	strm
+		nextPut: $P;
+		nextPutAll: evalString;
+		nextPutAll: ';;'
+]
+

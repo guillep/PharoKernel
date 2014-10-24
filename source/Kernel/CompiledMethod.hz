@@ -383,6 +383,33 @@ CompiledMethod >> hasReportableSlip
 	^ false
 ]
 
+CompiledMethod >> hasSourceCode
+[
+	"Retrieve or reconstruct the source code for this method."
+
+	| trailer source |
+	trailer := self trailer.
+	trailer sourceCode ifNotNil: [ :code | ^ true ].
+	trailer hasSourcePointer
+		ifFalse: [ ^ false ].	"Situation normal;  read the sourceCode from the file"
+	source := [ self getSourceFromFile ]
+		on: Error
+		do: [ :ex | ex return: nil ].
+	source isEmptyOrNil
+		ifTrue: [ ^ false ].
+	^ true
+]
+
+CompiledMethod >> hasSourceCodeInChangesFile
+[
+	^ self fileIndex == 2
+]
+
+CompiledMethod >> hasSourcePointer
+[
+	^ self trailer hasSourcePointer
+]
+
 CompiledMethod >> hash
 [
 	"CompiledMethod>>#= compares code, i.e. same literals and same bytecode.
@@ -660,6 +687,9 @@ CompiledMethod >> literalAt: index put: value
 
 CompiledMethod >> literalStrings
 [
+	"Return a list of strings or symbols corresponding to the class references and message sent.
+	The result also contains the name of the class"
+
 	| litStrs |
 	litStrs := OrderedCollection new: self numLiterals.
 	self
@@ -1313,6 +1343,16 @@ CompiledMethod >> selector: aSelector
 
 CompiledMethod >> sendsSelector: aSymbol
 [
+	"
+	Answer whether the method sends a particular selector
+
+	(CompiledMethod >> #sendsSelector:) sendsSelector: #includes:
+	=> true
+
+	(CompiledMethod >> #sendsSelector:) sendsSelector: #doBreakfastForMe
+	=> false
+	"
+
 	^ self messages includes: aSymbol
 ]
 

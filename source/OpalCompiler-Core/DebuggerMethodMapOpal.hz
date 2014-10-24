@@ -1,0 +1,87 @@
+DebuggerMethodMapOpal
+	instanceVariables: #(#methodNode );
+	package: #'OpalCompiler-Core'.
+
+DebuggerMethodMapOpal >> forMethod: aCompiledMethod
+[
+	methodNode := aCompiledMethod ast
+]
+
+DebuggerMethodMapOpal >> namedTempAt: index in: aContext
+[
+	"Answer the value of the temp at index in aContext where index is relative
+	 to the array of temp names answered by tempNamesForContext:"
+
+	| name |
+	name := (self tempNamesForContext: aContext) at: index.
+	^ self tempNamed: name in: aContext
+]
+
+DebuggerMethodMapOpal >> namedTempAt: index put: aValue in: aContext
+[
+	"Assign the value of the temp at index in aContext where index is relative
+	 to the array of temp names answered by tempNamesForContext:.
+	 If the value is a copied value we also need to set it along the lexical chain."
+
+	| name |
+	name := (self tempNamesForContext: aContext) at: index.
+	^ self tempNamed: name in: aContext put: aValue
+]
+
+DebuggerMethodMapOpal >> rangeForPC: aPC
+[
+	"return the debug highlight for aPC"
+
+	^ self rangeForPC: aPC contextIsActiveContext: false
+]
+
+DebuggerMethodMapOpal >> rangeForPC: aPC contextIsActiveContext: contextIsActive
+[
+	"return the debug highlight for aPC"
+
+	| pc |
+	"When on the top of the stack the pc is pointing to right instruction, but deeper in the stack	the pc was already advanced one bytecode, so we need to go back this one bytecode, which	can consist of multiple bytes. But on IR, we record the *last* bytecode offset as the offset of the	IR instruction, which means we can just go back one"
+	pc := contextIsActive
+		ifTrue: [ aPC ]
+		ifFalse: [ aPC - 1 ].
+	^ (methodNode sourceNodeForPC: pc) debugHighlightRange
+]
+
+DebuggerMethodMapOpal >> tempNamed: name in: aContext
+[
+	"Answer the value of the temp with name in aContext"
+
+	| scope var |
+	scope := aContext sourceNode scope.
+	var := scope lookupVar: name.
+	^ var readFromContext: aContext scope: scope
+]
+
+DebuggerMethodMapOpal >> tempNamed: name in: aContext put: aValue
+[
+	"Assign the value of the temp with name in aContext
+	 If the value is a copied value we also need to set it along the lexical chain."
+
+	| scope var |
+	scope := aContext sourceNode scope.
+	var := scope lookupVar: name.
+	^ var writeFromContext: aContext scope: scope value: aValue
+]
+
+DebuggerMethodMapOpal >> tempNamesForContext: aContext
+[
+	"Answer an Array of all the temp names in scope in aContext starting with
+	 the home's first local (the first argument or first temporary if no arguments)."
+
+	^ aContext sourceNode scope allTempNames
+]
+
+DebuggerMethodMapOpal class >> forMethod: aMethod
+[
+	"<CompiledMethod>"
+
+	"Answer a DebuggerMethodMap suitable for debugging activations of aMethod"
+
+	^ self new forMethod: aMethod
+]
+

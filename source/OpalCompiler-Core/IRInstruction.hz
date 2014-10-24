@@ -1,0 +1,347 @@
+IRInstruction
+	instanceVariables: #(#sourceNode #bytecodeIndex #sequence );
+	package: #'OpalCompiler-Core'.
+
+IRInstruction >> accept: aVisitor
+[
+	aVisitor visit: self
+]
+
+IRInstruction >> addInstructionsAfter: aCollection
+[
+	sequence addInstructions: aCollection after: self
+]
+
+IRInstruction >> addInstructionsBefore: aCollection
+[
+	sequence addInstructions: aCollection before: self
+]
+
+IRInstruction >> bytecodeIndex
+[
+	^ bytecodeIndex
+]
+
+IRInstruction >> bytecodeIndex: index
+[
+	bytecodeIndex := index
+]
+
+IRInstruction >> bytecodeOffset
+[
+	| startpc |
+	startpc := self method compiledMethod initialPC.
+	self bytecodeIndex ifNil: [ ^ startpc ].
+	^ self bytecodeIndex + startpc - 1
+]
+
+IRInstruction >> delete
+[
+	sequence ifNil: [ self error: 'This node doesn''t have a sequence' ].
+	sequence remove: self
+]
+
+IRInstruction >> executeOn: interpreter
+[
+	"Send approriate message to interpreter"
+
+	self subclassResponsibility
+]
+
+IRInstruction >> isBlockReturnTop
+[
+	^ false
+]
+
+IRInstruction >> isGoto
+[
+	"is unconditional jump"
+
+	^ false
+]
+
+IRInstruction >> isIf
+[
+	^ false
+]
+
+IRInstruction >> isInstVarAccess
+[
+	^ false
+]
+
+IRInstruction >> isJump
+[
+	"goto or if"
+
+	^ false
+]
+
+IRInstruction >> isJumpOrReturn
+[
+	^ self isJump or: [ self isReturn ]
+]
+
+IRInstruction >> isLiteralVariable
+[
+	^ false
+]
+
+IRInstruction >> isPop
+[
+	^ false
+]
+
+IRInstruction >> isPushClosureCopy
+[
+	^ false
+]
+
+IRInstruction >> isPushLiteral
+[
+	^ false
+]
+
+IRInstruction >> isPushLiteral: valueTest
+[
+	^ false
+]
+
+IRInstruction >> isRead
+[
+	^ false
+]
+
+IRInstruction >> isReturn
+[
+	^ false
+]
+
+IRInstruction >> isSelf
+[
+	^ false
+]
+
+IRInstruction >> isSend
+[
+	^ false
+]
+
+IRInstruction >> isStore
+[
+	^ false
+]
+
+IRInstruction >> isTemp
+[
+	^ false
+]
+
+IRInstruction >> isTempVector
+[
+	^ false
+]
+
+IRInstruction >> method
+[
+	^ sequence method
+]
+
+IRInstruction >> nonBodySuccessorSequences
+[
+	^ self successorSequences
+]
+
+IRInstruction >> replaceNode: aNode withNode: anotherNode
+[
+	self error: 'I don''t store other nodes'
+]
+
+IRInstruction >> replaceWith: aNode
+[
+	sequence ifNil: [ self error: 'This node doesn''t have a sequence' ].
+	sequence replaceNode: self withNode: aNode
+]
+
+IRInstruction >> replaceWithInstructions: aCollection
+[
+	sequence ifNil: [ self error: 'This node doesn''t have a sequence' ].
+	sequence replaceNode: self withNodes: aCollection
+]
+
+IRInstruction >> sequence
+[
+	^ sequence
+]
+
+IRInstruction >> sequence: aSeq
+[
+	sequence := aSeq
+]
+
+IRInstruction >> sourceNode
+[
+	^ sourceNode
+]
+
+IRInstruction >> sourceNode: parseNode
+[
+	sourceNode := parseNode
+]
+
+IRInstruction >> successorSequences
+[
+	"sent to last instruction in sequence which is expected to be a jump and return instruction"
+
+	^ #()
+]
+
+IRInstruction class >> blockReturnTop
+[
+	^ IRBlockReturnTop new
+]
+
+IRInstruction class >> createTempVectorNamed: aTempVectorName withVars: anArray
+[
+	^ IRTempVector new
+		name: aTempVectorName;
+		vars: anArray;
+		yourself
+]
+
+IRInstruction class >> popTop
+[
+	^ IRPop new
+]
+
+IRInstruction class >> pushClosureCopyCopiedValues: copiedValues args: arguments
+[
+	^ IRPushClosureCopy new
+		copiedValues: copiedValues;
+		arguments: arguments;
+		yourself
+]
+
+IRInstruction class >> pushConsArray: aSize
+[
+	^ IRPushArray new
+		size: aSize;
+		cons: true;
+		yourself
+]
+
+IRInstruction class >> pushDup
+[
+	^ IRPushDup new
+]
+
+IRInstruction class >> pushInstVar: index
+[
+	^ IRInstVarAccess new
+		index: index;
+		store: false;
+		yourself
+]
+
+IRInstruction class >> pushLiteral: object
+[
+	^ IRPushLiteral new literal: object
+]
+
+IRInstruction class >> pushLiteralVariable: object
+[
+	^ IRLiteralVariableAccess new
+		association: object;
+		store: false;
+		yourself
+]
+
+IRInstruction class >> pushNewArray: aSize
+[
+	^ IRPushArray new
+		size: aSize;
+		cons: false;
+		yourself
+]
+
+IRInstruction class >> pushReceiver
+[
+	^ IRReceiverAccess new
+]
+
+IRInstruction class >> pushRemoteTemp: aName inVectorAt: nameOfVector
+[
+	^ IRRemoteTempAccess new
+		name: aName;
+		tempVectorName: nameOfVector;
+		store: false;
+		yourself
+]
+
+IRInstruction class >> pushTemp: aName
+[
+	aName = 'self'
+		ifTrue: [ self error: 'use pushReceiver' ].
+	^ IRTempAccess new
+		name: aName;
+		store: false;
+		yourself
+]
+
+IRInstruction class >> pushThisContext
+[
+	^ IRThisContextAccess new
+]
+
+IRInstruction class >> returnTop
+[
+	^ IRReturn new
+]
+
+IRInstruction class >> send: selector
+[
+	^ IRSend new selector: selector
+]
+
+IRInstruction class >> send: selector toSuperOf: behavior
+[
+	behavior ifNil: [ self error: 'super of nil does not exist' ].
+	^ IRSend new
+		selector: selector;
+		superOf: behavior;
+		yourself
+]
+
+IRInstruction class >> storeInstVar: index
+[
+	^ IRInstVarAccess new
+		index: index;
+		store: true;
+		yourself
+]
+
+IRInstruction class >> storeIntoLiteralVariable: object
+[
+	^ IRLiteralVariableAccess new
+		association: object;
+		store: true;
+		yourself
+]
+
+IRInstruction class >> storeRemoteTemp: aName inVectorAt: nameOfVector
+[
+	^ IRRemoteTempAccess new
+		name: aName;
+		tempVectorName: nameOfVector;
+		store: true;
+		yourself
+]
+
+IRInstruction class >> storeTemp: aName
+[
+	^ IRTempAccess new
+		name: aName;
+		store: true;
+		yourself
+]
+

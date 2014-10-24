@@ -1,0 +1,85 @@
+PackageInfo >> asRPackageSet
+[
+	^ RPackageSet named: self packageName
+]
+
+PackageInfo >> classesAndMetaClassesNotDefinedInSubCategories
+[
+	| subCategoriesClasses |
+	subCategoriesClasses := OrderedCollection new.
+	self systemCategories
+		do: [ :aSymbol | aSymbol = self packageName asSymbol
+				ifFalse: [ subCategoriesClasses
+						addAll: (PackageOrganizer default packageNamed: aSymbol ifAbsent: [ PackageInfo new ]) classesAndMetaClasses ] ].
+	^ self classesAndMetaClasses difference: subCategoriesClasses
+]
+
+PackageInfo >> classesNotDefinedInSubCategories
+[
+	"return all classes that are defined in a category matching exactly the name of this package. Rpackage has to re-order each class in its right package. See RPackageOrganizer>>importFromPackageInfo:"
+
+	| subCategoriesClasses |
+	subCategoriesClasses := OrderedCollection new.
+	self systemCategories
+		do: [ :aSymbol | aSymbol = self packageName asSymbol
+				ifFalse: [ subCategoriesClasses addAll: (PackageInfo named: aSymbol asString) classes ] ].
+	^ self classes difference: subCategoriesClasses
+]
+
+PackageInfo >> coreMethodsNotDefinedInSubCategories
+[
+	^ self classesAndMetaClassesNotDefinedInSubCategories gather: [ :class | self coreMethodsForClass: class ]
+]
+
+PackageInfo >> extensionMethodsFromAllSystem
+[
+	^ Smalltalk allClassesAndTraits
+		gather: [ :classOrTrait | (self extensionMethodsForClass: classOrTrait classSide) , (self extensionMethodsForClass: classOrTrait) ]
+]
+
+PackageInfo >> extensionMethodsNotDefinedInSubCategories
+[
+	^ self externalBehaviorsNotDefinedInSubCategories
+		gather: [ :classOrTrait | self extensionMethodsForClass: classOrTrait ]
+]
+
+PackageInfo >> externalBehaviorsNotDefinedInSubCategories
+[
+	^ self externalClassesNotDefinedInSubCategories , self externalTraitsNotDefinedInSubCategories
+]
+
+PackageInfo >> externalClassesNotDefinedInSubCategories
+[
+	| myClasses |
+	myClasses := self classesAndMetaClassesNotDefinedInSubCategories.
+	^ Array
+		streamContents: [ :s | ProtoObject withAllSubclassesDo: [ :class | (myClasses includes: class)
+						ifFalse: [ s nextPut: class ] ] ]
+]
+
+PackageInfo >> externalTraitsNotDefinedInSubCategories
+[
+	^ Array
+		streamContents: [ :s | | behaviors |
+			behaviors := self classesAndMetaClassesNotDefinedInSubCategories.
+			Smalltalk allTraits
+				do: [ :trait | (behaviors includes: trait)
+						ifFalse: [ s nextPut: trait ].
+					(behaviors includes: trait classSide)
+						ifFalse: [ s nextPut: trait classSide ] ] ]
+]
+
+PackageInfo >> isEmpty
+[
+	^ (self classesAndMetaClassesNotDefinedInSubCategories , self coreMethodsNotDefinedInSubCategories
+		, self extensionMethodsNotDefinedInSubCategories) isEmpty
+]
+
+PackageInfo >> withClassesAndCategoriesDo: aBlock
+[
+	self systemCategories
+		do: [ :aSymbol | (SystemOrganization listAtCategoryNamed: aSymbol asString)
+				collect: [ :e | self class environment at: e ]
+				thenDo: [ :class | aBlock value: class value: aSymbol ] ]
+]
+

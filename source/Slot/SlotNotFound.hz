@@ -1,0 +1,45 @@
+SlotNotFound
+	superclass: #Error;
+	instanceVariables: #(#name #targetClass );
+	package: #Slot.
+
+SlotNotFound >> messageText
+[
+	^ 'Slot ''' , name asString , ''' not found' , (targetClass ifNil: [ '' ] ifNotNil: [ ' in ' , targetClass name ])
+]
+
+SlotNotFound >> name
+[
+	^ name
+]
+
+SlotNotFound >> name: anObject
+[
+	name := anObject
+]
+
+SlotNotFound >> targetClass
+[
+	^ targetClass
+]
+
+SlotNotFound >> targetClass: aClass
+[
+	targetClass := aClass
+]
+
+SlotNotFound class >> signalForName: aSymbol
+[
+	self new
+		name: aSymbol;
+		signal
+]
+
+SlotNotFound class >> signalForName: aSymbol inClass: aClass
+[
+	self new
+		name: aSymbol;
+		targetClass: aClass;
+		signal
+]
+

@@ -1,0 +1,127 @@
+RBReturnNode
+	superclass: #RBProgramNode;
+	instanceVariables: #(#return #value );
+	package: #'AST-Core'.
+
+RBReturnNode >> = anObject
+[
+	self == anObject
+		ifTrue: [ ^ true ].
+	self class = anObject class
+		ifFalse: [ ^ false ].
+	^ self value = anObject value
+]
+
+RBReturnNode >> acceptVisitor: aProgramNodeVisitor
+[
+	^ aProgramNodeVisitor visitReturnNode: self
+]
+
+RBReturnNode >> asSequenceNode
+[
+	^ RBSequenceNode statements: {self}
+]
+
+RBReturnNode >> children
+[
+	^ Array with: value
+]
+
+RBReturnNode >> containsReturn
+[
+	^ true
+]
+
+RBReturnNode >> copyInContext: aDictionary
+[
+	^ self class new
+		value: (self value copyInContext: aDictionary);
+		yourself
+]
+
+RBReturnNode >> equalTo: anObject withMapping: aDictionary
+[
+	^ self class = anObject class and: [ self value equalTo: anObject value withMapping: aDictionary ]
+]
+
+RBReturnNode >> hash
+[
+	^ self value hash
+]
+
+RBReturnNode >> isFaulty
+[
+	^ self value isFaulty
+]
+
+RBReturnNode >> isReturn
+[
+	^ true
+]
+
+RBReturnNode >> match: aNode inContext: aDictionary
+[
+	aNode class = self class
+		ifFalse: [ ^ false ].
+	^ value match: aNode value inContext: aDictionary
+]
+
+RBReturnNode >> postCopy
+[
+	super postCopy.
+	self value: self value copy
+]
+
+RBReturnNode >> replaceNode: aNode withNode: anotherNode
+[
+	value == aNode
+		ifTrue: [ self value: anotherNode ]
+]
+
+RBReturnNode >> return
+[
+	^ return
+]
+
+RBReturnNode >> return: anInteger
+[
+	return := anInteger
+]
+
+RBReturnNode >> return: returnInteger value: aValueNode
+[
+	return := returnInteger.
+	self value: aValueNode
+]
+
+RBReturnNode >> start
+[
+	^ return
+]
+
+RBReturnNode >> stop
+[
+	^ value stop
+]
+
+RBReturnNode >> value
+[
+	^ value
+]
+
+RBReturnNode >> value: valueNode
+[
+	value := valueNode.
+	value parent: self
+]
+
+RBReturnNode class >> return: returnInteger value: aValueNode
+[
+	^ self new return: returnInteger value: aValueNode
+]
+
+RBReturnNode class >> value: aNode
+[
+	^ self return: nil value: aNode
+]
+

@@ -1,0 +1,39 @@
+CodeDeclaration
+	instanceVariables: #(#contents );
+	package: #CodeImport.
+
+CodeDeclaration >> contents
+[
+	^ contents
+]
+
+CodeDeclaration >> contents: anObject
+[
+	contents := anObject
+]
+
+CodeDeclaration >> import
+[
+	self subclassResponsibility
+]
+
+CodeDeclaration >> importFor: aRequestor
+[
+	self import
+]
+
+CodeDeclaration >> printOn: aStream
+[
+	super printOn: aStream.
+	aStream nextPut: $(.
+	aStream nextPutAll: contents.
+	aStream nextPut: $)
+]
+
+CodeDeclaration class >> contents: someContents
+[
+	^ self new
+		contents: someContents;
+		yourself
+]
+

@@ -1,0 +1,198 @@
+RBMessageNode >> isInlineAndOr
+[
+	self methodNode compilationContext optionInlineAndOr
+		ifFalse: [ ^ false ].
+	self receiver isBlock
+		ifTrue: [ ^ false ].
+	self isCascaded
+		ifTrue: [ ^ false ].
+	(#(#and: #or:) includes: self selector)
+		ifFalse: [ ^ false ].
+	(self arguments allSatisfy: [ :each | each isBlock ])
+		ifFalse: [ ^ false ].
+	(self arguments allSatisfy: [ :each | each arguments isEmpty ])
+		ifFalse: [ self notify: 'and: (or:) takes zero-arg block'.
+			^ false ].
+	^ true
+]
+
+RBMessageNode >> isInlineCase
+[
+	self methodNode compilationContext optionInlineCase
+		ifFalse: [ ^ false ].
+	self isCascaded
+		ifTrue: [ ^ false ].
+	(#(#caseOf: #caseOf:otherwise:) includes: self selector)
+		ifFalse: [ ^ false ].
+	self arguments size = 2
+		ifTrue: [ "otherwise block"
+			self arguments last isBlock
+				ifFalse: [ ^ false ] ].
+	self arguments first isArray
+		ifFalse: [ ^ false ].
+	self arguments first statements
+		do: [ :assoc | (assoc isMessage and: [ assoc selector == #-> ])
+				ifFalse: [ ^ false ].
+			assoc receiver isBlock
+				ifFalse: [ ^ false ].
+			assoc receiver arguments isEmpty
+				ifFalse: [ self notify: 'caseOf: takes zero-arg blocks'.
+					^ false ].
+			assoc arguments first isBlock
+				ifFalse: [ ^ false ].
+			assoc arguments first arguments isEmpty
+				ifFalse: [ self notify: 'caseOf: takes zero-arg blocks' ] ].
+	^ true
+]
+
+RBMessageNode >> isInlineIf
+[
+	self methodNode compilationContext optionInlineIf
+		ifFalse: [ ^ false ].
+	self receiver isBlock
+		ifTrue: [ ^ false ].
+	self isCascaded
+		ifTrue: [ ^ false ].
+	(#(#ifTrue: #ifFalse: #ifTrue:ifFalse: #ifFalse:ifTrue:) includes: self selector)
+		ifFalse: [ ^ false ].
+	self arguments do: [ :node | node isBlock
+				ifFalse: [ ^ false ] ].
+	self arguments
+		do: [ :block | block arguments isEmpty
+				ifFalse: [ OCSemanticError new
+						node: self;
+						compilationContext: self methodNode compilationContext;
+						messageText: 'ifTrue:ifFalse: takes zero-arg blocks';
+						signal.
+					^ false ] ].
+	^ true
+]
+
+RBMessageNode >> isInlineIfNil
+[
+	| assertNone assertOneOrNone |
+	self methodNode compilationContext optionInlineIfNil
+		ifFalse: [ ^ false ].
+	self receiver isBlock
+		ifTrue: [ ^ false ].
+	self isCascaded
+		ifTrue: [ ^ false ].
+	(#(#ifNil: #ifNotNil: #ifNil:ifNotNil: #ifNotNil:ifNil:) includes: self selector)
+		ifFalse: [ ^ false ].
+	self arguments do: [ :node | node isBlock
+				ifFalse: [ ^ false ] ].
+	assertNone := [ :block | block arguments isEmpty
+		ifFalse: [ self notify: 'ifNil: takes zero-arg block'.
+			^ false ] ].
+	assertOneOrNone := [ :block | block arguments size > 1
+		ifTrue: [ self notify: 'ifNotNil: takes zero- or one-arg block'.
+			^ false ] ].
+	self selector == #ifNil:
+		ifTrue: [ assertNone value: self arguments first ].
+	self selector == #ifNil:ifNotNil:
+		ifTrue: [ assertNone value: self arguments first.
+			assertOneOrNone value: self arguments last ].
+	self selector == #ifNotNil:
+		ifTrue: [ assertOneOrNone value: self arguments first ].
+	self selector == #ifNotNil:ifNil:
+		ifTrue: [ assertOneOrNone value: self arguments first.
+			assertNone value: self arguments last ].
+	^ true
+]
+
+RBMessageNode >> isInlineTimesRepeat
+[
+	| block |
+	self methodNode compilationContext optionInlineTimesRepeat
+		ifFalse: [ ^ false ].
+	self receiver isBlock
+		ifTrue: [ ^ false ].
+	self isCascaded
+		ifTrue: [ ^ false ].
+	#timesRepeat: = self selector
+		ifFalse: [ ^ false ].
+	block := self arguments last.
+	block isBlock
+		ifFalse: [ ^ false ].
+	block arguments size isZero
+		ifFalse: [ "self notify: 'timesRepeat: block must take zero arg'."
+			^ false ].
+	^ true
+]
+
+RBMessageNode >> isInlineToDo
+[
+	| block step |
+	self methodNode compilationContext optionInlineToDo
+		ifFalse: [ ^ false ].
+	self receiver isBlock
+		ifTrue: [ ^ false ].
+	self isCascaded
+		ifTrue: [ ^ false ].
+	(#(#to:do: #to:by:do:) includes: self selector)
+		ifFalse: [ ^ false ].
+	block := self arguments last.
+	block isBlock
+		ifFalse: [ ^ false ].
+	block arguments size = 1
+		ifFalse: [ self notify: 'to:do: block must take one arg'.
+			^ false ].
+	self arguments first isVariable
+		ifTrue: [ (RBParseTreeSearcher new
+				matches: self arguments first name , ' := `@object' do: [ :n :a | true ];
+				executeTree: block initialAnswer: false)
+				ifTrue: [ ^ false ] ].
+	self arguments size = 3
+		ifTrue: [ step := self arguments second.
+			step isLiteralNode
+				ifFalse: [ ^ false ].
+			step value = 0
+				ifTrue: [ ^ false ] ].	"to:by:do:"
+	^ true
+]
+
+RBMessageNode >> isInlineWhile
+[
+	self methodNode compilationContext optionInlineWhile
+		ifFalse: [ ^ false ].
+	self isCascaded
+		ifTrue: [ ^ false ].
+	(#(#whileFalse: #whileTrue: #whileFalse #whileTrue) includes: self selector)
+		ifFalse: [ ^ false ].
+	self receiver isBlock
+		ifFalse: [ ^ false ].
+	self receiver arguments isEmpty
+		ifFalse: [ self notify: 'while receiver block must have no arguments'.
+			^ false ].
+	self arguments isEmpty
+		ifFalse: [ self arguments first isBlock
+				ifFalse: [ ^ false ].
+			self arguments first arguments isEmpty
+				ifFalse: [ self notify: 'while takes a zero-arg block as its argument'.
+					^ false ] ].
+	^ true
+]
+
+RBMessageNode >> isInlined
+[
+	self methodNode compilationContext optIlineNone
+		ifTrue: [ ^ false ].
+	self isInlineIf
+		ifTrue: [ ^ true ].
+	self isInlineIfNil
+		ifTrue: [ ^ true ].
+	self isInlineAndOr
+		ifTrue: [ ^ true ].
+	self isInlineWhile
+		ifTrue: [ ^ true ].
+	self isInlineToDo
+		ifTrue: [ ^ true ].
+	self isInlineTimesRepeat
+		ifTrue: [ ^ true ].
+	self isInlineCase
+		ifTrue: [ ^ true ].
+	self isInlineTimesRepeat
+		ifTrue: [ ^ true ].
+	^ false
+]
+

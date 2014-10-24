@@ -1,0 +1,32 @@
+VariableLayout
+	superclass: #PointerLayout;
+	package: #Slot.
+
+VariableLayout >> extendAgain: aLayout with: someScope
+[
+	| result |
+	result := self species new.
+	result host: aLayout host.
+	aLayout compactClassIndex > 0
+		ifTrue: [ result compactClassIndex: aLayout compactClassIndex ].
+	result slotScope: someScope.
+	^ result
+]
+
+VariableLayout >> instanceSpecificationBase
+[
+	^ 2
+]
+
+VariableLayout >> isVariable
+[
+	^ true
+]
+
+VariableLayout class >> extending: superLayout scope: aScope host: aClass
+[
+	^ (superLayout extendVariable: aScope)
+		host: aClass;
+		yourself
+]
+

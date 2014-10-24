@@ -1,0 +1,106 @@
+TBehavior >> compile: code
+[
+	"Compile the argument, code, as source code in the context of the 
+	receiver. Create an error notification if the code can not be compiled. 
+	The argument is either a string or an object that converts to a string or a 
+	PositionableStream on an object that converts to a string."
+
+	^ self compile: code notifying: nil
+]
+
+TBehavior >> compile: code notifying: requestor
+[
+	"Compile the argument, code, as source code in the context of the 
+	receiver and insEtall the result in the receiver's method dictionary. The 
+	second argument, requestor, is to be notified if an error occurs. The 
+	argument code is either a string or an object that converts to a string or 
+	a PositionableStream. This method also saves the source code."
+
+	| method |
+	method := self compiler
+		source: code;
+		requestor: requestor;
+		failBlock: [ ^ nil ];
+		compile.
+	method
+		putSource: code
+		inFile: 2
+		withPreamble: [ :f | f
+				cr;
+				nextPut: $!;
+				nextChunkPut: 'Behavior method';
+				cr ].
+	self addSelector: method selector withMethod: method notifying: requestor.
+	^ method selector
+]
+
+TBehavior >> compileAll
+[
+	^ self compileAllFrom: self
+]
+
+TBehavior >> compileAllFrom: oldClass
+[
+	"Compile all the methods in the receiver's method dictionary.
+	This validates sourceCode and variable references and forces
+	all methods to use the current bytecode set"
+
+	oldClass localSelectors do: [ :sel | self recompile: sel from: oldClass ]
+]
+
+TBehavior >> compiler
+[
+	"Answer a compiler appropriate for source methods of this class."
+
+	^ self compilerClass new
+		environment: self environment;
+		class: self
+]
+
+TBehavior >> compilerClass
+[
+	"Answer a compiler class appropriate for source methods of this class."
+
+	^ Smalltalk compilerClass
+]
+
+TBehavior >> evaluate: aString
+[
+	^ self compiler evaluate: aString
+]
+
+TBehavior >> recompile
+[
+	self compileAll
+]
+
+TBehavior >> recompile: selector
+[
+	"Compile the method associated with selector in the receiver's method dictionary."
+
+	^ self recompile: selector from: self
+]
+
+TBehavior >> recompile: selector from: oldClass
+[
+	^ self explicitRequirement
+]
+
+TBehavior >> recompileChanges
+[
+	"Compile all the methods that are in the changes file.
+	This validates sourceCode and variable references and forces
+	methods to use the current bytecode set"
+
+	self selectorsAndMethodsDo: [ :sel :meth | meth fileIndex > 1
+				ifTrue: [ self recompile: sel from: self ] ]
+]
+
+TBehavior >> sourceCodeTemplate
+[
+	"Answer an expression to be edited and evaluated in order to define 
+	methods in this class or trait."
+
+	^ 'message selector and argument names	"comment stating purpose of message"	| temporary variable names |	statements'
+]
+

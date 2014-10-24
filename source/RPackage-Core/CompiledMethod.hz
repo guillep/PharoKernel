@@ -1,0 +1,38 @@
+CompiledMethod >> handleUnpackaged: anRPackageOrganizer
+[
+	| tmpTrait |
+	tmpTrait := self methodClass traitComposition traitProvidingSelector: self selector.
+	tmpTrait
+		ifNotNil: [ (tmpTrait packages select: [ :aRPackage | aRPackage includesSelector: self selector ofClass: tmpTrait ]) isEmpty
+				ifFalse: [ ^ self ] ].
+	self error: 'Yes... method is unpackaged and I don''t know what to do with this.'	"	self halt.	self category isNil		ifTrue: [ Error signal ].			anRPackageOrganizer		systemMethodAddedActionFrom:			(AddedEvent				method: self				selector: self selector				protocol: self category				class: self methodClass) asSystemAnnouncement"
+]
+
+CompiledMethod >> isDefinedInPackage: anRPackage
+[
+	^ anRPackage includesDefinedSelector: self selector ofClass: self methodClass
+]
+
+CompiledMethod >> isExtensionInPackage: anRPackage
+[
+	^ anRPackage includesExtensionSelector: self selector ofClass: self methodClass
+]
+
+CompiledMethod >> package
+[
+	^ self packageFromOrganizer: RPackage organizer
+]
+
+CompiledMethod >> packageFromOrganizer: anRPackageOrganizer
+[
+	"This method returns the package this method belongs to.  
+	It takes into account classes and traits.  
+	If the method is in no package, returns nil by now"
+
+	self flag: 'TODO: use anRPackageOrganizer, or better delegate to anRPackageOrganizer'.
+	^ self origin packages
+		detect: [ :each | (each includesSelector: self selector ofClassName: self origin theNonMetaClass originalName)
+				or: [ each includesSelector: self selector ofMetaclassName: self origin theNonMetaClass originalName ] ]
+		ifNone: [ nil ]
+]
+

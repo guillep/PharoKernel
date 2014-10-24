@@ -1,0 +1,127 @@
+RGTraitDefinition
+	superclass: #RGTraitDescriptionDefinition;
+	instanceVariables: #(#metaClass #comment #category #package );
+	package: #'Ring-Core-Kernel'.
+
+RGTraitDefinition >> category
+[
+	"Retrieves the tag-package associated to the receiver"
+
+	^ category
+]
+
+RGTraitDefinition >> category: aSymbol
+[
+	category := aSymbol
+]
+
+RGTraitDefinition >> classVariables
+[
+	^ #()
+]
+
+RGTraitDefinition >> comment
+[
+	"Retrieves the comment definition object associated to the receiver"
+
+	^ comment
+]
+
+RGTraitDefinition >> comment: anObject
+[
+	"Sets a RGCommentDefinition object based on the argument"
+
+	comment := self factory createComment: anObject parent: self
+]
+
+RGTraitDefinition >> hasComment
+[
+	^ comment isEmptyOrNil not
+]
+
+RGTraitDefinition >> hasMetaclass
+[
+	^ metaClass notNil
+]
+
+RGTraitDefinition >> hasStamp
+[
+	^ self stamp isEmptyOrNil not
+]
+
+RGTraitDefinition >> instanceVariables
+[
+	^ #()
+]
+
+RGTraitDefinition >> isSameRevisionAs: aRGTraitDefinition
+[
+	"This method look for equality of the properties of the receiver"
+
+	^ (super isSameRevisionAs: aRGTraitDefinition)
+		and: [ self category = aRGTraitDefinition category
+				and: [ self traitCompositionSource = aRGTraitDefinition traitCompositionSource
+						and: [ ((self hasComment and: [ self comment isSameRevisionAs: aRGTraitDefinition comment ]) or: [ self hasComment not ])
+								and: [ self theMetaClass isSameRevisionAs: aRGTraitDefinition theMetaClass ] ] ] ]
+]
+
+RGTraitDefinition >> package
+[
+	"Retrieves the package in which this trait is contained"
+
+	^ package
+]
+
+RGTraitDefinition >> package: aRGPackage
+[
+	"Sets the package in which this trait is contained"
+
+	package := aRGPackage
+]
+
+RGTraitDefinition >> sharedPools
+[
+	^ #()
+]
+
+RGTraitDefinition >> stamp
+[
+	^ self hasComment
+		ifTrue: [ self comment stamp ]
+		ifFalse: [ nil ]
+]
+
+RGTraitDefinition >> stamp: aString
+[
+	self hasComment
+		ifTrue: [ self comment stamp: aString ]
+		ifFalse: [ self factory createComment
+				parent: self;
+				stamp: aString ]
+]
+
+RGTraitDefinition >> theMetaClass
+[
+	^ metaClass
+]
+
+RGTraitDefinition >> theNonMetaClass
+[
+	^ self
+]
+
+RGTraitDefinition >> withMetaclass
+[
+	"Registers explicitly the metaclass of a trait"
+
+	metaClass := self factory createMetatraitOf: self
+]
+
+RGTraitDefinition >> withMetaclass: aRGMetatraitDefinition
+[
+	"Registers explicitly the metaclass of a class"
+
+	metaClass := aRGMetatraitDefinition.
+	metaClass baseClass: self
+]
+

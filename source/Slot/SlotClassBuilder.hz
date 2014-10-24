@@ -1,0 +1,310 @@
+SlotClassBuilder
+	instanceVariables: #(#installer #oldClasses #newClasses #classSlots #category #superclass #name #layoutClass #slots #traitComposition #classTraitComposition #result #sharedPoolsString #sharedVariablesString );
+	package: #Slot.
+
+SlotClassBuilder >> apply: classModification
+[
+	"HELP ME"
+
+	classModification modifiesSlots
+		ifTrue: [ self applySlotChange: classModification ]
+		ifFalse: [ 
+			classModification modifiesFormat
+				ifTrue: [ self applyFormatChange: classModification ]
+				ifFalse: [ 
+					classModification modifiesSuperclass
+						ifTrue: [ self applySuperclassChange: classModification ]
+						ifFalse: [ 
+							(classModification modifiesSharedPools or: [ classModification modifiesSharedVariables ])
+								ifTrue: [ self applySharedVariableOrPoolChange: classModification ]
+								ifFalse: [ 
+									"Note: In the other cases of this evil if nesting, the trait composition is setted 									by the installer."
+									^ self installTraitComposition: classModification ] ] ] ].
+	self
+		migrateClasses: classModification;
+		cleanUp
+]
+
+SlotClassBuilder >> applyAndUpdateFormat: classModification
+[
+	^ self track: classModification during: [ :old :new | installer formatChangedFrom: old to: new by: classModification ]
+]
+
+SlotClassBuilder >> applyAndUpdateSharedVariableOrSharedPool: classModification
+[
+	^ self
+		track: classModification
+		during: [ :old :new | installer sharedVariableOrSharedPoolChangedFrom: old to: new by: classModification ]
+]
+
+SlotClassBuilder >> applyAndUpdateSlots: classModification
+[
+	^ self track: classModification during: [ :old :new | installer slotsChangedFrom: old to: new by: classModification ]
+]
+
+SlotClassBuilder >> applyAndUpdateSuperclass: classModification
+[
+	^ self
+		track: classModification
+		during: [ :old :new | installer superclassChangedFrom: old to: new by: classModification ]
+]
+
+SlotClassBuilder >> applyFormatChange: classModification
+[
+	result := self applyAndUpdateFormat: classModification.
+	classModification allPropagationsDo: [ :propagation | self applyAndUpdateFormat: propagation ]
+]
+
+SlotClassBuilder >> applySharedVariableOrPoolChange: classModification
+[
+	"This method updates both shared variables and shared pools since they use the same mechanism"
+
+	result := self applyAndUpdateSharedVariableOrSharedPool: classModification.
+	classModification allPropagationsDo: [ :propagation | self applyAndUpdateSharedVariableOrSharedPool: propagation ]
+]
+
+SlotClassBuilder >> applySlotChange: classModification
+[
+	result := self applyAndUpdateSlots: classModification.
+	classModification allPropagationsDo: [ :propagation | self applyAndUpdateSlots: propagation ]
+]
+
+SlotClassBuilder >> applySuperclassChange: classModification
+[
+	result := self applyAndUpdateSuperclass: classModification.
+	classModification allPropagationsDo: [ :propagation | self applyAndUpdateSuperclass: propagation ]
+]
+
+SlotClassBuilder >> build
+[
+	| oldClass metaChange classChange |
+	result := oldClass := installer classAt: name ifAbsent: [ ^ self buildNewClass ].
+	self validateSuperChain: oldClass.
+	metaChange := ClassModification
+		modify: oldClass class
+		extend: self superMetaclass
+		withLayoutType: FixedLayout
+		slots: classSlots
+		sharedVariables: ''
+		sharedPools: ''
+		traitComposition: classTraitComposition
+		compactClassIndex: oldClass class indexIfCompact.
+	classChange := ClassModification
+		modify: oldClass
+		extend: superclass
+		withLayoutType: self layoutClass
+		slots: slots
+		sharedVariables: sharedVariablesString
+		sharedPools: sharedPoolsString
+		traitComposition: traitComposition
+		compactClassIndex: oldClass indexIfCompact.
+	self apply: metaChange.
+	self apply: classChange.
+	result instanceSide
+		declare: sharedVariablesString;
+		sharing: sharedPoolsString.
+	result isMeta
+		ifFalse: [ installer recategorize: result to: category ].
+	^ result instanceSide
+]
+
+SlotClassBuilder >> buildNewClass
+[
+	| metaclass newClass |
+	metaclass := Metaclass new.
+	metaclass superclass: self superMetaclass withLayoutType: FixedLayout slots: classSlots.
+	newClass := metaclass new.
+	newClass setName: name.
+	newClass superclass: superclass withLayoutType: self layoutClass slots: slots.
+	newClass declare: sharedVariablesString.
+	newClass sharing: sharedPoolsString.
+	installer classAdded: newClass inCategory: category.
+	installer installTraitComposition: traitComposition on: newClass.
+	installer installTraitComposition: classTraitComposition on: metaclass.
+	^ newClass
+]
+
+SlotClassBuilder >> category: aCategory
+[
+	category := aCategory
+]
+
+SlotClassBuilder >> classSlots: someClassSlots
+[
+	classSlots := someClassSlots
+]
+
+SlotClassBuilder >> classTraitComposition: aTraitComposition
+[
+	classTraitComposition := aTraitComposition asTraitComposition
+]
+
+SlotClassBuilder >> cleanUp
+[
+	oldClasses removeAll.
+	newClasses removeAll
+]
+
+SlotClassBuilder >> client: anInstaller
+[
+	"deprecated"
+
+	installer := anInstaller
+]
+
+SlotClassBuilder >> copyClassSlotsFromExistingClass
+[
+	"Ugly helper method: I copy over the class slots of the class in my builder environment."
+
+	| oldClass |
+	oldClass := self environment at: name ifAbsent: [ ^ self ].
+	self classSlots: oldClass class layout slotScope visibleSlotNames
+]
+
+SlotClassBuilder >> copyTraitCompositionFromExistingClass
+[
+	"Ugly Helper method: I copy over the trait compisition of the class in my builder environment."
+
+	| oldClass |
+	oldClass := self environment at: name ifAbsent: [ ^ self ].
+	oldClass hasTraitComposition
+		ifTrue: [ self traitComposition: oldClass traitComposition copyTraitExpression ].
+	oldClass class hasTraitComposition
+		ifTrue: [ self classTraitComposition: oldClass class traitComposition copyTraitExpression ]
+]
+
+SlotClassBuilder >> environment
+[
+	^ installer environment
+]
+
+SlotClassBuilder >> environment: globals
+[
+	installer environment: globals
+]
+
+SlotClassBuilder >> initialize
+[
+	super initialize.
+	oldClasses := OrderedCollection new.
+	newClasses := OrderedCollection new.
+	sharedPoolsString := ''.
+	sharedVariablesString := ''.
+	classSlots := {}.
+	slots := {}.
+	superclass := Object.
+	classTraitComposition := {} asTraitComposition.
+	traitComposition := {} asTraitComposition
+]
+
+SlotClassBuilder >> installTraitComposition: classModification
+[
+	installer installTraitComposition: classModification traitComposition on: classModification target
+]
+
+SlotClassBuilder >> installer: anInstaller
+[
+	installer := anInstaller
+]
+
+SlotClassBuilder >> layoutClass
+[
+	"If not specified the layout class is the same as the superclass"
+
+	^ layoutClass ifNil: [ layoutClass := superclass layout class ]
+]
+
+SlotClassBuilder >> layoutClass: aLayoutClass
+[
+	layoutClass := aLayoutClass
+]
+
+SlotClassBuilder >> migrateClasses: classModification
+[
+	installer migrateClasses: oldClasses asArray to: newClasses asArray using: classModification instanceModification
+]
+
+SlotClassBuilder >> name: aName
+[
+	[ name := aName asSymbol ]
+		on: Error
+		do: [ InvalidGlobalName signal: 'Global names should be symbols' for: aName ].
+	self validateClassName.
+	self warnOfDangerousClasses
+]
+
+SlotClassBuilder >> sharedPools: poolString
+[
+	sharedPoolsString := poolString
+]
+
+SlotClassBuilder >> sharedVariables: aString
+[
+	sharedVariablesString := aString
+]
+
+SlotClassBuilder >> slots: someSlots
+[
+	slots := someSlots
+]
+
+SlotClassBuilder >> superMetaclass
+[
+	^ superclass ifNil: [ Class ] ifNotNil: [ superclass class ]
+]
+
+SlotClassBuilder >> superclass: aSuperclass
+[
+	superclass := aSuperclass.
+	superclass ifNotNil: [ self validateSuperclass: superclass ]
+]
+
+SlotClassBuilder >> track: classModification during: aBlock
+[
+	| old new |
+	old := classModification target.
+	new := classModification apply.
+	aBlock value: old value: new.	" Store the modification for updateClasses "
+	oldClasses add: old.
+	newClasses add: new.
+	^ new
+]
+
+SlotClassBuilder >> traitComposition: aTraitComposition
+[
+	traitComposition := aTraitComposition asTraitComposition
+]
+
+SlotClassBuilder >> validateClassName
+[
+	"Validate the new class name. Raise warning if invalid."
+
+	"name
+		detect: [ :c | (c isAlphaNumeric or: [ c = $_ ]) not ]
+		ifFound: [ :c | InvalidGlobalName signal: 'Invalid character: ''' , c printString , '''' for: name ].
+	name first canBeGlobalVarInitial
+		ifFalse: [ InvalidGlobalName signal: 'Class name does not start with a valid Global Var Initial' for: name ]"
+	^ self
+]
+
+SlotClassBuilder >> validateSuperChain: oldClass
+[
+	superclass ifNil: [ ^ nil ].
+	superclass
+		withAllSuperclassesDo: [ :class | class == oldClass
+				ifTrue: [ CircularHierarchyError signalFor: oldClass ] ]
+]
+
+SlotClassBuilder >> validateSuperclass: anObject
+[
+	anObject isBehavior
+		ifFalse: [ InvalidSuperclass signal: 'Trying to build classes from non-class objects' for: anObject ].
+	anObject isMeta
+		ifTrue: [ InvalidSuperclass signal: 'Metaclasses cannot be used for building classes' for: anObject ]
+]
+
+SlotClassBuilder >> warnOfDangerousClasses
+[
+	DangerousClassNotifier check: name
+]
+

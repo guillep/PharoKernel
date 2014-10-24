@@ -1,0 +1,22 @@
+OCUninitializedVariableWarning
+	superclass: #OCSemanticWarning;
+	package: #'OpalCompiler-Core'.
+
+OCUninitializedVariableWarning >> node: aVariableNode
+[
+	super node: aVariableNode.
+	messageText := 'Uninitialized temp: ' , aVariableNode name
+]
+
+OCUninitializedVariableWarning >> openMenuIn: aBlock
+[
+	| caption index |
+	caption := node name
+		,
+			' appears to be uninitialized at this point.Proceed anyway?'.
+	index := aBlock value: #('yes' 'no') value: #() value: caption.
+	index = 1
+		ifFalse: [ ^ self compilationContext failBlock value ].
+	^ self resume: true
+]
+

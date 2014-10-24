@@ -1,0 +1,46 @@
+RBVariableNode >> binding
+[
+	^ self propertyAt: #binding ifAbsent: [ nil ]
+]
+
+RBVariableNode >> binding: aSemVar
+[
+	aSemVar ifNil: [ ^ self removeProperty: #binding ifAbsent: [  ] ].
+	self propertyAt: #binding put: aSemVar
+]
+
+RBVariableNode >> isArg
+[
+	^ self binding isArg
+]
+
+RBVariableNode >> isClean
+[
+	^ (self isInstance | self isSpecialVariable) not
+]
+
+RBVariableNode >> isGlobal
+[
+	^ self binding isGlobal
+]
+
+RBVariableNode >> isInstance
+[
+	^ self binding isInstance
+]
+
+RBVariableNode >> isSpecialVariable
+[
+	^ self binding isSpecialVariable
+]
+
+RBVariableNode >> isTemp
+[
+	^ self binding isTemp
+]
+
+RBVariableNode >> isUndeclared
+[
+	^ self binding isUndeclared
+]
+

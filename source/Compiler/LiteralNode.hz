@@ -1,0 +1,63 @@
+LiteralNode
+	superclass: #LeafNode;
+	package: #Compiler.
+
+LiteralNode >> accept: aVisitor
+[
+	^ aVisitor visitLiteralNode: self
+]
+
+LiteralNode >> emitCodeForValue: stack encoder: encoder
+[
+	stack push: 1.
+	(encoder if: code isSpecialLiteralForPush: [ :specialLiteral | encoder genPushSpecialLiteral: specialLiteral ])
+		ifFalse: [ encoder genPushLiteral: index ]
+]
+
+LiteralNode >> isConstantNumber
+[
+	^ key isNumber
+]
+
+LiteralNode >> isLiteralNode
+[
+	^ true
+]
+
+LiteralNode >> isSpecialConstant
+[
+	^ code between: LdTrue and: LdMinus1 + 3
+]
+
+LiteralNode >> literalValue
+[
+	^ key
+]
+
+LiteralNode >> name: literal key: object index: i type: type
+[
+	"For compatibility with Encoder>>name:key:class:type:set:"
+
+	^ self key: object index: i type: type
+]
+
+LiteralNode >> printOn: aStream indent: level
+[
+	key isVariableBinding
+		ifTrue: [ key key
+				ifNil: [ aStream
+						nextPutAll: '###';
+						nextPutAll: key value soleInstance name ]
+				ifNotNil: [ aStream
+						nextPutAll: '##';
+						nextPutAll: key key ] ]
+		ifFalse: [ key storeOn: aStream ]
+]
+
+LiteralNode >> sizeCodeForValue: encoder
+[
+	self reserve: encoder.
+	(encoder if: code isSpecialLiteralForPush: [ :specialLiteral | ^ encoder sizePushSpecialLiteral: specialLiteral ])
+		ifFalse: [ ^ encoder sizePushLiteral: index ]
+]
+

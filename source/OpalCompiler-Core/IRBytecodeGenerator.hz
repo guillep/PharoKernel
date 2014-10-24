@@ -1,0 +1,783 @@
+IRBytecodeGenerator
+	instanceVariables: #(#seqOrder #orderSeq #seqBytes #jumps #literals #lastLiteral #currentSeqId #currentSeqNum #bytes #lastSpecialReturn #instrMaps #instrMap #stacks #stack #primNum #numArgs #properties #numberOfTemps #additionalLiterals #forceLongForm );
+	classVariables: #(#SpecialConstants #BytecodeTable #SpecialSelectors #Bytecodes );
+	package: #'OpalCompiler-Core'.
+
+IRBytecodeGenerator >> addLastLiteral: object
+[
+	lastLiteral ifNil: [ ^ lastLiteral := object ].
+	((lastLiteral literalEqual: object)
+		or: [ "case of metaclass, they have no unique association"
+			(lastLiteral isKindOf: Association) and: [ lastLiteral key isNil ] ])
+		ifFalse: [ self error: 'there can only be one last literal' ]
+]
+
+IRBytecodeGenerator >> addLiteral: object
+[
+	literals add: object.
+	^ literals identityIndexOf: object
+]
+
+IRBytecodeGenerator >> addPragma: aPragma
+[
+	properties ifNil: [ properties := AdditionalMethodState new ].
+	properties := properties copyWith: aPragma
+]
+
+IRBytecodeGenerator >> additionalLiterals: aSet
+[
+	additionalLiterals := aSet
+]
+
+IRBytecodeGenerator >> blockReturnTop
+[
+	self nextPut: (Bytecodes at: #returnTopFromBlock)
+]
+
+IRBytecodeGenerator >> bytecodes
+[
+	| stream |
+	self updateJumpOffsets.
+	stream := (ByteArray new: 100) writeStream.
+	orderSeq
+		do: [ :seqId | (instrMaps at: seqId) do: [ :assoc | assoc key bytecodeIndex: stream position + assoc value	"instr" ].
+			stream nextPutAll: (seqBytes at: seqId) ].
+	^ stream contents
+]
+
+IRBytecodeGenerator >> closureFrom: fromSeqId to: toSeqId copyNumCopiedValues: numCopied numArgs: numArgs2
+[
+	| distance from to |
+	(numCopied < 0 or: [ numCopied > 15 ])
+		ifTrue: [ ^ self error: 'too many copied vars' ].
+	from := seqOrder at: fromSeqId.
+	to := seqOrder at: toSeqId ifAbsent: [ ^ self ].	"not done yet"
+	distance := (from + 1 to: to - 1) inject: 0 into: [ :size :i | size + (seqBytes at: (orderSeq at: i)) size ].
+	distance > 65535
+		ifTrue: [ self error: 'forward jump too big' ].
+	self
+		nextPut: (Bytecodes at: #PushClosureCopyNumCopiedValuesNuumArgsJumpSize);
+		nextPut: numArgs2 + (numCopied bitShift: 4);
+		nextPut: (distance bitShift: -8);
+		nextPut: (distance bitAnd: 16rFF)
+]
+
+IRBytecodeGenerator >> compiledMethod
+[
+	^ self compiledMethodWith: CompiledMethodTrailer empty
+]
+
+IRBytecodeGenerator >> compiledMethodWith: trailer
+[
+	| cm |
+	cm := CompiledMethod
+		primitive: (self primNum > 0
+				ifTrue: [ self primNum ]
+				ifFalse: [ self quickMethodPrim ])
+		numArgs: self numArgs
+		numTemps: self numTemps
+		stackSize: self stackFrameSize
+		literals: self literals
+		bytecodes: self bytecodes
+		trailer: trailer.	"set the properties of cm according to properties saved"
+	properties
+		ifNotNil: [ cm penultimateLiteral: properties.
+			properties method: cm.
+			properties pragmas do: [ :each | each method: cm ] ].
+	^ cm
+]
+
+IRBytecodeGenerator >> forceLongForm: aBoolean
+[
+	forceLongForm := aBoolean
+]
+
+IRBytecodeGenerator >> from: fromSeqId goto: toSeqId
+[
+	| distance from to |
+	from := seqOrder at: fromSeqId.
+	to := seqOrder at: toSeqId ifAbsent: [ ^ self ].
+	from + 1 = to
+		ifTrue: [ ^ self ].	"fall through, no jump needed"
+	from < to
+		ifTrue: [ "jump forward"
+			distance := (from + 1 to: to - 1) inject: 0 into: [ :size :i | size + (seqBytes at: (orderSeq at: i)) size ].
+			self jumpForward: distance ]
+		ifFalse: [ "jump backward"
+			distance := ((to to: from - 1) inject: 0 into: [ :size :i | size + (seqBytes at: (orderSeq at: i)) size ])
+				+ bytes size.
+			self jumpBackward: distance ]
+]
+
+IRBytecodeGenerator >> from: fromSeqId if: bool goto: toSeqId otherwise: otherwiseSeqId
+[
+	| distance from to otherwise |
+	from := seqOrder at: fromSeqId.
+	to := seqOrder at: toSeqId ifAbsent: [ ^ self jump: 0 if: bool ].	"not done yet"
+	otherwise := seqOrder at: otherwiseSeqId ifAbsent: [ ^ self jump: 0 if: bool ].	"not done yet"
+	from < to
+		ifFalse: [ self error ].
+	from + 1 = otherwise
+		ifFalse: [ self error ].
+	distance := (from + 1 to: to - 1) inject: 0 into: [ :size :i | size + (seqBytes at: (orderSeq at: i)) size ].
+	self jump: distance if: bool
+]
+
+IRBytecodeGenerator >> goto: seqId
+[
+	stacks at: seqId put: (stack linkTo: (stacks at: seqId ifAbsentPut: [ nil ])).
+	self saveLastJump: (Message selector: #from:goto: arguments: {currentSeqId.
+					seqId}).
+	self from: currentSeqId goto: seqId
+]
+
+IRBytecodeGenerator >> if: bool goto: seqId
+[
+	| otherwiseSeqId |
+	otherwiseSeqId := self newDummySeqId.
+	self if: bool goto: seqId otherwise: otherwiseSeqId.
+	self label: otherwiseSeqId
+]
+
+IRBytecodeGenerator >> if: bool goto: seqId1 otherwise: seqId2
+[
+	stack pop.
+	stacks at: seqId1 put: (stack linkTo: (stacks at: seqId1 ifAbsentPut: [ nil ])).
+	stacks at: seqId2 put: (stack linkTo: (stacks at: seqId2 ifAbsentPut: [ nil ])).
+	self
+		saveLastJump:
+			(Message selector: #from:if:goto:otherwise: arguments: {currentSeqId.
+					bool.
+					seqId1.
+					seqId2}).
+	self
+		from: currentSeqId
+		if: bool
+		goto: seqId1
+		otherwise: seqId2
+]
+
+IRBytecodeGenerator >> initialize
+[
+	literals := OCLiteralList new.	"The following dicts are keyed by sequence id given by client in label: (and gotos)."
+	seqOrder := IdentityDictionary new.	"seqId -> seq order num"
+	seqBytes := IdentityDictionary new.	"seqId -> seq bytecodes"
+	jumps := IdentityDictionary new.	"seqId -> last jump instr"
+	instrMaps := IdentityDictionary new.	"seqId -> (clientInstr -> bytecode pos)"
+	stacks := IdentityDictionary new.	"seqId -> stackCount"
+	primNum := 0.
+	numArgs := 0.
+	currentSeqNum := 0.
+	orderSeq := OrderedCollection new.	"reverse map of seqOrder"
+	additionalLiterals := OCLiteralSet new.
+	forceLongForm := false.	"starting label in case one is not provided by client"
+	self label: self newDummySeqId
+]
+
+IRBytecodeGenerator >> irPrimitive: anIrPrimitive
+[
+	literals isEmpty
+		ifFalse: [ self error: 'init prim before adding instructions' ].
+	anIrPrimitive spec ifNotNil: [ literals add: anIrPrimitive spec ].
+	primNum := anIrPrimitive num
+]
+
+IRBytecodeGenerator >> jump: distance if: condition
+[
+	| hi |
+	distance = 0
+		ifTrue: [ "jumps to fall through, no-op"
+			^ self nextPut: (Bytecodes at: #popStackBytecode) ].
+	condition
+		ifTrue: [ hi := distance // 256.
+			hi < 4
+				ifFalse: [ self error: 'true jump too big' ].
+			self nextPut: (Bytecodes at: #longJumpIfTrue) first + hi.
+			self nextPut: distance \\ 256 ]
+		ifFalse: [ distance <= 8
+				ifTrue: [ self nextPut: (Bytecodes at: #shortConditionalJump) first + distance - 1 ]
+				ifFalse: [ hi := distance // 256.
+					hi < 4
+						ifFalse: [ self error: 'false jump too big' ].
+					self nextPut: (Bytecodes at: #longJumpIfFalse) first + hi.
+					self nextPut: distance \\ 256 ] ]
+]
+
+IRBytecodeGenerator >> jumpBackward: distance
+[
+	| dist |
+	dist := 1024 - distance - 2.
+	dist < 0
+		ifTrue: [ self error: 'back jump too big' ].
+	self nextPut: (Bytecodes at: #longUnconditionalJump) first + (dist // 256).
+	self nextPut: dist \\ 256
+]
+
+IRBytecodeGenerator >> jumpForward: distance
+[
+	distance = 0
+		ifTrue: [ ^ self ].	"no-op"
+	distance <= 8
+		ifTrue: [ self nextPut: (Bytecodes at: #shortUnconditionalJump) first + distance - 1 ]
+		ifFalse: [ distance > 1023
+				ifTrue: [ self error: 'forward jump too big' ].
+			self nextPut: (Bytecodes at: #longUnconditionalJump) first + (distance // 256) + 4.
+			self nextPut: distance \\ 256 ]
+]
+
+IRBytecodeGenerator >> label: seqId
+[
+	lastSpecialReturn := nil.
+	currentSeqId := seqId.
+	currentSeqNum := currentSeqNum + 1.
+	seqOrder at: seqId put: currentSeqNum.
+	orderSeq at: currentSeqNum ifAbsentPut: [ seqId ].
+	bytes := seqBytes at: seqId ifAbsentPut: [ OrderedCollection new ].
+	jumps at: seqId ifAbsentPut: [ nil ].
+	instrMap := instrMaps at: seqId ifAbsentPut: [ OrderedCollection new ].
+	stack := stacks at: currentSeqId ifAbsentPut: [ IRStackCount new ]
+]
+
+IRBytecodeGenerator >> literals
+[
+	literals := literals asArray.	"Put the optimized selectors in literals so as to browse senders more easily"
+	additionalLiterals := additionalLiterals asArray reject: [ :e | literals hasLiteral: e ].
+	additionalLiterals isEmpty
+		ifFalse: [ "Use one entry per literal if enough room, else make anArray"
+			literals := literals size + additionalLiterals size + 2 > 255
+				ifTrue: [ literals copyWith: additionalLiterals ]
+				ifFalse: [ literals , additionalLiterals ] ].
+	(literals anySatisfy: [ :each | each isMethodProperties ])
+		ifFalse: [ literals := literals copyWith: nil ].
+	^ lastLiteral ifNil: [ literals copyWith: nil ] ifNotNil: [ literals copyWith: lastLiteral ]
+]
+
+IRBytecodeGenerator >> mapBytesTo: instr
+[
+	"Associate the current byte offset with instr. We fix this later to have the correct offset,
+	see #bytecodes"
+
+	instrMap add: instr -> bytes size
+]
+
+IRBytecodeGenerator >> newDummySeqId
+[
+	^ Object new
+]
+
+IRBytecodeGenerator >> nextPut: byte
+[
+	bytes add: byte
+]
+
+IRBytecodeGenerator >> numArgs
+[
+	^ numArgs
+]
+
+IRBytecodeGenerator >> numArgs: n
+[
+	numArgs := n
+]
+
+IRBytecodeGenerator >> numTemps
+[
+	^ numberOfTemps
+]
+
+IRBytecodeGenerator >> numTemps: anInteger
+[
+	numberOfTemps := anInteger
+]
+
+IRBytecodeGenerator >> popTop
+[
+	stack pop.
+	self nextPut: (Bytecodes at: #popStackBytecode)
+]
+
+IRBytecodeGenerator >> pragmas: aCollection
+[
+	aCollection do: [ :each | self addPragma: each ]
+]
+
+IRBytecodeGenerator >> primNum
+[
+	^ primNum
+]
+
+IRBytecodeGenerator >> properties
+[
+	^ properties
+]
+
+IRBytecodeGenerator >> properties: propDict
+[
+	properties := propDict
+]
+
+IRBytecodeGenerator >> pushClosureCopyNumCopiedValues: numCopied numArgs: numArgs2 to: toSeqId
+[
+	| blockSeqId |
+	blockSeqId := self newDummySeqId.
+	stack pop: numCopied.
+	stacks at: blockSeqId put: (stack linkTo: (stacks at: blockSeqId ifAbsentPut: [ nil ])).
+	stack push.
+	stacks at: toSeqId put: (stack linkTo: (stacks at: toSeqId ifAbsentPut: [ nil ])).
+	self
+		saveLastJump:
+			(Message
+				selector: #closureFrom:to:copyNumCopiedValues:numArgs:
+				arguments: {currentSeqId.
+					toSeqId.
+					numCopied.
+					numArgs2}).
+	self
+		closureFrom: currentSeqId
+		to: toSeqId
+		copyNumCopiedValues: numCopied
+		numArgs: numArgs2.
+	self label: blockSeqId
+]
+
+IRBytecodeGenerator >> pushConsArray: size
+[
+	stack push.
+	stack pop: size.
+	(size < 0 or: [ size > 127 ])
+		ifTrue: [ self error: 'The array size is out of range. Should be 0 - 127' ].	"138 	10001010 1kkkkkkk 	Pop kkkkkkk into: (Array new: kkkkkkk)"
+	self
+		nextPut: (Bytecodes at: #pushConsArray);
+		nextPut: size + 128
+]
+
+IRBytecodeGenerator >> pushDup
+[
+	stack push.
+	self nextPut: (Bytecodes at: #duplicateTopBytecode)
+]
+
+IRBytecodeGenerator >> pushInstVar: instVarIndex
+[
+	| interval |
+	stack push.
+	interval := Bytecodes at: #pushReceiverVariableBytecode.
+	(instVarIndex <= interval size and: [ forceLongForm not ])
+		ifTrue: [ ^ self nextPut: (interval at: instVarIndex) ].
+	(instVarIndex <= 64 and: [ forceLongForm not ])
+		ifTrue: [ self nextPut: (Bytecodes at: #extendedPushBytecode).
+			^ self nextPut: (0 << 6) + instVarIndex - 1	"instVar" ].
+	instVarIndex <= 256
+		ifFalse: [ self error: 'can''t reference more than 256 inst vars' ].
+	self nextPut: (Bytecodes at: #doubleExtendedDoAnythingBytecode).
+	self nextPut: 2 << 5.	"pushInstVar"
+	self nextPut: instVarIndex - 1
+]
+
+IRBytecodeGenerator >> pushLiteral: object
+[
+	| index interval |
+	stack push.
+	(index := SpecialConstants identityIndexOf: object ifAbsent: 0) > 0
+		ifTrue: [ ^ self nextPut: (Bytecodes at: #pushConstantTrueBytecode) + index - 1 ].
+	(index := literals literalIndexOf: object ifAbsent: 0) > 0
+		ifFalse: [ index := self addLiteral: object ].
+	interval := Bytecodes at: #pushLiteralConstantBytecode.
+	index <= interval size
+		ifTrue: [ ^ self nextPut: (interval at: index) ].
+	index <= 64
+		ifTrue: [ self nextPut: (Bytecodes at: #extendedPushBytecode).
+			^ self nextPut: (2 << 6) + index - 1	"lit constant" ].
+	index > 256
+		ifTrue: [ self error: 'too many literals (>256)' ].
+	self nextPut: (Bytecodes at: #doubleExtendedDoAnythingBytecode).
+	self nextPut: 3 << 5.	"lit constant"
+	self nextPut: index - 1
+]
+
+IRBytecodeGenerator >> pushLiteralVariable: object
+[
+	| index interval |
+	stack push.
+	object isVariableBinding
+		ifFalse: [ self error: 'not a literal variable' ].
+	(index := literals literalIndexOf: object ifAbsent: 0) > 0
+		ifFalse: [ index := self addLiteral: object ].
+	interval := Bytecodes at: #pushLiteralVariableBytecode.
+	index <= interval size
+		ifTrue: [ ^ self nextPut: (interval at: index) ].
+	index <= 64
+		ifTrue: [ self nextPut: (Bytecodes at: #extendedPushBytecode).
+			^ self nextPut: (3 << 6) + index - 1	"literal variable" ].
+	index > 256
+		ifTrue: [ self error: 'too many literals (>256)' ].
+	self nextPut: (Bytecodes at: #doubleExtendedDoAnythingBytecode).
+	self nextPut: 1 << 7.	"lit variable"
+	self nextPut: index - 1
+]
+
+IRBytecodeGenerator >> pushNewArray: size
+[
+	stack push.
+	(size < 0 or: [ size > 127 ])
+		ifTrue: [ self error: 'The array size is out of range. Should be 0 - 127' ].	"138 	10001010 0kkkkkkk 	Push kkkkkkk into: (Array new: kkkkkkk)"
+	self
+		nextPut: (Bytecodes at: #pushConsArray);
+		nextPut: size
+]
+
+IRBytecodeGenerator >> pushReceiver
+[
+	stack push.
+	self nextPut: (Bytecodes at: #pushReceiverBytecode)
+]
+
+IRBytecodeGenerator >> pushRemoteTemp: tempIndex inVectorAt: tempVectorIndex
+[
+	stack push.
+	(tempIndex >= 0 and: [ tempIndex < 256 and: [ tempVectorIndex >= 0 and: [ tempVectorIndex < 256 ] ] ])
+		ifTrue: [ "140 	10001100 kkkkkkkk jjjjjjjj 	Push Temp At kkkkkkkk In Temp Vector At: jjjjjjjj"
+			self
+				nextPut: (Bytecodes at: #pushRemoteTempInVectorAt);
+				nextPut: tempIndex - 1;
+				nextPut: tempVectorIndex - 1.
+			^ self ].
+	tempIndex >= 256
+		ifTrue: [ ^ self error: 'remoteTempIndex is out of range 0 to 255' ].
+	tempVectorIndex >= 256
+		ifTrue: [ ^ self error: 'tempVectorIndex is out of range 0 to 255' ]
+]
+
+IRBytecodeGenerator >> pushTemp: index
+[
+	| interval |
+	stack push.
+	interval := Bytecodes at: #pushTemporaryVariableBytecode.
+	index <= interval size
+		ifTrue: [ ^ self nextPut: (interval at: index) ].
+	index <= 64
+		ifFalse: [ self error: 'too many temp vars (>64)' ].
+	self nextPut: (Bytecodes at: #extendedPushBytecode).
+	self nextPut: (1 << 6) + index - 1	"temp"
+]
+
+IRBytecodeGenerator >> pushThisContext
+[
+	stack push.
+	self nextPut: (Bytecodes at: #pushActiveContextBytecode)
+]
+
+IRBytecodeGenerator >> quickMethodPrim
+[
+	| index |
+	self numArgs = 0
+		ifFalse: [ ^ 0 ].
+	lastSpecialReturn ifNil: [ ^ 0 ].
+	seqBytes size <= 2
+		ifFalse: [ ^ 0 ].	"this is for ruling out the case in which the structure is the same as a quick return	but with and invalid special literal."
+	(literals size = 1
+		and: [ (SpecialConstants identityIncludes: literals first) not and: [ lastSpecialReturn selector = #returnConstant: ] ])
+		ifTrue: [ ^ 0 ].
+	lastSpecialReturn selector == #returnReceiver
+		ifTrue: [ ^ 256 ].
+	lastSpecialReturn selector == #returnConstant:
+		ifTrue: [ ^ (index := SpecialConstants indexOf: lastSpecialReturn argument) > 0
+				ifTrue: [ 256 + index ]
+				ifFalse: [ 0 ] ].
+	lastSpecialReturn selector == #returnInstVar:
+		ifTrue: [ ^ forceLongForm
+				ifTrue: [ 0 ]
+				ifFalse: [ 263 + lastSpecialReturn argument ]	"when compiling long bytecodes for Contexts, do not do quick return either" ]
+]
+
+IRBytecodeGenerator >> returnConstant: constant
+[
+	bytes ifEmpty: [ lastSpecialReturn := Message selector: #returnConstant: argument: constant ].
+	constant == true
+		ifTrue: [ ^ self nextPut: (Bytecodes at: #returnTrue) ].
+	constant == false
+		ifTrue: [ ^ self nextPut: (Bytecodes at: #returnFalse) ].
+	constant ifNil: [ ^ self nextPut: (Bytecodes at: #returnNil) ].
+	self pushLiteral: constant.
+	self returnTop
+]
+
+IRBytecodeGenerator >> returnInstVar: index
+[
+	bytes ifEmpty: [ lastSpecialReturn := Message selector: #returnInstVar: argument: index ].
+	self pushInstVar: index.
+	self returnTop
+]
+
+IRBytecodeGenerator >> returnReceiver
+[
+	bytes ifEmpty: [ lastSpecialReturn := Message selector: #returnReceiver ].
+	self nextPut: (Bytecodes at: #returnReceiver)
+]
+
+IRBytecodeGenerator >> returnTop
+[
+	stack pop.
+	self nextPut: (Bytecodes at: #returnTopFromMethod)
+]
+
+IRBytecodeGenerator >> saveLastJump: message
+[
+	jumps at: currentSeqId put: {(bytes size).
+			message}
+]
+
+IRBytecodeGenerator >> send: selector
+[
+	| index nArgs |
+	nArgs := selector numArgs.
+	stack pop: nArgs.
+	SpecialSelectors at: selector ifPresent: [ :i | ^ self nextPut: (Bytecodes at: #bytecodePrimAdd) + i ].
+	index := self addLiteral: selector.
+	(index <= 16 and: [ nArgs <= 2 ])
+		ifTrue: [ "short send"
+			^ self nextPut: (Bytecodes at: #sendLiteralSelectorBytecode) first + (nArgs * 16) + index - 1 ].
+	(index <= 32 and: [ nArgs <= 7 ])
+		ifTrue: [ "extended (2-byte) send"
+			self nextPut: (Bytecodes at: #singleExtendedSendBytecode).
+			^ self nextPut: nArgs * 32 + index - 1 ].
+	(index <= 64 and: [ nArgs <= 3 ])
+		ifTrue: [ "new extended (2-byte)"
+			self nextPut: (Bytecodes at: #secondExtendedSendBytecode).
+			^ self nextPut: nArgs * 64 + index - 1 ].	"long (3-byte) send"
+	self nextPut: (Bytecodes at: #doubleExtendedDoAnythingBytecode).
+	self nextPut: nArgs.
+	self nextPut: index - 1
+]
+
+IRBytecodeGenerator >> send: selector toSuperOf: behavior
+[
+	| index nArgs |
+	nArgs := selector numArgs.
+	stack pop: nArgs.
+	self addLastLiteral: behavior binding.
+	index := self addLiteral: selector.
+	(index <= 32 and: [ nArgs <= 7 ])
+		ifTrue: [ "extended (2-byte) send"
+			self nextPut: (Bytecodes at: #singleExtendedSuperBytecode).
+			^ self nextPut: nArgs * 32 + index - 1 ].	"long (3-byte) send"
+	self nextPut: (Bytecodes at: #doubleExtendedDoAnythingBytecode).
+	self nextPut: (1 << 5) + nArgs.	"super"
+	self nextPut: index - 1
+]
+
+IRBytecodeGenerator >> stackFrameSize
+[
+	^ (stacks collect: [ :s | s length ]) max
+]
+
+IRBytecodeGenerator >> storeInstVar: index
+[
+	(index <= 64 and: [ forceLongForm not ])
+		ifTrue: [ self nextPut: (Bytecodes at: #extendedStoreBytecode).
+			^ self nextPut: (0 << 6) + index - 1	"instVar" ].
+	index <= 256
+		ifFalse: [ self error: 'can''t reference more than 256 inst vars' ].
+	self nextPut: (Bytecodes at: #doubleExtendedDoAnythingBytecode).
+	self nextPut: 5 << 5.	"storeInstVar"
+	self nextPut: index - 1
+]
+
+IRBytecodeGenerator >> storeIntoLiteralVariable: object
+[
+	| index |
+	index := self addLiteral: object.
+	index <= 64
+		ifTrue: [ self nextPut: (Bytecodes at: #extendedStoreBytecode).
+			^ self nextPut: (3 << 6) + index - 1	"instVar" ].
+	index <= 256
+		ifFalse: [ self error: 'can''t reference more than 256 inst vars' ].
+	self nextPut: (Bytecodes at: #doubleExtendedDoAnythingBytecode).
+	self nextPut: 7 << 5.	"storeLiteralVar"
+	self nextPut: index - 1
+]
+
+IRBytecodeGenerator >> storePopInstVar: index
+[
+	| interval |
+	stack pop.
+	interval := Bytecodes at: #storeAndPopReceiverVariableBytecode.
+	(index <= interval size and: [ forceLongForm not ])
+		ifTrue: [ ^ self nextPut: (interval at: index) ].
+	(index <= 64 and: [ forceLongForm not ])
+		ifTrue: [ self nextPut: (Bytecodes at: #extendedStoreAndPopBytecode).
+			^ self nextPut: (0 << 6) + index - 1	"instVar" ].
+	index <= 256
+		ifFalse: [ self error: 'can''t reference more than 256 inst vars' ].
+	self nextPut: (Bytecodes at: #doubleExtendedDoAnythingBytecode).
+	self nextPut: 6 << 5.	"storePopInstVar"
+	self nextPut: index - 1
+]
+
+IRBytecodeGenerator >> storePopIntoLiteralVariable: assoc
+[
+	| index |
+	index := self addLiteral: assoc.
+	index <= 64
+		ifTrue: [ stack pop.
+			self nextPut: (Bytecodes at: #extendedStoreAndPopBytecode).
+			^ self nextPut: (3 << 6) + index - 1	"temp" ].
+	index <= 256
+		ifFalse: [ self error: 'can''t reference more than 256 inst vars' ].
+	self nextPut: (Bytecodes at: #doubleExtendedDoAnythingBytecode).
+	self nextPut: 7 << 5.	"storeLiteralVar"
+	self nextPut: index - 1.
+	self popTop
+]
+
+IRBytecodeGenerator >> storePopRemoteTemp: tempIndex inVectorAt: tempVectorIndex
+[
+	stack pop.	"142 	10001110 kkkkkkkk jjjjjjjj 	Pop and Store Temp At kkkkkkkk In Temp Vector At: jjjjjjjj"
+	(tempIndex >= 0 and: [ tempIndex < 256 and: [ tempVectorIndex >= 0 and: [ tempVectorIndex < 256 ] ] ])
+		ifTrue: [ self
+				nextPut: (Bytecodes at: #storePopRemoteTempInVectorAt);
+				nextPut: tempIndex - 1;
+				nextPut: tempVectorIndex - 1.
+			^ self ].
+	tempIndex >= 256
+		ifTrue: [ ^ self error: 'remoteTempIndex out of range 0 to 255' ].
+	tempVectorIndex >= 256
+		ifTrue: [ ^ self error: 'tempVectorIndex out of range range 0 to 255' ]
+]
+
+IRBytecodeGenerator >> storePopTemp: index
+[
+	| interval |
+	stack pop.
+	interval := Bytecodes at: #storeAndPopTemporaryVariableBytecode.
+	index <= interval size
+		ifTrue: [ ^ self nextPut: (interval at: index) ].
+	index <= 64
+		ifTrue: [ self nextPut: (Bytecodes at: #extendedStoreAndPopBytecode).
+			^ self nextPut: (1 << 6) + index - 1	"temp" ].
+	self error: 'too many temps (>64)'
+]
+
+IRBytecodeGenerator >> storeRemoteTemp: tempIndex inVectorAt: tempVectorIndex
+[
+	"141 	10001101 kkkkkkkk jjjjjjjj 	Store Temp At kkkkkkkk In Temp Vector At: jjjjjjjj"
+
+	(tempIndex >= 0 and: [ tempIndex < 256 and: [ tempVectorIndex >= 0 and: [ tempVectorIndex < 256 ] ] ])
+		ifTrue: [ self
+				nextPut: (Bytecodes at: #storeRemoteTempInVectorAt);
+				nextPut: tempIndex - 1;
+				nextPut: tempVectorIndex - 1.
+			^ self ].
+	tempIndex >= 256
+		ifTrue: [ ^ self error: 'remoteTempIndex out of range 0 to 255' ].
+	tempVectorIndex >= 256
+		ifTrue: [ ^ self error: 'tempVectorIndex out of range 0 to 255' ]
+]
+
+IRBytecodeGenerator >> storeTemp: index
+[
+	index <= 64
+		ifFalse: [ self error: 'too many temps (>64)' ].
+	self nextPut: (Bytecodes at: #extendedStoreBytecode).
+	self nextPut: (1 << 6) + index - 1	"temp"
+]
+
+IRBytecodeGenerator >> updateJump: seqId
+[
+	"Recalculate final jump bytecodes.  Return true if jump bytecodes SIZE has changed, otherwise return false"
+
+	| pair s1 |
+	pair := jumps at: seqId.
+	pair ifNil: [ ^ false ].	"no jump, a return"
+	bytes := seqBytes at: seqId.
+	s1 := bytes size.
+	bytes removeLast: bytes size - pair first.
+	pair last sendTo: self.
+	^ s1 ~= bytes size
+]
+
+IRBytecodeGenerator >> updateJumpOffsets
+[
+	[ orderSeq inject: false into: [ :changed :seqId | (self updateJump: seqId) or: [ changed ] ] ] whileTrue
+]
+
+IRBytecodeGenerator class >> bytecodeTableFrom: specArray
+[
+	"SpecArray is an array of either
+	(index selector) or
+	(index1 index2 selector)."
+
+	| contiguous |
+	Bytecodes := IdentityDictionary new: 256.
+	BytecodeTable := Array new: 256.
+	contiguous := 0.
+	specArray
+		do: [ :spec | spec first = contiguous
+				ifFalse: [ self error: 'Non-contiguous table entry' ].
+			spec size = 2
+				ifTrue: [ Bytecodes at: spec second put: spec first.
+					BytecodeTable at: spec first + 1 put: spec second.
+					contiguous := contiguous + 1 ]
+				ifFalse: [ spec size = 3
+						ifFalse: [ self error: 'bad spec size' ].
+					Bytecodes at: spec third put: (spec first to: spec second).
+					spec first to: spec second do: [ :i | BytecodeTable at: i + 1 put: spec third ].
+					contiguous := contiguous + spec second - spec first + 1 ] ].
+	^ BytecodeTable
+]
+
+IRBytecodeGenerator class >> initialize
+[
+	self initializeBytecodeTable.
+	self initializeSpecialSelectors.
+	self initializeSpecialConstants
+]
+
+IRBytecodeGenerator class >> initializeBytecodeTable
+[
+	"OCBytecodeGenerator  initialize"
+
+	"Defines all the bytecode instructions for the Compiler and the Interpreter.
+	The following bytecode tuple format is:
+
+	#(bytecode bytecodeSelector)
+
+	bytecodeSelector is the method in the Interpreter that gets executed for the given bytecode.
+	Common Send selector position within the specialSelectorsArray is hard code in the Interpreter, see senders of Interpreter specialSelector:."
+
+	^ self
+		bytecodeTableFrom:
+			#(#(0 15 #pushReceiverVariableBytecode) #(16 31 #pushTemporaryVariableBytecode) #(32 63 #pushLiteralConstantBytecode) #(64 95 #pushLiteralVariableBytecode) #(96 103 #storeAndPopReceiverVariableBytecode) #(104 111 #storeAndPopTemporaryVariableBytecode) #(112 #pushReceiverBytecode) #(113 #pushConstantTrueBytecode) #(114 #pushConstantFalseBytecode) #(115 #pushConstantNilBytecode) #(116 #pushConstantMinusOneBytecode) #(117 #pushConstantZeroBytecode) #(118 #pushConstantOneBytecode) #(119 #pushConstantTwoBytecode) #(120 #returnReceiver) #(121 #returnTrue) #(122 #returnFalse) #(123 #returnNil) #(124 #returnTopFromMethod) #(125 #returnTopFromBlock) #(126 #unknownBytecode) #(127 #unknownBytecode) #(128 #extendedPushBytecode) #(129 #extendedStoreBytecode) #(130 #extendedStoreAndPopBytecode) #(131 #singleExtendedSendBytecode) #(132 #doubleExtendedDoAnythingBytecode) #(133 #singleExtendedSuperBytecode) #(134 #secondExtendedSendBytecode) #(135 #popStackBytecode) #(136 #duplicateTopBytecode) #(137 #pushActiveContextBytecode) #(138 #pushConsArray) #(139 #experimentalBytecode) #(140 #pushRemoteTempInVectorAt) #(141 #storeRemoteTempInVectorAt) #(142 #storePopRemoteTempInVectorAt) #(143 #PushClosureCopyNumCopiedValuesNuumArgsJumpSize) #(144 151 #shortUnconditionalJump) #(152 159 #shortConditionalJump) #(160 167 #longUnconditionalJump) #(168 171 #longJumpIfTrue) #(172 175 #longJumpIfFalse) #(176 #bytecodePrimAdd) #(177 #bytecodePrimSubtract) #(178 #bytecodePrimLessThan) #(179 #bytecodePrimGreaterThan) #(180 #bytecodePrimLessOrEqual) #(181 #bytecodePrimGreaterOrEqual) #(182 #bytecodePrimEqual) #(183 #bytecodePrimNotEqual) #(184 #bytecodePrimMultiply) #(185 #bytecodePrimDivide) #(186 #bytecodePrimMod) #(187 #bytecodePrimMakePoint) #(188 #bytecodePrimBitShift) #(189 #bytecodePrimDiv) #(190 #bytecodePrimBitAnd) #(191 #bytecodePrimBitOr) #(192 #bytecodePrimAt) #(193 #bytecodePrimAtPut) #(194 #bytecodePrimSize) #(195 #bytecodePrimNext) #(196 #bytecodePrimNextPut) #(197 #bytecodePrimAtEnd) #(198 #bytecodePrimEquivalent) #(199 #bytecodePrimClass) #(200 #bytecodePrimBlockCopy) #(201 #bytecodePrimValue) #(202 #bytecodePrimValueWithArg) #(203 #bytecodePrimDo) #(204 #bytecodePrimNew) #(205 #bytecodePrimNewWithArg) #(206 #bytecodePrimPointX) #(207 #bytecodePrimPointY) #(208 255 #sendLiteralSelectorBytecode))	"(138 143 experimentalBytecode)"	"176-191 were sendArithmeticSelectorBytecode"	"192-207 were sendCommonSelectorBytecode"
+]
+
+IRBytecodeGenerator class >> initializeSpecialConstants
+[
+	SpecialConstants := {true.
+	false.
+	nil.
+	-1.
+	0.
+	1.
+	2}
+]
+
+IRBytecodeGenerator class >> initializeSpecialSelectors
+[
+	"Create a map from specialSelector -> bytecode offset from sendAdd (the first one)"
+
+	| array |
+	SpecialSelectors := IdentityDictionary new.
+	array := self specialSelectorsArray.	"Smalltalk specialObjectsArray at: 24"
+	1 to: array size by: 2 do: [ :i | SpecialSelectors at: (array at: i) put: (i - 1) / 2 ]	"skip numArgs"
+]
+
+IRBytecodeGenerator class >> specialConstants
+[
+	^ SpecialConstants
+]
+
+IRBytecodeGenerator class >> specialSelectorsArray
+[
+	^ #(#+ 1 #- 1 #< 1 #> 1 #<= 1 #>= 1 #= 1 #~= 1 #* 1 #/ 1 #\\ 1 #@ 1 #bitShift: 1 #// 1 #bitAnd: 1 #bitOr: 1 #at: 1 #at:put: 2 #size 0 #next 0 #nextPut: 1 #atEnd 0 #== 1 nil 0 #blockCopy: 1 #value 0 #value: 1 #do: 1 #new 0 #new: 1 #x 0 #y 0)
+]
+

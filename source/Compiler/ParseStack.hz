@@ -1,0 +1,47 @@
+ParseStack
+	instanceVariables: #(#position #length );
+	package: #Compiler.
+
+ParseStack >> init
+[
+	length := position := 0
+]
+
+ParseStack >> pop: n
+[
+	(position := position - n) < 0
+		ifTrue: [ self error: 'Parse stack underflow' ]
+]
+
+ParseStack >> position
+[
+	^ position
+]
+
+ParseStack >> position: n
+[
+	(position := n) > length
+		ifTrue: [ length := position ]
+]
+
+ParseStack >> printOn: aStream
+[
+	super printOn: aStream.
+	aStream
+		nextPutAll: ' at ';
+		print: position;
+		nextPutAll: ' of ';
+		print: length
+]
+
+ParseStack >> push: n
+[
+	(position := position + n) > length
+		ifTrue: [ length := position ]
+]
+
+ParseStack >> size
+[
+	^ length
+]
+

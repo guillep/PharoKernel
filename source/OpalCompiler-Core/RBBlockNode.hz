@@ -1,0 +1,66 @@
+RBBlockNode >> enclosingMethodOrBlockNode
+[
+	^ parent ifNotNil: [ parent methodOrBlockNode ]
+]
+
+RBBlockNode >> isClean
+[
+	"a block is clean if it has no escaping vars, has no non local return and its children are clean"
+
+	self isInlined
+		ifTrue: [ ^ false ].
+	self scope hasEscapingVars
+		ifTrue: [ ^ false ].
+	self lastIsReturn
+		ifTrue: [ ^ false ].
+	^ super isClean
+]
+
+RBBlockNode >> isInlined
+[
+	parent isMessage
+		ifFalse: [ ^ false ].
+	parent isInlineAndOr
+		ifTrue: [ ^ true ].
+	parent isInlineIf
+		ifTrue: [ ^ true ].
+	parent isInlineIfNil
+		ifTrue: [ ^ true ].
+	^ self isInlinedLoop
+]
+
+RBBlockNode >> isInlinedLoop
+[
+	parent isMessage
+		ifFalse: [ ^ false ].
+	parent isInlineToDo
+		ifTrue: [ ^ true ].
+	parent isInlineWhile
+		ifTrue: [ ^ true ].
+	parent isInlineTimesRepeat
+		ifTrue: [ ^ true ].
+	(parent parent isArray and: [ parent parent parent isMessage and: [ parent parent parent isInlineCase ] ])
+		ifTrue: [ ^ true ].
+	parent isInlineCase
+		ifTrue: [ ^ true ].	"otherwise branch"
+	^ false
+]
+
+RBBlockNode >> lastIsReturn
+[
+	^ self body lastIsReturn
+]
+
+RBBlockNode >> methodOrBlockNode
+[
+	"^ self"
+
+	
+]
+
+RBBlockNode >> owningScope
+[
+	^ self scope ifNil: [ "inlined"
+			^ parent owningScope ]
+]
+

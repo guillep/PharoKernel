@@ -1,0 +1,264 @@
+CCompilationContext
+	instanceVariables: #(#requestor #failBlock #noPattern #class #category #logged #interactive #options #environment #parserClass #semanticAnalyzerClass #astTranslatorClass #bytecodeGeneratorClass #compiledMethodTrailer );
+	classVariables: #(#WarningAllowed );
+	package: #'OpalCompiler-Core'.
+
+CCompilationContext >> astTranslatorClass
+[
+	^ astTranslatorClass ifNil: [ astTranslatorClass := OCASTTranslator ]
+]
+
+CCompilationContext >> astTranslatorClass: anObject
+[
+	astTranslatorClass := anObject
+]
+
+CCompilationContext >> bytecodeGeneratorClass
+[
+	^ bytecodeGeneratorClass ifNil: [ bytecodeGeneratorClass := IRBytecodeGenerator ]
+]
+
+CCompilationContext >> bytecodeGeneratorClass: anObject
+[
+	bytecodeGeneratorClass := anObject
+]
+
+CCompilationContext >> category
+[
+	^ category
+]
+
+CCompilationContext >> category: anObject
+[
+	category := anObject
+]
+
+CCompilationContext >> class: anObject
+[
+	class := anObject
+]
+
+CCompilationContext >> compiledMethodTrailer
+[
+	^ compiledMethodTrailer ifNil: [ compiledMethodTrailer := CompiledMethodTrailer empty ]
+]
+
+CCompilationContext >> compiledMethodTrailer: anObject
+[
+	compiledMethodTrailer := anObject
+]
+
+CCompilationContext >> compilerOptions: anArray
+[
+	self parseOptions: anArray
+]
+
+CCompilationContext >> doesNotUnderstand: message
+[
+	(message selector isUnary and: [ message selector beginsWith: 'opt' ])
+		ifTrue: [ ^ options includes: message selector ].
+	^ super doesNotUnderstand: message
+]
+
+CCompilationContext >> environment
+[
+	^ environment
+]
+
+CCompilationContext >> environment: anObject
+[
+	environment := anObject
+]
+
+CCompilationContext >> failBlock
+[
+	^ failBlock
+]
+
+CCompilationContext >> failBlock: anObject
+[
+	failBlock := anObject
+]
+
+CCompilationContext >> getClass
+[
+	^ class
+]
+
+CCompilationContext >> initialize
+[
+	options := Set new
+]
+
+CCompilationContext >> interactive
+[
+	^ interactive ifNil: [ false ]
+]
+
+CCompilationContext >> interactive: anObject
+[
+	interactive := anObject
+]
+
+CCompilationContext >> logged
+[
+	^ logged ifNil: [ false ]
+]
+
+CCompilationContext >> logged: anObject
+[
+	logged := anObject
+]
+
+CCompilationContext >> noPattern
+[
+	^ noPattern ifNil: [ false ]
+]
+
+CCompilationContext >> noPattern: anObject
+[
+	noPattern := anObject
+]
+
+CCompilationContext >> optionIlineNone
+[
+	^ options includes: #optionIlineNone
+]
+
+CCompilationContext >> optionInlineAndOr
+[
+	^ options includes: #optionInlineAndOr
+]
+
+CCompilationContext >> optionInlineCase
+[
+	^ options includes: #optionInlineCase
+]
+
+CCompilationContext >> optionInlineIf
+[
+	^ options includes: #optionInlineIf
+]
+
+CCompilationContext >> optionInlineIfNil
+[
+	^ options includes: #optionInlineIfNil
+]
+
+CCompilationContext >> optionInlineTimesRepeat
+[
+	^ options includes: #optionInlineTimesRepeat
+]
+
+CCompilationContext >> optionInlineToDo
+[
+	^ options includes: #optionInlineToDo
+]
+
+CCompilationContext >> optionInlineWhile
+[
+	^ options includes: #optionInlineWhile
+]
+
+CCompilationContext >> optionLongIvarAccessBytecodes
+[
+	^ options includes: #optionLongIvarAccessBytecodes
+]
+
+CCompilationContext >> optionOptimizeIR
+[
+	^ options includes: #optionOptimizeIR
+]
+
+CCompilationContext >> parseOptions: optionsArray
+[
+	"parse an array, which is a sequence of options in a form of: 
+	
+	#( + option1 option2 - option3 ... )
+	
+	each time the #+ is seen, the options which follow it will be subject for inclusion
+	and, correspondingly, if #- seen, then they will be excluded	.
+
+	By default, (if none of #+ or #- specified initially), all options are subject for inclusion.
+	"
+
+	| include |
+	include := true.
+	optionsArray
+		do: [ :option | option == #+
+				ifTrue: [ include := true ]
+				ifFalse: [ option == #-
+						ifTrue: [ include := false ]
+						ifFalse: [ include
+								ifTrue: [ options add: option ]
+								ifFalse: [ options remove: option ifAbsent: [  ] ] ] ] ]
+]
+
+CCompilationContext >> parserClass
+[
+	^ parserClass ifNil: [ parserClass := RBExplicitVariableParser ]
+]
+
+CCompilationContext >> parserClass: anObject
+[
+	parserClass := anObject
+]
+
+CCompilationContext >> requestor
+[
+	^ requestor
+]
+
+CCompilationContext >> requestor: anObject
+[
+	requestor := anObject
+]
+
+CCompilationContext >> scope
+[
+	| newScope |
+	newScope := OCClassScope for: class.
+	requestor
+		ifNotNil: [ "the requestor is allowed to manage variables, the workspace is using it to auto-define vars"
+			newScope := (OCRequestorScope new requestor: requestor) outerScope: newScope ].
+	^ newScope
+]
+
+CCompilationContext >> semanticAnalyzerClass
+[
+	^ semanticAnalyzerClass ifNil: [ semanticAnalyzerClass := OCASTSemanticAnalyzer ]
+]
+
+CCompilationContext >> semanticAnalyzerClass: anObject
+[
+	semanticAnalyzerClass := anObject
+]
+
+CCompilationContext >> warningAllowed
+[
+	^ self class warningAllowed
+]
+
+CCompilationContext class >> compiler
+[
+	^ self compilerClass new
+		compilationContextClass: CompilationContext;
+		environment: self environment;
+		class: self
+]
+
+CCompilationContext class >> default
+[
+	^ self new parseOptions: OpalCompiler defaultOptions
+]
+
+CCompilationContext class >> warningAllowed
+[
+	^ WarningAllowed ifNil: [ WarningAllowed := true ]
+]
+
+CCompilationContext class >> warningAllowed: aBoolean
+[
+	WarningAllowed := aBoolean
+]
+

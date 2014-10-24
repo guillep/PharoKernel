@@ -1,0 +1,17 @@
+IRVisitor
+	traitComposition: TIRVisitor;
+	package: #'OpalCompiler-Core'.
+
+IRVisitor >> visitMethod: aMethod
+[
+	aMethod startSequence withAllSuccessorsDo: [ :seq | seq do: [ :instruction | instruction accept: self ] ].
+	^ aMethod
+]
+
+IRVisitor class >> on: anIRMethod
+[
+	^ self new
+		visitMethod: anIRMethod;
+		yourself
+]
+

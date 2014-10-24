@@ -1,0 +1,225 @@
+RBPragmaNode
+	superclass: #RBProgramNode;
+	instanceVariables: #(#selector #selectorParts #arguments #left #right );
+	package: #'AST-Core'.
+
+RBPragmaNode >> = anObject
+[
+	self == anObject
+		ifTrue: [ ^ true ].
+	self class = anObject class
+		ifFalse: [ ^ false ].
+	self selector = anObject selector
+		ifFalse: [ ^ false ].
+	1 to: self arguments size do: [ :i | (self arguments at: i) = (anObject arguments at: i)
+			ifFalse: [ ^ false ] ].
+	^ true
+]
+
+RBPragmaNode >> acceptVisitor: aProgramNodeVisitor
+[
+	^ aProgramNodeVisitor visitPragmaNode: self
+]
+
+RBPragmaNode >> argumentAt: keywordSelector
+[
+	^ self argumentAt: keywordSelector ifAbsent: [ KeyNotFound signalFor: keywordSelector ]
+]
+
+RBPragmaNode >> argumentAt: keywordSelector ifAbsent: absentBlock
+[
+	self selectorParts
+		with: self arguments
+		do: [ :selectorPart :argument | selectorPart value = keywordSelector
+				ifTrue: [ ^ argument ] ].
+	^ absentBlock value
+]
+
+RBPragmaNode >> arguments
+[
+	^ arguments ifNil: [ #() ]
+]
+
+RBPragmaNode >> arguments: aLiteralCollection
+[
+	arguments := aLiteralCollection.
+	arguments do: [ :each | each parent: self ]
+]
+
+RBPragmaNode >> buildSelector
+[
+	^ (String streamContents: [ :selectorStream | selectorParts do: [ :each | selectorStream nextPutAll: each value ] ])
+		asSymbol
+]
+
+RBPragmaNode >> children
+[
+	^ self arguments
+]
+
+RBPragmaNode >> copyInContext: aDictionary
+[
+	^ self class new
+		selectorParts: (self selectorParts collect: [ :each | each copy removePositions ]);
+		arguments: (self arguments collect: [ :each | each copyInContext: aDictionary ]);
+		yourself
+]
+
+RBPragmaNode >> equalTo: anObject withMapping: aDictionary
+[
+	self class = anObject class
+		ifFalse: [ ^ false ].
+	self selector = anObject selector
+		ifFalse: [ ^ false ].
+	self arguments
+		with: anObject arguments
+		do: [ :first :second | (first equalTo: second withMapping: aDictionary)
+				ifFalse: [ ^ false ] ].
+	^ true
+]
+
+RBPragmaNode >> hash
+[
+	^ self selector hash bitXor: (self hashForCollection: self arguments)
+]
+
+RBPragmaNode >> isBinary
+[
+	^ (self isUnary or: [ self isKeyword ]) not
+]
+
+RBPragmaNode >> isFaulty
+[
+	^ self arguments anySatisfy: #isFaulty
+]
+
+RBPragmaNode >> isKeyword
+[
+	^ selectorParts first value last = $:
+]
+
+RBPragmaNode >> isPragma
+[
+	^ true
+]
+
+RBPragmaNode >> isPrimitive
+[
+	^ #(#primitive: #primitive:error: #primitive:error:module: #primitive:module: #primitive:module:error:)
+		includes: self selector
+]
+
+RBPragmaNode >> isUnary
+[
+	^ arguments isEmpty
+]
+
+RBPragmaNode >> left
+[
+	^ left
+]
+
+RBPragmaNode >> left: anInteger
+[
+	left := anInteger
+]
+
+RBPragmaNode >> match: aNode inContext: aDictionary
+[
+	aNode class = self class
+		ifFalse: [ ^ false ].
+	self selector = aNode selector
+		ifFalse: [ ^ false ].
+	self arguments
+		with: aNode arguments
+		do: [ :first :second | (first match: second inContext: aDictionary)
+				ifFalse: [ ^ false ] ].
+	^ true
+]
+
+RBPragmaNode >> numArgs
+[
+	^ self selector numArgs
+]
+
+RBPragmaNode >> postCopy
+[
+	super postCopy.
+	self arguments: (self arguments collect: [ :each | each copy ])
+]
+
+RBPragmaNode >> replaceNode: aNode withNode: anotherNode
+[
+	self arguments: (arguments collect: [ :each | each == aNode
+						ifTrue: [ anotherNode ]
+						ifFalse: [ each ] ])
+]
+
+RBPragmaNode >> right
+[
+	^ right
+]
+
+RBPragmaNode >> right: anInteger
+[
+	right := anInteger
+]
+
+RBPragmaNode >> selector
+[
+	^ selector ifNil: [ selector := self buildSelector ]
+]
+
+RBPragmaNode >> selector: aSelector
+[
+	| keywords numArgs |
+	keywords := aSelector keywords.
+	numArgs := aSelector numArgs.
+	numArgs == arguments size
+		ifFalse: [ self error: 'Attempting to assign selector with wrong number of arguments.' ].
+	selectorParts := numArgs == 0
+		ifTrue: [ Array with: (RBIdentifierToken value: keywords first start: nil) ]
+		ifFalse: [ keywords first last = $:
+				ifTrue: [ keywords collect: [ :each | RBKeywordToken value: each start: nil ] ]
+				ifFalse: [ Array with: (RBBinarySelectorToken value: aSelector start: nil) ] ].
+	selector := aSelector asSymbol
+]
+
+RBPragmaNode >> selectorParts
+[
+	^ selectorParts
+]
+
+RBPragmaNode >> selectorParts: tokenCollection
+[
+	selectorParts := tokenCollection
+]
+
+RBPragmaNode >> selectorParts: keywordTokens arguments: valueNodes
+[
+	self selectorParts: keywordTokens.
+	self arguments: valueNodes
+]
+
+RBPragmaNode >> sentMessages
+[
+	^ super sentMessages
+		add: self selector;
+		yourself
+]
+
+RBPragmaNode >> start
+[
+	^ left
+]
+
+RBPragmaNode >> stop
+[
+	^ right
+]
+
+RBPragmaNode class >> selectorParts: keywordTokens arguments: valueNodes
+[
+	^ self new selectorParts: keywordTokens arguments: valueNodes
+]
+

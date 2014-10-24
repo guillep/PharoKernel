@@ -1,0 +1,545 @@
+PackageInfo
+	instanceVariables: #(#packageName #methodCategoryPrefix );
+	package: #PackageInfo.
+
+PackageInfo >> = other
+[
+	^ other species = self species and: [ other packageName = self packageName ]
+]
+
+PackageInfo >> actualMethodsDo: aBlock
+[
+	"Evaluate aBlock with the actual method objects in this package."
+
+	| enum |
+	self extensionMethods do: [ :mr | aBlock value: mr compiledMethod ].
+	enum := [ :behavior | behavior organization categories
+		do: [ :cat | (self isForeignClassExtension: cat)
+				ifFalse: [ (behavior organization listAtCategoryNamed: cat) do: [ :s | aBlock value: (behavior compiledMethodAt: s) ] ] ] ].
+	self classes do: [ :c | enum
+				value: c;
+				value: c classSide ]
+]
+
+PackageInfo >> addCoreMethod: aMethodReference
+[
+	| category |
+	category := self baseCategoryOfMethod: aMethodReference.
+	aMethodReference actualClass organization classify: aMethodReference selector under: category suppressIfDefault: false
+]
+
+PackageInfo >> addExtensionMethod: aMethodReference
+[
+	| category |
+	category := self baseCategoryOfMethod: aMethodReference.
+	aMethodReference actualClass organization
+		classify: aMethodReference selector
+		under: self methodCategoryPrefix , '-' , category
+]
+
+PackageInfo >> addMethod: aMethodReference
+[
+	(self includesClass: aMethodReference actualClass)
+		ifTrue: [ self addCoreMethod: aMethodReference ]
+		ifFalse: [ self addExtensionMethod: aMethodReference ]
+]
+
+PackageInfo >> allOverriddenMethods
+[
+	"search classes and meta classes"
+
+	^ Array streamContents: [ :stream | self allOverriddenMethodsDo: [ :each | stream nextPut: each ] ]
+]
+
+PackageInfo >> allOverriddenMethodsDo: aBlock
+[
+	"Evaluates aBlock with all the overridden methods in the system"
+
+	^ ProtoObject withAllSubclassesDo: [ :class | self overriddenMethodsInClass: class do: aBlock ]
+]
+
+PackageInfo >> asRingDefinition
+[
+	"Creates a RGPackage containing all its classes and methods.
+	Including extension methods"
+
+	| rgPackage rgClasses rgMethods rgCls |
+	self flag: 'Should be removed when RPackage is integrated'.
+	rgPackage := RGFactory current createPackageNamed: self packageName.
+	rgClasses := self classes collect: [ :cls | cls asRingDefinition ].
+	rgMethods := self methods collect: [ :mth | mth asRingDefinition ].
+	rgClasses do: [ :cls | rgPackage addClass: cls ].
+	rgClasses
+		do: [ :cls | | scls |
+			scls := rgPackage classOrTraitNamed: cls superclassName.
+			scls notNil
+				ifTrue: [ cls superclass: scls.
+					cls theMetaClass superclass: scls theMetaClass ] ].
+	rgMethods
+		do: [ :mth | rgCls := rgPackage classOrTraitNamed: mth parentName.
+			rgCls notNil
+				ifTrue: [ mth isExtension: false.
+					rgCls addMethod: mth ]
+				ifFalse: [ mth isExtension: true ].
+			rgPackage addMethod: mth ].
+	^ rgPackage
+]
+
+PackageInfo >> baseCategoryOfMethod: aMethodReference
+[
+	| oldCat oldPrefix tokens |
+	oldCat := aMethodReference category.
+	({'as yet unclassified'.
+	'all'} includes: oldCat)
+		ifTrue: [ oldCat := '' ].
+	tokens := oldCat findTokens: '*-' keep: '*'.	"Strip off any old prefixes"
+	(tokens at: 1 ifAbsent: [ '' ]) = '*'
+		ifTrue: [ [ (tokens at: 1 ifAbsent: [ '' ]) = '*' ] whileTrue: [ tokens removeFirst ].
+			oldPrefix := tokens removeFirst asLowercase.
+			[ (tokens at: 1 ifAbsent: [ '' ]) asLowercase = oldPrefix ] whileTrue: [ tokens removeFirst ] ].
+	tokens isEmpty
+		ifTrue: [ ^ 'as yet unclassified' ].
+	^ String streamContents: [ :s | tokens do: [ :tok | s nextPutAll: tok ] separatedBy: [ s nextPut: $- ] ]
+]
+
+PackageInfo >> category: categoryName matches: prefix
+[
+	| prefixSize catSize |
+	categoryName ifNil: [ ^ false ].
+	catSize := categoryName size.
+	prefixSize := prefix size.
+	catSize < prefixSize
+		ifTrue: [ ^ false ].
+	(categoryName findString: prefix startingAt: 1 caseSensitive: false) = 1
+		ifFalse: [ ^ false ].
+	^ (categoryName at: prefix size + 1 ifAbsent: [ ^ true ]) = $-
+]
+
+PackageInfo >> categoryName
+[
+	| category |
+	category := self class category.
+	^ (category endsWith: '-Info')
+		ifTrue: [ category copyUpToLast: $- ]
+		ifFalse: [ category ]
+]
+
+PackageInfo >> changeRecordForOverriddenMethod: aMethodDefinition
+[
+	^ SourceFiles
+		changeRecordsFor: aMethodDefinition
+		detect: [ :protocol | self includesMethodCategory: protocol ofClass: aMethodDefinition actualClass ]
+]
+
+PackageInfo >> classes
+[
+	^ (self systemCategories
+		gather: [ :cat | (self systemOrganization listAtCategoryNamed: cat) collect: [ :className | self environment at: className ] ])
+		sort: [ :a :b | a className <= b className ]
+]
+
+PackageInfo >> classesAndMetaClasses
+[
+	"Return a Set with all classes and metaclasses belonging to this package"
+
+	| baseClasses result |
+	baseClasses := self classes.
+	result := (Set new: baseClasses size * 2)
+		addAll: baseClasses;
+		yourself.
+	baseClasses do: [ :c | result add: c classSide ].
+	^ result
+]
+
+PackageInfo >> coreCategoriesForClass: aClass
+[
+	^ aClass organization categories select: [ :cat | (self isForeignClassExtension: cat) not ]
+]
+
+PackageInfo >> coreMethods
+[
+	^ self classesAndMetaClasses gather: [ :class | self coreMethodsForClass: class ]
+]
+
+PackageInfo >> coreMethodsForClass: aClass
+[
+	^ (aClass selectors asSet difference: ((self foreignExtensionMethodsForClass: aClass) collect: [ :r | r selector ]))
+		asArray collect: [ :sel | self referenceForMethod: sel ofClass: aClass ]
+]
+
+PackageInfo >> definedClasses
+[
+	^ self classes
+]
+
+PackageInfo >> environment
+[
+	^ Smalltalk globals
+]
+
+PackageInfo >> extensionCategoriesForClass: aClass
+[
+	^ aClass organization categories select: [ :cat | self isYourClassExtension: cat ]
+]
+
+PackageInfo >> extensionClasses
+[
+	^ self externalBehaviors reject: [ :classOrTrait | (self extensionCategoriesForClass: classOrTrait) isEmpty ]
+]
+
+PackageInfo >> extensionMethods
+[
+	^ Smalltalk allClassesAndTraits , (Smalltalk allClasses collect: [ :c | c class ])
+		gather: [ :classOrTrait | self extensionMethodsForClass: classOrTrait ]
+]
+
+PackageInfo >> extensionMethodsForClass: aClass
+[
+	^ (self extensionCategoriesForClass: aClass)
+		gather: [ :cat | ((aClass organization listAtCategoryNamed: cat) ifNil: [ #() ])
+				collect: [ :sel | self referenceForMethod: sel ofClass: aClass ] ]
+]
+
+PackageInfo >> extensionMethodsFromClasses: classes
+[
+	^ classes gather: [ :class | self extensionMethodsForClass: class ]
+]
+
+PackageInfo >> externalBehaviors
+[
+	^ self externalClasses , self externalTraits
+]
+
+PackageInfo >> externalCallers
+[
+	^ self externalRefsSelect: [ :literal | literal isKindOf: Symbol ] thenCollect: [ :l | l ]
+]
+
+PackageInfo >> externalClasses
+[
+	| myClasses |
+	myClasses := self classesAndMetaClasses.
+	^ Array
+		streamContents: [ :s | ProtoObject withAllSubclassesDo: [ :class | (myClasses includes: class)
+						ifFalse: [ s nextPut: class ] ] ]
+]
+
+PackageInfo >> externalName
+[
+	^ self packageName
+]
+
+PackageInfo >> externalRefsSelect: selBlock thenCollect: colBlock
+[
+	| pkgMethods dependents extMethods otherClasses otherMethods classNames |
+	classNames := self classes collect: [ :c | c name ].
+	extMethods := self extensionMethods collect: [ :mr | mr selector ].
+	otherClasses := self externalClasses difference: self externalSubclasses.
+	otherMethods := otherClasses gather: [ :c | c selectors ].
+	pkgMethods := self methods asSet collect: [ :mr | mr selector ].
+	pkgMethods removeAllFoundIn: otherMethods.
+	dependents := Set new.
+	otherClasses
+		do: [ :c | c
+				selectorsAndMethodsDo: [ :sel :compiled | | refs |
+					(extMethods includes: sel)
+						ifFalse: [ refs := compiled literals select: selBlock thenCollect: colBlock.
+							refs
+								do: [ :ea | ((classNames includes: ea) or: [ pkgMethods includes: ea ])
+										ifTrue: [ dependents add: (self referenceForMethod: sel ofClass: c) -> ea ] ] ] ] ].
+	^ dependents
+]
+
+PackageInfo >> externalSubclasses
+[
+	| pkgClasses subClasses |
+	pkgClasses := self classes.
+	subClasses := Set new.
+	pkgClasses do: [ :c | subClasses addAll: c allSubclasses ].
+	^ subClasses difference: pkgClasses
+]
+
+PackageInfo >> externalTraits
+[
+	^ Array
+		streamContents: [ :s | | behaviors |
+			behaviors := self classesAndMetaClasses.
+			Smalltalk allTraits
+				do: [ :trait | (behaviors includes: trait)
+						ifFalse: [ s nextPut: trait ].
+					(behaviors includes: trait classSide)
+						ifFalse: [ s nextPut: trait classSide ] ] ]
+]
+
+PackageInfo >> externalUsers
+[
+	^ self externalRefsSelect: [ :literal | literal isVariableBinding ] thenCollect: [ :l | l key ]
+]
+
+PackageInfo >> foreignClasses
+[
+	| s |
+	s := IdentitySet new.
+	self foreignSystemCategories
+		do: [ :c | (self systemOrganization listAtCategoryNamed: c)
+				do: [ :cl | | cls |
+					cls := self environment at: cl.
+					s
+						add: cls;
+						add: cls theMetaClass ] ].
+	^ s
+]
+
+PackageInfo >> foreignExtensionCategoriesForClass: aClass
+[
+	^ aClass organization categories select: [ :cat | self isForeignClassExtension: cat ]
+]
+
+PackageInfo >> foreignExtensionMethodsForClass: aClass
+[
+	^ (self foreignExtensionCategoriesForClass: aClass)
+		gather: [ :cat | (aClass organization listAtCategoryNamed: cat) collect: [ :sel | self referenceForMethod: sel ofClass: aClass ] ]
+]
+
+PackageInfo >> foreignSystemCategories
+[
+	^ self systemOrganization categories reject: [ :cat | self includesSystemCategory: cat ]
+]
+
+PackageInfo >> hash
+[
+	^ packageName hash
+]
+
+PackageInfo >> includesChangeRecord: aChangeRecord
+[
+	^ aChangeRecord methodClass notNil
+		and: [ self includesMethodCategory: aChangeRecord category ofClass: aChangeRecord methodClass ]
+]
+
+PackageInfo >> includesClass: aClass
+[
+	^ self includesSystemCategory: aClass theNonMetaClass category
+]
+
+PackageInfo >> includesClassNamed: aClassName
+[
+	^ self includesSystemCategory: ((self systemOrganization categoryOfElement: aClassName) ifNil: [ ^ false ])
+]
+
+PackageInfo >> includesMethod: aSymbol ofClass: aClass
+[
+	aClass ifNil: [ ^ false ].
+	^ self includesMethodCategory: ((aClass organization categoryOfElement: aSymbol) ifNil: [ ' ' ]) ofClass: aClass
+]
+
+PackageInfo >> includesMethodCategory: categoryName ofClass: aClass
+[
+	^ (self isYourClassExtension: categoryName)
+		or: [ (self includesClass: aClass) and: [ (self isForeignClassExtension: categoryName) not ] ]
+]
+
+PackageInfo >> includesMethodCategory: categoryName ofClassNamed: aClass
+[
+	^ (self isYourClassExtension: categoryName)
+		or: [ (self includesClassNamed: aClass) and: [ (self isForeignClassExtension: categoryName) not ] ]
+]
+
+PackageInfo >> includesMethodReference: aMethodRef
+[
+	^ self includesMethod: aMethodRef selector ofClass: aMethodRef actualClass
+]
+
+PackageInfo >> includesSystemCategory: categoryName
+[
+	^ self category: categoryName matches: self systemCategoryPrefix
+]
+
+PackageInfo >> isForeignClassExtension: categoryName
+[
+	^ categoryName first = $* and: [ (self isYourClassExtension: categoryName) not ]
+]
+
+PackageInfo >> isOverrideCategory: aString
+[
+	^ aString endsWith: '-override'
+]
+
+PackageInfo >> isOverrideMethod: aMethodReference
+[
+	^ self isOverrideCategory: aMethodReference category
+]
+
+PackageInfo >> isOverrideOfYourMethod: aMethodReference
+[
+	"Answers true if the argument overrides a method in this package"
+
+	^ (self isYourClassExtension: aMethodReference category) not
+		and: [ (self changeRecordForOverriddenMethod: aMethodReference) notNil ]
+]
+
+PackageInfo >> isYourClassExtension: categoryName
+[
+	^ categoryName notNil and: [ self category: categoryName asLowercase matches: self methodCategoryPrefix ]
+]
+
+PackageInfo >> linesOfCode
+[
+	"An approximate measure of lines of code.
+	Includes comments, but excludes blank lines."
+
+	^ self methods inject: 0 into: [ :sum :each | sum + each compiledMethod linesOfCode ]
+]
+
+PackageInfo >> methodCategoryPrefix
+[
+	^ methodCategoryPrefix ifNil: [ methodCategoryPrefix := '*' , self packageName asLowercase ]
+]
+
+PackageInfo >> methods
+[
+	^ self extensionMethods , self coreMethods
+		select: [ :method | method isValid and: [ method isLocalSelector and: [ method selector isDoIt not ] ] ]
+]
+
+PackageInfo >> methodsInCategory: aString ofClass: aClass
+[
+	^ Array
+		streamContents: [ :stream | self methodsInCategory: aString ofClass: aClass do: [ :each | stream nextPut: each ] ]
+]
+
+PackageInfo >> methodsInCategory: aString ofClass: aClass do: aBlock
+[
+	((aClass organization listAtCategoryNamed: aString) ifNil: [ ^ self ])
+		do: [ :sel | aBlock value: (self referenceForMethod: sel ofClass: aClass) ]
+]
+
+PackageInfo >> outsideClasses
+[
+	^ ProtoObject withAllSubclasses difference: self classesAndMetaClasses
+]
+
+PackageInfo >> overriddenMethods
+[
+	^ Array streamContents: [ :stream | self overriddenMethodsDo: [ :each | stream nextPut: each ] ]
+]
+
+PackageInfo >> overriddenMethodsDo: aBlock
+[
+	"Enumerates the methods the receiver contains which have been overridden by other packages"
+
+	^ self allOverriddenMethodsDo: [ :ea | (self isOverrideOfYourMethod: ea)
+				ifTrue: [ aBlock value: ea ] ]
+]
+
+PackageInfo >> overriddenMethodsInClass: aClass
+[
+	^ Array streamContents: [ :stream | self overriddenMethodsInClass: aClass do: [ :each | stream nextPut: each ] ]
+]
+
+PackageInfo >> overriddenMethodsInClass: aClass do: aBlock
+[
+	"Evaluates aBlock with the overridden methods in aClass"
+
+	^ self overrideCategoriesForClass: aClass do: [ :cat | self methodsInCategory: cat ofClass: aClass do: aBlock ]
+]
+
+PackageInfo >> overrideCategoriesForClass: aClass
+[
+	^ Array streamContents: [ :stream | self overrideCategoriesForClass: aClass do: [ :each | stream nextPut: each ] ]
+]
+
+PackageInfo >> overrideCategoriesForClass: aClass do: aBlock
+[
+	"Evaluates aBlock with all the *foo-override categories in aClass"
+
+	^ aClass organization categories do: [ :cat | (self isOverrideCategory: cat)
+				ifTrue: [ aBlock value: cat ] ]
+]
+
+PackageInfo >> packageName
+[
+	^ packageName ifNil: [ packageName := self categoryName ]
+]
+
+PackageInfo >> packageName: aString
+[
+	packageName := aString
+]
+
+PackageInfo >> printOn: aStream
+[
+	super printOn: aStream.
+	aStream nextPutAll: '(' , self packageName , ')'
+]
+
+PackageInfo >> referenceForMethod: aSymbol ofClass: aClass
+[
+	^ RGMethodDefinition realClass: aClass selector: aSymbol
+]
+
+PackageInfo >> register
+[
+	PackageOrganizer default registerPackage: self
+]
+
+PackageInfo >> removeMethod: aMethodReference
+[
+	
+]
+
+PackageInfo >> selectors
+[
+	^ self methods collect: [ :ea | ea selector ]
+]
+
+PackageInfo >> systemCategories
+[
+	^ self systemOrganization categories select: [ :cat | self includesSystemCategory: cat ]
+]
+
+PackageInfo >> systemCategoryPrefix
+[
+	^ self packageName
+]
+
+PackageInfo >> systemOrganization
+[
+	^ self environment organization
+]
+
+PackageInfo class >> allPackages
+[
+	^ PackageOrganizer default packages
+]
+
+PackageInfo class >> default
+[
+	^ self allPackages detect: [ :ea | ea class = self ] ifNone: [ self new register ]
+]
+
+PackageInfo class >> existPackageNamed: aString
+[
+	"
+	self existPackageNamed: 'PackageInfo'
+	self existPackageNamed: 'Zork'
+	"
+
+	^ self allPackages anySatisfy: [ :each | each packageName = aString ]
+]
+
+PackageInfo class >> initialize
+[
+	self allSubclassesDo: [ :ea | ea new register ]
+]
+
+PackageInfo class >> named: aString
+[
+	^ PackageOrganizer default packageNamed: aString ifAbsent: [ (self new packageName: aString) register ]
+]
+
+PackageInfo class >> registerPackageName: aString
+[
+	^ PackageOrganizer default registerPackageNamed: aString
+]
+

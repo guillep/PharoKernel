@@ -3,6 +3,11 @@ FileReference
 	instanceVariables: #(#filesystem #path );
 	package: #'FileSystem-Core'.
 
+FileReference >> , extension
+[
+	^ self withPath: self path , extension
+]
+
 FileReference >> = other
 [
 	^ self species = other species and: [ self path = other path and: [ self fileSystem = other fileSystem ] ]
@@ -12,7 +17,9 @@ FileReference >> absolutePath
 [
 	"Return the absolute of the receiver"
 
-	^ self path
+	^ self path isRelative
+		ifFalse: [ self path ]
+		ifTrue: [ filesystem resolve: self path ]
 ]
 
 FileReference >> asAbsolute
@@ -29,6 +36,11 @@ FileReference >> asFileReference
 	^ self
 ]
 
+FileReference >> binaryReadStream
+[
+	^ filesystem binaryReadStreamOn: self path
+]
+
 FileReference >> containsReference: aReference
 [
 	^ aReference fileSystem = filesystem and: [ path contains: aReference path ]
@@ -39,7 +51,7 @@ FileReference >> copyTo: aReference
 	self isDirectory
 		ifTrue: [ aReference ensureCreateDirectory ]
 		ifFalse: [ filesystem = aReference fileSystem
-				ifTrue: [ filesystem copy: path to: aReference path ]
+				ifTrue: [ filesystem copy: path to: aReference resolve path ]
 				ifFalse: [ filesystem copy: path toReference: aReference ] ]
 ]
 
@@ -212,7 +224,7 @@ FileReference >> modificationTime
 FileReference >> moveTo: aReference
 [
 	| result |
-	result := self fileSystem rename: self path to: aReference path.
+	result := self fileSystem rename: self path to: aReference resolve path.
 	result ifNotNil: [ self setFileSystem: filesystem path: aReference path ]
 ]
 
@@ -333,5 +345,15 @@ FileReference class >> / aString
 FileReference class >> fileSystem: aFilesystem path: aPath
 [
 	^ self new setFileSystem: aFilesystem path: aPath
+]
+
+FileReference class >> newTempFilePrefix: prefix suffix: suffix
+[
+	| tmpDir random fileName |
+	tmpDir := FileLocator temp asFileReference.
+	[ random := UUIDGenerator default generateRandomBitsOfLength: 100.
+	fileName := prefix , random asString , suffix ]
+		doWhileTrue: [ (tmpDir / fileName) exists ].
+	^ fileName asFileReference
 ]
 

@@ -1,0 +1,35 @@
+OCUndeclaredVariable
+	superclass: #OCAbstractVariable;
+	instanceVariables: #(#name );
+	package: #'OpalCompiler-Core'.
+
+OCUndeclaredVariable >> assoc
+[
+	^ Undeclared associationAt: name
+]
+
+OCUndeclaredVariable >> emitStore: methodBuilder
+[
+	methodBuilder storeIntoLiteralVariable: self assoc
+]
+
+OCUndeclaredVariable >> emitValue: methodBuilder
+[
+	methodBuilder pushLiteralVariable: self assoc
+]
+
+OCUndeclaredVariable >> isUndeclared
+[
+	^ true
+]
+
+OCUndeclaredVariable >> name
+[
+	^ name
+]
+
+OCUndeclaredVariable >> name: anObject
+[
+	name := anObject
+]
+

@@ -1,0 +1,101 @@
+RBToken
+	instanceVariables: #(#sourcePointer #comments );
+	package: #'AST-Core'.
+
+RBToken >> comments
+[
+	^ comments
+]
+
+RBToken >> comments: anObject
+[
+	comments := anObject
+]
+
+RBToken >> isAssignment
+[
+	^ false
+]
+
+RBToken >> isBinary
+[
+	^ false
+]
+
+RBToken >> isError
+[
+	^ false
+]
+
+RBToken >> isIdentifier
+[
+	^ false
+]
+
+RBToken >> isKeyword
+[
+	^ false
+]
+
+RBToken >> isLiteralArrayToken
+[
+	^ false
+]
+
+RBToken >> isLiteralToken
+[
+	^ false
+]
+
+RBToken >> isPatternBlock
+[
+	^ false
+]
+
+RBToken >> isPatternVariable
+[
+	^ false
+]
+
+RBToken >> isSpecial
+[
+	^ false
+]
+
+RBToken >> length
+[
+	^ self subclassResponsibility
+]
+
+RBToken >> printOn: aStream
+[
+	aStream
+		nextPut: $ ;
+		nextPutAll: self class name
+]
+
+RBToken >> removePositions
+[
+	sourcePointer := nil
+]
+
+RBToken >> start
+[
+	^ sourcePointer ifNil: [ 0 ]
+]
+
+RBToken >> start: anInteger
+[
+	sourcePointer := anInteger
+]
+
+RBToken >> stop
+[
+	^ sourcePointer ifNil: [ -1 ] ifNotNil: [ self start + self length - 1 ]
+]
+
+RBToken class >> start: anInterval
+[
+	^ self new start: anInterval
+]
+

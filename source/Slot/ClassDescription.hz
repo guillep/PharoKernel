@@ -1,0 +1,48 @@
+ClassDescription >> initializeLayoutWithSlots: slots
+[
+	| offset superlayout |
+	superlayout := superclass layout.
+	offset := superlayout size.	"create the new layout and copy in the super slots"
+	layout := self layoutSized: slots size + offset.
+	layout replaceFrom: 1 to: offset with: superlayout.	"create new slots"
+	slots withIndexDo: [ :slot :index | layout at: offset + index put: slot asSlot ].
+	layout finalize.	"backup solution to create instvar names"
+	instanceVariables := Array new: slots size.
+	1 to: slots size do: [ :index | instanceVariables at: index put: (layout at: index + offset) name ]
+]
+
+ClassDescription >> layoutSized: size
+[
+	| layoutInstance layoutClass |
+	layoutClass := FixedLayout.
+	self isBits
+		ifTrue: [ self isBytes
+				ifTrue: [ layoutClass := ByteLayout ].
+			self isWords
+				ifTrue: [ layoutClass := WordLayout ] ]
+		ifFalse: [ self isVariable
+				ifTrue: [ layoutClass := VariableLayout ].
+			self isWeak
+				ifTrue: [ layoutClass := WeakLayout ] ].
+	layoutInstance := layoutClass new: size.
+	layoutInstance host: self.
+	^ layoutInstance
+]
+
+ClassDescription >> superclass: aSuperclass layout: aLayout
+[
+	layout := aLayout.	"	layout host: self. --> this is done in #buildFrom:scope:host:"
+	self superclass: aSuperclass methodDictionary: MethodDictionary new format: aLayout format.
+	instanceVariables := layout instanceVariables asArray
+]
+
+ClassDescription >> superclass: aSuperclass withLayoutType: layoutType slots: slotArray
+[
+	| superLayout newScope newLayout |
+	superLayout := aSuperclass ifNil: [ EmptyLayout instance ] ifNotNil: [ aSuperclass layout ].
+	newScope := superLayout slotScope extend: slotArray.
+	newLayout := layoutType extending: superLayout scope: newScope host: self.
+	newLayout checkSanity.
+	self superclass: aSuperclass layout: newLayout
+]
+

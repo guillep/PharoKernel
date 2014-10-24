@@ -1,0 +1,44 @@
+MaybeContextInstanceVariableNode
+	superclass: #InstanceVariableNode;
+	package: #Compiler.
+
+MaybeContextInstanceVariableNode >> code
+[
+	"Answer a bogus code to avoid creating quick methods.
+	 See MethodNode>>generate:ifQuick:"
+
+	^ LoadLong
+]
+
+MaybeContextInstanceVariableNode >> emitCodeForStore: stack encoder: encoder
+[
+	encoder genStoreInstVarLong: index
+]
+
+MaybeContextInstanceVariableNode >> emitCodeForStorePop: stack encoder: encoder
+[
+	encoder genStorePopInstVarLong: index.
+	stack pop: 1
+]
+
+MaybeContextInstanceVariableNode >> emitCodeForValue: stack encoder: encoder
+[
+	stack push: 1.
+	^ encoder genPushInstVarLong: index
+]
+
+MaybeContextInstanceVariableNode >> sizeCodeForStore: encoder
+[
+	^ encoder sizeStoreInstVarLong: index
+]
+
+MaybeContextInstanceVariableNode >> sizeCodeForStorePop: encoder
+[
+	^ encoder sizeStorePopInstVarLong: index
+]
+
+MaybeContextInstanceVariableNode >> sizeCodeForValue: encoder
+[
+	^ encoder sizePushInstVarLong: index
+]
+

@@ -1,0 +1,590 @@
+RPackageOrganizer
+	instanceVariables: #(#classPackageMapping #packages #classExtendingPackagesMapping #debuggingName );
+	package: #'RPackage-Core'.
+
+RPackageOrganizer class
+	instanceVariables: #(#default ).
+
+RPackageOrganizer >> addMethod: method
+[
+	"we have to register the method in the parent RPackage of the class. 
+	to do that, we first have to look if the method is an extension from an external package:"
+
+	| rPackage protocol |
+	protocol := method protocol ifNil: [ Error signal: 'Should not happen' ].
+	rPackage := (self hasPackageForProtocol: protocol inClass: method methodClass)
+		ifTrue: [ self packageForProtocol: protocol inClass: method methodClass ]
+		ifFalse: [ self registerPackage: (self packageClass named: (protocol copyWithout: $*)) ].
+	rPackage addMethod: method
+]
+
+RPackageOrganizer >> basicRegisterPackage: aPackage
+[
+	"A new package is now available and declared in the receiver. Note that it is a low level implementation method since it does not deal with package contained information and does not update the related mapping tables."
+
+	packages at: aPackage name asSymbol put: aPackage.	"register mc package"
+	MCWorkingCopy forPackage: (MCPackage named: aPackage name).
+	^ aPackage
+]
+
+RPackageOrganizer >> basicUnregisterPackage: aPackage
+[
+	"Unregister the specified package from the list of registered packages. Raise the announcement RPackageUnregistered. This is a low level action. It does not unregister the back pointer from classes to packages or any other information managed by the organizer"
+
+	packages removeKey: aPackage name asSymbol ifAbsent: [ self reportExtraRemovalOf: aPackage ].	"unregister also mc package"
+	aPackage correspondingMcPackage ifNotNil: [ :mcPackage | mcPackage workingCopy unregister ]
+]
+
+RPackageOrganizer >> basicUnregisterPackageNamed: aSymbolName
+[
+	"Unregister the specified package from the list of registered packages. Raise the RPackageUnregistered announcement. This is a low level action. It does not unregister the back pointer from classes to packages or any other information managed by the organizer"
+
+	packages removeKey: aSymbolName asSymbol ifAbsent: [  ]
+]
+
+RPackageOrganizer >> category: categoryName matches: prefix
+[
+	| prefixSize catSize |
+	categoryName ifNil: [ ^ false ].
+	catSize := categoryName size.
+	prefixSize := prefix size.
+	catSize < prefixSize
+		ifTrue: [ ^ false ].
+	(categoryName findString: prefix startingAt: 1 caseSensitive: false) = 1
+		ifFalse: [ ^ false ].
+	^ (categoryName at: prefix size + 1 ifAbsent: [ ^ true ]) = $-
+]
+
+RPackageOrganizer >> checkPackageExistsOrRegister: packageName
+[
+	(self packages anySatisfy: [ :each | self category: packageName matches: each packageName ])
+		ifFalse: [ (RPackage named: packageName capitalized) register ]
+]
+
+RPackageOrganizer >> debuggingName
+[
+	^ debuggingName
+]
+
+RPackageOrganizer >> debuggingName: aString
+[
+	debuggingName := aString
+]
+
+RPackageOrganizer >> defineUnpackagedClassesPackage
+[
+	^ self ensureExistAndRegisterPackageNamed: self packageClass defaultPackageName
+]
+
+RPackageOrganizer >> ensureExistAndRegisterPackageNamed: aSymbol
+[
+	"A new package is now available and declared in the receiver."
+
+	| package |
+	package := packages at: aSymbol asSymbol ifAbsentPut: [ self packageClass named: aSymbol ].
+	package extendedClasses do: [ :extendedClass | self registerExtendingPackage: package forClass: extendedClass ].
+	package definedClasses do: [ :definedClass | self registerPackage: package forClass: definedClass ].
+	self announcer announce: (RPackageCreated to: package).
+	^ package
+]
+
+RPackageOrganizer >> extendingPackagesOf: aClass
+[
+	"Returns the packages extending the class aClass"
+
+	^ classExtendingPackagesMapping at: aClass theNonMetaClass name ifAbsent: [ #() ]
+]
+
+RPackageOrganizer >> extendingPackagesOfClassNamed: aName
+[
+	"Returns the packages extending the class named a Symbol"
+
+	^ classExtendingPackagesMapping at: aName asSymbol ifAbsent: [ #() ]
+]
+
+RPackageOrganizer >> globalPackageOf: aClass
+[
+	"this method should return the 'global' parent package of aClass, that means the package holding the (possible) subcategory in which aClass is concretely defined. For example, 'Object package' returns Kernel-Object, whereas 'PackageOrganizer packageOf: Object' returns Kernel. So I guess that all use of 'packageOf' should be replaced by this method  "
+
+	"RPackageOrganizer default globalPackageOf: Object"
+
+	| classPackage |
+	classPackage := self packageOf: aClass.
+	^ self packages
+		detect: [ :aRPackage | aRPackage ~= classPackage and: [ aRPackage systemCategories includes: classPackage name ] ]
+		ifNone: [ classPackage ]
+]
+
+RPackageOrganizer >> hasRegistered
+[
+	"return true if this package organizer has already registered interest to system events and Monticello changes "
+
+	^ self announcer hasSubscriber: self	"|actionSequence|	self announcer subscriptions ifNil: [^ true].	actionSequence := self announcer subscriptions values 								detect: [:each | each anySatisfy: [:anAction | anAction receiver = RPackage organizer]] ifNone: [nil].	self flag: #cyril.	^ (actionSequence isNil not) and: [(MCWorkingCopy myDependents includes: self)]"
+]
+
+RPackageOrganizer >> importFromPackageInfo: info
+[
+	"PackageInfo lazy-initialize itself from all existing categories in the system. It can happen that we ask him for a non registered PackageInfo, and in this case it will just have to create a new PackageInfo with the right name. Then accessing the classes, methods is done throught the system interface, so no cache to update. It is not the same for RPackage. As rpackage initialize itself from package info, some categories can not been yet registered in RPackageOrganizer, which can be more problematic. For now we could create a packageInfo and import a new RPackage using the packageInfo interface (which is simplier than accessing categories then classes then methods, check what are extensions , ... )"
+
+	| package |
+	package := self ensureExistAndRegisterPackageNamed: info packageName.
+	info isEmpty
+		ifFalse: [ self importFromPackageInfoPass1: info package: package.
+			self importFromPackageInfoPass2: info package: package ].
+	^ package
+]
+
+RPackageOrganizer >> importFromPackageInfoPass1: info package: package
+[
+	"My problem here: If a package appear here after one of its subcategories, all classes and methods would be re-affected 
+	 to this package instead of the subcatagory. That's why I focus only on classes and methods that are not defined in subcategories, 
+	to avoid to override information set before"
+
+	info classesNotDefinedInSubCategories do: [ :each | package addClassDefinition: each ].
+	info coreMethodsNotDefinedInSubCategories
+		do: [ :each | 
+			"it seems that PackageInfo does not count methods from a trait inside the class package. We should do the same, as 			monticello expect this behavior"
+			(each isValid and: [ each isLocalSelector ])
+				ifTrue: [ package addMethod: each compiledMethod ] ].
+	^ package
+]
+
+RPackageOrganizer >> importFromPackageInfoPass2: info package: package
+[
+	info extensionMethodsFromAllSystem
+		do: [ :each | 
+			"it seems that PackageInfo does not count methods from a trait inside the class package. We should do the 			same, as monticello expect this behavior"
+			((each isValid and: [ each isLocalSelector ])
+				and: [ (self packageForProtocol: each protocol inClass: each realClass) = package ])
+				ifTrue: [ package addMethod: each compiledMethod ] ].
+	^ package
+]
+
+RPackageOrganizer >> includesPackage: aPackage
+[
+	"Answer whether the receiver get a package as registered."
+
+	^ self includesPackageNamed: aPackage name
+]
+
+RPackageOrganizer >> includesPackageBackPointerForClass: aClass
+[
+	^ classPackageMapping includesKey: aClass instanceSide name asSymbol
+]
+
+RPackageOrganizer >> includesPackageBackPointerForClassNamed: aSymbol
+[
+	^ classPackageMapping includesKey: aSymbol asSymbol
+]
+
+RPackageOrganizer >> includesPackageNamed: aSymbol
+[
+	"Answer whether the receiver get a package named aSymbol as registered."
+
+	^ packages includesKey: aSymbol asSymbol
+]
+
+RPackageOrganizer >> initialize
+[
+	super initialize.
+	packages := IdentityDictionary new.
+	classPackageMapping := IdentityDictionary new.
+	classExtendingPackagesMapping := IdentityDictionary new.
+	debuggingName := ''.
+	self defineUnpackagedClassesPackage
+]
+
+RPackageOrganizer >> initializeFromSystemStartingFromPackageOrganizer
+[
+	"this method will do the same job than initializeFromSystem except that it will start from all packages in the package organizer, instead of the ones of Monticello. Even when starting from the workingCopies of monticello, we ask to the corresponding package info to retrrieve information. Moreover, monticello does not refer all packages in packageOrganizer (surely because of some sub-categories not yet taken into account)"
+
+	| allInfos package |
+	UIManager default
+		informUser: 'Calculating packages to import'
+		during: [ allInfos := PackageOrganizer default packages reject: #isEmpty ].
+	allInfos
+		do: [ :info | 
+			package := self ensureExistAndRegisterPackageNamed: info packageName.	"PackageOrganizer contains a quite special packageInfo used by monticello test. It is subclass 			  of MCDirtyPackageInfo. Its instance variable is initialized as #'Monticello-Mocks' but 			  MCDirtyPackageInfo>> packageName return another name. The tests expect to 			  have #'Monticello-Mocks' as name: "
+			info methodCategoryPrefix = '*mcdirtypackage'
+				ifTrue: [ self ensureExistAndRegisterPackageNamed: #'Monticello-Mocks' ].
+			self importFromPackageInfoPass1: info package: package ]
+		displayingProgress: 'Importing from PackageOrganizer. Pass 1'.
+	allInfos
+		do: [ :info | package := self ensureExistAndRegisterPackageNamed: info packageName.
+			self importFromPackageInfoPass2: info package: package ]
+		displayingProgress: 'Importing from PackageOrganizer. Pass 2'
+]
+
+RPackageOrganizer >> packageClass
+[
+	"Return the system class that represent packages."
+
+	^ RPackage
+]
+
+RPackageOrganizer >> packageDefiningOrExtendingMethod: aCompiledMethod
+[
+	^ self packageDefiningOrExtendingSelector: aCompiledMethod selector inClass: aCompiledMethod methodClass
+]
+
+RPackageOrganizer >> packageDefiningOrExtendingSelector: aSelector inClass: aClass
+[
+	"this implementation is slower
+		aClass packages detect: [:each | each includesSelector: aSelector ofClass: aClass ]"
+
+	^ aClass packages
+		detect: [ :each | each includesSelector: aSelector ofClass: aClass ]
+		ifNone: [ | tmpTrait "if we do not find in the packages of the class, it means that the method is coming from a trait: " |
+			tmpTrait := aClass traitComposition traitProvidingSelector: aSelector.
+			(aClass traitComposition traitProvidingSelector: aSelector) packages
+				detect: [ :each | each includesSelector: aSelector ofClass: tmpTrait ] ]	"	self packages detect: [:each | 		each includesSelector: aSelector ofClass: aClass ]."
+]
+
+RPackageOrganizer >> packageDefiningOrExtendingSelector: aSelector inClassNamed: aClassNameSymbol
+[
+	"this implementation is slower
+		aClass packages detect: [:each | each includesSelector: aSelector ofClass: aClass ]"
+
+	| classPackage |
+	classPackage := self packageOfClassNamed: aClassNameSymbol.
+	(classPackage includesSelector: aSelector ofClassName: aClassNameSymbol)
+		ifTrue: [ ^ classPackage ].
+	^ (self extendingPackagesOfClassNamed: aClassNameSymbol)
+		detect: [ :p | p includesSelector: aSelector ofClassName: aClassNameSymbol ]
+		ifNone: [ self error: ('No package found for selector {1} in class {2}' format: {aSelector.
+							aClassNameSymbol}) ]
+]
+
+RPackageOrganizer >> packageDefiningOrExtendingSelector: aSelector inMetaclassNamed: aClassNameSymbol
+[
+	"this implementation is slower
+		aClass packages detect: [:each | each includesSelector: aSelector ofClass: aClass ]"
+
+	| classPackage |
+	classPackage := self packageOfClassNamed: aClassNameSymbol.
+	(classPackage includesSelector: aSelector ofMetaclassName: aClassNameSymbol)
+		ifTrue: [ ^ classPackage ].
+	^ (self extendingPackagesOfClassNamed: aClassNameSymbol)
+		detect: [ :p | p includesSelector: aSelector ofMetaclassName: aClassNameSymbol ]
+		ifNone: [ self error: ('No package found for selector {1} in class {2}' format: {aSelector.
+							aClassNameSymbol}) ]
+]
+
+RPackageOrganizer >> packageNamed: aSymbol
+[
+	^ self packageNamed: aSymbol ifAbsent: [ KeyNotFound signalFor: aSymbol ]
+]
+
+RPackageOrganizer >> packageNamed: aSymbol ifAbsent: errorBlock
+[
+	"Answer a package with exact name but ignoring case. 
+	 It first looks for exact key for performance"
+
+	^ packages at: aSymbol asSymbol ifAbsent: [ self packageNamedIgnoreCase: aSymbol ifAbsent: errorBlock ]
+]
+
+RPackageOrganizer >> packageNamedIgnoreCase: aSymbol ifAbsent: aBlock
+[
+	"In case of extensions, I can need to take a package ignoring name"
+
+	self packagesDo: [ :each | (each name sameAs: aSymbol)
+				ifTrue: [ ^ each ] ].
+	^ aBlock value
+]
+
+RPackageOrganizer >> packageNames
+[
+	^ packages keys
+]
+
+RPackageOrganizer >> packageNamesDo: aBlock
+[
+	^ packages keysDo: aBlock
+]
+
+RPackageOrganizer >> packageOf: aClass
+[
+	^ classPackageMapping
+		at: aClass theNonMetaClass originalName
+		ifAbsent: [ self packageNamed: self packageClass defaultPackageName ]
+]
+
+RPackageOrganizer >> packageOfClassNamed: aName
+[
+	self flag: self.	"shouldProbablyReturnUnunpackagedPackage instead of nil"
+	^ classPackageMapping at: aName asSymbol ifAbsent: [ nil ]
+]
+
+RPackageOrganizer >> packages
+[
+	^ packages values
+]
+
+RPackageOrganizer >> packagesDo: aBlock
+[
+	packages valuesDo: aBlock
+]
+
+RPackageOrganizer >> packagesWithoutExtensions
+[
+	^ self packages
+]
+
+RPackageOrganizer >> printOn: aStream
+[
+	super printOn: aStream.
+	debuggingName ifNotNil: [ aStream nextPutAll: debuggingName ]
+]
+
+RPackageOrganizer >> register
+[
+	"self registerInterestToMC."
+
+	self registerInterestToSystemAnnouncement
+]
+
+RPackageOrganizer >> registerExtendingPackage: aPackage forClass: aClass
+[
+	| cur |
+	cur := classExtendingPackagesMapping at: aClass theNonMetaClass name ifAbsent: [ nil ].
+	cur isNil
+		ifTrue: [ classExtendingPackagesMapping at: aClass theNonMetaClass name put: (Set with: aPackage) ]
+		ifFalse: [ cur add: aPackage ]
+]
+
+RPackageOrganizer >> registerExtendingPackage: aPackage forClassName: aClassName
+[
+	| cur |
+	cur := classExtendingPackagesMapping at: aClassName asSymbol ifAbsent: [ nil ].
+	cur isNil
+		ifTrue: [ classExtendingPackagesMapping at: aClassName asSymbol put: (Set with: aPackage) ]
+		ifFalse: [ cur add: aPackage ]
+]
+
+RPackageOrganizer >> registerPackage: aPackage
+[
+	"A new package is now available and declared in the receiver. "
+
+	self validateCanBeAddedPackage: aPackage.
+	self basicRegisterPackage: aPackage.
+	aPackage extendedClasses do: [ :extendedClass | self registerExtendingPackage: aPackage forClass: extendedClass ].
+	aPackage definedClasses do: [ :definedClass | self registerPackage: aPackage forClass: definedClass ].
+	self announcer announce: (RPackageCreated to: aPackage).
+	^ aPackage
+]
+
+RPackageOrganizer >> registerPackage: aPackage forClass: aClass
+[
+	(aPackage includesClass: aClass)
+		ifFalse: [ self error: aPackage name , ' does not includes the class ' , aClass name ].
+	^ classPackageMapping at: aClass theNonMetaClass name put: aPackage
+]
+
+RPackageOrganizer >> registerPackage: aPackage forClassName: aClassNameSymbol
+[
+	"Register aPackage as the package of the class aClassNameSymbol. The package should contain the class in its class definitions."
+
+	(aPackage includesClassNamed: aClassNameSymbol asSymbol)
+		ifFalse: [ self error: aPackage name , ' does not include the class ' , aClassNameSymbol ].
+	^ classPackageMapping at: aClassNameSymbol put: aPackage
+]
+
+RPackageOrganizer >> registerPackageNamed: aString
+[
+	^ self packageNamed: aString asSymbol ifAbsent: [ (RPackage named: aString asSymbol) register ]
+]
+
+RPackageOrganizer >> renamePackage: aPackage in: aString
+[
+	self deprecated: 'use RPackage>>renameTo:' on: '18 Mar 2014' in: #Pharo30.
+	^ aPackage renameTo: aString
+]
+
+RPackageOrganizer >> reportBogusBehaviorOf: aSelector
+[
+	self
+		logCr:
+			'RPackage log: Something wrong around ' , aSelector asString
+				, 'since the removeKey: is called on not present information.'
+]
+
+RPackageOrganizer >> reportExtraRemovalOf: aClass
+[
+	self logCr: 'The class ' , aClass name printString , 'is removed twice'
+]
+
+RPackageOrganizer >> stopNotification
+[
+	"(self instVarNamed: #default) stopNotification"
+
+	"pay attention that we can break the system using this method"
+
+	SystemAnnouncer uniqueInstance unsubscribe: self.
+	MCWorkingCopy removeDependent: self
+]
+
+RPackageOrganizer >> unregister
+[
+	SystemAnnouncer uniqueInstance unsubscribe: self
+]
+
+RPackageOrganizer >> unregisterExtendingPackage: aPackage forClass: aClass
+[
+	| extendingPackageForClass |
+	extendingPackageForClass := classExtendingPackagesMapping at: aClass theNonMetaClass name ifAbsent: [ nil ].
+	extendingPackageForClass
+		ifNotNil: [ extendingPackageForClass remove: aPackage ifAbsent: [  ]	"not happy with this one" ]
+]
+
+RPackageOrganizer >> unregisterExtendingPackage: aPackage forClassName: aClassName
+[
+	| cur |
+	cur := classExtendingPackagesMapping at: aClassName asSymbol ifAbsent: [ nil ].
+	cur isNil
+		ifFalse: [ cur remove: aPackage ifAbsent: [  ]	"not happy with this one" ]
+]
+
+RPackageOrganizer >> unregisterPackage: aPackage
+[
+	"Unregister the specified package from the list of registered packages. Raise the announcement RPackageUnregistered."
+
+	self basicUnregisterPackage: aPackage.
+	aPackage extendedClasses do: [ :extendedClass | self unregisterExtendingPackage: aPackage forClass: extendedClass ].
+	aPackage definedClasses do: [ :definedClass | self unregisterPackage: aPackage forClass: definedClass ].
+	self announcer announce: (RPackageUnregistered to: aPackage).
+	^ aPackage
+]
+
+RPackageOrganizer >> unregisterPackage: aPackage forClass: aClass
+[
+	"unregister the back pointer mapping from classes to packages."
+
+	^ classPackageMapping removeKey: aClass theNonMetaClass name ifAbsent: [ self reportExtraRemovalOf: aClass ]
+]
+
+RPackageOrganizer >> unregisterPackage: aPackage forClassName: aClassName
+[
+	"Unregister the package back pointer for a given class. The class should not belong to the package anymore before removing the back pointer."
+
+	(aPackage includesClassNamed: aClassName asSymbol)
+		ifTrue: [ self error: aPackage name , ' still includes the class ' , aClassName asSymbol ].
+	^ classPackageMapping
+		removeKey: aClassName asSymbol
+		ifAbsent: [ self reportBogusBehaviorOf: #unregisterPackage:forClassName: ]
+]
+
+RPackageOrganizer >> unregisterPackageNamed: symbol
+[
+	"Unregister the specified package from the list of registered packages. Raise the announcement RPackageUnregistered."
+
+	| aPackage |
+	aPackage := packages at: symbol asSymbol ifAbsent: [ nil ].
+	aPackage ifNotNil: [ self unregisterPackage: aPackage ].
+	^ aPackage
+]
+
+RPackageOrganizer >> validateCanBeAddedPackage: aPackage
+[
+	self validateCanBeAddedPackageName: aPackage categoryName tagName: nil
+]
+
+RPackageOrganizer >> validateCanBeAddedPackage: aPackage tagName: aSymbol
+[
+	aPackage name = aSymbol
+		ifTrue: [ ^ self ].
+	self validateCanBeAddedPackageName: aPackage categoryName , '-' , aSymbol tagName: nil
+]
+
+RPackageOrganizer >> validateCanBeAddedPackageName: packageName tagName: tagName
+[
+	| package |
+	package := self
+		packageNamed: packageName
+		ifAbsent: [ (packageName includes: $-)
+				ifFalse: [ ^ self ].
+			^ self
+				validateCanBeAddedPackageName: (packageName copyUpToLast: $-)
+				tagName: (packageName copyAfterLast: $-) , (tagName ifNotNil: [ '-' , tagName ] ifNil: [ '' ]) ].
+	(tagName isEmptyOrNil or: [ package includesClassTagNamed: tagName ])
+		ifTrue: [ RPackageConflictError
+				signal:
+					('Package/Tag can not be added because it conflicts with package {1} tag {2}' format: {packageName.
+							tagName}) ]
+]
+
+RPackageOrganizer class >> default
+[
+	"WARNING: Since this component can be changed (i.e. for testing) you should NOT use it directly. 
+	  Use RPackage class>>#organizer instead"
+
+	^ default ifNil: [ default := self new ]
+]
+
+RPackageOrganizer class >> fillUp
+[
+	"self fillUp"
+
+	self default initializeFromSystemStartingFromPackageOrganizer.	"initializing from system might have generated some new packageInfo (because Package Inof lazily register system categories). Therefore, we should iterate a second time over all package infos:"
+	self default initializeFromSystemStartingFromPackageOrganizer
+]
+
+RPackageOrganizer class >> initialize
+[
+	"You need manually filll the data: 
+	
+	self initializeDefaultFromMC.
+	
+	is the usual way (but is not in this package by default, it depends on MC)"
+
+	
+]
+
+RPackageOrganizer class >> initializeDefault
+[
+	"self initializeDefault"
+
+	default ifNotNil: [ default unregister ].
+	default := nil.
+	self setDefault: self new.
+	self fillUp
+]
+
+RPackageOrganizer class >> packageClass
+[
+	^ RPackage
+]
+
+RPackageOrganizer class >> removeMockPackagesFromOldOrganizer
+[
+	"the next line is a bit 'hacky'. It will remove the mock packages used by monticello test in packageInfo-Organizer. Those packages will now be subclasses of RPackage and should no longer be present in the packageInfo-organizer"
+
+	| mockPackages |
+	"mockPackages := PackageOrganizer default packages select: [:info | ((((info packageName = 'MCDirtyPackage') or: [info packageName = 'MCEmptyPackage']) or: [info packageName = 'MonticelloMocks']) 	or: [info isKindOf:  MCDirtyPackageInfo])]."
+	mockPackages := self default packages
+		select: [ :info | ({'MCDirtyPackageInfo'.
+			'MCEmptyPackage'.
+			'MonticelloMocks'} includes: info packageName) or: [ info isKindOf: MCDirtyPackageInfo ] ].
+	mockPackages do: [ :each | self default unregisterPackage: each ].
+	self default packagesDictionary removeKey: #'Monticello-Mocks' ifAbsent: [  ]
+]
+
+RPackageOrganizer class >> resetDefault
+[
+	"self resetDefault"
+
+	default
+		ifNotNil: [ "When an Organizer is not used anymore, we should always pay attention that these two actions are corretly done."
+			default unregisterInterestToSystemAnnouncement.
+			MCWorkingCopy removeDependent: default ].
+	default := self new.
+	self packageClass initialize
+]
+
+RPackageOrganizer class >> setDefault: anOrganizer
+[
+	default ifNotNil: [ default unregister ].
+	default := anOrganizer.
+	default register.
+	RPackage organizer: nil
+]
+

@@ -403,14 +403,19 @@ BlockClosure >> numCopiedValues
 	^ self basicSize
 ]
 
+BlockClosure >> numLocalTemps
+[
+	"Answer the number of local temporaries for the receiver"
+
+	^ BlockLocalTempCounter tempCountForBlockAt: startpc - 4 in: self method	"size of push closure copy bytecode"
+]
+
 BlockClosure >> numTemps
 [
 	"Answer the number of temporaries for the receiver; this includes
 	 the number of arguments and the number of copied values."
 
-	| blockCreationBytecodeSize |
-	^ self numCopiedValues + self numArgs
-		+ (BlockLocalTempCounter tempCountForBlockAt: startpc - (blockCreationBytecodeSize := 4) in: self method)
+	^ self numCopiedValues + self numArgs + self numLocalTemps
 ]
 
 BlockClosure >> on: exception do: handlerAction

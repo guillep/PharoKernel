@@ -1,0 +1,55 @@
+IRJump
+	superclass: #IRInstruction;
+	instanceVariables: #(#destination #successor );
+	package: #'OpalCompiler-Core'.
+
+IRJump >> accept: aVisitor
+[
+	^ aVisitor visitJump: self
+]
+
+IRJump >> destination
+[
+	^ destination
+]
+
+IRJump >> destination: aSequence
+[
+	destination := aSequence
+]
+
+IRJump >> executeOn: interpreter
+[
+	^ interpreter goto: destination orderNumber
+]
+
+IRJump >> isGoto
+[
+	"is unconditional jump"
+
+	^ true
+]
+
+IRJump >> isJump
+[
+	"goto or if"
+
+	^ true
+]
+
+IRJump >> successor
+[
+	^ successor
+]
+
+IRJump >> successor: succ
+[
+	successor := succ
+]
+
+IRJump >> successorSequences
+[
+	^ {destination.
+	successor}
+]
+

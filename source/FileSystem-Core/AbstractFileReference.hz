@@ -3,7 +3,7 @@ AbstractFileReference
 
 AbstractFileReference >> , extension
 [
-	^ self withPath: self path , extension
+	^ self resolve , extension
 ]
 
 AbstractFileReference >> / aString
@@ -95,6 +95,33 @@ AbstractFileReference >> basenameWithoutExtension
 	"Returns the basename, i.e. /foo/gloops.taz basenameWithoutExtension is 'gloops'"
 
 	^ self fullPath basenameWithoutExtension
+]
+
+AbstractFileReference >> binaryReadStream
+[
+	^ self subclassResponsibility
+]
+
+AbstractFileReference >> binaryReadStreamDo: aBlock
+[
+	| stream |
+	stream := self binaryReadStream.
+	^ [ aBlock value: stream ]
+		ensure: [ stream close ]
+]
+
+AbstractFileReference >> binaryReadStreamDo: doBlock ifAbsent: absentBlock
+[
+	^ self isFile
+		ifTrue: [ self binaryReadStreamDo: doBlock ]
+		ifFalse: absentBlock
+]
+
+AbstractFileReference >> binaryReadStreamIfAbsent: absentBlock
+[
+	^ self isFile
+		ifTrue: [ self binaryReadStream ]
+		ifFalse: absentBlock
 ]
 
 AbstractFileReference >> childGeneratorBlock: doBlock matching: patterns

@@ -1,0 +1,245 @@
+ClassChangeRecord
+	instanceVariables: #(#changeTypes #priorDefinition #thisName #priorName #methodChanges );
+	package: #'System-Changes'.
+
+ClassChangeRecord >> allChangeTypes
+[
+	| chgs |
+	(priorName notNil and: [ changeTypes includes: #rename ])
+		ifTrue: [ (chgs := changeTypes copy) add: 'oldName: ' , priorName.
+			^ chgs ].
+	^ changeTypes
+]
+
+ClassChangeRecord >> assimilateAllChangesIn: otherRecord
+[
+	otherRecord isClassRemoval
+		ifTrue: [ ^ self noteChangeType: #remove ].
+	otherRecord allChangeTypes do: [ :chg | self noteChangeType: chg fromClass: self realClass ].
+	otherRecord methodChanges
+		associationsDo: [ :assn | | changeType selector changeRecord |
+			selector := assn key.
+			changeRecord := assn value.
+			changeType := changeRecord changeType.
+			(changeType == #remove or: [ changeType == #addedThenRemoved ])
+				ifTrue: [ changeType == #addedThenRemoved
+						ifTrue: [ self atSelector: selector put: #add ].
+					self noteRemoveSelector: selector priorMethod: nil lastMethodInfo: changeRecord methodInfoFromRemoval ]
+				ifFalse: [ self atSelector: selector put: changeType ] ]
+]
+
+ClassChangeRecord >> atSelector: selector ifAbsent: absentBlock
+[
+	^ (methodChanges at: selector ifAbsent: absentBlock) changeType
+]
+
+ClassChangeRecord >> atSelector: selector put: changeType
+[
+	(self findOrMakeMethodChangeAt: selector priorMethod: nil) noteChangeType: changeType
+]
+
+ClassChangeRecord >> changedSelectors
+[
+	"Return a set of the changed or removed selectors."
+
+	^ methodChanges keys
+]
+
+ClassChangeRecord >> checkCoherence
+[
+	"If I recreate the class then don't remove it"
+
+	(changeTypes includes: #remove)
+		ifTrue: [ changeTypes remove: #remove.
+			changeTypes add: #change ].
+	(changeTypes includes: #addedThenRemoved)
+		ifTrue: [ changeTypes remove: #addedThenRemoved.
+			changeTypes add: #add ]
+]
+
+ClassChangeRecord >> findOrMakeMethodChangeAt: selector priorMethod: priorMethod
+[
+	^ methodChanges at: selector ifAbsentPut: [ MethodChangeRecord new ]
+]
+
+ClassChangeRecord >> forgetChangesIn: otherRecord
+[
+	"See forgetAllChangesFoundIn:.  Used in culling changeSets."
+
+	| cls otherMethodChanges |
+	(cls := self realClass) ifNil: [ ^ self ].	"We can do better now, though..."
+	otherMethodChanges := otherRecord methodChangeTypes.
+	otherMethodChanges
+		associationsDo: [ :assoc | | selector actionToSubtract |
+			selector := assoc key.
+			actionToSubtract := assoc value.
+			(cls includesSelector: selector)
+				ifTrue: [ (#(#add #change) includes: actionToSubtract)
+						ifTrue: [ methodChanges removeKey: selector ifAbsent: [  ] ] ]
+				ifFalse: [ (#(#remove #addedThenRemoved) includes: actionToSubtract)
+						ifTrue: [ methodChanges removeKey: selector ifAbsent: [  ] ] ] ].
+	changeTypes isEmpty
+		ifFalse: [ changeTypes removeAllFoundIn: otherRecord allChangeTypes.
+			(changeTypes includes: #rename)
+				ifFalse: [ changeTypes removeAllSuchThat: [ :x | x beginsWith: 'oldName: ' ] ] ]
+]
+
+ClassChangeRecord >> hasNoChanges
+[
+	^ changeTypes isEmpty and: [ methodChanges isEmpty ]
+]
+
+ClassChangeRecord >> includesChangeType: changeType
+[
+	changeType == #new
+		ifTrue: [ ^ changeTypes includes: #add ].	"Backwd compat"
+	^ changeTypes includes: changeType
+]
+
+ClassChangeRecord >> initFor: className
+[
+	changeTypes := IdentitySet new.
+	methodChanges := IdentityDictionary new.
+	priorName := thisName := className
+]
+
+ClassChangeRecord >> isClassRemoval
+[
+	"NOTE: there are other removals with changeType #addedThenRemoved,
+	but this message is used to write out removals in fileOut, and those
+	cases should not be written out."
+
+	^ (changeTypes includes: #remove) or: [ changeTypes includes: #removeClass ]
+]
+
+ClassChangeRecord >> methodChangeTypes
+[
+	"Return an old-style dictionary of method change types."
+
+	| dict |
+	dict := IdentityDictionary new.
+	methodChanges
+		associationsDo: [ :assn | | selector record |
+			selector := assn key.
+			record := assn value.
+			dict at: selector put: record changeType ].
+	^ dict
+]
+
+ClassChangeRecord >> methodChanges
+[
+	^ methodChanges
+]
+
+ClassChangeRecord >> noteChangeType: changeSymbol
+[
+	^ self noteChangeType: changeSymbol fromClass: nil
+]
+
+ClassChangeRecord >> noteChangeType: changeSymbol fromClass: class
+[
+	(changeSymbol = #new or: [ changeSymbol = #add ])
+		ifTrue: [ changeTypes add: #add.
+			changeTypes remove: #change ifAbsent: [  ].
+			^ self ].
+	changeSymbol = #change
+		ifTrue: [ (changeTypes includes: #add)
+				ifTrue: [ ^ self ].
+			^ changeTypes add: changeSymbol ].
+	changeSymbol == #addedThenRemoved
+		ifTrue: [ ^ self ].	"An entire class was added but then removed"
+	changeSymbol = #comment
+		ifTrue: [ ^ changeTypes add: changeSymbol ].
+	changeSymbol = #reorganize
+		ifTrue: [ ^ changeTypes add: changeSymbol ].
+	changeSymbol = #rename
+		ifTrue: [ ^ changeTypes add: changeSymbol ].
+	(changeSymbol beginsWith: 'oldName: ')
+		ifTrue: [ "Must only be used when assimilating other changeSets"
+			(changeTypes includes: #add)
+				ifTrue: [ ^ self ].
+			priorName := changeSymbol copyFrom: 'oldName: ' size + 1 to: changeSymbol size.
+			^ changeTypes add: #rename ].
+	changeSymbol = #remove
+		ifTrue: [ (changeTypes includes: #add)
+				ifTrue: [ changeTypes add: #addedThenRemoved ]
+				ifFalse: [ changeTypes add: #remove ].
+			^ changeTypes removeAllFoundIn: #(#add #change #comment #reorganize) ].
+	self error: 'Unrecognized changeType'
+]
+
+ClassChangeRecord >> noteNewMethod: newMethod selector: selector priorMethod: methodOrNil
+[
+	| methodChange |
+	methodChange := self findOrMakeMethodChangeAt: selector priorMethod: methodOrNil.
+	methodOrNil ifNil: [ methodChange noteChangeType: #add ] ifNotNil: [ methodChange noteChangeType: #change ]
+]
+
+ClassChangeRecord >> noteNewName: newName
+[
+	thisName := newName
+]
+
+ClassChangeRecord >> notePriorDefinition: oldClass
+[
+	oldClass ifNil: [ ^ self ].
+	priorDefinition ifNil: [ priorDefinition := oldClass definition ]
+]
+
+ClassChangeRecord >> noteRemoveSelector: selector priorMethod: priorMethod lastMethodInfo: infoOrNil
+[
+	| methodChange |
+	methodChange := self findOrMakeMethodChangeAt: selector priorMethod: priorMethod.
+	methodChange changeType == #add
+		ifTrue: [ methodChange noteChangeType: #addedThenRemoved ]
+		ifFalse: [ methodChange noteChangeType: #remove ].
+	infoOrNil
+		ifNotNil: [ "Save the source code pointer and category so can still browse old versions"
+			methodChange noteMethodInfoFromRemoval: infoOrNil ]
+]
+
+ClassChangeRecord >> priorDefinition
+[
+	^ priorDefinition
+]
+
+ClassChangeRecord >> priorName
+[
+	^ priorName
+]
+
+ClassChangeRecord >> realClass
+[
+	"Return the actual class (or meta), as determined from my name."
+
+	thisName ifNil: [ ^ nil ].
+	(thisName endsWith: ' class')
+		ifTrue: [ ^ (Smalltalk globals at: (thisName copyFrom: 1 to: thisName size - 6) asSymbol ifAbsent: [ ^ nil ]) class ]
+		ifFalse: [ ^ Smalltalk globals at: thisName ifAbsent: [ ^ nil ] ]
+]
+
+ClassChangeRecord >> removeSelector: selector
+[
+	"Remove all memory of changes associated with the argument, selector, in this class."
+
+	selector == #Comment
+		ifTrue: [ changeTypes remove: #comment ifAbsent: [  ] ]
+		ifFalse: [ methodChanges removeKey: selector ifAbsent: [  ] ]
+]
+
+ClassChangeRecord >> thisName
+[
+	^ thisName
+]
+
+ClassChangeRecord >> trimHistory
+[
+	"Drop non-essential history."
+
+	"Forget methods added and later removed"
+
+	methodChanges keysAndValuesRemove: [ :sel :chgRecord | chgRecord changeType == #addedThenRemoved ].	"Forget renaming and reorganization of newly-added classes."
+	(changeTypes includes: #add)
+		ifTrue: [ changeTypes removeAllFoundIn: #(#rename #reorganize) ]
+]
+

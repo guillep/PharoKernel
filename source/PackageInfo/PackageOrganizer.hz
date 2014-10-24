@@ -1,0 +1,120 @@
+PackageOrganizer
+	instanceVariables: #(#packages );
+	package: #PackageInfo.
+
+PackageOrganizer class
+	instanceVariables: #(#default ).
+
+PackageOrganizer >> flushObsoletePackages: aBlock
+[
+	"Flush all packages considered obsolete by evaluating the argument block."
+
+	packages keys do: [ :key | (aBlock value: (packages at: key))
+				ifTrue: [ packages removeKey: key ] ]
+]
+
+PackageOrganizer >> initialize
+[
+	super initialize.
+	packages := Dictionary new
+]
+
+PackageOrganizer >> mostSpecificPackageIn: aCollection ifNone: aBlock
+[
+	aCollection isEmpty
+		ifTrue: [ ^ aBlock value ].
+	^ (aCollection asArray sort: [ :a :b | a packageName size > b packageName size ]) first
+]
+
+PackageOrganizer >> mostSpecificPackageOfClass: aClass
+[
+	^ self mostSpecificPackageOfClass: aClass ifNone: [ self noPackageFound ]
+]
+
+PackageOrganizer >> mostSpecificPackageOfClass: aClass ifNone: aBlock
+[
+	^ self mostSpecificPackageIn: (self packages select: [ :each | each includesClass: aClass ]) ifNone: aBlock
+]
+
+PackageOrganizer >> mostSpecificPackageOfMethod: aMethodReference
+[
+	^ self mostSpecificPackageOfMethod: aMethodReference ifNone: [ self noPackageFound ]
+]
+
+PackageOrganizer >> mostSpecificPackageOfMethod: aMethodReference ifNone: aBlock
+[
+	^ self
+		mostSpecificPackageIn: (self packages select: [ :each | each includesMethodReference: aMethodReference ])
+		ifNone: aBlock
+]
+
+PackageOrganizer >> noPackageFound
+[
+	self error: 'No package found'
+]
+
+PackageOrganizer >> packageNamed: aString ifAbsent: errorBlock
+[
+	^ packages at: aString ifAbsent: errorBlock
+]
+
+PackageOrganizer >> packageNames
+[
+	^ packages keys
+]
+
+PackageOrganizer >> packageOfClass: aClass
+[
+	^ self packageOfClass: aClass ifNone: [ self noPackageFound ]
+]
+
+PackageOrganizer >> packageOfClass: aClass ifNone: errorBlock
+[
+	| classCategory |
+	classCategory := aClass theNonMetaClass category.
+	packages at: classCategory ifPresent: [ :v | ^ v ].
+	(classCategory includes: $-)
+		ifTrue: [ packages at: (classCategory copyUpTo: $-) ifPresent: [ :v | ^ v ] ].
+	^ self packages detect: [ :ea | ea includesClass: aClass ] ifNone: errorBlock
+]
+
+PackageOrganizer >> packageOfMethod: aMethodReference
+[
+	^ self packageOfMethod: aMethodReference ifNone: [ self noPackageFound ]
+]
+
+PackageOrganizer >> packageOfMethod: aMethodReference ifNone: errorBlock
+[
+	^ self packages detect: [ :ea | ea includesMethodReference: aMethodReference ] ifNone: errorBlock
+]
+
+PackageOrganizer >> packages
+[
+	^ packages values
+]
+
+PackageOrganizer >> registerPackage: aPackageInfo
+[
+	packages at: aPackageInfo packageName put: aPackageInfo
+]
+
+PackageOrganizer >> registerPackageNamed: aString
+[
+	^ self registerPackage: (PackageInfo named: aString)
+]
+
+PackageOrganizer >> unregisterPackage: aPackageInfo
+[
+	packages removeKey: aPackageInfo packageName ifAbsent: [  ]
+]
+
+PackageOrganizer >> unregisterPackageNamed: aString
+[
+	self unregisterPackage: (self packageNamed: aString ifAbsent: [ ^ self ])
+]
+
+PackageOrganizer class >> default
+[
+	^ default ifNil: [ default := self new ]
+]
+

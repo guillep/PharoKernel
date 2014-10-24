@@ -1,0 +1,91 @@
+IRPrimitive
+	instanceVariables: #(#primitiveNum #spec );
+	package: #'OpalCompiler-Core'.
+
+IRPrimitive >> initializeFrom: aPragmaNode
+[
+	primitiveNum := 0.
+	spec := Array
+		with: aPragmaNode arguments second name
+		with: aPragmaNode arguments first name
+		with: 0
+		with: 0
+]
+
+IRPrimitive >> num
+[
+	^ primitiveNum
+]
+
+IRPrimitive >> num: n
+[
+	primitiveNum := n
+]
+
+IRPrimitive >> printOn: aStream
+[
+	aStream
+		nextPutAll: 'primitive ';
+		print: primitiveNum
+]
+
+IRPrimitive >> printPrimitiveOn: aStream
+[
+	"Print the primitive on aStream"
+
+	| primIndex primDecl |
+	primIndex := primitiveNum.
+	primIndex = 0
+		ifTrue: [ ^ self ].
+	primIndex = 120
+		ifTrue: [ "External call spec"
+			^ aStream print: spec ].
+	aStream nextPutAll: '<primitive: '.
+	primIndex = 117
+		ifTrue: [ primDecl := spec.
+			aStream
+				nextPut: $';
+				nextPutAll: primDecl second;
+				nextPut: $'.
+			primDecl first
+				ifNotNil: [ aStream
+						nextPutAll: ' module: ';
+						nextPut: $';
+						nextPutAll: primDecl first;
+						nextPut: $' ] ]
+		ifFalse: [ aStream print: primIndex ].
+	aStream nextPut: $>.
+	(primIndex ~= 117 and: [ primIndex ~= 120 ])
+		ifTrue: [ Smalltalk
+				at: #Interpreter
+				ifPresent: [ :cls | aStream
+						nextPutAll: ' "';
+						nextPutAll: ((cls classPool at: #PrimitiveTable) at: primIndex + 1);
+						nextPutAll: '" ' ] ]
+]
+
+IRPrimitive >> sourceText
+[
+	^ String streamContents: [ :stream | self printPrimitiveOn: stream ]
+]
+
+IRPrimitive >> spec
+[
+	^ spec
+]
+
+IRPrimitive >> spec: literal
+[
+	spec := literal
+]
+
+IRPrimitive class >> from: aPragmaNode
+[
+	^ self new initializeFrom: aPragmaNode
+]
+
+IRPrimitive class >> null
+[
+	^ self new num: 0
+]
+

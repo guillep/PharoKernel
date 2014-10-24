@@ -1,0 +1,41 @@
+OCSpecialVariable
+	superclass: #OCAbstractLocalVariable;
+	package: #'OpalCompiler-Core'.
+
+OCSpecialVariable >> emitStore: methodBuilder
+[
+	self shouldNotImplement
+]
+
+OCSpecialVariable >> emitValue: methodBuilder
+[
+	self isContext
+		ifTrue: [ methodBuilder pushThisContext ]
+		ifFalse: [ methodBuilder pushReceiver ]
+]
+
+OCSpecialVariable >> isContext
+[
+	^ name = 'thisContext'
+]
+
+OCSpecialVariable >> isSelf
+[
+	^ name = 'self'
+]
+
+OCSpecialVariable >> isSpecialVariable
+[
+	^ true
+]
+
+OCSpecialVariable >> isSuper
+[
+	^ name = 'super'
+]
+
+OCSpecialVariable >> isUninitialized
+[
+	^ false
+]
+

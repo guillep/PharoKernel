@@ -1,0 +1,68 @@
+IRJumpIf
+	superclass: #IRJump;
+	instanceVariables: #(#boolean #otherwise );
+	package: #'OpalCompiler-Core'.
+
+IRJumpIf >> accept: aVisitor
+[
+	^ aVisitor visitJumpIf: self
+]
+
+IRJumpIf >> boolean
+[
+	^ boolean
+]
+
+IRJumpIf >> boolean: bool
+[
+	boolean := bool
+]
+
+IRJumpIf >> executeOn: interpreter
+[
+	^ interpreter if: boolean goto: destination orderNumber otherwise: otherwise orderNumber
+]
+
+IRJumpIf >> isGoto
+[
+	"is unconditional jump"
+
+	^ false
+]
+
+IRJumpIf >> isIf
+[
+	^ true
+]
+
+IRJumpIf >> nextBytecodeOffsetAfterJump
+[
+	"check if we are in ifTrue:ifFalse: / ifFalse:ifTrue: or in ifTrue: / ifFalse: and answers the next byte code offset"
+
+	^ destination last isJump
+		ifTrue: [ destination last destination first bytecodeOffset ]
+		ifFalse: [ self flag: #FIXME.	"it does not work in case of multiple byte code instruction in the optimized block"
+			(destination sequence at: destination size - 1) bytecodeOffset ]
+]
+
+IRJumpIf >> nonBodySuccessorSequences
+[
+	^ {destination}
+]
+
+IRJumpIf >> otherwise
+[
+	^ otherwise
+]
+
+IRJumpIf >> otherwise: aSequence
+[
+	otherwise := aSequence
+]
+
+IRJumpIf >> successorSequences
+[
+	^ {destination.
+	otherwise}
+]
+

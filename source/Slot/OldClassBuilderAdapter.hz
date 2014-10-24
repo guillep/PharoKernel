@@ -1,0 +1,237 @@
+OldClassBuilderAdapter
+	package: #Slot.
+
+OldClassBuilderAdapter >> anonymousClassInstaller
+[
+	^ AnonymousClassInstaller
+]
+
+OldClassBuilderAdapter >> anonymousSubclassOf: superClass
+[
+	"Answer an anonymous subclass of the given superclass."
+
+	^ self anonymousClassInstaller
+		make: [ :builder | builder
+				superclass: superClass;
+				layoutClass: superClass layout class ]
+]
+
+OldClassBuilderAdapter >> becomeCompact: aClass
+[
+	"Make the class compact.
+	This means: 
+	- to find a free slot in 'Smalltalk compactClassArray'
+	- add the class in that array
+	- update the format of the class with the index
+	- update the instances of the class
+	"
+
+	| compactClassesArray index |
+	aClass isWeak
+		ifTrue: [ ^ self error: 'You must not make a weak class compact' ].
+	compactClassesArray := Smalltalk compactClassesArray.
+	(aClass isCompact or: [ compactClassesArray includes: aClass ])
+		ifTrue: [ ^ self error: aClass name , 'is already compact' ].
+	index := compactClassesArray indexOf: nil ifAbsent: [ ^ self error: 'compact class table is full' ].	"Install this class in the compact class table"
+	compactClassesArray at: index put: aClass.	"Update instspec so instances will be compact. 	The layout has the responsibility for setting the format."
+	aClass layout compactClassIndex: index.	"Make up new instances and become old ones into them"
+	aClass updateInstancesFrom: aClass.	"Purge any old instances"
+	Smalltalk garbageCollect
+]
+
+OldClassBuilderAdapter >> becomeCompact: aClass simplyAt: index
+[
+	"The same as #becomeCompact: but without updating the instances."
+
+	| compactClassesArray |
+	aClass isWeak
+		ifTrue: [ ^ self error: 'You must not make a weak class compact' ].
+	compactClassesArray := Smalltalk compactClassesArray.
+	(aClass isCompact or: [ compactClassesArray includes: aClass ])
+		ifTrue: [ ^ self error: aClass name , 'is already compact' ].
+	(compactClassesArray at: index) ifNotNil: [ ^ self error: 'compact table slot already in use' ].	"Install this class in the compact class table"
+	compactClassesArray at: index put: aClass.	"Update instspec so instances will be compact. 	The layout has the responsibility for setting the format."
+	aClass layout compactClassIndex: index
+]
+
+OldClassBuilderAdapter >> becomeUncompact: aClass
+[
+	"The inverse of #becomeCompact. However, some classes can not be uncompact: see #checkCanBeUncompact."
+
+	| compactClassesArray index |
+	compactClassesArray := Smalltalk compactClassesArray.
+	(index := aClass indexIfCompact) = 0
+		ifTrue: [ ^ self ].
+	self assert: [ compactClassesArray includes: aClass ].
+	aClass checkCanBeUncompact.	"Update instspec so instances will be compact. 	The layout has the responsibility for setting the format."
+	aClass layout compactClassIndex: 0.	"Make up new instances and become old ones into them"
+	aClass updateInstancesFrom: aClass.	"Make sure there are no compact ones left around"
+	Smalltalk garbageCollect.	"Remove this class from the compact class table"
+	compactClassesArray at: index put: nil
+]
+
+OldClassBuilderAdapter >> class: oldClass instanceVariableNames: instVarString
+[
+	"This is the basic initialization message to change the definition of an existing Metaclass"
+
+	| theClass |
+	theClass := oldClass theNonMetaClass.
+	theClass := self slotClassInstaller
+		make: [ :builder | builder
+				superclass: theClass superclass;
+				name: theClass name;
+				layoutClass: theClass layout class;
+				slots: (theClass instVarNames collect: [ :n | n asSlot ]);
+				sharedVariables: theClass classVariablesString;
+				sharedPools: theClass sharedPoolsString;
+				traitComposition: theClass traitComposition;
+				category: theClass category asString;
+				classSlots: instVarString asSlotCollection ].
+	^ theClass theMetaClass
+]
+
+OldClassBuilderAdapter >> layoutForType: typeSymbol
+[
+	typeSymbol = #compiledMethod
+		ifTrue: [ ^ CompiledMethodLayout ].
+	typeSymbol = #bytes
+		ifTrue: [ ^ ByteLayout ].
+	typeSymbol = #words
+		ifTrue: [ ^ WordLayout ].
+	typeSymbol = #weak
+		ifTrue: [ ^ WeakLayout ].
+	typeSymbol = #variable
+		ifTrue: [ ^ VariableLayout ].
+	typeSymbol = #normal
+		ifTrue: [ ^ FixedLayout ].
+	Error signal: 'Invalid layout type: ' , typeSymbol asString
+]
+
+OldClassBuilderAdapter >> name: name inEnvironment: environment subclassOf: superClass type: type instanceVariableNames: instanceVariablesString classVariableNames: classVariablesString poolDictionaries: sharedPoolsString category: category
+[
+	"Define a new class in the given environment"
+
+	^ self slotClassInstaller
+		make: [ :builder | builder
+				superclass: superClass;
+				name: name;
+				layoutClass: (self layoutForType: type);
+				slots: instanceVariablesString asSlotCollection;
+				sharedVariables: classVariablesString;
+				sharedPools: sharedPoolsString;
+				category: category;
+				environment: environment;
+				copyTraitCompositionFromExistingClass;
+				copyClassSlotsFromExistingClass ]
+]
+
+OldClassBuilderAdapter >> slotClassInstaller
+[
+	^ PharoClassInstaller
+]
+
+OldClassBuilderAdapter >> superclass: newSuper subclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+[
+	"This is the standard initialization message for creating a new class as a 
+	subclass of an existing class."
+
+	^ self
+		name: t
+		inEnvironment: newSuper environment
+		subclassOf: newSuper
+		type: newSuper typeOfClass
+		instanceVariableNames: f
+		classVariableNames: d
+		poolDictionaries: s
+		category: cat
+]
+
+OldClassBuilderAdapter >> superclass: aClass variableByteSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+[
+	"This is the standard initialization message for creating a new class as a 
+	subclass of an existing class in which the subclass is to 
+	have indexable byte-sized nonpointer variables."
+
+	| oldClassOrNil actualType |
+	aClass instSize > 0
+		ifTrue: [ ^ self error: 'cannot make a byte subclass of a class with named fields' ].
+	(aClass isVariable and: [ aClass isWords ])
+		ifTrue: [ ^ self error: 'cannot make a byte subclass of a class with word fields' ].
+	(aClass isVariable and: [ aClass isPointers ])
+		ifTrue: [ ^ self error: 'cannot make a byte subclass of a class with pointer fields' ].
+	oldClassOrNil := aClass environment at: t ifAbsent: [ nil ].
+	actualType := (oldClassOrNil notNil and: [ oldClassOrNil typeOfClass == #compiledMethod ])
+		ifTrue: [ #compiledMethod ]
+		ifFalse: [ #bytes ].
+	^ self
+		name: t
+		inEnvironment: aClass environment
+		subclassOf: aClass
+		type: actualType
+		instanceVariableNames: f
+		classVariableNames: d
+		poolDictionaries: s
+		category: cat
+]
+
+OldClassBuilderAdapter >> superclass: aClass variableSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+[
+	"This is the standard initialization message for creating a new class as a 
+	subclass of an existing class in which the subclass is to 
+	have indexable pointer variables."
+
+	aClass isBits
+		ifTrue: [ ^ self error: 'cannot make a pointer subclass of a class with non-pointer fields' ].
+	^ self
+		name: t
+		inEnvironment: aClass environment
+		subclassOf: aClass
+		type: #variable
+		instanceVariableNames: f
+		classVariableNames: d
+		poolDictionaries: s
+		category: cat
+]
+
+OldClassBuilderAdapter >> superclass: aClass variableWordSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+[
+	"This is the standard initialization message for creating a new class as a 
+	subclass of an existing class in which the subclass is to 
+	have indexable word-sized nonpointer variables."
+
+	aClass instSize > 0
+		ifTrue: [ ^ self error: 'cannot make a word subclass of a class with named fields' ].
+	(aClass isVariable and: [ aClass isBytes ])
+		ifTrue: [ ^ self error: 'cannot make a word subclass of a class with byte fields' ].
+	(aClass isVariable and: [ aClass isPointers ])
+		ifTrue: [ ^ self error: 'cannot make a word subclass of a class with pointer fields' ].
+	^ self
+		name: t
+		inEnvironment: aClass environment
+		subclassOf: aClass
+		type: #words
+		instanceVariableNames: f
+		classVariableNames: d
+		poolDictionaries: s
+		category: cat
+]
+
+OldClassBuilderAdapter >> superclass: aClass weakSubclass: t instanceVariableNames: f classVariableNames: d poolDictionaries: s category: cat
+[
+	"This is the standard initialization message for creating a new class as a 
+	subclass of an existing class (the receiver) in which the subclass is to 
+	have weak indexable pointer variables."
+
+	aClass isBits
+		ifTrue: [ ^ self error: 'cannot make a pointer subclass of a class with non-pointer fields' ].
+	^ self
+		name: t
+		inEnvironment: aClass environment
+		subclassOf: aClass
+		type: #weak
+		instanceVariableNames: f
+		classVariableNames: d
+		poolDictionaries: s
+		category: cat
+]
+

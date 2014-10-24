@@ -548,7 +548,7 @@ TClassDescription >> fileOutChangedMessages: aSet on: aFileStream moveSource: mo
 	.changes file, and should only write a preamble for every method."
 
 	| org |
-	(org := self organization) categories
+	(org := self organization) realCategories
 		do: [ :cat | | sels |
 			sels := (org listAtCategoryNamed: cat) select: [ :sel | aSet includes: sel ].
 			sels
@@ -610,7 +610,7 @@ TClassDescription >> fileOutOn: aFileStream moveSource: moveSource toFile: fileI
 		numbered: fileIndex
 		moveSource: moveSource
 		forClass: self.
-	self organization categories
+	self organization realCategories
 		do: [ :heading | self
 				fileOutCategory: heading
 				on: aFileStream

@@ -1,0 +1,45 @@
+OCLiteralVariable
+	superclass: #OCAbstractVariable;
+	instanceVariables: #(#assoc );
+	package: #'OpalCompiler-Core'.
+
+OCLiteralVariable >> assoc
+[
+	^ assoc
+]
+
+OCLiteralVariable >> assoc: anAssociation
+[
+	assoc := anAssociation
+]
+
+OCLiteralVariable >> emitStore: methodBuilder
+[
+	methodBuilder storeIntoLiteralVariable: assoc
+]
+
+OCLiteralVariable >> emitValue: methodBuilder
+[
+	methodBuilder pushLiteralVariable: assoc
+]
+
+OCLiteralVariable >> isGlobal
+[
+	^ true
+]
+
+OCLiteralVariable >> isLiteralVariable
+[
+	^ true
+]
+
+OCLiteralVariable >> name
+[
+	^ assoc name
+]
+
+OCLiteralVariable >> value
+[
+	^ assoc value
+]
+

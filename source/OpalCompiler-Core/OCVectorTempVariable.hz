@@ -1,0 +1,53 @@
+OCVectorTempVariable
+	superclass: #OCTempVariable;
+	instanceVariables: #(#vectorName );
+	package: #'OpalCompiler-Core'.
+
+OCVectorTempVariable >> emitStore: methodBuilder
+[
+	methodBuilder storeRemoteTemp: name inVector: vectorName
+]
+
+OCVectorTempVariable >> emitValue: methodBuilder
+[
+	methodBuilder pushRemoteTemp: name inVector: vectorName
+]
+
+OCVectorTempVariable >> isRemote
+[
+	^ true
+]
+
+OCVectorTempVariable >> isTempVectorTemp
+[
+	^ true
+]
+
+OCVectorTempVariable >> readFromContext: aContext scope: contextScope
+[
+	| tempVectorVar theVector offset |
+	tempVectorVar := scope lookupVar: vectorName.
+	theVector := tempVectorVar readFromContext: aContext scope: contextScope.
+	offset := tempVectorVar indexInTempVectorFromIR: name.
+	^ theVector at: offset
+]
+
+OCVectorTempVariable >> vectorName
+[
+	^ vectorName
+]
+
+OCVectorTempVariable >> vectorName: anObject
+[
+	vectorName := anObject
+]
+
+OCVectorTempVariable >> writeFromContext: aContext scope: contextScope value: aValue
+[
+	| tempVectorVar theVector offset |
+	tempVectorVar := scope lookupVar: vectorName.
+	theVector := tempVectorVar readFromContext: aContext scope: tempVectorVar scope.
+	offset := tempVectorVar indexInTempVectorFromIR: name.
+	^ theVector at: offset put: aValue
+]
+

@@ -385,7 +385,15 @@ Path class >> / aString
 
 Path class >> absoluteWindowsPathRegex
 [
-	^ absoluteWindowsPathRegex ifNil: [ absoluteWindowsPathRegex := '[a-zA-Z]\:\\.*' asRegex ]
+	"Return a copy of the regex since it is not thread-safe.
+	Note: That the #copy only makes a shallow copy which is fast and but sufficient.
+	Note: The slow part is parsing the regular expression, which only happens once here"
+
+	"Case13065 Force re-initialization of variable during integration. 
+	Subsequently next line should be removed as step 2 of integration"
+
+	absoluteWindowsPathRegex := '([a-zA-Z]\:)?\\.*' asRegex.
+	^ (absoluteWindowsPathRegex ifNil: [ absoluteWindowsPathRegex := '([a-zA-Z]\:)?\\.*' asRegex ]) copy
 ]
 
 Path class >> addElement: element to: result
@@ -406,7 +414,7 @@ Path class >> addEmptyElementTo: result
 
 Path class >> addParentElementTo: result
 [
-	result isEmpty
+	(result isEmpty or: [ result last = '..' ])
 		ifTrue: [ result add: '..' ]
 		ifFalse: [ result removeLast ]
 ]
@@ -440,13 +448,13 @@ Path class >> from: aString delimiter: aDelimiterCharacter
 [
 	"Answer a path composed of several elements delimited by aCharacter"
 
-	| pathCls |
+	| pathClass |
 	aString isEmpty
 		ifTrue: [ ^ self root ].
-	pathCls := ((self isAbsoluteUnixPath: aString) or: [ self isAbsoluteWindowsPath: aString ])
+	pathClass := ((self isAbsoluteUnixPath: aString) or: [ self isAbsoluteWindowsPath: aString ])
 		ifTrue: [ AbsolutePath ]
 		ifFalse: [ RelativePath ].
-	^ pathCls withAll: (pathCls canonicalizeElements: (aDelimiterCharacter split: aString))
+	^ pathClass withAll: (pathClass canonicalizeElements: (aDelimiterCharacter split: aString))
 ]
 
 Path class >> isAbsoluteUnixPath: aString

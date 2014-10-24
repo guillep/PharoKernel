@@ -1,0 +1,146 @@
+RGNamespace
+	superclass: #RGContainer;
+	package: #'Ring-Core-Containers'.
+
+RGNamespace >> addElement: anObject in: aCollection
+[
+	anObject environment: self.
+	super addElement: anObject in: aCollection
+]
+
+RGNamespace >> addGlobalVariable: anORGlobalVariableDefinition
+[
+	"adds anORGlobalVariableDefinition to the globals dictionary if satisfies it #isGlobalVariable"
+
+	anORGlobalVariableDefinition isGlobalVariable
+		ifFalse: [ ^ self ].
+	self addElement: anORGlobalVariableDefinition in: self globalVariables
+]
+
+RGNamespace >> addGlobalVariableNamed: globalVariableName
+[
+	"creates a RGGlobalVariableDefinition with the given name.
+	It's verified that a pool with that name does not exist"
+
+	| gv |
+	(self includesGlobalVariableNamed: globalVariableName)
+		ifTrue: [ ^ self ].
+	gv := self factory createGlobalVariableNamed: globalVariableName.
+	self addGlobalVariable: gv
+]
+
+RGNamespace >> addPool: anORPoolDefinition
+[
+	"adds anORPoolDefinition to the pools dictionary if satisfies it #isPool"
+
+	anORPoolDefinition isPool
+		ifFalse: [ ^ self ].
+	self addElement: anORPoolDefinition in: self pools
+]
+
+RGNamespace >> addPoolNamed: poolName
+[
+	"creates a RGPoolDefinition with the given name.
+	It's verified that a pool with that name does not exist"
+
+	| pool |
+	(self includesPoolNamed: poolName)
+		ifTrue: [ ^ self ].
+	pool := self factory createSharedPoolNamed: poolName.
+	self addPool: pool
+]
+
+RGNamespace >> globalVariableNamed: globalVariableName
+[
+	^ self elementNamed: globalVariableName in: self globalVariables
+]
+
+RGNamespace >> globalVariables
+[
+	"retrieves global variables"
+
+	^ self elementsCategorized: #globalVariables
+]
+
+RGNamespace >> globalVariables: aCollection
+[
+	self elementsCategorized: #globalVariables with: aCollection
+]
+
+RGNamespace >> includesGlobalVariable: anORGlobalVariableDefinition
+[
+	^ self globalVariables includes: anORGlobalVariableDefinition
+]
+
+RGNamespace >> includesGlobalVariableNamed: globalVariableName
+[
+	^ self includesElementNamed: globalVariableName in: self globalVariables
+]
+
+RGNamespace >> includesPool: anORPoolDefinition
+[
+	^ self pools includes: anORPoolDefinition
+]
+
+RGNamespace >> includesPoolNamed: poolName
+[
+	^ self includesElementNamed: poolName in: self pools
+]
+
+RGNamespace >> initialize
+[
+	super initialize.
+	self globalVariables: IdentityDictionary new.
+	self pools: IdentityDictionary new
+]
+
+RGNamespace >> isNamespace
+[
+	^ true
+]
+
+RGNamespace >> poolNamed: poolName
+[
+	^ self elementNamed: poolName in: self pools
+]
+
+RGNamespace >> pools
+[
+	"retrieves the shares pools"
+
+	^ self elementsCategorized: #pools
+]
+
+RGNamespace >> pools: aCollection
+[
+	self elementsCategorized: #pools with: aCollection
+]
+
+RGNamespace >> removeGlobalVariable: anORGlobalVariableDefinition
+[
+	"removes anORGlobalVariableDefinition from the globals dictionary if satisfies it #isGlobalVariable"
+
+	anORGlobalVariableDefinition isGlobalVariable
+		ifFalse: [ ^ self ].
+	self removeElement: anORGlobalVariableDefinition from: self globalVariables
+]
+
+RGNamespace >> removePool: anORPoolDefinition
+[
+	"removes anORPoolDefinition from the pools dictionary if satisfies it #isPool"
+
+	anORPoolDefinition isPool
+		ifFalse: [ ^ self ].
+	self removeElement: anORPoolDefinition from: self pools
+]
+
+RGNamespace >> withoutGlobalVariables
+[
+	self removeElementsCategorized: #globalVariables
+]
+
+RGNamespace >> withoutPools
+[
+	self removeElementsCategorized: #pools
+]
+

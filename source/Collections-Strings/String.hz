@@ -553,6 +553,31 @@ String >> convertToWithConverter: converter
 				emitSequenceToResetStateIfNeededOn: writeStream ]
 ]
 
+String >> copyReplaceAll: oldSubstring with: newSubstring asTokens: ifTokens
+[
+	"Answer a copy of the receiver in which all occurrences of
+	oldSubstring have been replaced by newSubstring.
+	ifTokens (valid for Strings only) specifies that the characters
+	surrounding the recplacement must not be alphanumeric.
+		Bruce Simth,  must be incremented by 1 and not 
+	newSubstring if ifTokens is true.  See example below. "
+
+	| aString startSearch currentIndex endIndex |
+	aString := self.
+	startSearch := 1.
+	[ (currentIndex := aString indexOfSubCollection: oldSubstring startingAt: startSearch) > 0 ]
+		whileTrue: [ endIndex := currentIndex + oldSubstring size - 1.
+			(ifTokens not
+				or: [ (currentIndex = 1 or: [ (aString at: currentIndex - 1) isAlphaNumeric not ])
+						and: [ endIndex = aString size or: [ (aString at: endIndex + 1) isAlphaNumeric not ] ] ])
+				ifTrue: [ aString := aString copyReplaceFrom: currentIndex to: endIndex with: newSubstring.
+					startSearch := currentIndex + newSubstring size ]
+				ifFalse: [ ifTokens
+						ifTrue: [ startSearch := currentIndex + 1 ]
+						ifFalse: [ startSearch := currentIndex + newSubstring size ] ] ].
+	^ aString	"Test case:	'test te string' copyReplaceAll: 'te' with: 'longone' asTokens: true   "
+]
+
 String >> copyReplaceTokens: oldSubstring with: newSubstring
 [
 	"Replace all occurrences of oldSubstring that are surrounded
@@ -889,6 +914,7 @@ String >> findSelector
 	| sel possibleParens |
 	sel := self trimBoth.
 	sel := sel copyReplaceAll: '#' with: ''.
+	sel := sel copyReplaceAll: '[' with: '[ '.
 	(sel includes: $:)
 		ifTrue: [ sel := sel copyReplaceAll: ':' with: ': '.	"for the style (aa max:bb) with no space"
 			possibleParens := sel findTokens: Character separators.
@@ -1008,9 +1034,9 @@ String >> findSubstringViaPrimitive: key in: body startingAt: start matchTable: 
 	The algorithm below is not optimum -- it is intended to be translated to C which will go so fast that it wont matter."
 
 	<primitive: 'primitiveFindSubstring' module: 'MiscPrimitivePlugin'>
-	<var: #key declareC: 'unsigned char *key'>
-	<var: #body declareC: 'unsigned char *body'>
-	<var: #matchTable declareC: 'unsigned char *matchTable'>
+	<var: #key declareC: 'unsigned char *key'>
+	<var: #body declareC: 'unsigned char *body'>
+	<var: #matchTable declareC: 'unsigned char *matchTable'>
 	| index |
 	key size = 0
 		ifTrue: [ ^ 0 ].
@@ -2470,36 +2496,36 @@ String class >> initialize
 	"self initialize"
 
 	| order |
-	self initializeTypeTable.
+	"self initializeTypeTable."
 	AsciiOrder := (0 to: 255) as: ByteArray.
-	CaseInsensitiveOrder := AsciiOrder copy.
+	"CaseInsensitiveOrder := AsciiOrder copy.
 	($a to: $z)
-		do: [ :c | CaseInsensitiveOrder at: c asciiValue + 1 put: (CaseInsensitiveOrder at: c asUppercase asciiValue + 1) ].	"Case-sensitive compare sorts space, digits, letters, all the rest..."
-	CaseSensitiveOrder := ByteArray new: 256 withAll: 255.
+		do: [ :c | CaseInsensitiveOrder at: c asciiValue + 1 put: (CaseInsensitiveOrder at: c asUppercase asciiValue + 1) ]."	"Case-sensitive compare sorts space, digits, letters, all the rest..."
+	"CaseSensitiveOrder := ByteArray new: 256 withAll: 255.
 	order := -1.
-	' 0123456789' do: [ :c "0..10" | CaseSensitiveOrder at: c asciiValue + 1 put: (order := order + 1) ].
+	' 0123456789' do: [ :c ""0..10"" | CaseSensitiveOrder at: c asciiValue + 1 put: (order := order + 1) ].
 	($a to: $z)
 		do: [ :c "11-64" | CaseSensitiveOrder at: c asUppercase asciiValue + 1 put: (order := order + 1).
 			CaseSensitiveOrder at: c asciiValue + 1 put: (order := order + 1) ].
 	1 to: CaseSensitiveOrder size do: [ :i | (CaseSensitiveOrder at: i) = 255
 			ifTrue: [ CaseSensitiveOrder at: i put: (order := order + 1) ] ].
 	order = 255
-		ifFalse: [ self error: 'order problem' ].	"a table for translating to lower case"
-	LowercasingTable := String withAll: (Character allByteCharacters collect: [ :c | c asLowercase ]).	"a table for translating to upper case"
-	UppercasingTable := String withAll: (Character allByteCharacters collect: [ :c | c asUppercase ]).	"a table for testing tokenish (for fast numArgs)"
-	Tokenish := String
+		ifFalse: [ self error: 'order problem' ]."	"a table for translating to lower case"
+	"LowercasingTable := String withAll: (Character allByteCharacters collect: [ :c | c asLowercase ])."	"a table for translating to upper case"
+	"UppercasingTable := String withAll: (Character allByteCharacters collect: [ :c | c asUppercase ])."	"a table for testing tokenish (for fast numArgs)"
+	"Tokenish := String
 		withAll: (Character allByteCharacters collect: [ :c | c tokenish
 						ifTrue: [ c ]
-						ifFalse: [ $~ ] ]).	"CR and LF--characters that terminate a line"
-	CSLineEnders := CharacterSet crlf.	"separators and non-separators"
-	CSSeparators := CharacterSet separators.
-	CSNonSeparators := CSSeparators complement.	"a table for exchanging cr with lf and vica versa"
-	CrLfExchangeTable := Character allByteCharacters
+						ifFalse: [ $~ ] ])."	"CR and LF--characters that terminate a line"
+	"CSLineEnders := CharacterSet crlf."	"separators and non-separators"
+	"CSSeparators := CharacterSet separators."
+	"CSNonSeparators := CSSeparators complement."	"a table for exchanging cr with lf and vica versa"
+	"CrLfExchangeTable := Character allByteCharacters
 		collect: [ :each | each = Character cr
 				ifTrue: [ Character lf ]
 				ifFalse: [ each = Character lf
 						ifTrue: [ Character cr ]
-						ifFalse: [ each ] ] ]
+						ifFalse: [ each ] ] ]"
 ]
 
 String class >> initializeTypeTable

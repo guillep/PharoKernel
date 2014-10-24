@@ -1,0 +1,56 @@
+CompiledMethod >> compiler
+[
+	^ self methodClass ifNil: [ Smalltalk compiler ] ifNotNil: [ :class | class compiler ]
+]
+
+CompiledMethod >> compilerClass
+[
+	^ self methodClass ifNil: [ Smalltalk compilerClass ] ifNotNil: [ :class | class compilerClass ]
+]
+
+CompiledMethod >> ir
+[
+	^ IRBytecodeDecompiler new decompile: self
+]
+
+CompiledMethod >> irPrimitive
+[
+	| primNode n |
+	primNode := IRPrimitive new num: (n := self primitive).
+	(n = 117 or: [ n = 120 ])
+		ifTrue: [ primNode spec: (self literalAt: 1) ].
+	^ primNode
+]
+
+CompiledMethod >> methodNode
+[
+	"Return the parse tree that represents self"
+
+	| aClass source methodNode |
+	aClass := self methodClass.
+	source := self sourceCode.
+	methodNode := aClass compiler parse: source.
+	methodNode source: source.
+	^ methodNode
+]
+
+CompiledMethod >> recompile
+[
+	^ self methodClass recompile: self selector
+]
+
+CompiledMethod >> reformat
+[
+	self methodClass compile: self ast formattedCode classified: self category
+]
+
+CompiledMethod >> sourceNode
+[
+	^ self ast
+]
+
+CompiledMethod >> sourceNodeForPC: aPC
+[
+	^ self sourceNode sourceNodeForPC: aPC
+]
+

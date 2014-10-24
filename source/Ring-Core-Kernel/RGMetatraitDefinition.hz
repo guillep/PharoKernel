@@ -1,0 +1,56 @@
+RGMetatraitDefinition
+	superclass: #RGTraitDescriptionDefinition;
+	instanceVariables: #(#baseClass );
+	package: #'Ring-Core-Kernel'.
+
+RGMetatraitDefinition >> baseClass: anRGTraitDefinition
+[
+	baseClass := anRGTraitDefinition.
+	self name: (baseClass name , ' classTrait') asSymbol
+]
+
+RGMetatraitDefinition >> environment
+[
+	^ baseClass environment
+]
+
+RGMetatraitDefinition >> isMeta
+[
+	^ true
+]
+
+RGMetatraitDefinition >> isSameRevisionAs: aRGMetatraitDefinition
+[
+	"This method look for equality of the properties of the receiver"
+
+	^ (super isSameRevisionAs: aRGMetatraitDefinition)
+		and: [ self traitCompositionSource = aRGMetatraitDefinition traitCompositionSource ]
+]
+
+RGMetatraitDefinition >> package
+[
+	^ baseClass package
+]
+
+RGMetatraitDefinition >> realClass
+[
+	^ baseClass realClass theMetaClass
+]
+
+RGMetatraitDefinition >> theMetaClass
+[
+	^ self
+]
+
+RGMetatraitDefinition >> theNonMetaClass
+[
+	^ baseClass
+]
+
+RGMetatraitDefinition class >> class: anORTraitDefinition
+[
+	^ self new
+		baseClass: anORTraitDefinition;
+		yourself
+]
+

@@ -504,6 +504,13 @@ Collection >> difference: aCollection
 [
 	"Answer the set theoretic difference of two collections."
 
+	"#(a b c d e f) difference:  #(a b z k)
+	=> #(#f #d #e #c)
+	
+	#(a b z k) difference: #(a b c d e f) 
+	=> #(#k #z) 
+	"
+
 	| set |
 	set := self asSet.
 	aCollection do: [ :each | set remove: each ifAbsent: [  ] ].
@@ -556,7 +563,7 @@ Collection >> do: aBlock displayingProgress: aStringOrBlock every: msecs
 		to: size
 		during: [ :bar | labelBlock := aStringOrBlock isString
 				ifTrue: [ bar label: aStringOrBlock.
-					[ :item | aStringOrBlock ] ]
+					[ :dummyItem | aStringOrBlock ] ]
 				ifFalse: [ aStringOrBlock ].
 			self
 				do: [ :each | | newLabel |
@@ -564,7 +571,8 @@ Collection >> do: aBlock displayingProgress: aStringOrBlock every: msecs
 					(count = 0 or: [ count + 1 = size or: [ (Time millisecondsSince: lastUpdate) >= msecs ] ])
 						ifTrue: [ bar current: count.
 							oldLabel = (newLabel := (labelBlock cull: each) ifNil: [ oldLabel ])
-								ifFalse: [ ProgressNotification signal: '' extra: (oldLabel := newLabel) ].
+								ifFalse: [ bar label: newLabel.
+									ProgressNotification signal: '' extra: (oldLabel := newLabel) ].
 							lastUpdate := Time millisecondClockValue ].
 					aBlock value: each.
 					count := count + 1 ] ]

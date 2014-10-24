@@ -1,0 +1,138 @@
+RGClassDescriptionDefinition
+	superclass: #RGBehaviorDefinition;
+	instanceVariables: #(#instanceVariables #organization );
+	package: #'Ring-Core-Kernel'.
+
+RGClassDescriptionDefinition >> = aRGClassDefinition
+[
+	^ self class = aRGClassDefinition class
+		and: [ self name = aRGClassDefinition name and: [ self environment = aRGClassDefinition environment ] ]
+]
+
+RGClassDescriptionDefinition >> addInstVarNamed: aString
+[
+	| var |
+	var := self factory createInstanceVariableNamed: aString parent: self.
+	self addVariable: var in: instanceVariables.
+	^ var
+]
+
+RGClassDescriptionDefinition >> addInstanceVariable: aRGVariableDefinition
+[
+	"aRGVariableDefinition is a instance variable or class instance variable"
+
+	self addVariable: (aRGVariableDefinition parent: self) in: instanceVariables
+]
+
+RGClassDescriptionDefinition >> addInstanceVariables: aCollection
+[
+	aCollection do: [ :var | self addInstVarNamed: var ]
+]
+
+RGClassDescriptionDefinition >> addVariable: aRGVariableDefinition in: aCollection
+[
+	"Adds a RGVariableDefinition in the collection received"
+
+	aCollection add: aRGVariableDefinition
+]
+
+RGClassDescriptionDefinition >> allInstVarNames
+[
+	^ self allInstanceVariables collect: [ :ivar | ivar name ]
+]
+
+RGClassDescriptionDefinition >> allInstanceVariables
+[
+	"Answer a collection of the receiver's instanceVariables, including those defined in its superclass"
+
+	^ self hasSuperclass
+		ifFalse: [ instanceVariables ]
+		ifTrue: [ self superclass allInstanceVariables , instanceVariables ]
+]
+
+RGClassDescriptionDefinition >> hash
+[
+	^ self name hash bitXor: self class hash
+]
+
+RGClassDescriptionDefinition >> initialize
+[
+	super initialize.
+	instanceVariables := OrderedCollection new
+]
+
+RGClassDescriptionDefinition >> instVarNames
+[
+	"Answer a collection of the names of the instance variables defined in the receiver."
+
+	^ instanceVariables collect: [ :ivar | ivar name ]
+]
+
+RGClassDescriptionDefinition >> instanceVariableNamed: aString
+[
+	^ instanceVariables detect: [ :v | v name = aString asSymbol ] ifNone: [ nil ]
+]
+
+RGClassDescriptionDefinition >> instanceVariables
+[
+	^ instanceVariables
+]
+
+RGClassDescriptionDefinition >> instanceVariables: aCollection
+[
+	instanceVariables := aCollection
+]
+
+RGClassDescriptionDefinition >> isClass
+[
+	^ true
+]
+
+RGClassDescriptionDefinition >> isSameRevisionAs: aRGClassDescriptionDefinition
+[
+	"This method look for equality of the properties of the receiver"
+
+	"Instances variables are compared at the level of names but without any sorting"
+
+	^ (super isSameRevisionAs: aRGClassDescriptionDefinition)
+		and: [ self instVarNames sort = aRGClassDescriptionDefinition instVarNames sort ]
+]
+
+RGClassDescriptionDefinition >> organization
+[
+	"Answer the instance of ClassOrganizer that represents the organization 
+	of the messages of the receiver."
+
+	organization ifNil: [ self organization: (ClassOrganization forClass: self) ].	"Making sure that subject is set correctly. It should not be necessary."
+	organization ifNotNil: [ organization setSubject: self ].
+	^ organization
+]
+
+RGClassDescriptionDefinition >> organization: aClassOrg
+[
+	"Install an instance of ClassOrganizer that represents the organization of the messages of the receiver."
+
+	aClassOrg ifNotNil: [ aClassOrg setSubject: self ].
+	organization := aClassOrg
+]
+
+RGClassDescriptionDefinition >> removeInstVarNamed: aString
+[
+	self removeVariable: (self instanceVariableNamed: aString) from: instanceVariables
+]
+
+RGClassDescriptionDefinition >> removeInstanceVariable: aRGVariableDefinition
+[
+	"aRGVariableDefinition is a instance variable or class instance variable"
+
+	self removeVariable: aRGVariableDefinition from: instanceVariables
+]
+
+RGClassDescriptionDefinition >> removeVariable: aRGVariableDefinition from: aCollection
+[
+	"Removes a variable from a particular collection.
+	This behavior is the same for any kind of variable"
+
+	aCollection remove: aRGVariableDefinition ifAbsent: [  ]
+]
+

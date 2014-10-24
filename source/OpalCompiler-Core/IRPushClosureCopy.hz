@@ -1,0 +1,131 @@
+IRPushClosureCopy
+	superclass: #IRJump;
+	instanceVariables: #(#numArgs #blockSequence #tempMap #copiedValues #lastBlockSequence #arguments );
+	package: #'OpalCompiler-Core'.
+
+IRPushClosureCopy >> accept: aVisitor
+[
+	^ aVisitor visitPushClosureCopy: self
+]
+
+IRPushClosureCopy >> arguments
+[
+	^ arguments
+]
+
+IRPushClosureCopy >> arguments: anArray
+[
+	arguments := anArray
+]
+
+IRPushClosureCopy >> blockSequence
+[
+	^ blockSequence
+]
+
+IRPushClosureCopy >> blockSequence: anIRSequence
+[
+	blockSequence := anIRSequence
+]
+
+IRPushClosureCopy >> copiedValues
+[
+	^ copiedValues
+]
+
+IRPushClosureCopy >> copiedValues: anArray
+[
+	copiedValues := anArray
+]
+
+IRPushClosureCopy >> definedTemps
+[
+	^ self tempMap keys copyWithoutAll: arguments , copiedValues
+]
+
+IRPushClosureCopy >> executeOn: interpreter
+[
+	^ interpreter pushClosureCopyCopiedValues: copiedValues args: arguments jumpTo: destination
+]
+
+IRPushClosureCopy >> hasTempVector: aSymbol
+[
+	blockSequence
+		withAllSuccessorsDo: [ :seq | (seq hasTempVector: aSymbol)
+				ifTrue: [ ^ true ].
+			seq == lastBlockSequence
+				ifTrue: [ ^ false ] ].
+	^ false
+]
+
+IRPushClosureCopy >> indexForVarNamed: aName
+[
+	^ tempMap at: aName
+]
+
+IRPushClosureCopy >> initialize
+[
+	super initialize.
+	tempMap := Dictionary new
+]
+
+IRPushClosureCopy >> isPushClosureCopy
+[
+	^ true
+]
+
+IRPushClosureCopy >> lastBlockSequence
+[
+	^ lastBlockSequence
+]
+
+IRPushClosureCopy >> lastBlockSequence: aSequence
+[
+	lastBlockSequence := aSequence
+]
+
+IRPushClosureCopy >> nonBodySuccessorSequences
+[
+	^ {destination}
+]
+
+IRPushClosureCopy >> numArgs
+[
+	^ numArgs
+]
+
+IRPushClosureCopy >> numArgs: aSmallInteger
+[
+	numArgs := aSmallInteger
+]
+
+IRPushClosureCopy >> successorSequences
+[
+	^ {destination.
+	blockSequence}
+]
+
+IRPushClosureCopy >> tempKeys
+[
+	^ tempMap keys
+]
+
+IRPushClosureCopy >> tempMap
+[
+	^ tempMap
+]
+
+IRPushClosureCopy >> tempVectorName
+[
+	self blockSequence do: [ :irNode | irNode isTempVector
+				ifTrue: [ ^ irNode name ] ].
+	^ nil
+]
+
+IRPushClosureCopy >> tempVectorNamed: aName
+[
+	(self hasTempVector: aName)
+		ifFalse: [ ^ nil ].
+	^ blockSequence tempVectorNamed: aName
+]
+

@@ -1,0 +1,151 @@
+OCAbstractVariable
+	instanceVariables: #(#scope #usage );
+	package: #'OpalCompiler-Core'.
+
+OCAbstractVariable >> asString
+[
+	^ self name
+]
+
+OCAbstractVariable >> definingScope
+[
+	^ scope
+]
+
+OCAbstractVariable >> emitStore: methodBuilder
+[
+	self subclassResponsibility
+]
+
+OCAbstractVariable >> emitValue: methodBuilder
+[
+	self subclassResponsibility
+]
+
+OCAbstractVariable >> isArg
+[
+	^ false
+]
+
+OCAbstractVariable >> isGlobal
+[
+	^ false
+]
+
+OCAbstractVariable >> isInstance
+[
+	^ false
+]
+
+OCAbstractVariable >> isLiteralVariable
+[
+	^ false
+]
+
+OCAbstractVariable >> isLocal
+[
+	^ false
+]
+
+OCAbstractVariable >> isRead
+[
+	^ usage = #read or: [ usage = #arg ]	"we treat arguments as read by default"
+]
+
+OCAbstractVariable >> isRemote
+[
+	^ false
+]
+
+OCAbstractVariable >> isSelf
+[
+	^ false
+]
+
+OCAbstractVariable >> isSpecialVariable
+[
+	^ false
+]
+
+OCAbstractVariable >> isSuper
+[
+	^ false
+]
+
+OCAbstractVariable >> isTemp
+[
+	^ false
+]
+
+OCAbstractVariable >> isUndeclared
+[
+	^ false
+]
+
+OCAbstractVariable >> isUninitialized
+[
+	^ false
+]
+
+OCAbstractVariable >> isUnused
+[
+	"when the var is never read or written, it is not used.
+	Note: we have a special #arg use which means arguments are never unused"
+
+	^ usage isNil
+]
+
+OCAbstractVariable >> isWrite
+[
+	^ usage = #write
+]
+
+OCAbstractVariable >> markRead
+[
+	"reading does not change a #write, nor an #arg"
+
+	usage ifNil: [ usage := #read ]
+]
+
+OCAbstractVariable >> markWrite
+[
+	"write is the strongest use: a read is turned into a write"
+
+	usage := #write
+]
+
+OCAbstractVariable >> name
+[
+	^ self subclassResponsibility
+]
+
+OCAbstractVariable >> originalVar
+[
+	^ self
+]
+
+OCAbstractVariable >> printOn: stream
+[
+	stream nextPutAll: self name
+]
+
+OCAbstractVariable >> scope
+[
+	^ scope
+]
+
+OCAbstractVariable >> scope: aLexicalScope
+[
+	scope := aLexicalScope
+]
+
+OCAbstractVariable >> usage
+[
+	^ usage
+]
+
+OCAbstractVariable >> usage: anObject
+[
+	usage := anObject
+]
+

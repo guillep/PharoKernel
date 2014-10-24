@@ -1,0 +1,34 @@
+String >> asSlotCollection
+[
+	"Parse as slots.
+	Example: 
+	  'a b' asSlotCollection --> {a => Slot. b => Slot}
+	"
+
+	^ (self subStrings: ' ') collect: [ :x | x asSlot ]
+]
+
+String >> inviolateInstanceVariableNames
+[
+	"Answer a list of instance variable names not to be used.  (Place holder for real list)"
+
+	^ #('thisContext' 'self')
+]
+
+String >> isLegalClassName
+[
+	"Answer whether aString is a legal  class name."
+
+	^ [ Smalltalk classBuilder validateClassName: self asSymbol ]
+		on: Error
+		do: [ ^ false ]
+]
+
+String >> isLegalInstVarName
+[
+	"Answer whether aString is a legal instance variable name."
+
+	^ (self isLiteralSymbol and: [ (self includes: $:) not ])
+		and: [ (self inviolateInstanceVariableNames includes: self) not ]
+]
+

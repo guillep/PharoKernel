@@ -1,0 +1,305 @@
+IRMethod
+	instanceVariables: #(#sourceNode #startSequence #numArgs #properties #tempMap #pragmas #additionalLiterals #compiledMethod #compilationContext #irPrimitive );
+	package: #'OpalCompiler-Core'.
+
+IRMethod >> absorbConstantConditionalJumps
+[
+	startSequence absorbConstantConditionalJumps: IdentitySet new
+]
+
+IRMethod >> absorbJumpsToSingleInstrs
+[
+	startSequence absorbJumpToSingleInstr: IdentitySet new
+]
+
+IRMethod >> accept: aVisitor
+[
+	^ aVisitor visitMethod: self
+]
+
+IRMethod >> addAdditionalLiteral: aLiteral
+[
+	additionalLiterals add: aLiteral
+]
+
+IRMethod >> addAdditionalLiterals: literals
+[
+	additionalLiterals := literals
+]
+
+IRMethod >> addInstructionsAfter: aCollection
+[
+	| returningSeqs lastInstr |
+	aCollection ifEmpty: [ ^ self ].
+	returningSeqs := self allSequences select: [ :each | each last isReturn ].
+	lastInstr := returningSeqs last last.
+	lastInstr addInstructionsBefore: aCollection
+]
+
+IRMethod >> addInstructionsBefore: aCollection
+[
+	self startSequence nextSequence first addInstructionsBefore: aCollection
+]
+
+IRMethod >> addPragma: aPragma
+[
+	pragmas add: aPragma
+]
+
+IRMethod >> additionalLiterals
+[
+	^ additionalLiterals
+]
+
+IRMethod >> allInstructions
+[
+	" return irNodes as a flat collection "
+
+	| irInstructions |
+	irInstructions := OrderedCollection new.
+	startSequence withAllSuccessorsDo: [ :seq | seq do: [ :bc | irInstructions add: bc ] ].
+	^ irInstructions
+]
+
+IRMethod >> allInstructionsMatching: aBlock
+[
+	" return irNodes as a flat collection "
+
+	| irInstructions |
+	irInstructions := OrderedCollection new.
+	startSequence
+		withAllSuccessorsDo: [ :seq | seq do: [ :bc | (aBlock value: bc)
+						ifTrue: [ irInstructions add: bc ] ] ].
+	^ irInstructions
+]
+
+IRMethod >> allSequences
+[
+	^ startSequence withAllSuccessors
+]
+
+IRMethod >> allTempAccessInstructions
+[
+	^ self allInstructionsMatching: [ :bc | bc isTemp ]
+]
+
+IRMethod >> compilationContext
+[
+	^ compilationContext
+		ifNil: [ "only happens when decompiling or using stand-alone"
+			compilationContext := CompilationContext default ]
+]
+
+IRMethod >> compilationContext: aCompilationContext
+[
+	compilationContext := aCompilationContext
+]
+
+IRMethod >> compiledMethod
+[
+	^ self compiledMethodWith: CompiledMethodTrailer empty
+]
+
+IRMethod >> compiledMethodWith: trailer
+[
+	^ compiledMethod ifNil: [ self generate: trailer ] ifNotNil: [ compiledMethod ]
+]
+
+IRMethod >> firstInstructionMatching: aBlock
+[
+	" return irNodes as a flat collection "
+
+	startSequence withAllSuccessorsDo: [ :seq | seq do: [ :bc | (aBlock value: bc)
+						ifTrue: [ ^ bc ] ] ].
+	^ nil
+]
+
+IRMethod >> forceLongForm
+[
+	compilationContext ifNil: [ ^ false ].
+	^ compilationContext optionLongIvarAccessBytecodes
+]
+
+IRMethod >> generate
+[
+	^ self generate: CompiledMethodTrailer empty
+]
+
+IRMethod >> generate: trailer
+[
+	| irTranslator |
+	irTranslator := IRTranslator new
+		compilationContext: compilationContext;
+		trailer: trailer;
+		interpret: self;
+		pragmas: pragmas;
+		yourself.
+	compiledMethod := irTranslator compiledMethod.
+	self sourceNode
+		ifNotNil: [ compiledMethod classBinding: self sourceNode methodClass binding.
+			compiledMethod selector: self sourceNode selector ]
+		ifNil: [ compiledMethod classBinding: UndefinedObject binding.
+			compiledMethod selector: #UndefinedMethod ].
+	^ compiledMethod
+]
+
+IRMethod >> hasTempVector: aSymbol
+[
+	startSequence withAllSuccessorsDo: [ :seq | (seq hasTempVector: aSymbol)
+				ifTrue: [ ^ true ] ].
+	^ false
+]
+
+IRMethod >> indexForVarNamed: aName
+[
+	^ tempMap at: aName
+]
+
+IRMethod >> initialize
+[
+	irPrimitive := IRPrimitive null.
+	tempMap := Dictionary new.
+	pragmas := OrderedCollection new.
+	additionalLiterals := OCLiteralSet new.
+	numArgs := 0
+]
+
+IRMethod >> instructionForPC: aPC
+[
+	self compiledMethod.	"generates the compiledMethod and optimize the ir. 	Removes the side-effect of optimizing the IR while looking for instruction, 	which results in incorrect found instruction"
+	0 to: -3 by: -1 do: [ :off | (self firstInstructionMatching: [ :ir | ir bytecodeOffset = (aPC - off) ]) ifNotNil: [ :it | ^ it ] ]
+]
+
+IRMethod >> instructionsForDecompiling
+[
+	"return all instructions, but skip the block bodies, as the decompiler
+	recurses over blocks"
+
+	^ startSequence instructionsForDecompiling allButFirst
+]
+
+IRMethod >> ir
+[
+	^ self
+]
+
+IRMethod >> irPrimitive
+[
+	^ irPrimitive
+]
+
+IRMethod >> irPrimitive: aPrimitiveNode
+[
+	irPrimitive := aPrimitiveNode
+]
+
+IRMethod >> isPushClosureCopy
+[
+	^ false
+]
+
+IRMethod >> isSend
+[
+	^ false
+]
+
+IRMethod >> longPrintOn: stream
+[
+	IRPrinter new
+		indent: 0;
+		stream: stream;
+		interpret: self
+]
+
+IRMethod >> method
+[
+	^ self
+]
+
+IRMethod >> numArgs
+[
+	^ numArgs
+]
+
+IRMethod >> numArgs: anInteger
+[
+	numArgs := anInteger
+]
+
+IRMethod >> optimize
+[
+	self removeEmptyStart.
+	self compilationContext optionOptimizeIR
+		ifFalse: [ ^ self ].
+	self absorbJumpsToSingleInstrs.
+	self absorbConstantConditionalJumps.
+	self absorbJumpsToSingleInstrs
+]
+
+IRMethod >> predecessorsOf: aSequence
+[
+	| predecessors |
+	predecessors := OrderedCollection new.
+	self allSequences do: [ :each | (each successorSequences includes: aSequence)
+				ifTrue: [ predecessors add: each ] ].
+	^ predecessors
+]
+
+IRMethod >> properties
+[
+	^ properties
+]
+
+IRMethod >> properties: propDict
+[
+	properties := propDict
+]
+
+IRMethod >> removeEmptyStart
+[
+	(startSequence size = 1 and: [ startSequence last isPushClosureCopy not ])
+		ifTrue: [ "startSeq is just unconditional jump, forget it"
+			startSequence := startSequence last destination ]
+]
+
+IRMethod >> removeReturn
+[
+	self allSequences last removeLast
+]
+
+IRMethod >> sourceNode
+[
+	^ sourceNode
+]
+
+IRMethod >> sourceNode: aNode
+[
+	sourceNode := aNode
+]
+
+IRMethod >> startSequence
+[
+	^ startSequence
+]
+
+IRMethod >> startSequence: irSequence
+[
+	startSequence := irSequence.
+	irSequence method: self
+]
+
+IRMethod >> tempKeys
+[
+	^ tempMap keys
+]
+
+IRMethod >> tempMap
+[
+	^ tempMap
+]
+
+IRMethod >> tempVectorNamed: aName
+[
+	^ self firstInstructionMatching: [ :ir | ir isTempVector and: [ ir name = aName ] ]
+]
+

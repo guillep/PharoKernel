@@ -1,0 +1,35 @@
+TextClassLink
+	superclass: #TextLink;
+	instanceVariables: #(#className );
+	package: #'Text-Core'.
+
+TextClassLink >> actOnClick: anEvent for: target in: aParagraph editor: anEditor
+[
+	anEvent shiftPressed
+		ifFalse: [ anEditor browseClassFrom: self className ]
+		ifTrue: [ anEditor referencesTo: self className ].
+	^ true
+]
+
+TextClassLink >> className
+[
+	^ className
+]
+
+TextClassLink >> className: aStringOrSymbol
+[
+	className := aStringOrSymbol asSymbol
+]
+
+TextClassLink class >> class: aClass
+[
+	^ self className: aClass name
+]
+
+TextClassLink class >> className: aSymbol
+[
+	^ self new
+		className: aSymbol;
+		yourself
+]
+

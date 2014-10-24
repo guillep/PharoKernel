@@ -1,0 +1,399 @@
+ClassOrganization
+	instanceVariables: #(#comment #commentStamp #protocolOrganizer #organizedClass );
+	package: #'ClassOrganizer-Core'.
+
+ClassOrganization >> addCategory: aString
+[
+	| oldCategories |
+	(self protocolOrganizer hasProtocolNamed: aString)
+		ifTrue: [ ^ self ].
+	oldCategories := self categories copy.
+	self protocolOrganizer addProtocolNamed: aString.
+	self notifyOfAddedCategory: aString.
+	self notifyOfChangedCategoriesFrom: oldCategories to: self categories
+]
+
+ClassOrganization >> addCategory: aProtocolName before: aUselessArgument
+[
+	self addCategory: aProtocolName
+]
+
+ClassOrganization >> allMethodSelectors
+[
+	^ protocolOrganizer allMethods
+]
+
+ClassOrganization >> categories
+[
+	^ self protocolOrganizer allProtocolsNames
+]
+
+ClassOrganization >> categoriesSorted
+[
+	^ self protocolOrganizer protocolsSorted
+]
+
+ClassOrganization >> categoryOfElement: aSelector
+[
+	^ (self protocolOrganizer protocolsOfSelector: aSelector)
+		ifEmpty: [ Protocol unclassified ]
+		ifNotEmpty: [ :col | col first name ]
+]
+
+ClassOrganization >> changeFromCategorySpecs: categorySpecs
+[
+	"notification"
+
+	self internalChangeFromString: categorySpecs
+]
+
+ClassOrganization >> changeFromString: aString
+[
+	"Parse the argument, aString, and make this be the receiver's structure."
+
+	| categorySpecs |
+	categorySpecs := aString parseLiterals.	"If nothing was scanned and I had no elements before, then default me"
+	(categorySpecs isEmpty and: [ self protocolOrganizer isEmpty ])
+		ifTrue: [ ^ self protocolOrganizer reset ].
+	^ self changeFromCategorySpecs: categorySpecs
+]
+
+ClassOrganization >> classComment
+[
+	^ self comment
+]
+
+ClassOrganization >> classComment: aString
+[
+	self comment: aString
+]
+
+ClassOrganization >> classComment: aString stamp: aStamp
+[
+	self
+		comment: aString;
+		commentStamp: aStamp
+]
+
+ClassOrganization >> classify: aSymbol under: aProtocolName
+[
+	^ self classify: aSymbol under: aProtocolName suppressIfDefault: true
+]
+
+ClassOrganization >> classify: selector under: aProtocolName suppressIfDefault: aBoolean
+[
+	| oldProtocol forceNotify |
+	forceNotify := (self protocolOrganizer includesSelector: selector) not.
+	oldProtocol := self categoryOfElement: selector.
+	(forceNotify or: [ oldProtocol ~= aProtocolName or: [ aBoolean not or: [ aProtocolName ~= Protocol unclassified ] ] ])
+		ifFalse: [ ^ self ].
+	self protocolOrganizer classify: selector inProtocolNamed: aProtocolName suppressIfDefault: aBoolean.
+	self notifyOfChangedSelector: selector from: oldProtocol to: aProtocolName
+]
+
+ClassOrganization >> comment
+[
+	comment ifNil: [ ^ '' ].
+	^ comment string ifNil: [ '' ]
+]
+
+ClassOrganization >> comment: aString
+[
+	"Store the comment, aString, associated with the object that refers to the 
+	receiver."
+
+	comment := (aString isKindOf: RemoteString)
+		ifTrue: [ aString ]
+		ifFalse: [ aString isEmptyOrNil
+				ifTrue: [ nil ]
+				ifFalse: [ RemoteString newString: aString onFileNumber: 2 ] ]	"Later add priorSource and date and initials?"
+]
+
+ClassOrganization >> commentRemoteStr
+[
+	^ comment
+]
+
+ClassOrganization >> commentRemoteString
+[
+	^ comment
+]
+
+ClassOrganization >> commentStamp
+[
+	^ commentStamp
+]
+
+ClassOrganization >> commentStamp: anObject
+[
+	commentStamp := anObject
+]
+
+ClassOrganization >> extensionProtocols
+[
+	^ self protocolOrganizer extensionProtocols
+]
+
+ClassOrganization >> fileOutCommentOn: aFileStream moveSource: moveSource toFile: fileIndex
+[
+	"Copy the class comment to aFileStream.  If moveSource is true (as in compressChanges or compressSources, then update classComment to point to the new file."
+
+	| fileComment |
+	self classComment ifNil: [ ^ self ].
+	aFileStream cr.
+	fileComment := RemoteString newString: self classComment string onFileNumber: fileIndex toFile: aFileStream.
+	moveSource
+		ifTrue: [ self classComment: fileComment ]
+]
+
+ClassOrganization >> hasComment
+[
+	^ self comment isEmptyOrNil not
+]
+
+ClassOrganization >> hasSubject
+[
+	^ organizedClass notNil
+]
+
+ClassOrganization >> importFrom: aClassOrganizer
+[
+	organizedClass := aClassOrganizer subject.
+	self comment: aClassOrganizer classComment.
+	self commentStamp: aClassOrganizer commentStamp.
+	protocolOrganizer := ProtocolOrganizer importFrom: aClassOrganizer
+]
+
+ClassOrganization >> initialize
+[
+	super initialize.
+	protocolOrganizer := ProtocolOrganizer new
+]
+
+ClassOrganization >> initializeClass: aClass
+[
+	self initialize.
+	organizedClass := aClass.
+	organizedClass selectors do: [ :each | self classify: each under: Protocol unclassified ]
+]
+
+ClassOrganization >> internalChangeFromString: categorySpecs
+[
+	"Parse the argument, aString, and make this be the receiver's structure."
+
+	protocolOrganizer := ProtocolOrganizer fromSpec: categorySpecs
+]
+
+ClassOrganization >> isEmptyCategoryNamed: categoryName
+[
+	^ (self protocolOrganizer protocolNamed: categoryName) isEmpty
+]
+
+ClassOrganization >> listAtCategoryNamed: aName
+[
+	^ (self protocolOrganizer methodsInProtocolNamed: aName) asArray
+]
+
+ClassOrganization >> listAtCategoryNumber: aSmallInteger
+[
+	^ (protocolOrganizer allProtocols at: aSmallInteger ifAbsent: [ ^ {} ]) methods asArray
+]
+
+ClassOrganization >> notifyOfAddedCategory: protocolName
+[
+	self hasSubject
+		ifFalse: [ ^ self ].
+	SystemAnnouncer uniqueInstance protocolAdded: protocolName inClass: self subject
+]
+
+ClassOrganization >> notifyOfChangedCategoriesFrom: oldCollectionOrNil to: newCollectionOrNil
+[
+	(self hasSubject and: [ oldCollectionOrNil ~= newCollectionOrNil ])
+		ifTrue: [ SystemAnnouncer uniqueInstance classReorganized: self subject ]
+]
+
+ClassOrganization >> notifyOfChangedCategoryFrom: oldNameOrNil to: newNameOrNil
+[
+	(self hasSubject and: [ oldNameOrNil ~= newNameOrNil ])
+		ifTrue: [ SystemAnnouncer uniqueInstance classReorganized: self subject ]
+]
+
+ClassOrganization >> notifyOfChangedSelector: element from: oldCategory to: newCategory
+[
+	(self hasSubject and: [ oldCategory ~= newCategory ])
+		ifTrue: [ self subject notifyOfRecategorizedSelector: element from: oldCategory to: newCategory ]
+]
+
+ClassOrganization >> notifyOfRemovedCategory: protocolName
+[
+	self hasSubject
+		ifFalse: [ ^ self ].
+	SystemAnnouncer uniqueInstance protocolRemoved: protocolName inClass: self subject
+]
+
+ClassOrganization >> organizedClass
+[
+	^ organizedClass
+]
+
+ClassOrganization >> ownCategories
+[
+	"get all categories that are not obtained from traits. Order is random"
+
+	| traitsCategories |
+	traitsCategories := self subject traits
+		inject: Set new
+		into: [ :set :trait | set
+				addAll:
+					(trait organization protocolOrganizer protocols
+						reject: [ :eachProtocol | self subject methods
+								anySatisfy: [ :eachMethod | eachMethod origin = self subject and: [ eachMethod protocol = eachProtocol name ] ] ]).
+			set ].
+	^ ((self protocolOrganizer protocols collect: #name) copyWithoutAll: (traitsCategories collect: #name)) asArray
+]
+
+ClassOrganization >> protocolNamed: aString
+[
+	^ self protocolOrganizer protocolNamed: aString ifAbsent: [ nil ]
+]
+
+ClassOrganization >> protocolOrganizer
+[
+	^ protocolOrganizer
+]
+
+ClassOrganization >> protocols
+[
+	^ self protocolOrganizer protocols
+]
+
+ClassOrganization >> putCommentOnFile: aFileStream numbered: sourceIndex moveSource: moveSource forClass: aClass
+[
+	"Store the comment about the class onto file, aFileStream."
+
+	| header |
+	self classComment ifNil: [ ^ self ].
+	aFileStream
+		cr;
+		nextPut: $!.
+	header := String
+		streamContents: [ :strm | strm
+				nextPutAll: aClass name;
+				nextPutAll: ' commentStamp: '.
+			commentStamp ifNil: [ commentStamp := '<historical>' ].
+			commentStamp storeOn: strm.
+			strm
+				nextPutAll: ' prior: ';
+				nextPutAll: '0' ].
+	aFileStream nextChunkPut: header.
+	aClass organization fileOutCommentOn: aFileStream moveSource: moveSource toFile: sourceIndex.
+	aFileStream cr
+]
+
+ClassOrganization >> realCategories
+[
+	^ self protocolOrganizer protocolsNames
+]
+
+ClassOrganization >> removeCategory: protocolName
+[
+	(self protocolOrganizer hasProtocolNamed: protocolName)
+		ifFalse: [ ^ self ].
+	self removeProtocol: (self protocolNamed: protocolName)
+]
+
+ClassOrganization >> removeElement: aSymbol
+[
+	| oldProtocol |
+	oldProtocol := self categoryOfElement: aSymbol.
+	self protocolOrganizer removeMethod: aSymbol.
+	self notifyOfChangedSelector: aSymbol from: oldProtocol to: (self categoryOfElement: aSymbol)
+]
+
+ClassOrganization >> removeEmptyCategories
+[
+	| oldCategories |
+	oldCategories := self protocolOrganizer allProtocolsNames copy.
+	self protocolOrganizer removeEmptyProtocols.
+	self notifyOfChangedCategoriesFrom: oldCategories to: self protocolOrganizer allProtocolsNames
+]
+
+ClassOrganization >> removeProtocol: aProtocol
+[
+	| oldCategories |
+	oldCategories := self protocolOrganizer allProtocolsNames copy.
+	self protocolOrganizer removeProtocol: aProtocol.
+	self notifyOfRemovedCategory: aProtocol name.
+	self notifyOfChangedCategoriesFrom: oldCategories to: self protocolOrganizer allProtocolsNames
+]
+
+ClassOrganization >> removeProtocolIfEmpty: protocolName
+[
+	"The protocol may already have been removed, be non empty or a special protocol which can't be removed, such as 'all'."
+
+	(self protocolNamed: protocolName)
+		ifNotNil: [ :protocol | (protocol isEmpty and: [ protocol canBeRemoved ])
+				ifTrue: [ self removeProtocol: protocol ] ]
+]
+
+ClassOrganization >> renameCategory: oldName toBe: newName
+[
+	self silentlyRenameCategory: oldName toBe: newName.
+	self notifyOfChangedCategoryFrom: oldName to: newName.	"I need to notify also the selector changes, otherwise RPackage will not notice"
+	(self protocolOrganizer protocolNamed: newName) methods
+		do: [ :each | self notifyOfChangedSelector: each from: oldName to: newName ]
+]
+
+ClassOrganization >> scanFrom: aStream
+[
+	"Reads in the organization from the next chunk on aStream.
+	Categories or elements not found in the definition are not affected.
+	New elements are ignored."
+
+	self changeFromString: aStream nextChunk.
+	aStream skipStyleChunk
+]
+
+ClassOrganization >> setSubject: anObject
+[
+	organizedClass := anObject
+]
+
+ClassOrganization >> silentlyRenameCategory: oldName toBe: newName
+[
+	self protocolOrganizer renameProtocol: oldName into: newName
+]
+
+ClassOrganization >> sortCategories
+[
+	"Do nothing"
+
+	
+]
+
+ClassOrganization >> stringForFileOut
+[
+	^ self protocolOrganizer stringForFileOut
+]
+
+ClassOrganization >> subject
+[
+	^ organizedClass
+]
+
+ClassOrganization class >> forClass: aClass
+[
+	^ self basicNew
+		initializeClass: aClass;
+		yourself
+]
+
+ClassOrganization class >> importFrom: aClassOrganizer
+[
+	aClassOrganizer class = self
+		ifTrue: [ ^ aClassOrganizer ].
+	^ self new
+		importFrom: aClassOrganizer;
+		yourself
+]
+

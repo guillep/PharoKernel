@@ -1,0 +1,45 @@
+IRTempVector
+	superclass: #IRInstruction;
+	instanceVariables: #(#name #vars );
+	package: #'OpalCompiler-Core'.
+
+IRTempVector >> accept: aVisitor
+[
+	^ aVisitor visitTempVector: self
+]
+
+IRTempVector >> executeOn: interpreter
+[
+	interpreter createTempVectorNamed: name withVars: vars
+]
+
+IRTempVector >> indexForVarNamed: aName
+[
+	^ vars indexOf: aName
+]
+
+IRTempVector >> initialize
+[
+	vars := Dictionary new
+]
+
+IRTempVector >> isTempVector
+[
+	^ true
+]
+
+IRTempVector >> name
+[
+	^ name
+]
+
+IRTempVector >> name: anObject
+[
+	name := anObject
+]
+
+IRTempVector >> vars: anObject
+[
+	vars := anObject
+]
+

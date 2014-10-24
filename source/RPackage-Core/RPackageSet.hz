@@ -1,0 +1,204 @@
+RPackageSet
+	instanceVariables: #(#packageName #packages #classes #definedClasses #extensionMethods #methods #classesAndMetaClasses #extensionClasses #systemCategories #overriddenMethods );
+	package: #'RPackage-Core'.
+
+RPackageSet class
+	instanceVariables: #(#cacheActive #cachePackages ).
+
+RPackageSet >> asRPackageSet
+[
+	^ self
+]
+
+RPackageSet >> category: categoryName matches: prefix
+[
+	^ RPackageOrganizer default category: categoryName matches: prefix
+]
+
+RPackageSet >> categoryNames
+[
+	^ self packages inject: #() into: [ :all :each | all , each classTagCategoryNames asArray ]
+]
+
+RPackageSet >> changeRecordForOverriddenMethod: aMethodDefinition
+[
+	^ SourceFiles
+		changeRecordsFor: aMethodDefinition
+		detect: [ :protocol | self includesMethodCategory: protocol ofClass: aMethodDefinition actualClass ]
+]
+
+RPackageSet >> classes
+[
+	^ classes ifNil: [ classes := self collectFromAllPackages: #definedClasses ]
+]
+
+RPackageSet >> classesAndMetaClasses
+[
+	^ classesAndMetaClasses ifNil: [ classesAndMetaClasses := self collectFromAllPackages: #classesAndMetaClasses ]
+]
+
+RPackageSet >> collectFromAllPackages: selector
+[
+	^ self packages inject: #() into: [ :all :each | all , (each perform: selector) asArray ]
+]
+
+RPackageSet >> collectFromAllPackages: selector with: anObject
+[
+	^ self packages inject: #() into: [ :all :each | all , (each perform: selector with: anObject) asArray ]
+]
+
+RPackageSet >> coreCategoriesForClass: aClass
+[
+	^ self collectFromAllPackages: #coreCategoriesForClass: with: aClass
+]
+
+RPackageSet >> definedClasses
+[
+	^ definedClasses ifNil: [ definedClasses := self collectFromAllPackages: #definedClasses ]
+]
+
+RPackageSet >> extensionCategoriesForClass: aClass
+[
+	^ aClass organization categories select: [ :cat | self isYourClassExtension: cat ]
+]
+
+RPackageSet >> extensionClasses
+[
+	^ extensionClasses ifNil: [ extensionClasses := self collectFromAllPackages: #extensionClasses ]
+]
+
+RPackageSet >> extensionMethods
+[
+	^ extensionMethods
+		ifNil: [ extensionMethods := ((self collectFromAllPackages: #extensionMethods) collect: #asRingDefinition) asSet asArray ]
+]
+
+RPackageSet >> includesClass: aClass
+[
+	^ self packages anySatisfy: [ :each | each includesClass: aClass ]
+]
+
+RPackageSet >> includesMethodCategory: categoryName ofClass: aClass
+[
+	^ (self isYourClassExtension: categoryName)
+		or: [ (self includesClass: aClass) and: [ (self isForeignClassExtension: categoryName) not ] ]
+]
+
+RPackageSet >> includesMethodReference: aMethodReference
+[
+	^ self packages anySatisfy: [ :each | each includesMethodReference: aMethodReference ]
+]
+
+RPackageSet >> includesSystemCategory: categoryName
+[
+	^ self packages anySatisfy: [ :each | each includesSystemCategory: categoryName ]
+]
+
+RPackageSet >> initialize: aString
+[
+	self initialize.
+	packageName := aString asSymbol.
+	packages := (RPackage organizer packageNamed: aString ifAbsent: [ nil ])
+		ifNotNil: [ :package | {package} ]
+		ifNil: [ {} ]
+]
+
+RPackageSet >> isForeignClassExtension: categoryName
+[
+	^ categoryName first = $* and: [ (self isYourClassExtension: categoryName) not ]
+]
+
+RPackageSet >> isYourClassExtension: categoryName
+[
+	^ categoryName notNil and: [ self category: categoryName asLowercase matches: self methodCategoryPrefix ]
+]
+
+RPackageSet >> methodCategoryPrefix
+[
+	^ '*' , self packageName asLowercase
+]
+
+RPackageSet >> methods
+[
+	^ methods ifNil: [ methods := (self collectFromAllPackages: #methods) collect: #asRingDefinition ]
+]
+
+RPackageSet >> overriddenMethods
+[
+	^ overriddenMethods ifNil: [ overriddenMethods := self collectFromAllPackages: #overriddenMethods ]
+]
+
+RPackageSet >> packageName
+[
+	^ packageName
+]
+
+RPackageSet >> packages
+[
+	^ packages
+]
+
+RPackageSet >> systemCategories
+[
+	^ systemCategories ifNil: [ systemCategories := (self collectFromAllPackages: #systemCategories) asSet asArray ]
+]
+
+RPackageSet >> unregister
+[
+	self packages do: #unregister
+]
+
+RPackageSet class >> basicNamed: aString
+[
+	self flag: #hack.	"We force the creation of a PackageInfo to keep backward compatibility of tools"
+	PackageInfo named: aString.
+	^ self basicNew
+		initialize: aString;
+		yourself
+]
+
+RPackageSet class >> cacheActive: aBoolean
+[
+	cacheActive := aBoolean
+]
+
+RPackageSet class >> cachePackageAt: aString ifAbsentPut: aBlock
+[
+	"self addCount: aString."
+
+	^ self cachePackages at: aString asSymbol ifAbsentPut: aBlock
+]
+
+RPackageSet class >> cachePackages
+[
+	^ cachePackages ifNil: [ cachePackages := IdentityDictionary new ]
+]
+
+RPackageSet class >> isCacheActive
+[
+	^ cacheActive ifNil: [ cacheActive := false ]
+]
+
+RPackageSet class >> named: aString
+[
+	^ self isCacheActive
+		ifTrue: [ self cachePackageAt: aString ifAbsentPut: [ self basicNamed: aString ] ]
+		ifFalse: [ self basicNamed: aString ]
+]
+
+RPackageSet class >> resetCache
+[
+	cachePackages := nil
+]
+
+RPackageSet class >> withCacheDo: aBlock
+[
+	| oldActive |
+	oldActive := self isCacheActive.
+	self cacheActive: true.
+	aBlock
+		ensure: [ self cacheActive: oldActive.
+			self isCacheActive
+				ifFalse: [ self resetCache ] ]
+]
+

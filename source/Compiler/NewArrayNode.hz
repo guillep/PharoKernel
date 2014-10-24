@@ -1,0 +1,44 @@
+NewArrayNode
+	superclass: #ParseNode;
+	instanceVariables: #(#numElements );
+	package: #Compiler.
+
+NewArrayNode >> accept: aVisitor
+[
+	^ aVisitor visitNewArrayNode: self
+]
+
+NewArrayNode >> analyseTempsWithin: scopeBlock rootNode: rootNode assignmentPools: assignmentPools
+[
+	"<BlockNode>"
+
+	"<MethodNode>"
+
+	"<Dictionary>"
+
+	"This is a no-op except in TempVariableNode"
+
+	^ self
+]
+
+NewArrayNode >> emitCodeForValue: stack encoder: encoder
+[
+	encoder genPushNewArray: numElements.
+	stack push: 1
+]
+
+NewArrayNode >> numElements
+[
+	^ numElements
+]
+
+NewArrayNode >> numElements: n
+[
+	numElements := n
+]
+
+NewArrayNode >> sizeCodeForValue: encoder
+[
+	^ encoder sizePushNewArray: numElements
+]
+

@@ -1,0 +1,33 @@
+IRPushArray
+	superclass: #IRInstruction;
+	instanceVariables: #(#size #cons );
+	package: #'OpalCompiler-Core'.
+
+IRPushArray >> accept: aVisitor
+[
+	^ aVisitor visitPushArray: self
+]
+
+IRPushArray >> cons: aBool
+[
+	cons := aBool
+]
+
+IRPushArray >> executeOn: interpreter
+[
+	^ cons
+		ifFalse: [ interpreter pushNewArray: size ]
+		ifTrue: [ interpreter pushConsArray: size ]
+]
+
+IRPushArray >> initialize
+[
+	size := 0.
+	cons := false
+]
+
+IRPushArray >> size: aSmallInteger
+[
+	size := aSmallInteger
+]
+

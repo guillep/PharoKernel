@@ -1,0 +1,58 @@
+OCASTClosureAnalyzer
+	superclass: #RBProgramNodeVisitor;
+	instanceVariables: #(#scope );
+	package: #'OpalCompiler-Core'.
+
+OCASTClosureAnalyzer >> doCopying
+[
+	| copying |
+	copying := scope tempVars select: [ :each | each isEscapingRead ].
+	copying do: [ :each | scope addCopyingTemp: each ]
+]
+
+OCASTClosureAnalyzer >> doRemotes
+[
+	| remotes |
+	remotes := scope tempVars select: [ :each | each isEscapingWrite ].
+	remotes do: [ :each | scope moveToVectorTemp: each ]
+]
+
+OCASTClosureAnalyzer >> visitBlockNode: aBlockNode
+[
+	"here look at the temps and make copying vars / tempVector out of them"
+
+	scope := aBlockNode scope.
+	self
+		doRemotes;
+		doCopying.
+	self visitNode: aBlockNode body.
+	scope := scope popScope
+]
+
+OCASTClosureAnalyzer >> visitMethodNode: aMethodNode
+[
+	"here look at the temps and make copying vars / tempVector out of them"
+
+	scope := aMethodNode scope.
+	self
+		doRemotes;
+		doCopying.
+	self visitNode: aMethodNode body.
+	scope := scope popScope
+]
+
+OCASTClosureAnalyzer >> visitVariableNode: aVariableNode
+[
+	"re-lookup the temorary variables..."
+
+	| var |
+	aVariableNode isTemp
+		ifFalse: [ ^ self ].
+	var := scope lookupVar: aVariableNode name.
+	aVariableNode binding: var.
+	var isTempVectorTemp
+		ifTrue: [ scope addCopyingTempToAllScopesUpToDefVector: var vectorName ].
+	var isCopying
+		ifTrue: [ scope addCopyingTempToAllScopesUpToDefTemp: var ]
+]
+

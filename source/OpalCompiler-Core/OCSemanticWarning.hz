@@ -1,0 +1,93 @@
+OCSemanticWarning
+	superclass: #Notification;
+	instanceVariables: #(#compilationContext #node );
+	package: #'OpalCompiler-Core'.
+
+OCSemanticWarning >> compilationContext
+[
+	^ compilationContext
+]
+
+OCSemanticWarning >> compilationContext: anObject
+[
+	compilationContext := anObject
+]
+
+OCSemanticWarning >> defaultAction
+[
+	self errorNotification
+		ifFalse: [ ^ nil ].
+	^ self openMenuIn: [ :labels :lines :caption | UIManager default chooseFrom: labels lines: lines title: caption ]
+]
+
+OCSemanticWarning >> errorCode
+[
+	self requestor ifNil: [ ^ self node methodNode asString ].
+	^ self requestor contents
+]
+
+OCSemanticWarning >> errorMessage
+[
+	^ self messageText
+]
+
+OCSemanticWarning >> errorNotification
+[
+	^ compilationContext interactive and: [ compilationContext warningAllowed ]
+]
+
+OCSemanticWarning >> interactive
+[
+	^ UIManager default interactiveParserFor: self requestor
+]
+
+OCSemanticWarning >> location
+[
+	^ self node sourceInterval first
+]
+
+OCSemanticWarning >> methodClass
+[
+	^ node methodNode methodClass
+]
+
+OCSemanticWarning >> methodNode
+[
+	^ node methodNode
+]
+
+OCSemanticWarning >> node
+[
+	^ node
+]
+
+OCSemanticWarning >> node: anObject
+[
+	node := anObject
+]
+
+OCSemanticWarning >> notify: aString at: location
+[
+	"Refer to the comment in Object|notify:."
+
+	^ self requestor
+		ifNil: [ SyntaxErrorNotification
+				inClass: self methodClass
+				category: self methodClass category
+				withCode: self methodNode source
+				doitFlag: false
+				errorMessage: aString
+				location: location ]
+		ifNotNil: [ self requestor notify: aString , ' ->' at: location in: self requestor text ]
+]
+
+OCSemanticWarning >> openMenuIn: aBlock
+[
+	self subclassResponsibility
+]
+
+OCSemanticWarning >> requestor
+[
+	^ compilationContext requestor
+]
+

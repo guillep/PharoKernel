@@ -1057,7 +1057,7 @@ ContextPart >> return: value
 [
 	"Unwind thisContext to self and return value to self's sender.  Execute any unwind blocks while unwinding.  ASSUMES self is a sender of thisContext"
 
-	sender ifNil: [ self cannotReturn: value to: sender ].
+	sender ifNil: [ ^ self cannotReturn: value to: sender ].
 	sender resume: value
 ]
 
@@ -1154,16 +1154,15 @@ ContextPart >> runUntilErrorOrReturnFrom: aSender
 						ifNotNil: [ ex pass ] ]).
 	context := context
 		insertSender: (ContextPart contextEnsure: [ error ifNil: [ topContext := thisContext.
-							here jump ] ]).	"Control jumps to self"
-	self jump.	"Control resumes here once above ensure block or exception handler is executed"
+							here jump ] ]).
+	self jump.	"Control jumps to self"	"Control resumes here once above ensure block or exception handler is executed"
 	^ error
 		ifNil: [ "No error was raised, remove ensure context by stepping until popped"
 			[ context isDead ] whileFalse: [ topContext := topContext stepToCallee ].
 			{topContext.
 			nil} ]
 		ifNotNil: [ "Error was raised, remove inserted above contexts then return signaler context"
-			"remove above ensure and handler contexts"
-			aSender terminateTo: context sender.
+			aSender terminateTo: context sender.	"remove above ensure and handler contexts"
 			{topContext.
 			error} ]
 ]

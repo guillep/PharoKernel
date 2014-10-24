@@ -1,0 +1,45 @@
+ModifiedField
+	superclass: #AbstractFieldModification;
+	instanceVariables: #(#newSlot #originalSlot );
+	package: #Slot.
+
+ModifiedField >> installOn: aModification
+[
+	aModification installModifiedSlot: self
+]
+
+ModifiedField >> migrateAt: index to: newInstance from: oldInstance
+[
+	newInstance instVarAt: index put: (oldInstance instVarAt: self oldFieldIndex)
+]
+
+ModifiedField >> newFieldIndex
+[
+	^ newSlot index + fieldIndex
+]
+
+ModifiedField >> newSlot
+[
+	^ newSlot
+]
+
+ModifiedField >> newSlot: anObject
+[
+	newSlot := anObject
+]
+
+ModifiedField >> oldFieldIndex
+[
+	^ originalSlot index + fieldIndex
+]
+
+ModifiedField >> originalSlot
+[
+	^ originalSlot
+]
+
+ModifiedField >> originalSlot: anObject
+[
+	originalSlot := anObject
+]
+

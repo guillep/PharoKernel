@@ -1,0 +1,127 @@
+OCTempVariable
+	superclass: #OCAbstractLocalVariable;
+	instanceVariables: #(#escaping );
+	package: #'OpalCompiler-Core'.
+
+OCTempVariable >> = aTempVar
+[
+	^ aTempVar class = self class
+		and: [ aTempVar scope = self scope and: [ aTempVar name = self name and: [ aTempVar usage = self usage ] ] ]
+]
+
+OCTempVariable >> emitStore: methodBuilder
+[
+	methodBuilder storeTemp: name
+]
+
+OCTempVariable >> emitValue: methodBuilder
+[
+	methodBuilder pushTemp: name
+]
+
+OCTempVariable >> escaping
+[
+	^ escaping
+]
+
+OCTempVariable >> escaping: anObject
+[
+	escaping := anObject
+]
+
+OCTempVariable >> hash
+[
+	^ name hash bitXor: (usage hash bitXor: scope hash)
+]
+
+OCTempVariable >> indexFromIR
+[
+	^ scope outerNotOptimizedScope node irInstruction indexForVarNamed: name
+]
+
+OCTempVariable >> initialize
+[
+	super initialize.
+	escaping := false
+]
+
+OCTempVariable >> isCopying
+[
+	^ false
+]
+
+OCTempVariable >> isEscaping
+[
+	^ escaping = #escapingRead or: [ escaping = #escapingWrite ]
+]
+
+OCTempVariable >> isEscapingRead
+[
+	^ escaping = #escapingRead
+]
+
+OCTempVariable >> isEscapingWrite
+[
+	^ escaping = #escapingWrite
+]
+
+OCTempVariable >> isStoringTempVector
+[
+	"I am a temp that stores a temp vector. Those generated temps have a invalid name starting with 0"
+
+	^ name first = $0
+]
+
+OCTempVariable >> isTemp
+[
+	^ true
+]
+
+OCTempVariable >> isTempVectorTemp
+[
+	^ false
+]
+
+OCTempVariable >> markEscapingRead
+[
+	escaping = #escapingWrite
+		ifFalse: [ escaping := #escapingRead ]
+]
+
+OCTempVariable >> markEscapingWrite
+[
+	escaping := #escapingWrite.
+	usage := #write
+]
+
+OCTempVariable >> markWrite
+[
+	"if an escaping var is wrote to later, it needs to be remote"
+
+	self isEscaping
+		ifTrue: [ self markEscapingWrite ].
+	super markWrite
+]
+
+OCTempVariable >> readFromContext: aContext scope: contextScope
+[
+	"Usually the loop is useless, the first case with i = offset returns the correct result. 
+	However, the loop is required for specific case as Debugger restart feature."
+
+	| offset contextForRead |
+	offset := contextScope outerOffsetTo: scope.
+	offset to: 0 by: -1 do: [ :i | contextForRead := aContext.
+		i timesRepeat: [ contextForRead := contextForRead outerContext ].
+		contextForRead ifNotNil: [ :ctx | ^ ctx tempAt: self indexFromIR ] ].
+	self error: 'temporary variable not found'
+]
+
+OCTempVariable >> writeFromContext: aContext scope: contextScope value: aValue
+[
+	| offset contextForRead |
+	offset := contextScope outerOffsetTo: scope.
+	contextForRead := aContext.
+	offset timesRepeat: [ contextForRead := contextForRead outerContext ].
+	^ contextForRead tempAt: self indexFromIR put: aValue
+]
+

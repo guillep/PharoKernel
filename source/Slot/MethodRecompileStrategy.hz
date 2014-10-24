@@ -1,0 +1,16 @@
+MethodRecompileStrategy
+	superclass: #AbstractMethodUpdateStrategy;
+	package: #Slot.
+
+MethodRecompileStrategy >> transform: oldClass to: newClass using: aMethodModification
+[
+	newClass compileAllFrom: oldClass
+]
+
+MethodRecompileStrategy >> updateClassLiteralKeysIn: aClass
+[
+	aClass isMeta
+		ifTrue: [ ^ self ].
+	aClass methodsDo: [ :method | method classBinding: (aClass environment bindingOf: aClass name) ]
+]
+

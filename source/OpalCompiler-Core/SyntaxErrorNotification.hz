@@ -1,0 +1,66 @@
+SyntaxErrorNotification
+	superclass: #Error;
+	instanceVariables: #(#inClass #code #category #doitFlag #errorMessage #location );
+	package: #'OpalCompiler-Core'.
+
+SyntaxErrorNotification >> category
+[
+	^ category
+]
+
+SyntaxErrorNotification >> defaultAction
+[
+	^ UIManager default syntaxErrorNotificationDefaultAction: self
+]
+
+SyntaxErrorNotification >> doitFlag
+[
+	^ doitFlag
+]
+
+SyntaxErrorNotification >> errorClass
+[
+	^ inClass
+]
+
+SyntaxErrorNotification >> errorCode
+[
+	^ code
+]
+
+SyntaxErrorNotification >> errorMessage
+[
+	^ errorMessage
+]
+
+SyntaxErrorNotification >> location
+[
+	^ location
+]
+
+SyntaxErrorNotification >> messageText
+[
+	^ super messageText ifNil: [ messageText := code ]
+]
+
+SyntaxErrorNotification >> setClass: aClass category: aCategory code: codeString doitFlag: aBoolean errorMessage: errorString location: anInteger
+[
+	inClass := aClass.
+	category := aCategory.
+	code := codeString.
+	doitFlag := aBoolean.
+	errorMessage := errorString.
+	location := anInteger
+]
+
+SyntaxErrorNotification class >> inClass: aClass category: aCategory withCode: codeString doitFlag: doitFlag errorMessage: errorString location: location
+[
+	^ (self new
+		setClass: aClass
+		category: aCategory
+		code: codeString
+		doitFlag: doitFlag
+		errorMessage: errorString
+		location: location) signal
+]
+

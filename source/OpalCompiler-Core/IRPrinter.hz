@@ -1,0 +1,185 @@
+IRPrinter
+	superclass: #IRInterpreter;
+	instanceVariables: #(#stream #indent );
+	package: #'OpalCompiler-Core'.
+
+IRPrinter >> blockReturnTop
+[
+	stream nextPutAll: 'blockReturnTop'
+]
+
+IRPrinter >> createTempVectorNamed: name withVars: vars
+[
+	stream nextPutAll: 'createTempVectorNamed: '.
+	name printOn: stream.
+	stream nextPutAll: ' withVars: '.
+	stream nextPutAll: vars printString
+]
+
+IRPrinter >> goto: seqNum
+[
+	stream nextPutAll: 'goto: '.
+	seqNum printOn: stream
+]
+
+IRPrinter >> if: bool goto: seqNum1 otherwise: seqNum2
+[
+	stream nextPutAll: 'if: '.
+	bool printOn: stream.
+	stream nextPutAll: ' goto: '.
+	seqNum1 printOn: stream.
+	stream nextPutAll: ' else: '.
+	seqNum2 printOn: stream
+]
+
+IRPrinter >> indent: tabs
+[
+	indent := tabs
+]
+
+IRPrinter >> interpretInstruction: irInstruction
+[
+	indent timesRepeat: [ stream tab ].
+	super interpretInstruction: irInstruction.
+	stream cr
+]
+
+IRPrinter >> label: seqNum
+[
+	"add tab and cr since this does not get called within interpretInstruction:"
+
+	stream cr.	"extra cr just to space out sequences"
+	indent timesRepeat: [ stream tab ].
+	stream nextPutAll: 'label: '.
+	seqNum printOn: stream.
+	stream cr
+]
+
+IRPrinter >> popTop
+[
+	stream nextPutAll: 'popTop'
+]
+
+IRPrinter >> pushClosureCopyCopiedValues: copiedValues args: args jumpTo: labelSymbol
+[
+	stream nextPutAll: 'pushClosureCopyCopiedValues: '.
+	stream nextPutAll: copiedValues printString.
+	stream nextPutAll: ' args: '.
+	stream nextPutAll: args printString
+]
+
+IRPrinter >> pushConsArray: size
+[
+	stream nextPutAll: 'pushConsArray: '.
+	size printOn: stream
+]
+
+IRPrinter >> pushDup
+[
+	stream nextPutAll: 'pushDup'
+]
+
+IRPrinter >> pushInstVar: index
+[
+	stream nextPutAll: 'pushInstVar: '.
+	index printOn: stream
+]
+
+IRPrinter >> pushLiteral: object
+[
+	stream nextPutAll: 'pushLiteral: '.
+	object isVariableBinding
+		ifTrue: [ ^ stream nextPutAll: object key ].
+	object printOn: stream
+]
+
+IRPrinter >> pushLiteralVariable: object
+[
+	stream nextPutAll: 'pushLiteralVariable: '.
+	object isVariableBinding
+		ifTrue: [ ^ stream nextPutAll: object key ].
+	object printOn: stream
+]
+
+IRPrinter >> pushNewArray: size
+[
+	stream nextPutAll: 'pushNewArray: '.
+	size printOn: stream
+]
+
+IRPrinter >> pushReceiver
+[
+	stream nextPutAll: 'pushReceiver'
+]
+
+IRPrinter >> pushRemoteTemp: name inVector: tempVectorName
+[
+	stream nextPutAll: 'pushRemoteTemp: '.
+	name printOn: stream.
+	stream nextPutAll: ' inVector: '.
+	tempVectorName printOn: stream
+]
+
+IRPrinter >> pushTemp: index
+[
+	stream nextPutAll: 'pushTemp: '.
+	index printOn: stream
+]
+
+IRPrinter >> pushThisContext
+[
+	stream nextPutAll: 'pushThisContext'
+]
+
+IRPrinter >> returnTop
+[
+	stream nextPutAll: 'returnTop'
+]
+
+IRPrinter >> send: selector
+[
+	stream nextPutAll: 'send: '.
+	selector printOn: stream
+]
+
+IRPrinter >> send: selector toSuperOf: behavior
+[
+	stream nextPutAll: 'send: '.
+	selector printOn: stream.
+	stream nextPutAll: ' toSuperOf: '.
+	behavior printOn: stream
+]
+
+IRPrinter >> storeInstVar: index
+[
+	stream nextPutAll: 'storeInstVar: '.
+	index printOn: stream
+]
+
+IRPrinter >> storeIntoLiteralVariable: object
+[
+	stream nextPutAll: 'storeLiteralVariable: '.
+	object isVariableBinding
+		ifTrue: [ ^ stream nextPutAll: object key ].
+	object printOn: stream
+]
+
+IRPrinter >> storeRemoteTemp: name inVector: tempVectorName
+[
+	stream nextPutAll: 'storeRemoteTemp: '.
+	name printOn: stream.
+	stream nextPutAll: ' inVector: '.
+	tempVectorName printOn: stream
+]
+
+IRPrinter >> storeTemp: index
+[
+	stream nextPutAll: 'storeTemp: '.
+	index printOn: stream
+]
+
+IRPrinter >> stream: stringWriteStream
+[
+	stream := stringWriteStream
+]
+

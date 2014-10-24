@@ -1,0 +1,99 @@
+FileServices
+	classVariables: #(#FileReaderRegistry );
+	package: #'System-FileRegistry'.
+
+FileServices class >> allRegisteredServices
+[
+	"self allRegisteredServices"
+
+	| allServices |
+	allServices := OrderedCollection new.
+	self registeredFileReaderClasses do: [ :each | allServices addAll: each services ].
+	^ allServices
+]
+
+FileServices class >> cleanUp
+[
+	"Remove obsolete services"
+
+	self removeObsolete
+]
+
+FileServices class >> initialize
+[
+	"FileServices initialize"
+
+	Smalltalk globals
+		allClassesDo: [ :aClass | (aClass class includesSelector: #fileReaderServicesForFile:suffix:)
+				ifTrue: [ self registerFileReader: aClass ] ]
+]
+
+FileServices class >> isReaderNamedRegistered: aSymbol
+[
+	"return if a given reader class has been registered. Note that this is on purpose that the argument is
+	a symbol and not a class"
+
+	^ self registeredFileReaderClasses anySatisfy: [ :each | each name = aSymbol ]
+]
+
+FileServices class >> itemsForDirectory: aFileDirectory
+[
+	"Answer a list of services appropriate when no file is selected."
+
+	| services |
+	services := OrderedCollection new.
+	self registeredFileReaderClasses
+		do: [ :reader | reader ifNotNil: [ services addAll: (reader fileReaderServicesForDirectory: aFileDirectory) ] ].
+	^ services
+]
+
+FileServices class >> itemsForFile: fullName
+[
+	"Answer a list of services appropriate for a file of the given full name"
+
+	| services suffix |
+	suffix := self suffixOf: fullName.
+	services := OrderedCollection new.
+	self registeredFileReaderClasses
+		do: [ :reader | reader ifNotNil: [ services addAll: (reader fileReaderServicesForFile: fullName suffix: suffix) ] ].
+	^ services
+]
+
+FileServices class >> registerFileReader: aProviderClass
+[
+	"register the given class as providing services for reading files"
+
+	| registeredReaders |
+	registeredReaders := self registeredFileReaderClasses.
+	(registeredReaders includes: aProviderClass)
+		ifFalse: [ registeredReaders addLast: aProviderClass ]
+]
+
+FileServices class >> registeredFileReaderClasses
+[
+	FileReaderRegistry ifNil: [ FileReaderRegistry := OrderedCollection new ].
+	^ FileReaderRegistry
+]
+
+FileServices class >> removeObsolete
+[
+	"FileServices removeObsolete"
+
+	self registeredFileReaderClasses copy do: [ :cls | cls isObsolete
+				ifTrue: [ self unregisterFileReader: cls ] ]
+]
+
+FileServices class >> suffixOf: aName
+[
+	"Answer the file extension of the given file"
+
+	^ aName ifNil: [ '' ] ifNotNil: [ aName asFileReference extension asLowercase ]
+]
+
+FileServices class >> unregisterFileReader: aProviderClass
+[
+	"unregister the given class as providing services for reading files"
+
+	self registeredFileReaderClasses remove: aProviderClass ifAbsent: [ nil ]
+]
+

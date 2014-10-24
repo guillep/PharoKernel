@@ -1,0 +1,49 @@
+TextMethodLink
+	superclass: #TextLink;
+	instanceVariables: #(#hostName #selector #browseSenders );
+	package: #'Text-Core'.
+
+TextMethodLink >> actOnClick: anEvent for: target in: aParagraph editor: anEditor
+[
+	self flag: 'TODO: complete implementation with class'.
+	browseSenders == anEvent shiftPressed
+		ifTrue: [ anEditor implementorsOf: self selector ]
+		ifFalse: [ anEditor sendersOf: self selector ].
+	^ true
+]
+
+TextMethodLink >> initialize
+[
+	super initialize.
+	browseSenders := false
+]
+
+TextMethodLink >> selector
+[
+	^ selector
+]
+
+TextMethodLink >> selector: aStringOrSymbol
+[
+	selector := aStringOrSymbol asSymbol
+]
+
+TextMethodLink >> senders: aBoolean
+[
+	browseSenders := aBoolean
+]
+
+TextMethodLink class >> selector: aStringOrSymbol
+[
+	^ self new
+		selector: aStringOrSymbol;
+		yourself
+]
+
+TextMethodLink class >> selector: aString senders: browseSenders
+[
+	^ (self selector: aString)
+		senders: browseSenders;
+		yourself
+]
+

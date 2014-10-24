@@ -1,0 +1,128 @@
+Slot
+	instanceVariables: #(#index #name );
+	package: #Slot.
+
+Slot >> = other
+[
+	self == other
+		ifTrue: [ ^ true ].
+	^ (self species == other species and: [ index = other index ]) and: [ name = other name ]
+]
+
+Slot >> asSlot
+[
+	^ self
+]
+
+Slot >> finalize: layout
+[
+	"nothing to do here"
+
+	
+]
+
+Slot >> hash
+[
+	^ (self species hash bitXor: self name hash) bitXor: self index
+]
+
+Slot >> index
+[
+	^ index
+]
+
+Slot >> index: anIndex
+[
+	index := anIndex
+]
+
+Slot >> initialize: instance
+[
+	"nothing to do for the default slot"
+
+	
+]
+
+Slot >> internalRead: anObject
+[
+	^ anObject instVarAt: index
+]
+
+Slot >> internalWrite: aValue to: anObject
+[
+	anObject instVarAt: index put: aValue
+]
+
+Slot >> isVisible
+[
+	^ true
+]
+
+Slot >> name
+[
+	^ name
+]
+
+Slot >> name: aSymbol
+[
+	name := aSymbol
+]
+
+Slot >> parentScopeFor: aScope
+[
+	^ aScope
+]
+
+Slot >> printOn: aStream
+[
+	aStream << self name
+		<< ' => ';
+		<< self class name
+]
+
+Slot >> read: anObject
+[
+	^ self internalRead: anObject
+]
+
+Slot >> size
+[
+	^ 1
+]
+
+Slot >> storeInitializationOn: aStream
+[
+	aStream nextPutAll: self class name
+]
+
+Slot >> storeOn: aStream
+[
+	aStream store: self name.
+	aStream nextPutAll: ' => '.
+	self storeInitializationOn: aStream
+]
+
+Slot >> write: aValue to: anObject
+[
+	self internalWrite: aValue to: anObject
+]
+
+Slot class >> asSlot
+[
+	^ self new
+]
+
+Slot class >> checkValidName: aSymbol
+[
+	aSymbol isPseudovariableName
+		ifTrue: [ ^ InvalidSlotName signalFor: aSymbol ]
+]
+
+Slot class >> named: aSymbol
+[
+	self checkValidName: aSymbol.
+	^ self new
+		name: aSymbol;
+		yourself
+]
+

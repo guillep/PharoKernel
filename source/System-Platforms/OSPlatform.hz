@@ -3,6 +3,11 @@ OSPlatform
 	classVariables: #(#Current );
 	package: #'System-Platforms'.
 
+OSPlatform >> createEnvironment
+[
+	^ OSEnvironment environmentFor: self
+]
+
 OSPlatform >> current
 [
 	^ self
@@ -10,7 +15,7 @@ OSPlatform >> current
 
 OSPlatform >> environment
 [
-	^ environment ifNil: [ environment := NixEnvironment new ]
+	^ environment ifNil: [ environment := self createEnvironment ]
 ]
 
 OSPlatform >> family
@@ -136,17 +141,11 @@ OSPlatform class >> currentVersion
 	^ (Smalltalk vm getSystemAttribute: 1002) asString
 ]
 
-OSPlatform class >> determineActivePlatformStartingAt: parentClass
+OSPlatform class >> determineActivePlatform
 [
-	"Determine the current platform starting at parentClass.
-	This is a potentially recursive process as we want to determine the most specific (in terms of subclasses) platform available."
+	"Look for the matching platform class"
 
-	"OSPlatform determineActivePlatformStartingAt: OSPlatform"
-
-	| platformClass |
-	parentClass subclasses ifEmpty: [ ^ parentClass ].	"Look for the matching platform class"
-	platformClass := parentClass allSubclasses detect: [ :any | any isActivePlatform ] ifNone: [ nil ].	"Check if there is a more specific subclass"
-	^ self determineActivePlatformStartingAt: platformClass
+	^ self allSubclasses detect: [ :any | any isActivePlatform ]
 ]
 
 OSPlatform class >> initialize
@@ -157,9 +156,9 @@ OSPlatform class >> initialize
 
 	Smalltalk
 		removeFromStartUpList: self;
-		addToStartUpList: self after: Delay.";
+		addToStartUpList: self after: Delay;
 		removeFromShutDownList: self;
-		addToShutDownList: self after: DisplayScreen."
+		addToShutDownList: self after: DisplayScreen.
 	self startUp: true
 ]
 
@@ -179,14 +178,11 @@ OSPlatform class >> shutDown: quitting
 
 OSPlatform class >> startUp: resuming
 [
-	"Determine the current platform.
-	Use the most specific (in terms of subclasses) platform available."
+	"Determine the current platform."
 
-	| platformClass |
-	"Look for the matching platform class"
-	platformClass := self determineActivePlatformStartingAt: self.
-	platformClass ifNil: [ ^ self ].
-	Current := platformClass new.
+	resuming
+		ifFalse: [ ^ self ].
+	Current := self determineActivePlatform new.
 	Current startUp: resuming
 ]
 

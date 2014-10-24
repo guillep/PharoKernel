@@ -1,0 +1,242 @@
+MorphicTransform
+	superclass: #DisplayTransform;
+	instanceVariables: #(#offset #angle #scale );
+	package: #'Graphics-Transformations'.
+
+MorphicTransform >> angle
+[
+	^ angle
+]
+
+MorphicTransform >> asMatrixTransform2x3
+[
+	^ ((MatrixTransform2x3 withRotation: angle radiansToDegrees negated)
+		composedWithLocal: (MatrixTransform2x3 withScale: scale)) offset: offset negated
+]
+
+MorphicTransform >> asMorphicTransform
+[
+	^ self
+]
+
+MorphicTransform >> composedWith: aTransform
+[
+	"Return a new transform that has the effect of transforming points first by the receiver and then by the argument."
+
+	self isIdentity
+		ifTrue: [ ^ aTransform ].
+	aTransform isIdentity
+		ifTrue: [ ^ self ].
+	^ CompositeTransform new globalTransform: self localTransform: aTransform
+]
+
+MorphicTransform >> composedWithLocal: aTransform
+[
+	aTransform isIdentity
+		ifTrue: [ ^ self ].
+	self isIdentity
+		ifTrue: [ ^ aTransform ].
+	aTransform isMorphicTransform
+		ifFalse: [ ^ super composedWithLocal: aTransform ].
+	self isPureTranslation
+		ifTrue: [ ^ aTransform withOffset: aTransform offset + self offset ].
+	aTransform isPureTranslation
+		ifTrue: [ ^ self withOffset: (self localPointToGlobal: aTransform offset negated) negated ].
+	^ super composedWithLocal: aTransform
+]
+
+MorphicTransform >> globalPointToLocal: aPoint
+[
+	"Transform aPoint from global coordinates into local coordinates"
+
+	^ self transform: aPoint
+]
+
+MorphicTransform >> inverseTransformation
+[
+	"Return the inverse transformation of the receiver"
+
+	^ MorphicTransform
+		offset: (self transform: 0 @ 0) - (self transform: offset)
+		angle: angle negated
+		scale: scale reciprocal
+]
+
+MorphicTransform >> invert: aPoint
+[
+	"Transform the given point from local to global coordinates."
+
+	| p3 p2 |
+	self isPureTranslation
+		ifTrue: [ ^ aPoint - offset ].
+	p3 := aPoint * scale.
+	p2 := (p3 x * angle cos + (p3 y * angle sin)) @ (p3 y * angle cos - (p3 x * angle sin)).
+	^ p2 - offset
+]
+
+MorphicTransform >> invertBoundsRect: aRectangle
+[
+	"Return a rectangle whose coordinates have been transformed
+	from local back to global coordinates.  NOTE: if the transformation
+	is not just a translation, then it will compute the bounding box
+	in global coordinates."
+
+	| outerRect |
+	self isPureTranslation
+		ifTrue: [ ^ (self invert: aRectangle topLeft) corner: (self invert: aRectangle bottomRight) ]
+		ifFalse: [ outerRect := Rectangle encompassing: (aRectangle innerCorners collect: [ :p | self invert: p ]).	"Following asymmetry due to likely subsequent truncation"
+			^ outerRect topLeft - (1 @ 1) corner: outerRect bottomRight + (2 @ 2) ]
+]
+
+MorphicTransform >> invertRect: aRectangle
+[
+	self error: 'method name changed to emphasize enclosing bounds'.
+	^ self invertBoundsRect: aRectangle
+]
+
+MorphicTransform >> isIdentity
+[
+	"Return true if the receiver is the identity transform; that is, if applying to a point returns the point itself."
+
+	^ self isPureTranslation and: [ offset = (0 @ 0) ]
+]
+
+MorphicTransform >> isMorphicTransform
+[
+	^ true
+]
+
+MorphicTransform >> isPureTranslation
+[
+	"Return true if the receiver specifies no rotation or scaling."
+
+	^ angle = 0.0 and: [ scale = 1.0 ]
+]
+
+MorphicTransform >> localPointToGlobal: aPoint
+[
+	"Transform aPoint from global coordinates into local coordinates"
+
+	^ self invert: aPoint
+]
+
+MorphicTransform >> offset
+[
+	^ offset
+]
+
+MorphicTransform >> printOn: aStream
+[
+	super printOn: aStream.
+	aStream
+		nextPut: $(;
+		nextPutAll: 'angle = ';
+		print: angle;
+		nextPutAll: '; scale = ';
+		print: scale;
+		nextPutAll: '; offset = ';
+		print: offset;
+		nextPut: $)
+]
+
+MorphicTransform >> scale
+[
+	^ scale
+]
+
+MorphicTransform >> setAngle: aFloat
+[
+	angle := aFloat
+]
+
+MorphicTransform >> setIdentiy
+[
+	scale := 1.0.
+	offset := 0 @ 0.
+	angle := 0.0
+]
+
+MorphicTransform >> setOffset: aPoint
+[
+	offset := aPoint
+]
+
+MorphicTransform >> setOffset: aPoint angle: a scale: s
+[
+	offset := aPoint.
+	angle := a.
+	scale := s
+]
+
+MorphicTransform >> setScale: aFloat
+[
+	scale := aFloat
+]
+
+MorphicTransform >> transform: aPoint
+[
+	"Transform the given point from global to local coordinates."
+
+	| p2 p3 |
+	self isPureTranslation
+		ifTrue: [ ^ aPoint + offset ].
+	p2 := aPoint + offset.
+	p3 := (p2 x * angle cos - (p2 y * angle sin)) @ (p2 y * angle cos + (p2 x * angle sin)) / scale.
+	^ p3
+]
+
+MorphicTransform >> transformBoundsRect: aRectangle
+[
+	"Return a rectangle whose coordinates have been transformed
+	from global to local coordinates.  NOTE: if the transformation
+	is not just a translation, then it will compute the bounding box
+	in global coordinates."
+
+	| outerRect |
+	self isPureTranslation
+		ifTrue: [ ^ (self transform: aRectangle topLeft) corner: (self transform: aRectangle bottomRight) ]
+		ifFalse: [ outerRect := Rectangle encompassing: (aRectangle innerCorners collect: [ :p | self transform: p ]).	"Following asymmetry due to likely subsequent truncation"
+			^ outerRect topLeft - (1 @ 1) corner: outerRect bottomRight + (2 @ 2) ]
+]
+
+MorphicTransform >> withAngle: a
+[
+	"Return a copy of me with a different Angle"
+
+	^ self copy setAngle: a
+]
+
+MorphicTransform >> withOffset: a
+[
+	"Return a copy of me with a different Offset"
+
+	^ self copy setOffset: a
+]
+
+MorphicTransform >> withScale: a
+[
+	"Return a copy of me with a different Scale"
+
+	^ self copy setScale: a
+]
+
+MorphicTransform class >> identity
+[
+	^ self offset: 0 @ 0 angle: 0.0 scale: 1.0
+]
+
+MorphicTransform class >> new
+[
+	^ self offset: 0 @ 0
+]
+
+MorphicTransform class >> offset: aPoint
+[
+	^ self offset: aPoint angle: 0.0 scale: 1.0
+]
+
+MorphicTransform class >> offset: aPoint angle: a scale: s
+[
+	^ self basicNew setOffset: aPoint angle: a scale: s
+]
+

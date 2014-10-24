@@ -1,0 +1,50 @@
+MissingClassError
+	superclass: #Error;
+	instanceVariables: #(#resumable #className #superclassName );
+	package: #CodeImport.
+
+MissingClassError >> asResumable
+[
+	"When sent to the receiver, this one turns into a resumable exception allowing for example to define missing class on the fly."
+
+	resumable := true
+]
+
+MissingClassError >> className: aString
+[
+	className := aString
+]
+
+MissingClassError >> defineClass
+[
+	Smalltalk compiler
+		evaluate:
+			self superclassName , ' subclass: #' , className
+				,
+					' instanceVariableNames: ''''	classVariableNames: ''''	poolDictionaries: ''''	category: ''Stub-Classes'''
+]
+
+MissingClassError >> isResumable
+[
+	"Determine whether an exception is resumable. By default not but can be resumable using accessors at exception raising time."
+
+	^ resumable ifNil: [ super isResumable ]
+]
+
+MissingClassError >> superclassName
+[
+	^ superclassName ifNil: [ superclassName := 'Object' ]
+]
+
+MissingClassError >> superclassName: aString
+[
+	superclassName := aString
+]
+
+MissingClassError class >> className: aString
+[
+	^ self new
+		className: aString;
+		yourself
+]
+

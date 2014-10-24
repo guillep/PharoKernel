@@ -1,0 +1,46 @@
+InstanceVariableNode
+	superclass: #VariableNode;
+	package: #Compiler.
+
+InstanceVariableNode >> accept: aVisitor
+[
+	^ aVisitor visitInstanceVariableNode: self
+]
+
+InstanceVariableNode >> emitCodeForStore: stack encoder: encoder
+[
+	encoder genStoreInstVar: index
+]
+
+InstanceVariableNode >> emitCodeForStorePop: stack encoder: encoder
+[
+	encoder genStorePopInstVar: index.
+	stack pop: 1
+]
+
+InstanceVariableNode >> emitCodeForValue: stack encoder: encoder
+[
+	stack push: 1.
+	^ encoder genPushInstVar: index
+]
+
+InstanceVariableNode >> name: varName index: varIndex
+[
+	^ self name: varName index: varIndex - 1 type: LdInstType
+]
+
+InstanceVariableNode >> sizeCodeForStore: encoder
+[
+	^ encoder sizeStoreInstVar: index
+]
+
+InstanceVariableNode >> sizeCodeForStorePop: encoder
+[
+	^ encoder sizeStorePopInstVar: index
+]
+
+InstanceVariableNode >> sizeCodeForValue: encoder
+[
+	^ encoder sizePushInstVar: index
+]
+

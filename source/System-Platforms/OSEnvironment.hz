@@ -149,6 +149,25 @@ OSEnvironment class >> default
 	^ self new
 ]
 
+OSEnvironment class >> environmentFor: aPlatform
+[
+	| environmentClass |
+	environmentClass := self allSubclasses detect: [ :each | each isDefaultFor: aPlatform ] ifNone: [ nil ].
+	^ (environmentClass notNil and: [ environmentClass isAvailable ])
+		ifTrue: [ environmentClass platform: aPlatform ]
+		ifFalse: [ PlatformIndependentEnvironment platform: aPlatform ]
+]
+
+OSEnvironment class >> isAvailable
+[
+	^ NativeBoost isAvailable
+]
+
+OSEnvironment class >> isDefaultFor: aPlatform
+[
+	^ false
+]
+
 OSEnvironment class >> platform: anOSPlatform
 [
 	^ self basicNew initializeWith: anOSPlatform

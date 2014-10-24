@@ -1,0 +1,37 @@
+IRLiteralVariableAccess
+	superclass: #IRAccess;
+	instanceVariables: #(#association );
+	package: #'OpalCompiler-Core'.
+
+IRLiteralVariableAccess >> accept: aVisitor
+[
+	^ aVisitor visitLiteralVariableAccess: self
+]
+
+IRLiteralVariableAccess >> association
+[
+	^ association
+]
+
+IRLiteralVariableAccess >> association: anAssociation
+[
+	association := anAssociation
+]
+
+IRLiteralVariableAccess >> executeOn: interpreter
+[
+	store
+		ifFalse: [ interpreter pushLiteralVariable: association ]
+		ifTrue: [ interpreter storeIntoLiteralVariable: association ]
+]
+
+IRLiteralVariableAccess >> isLiteralVariable
+[
+	^ true
+]
+
+IRLiteralVariableAccess >> name
+[
+	^ association key
+]
+

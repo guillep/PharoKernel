@@ -1,0 +1,372 @@
+IRBuilder
+	instanceVariables: #(#ir #currentScope #jumpBackTargetStacks #jumpAheadStacks #currentSequence #sourceMapNodes #sourceMapByteIndex );
+	package: #'OpalCompiler-Core'.
+
+IRBuilder >> add: instr
+[
+	"Associate instr with current parse node or byte range"
+
+	instr sourceNode: self sourceNode.
+	instr bytecodeIndex: self sourceByteIndex.
+	^ currentSequence add: instr
+]
+
+IRBuilder >> addBlockReturnTopIfRequired
+[
+	"If the current sequence is empty this means that there was a returntop before 
+	then since there is no more stmts we do not need a blockreturntop"
+
+	"cant we optimize this away later? Then the frontend can always just add a return...."
+
+	| predecessors |
+	self
+		flag: 'cant we do this automatically.... frontend always adds return, we ignore it if there is a ret method before?'.
+	predecessors := ir predecessorsOf: currentSequence.
+	(currentSequence isEmpty
+		and: [ predecessors isEmpty
+				or: [ (ir predecessorsOf: currentSequence)
+						anySatisfy: [ :each | each last isBlockReturnTop not
+								and: [ each last isReturn or: [ each size > 1 and: [ (each at: each size - 1) isReturn ] ] ] ] ] ])
+		ifTrue: [ self popScope ]
+		ifFalse: [ self blockReturnTop ]
+]
+
+IRBuilder >> addJumpBackTarget: label to: sequence
+[
+	(jumpBackTargetStacks at: label ifAbsentPut: [ OrderedCollection new ]) addLast: sequence
+]
+
+IRBuilder >> addLiteral: aLiteral
+[
+	"Add this literal at the end of the literal array if there is space left"
+
+	ir addAdditionalLiteral: aLiteral
+]
+
+IRBuilder >> addPragma: aPragma
+[
+	^ ir addPragma: aPragma
+]
+
+IRBuilder >> addTemp: tempKey
+[
+	self addTemps: {tempKey}
+]
+
+IRBuilder >> addTemps: newKeys
+[
+	| i offset |
+	offset := self currentScope tempMap size.
+	i := 1.
+	newKeys do: [ :key | self currentScope tempMap at: key ifAbsentPut: [ i := i + 1.
+					offset + i - 1 ] ]
+]
+
+IRBuilder >> additionalLiterals: literals
+[
+	"Add this literal at the end of the literal array if there is space left"
+
+	ir addAdditionalLiterals: literals
+]
+
+IRBuilder >> blockReturnTop
+[
+	| retInst |
+	retInst := IRInstruction blockReturnTop.
+	self add: retInst.
+	self startNewSequence.
+	retInst successor: currentSequence.
+	self popScope
+]
+
+IRBuilder >> compilationContext
+[
+	^ ir compilationContext
+]
+
+IRBuilder >> compilationContext: aCompilationContext
+[
+	ir compilationContext: aCompilationContext
+]
+
+IRBuilder >> createTempVectorNamed: name withVars: anArray
+[
+	"self addVectorTemps: anArray."
+
+	self addTemp: name.
+	self add: (IRInstruction createTempVectorNamed: name withVars: anArray)
+]
+
+IRBuilder >> currentScope
+[
+	^ currentScope top
+]
+
+IRBuilder >> initialize
+[
+	ir := IRMethod new.
+	jumpAheadStacks := IdentityDictionary new.
+	jumpBackTargetStacks := IdentityDictionary new.
+	sourceMapNodes := OrderedCollection new.	"stack"
+	currentScope := Stack new.
+	self pushScope: ir.	"Leave an empty sequence up front (guaranteed not to be in loop)"
+	ir startSequence: ((IRSequence orderNumber: 0) method: ir).
+	currentSequence := (IRSequence orderNumber: 1) method: ir.
+	ir startSequence
+		add: (IRJump new
+				destination: currentSequence;
+				bytecodeIndex: sourceMapByteIndex;
+				yourself)
+]
+
+IRBuilder >> ir
+[
+	^ ir
+]
+
+IRBuilder >> irPrimitive: primNode
+[
+	ir irPrimitive: primNode
+]
+
+IRBuilder >> jumpAheadTarget: labelSymbol
+[
+	"Pop latest jumpAheadTo: with this labelSymbol and have it point to this new instruction sequence"
+
+	| jumpInstr |
+	self startNewSequence.
+	jumpInstr := (jumpAheadStacks
+		at: labelSymbol
+		ifAbsent: [ self error: 'Missing jumpAheadTo: ' , labelSymbol printString ]) removeLast.
+	jumpInstr destination: currentSequence
+]
+
+IRBuilder >> jumpAheadTo: labelSymbol
+[
+	"Jump to the sequence that will be created when jumpAheadTarget: labelSymbol is sent to self.  This is and its corresponding target is only good for one use.  Other jumpAheadTo: with the same label will be put on a stack and superceed existing ones until its jumpAheadTarget: is called."
+
+	"jumpAheadTarget: label will pop this and replace destination with its basic block"
+
+	(jumpAheadStacks at: labelSymbol ifAbsentPut: [ OrderedCollection new ]) addLast: (self add: IRJump new).
+	self startNewSequence
+]
+
+IRBuilder >> jumpAheadTo: labelSymbol if: boolean
+[
+	"Conditional jump to the sequence that will be created when jumpAheadTarget: labelSymbol is sent to self.  This and its corresponding target is only good for one use.  Other jumpAheadTo:... with the same label will be put on a stack and superceed existing ones until its jumpAheadTarget: is called."
+
+	| instr |
+	"jumpAheadTarget: label will pop this and replace destination with its basic block"
+	(jumpAheadStacks at: labelSymbol ifAbsentPut: [ OrderedCollection new ])
+		addLast: (instr := self add: (IRJumpIf new boolean: boolean)).
+	self startNewSequence.
+	instr otherwise: currentSequence
+]
+
+IRBuilder >> jumpBackTarget: labelSymbol
+[
+	"Remember this basic block for a future jumpBackTo: labelSymbol.  Stack up remembered targets with same name and remove them from stack for each jumpBackTo: called with same name."
+
+	self startNewSequence.
+	(jumpBackTargetStacks at: labelSymbol ifAbsentPut: [ OrderedCollection new ]) addLast: currentSequence
+]
+
+IRBuilder >> jumpBackTo: labelSymbol
+[
+	"Pop last remembered position with this label and write an unconditional jump to it"
+
+	| sequence jump |
+	sequence := (jumpBackTargetStacks
+		at: labelSymbol
+		ifAbsent: [ self error: 'Missing jumpBackTarget: ' , labelSymbol printString ]) removeLast.
+	jump := IRJump new destination: sequence.
+	self add: jump.
+	self startNewSequence.
+	jump successor: currentSequence
+]
+
+IRBuilder >> mapToByteIndex: index
+[
+	"decompiling"
+
+	sourceMapByteIndex := index
+]
+
+IRBuilder >> mapToNode: object
+[
+	"new instructions will be associated with object"
+
+	sourceMapNodes addLast: object
+]
+
+IRBuilder >> numArgs: anInteger
+[
+	ir numArgs: anInteger.
+	ir sourceNode: self sourceNode
+]
+
+IRBuilder >> popMap
+[
+	sourceMapNodes removeLast
+]
+
+IRBuilder >> popScope
+[
+	currentScope pop
+]
+
+IRBuilder >> popTop
+[
+	self add: IRInstruction popTop
+]
+
+IRBuilder >> properties: aDict
+[
+	ir properties: aDict
+]
+
+IRBuilder >> pushClosureCopyCopiedValues: copiedValuesNames args: args jumpTo: aJumpLabel
+[
+	| irInstruction |
+	irInstruction := IRInstruction pushClosureCopyCopiedValues: copiedValuesNames args: args.
+	self add: irInstruction.
+	(jumpAheadStacks at: aJumpLabel ifAbsentPut: [ OrderedCollection new ]) addLast: irInstruction.
+	self startNewSequence.
+	irInstruction blockSequence: currentSequence.
+	self pushScope: irInstruction.
+	self addTemps: args.
+	self addTemps: copiedValuesNames.
+	^ irInstruction
+]
+
+IRBuilder >> pushConsArray: size
+[
+	self add: (IRInstruction pushConsArray: size)
+]
+
+IRBuilder >> pushDup
+[
+	self add: IRInstruction pushDup
+]
+
+IRBuilder >> pushInstVar: index
+[
+	self add: (IRInstruction pushInstVar: index)
+]
+
+IRBuilder >> pushLiteral: object
+[
+	self add: (IRInstruction pushLiteral: object)
+]
+
+IRBuilder >> pushLiteralVariable: object
+[
+	self add: (IRInstruction pushLiteralVariable: object)
+]
+
+IRBuilder >> pushNewArray: size
+[
+	self add: (IRInstruction pushNewArray: size)
+]
+
+IRBuilder >> pushReceiver
+[
+	self add: IRInstruction pushReceiver
+]
+
+IRBuilder >> pushRemoteTemp: name inVector: nameOfVector
+[
+	^ self add: (IRInstruction pushRemoteTemp: name inVectorAt: nameOfVector)
+]
+
+IRBuilder >> pushScope: anIRBlockOrMethod
+[
+	currentScope push: anIRBlockOrMethod
+]
+
+IRBuilder >> pushTemp: aSelector
+[
+	^ self add: (IRInstruction pushTemp: aSelector)
+]
+
+IRBuilder >> pushThisContext
+[
+	self add: IRInstruction pushThisContext
+]
+
+IRBuilder >> returnTop
+[
+	self add: IRInstruction returnTop.
+	self startNewSequence
+]
+
+IRBuilder >> send: selector
+[
+	^ self add: (IRInstruction send: selector)
+]
+
+IRBuilder >> send: selector toSuperOf: behavior
+[
+	^ self add: (IRInstruction send: selector toSuperOf: behavior)
+]
+
+IRBuilder >> sourceByteIndex
+[
+	^ sourceMapByteIndex
+]
+
+IRBuilder >> sourceNode
+[
+	^ sourceMapNodes ifEmpty: [ nil ] ifNotEmpty: [ sourceMapNodes last ]
+]
+
+IRBuilder >> startNewSequence
+[
+	"End current instruction sequence and start a new sequence to add instructions to.  If ending block just falls through to new block then add an explicit jump to it so they stay linked"
+
+	| newSequence |
+	currentSequence ifEmpty: [ ^ self ].	"block is still empty, continue using it"
+	newSequence := IRSequence orderNumber: currentSequence orderNumber + 1.
+	newSequence method: ir.
+	currentSequence last isJumpOrReturn
+		ifFalse: [ self add: (IRJump new destination: newSequence) ].
+	self currentScope isPushClosureCopy
+		ifTrue: [ self currentScope lastBlockSequence: currentSequence ].
+	currentSequence := newSequence
+]
+
+IRBuilder >> storeInstVar: name
+[
+	^ self add: (IRInstruction storeInstVar: name)
+]
+
+IRBuilder >> storeIntoLiteralVariable: name
+[
+	^ self add: (IRInstruction storeIntoLiteralVariable: name)
+]
+
+IRBuilder >> storeRemoteTemp: name inVector: nameOfVector
+[
+	^ self add: (IRInstruction storeRemoteTemp: name inVectorAt: nameOfVector)
+]
+
+IRBuilder >> storeTemp: aSymbol
+[
+	^ self add: (IRInstruction storeTemp: aSymbol)
+]
+
+IRBuilder >> testJumpAheadTarget: label
+[
+	jumpAheadStacks at: label ifPresent: [ :stack | [ stack isEmpty ] whileFalse: [ self jumpAheadTarget: label ] ]
+]
+
+IRBuilder class >> buildIR: aBlock
+[
+	^ (aBlock value: self new) ir
+]
+
+IRBuilder class >> buildMethod: aBlock
+[
+	^ (self buildIR: aBlock) compiledMethod
+]
+

@@ -1,0 +1,28 @@
+Symbol >> => aSlot
+[
+	aSlot isBehavior
+		ifTrue: [ ^ aSlot named: self ].
+	^ aSlot
+		name: self;
+		yourself
+]
+
+Symbol >> asSlot
+[
+	^ Slot named: self
+]
+
+Symbol >> isPseudovariableName
+[
+	"Answer true if I am a pseudo-variable name.
+	#self isPseudovariableName -> true
+	"
+
+	^ self class pseudovariablesNames includes: self
+]
+
+Symbol class >> pseudovariablesNames
+[
+	^ #('self' 'true' 'false' 'nil' 'thisContext' 'super')
+]
+

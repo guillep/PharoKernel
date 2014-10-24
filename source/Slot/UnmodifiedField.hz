@@ -1,0 +1,30 @@
+UnmodifiedField
+	superclass: #AbstractFieldModification;
+	instanceVariables: #(#slot );
+	package: #Slot.
+
+UnmodifiedField >> fieldIndex
+[
+	^ slot index + fieldIndex
+]
+
+UnmodifiedField >> installOn: aModification
+[
+	aModification installUnmodifiedSlot: self
+]
+
+UnmodifiedField >> migrateAt: index to: newInstance from: oldInstance
+[
+	newInstance instVarAt: index put: (oldInstance instVarAt: index)
+]
+
+UnmodifiedField >> slot
+[
+	^ slot
+]
+
+UnmodifiedField >> slot: anObject
+[
+	slot := anObject
+]
+

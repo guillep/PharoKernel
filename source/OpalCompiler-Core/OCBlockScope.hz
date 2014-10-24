@@ -1,0 +1,24 @@
+OCBlockScope
+	superclass: #OCAbstractMethodScope;
+	package: #'OpalCompiler-Core'.
+
+OCBlockScope >> hasEscapingVars
+[
+	^ (copiedVars isEmpty & tempVector isEmpty) not
+]
+
+OCBlockScope >> inComingCopiedVars
+[
+	^ copiedVars select: [ :each | outerScope copiedVars includes: each ]
+]
+
+OCBlockScope >> isBlockScope
+[
+	^ true
+]
+
+OCBlockScope >> isInsideOptimizedLoop
+[
+	^ self outerScope isInsideOptimizedLoop
+]
+

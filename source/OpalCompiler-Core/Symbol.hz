@@ -1,0 +1,20 @@
+Symbol >> asMethodPreamble
+[
+	self numArgs = 0
+		ifTrue: [ ^ self asString ].
+	^ String
+		streamContents: [ :str | self keywords doWithIndex: [ :each :index | str
+						nextPutAll: each;
+						nextPutAll: ' var' , index asString ] ]
+]
+
+Symbol >> asOneArgSelector
+[
+	^ String
+		streamContents: [ :str | | parts |
+			parts := self findTokens: ':)'.
+			str nextPutAll: parts first.
+			parts allButFirst do: [ :each | str nextPutAll: each capitalized ].
+			str nextPutAll: ':' ]
+]
+

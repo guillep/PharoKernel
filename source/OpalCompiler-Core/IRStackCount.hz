@@ -1,0 +1,92 @@
+IRStackCount
+	instanceVariables: #(#start #position #length );
+	package: #'OpalCompiler-Core'.
+
+IRStackCount >> = other
+[
+	^ self class == other class
+		and: [ start = other start and: [ position = other position and: [ length = other size ] ] ]
+]
+
+IRStackCount >> hash
+[
+	^ position hash bitXor: (length hash bitXor: start hash)
+]
+
+IRStackCount >> length
+[
+	^ length
+]
+
+IRStackCount >> linkTo: stackOrNil
+[
+	stackOrNil ifNil: [ ^ self class startAt: self position ].
+	^ self position = stackOrNil start
+		ifTrue: [ stackOrNil ]
+		ifFalse: [ self error: 'stack out of sync in bytecode generator' ]
+]
+
+IRStackCount >> pop
+[
+	^ self pop: 1
+]
+
+IRStackCount >> pop: n
+[
+	(position := position - n) < 0
+		ifTrue: [ self error: 'stack underflow in bytecode generator' ]
+]
+
+IRStackCount >> position
+[
+	^ position
+]
+
+IRStackCount >> printOn: aStream
+[
+	super printOn: aStream.
+	aStream
+		nextPutAll: ' start ';
+		print: start;
+		nextPutAll: ' stop ';
+		print: position;
+		nextPutAll: ' max ';
+		print: length
+]
+
+IRStackCount >> push
+[
+	^ self push: 1
+]
+
+IRStackCount >> push: n
+[
+	(position := position + n) > length
+		ifTrue: [ length := position ]
+]
+
+IRStackCount >> size
+[
+	^ length
+]
+
+IRStackCount >> start
+[
+	^ start
+]
+
+IRStackCount >> startAt: pos
+[
+	start := position := length := pos
+]
+
+IRStackCount class >> new
+[
+	^ super new startAt: 0
+]
+
+IRStackCount class >> startAt: pos
+[
+	^ self new startAt: pos
+]
+

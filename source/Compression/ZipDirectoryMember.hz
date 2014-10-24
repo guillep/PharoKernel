@@ -1,0 +1,60 @@
+ZipDirectoryMember
+	superclass: #ZipFileMember;
+	package: #Compression.
+
+ZipDirectoryMember >> asDirectory
+[
+	^ self
+]
+
+ZipDirectoryMember >> desiredCompressionMethod: aNumber
+[
+	
+]
+
+ZipDirectoryMember >> initialize
+[
+	super initialize.
+	externalFileAttributes := self mapPermissionsFromUnix: DefaultDirectoryPermissions.
+	super desiredCompressionMethod: CompressionStored
+]
+
+ZipDirectoryMember >> isDirectory
+[
+	^ true
+]
+
+ZipDirectoryMember >> localFileName: aString
+[
+	| file |
+	file := aString asFileReference.
+	super localFileName: (file basename copyWith: $/).
+	file exists
+		ifFalse: [ ^ self ].
+	self modifiedAt: file entry modificationTime
+]
+
+ZipDirectoryMember >> rewindData
+[
+	
+]
+
+ZipDirectoryMember >> usesFileNamed: aName
+[
+	^ false
+]
+
+ZipDirectoryMember >> writeDataTo: aStream
+[
+	"Write nothing. Directories have no contents to write."
+
+	
+]
+
+ZipDirectoryMember class >> newNamed: aFileName
+[
+	^ self new
+		localFileName: aFileName;
+		yourself
+]
+

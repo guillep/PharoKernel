@@ -1,0 +1,26 @@
+CursorWithAlpha
+	superclass: #Cursor;
+	instanceVariables: #(#fallback );
+	package: #'Graphics-Display Objects'.
+
+CursorWithAlpha >> asCursorForm
+[
+	^ Form newFrom: self
+]
+
+CursorWithAlpha >> fallback
+[
+	^ fallback ifNil: [ NormalCursor ]
+]
+
+CursorWithAlpha >> fallback: aCursor
+[
+	fallback := aCursor
+]
+
+CursorWithAlpha >> primBeCursor
+[
+	<primitive: 101>
+	self fallback primBeCursor
+]
+

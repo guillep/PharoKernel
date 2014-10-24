@@ -1,0 +1,40 @@
+IRSend
+	superclass: #IRInstruction;
+	instanceVariables: #(#selector #superOf );
+	package: #'OpalCompiler-Core'.
+
+IRSend >> accept: aVisitor
+[
+	^ aVisitor visitSend: self
+]
+
+IRSend >> executeOn: interpreter
+[
+	^ superOf ifNil: [ interpreter send: selector ] ifNotNil: [ interpreter send: selector toSuperOf: superOf ]
+]
+
+IRSend >> isSend
+[
+	^ true
+]
+
+IRSend >> isSuperSend
+[
+	^ superOf notNil
+]
+
+IRSend >> selector
+[
+	^ selector
+]
+
+IRSend >> selector: symbol
+[
+	selector := symbol
+]
+
+IRSend >> superOf: behavior
+[
+	superOf := behavior
+]
+

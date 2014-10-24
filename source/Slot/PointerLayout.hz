@@ -1,0 +1,242 @@
+PointerLayout
+	superclass: #ObjectLayout;
+	instanceVariables: #(#slotScope );
+	package: #Slot.
+
+PointerLayout >> = other
+[
+	^ super = other
+		ifFalse: [ false ]
+		ifTrue: [ self slotScope = other slotScope ]
+]
+
+PointerLayout >> allSlots
+[
+	^ slotScope flatten
+]
+
+PointerLayout >> allVisibleSlots
+[
+	^ slotScope allVisibleSlots
+]
+
+PointerLayout >> atName: aName
+[
+	^ slotScope atName: aName
+]
+
+PointerLayout >> atName: aName ifAbsent: aBlock
+[
+	^ slotScope atName: aName ifAbsent: aBlock
+]
+
+PointerLayout >> checkInheritedSlots
+[
+	self host superclass ifNil: [ ^ self ].
+	self host layout ifNil: [ ^ self ].
+	self
+		assert: self host superclass layout size <= self host layout size
+		description: [ self host name , ' does not inherit all slots from ' , self host superclass name ].	"check that the we have the same slots at the same indices as in the superclass"
+	self host superclass layout allSlots
+		withIndexDo: [ :slot :index | | localSlot |
+			localSlot := self host layout slotAt: index.
+			self
+				assert: slot = localSlot
+				description: [ 'Slot "' , localSlot name , '" index at position ' , index asString , ' conflicts with slot "' , slot name , '" in '
+						, self host superclass asString ] ]
+]
+
+PointerLayout >> checkIntegrity
+[
+	self
+		checkSanity;
+		checkParentScopes;
+		checkInheritedSlots
+]
+
+PointerLayout >> checkParentScopes
+[
+	| parentScope superclassScope |
+	parentScope := self slotScope parentScope.
+	self host superclass ifNil: [ ^ self ].
+	superclassScope := self host superclass layout slotScope.
+	self assert: parentScope = superclassScope description: 'Parent slot scope is out of sync'
+]
+
+PointerLayout >> checkSanity
+[
+	super checkSanity.
+	self
+		checkSlotNames;
+		checkSlotIndices
+]
+
+PointerLayout >> checkSlotIndices
+[
+	| slots current |
+	slots := slotScope flatten.
+	[ slots size > 1 ]
+		whileTrue: [ current := slots removeFirst.
+			self assert: slots first index = (current index + current size) ]
+]
+
+PointerLayout >> checkSlotNames
+[
+	| slots current |
+	slots := slotScope allVisibleSlots.
+	[ slots isEmpty ]
+		whileFalse: [ current := slots removeLast.
+			slots
+				do: [ :other | other name = current name
+						ifTrue: [ DuplicatedSlotName new
+								oldSlot: current;
+								newSlot: other;
+								host: host;
+								signal ] ] ]
+]
+
+PointerLayout >> computeChangesFrom: other in: modification
+[
+	| additions changes removals copies |
+	other hasSlots
+		ifFalse: [ ^ modification additions: self allSlots asArray ].
+	additions := self allSlots.
+	removals := OrderedCollection new.
+	copies := modification copies.
+	changes := modification changes.
+	other allSlots
+		do: [ :oldSlot | (self popSlot: oldSlot from: additions)
+				ifNil: [ removals add: oldSlot ]
+				ifNotNil: [ :newSlot | newSlot = oldSlot
+						ifTrue: [ copies at: newSlot put: oldSlot ]
+						ifFalse: [ changes at: newSlot put: oldSlot ] ] ].
+	modification
+		additions: additions asArray;
+		removals: removals asArray
+]
+
+PointerLayout >> extend
+[
+	"Answer a default layout extending me."
+
+	^ self extend: self slotScope extend
+]
+
+PointerLayout >> extend: aScope
+[
+	^ self species new slotScope: aScope
+]
+
+PointerLayout >> extendAgain: aLayout with: someScope
+[
+	| result |
+	result := aLayout copy.
+	result slotScope: someScope.
+	^ result
+]
+
+PointerLayout >> extendVariable: newScope
+[
+	^ VariableLayout new slotScope: newScope
+]
+
+PointerLayout >> extendWeak: newScope
+[
+	^ WeakLayout new slotScope: newScope
+]
+
+PointerLayout >> fieldSize
+[
+	^ slotScope fieldSize
+]
+
+PointerLayout >> hasFields
+[
+	^ slotScope hasFields
+]
+
+PointerLayout >> hasSlots
+[
+	^ slotScope hasSlots
+]
+
+PointerLayout >> hash
+[
+	^ self class hash bitXor: self slotScope hash
+]
+
+PointerLayout >> includesName: aName
+[
+	self atName: aName ifAbsent: [ ^ false ].
+	^ true
+]
+
+PointerLayout >> initializeInstance: anInstance
+[
+	self allSlotsDo: [ :slot | slot initialize: anInstance ]
+]
+
+PointerLayout >> instanceSpecification
+[
+	| base |
+	base := self instanceSpecificationBase.
+	^ self hasFields
+		ifTrue: [ base + 1 ]
+		ifFalse: [ base ]
+]
+
+PointerLayout >> instanceVariables
+[
+	^ slotScope visibleSlotNames
+]
+
+PointerLayout >> popSlot: aSlot from: collection
+[
+	collection withIndexDo: [ :slot :index | slot name == aSlot name
+				ifTrue: [ ^ collection removeAt: index ] ].
+	^ nil
+]
+
+PointerLayout >> postCopy
+[
+	slotScope := slotScope copy
+]
+
+PointerLayout >> printSlotDefinitionOn: aStream
+[
+	slotScope printSlotDefinitionOn: aStream
+]
+
+PointerLayout >> reshapeTo: aModification
+[
+	| newScope |
+	newScope := slotScope rebase: aModification originalScope to: aModification newScope.
+	^ aModification newLayout extendAgain: self with: newScope
+]
+
+PointerLayout >> resolveSlot: aName
+[
+	^ slotScope atName: aName
+]
+
+PointerLayout >> size
+[
+	^ slotScope fieldSize
+]
+
+PointerLayout >> slotAt: index
+[
+	self flag: 'clean..'.
+	^ self allSlots at: index
+]
+
+PointerLayout >> slotScope
+[
+	^ slotScope
+]
+
+PointerLayout >> slotScope: anObject
+[
+	slotScope := anObject
+]
+

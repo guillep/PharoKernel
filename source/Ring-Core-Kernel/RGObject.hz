@@ -1,0 +1,171 @@
+RGObject
+	instanceVariables: #(#annotations );
+	package: #'Ring-Core-Kernel'.
+
+RGObject >> annotationNamed: annotationName
+[
+	"Answer the value of the annotation named <annotationName>, or 
+	nil if the annotation is not defined for the receiver."
+
+	^ self annotationNamed: annotationName ifAbsent: [ nil ]
+]
+
+RGObject >> annotationNamed: annotationName ifAbsent: exceptionBlock
+[
+	"Answer the value of the annotation named <annotationName>. If the 
+	annotation is not defined for the receiver, answer the result of 
+	evaluating the <exceptionBlock>."
+
+	self hasAnnotations
+		ifFalse: [ ^ exceptionBlock value ].
+	^ self annotations at: annotationName ifAbsent: [ exceptionBlock value ]
+]
+
+RGObject >> annotationNamed: annotationName ifAbsentPut: blockValue
+[
+	^ self annotations at: annotationName ifAbsentPut: blockValue
+]
+
+RGObject >> annotationNamed: annotationName put: value
+[
+	self annotations at: annotationName put: value
+]
+
+RGObject >> annotationNames
+[
+	self hasAnnotations
+		ifFalse: [ ^ OrderedCollection new ].
+	^ annotations keys
+]
+
+RGObject >> annotations
+[
+	^ annotations ifNil: [ annotations := IdentityDictionary new ]
+]
+
+RGObject >> factory
+[
+	"Retrives the factory in charge of object creation"
+
+	^ self class factory
+]
+
+RGObject >> hasAnnotationNamed: annotationName
+[
+	"Answer <true> if the receiver contains the annotation named <annotationName>. "
+
+	self hasAnnotations
+		ifFalse: [ ^ false ].
+	^ annotations includesKey: annotationName
+]
+
+RGObject >> hasAnnotations
+[
+	^ annotations notNil
+]
+
+RGObject >> isAccess
+[
+	^ false
+]
+
+RGObject >> isAssociation
+[
+	^ false
+]
+
+RGObject >> isClass
+[
+	^ false
+]
+
+RGObject >> isComment
+[
+	^ false
+]
+
+RGObject >> isGlobalVariable
+[
+	^ false
+]
+
+RGObject >> isInheritance
+[
+	^ false
+]
+
+RGObject >> isInvocation
+[
+	^ false
+]
+
+RGObject >> isMethod
+[
+	^ false
+]
+
+RGObject >> isNamespace
+[
+	^ false
+]
+
+RGObject >> isOrganization
+[
+	^ false
+]
+
+RGObject >> isPackage
+[
+	^ false
+]
+
+RGObject >> isPool
+[
+	^ false
+]
+
+RGObject >> isReference
+[
+	^ false
+]
+
+RGObject >> isRingObject
+[
+	^ true
+]
+
+RGObject >> isSlice
+[
+	^ false
+]
+
+RGObject >> isVariable
+[
+	^ false
+]
+
+RGObject >> removeAnnotationNamed: annotationName
+[
+	"Remove the annotation named <annotationName>. Fails quietly if there 
+	is no annotation with the given name."
+
+	(self hasAnnotationNamed: annotationName)
+		ifTrue: [ annotations removeKey: annotationName ]
+]
+
+RGObject class >> factory
+[
+	"Retrives the factory in charge of object creation"
+
+	^ RGFactory current
+]
+
+RGObject class >> onEnvironment: anObject
+[
+	"no used yet"
+
+	^ self new
+		environment: anObject;
+		yourself
+]
+

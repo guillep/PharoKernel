@@ -1,0 +1,105 @@
+AbstractLayout
+	instanceVariables: #(#host );
+	package: #Slot.
+
+AbstractLayout >> = other
+[
+	^ self class = other class
+]
+
+AbstractLayout >> allSlots
+[
+	^ {}
+]
+
+AbstractLayout >> allSlotsDo: aBlock
+[
+	self slotScope allSlotsDo: aBlock
+]
+
+AbstractLayout >> allVisibleSlots
+[
+	^ {}
+]
+
+AbstractLayout >> checkIntegrity
+[
+	self checkSanity
+]
+
+AbstractLayout >> checkSanity
+[
+	host ifNil: [ self error: 'Host should not be nil' ]
+]
+
+AbstractLayout >> fieldSize
+[
+	^ 0
+]
+
+AbstractLayout >> finalize
+[
+	self allSlotsDo: [ :aSlot | aSlot finalize: self ]
+]
+
+AbstractLayout >> hasFields
+[
+	^ false
+]
+
+AbstractLayout >> hasSlots
+[
+	^ false
+]
+
+AbstractLayout >> hash
+[
+	^ self class hash
+]
+
+AbstractLayout >> host
+[
+	^ host
+]
+
+AbstractLayout >> host: aClass
+[
+	host := aClass
+]
+
+AbstractLayout >> instanceVariables
+[
+	^ {}
+]
+
+AbstractLayout >> isBits
+[
+	^ false
+]
+
+AbstractLayout >> isVariable
+[
+	^ false
+]
+
+AbstractLayout >> isWeak
+[
+	^ false
+]
+
+AbstractLayout >> printSlotDefinitionOn: aStream
+[
+	aStream << '{}'
+]
+
+AbstractLayout >> resolveSlot: aName
+[
+	self flag: 'Signal rather than error'.
+	self error: 'No slots found'
+]
+
+AbstractLayout >> slotScope
+[
+	^ LayoutEmptyScope instance
+]
+

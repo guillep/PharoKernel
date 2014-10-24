@@ -17,7 +17,9 @@ UndefinedObject >> addSubclass: aClass
 
 UndefinedObject >> allSuperclassesDo: aBlockContext
 [
-	self shouldBeImplemented
+	"Ignored -- necessary to support disjoint class hierarchies"
+
+	
 ]
 
 UndefinedObject >> asSetElement
@@ -194,17 +196,17 @@ UndefinedObject >> storeOn: aStream
 
 UndefinedObject >> subclass: nameOfClass instanceVariableNames: instVarNames classVariableNames: classVarNames poolDictionaries: poolDictnames category: category
 [
-	"Calling this method is now considered an accident.  If you really want to create a class with a nil superclass, then create the class and then set the superclass using #superclass:"
 
-	self
-		traceCr:
-			'Attempt to create ' , nameOfClass , ' as a subclass of nil.  Possibly a class is being loaded before its superclass.'.
-	^ Object
+	| class |
+	class := self classBuilder
+		superclass: self
 		subclass: nameOfClass
 		instanceVariableNames: instVarNames
 		classVariableNames: classVarNames
 		poolDictionaries: poolDictnames
-		category: category
+		category: category.
+	class ifNotNil:  [ class setTraitComposition: {} asTraitComposition ].
+	^ class
 ]
 
 UndefinedObject >> subclassDefinerClass

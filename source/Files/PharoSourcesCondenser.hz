@@ -1,0 +1,71 @@
+PharoSourcesCondenser
+	superclass: #PharoChangesCondenser;
+	package: #Files.
+
+PharoSourcesCondenser >> backupOldChanges
+[
+	super backupOldChanges.
+	self installFreshChangesFile
+]
+
+PharoSourcesCondenser >> fileIndex
+[
+	"We are working on the .sources file which has index = 1"
+
+	^ 1
+]
+
+PharoSourcesCondenser >> installFreshChangesFile
+[
+	| changesFile |
+	"install a new .changes file"
+	changesFile := Smalltalk changesFile.
+	changesFile moveTo: (changesFile , 'bak') nextVersion.	"create a fresh changes file "
+	changesFile writeStreamDo: [ :strm | strm timeStamp ]
+]
+
+PharoSourcesCondenser >> newSourceVersion: version
+[
+	"Create a new version of the .soruces file by copying the existing file to a new location"
+
+	| originalSourcesFile newSourcesFile |
+	"Create a copy with the new name"
+	originalSourcesFile := self originalFile resolve.
+	Smalltalk sourceFileVersionString: 'PharoV' , version asString.
+	newSourcesFile := Smalltalk sourcesFile.
+	originalSourcesFile copyTo: newSourcesFile.	"Use the new sources file"
+	Smalltalk openSourceFiles
+]
+
+PharoSourcesCondenser >> originalFile
+[
+	^ Smalltalk sourcesFile
+]
+
+PharoSourcesCondenser >> shouldCondenseMethod: aCompiledMethod
+[
+	"The sources condenser moves ALL method sources to a new file"
+
+	^ aCompiledMethod hasSourcePointer
+]
+
+PharoSourcesCondenser >> temporaryFile
+[
+	^ 'new.sources' asFileReference nextVersion
+]
+
+PharoSourcesCondenser >> updateQuitPosition
+[
+	"We use an empty .changes file, hence the last quit position is 0"
+
+	Smalltalk lastQuitLogPosition: 0
+]
+
+PharoSourcesCondenser class >> condenseNewSources
+[
+	| condenser |
+	condenser := self new.
+	condenser newSourceVersion: SystemVersion current major * 10.
+	condenser condense
+]
+

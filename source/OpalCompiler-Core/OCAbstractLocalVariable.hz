@@ -1,0 +1,48 @@
+OCAbstractLocalVariable
+	superclass: #OCAbstractVariable;
+	instanceVariables: #(#name #index );
+	package: #'OpalCompiler-Core'.
+
+OCAbstractLocalVariable >> index
+[
+	^ index
+]
+
+OCAbstractLocalVariable >> index: n
+[
+	index := n
+]
+
+OCAbstractLocalVariable >> isArg
+[
+	^ usage = #arg
+]
+
+OCAbstractLocalVariable >> isLocal
+[
+	^ true
+]
+
+OCAbstractLocalVariable >> isUninitialized
+[
+	usage ifNil: [ ^ true ].
+	self isArg
+		ifTrue: [ ^ false ].	"arguments are never unitialized"
+	^ self isRead
+]
+
+OCAbstractLocalVariable >> markArg
+[
+	usage := #arg
+]
+
+OCAbstractLocalVariable >> name
+[
+	^ name
+]
+
+OCAbstractLocalVariable >> name: string
+[
+	name := string
+]
+

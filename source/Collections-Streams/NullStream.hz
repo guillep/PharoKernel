@@ -1,6 +1,6 @@
 NullStream
 	superclass: #Stream;
-	instanceVariables: #(#binary #position );
+	instanceVariables: #(#binary #position #lastElement );
 	package: #'Collections-Streams'.
 
 NullStream >> ascii
@@ -40,6 +40,11 @@ NullStream >> contents
 	self shouldNotImplement
 ]
 
+NullStream >> cr
+[
+	^ self nextPut: Character cr
+]
+
 NullStream >> element
 [
 	"The element returned by the stream"
@@ -69,6 +74,11 @@ NullStream >> isEmpty
 	"Answer whether the receiver's contents has no elements."
 
 	^ false
+]
+
+NullStream >> lf
+[
+	^ self nextPut: Character lf
 ]
 
 NullStream >> next
@@ -120,6 +130,7 @@ NullStream >> next: anInteger putAll: aCollection startingAt: startIndex
 	"Store the next anInteger elements from the given collection."
 
 	position := position + anInteger.
+	lastElement := aCollection at: anInteger + startIndex - 1.
 	^ aCollection
 ]
 
@@ -147,6 +158,7 @@ NullStream >> nextPut: anObject
 	receiver. Answer anObject."
 
 	position := position + 1.
+	lastElement := anObject.
 	^ anObject
 ]
 
@@ -156,6 +168,8 @@ NullStream >> nextPutAll: aCollection
 	by the receiver. Answer aCollection."
 
 	position := position + aCollection size.
+	aCollection isEmpty
+		ifFalse: [ lastElement := aCollection last ].
 	^ aCollection
 ]
 
@@ -165,6 +179,11 @@ NullStream >> peek
 	receiver. If the receiver is at the end, answer nil."
 
 	^ self element
+]
+
+NullStream >> peekLast
+[
+	^ lastElement
 ]
 
 NullStream >> position
@@ -216,6 +235,16 @@ NullStream >> skip: anInteger
 	position+anInteger for the repositioning."
 
 	self position: position + anInteger
+]
+
+NullStream >> space
+[
+	^ self nextPut: Character space
+]
+
+NullStream >> tab
+[
+	^ self nextPut: Character tab
 ]
 
 NullStream class >> new

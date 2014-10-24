@@ -1,0 +1,32 @@
+IRInstVarAccess
+	superclass: #IRAccess;
+	instanceVariables: #(#index );
+	package: #'OpalCompiler-Core'.
+
+IRInstVarAccess >> accept: aVisitor
+[
+	^ aVisitor visitInstVarAccess: self
+]
+
+IRInstVarAccess >> executeOn: interpreter
+[
+	store
+		ifFalse: [ interpreter pushInstVar: index ]
+		ifTrue: [ interpreter storeInstVar: index ]
+]
+
+IRInstVarAccess >> index
+[
+	^ index
+]
+
+IRInstVarAccess >> index: anInteger
+[
+	index := anInteger
+]
+
+IRInstVarAccess >> isInstVarAccess
+[
+	^ true
+]
+

@@ -1,0 +1,75 @@
+OCAbstractScope
+	instanceVariables: #(#outerScope #node );
+	package: #'OpalCompiler-Core'.
+
+OCAbstractScope >> instanceScope
+[
+	^ self outerScope instanceScope
+]
+
+OCAbstractScope >> isInsideOptimizedLoop
+[
+	^ false
+]
+
+OCAbstractScope >> isInstanceScope
+[
+	^ false
+]
+
+OCAbstractScope >> isOptimizedBlockScope
+[
+	^ false
+]
+
+OCAbstractScope >> lookupSelector: name
+[
+	Symbol hasInterned: name ifTrue: [ :sym | ^ sym ].
+	^ nil
+]
+
+OCAbstractScope >> lookupVar: name
+[
+	"subclass responsibility"
+
+	^ self outerScope lookupVar: name
+]
+
+OCAbstractScope >> lookupVarForDeclaration: name
+[
+	"subclass responsibility"
+
+	^ self outerScope lookupVarForDeclaration: name
+]
+
+OCAbstractScope >> node
+[
+	^ node
+]
+
+OCAbstractScope >> node: aNode
+[
+	node := aNode
+]
+
+OCAbstractScope >> outerScope
+[
+	^ outerScope
+]
+
+OCAbstractScope >> outerScope: aSemScope
+[
+	outerScope := aSemScope
+]
+
+OCAbstractScope >> possibleSelectorsFor: string
+[
+	^ Symbol possibleSelectorsFor: string
+]
+
+OCAbstractScope >> scopeLevel
+[
+	outerScope ifNil: [ ^ 0 ].
+	^ outerScope scopeLevel + 1
+]
+

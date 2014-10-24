@@ -1,0 +1,528 @@
+RBMethodNode
+	superclass: #RBProgramNode;
+	instanceVariables: #(#scope #selector #selectorParts #body #source #arguments #pragmas #replacements #nodeReplacements #compilationContext );
+	package: #'AST-Core'.
+
+RBMethodNode >> = anObject
+[
+	self == anObject
+		ifTrue: [ ^ true ].
+	self class = anObject class
+		ifFalse: [ ^ false ].
+	(self selector = anObject selector
+		and: [ self pragmas size = anObject pragmas size and: [ self body = anObject body ] ])
+		ifFalse: [ ^ false ].
+	self arguments with: anObject arguments do: [ :first :second | first = second
+				ifFalse: [ ^ false ] ].
+	self pragmas with: anObject pragmas do: [ :first :second | first = second
+				ifFalse: [ ^ false ] ].
+	^ true
+]
+
+RBMethodNode >> acceptVisitor: aProgramNodeVisitor
+[
+	^ aProgramNodeVisitor visitMethodNode: self
+]
+
+RBMethodNode >> addNode: aNode
+[
+	^ body addNode: aNode
+]
+
+RBMethodNode >> addReplacement: aStringReplacement
+[
+	replacements ifNil: [ ^ self ].
+	replacements add: aStringReplacement
+]
+
+RBMethodNode >> addReturn
+[
+	^ body addReturn
+]
+
+RBMethodNode >> addSelfReturn
+[
+	^ body addSelfReturn
+]
+
+RBMethodNode >> allArgumentVariables
+[
+	^ self argumentNames asOrderedCollection
+		addAll: super allArgumentVariables;
+		yourself
+]
+
+RBMethodNode >> allDefinedVariables
+[
+	^ self argumentNames asOrderedCollection
+		addAll: super allDefinedVariables;
+		yourself
+]
+
+RBMethodNode >> argumentNames
+[
+	^ self arguments collect: [ :each | each name ]
+]
+
+RBMethodNode >> arguments
+[
+	^ arguments
+]
+
+RBMethodNode >> arguments: variableNodes
+[
+	arguments := variableNodes.
+	arguments do: [ :each | each parent: self ]
+]
+
+RBMethodNode >> body
+[
+	^ body
+]
+
+RBMethodNode >> body: stmtsNode
+[
+	body := stmtsNode.
+	body parent: self
+]
+
+RBMethodNode >> buildSelector
+[
+	^ (String streamContents: [ :selectorStream | selectorParts do: [ :each | selectorStream nextPutAll: each value ] ])
+		asSymbol
+]
+
+RBMethodNode >> changeSourceSelectors: oldSelectorParts arguments: oldArguments
+[
+	"If this is the same number of arguments, we try a one to one replacement of selector parts and arguments. If this is not the case try to rewrite the signature as a whole, what unfortunately drops the comments within the signature."
+
+	[ (oldSelectorParts size = selectorParts size and: [ oldArguments size = arguments size ])
+		ifTrue: [ oldSelectorParts
+				with: selectorParts
+				do: [ :old :new | self addReplacement: (RBStringReplacement replaceFrom: old start to: old stop with: new value) ].
+			oldArguments
+				with: arguments
+				do: [ :old :new | self addReplacement: (RBStringReplacement replaceFrom: old start to: old stop with: new name) ] ]
+		ifFalse: [ self
+				addReplacement:
+					(RBStringReplacement
+						replaceFrom: oldSelectorParts first start
+						to:
+							(oldArguments notEmpty
+								ifTrue: [ oldArguments last stop ]
+								ifFalse: [ oldSelectorParts last stop ])
+						with:
+							(String
+								streamContents: [ :stream | selectorParts
+										keysAndValuesDo: [ :index :part | index = 1
+												ifFalse: [ stream space ].
+											stream nextPutAll: part value.
+											index <= arguments size
+												ifTrue: [ stream
+														space;
+														nextPutAll: (arguments at: index) name ] ] ])) ] ]
+		on: Error
+		do: [ :ex | ex return ]
+]
+
+RBMethodNode >> children
+[
+	^ OrderedCollection new
+		addAll: self arguments;
+		addAll: self pragmas;
+		add: self body;
+		yourself
+]
+
+RBMethodNode >> clearReplacements
+[
+	replacements := nil
+]
+
+RBMethodNode >> compilationContext
+[
+	^ compilationContext
+]
+
+RBMethodNode >> compilationContext: aCompilationContext
+[
+	compilationContext := aCompilationContext
+]
+
+RBMethodNode >> copyInContext: aDictionary
+[
+	^ self class new
+		selectorParts: (self selectorParts collect: [ :each | each copy removePositions ]);
+		arguments: (self arguments collect: [ :each | each copyInContext: aDictionary ]);
+		pragmas:
+				(self pragmas isEmpty
+						ifTrue: [ aDictionary at: '-pragmas-' ifAbsent: [ #() ] ]
+						ifFalse: [ self copyList: self pragmas inContext: aDictionary ]);
+		body: (self body copyInContext: aDictionary);
+		source: (aDictionary at: '-source-' ifAbsentPut: [ self source ]);
+		yourself
+]
+
+RBMethodNode >> defines: aName
+[
+	^ arguments anySatisfy: [ :each | each name = aName ]
+]
+
+RBMethodNode >> equalTo: anObject withMapping: aDictionary
+[
+	self class = anObject class
+		ifFalse: [ ^ false ].
+	(self selector = anObject selector
+		and: [ self pragmas size = anObject pragmas size and: [ self body equalTo: anObject body withMapping: aDictionary ] ])
+		ifFalse: [ ^ false ].
+	self arguments
+		with: anObject arguments
+		do: [ :first :second | (first equalTo: second withMapping: aDictionary)
+				ifFalse: [ ^ false ].
+			aDictionary removeKey: first name ].
+	self pragmas
+		with: anObject pragmas
+		do: [ :first :second | (first equalTo: second withMapping: aDictionary)
+				ifFalse: [ ^ false ] ].
+	^ true
+]
+
+RBMethodNode >> firstPrecodeComment
+[
+	| sourceInterval |
+	self comments ifEmpty: [ ^ nil ].
+	sourceInterval := self comments first.
+	^ self source copyFrom: sourceInterval first to: sourceInterval last
+]
+
+RBMethodNode >> hasArgumentNamed: aString
+[
+	^ self arguments anySatisfy: [ :argument | argument name = aString ]
+]
+
+RBMethodNode >> hasPragmaNamed: aSymbol
+[
+	self pragmaNamed: aSymbol ifAbsent: [ ^ false ].
+	^ true
+]
+
+RBMethodNode >> hasTemporaryNamed: aString
+[
+	^ self temporaries anySatisfy: [ :temp | temp name = aString ]
+]
+
+RBMethodNode >> hash
+[
+	^ ((self selector hash bitXor: (self hashForCollection: self arguments)) bitXor: (self hashForCollection: self pragmas))
+		bitXor: self body hash
+]
+
+RBMethodNode >> initialize
+[
+	replacements := SortedCollection
+		sortBlock: [ :a :b | a startPosition < b startPosition or: [ a startPosition = b startPosition and: [ a stopPosition < b stopPosition ] ] ].
+	nodeReplacements := IdentityDictionary new
+]
+
+RBMethodNode >> isFaulty
+[
+	(self arguments anySatisfy: #isFaulty)
+		ifTrue: [ ^ true ].
+	(self pragmas anySatisfy: #isFaulty)
+		ifTrue: [ ^ true ].
+	^ self body isFaulty
+]
+
+RBMethodNode >> isLast: aNode
+[
+	^ body isLast: aNode
+]
+
+RBMethodNode >> isMethod
+[
+	^ true
+]
+
+RBMethodNode >> isPrimitive
+[
+	^ self pragmas anySatisfy: [ :each | each isPrimitive ]
+]
+
+RBMethodNode >> lastIsReturn
+[
+	^ body lastIsReturn
+]
+
+RBMethodNode >> map: oldNode to: newNode
+[
+	nodeReplacements at: oldNode put: newNode
+]
+
+RBMethodNode >> mappingFor: oldNode
+[
+	^ nodeReplacements at: oldNode ifAbsent: [ oldNode ]
+]
+
+RBMethodNode >> match: aNode inContext: aDictionary
+[
+	self class = aNode class
+		ifFalse: [ ^ false ].
+	aDictionary at: '-source-' put: aNode source.
+	self selector = aNode selector
+		ifFalse: [ ^ false ].
+	^ (self matchList: arguments against: aNode arguments inContext: aDictionary)
+		and: [ (self matchPragmas: self pragmas against: aNode pragmas inContext: aDictionary)
+				and: [ body match: aNode body inContext: aDictionary ] ]
+]
+
+RBMethodNode >> matchPragmas: matchNodes against: pragmaNodes inContext: aDictionary
+[
+	matchNodes isEmpty
+		ifTrue: [ aDictionary at: '-pragmas-' put: pragmaNodes.
+			^ true ].
+	^ matchNodes
+		allSatisfy: [ :matchNode | pragmaNodes anySatisfy: [ :pragmaNode | matchNode match: pragmaNode inContext: aDictionary ] ]
+]
+
+RBMethodNode >> methodClass
+[
+	^ self compilationContext getClass
+]
+
+RBMethodNode >> methodClass: aClass
+[
+	compilationContext ifNil: [ compilationContext := aClass compiler compilationContext ].
+	self compilationContext class: aClass
+]
+
+RBMethodNode >> methodComments
+[
+	| methodComments |
+	methodComments := OrderedCollection withAll: self comments.
+	arguments do: [ :each | methodComments addAll: each comments ].
+	^ methodComments asSortedCollection: [ :a :b | a first < b first ]
+]
+
+RBMethodNode >> methodNode
+[
+	^ self
+]
+
+RBMethodNode >> newSource
+[
+	replacements ifNil: [ ^ self formattedCode ].
+	^ [ self reformatSource ]
+		on: Error
+		do: [ :ex | ex return: self formattedCode ]
+]
+
+RBMethodNode >> numArgs
+[
+	^ self selector numArgs
+]
+
+RBMethodNode >> postCopy
+[
+	super postCopy.
+	self arguments: (self arguments collect: [ :each | each copy ]).
+	self pragmas: (self pragmas collect: [ :each | each copy ]).
+	self body: self body copy
+]
+
+RBMethodNode >> pragmaNamed: aSymbol
+[
+	^ self pragmaNamed: aSymbol ifAbsent: [ KeyNotFound signalFor: aSymbol ]
+]
+
+RBMethodNode >> pragmaNamed: aSymbol ifAbsent: absentBlock
+[
+	^ self pragmas detect: [ :pragma | pragma selector = aSymbol ] ifNone: absentBlock
+]
+
+RBMethodNode >> pragmas
+[
+	^ pragmas ifNil: [ #() ]
+]
+
+RBMethodNode >> pragmas: aCollection
+[
+	pragmas := aCollection.
+	pragmas do: [ :each | each parent: self ]
+]
+
+RBMethodNode >> primitiveSources
+[
+	^ self pragmas collect: [ :each | self source copyFrom: each first to: each last ]
+]
+
+RBMethodNode >> printOn: aStream
+[
+	aStream nextPutAll: self formattedCode
+]
+
+RBMethodNode >> references: aVariableName
+[
+	^ body references: aVariableName
+]
+
+RBMethodNode >> reformatSource
+[
+	| stream newSource newTree |
+	stream := WriteStream on: (String new: source size + 100).
+	stream
+		nextPutAll:
+			(source
+				copyFrom:
+					(replacements
+						inject: 1
+						into: [ :sum :each | stream
+								nextPutAll: (source copyFrom: sum to: each startPosition - 1);
+								nextPutAll: each string.
+							each stopPosition + 1 ])
+				to: source size).
+	newSource := stream contents.
+	newTree := RBParser parseMethod: newSource onError: [ :msg :pos | ^ self formattedCode ].
+	self = newTree
+		ifFalse: [ ^ self formattedCode ].
+	^ newSource
+]
+
+RBMethodNode >> renameSelector: newSelector andArguments: varNodeCollection
+[
+	| oldSelectorParts oldArguments |
+	oldSelectorParts := selectorParts.
+	oldArguments := arguments.
+	self
+		arguments: varNodeCollection;
+		selector: newSelector.
+	self changeSourceSelectors: oldSelectorParts arguments: oldArguments
+]
+
+RBMethodNode >> replaceNode: aNode withNode: anotherNode
+[
+	aNode == body
+		ifTrue: [ self body: anotherNode ].
+	self arguments: (arguments collect: [ :each | each == aNode
+						ifTrue: [ anotherNode ]
+						ifFalse: [ each ] ])
+]
+
+RBMethodNode >> scope
+[
+	^ scope
+]
+
+RBMethodNode >> scope: aScopedNode
+[
+	scope := aScopedNode
+]
+
+RBMethodNode >> selector
+[
+	^ selector ifNil: [ selector := self buildSelector ]
+]
+
+RBMethodNode >> selector: aSelector
+[
+	| keywords numArgs |
+	keywords := aSelector keywords.
+	numArgs := aSelector numArgs.
+	numArgs == arguments size
+		ifFalse: [ self error: 'Attempting to assign selector with wrong number of arguments.' ].
+	selectorParts := numArgs == 0
+		ifTrue: [ Array with: (RBIdentifierToken value: keywords first start: nil) ]
+		ifFalse: [ keywords first last = $:
+				ifTrue: [ keywords collect: [ :each | RBKeywordToken value: each start: nil ] ]
+				ifFalse: [ Array with: (RBBinarySelectorToken value: aSelector start: nil) ] ].
+	selector := aSelector asSymbol
+]
+
+RBMethodNode >> selectorParts
+[
+	^ selectorParts
+]
+
+RBMethodNode >> selectorParts: tokenCollection
+[
+	selectorParts := tokenCollection
+]
+
+RBMethodNode >> selectorParts: tokenCollection arguments: variableNodes
+[
+	selectorParts := tokenCollection.
+	self arguments: variableNodes
+]
+
+RBMethodNode >> source
+[
+	^ source
+]
+
+RBMethodNode >> source: anObject
+[
+	source := anObject
+]
+
+RBMethodNode >> sourceCode
+[
+	"compatibility to MethodNode"
+
+	^ source
+]
+
+RBMethodNode >> start
+[
+	^ 1
+]
+
+RBMethodNode >> statements
+[
+	^ self body statements
+]
+
+RBMethodNode >> statements: aCollection
+[
+	self body statements: aCollection
+]
+
+RBMethodNode >> stop
+[
+	^ source size
+]
+
+RBMethodNode >> temporaries
+[
+	^ self body temporaries
+]
+
+RBMethodNode >> temporaryNames
+[
+	^ self body temporaryNames
+]
+
+RBMethodNode >> uses: aNode
+[
+	^ body == aNode and: [ aNode lastIsReturn ]
+]
+
+RBMethodNode class >> selector: aSymbol arguments: variableNodes body: aSequenceNode
+[
+	^ self new
+		arguments: variableNodes;
+		selector: aSymbol;
+		body: aSequenceNode;
+		yourself
+]
+
+RBMethodNode class >> selector: aSymbol body: aSequenceNode
+[
+	^ self selector: aSymbol arguments: #() body: aSequenceNode
+]
+
+RBMethodNode class >> selectorParts: tokenCollection arguments: variableNodes
+[
+	^ self new
+		selectorParts: tokenCollection arguments: variableNodes;
+		yourself
+]
+

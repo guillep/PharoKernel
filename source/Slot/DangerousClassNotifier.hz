@@ -1,0 +1,66 @@
+DangerousClassNotifier
+	package: #Slot.
+
+DangerousClassNotifier class
+	instanceVariables: #(#enabled #restoreState ).
+
+DangerousClassNotifier class >> check: classSymbol
+[
+	self enabled
+		ifTrue: [ (self tooDangerousClasses includes: classSymbol)
+				ifTrue: [ self error: classSymbol name , ' cannot be changed' ].	"Check if the receiver should not be redefined"
+			(self shouldNotBeRedefined: classSymbol)
+				ifTrue: [ self notify: classSymbol asText allBold , ' should not be redefined. \Proceed to store over it.' withCRs ] ].
+	^ true	"Just to keep some tests happy"
+]
+
+DangerousClassNotifier class >> disable
+[
+	enabled := false
+]
+
+DangerousClassNotifier class >> disableForTesting
+[
+	restoreState ifNotNil: [ self error: 'Cannot nest disable for testing' ].
+	restoreState := enabled.
+	enabled := false
+]
+
+DangerousClassNotifier class >> enable
+[
+	enabled := true
+]
+
+DangerousClassNotifier class >> enabled
+[
+	^ enabled ifNil: [ enabled := false ]
+]
+
+DangerousClassNotifier class >> initialize
+[
+	enabled := true
+]
+
+DangerousClassNotifier class >> restoreAfterTesting
+[
+	restoreState ifNil: [ self error: 'Cannot nest disable for testing' ].
+	enabled := restoreState.
+	restoreState := nil
+]
+
+DangerousClassNotifier class >> shouldNotBeRedefined: classSymbol
+[
+	Smalltalk
+		at: classSymbol
+		ifPresent: [ :class | ^ (Smalltalk compactClassesArray includes: class)
+				or: [ (Smalltalk specialObjectsArray includes: class) or: [ class isKindOf: class ] ] ].
+	^ false
+]
+
+DangerousClassNotifier class >> tooDangerousClasses
+[
+	"Return a list of class names which will not be modified in the public interface"
+
+	^ #(#ProtoObject #Object #InstructionStream #ContextPart #MethodContext #BlockClosure #Collection #SequenceableCollection #ArrayedCollection #Array #Bitmap #String #Symbol #ByteArray #CompiledMethod #Magnitude #Number #SmallInteger #Float #Boolean #True #False #LookupKey #Association #Link #Point #Rectangle #Behavior #PositionableStream #UndefinedObject)	"Object will break immediately"	"Contexts and their superclasses"	"Superclasses of basic collections"	"Collections known to the VM"	"Basic Numbers and logic"	"Misc other"
+]
+

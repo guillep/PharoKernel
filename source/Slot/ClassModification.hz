@@ -1,0 +1,220 @@
+ClassModification
+	superclass: #AbstractClassModification;
+	instanceVariables: #(#ownSlotStart #superclass #additions #removals #changes #subclassSlotOffset #slotShift #methodModification #copies #traitComposition #sharedVariables #sharedPools );
+	package: #Slot.
+
+ClassModification >> additions: aCollection
+[
+	additions := aCollection
+]
+
+ClassModification >> buildModificationMapFor: aModification
+[
+	aModification slotShift: (ShiftedField new shift: slotShift).
+	aModification size = 0
+		ifTrue: [ ^ aModification ].
+	additions do: [ :slot | self installSlotAddition: slot on: aModification ].
+	changes keysAndValuesDo: [ :newSlot :oldSlot | self installSlotChangeFrom: oldSlot to: newSlot on: aModification ].
+	removals do: [ :slot | self installSlotRemoval: slot on: aModification ].
+	copies keysAndValuesDo: [ :newSlot :oldSlot | self installSlotCopiedFrom: oldSlot to: newSlot on: aModification ].
+	^ aModification
+]
+
+ClassModification >> changes
+[
+	^ changes
+]
+
+ClassModification >> computeChange
+[
+	super computeChange.
+	layout computeChangesFrom: target layout in: self.
+	slotShift := layout fieldSize - target layout fieldSize.
+	self propagate
+]
+
+ClassModification >> copies
+[
+	^ copies
+]
+
+ClassModification >> initialize
+[
+	super initialize.
+	changes := IdentityDictionary new.
+	copies := IdentityDictionary new.
+	removals := {}.
+	additions := {}
+]
+
+ClassModification >> installSlotAddition: slot on: aModification
+[
+	0 to: slot size - 1 do: [ :idx | (AddedField new
+			newSlot: slot;
+			fieldIndex: idx) installOn: aModification ]
+]
+
+ClassModification >> installSlotChangeFrom: oldSlot to: newSlot on: aModification
+[
+	0 to: newSlot size - 1 do: [ :idx | (ModifiedField new
+			newSlot: newSlot;
+			originalSlot: oldSlot;
+			fieldIndex: idx) installOn: aModification ]
+]
+
+ClassModification >> installSlotCopiedFrom: oldSlot to: newSlot on: aModification
+[
+	0 to: newSlot size - 1 do: [ :idx | (UnmodifiedField new
+			slot: newSlot;
+			fieldIndex: idx) installOn: aModification ]
+]
+
+ClassModification >> installSlotRemoval: slot on: aModification
+[
+	0 to: slot size - 1 do: [ :idx | (RemovedField new
+			originalSlot: slot;
+			fieldIndex: idx) installOn: aModification ]
+]
+
+ClassModification >> instanceModification
+[
+	| map |
+	map := InstanceModification new: layout fieldSize.
+	^ self buildModificationMapFor: map
+]
+
+ClassModification >> isPropagation
+[
+	^ false
+]
+
+ClassModification >> layoutClass: layoutClass slots: slotArray compactClassIndex: compactClassIndex
+[
+	| parentLayout newScope newLayout |
+	parentLayout := self superLayout.
+	newScope := parentLayout slotScope extend: slotArray.
+	newLayout := layoutClass extending: parentLayout scope: newScope host: self target.
+	newLayout compactClassIndex: compactClassIndex.
+	self layout: newLayout
+]
+
+ClassModification >> methodModification
+[
+	^ methodModification
+		ifNil: [ methodModification := MethodModification new: target layout fieldSize.
+			self buildModificationMapFor: methodModification ]
+]
+
+ClassModification >> modifiesFormat
+[
+	^ (layout format = target layout format) not
+]
+
+ClassModification >> modifiesSharedPools
+[
+	^ (target sharedPoolsString = sharedPools) not
+]
+
+ClassModification >> modifiesSharedVariables
+[
+	"Note: The meta class has the same shared variables as it's non-meta class"
+
+	^ target isInstanceSide and: [ (target classVariablesString = sharedVariables) not ]
+]
+
+ClassModification >> modifiesSlots
+[
+	^ (changes isEmpty and: [ removals isEmpty and: [ additions isEmpty ] ]) not
+]
+
+ClassModification >> modifiesSuperclass
+[
+	^ (target superclass == superclass) not
+]
+
+ClassModification >> newScope
+[
+	^ layout slotScope
+]
+
+ClassModification >> originalScope
+[
+	^ target layout slotScope
+]
+
+ClassModification >> removals: aCollection
+[
+	removals := aCollection
+]
+
+ClassModification >> sharedPools
+[
+	^ sharedPools
+]
+
+ClassModification >> sharedPools: anObject
+[
+	sharedPools := anObject
+]
+
+ClassModification >> sharedVariables
+[
+	^ sharedVariables
+]
+
+ClassModification >> sharedVariables: anObject
+[
+	sharedVariables := anObject
+]
+
+ClassModification >> slotShift
+[
+	^ slotShift
+]
+
+ClassModification >> subclassSlotOffset
+[
+	^ subclassSlotOffset
+]
+
+ClassModification >> superLayout
+[
+	^ superclass ifNil: [ EmptyLayout instance ] ifNotNil: [ superclass layout ]
+]
+
+ClassModification >> superclass
+[
+	^ superclass
+]
+
+ClassModification >> superclass: aClass
+[
+	superclass := aClass
+]
+
+ClassModification >> traitComposition
+[
+	^ traitComposition
+]
+
+ClassModification >> traitComposition: aTraitComposition
+[
+	" We copy the trait composition since we might want "
+
+	" to update the slot indices if the composition is partly stateful "
+
+	traitComposition := aTraitComposition copyTraitExpression
+]
+
+ClassModification class >> modify: aClass extend: aSuperclass withLayoutType: layoutClass slots: someSlots sharedVariables: someSharedVariables sharedPools: someSharedPools traitComposition: aTraitComposition compactClassIndex: compactClassIndex
+[
+	^ self new
+		target: aClass;
+		superclass: aSuperclass;
+		traitComposition: aTraitComposition;
+		sharedVariables: someSharedVariables;
+		sharedPools: someSharedPools;
+		layoutClass: layoutClass slots: someSlots compactClassIndex: compactClassIndex;
+		yourself
+]
+

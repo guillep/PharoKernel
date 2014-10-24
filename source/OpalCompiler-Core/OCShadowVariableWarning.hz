@@ -1,0 +1,53 @@
+OCShadowVariableWarning
+	superclass: #OCSemanticWarning;
+	instanceVariables: #(#shadowedVar );
+	package: #'OpalCompiler-Core'.
+
+OCShadowVariableWarning >> defaultAction
+[
+	^ self resume: (self variable: self node shadows: self shadowedVar)
+]
+
+OCShadowVariableWarning >> node: aVariableNode
+[
+	super node: aVariableNode.
+	messageText := 'Temp shadows: ' , aVariableNode name
+]
+
+OCShadowVariableWarning >> openMenuIn: aBlock
+[
+	self error: 'should not be called'
+]
+
+OCShadowVariableWarning >> shadowedVar
+[
+	^ shadowedVar
+]
+
+OCShadowVariableWarning >> shadowedVar: aVar
+[
+	shadowedVar := aVar
+]
+
+OCShadowVariableWarning >> stringMessage
+[
+	^ 'Name already defined'
+]
+
+OCShadowVariableWarning >> variable: varNode shadows: semVar
+[
+	self interactive
+		ifTrue: [ OCSemanticError new
+				node: node;
+				compilationContext: compilationContext;
+				messageText: self stringMessage;
+				signal ]
+		ifFalse: [ Transcript
+				cr;
+				show: self methodClass name , '>>' , varNode methodNode selector;
+				show: '(';
+				show: varNode name;
+				show: ' is shadowed)';
+				yourself ]
+]
+

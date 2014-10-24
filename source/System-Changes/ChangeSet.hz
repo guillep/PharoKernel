@@ -1,0 +1,1621 @@
+ChangeSet
+	instanceVariables: #(#name #preamble #postscript #changeRecords );
+	classVariables: #(#DefaultChangeSetDirectoryName #AllChangeSets #MustCheckForSlips );
+	package: #'System-Changes'.
+
+ChangeSet class
+	instanceVariables: #(#current ).
+
+ChangeSet >> absorbClass: className from: otherChangeSet
+[
+	"Absorb into the receiver all the changes found in the class in the other change set.
+	*** Classes renamed in otherChangeSet may have problems"
+
+	(self changeRecorderFor: className) assimilateAllChangesIn: (otherChangeSet changeRecorderFor: className)
+]
+
+ChangeSet >> absorbMethod: selector class: aClass from: aChangeSet
+[
+	"Absorb into the receiver all the changes for the method in the class in the other change set."
+
+	| info |
+	info := aChangeSet methodChanges at: aClass name ifAbsent: [ Dictionary new ].
+	self atSelector: selector class: aClass put: (info at: selector)
+]
+
+ChangeSet >> addClass: class
+[
+	"Include indication that a new class was created."
+
+	class wantsChangeSetLogging
+		ifFalse: [ ^ self ].
+	self atClass: class add: #new.
+	self atClass: class add: #change.
+	self addCoherency: class name
+]
+
+ChangeSet >> addCoherency: className
+[
+	"SqR! 19980923: If I recreate the class then don't remove it"
+
+	(self changeRecorderFor: className) checkCoherence	"	classRemoves remove: className ifAbsent: [].	(classChanges includesKey: className) ifTrue:		[(classChanges at: className) remove: #remove ifAbsent: []]"
+]
+
+ChangeSet >> adoptSelector: aSelector forClass: aClass
+[
+	"Adopt the given selector/class combination as a change in the receiver"
+
+	self
+		noteNewMethod: (aClass methodDict at: aSelector)
+		forClass: aClass
+		selector: aSelector
+		priorMethod: nil
+]
+
+ChangeSet >> assimilateAllChangesFoundIn: otherChangeSet
+[
+	"Make all changes in otherChangeSet take effect on self as if they happened just now."
+
+	otherChangeSet changedClassNames do: [ :className | self absorbClass: className from: otherChangeSet ]
+]
+
+ChangeSet >> assurePostscriptExists
+[
+	"Make sure there is a StringHolder holding the postscript.  "
+
+	"NOTE: FileIn recognizes the postscript by the line with Postscript: on it"
+
+	postscript
+		ifNil: [ 
+			postscript := '"Postscript:Leave the line above, and replace the rest of this comment by a useful one.Executable statements should follow this comment, and shouldbe separated by periods, with no exclamation points (!).Be sure to put any further comments in double-quotes, like this one."' ]
+]
+
+ChangeSet >> assurePreambleExists
+[
+	"Make sure there is a StringHolder holding the preamble; if it's found to have reverted to empty contents, put up the template"
+
+	preamble isEmptyOrNil
+		ifTrue: [ preamble := self preambleTemplate ]
+]
+
+ChangeSet >> atClass: class add: changeType
+[
+	(self changeRecorderFor: class) noteChangeType: changeType fromClass: class
+]
+
+ChangeSet >> atClass: class includes: changeType
+[
+	^ (changeRecords at: class name ifAbsent: [ ^ false ]) includesChangeType: changeType
+]
+
+ChangeSet >> atSelector: selector class: class
+[
+	^ (changeRecords at: class name ifAbsent: [ ^ #none ]) atSelector: selector ifAbsent: [ ^ #none ]
+]
+
+ChangeSet >> atSelector: selector class: class put: changeType
+[
+	(self changeRecorderFor: class) atSelector: selector put: changeType
+]
+
+ChangeSet >> author
+[
+	| author |
+	self assurePreambleExists.
+	author := self preambleString lineNumber: 3.
+	author := author copyFrom: 8 to: author size.	"Strip the 'Author:' prefix. Ugly ugly."
+	^ author trimBoth
+]
+
+ChangeSet >> changeClass: class from: oldClass
+[
+	"Remember that a class definition has been changed.  Record the original structure, so that a conversion method can be built."
+
+	class wantsChangeSetLogging
+		ifFalse: [ ^ self ].
+	class isMeta
+		ifFalse: [ self atClass: class add: #change ]
+		ifTrue: [ 
+			((self classChangeAt: class theNonMetaClass name) includes: #add)
+				ifTrue: [ self atClass: class add: #add ]
+				ifFalse: [ self atClass: class add: #change ]	"When a class is defined, the metaclass				is not recorded, even though it was added.  A further change is				really just part of the original add." ].	"normal"
+	self addCoherency: class name.
+	(self changeRecorderFor: class) notePriorDefinition: oldClass
+]
+
+ChangeSet >> changeRecorderFor: class
+[
+	| cname |
+	class isString
+		ifTrue: [ cname := class ]
+		ifFalse: [ cname := class name ].	"Later this will init the changeRecords so according to whether they should be revertable."
+	^ changeRecords at: cname ifAbsent: [ ^ changeRecords at: cname put: (ClassChangeRecord new initFor: cname) ]
+]
+
+ChangeSet >> changedClassNames
+[
+	"Answer a OrderedCollection of the names of changed or edited classes.
+	DOES include removed classes.  Sort alphabetically."
+
+	^ changeRecords keysSortedSafely
+]
+
+ChangeSet >> changedClasses
+[
+	"Answer an OrderedCollection of changed or edited classes.
+	Does not include removed classes.  Sort alphabetically by name."
+
+	"Much faster to sort names first, then convert back to classes.  Because metaclasses reconstruct their name at every comparison in the sorted collection.
+	8/91 sw chgd to filter out non-existent classes (triggered by problems with class-renames"
+
+	^ self changedClassNames
+		collect: [ :className | Smalltalk globals classNamed: className ]
+		thenSelect: [ :aClass | aClass notNil ]
+]
+
+ChangeSet >> changedMessageList
+[
+	"Used by a message set browser to access the list view information."
+
+	| messageList |
+	messageList := OrderedCollection new.
+	changeRecords
+		associationsDo: [ :clAssoc | | className classIsMeta |
+			className := clAssoc key asSymbol.
+			classIsMeta := (className findTokens: ' ') size > 1.
+			(clAssoc value allChangeTypes includes: #comment)
+				ifTrue: [ messageList add: (RGCommentDefinition new parentName: className) asActive ].
+			clAssoc value methodChangeTypes
+				associationsDo: [ :mAssoc | (#(#remove #addedThenRemoved) includes: mAssoc value)
+						ifFalse: [ messageList
+								add:
+									((RGMethodDefinition named: mAssoc key)
+										parentName: className;
+										isMetaSide: classIsMeta) asActive ] ] ].
+	^ messageList asArray sort
+]
+
+ChangeSet >> checkForSlips
+[
+	"Return a collection of method refs with possible debugging code in them."
+
+	| slips |
+	slips := OrderedCollection new.
+	self changedClasses
+		do: [ :aClass | (self methodChangesAtClass: aClass name)
+				associationsDo: [ :mAssoc | | method |
+					(#(#remove #addedThenRemoved) includes: mAssoc value)
+						ifFalse: [ method := aClass compiledMethodAt: mAssoc key ifAbsent: [ nil ].
+							method
+								ifNotNil: [ method hasReportableSlip
+										ifTrue: [ slips add: (aClass >> mAssoc key) methodReference ] ] ] ] ].
+	^ slips
+]
+
+ChangeSet >> checkForUnclassifiedMethods
+[
+	"Open a message list browser on all methods in the current change set that have not been categorized,"
+
+	| aList |
+	(aList := self methodsWithoutClassifications) size > 0
+		ifFalse: [ 
+			^ self
+				inform:
+					'All methods in "' , self name
+						,
+							'"are categorized.' ]
+		ifTrue: [ self systemNavigation browseMessageList: aList name: 'methods in "' , self name , '" which have not been categorized' ]
+]
+
+ChangeSet >> checkForUncommentedMethods
+[
+	| aList |
+	"Check to see if there are any methods in the receiver that have no comments, and open a browser on all found"
+	(aList := self methodsWithoutComments) size > 0
+		ifFalse: [ ^ self inform: 'All methods in "' , self name , '" have comments' ]
+		ifTrue: [ self systemNavigation browseMessageList: aList name: 'methods in "' , self name , '" that lack comments' ]
+]
+
+ChangeSet >> checkForUnsentMessages
+[
+	"Check the change set for unsent messages, and if any are found, open 
+	up a message-list browser on them"
+
+	| nameLine allChangedSelectors augList unsent |
+	nameLine := '"' , self name , '"'.
+	allChangedSelectors := Set new.
+	(augList := self changedMessageList)
+		do: [ :each | each isValid
+				ifTrue: [ allChangedSelectors add: each selector ] ].
+	unsent := self systemNavigation allUnsentMessagesIn: allChangedSelectors.
+	unsent size = 0
+		ifTrue: [ 
+			^ self
+				inform:
+					'There are no unsent messages in change set' , nameLine ].
+	self systemNavigation
+		browseMessageList: (augList select: [ :each | unsent includes: each selector ])
+		name: 'Unsent messages in ' , nameLine
+]
+
+ChangeSet >> classAdded: anEvent
+[
+	self addClass: anEvent classAdded
+]
+
+ChangeSet >> classChangeAt: className
+[
+	"Return what we know about class changes to this class."
+
+	^ (changeRecords at: className ifAbsent: [ ^ Set new ]) allChangeTypes
+]
+
+ChangeSet >> classCommented: anEvent
+[
+	self commentClass: anEvent classCommented
+]
+
+ChangeSet >> classModified: anEvent
+[
+	self changeClass: anEvent newClassDefinition from: anEvent oldClassDefinition
+]
+
+ChangeSet >> classRecategorized: anEvent
+[
+	self changeClass: anEvent classRecategorized from: anEvent classRecategorized
+]
+
+ChangeSet >> classRemoved: anEvent
+[
+	self noteRemovalOf: anEvent classRemoved
+]
+
+ChangeSet >> classRemoves
+[
+	^ changeRecords keys select: [ :className | (changeRecords at: className) isClassRemoval ]
+]
+
+ChangeSet >> classRenamed: anEvent
+[
+	self renameClass: anEvent classRenamed from: anEvent oldName to: anEvent newName
+]
+
+ChangeSet >> classReorganized: anEvent
+[
+	self reorganizeClass: anEvent classReorganized
+]
+
+ChangeSet >> clear
+[
+	"Reset the receiver to be empty.  "
+
+	changeRecords := Dictionary new.
+	preamble := nil.
+	postscript := nil
+]
+
+ChangeSet >> commentClass: class
+[
+	"Include indication that a class comment has been changed."
+
+	class wantsChangeSetLogging
+		ifFalse: [ ^ self ].
+	self atClass: class add: #comment
+]
+
+ChangeSet >> containsClass: aClass
+[
+	^ self changedClasses includes: aClass
+]
+
+ChangeSet >> defaultChangeSetDirectory
+[
+	^ self class defaultChangeSetDirectory
+]
+
+ChangeSet >> editPostscript
+[
+	"edit the receiver's postscript, in a separate window.  "
+
+	self assurePostscriptExists.
+	UIManager default
+		edit: self postscript
+		label: 'Postscript for ChangeSet named ' , name
+		accept: [ :aString | self postscript: aString ]
+]
+
+ChangeSet >> editPreamble
+[
+	"edit the receiver's preamble, in a separate window.  "
+
+	self assurePreambleExists.
+	UIManager default
+		edit: self preamble
+		label: 'Preamble for ChangeSet named ' , name
+		accept: [ :aString | self preamble: aString ]
+]
+
+ChangeSet >> expungeEmptyClassChangeEntries
+[
+	changeRecords keysAndValuesRemove: [ :className :classRecord | classRecord hasNoChanges ]
+]
+
+ChangeSet >> fatDefForClass: class
+[
+	| newDef oldDef oldStrm newStrm outStrm oldVars newVars addedVars |
+	class isBehavior
+		ifFalse: [ ^ class definition ].
+	newDef := class definition.
+	oldDef := (self changeRecorderFor: class) priorDefinition.
+	oldDef ifNil: [ ^ newDef ].
+	oldDef = newDef
+		ifTrue: [ ^ newDef ].
+	oldStrm := oldDef readStream.
+	newStrm := newDef readStream.
+	outStrm := (String new: newDef size * 2) writeStream.	"Merge inst vars from old and new defs..."
+	oldStrm
+		upToAll: 'instanceVariableNames';
+		upTo: $'.
+	outStrm
+		nextPutAll: (newStrm upToAll: 'instanceVariableNames');
+		nextPutAll: 'instanceVariableNames:'.
+	newStrm peek = $:
+		ifTrue: [ newStrm next ].	"may or may not be there, but already written"
+	outStrm
+		nextPutAll: (newStrm upTo: $');
+		nextPut: $'.
+	oldVars := (oldStrm upTo: $') findTokens: Character separators.
+	newVars := (newStrm upTo: $') findTokens: Character separators.
+	addedVars := oldVars asSet
+		addAll: newVars;
+		removeAll: oldVars;
+		asOrderedCollection.
+	oldVars , addedVars do: [ :var | outStrm
+				nextPutAll: var;
+				space ].
+	outStrm nextPut: $'.
+	class isMeta
+		ifFalse: [ "Merge class vars from old and new defs..."
+			oldStrm
+				upToAll: 'classVariableNames:';
+				upTo: $'.
+			outStrm
+				nextPutAll: (newStrm upToAll: 'classVariableNames:');
+				nextPutAll: 'classVariableNames:';
+				nextPutAll: (newStrm upTo: $');
+				nextPut: $'.
+			oldVars := (oldStrm upTo: $') findTokens: Character separators.
+			newVars := (newStrm upTo: $') findTokens: Character separators.
+			addedVars := oldVars asSet
+				addAll: newVars;
+				removeAll: oldVars;
+				asOrderedCollection.
+			oldVars , addedVars do: [ :var | outStrm
+						nextPutAll: var;
+						space ].
+			outStrm nextPut: $' ].
+	outStrm nextPutAll: newStrm upToEnd.
+	^ outStrm contents
+]
+
+ChangeSet >> fileOut
+[
+	"File out the receiver, to a file whose name is a function of the  
+	change-set name and a unique numeric tag."
+
+	| slips nameToUse |
+	ChangeSet promptForDefaultChangeSetDirectoryIfNecessary.
+	nameToUse := (self defaultChangeSetDirectory / self name , 'cs') nextVersion basename.
+	Cursor write
+		showWhile: [ | internalStream |
+			internalStream := (String new: 10000) writeStream.
+			internalStream
+				header;
+				timeStamp.
+			self fileOutPreambleOn: internalStream.
+			self fileOutOn: internalStream.
+			self fileOutPostscriptOn: internalStream.
+			internalStream trailer.
+			FileStream writeSourceCodeFrom: internalStream baseName: (nameToUse copyFrom: 1 to: nameToUse size - 3) isSt: false ].
+	self class mustCheckForSlips
+		ifFalse: [ ^ self ].
+	slips := self checkForSlips.
+	(slips size > 0
+		and: [ 
+			self
+				confirm:
+					'Methods in this fileOut have haltsor references to the Transcriptor other ''slips'' in them.Would you like to browse them?' translated ])
+		ifTrue: [ self systemNavigation browseMessageList: slips name: 'Possible slips in ' , name ]
+]
+
+ChangeSet >> fileOutChangesFor: class on: stream
+[
+	"Write out all the method changes for this class."
+
+	| changes |
+	changes := Set new.
+	(self methodChangesAtClass: class name)
+		associationsDo: [ :mAssoc | (mAssoc value = #remove or: [ mAssoc value = #addedThenRemoved ])
+				ifFalse: [ changes add: mAssoc key ] ].
+	changes isEmpty
+		ifFalse: [ class fileOutChangedMessages: changes on: stream.
+			stream cr ]
+]
+
+ChangeSet >> fileOutClassDefinition: class on: stream
+[
+	"Write out class definition for the given class on the given stream, if the class definition was added or changed."
+
+	(self atClass: class includes: #rename)
+		ifTrue: [ stream
+				nextChunkPut: 'Smalltalk renameClassNamed: #' , (self oldNameFor: class) , ' as: #' , class name;
+				cr ].
+	(self atClass: class includes: #change)
+		ifTrue: [ 
+			"fat definition only needed for changes"
+			stream
+				nextChunkPut: (self fatDefForClass: class);
+				cr.
+			DeepCopier new checkClass: class	"If veryDeepCopy weakly copies some inst 			vars in this class, warn author when new ones are added." ]
+		ifFalse: [ 
+			(self atClass: class includes: #add)
+				ifTrue: [ 
+					"use current definition for add"
+					stream
+						nextChunkPut: class definition;
+						cr.
+					DeepCopier new checkClass: class	"If veryDeepCopy weakly copies some inst 				vars in this class, warn author when new ones are added." ] ].
+	(self atClass: class includes: #comment)
+		ifTrue: [ class theNonMetaClass organization
+				putCommentOnFile: stream
+				numbered: 0
+				moveSource: false
+				forClass: class theNonMetaClass.
+			stream cr ]
+]
+
+ChangeSet >> fileOutOn: stream
+[
+	"Write out all the changes the receiver knows about"
+
+	| classList traits classes traitList list |
+	(self isEmpty and: [ stream isKindOf: FileStream ])
+		ifTrue: [ self inform: 'Warning: no changes to file out' ].
+	traits := self changedClasses reject: [ :each | each isBehavior ].
+	classes := self changedClasses select: [ :each | each isBehavior ].
+	traitList := self class traitsOrder: traits asOrderedCollection.
+	classList := self class classesOrder: classes asOrderedCollection.
+	list := OrderedCollection new
+		addAll: traitList;
+		addAll: classList;
+		yourself.	"First put out rename, max classDef and comment changes."
+	list do: [ :aClass | self fileOutClassDefinition: aClass on: stream ].	"Then put out all the method changes"
+	list do: [ :aClass | self fileOutChangesFor: aClass on: stream ].	"Finally put out removals, final class defs and reorganization if any"
+	list reverseDo: [ :aClass | self fileOutPSFor: aClass on: stream ].
+	self classRemoves asSortedCollection
+		do: [ :aClassName | stream
+				nextChunkPut: 'Smalltalk removeClassNamed: #' , aClassName;
+				cr ]
+]
+
+ChangeSet >> fileOutPSFor: class on: stream
+[
+	"Write out removals and initialization for this class."
+
+	| dict classRecord currentDef |
+	classRecord := changeRecords at: class name ifAbsent: [ ^ self ].
+	dict := classRecord methodChangeTypes.
+	dict keysSortedSafely
+		do: [ :key | | changeType |
+			changeType := dict at: key.
+			(#(#remove #addedThenRemoved) includes: changeType)
+				ifTrue: [ stream
+						nextChunkPut: class name , ' removeSelector: ' , key storeString;
+						cr ]
+				ifFalse: [ (key = #initialize and: [ class isMeta ])
+						ifTrue: [ stream
+								nextChunkPut: class soleInstance name , ' initialize';
+								cr ] ] ].
+	((classRecord includesChangeType: #change) and: [ (currentDef := class definition) ~= (self fatDefForClass: class) ])
+		ifTrue: [ stream
+				nextChunkPut: currentDef;
+				cr ].
+	(classRecord includesChangeType: #reorganize)
+		ifTrue: [ class fileOutOrganizationOn: stream.
+			stream cr ]
+]
+
+ChangeSet >> fileOutPostscriptOn: stream
+[
+	"If the receiver has a postscript, put it out onto the stream.  "
+
+	| aString |
+	aString := self postscriptString.
+	(aString notNil and: [ aString size > 0 ])
+		ifTrue: [ stream nextChunkPut: aString.	"surroundedBySingleQuotes"
+			stream
+				cr;
+				cr ]
+]
+
+ChangeSet >> fileOutPreambleOn: stream
+[
+	"If the receiver has a preamble, put it out onto the stream.  "
+
+	| aString |
+	aString := self preambleString.
+	(aString notNil and: [ aString size > 0 ])
+		ifTrue: [ stream nextChunkPut: aString.	"surroundedBySingleQuotes"
+			stream
+				cr;
+				cr ]
+]
+
+ChangeSet >> forgetAllChangesFoundIn: otherChangeSet
+[
+	"Remove from the receiver all method changes found in aChangeSet. The intention is facilitate the process of factoring a large set of changes into disjoint change sets.  To use:  in a change sorter, copy over all the changes you want into some new change set, then use the subtract-other-side feature to subtract those changes from the larger change set, and continue in this manner."
+
+	otherChangeSet == self
+		ifTrue: [ ^ self ].
+	otherChangeSet changedClassNames do: [ :className | self forgetChangesForClass: className in: otherChangeSet ].
+	self expungeEmptyClassChangeEntries
+]
+
+ChangeSet >> forgetChangesForClass: className in: otherChangeSet
+[
+	"See forgetAllChangesFoundIn:.  Used in culling changeSets."
+
+	(self changeRecorderFor: className) forgetChangesIn: (otherChangeSet changeRecorderFor: className)
+]
+
+ChangeSet >> hasAnyChangeForSelector: aSelector
+[
+	"Answer whether the receiver has any change under the given selector, whether it be add, change, or remove, for any class"
+
+	changeRecords do: [ :aRecord | (aRecord changedSelectors includes: aSelector)
+				ifTrue: [ ^ true ] ].
+	^ false
+]
+
+ChangeSet >> hasPostscript
+[
+	^ postscript notNil
+]
+
+ChangeSet >> hasPreamble
+[
+	^ preamble notNil
+]
+
+ChangeSet >> initialize
+[
+	"Initialize the receiver to be empty."
+
+	super initialize.
+	name ifNil: [ ^ self error: 'All changeSets must be registered, as in ChangeSorter newChangeSet' ].
+	self clear
+]
+
+ChangeSet >> isEmpty
+[
+	"Answer whether the receiver contains any elements."
+
+	changeRecords ifNil: [ ^ true ].
+	^ changeRecords isEmpty
+]
+
+ChangeSet >> isMoribund
+[
+	"Answer whether the receiver is obsolete and about to die; part of an effort to get such guys cleared out from the change sorter."
+
+	^ name isNil
+]
+
+ChangeSet >> isNumbered
+[
+	"Answer whether a change set is numbered"
+
+	^ self name startsWithDigit
+]
+
+ChangeSet >> lookForSlips
+[
+	"Scan the receiver for changes that the user may regard as slips to be remedied"
+
+	| slips nameLine msg |
+	nameLine := '"' , self name
+		,
+			'"'.
+	(slips := self checkForSlips) size = 0
+		ifTrue: [ ^ self inform: 'No slips detected in change set' , nameLine ].
+	msg := slips size = 1
+		ifTrue: [ 
+			'One method in change set' , nameLine
+				,
+					'has a halt, reference to the Transcript,and/or some other ''slip'' in it.Would you like to browse it? ?' ]
+		ifFalse: [ 
+			slips size printString , ' methods in change set' , nameLine
+				,
+					'have halts or references to theTranscript or other ''slips'' in them.Would you like to browse them?' ].
+	(UIManager default chooseFrom: #('Ignore' 'Browse slips') title: msg) = 2
+		ifTrue: [ self systemNavigation browseMessageList: slips name: 'Possible slips in ' , name ]
+]
+
+ChangeSet >> methodAdded: anEvent
+[
+	self
+		noteNewMethod: anEvent method
+		forClass: anEvent methodClass
+		selector: anEvent selector
+		priorMethod: nil
+]
+
+ChangeSet >> methodChanges
+[
+	| methodChangeDict |
+	methodChangeDict := Dictionary new.
+	changeRecords
+		associationsDo: [ :assn | | changeTypes |
+			changeTypes := assn value methodChangeTypes.
+			changeTypes isEmpty
+				ifFalse: [ methodChangeDict at: assn key put: changeTypes ] ].
+	^ methodChangeDict
+]
+
+ChangeSet >> methodChangesAtClass: className
+[
+	"Return an old-style dictionary of method change types."
+
+	^ (changeRecords at: className ifAbsent: [ ^ Dictionary new ]) methodChangeTypes
+]
+
+ChangeSet >> methodModified: anEvent
+[
+	self
+		noteNewMethod: anEvent newMethod
+		forClass: anEvent methodClass
+		selector: anEvent selector
+		priorMethod: anEvent oldMethod
+]
+
+ChangeSet >> methodRecategorized: anEvent
+[
+	self reorganizeClass: anEvent methodClass
+]
+
+ChangeSet >> methodRemoved: anEvent
+[
+	self
+		removeSelector: anEvent selector
+		class: anEvent methodClass
+		priorMethod: anEvent methodRemoved
+		lastMethodInfo: {(anEvent methodRemoved sourcePointer).
+			(anEvent protocol)}
+]
+
+ChangeSet >> methodsWithInitialsOtherThan: myInits
+[
+	"Return a collection of method refs whose author appears to be different from the given one"
+
+	| slips |
+	slips := OrderedCollection new.
+	self changedClasses
+		do: [ :aClass | (self methodChangesAtClass: aClass name)
+				associationsDo: [ :mAssoc | | method aTimeStamp |
+					(#(#remove #addedThenRemoved) includes: mAssoc value)
+						ifFalse: [ method := aClass compiledMethodAt: mAssoc key ifAbsent: [ nil ].
+							method
+								ifNotNil: [ ((aTimeStamp := method timeStamp) notNil and: [ (aTimeStamp beginsWith: myInits) not ])
+										ifTrue: [ slips add: aClass name , ' ' , mAssoc key ] ] ] ] ].
+	^ slips	"Smalltalk browseMessageList: (ChangeSet current methodsWithInitialsOtherThan: 'sw') name: 'authoring problems'"
+]
+
+ChangeSet >> methodsWithoutClassifications
+[
+	"Return a collection representing methods in the receiver which have not been categorized"
+
+	| slips notClassified |
+	notClassified := {('as yet unclassified' asSymbol).
+	#all}.
+	slips := OrderedCollection new.
+	self changedClasses
+		do: [ :aClass | (self methodChangesAtClass: aClass name)
+				associationsDo: [ :mAssoc | | aSelector |
+					(aClass includesSelector: (aSelector := mAssoc key))
+						ifTrue: [ (notClassified includes: (aClass organization categoryOfElement: aSelector))
+								ifTrue: [ slips add: aClass name , ' ' , aSelector ] ] ] ].
+	^ slips	"Smalltalk browseMessageList: (ChangeSet current methodsWithoutClassifications) name: 'unclassified methods'"
+]
+
+ChangeSet >> methodsWithoutComments
+[
+	"Return a collection representing methods in the receiver which have no precode comments"
+
+	| slips |
+	slips := OrderedCollection new.
+	self changedClasses
+		do: [ :aClass | (self methodChangesAtClass: aClass name)
+				associationsDo: [ :mAssoc | (#(#remove #addedThenRemoved) includes: mAssoc value)
+						ifFalse: [ (aClass includesSelector: mAssoc key)
+								ifTrue: [ (aClass firstPrecodeCommentFor: mAssoc key) isEmptyOrNil
+										ifTrue: [ slips add: aClass name , ' ' , mAssoc key ] ] ] ] ].
+	^ slips	"Smalltalk browseMessageList: (ChangeSet current methodsWithoutComments) name: 'methods lacking comments'"
+]
+
+ChangeSet >> name
+[
+	"The name of this changeSet. If name is nil, we've got garbage.  Help to identify."
+
+	^ name ifNil: [ '<no name -- garbage?>' ] ifNotNil: [ name ]
+]
+
+ChangeSet >> name: anObject
+[
+	name := anObject
+]
+
+ChangeSet >> noteNewMethod: newMethod forClass: class selector: selector priorMethod: methodOrNil
+[
+	class wantsChangeSetLogging
+		ifFalse: [ ^ self ].
+	(self changeRecorderFor: class) noteNewMethod: newMethod selector: selector priorMethod: methodOrNil
+]
+
+ChangeSet >> noteRemovalOf: class
+[
+	"The class is about to be removed from the system.
+	Adjust the receiver to reflect that fact."
+
+	class wantsChangeSetLogging
+		ifFalse: [ ^ self ].
+	(self changeRecorderFor: class) noteChangeType: #remove fromClass: class.
+	changeRecords removeKey: class class name ifAbsent: [  ]
+]
+
+ChangeSet >> okayToRemove
+[
+	^ self okayToRemoveInforming: true
+]
+
+ChangeSet >> okayToRemoveInforming: aBoolean
+[
+	"Answer whether it is okay to remove the receiver.  If aBoolean is true, inform the receiver if it is not okay"
+
+	| aName |
+	aName := self name.
+	self == self class current
+		ifTrue: [ 
+			aBoolean
+				ifTrue: [ 
+					self
+						inform:
+							'Cannot remove "' , aName
+								,
+									'"because it is the current change set.' ].
+			^ false ].
+	^ true
+]
+
+ChangeSet >> oldNameFor: class
+[
+	^ (changeRecords at: class name) priorName
+]
+
+ChangeSet >> postscript
+[
+	"Answer the string representing the postscript.  "
+
+	^ postscript ifNotNil: [ postscript isString
+				ifTrue: [ postscript ]
+				ifFalse: [ postscript contents asString ] ]
+]
+
+ChangeSet >> postscript: aString
+[
+	"Answer the string representing the postscript.  "
+
+	postscript := aString
+]
+
+ChangeSet >> postscriptHasDependents
+[
+	^ false
+]
+
+ChangeSet >> postscriptString
+[
+	"Answer the string representing the postscript.  "
+
+	^ self postscript
+]
+
+ChangeSet >> postscriptString: aString
+[
+	"Establish aString as the new contents of the postscript.  "
+
+	self postscript: aString
+]
+
+ChangeSet >> preamble
+[
+	"Answer the string representing the preamble"
+
+	^ preamble ifNotNil: [ preamble isString
+				ifTrue: [ preamble ]
+				ifFalse: [ preamble contents asString ] ]
+]
+
+ChangeSet >> preamble: aString
+[
+	"Establish aString as the new contents of the preamble.  "
+
+	preamble := aString
+]
+
+ChangeSet >> preambleString
+[
+	"Answer the string representing the preamble"
+
+	^ self preamble
+]
+
+ChangeSet >> preambleString: aString
+[
+	"Establish aString as the new contents of the preamble.  "
+
+	self preamble: aString
+]
+
+ChangeSet >> preambleTemplate
+[
+	"Answer a string that will form the default contents for a change set's preamble.
+	Just a first stab at what the content should be."
+
+	^ String
+		streamContents: [ :strm | strm nextPutAll: '"Change Set:'.	"NOTE: fileIn recognizes preambles by this string."
+			strm
+				tab;
+				tab;
+				nextPutAll: self name.
+			strm
+				cr;
+				nextPutAll: 'Date:';
+				tab;
+				tab;
+				tab;
+				nextPutAll: Date today printString.
+			strm
+				cr;
+				nextPutAll: 'Author:';
+				tab;
+				tab;
+				tab;
+				nextPutAll: Author fullName.
+			strm
+				cr;
+				cr;
+				nextPutAll: '<your descriptive text goes here>"' ]	"ChangeSet current preambleTemplate"
+]
+
+ChangeSet >> printOn: aStream
+[
+	super printOn: aStream.
+	aStream nextPutAll: ' named ' , self name
+]
+
+ChangeSet >> removeClassAndMetaClassChanges: class
+[
+	"Remove all memory of changes associated with this class and its metaclass."
+
+	changeRecords removeKey: class name ifAbsent: [  ].
+	changeRecords removeKey: class class name ifAbsent: [  ]
+]
+
+ChangeSet >> removeClassChanges: class
+[
+	"Remove all memory of changes associated with this class"
+
+	| cname |
+	class isString
+		ifTrue: [ cname := class ]
+		ifFalse: [ cname := class name ].
+	changeRecords removeKey: cname ifAbsent: [  ]
+]
+
+ChangeSet >> removePostscript
+[
+	postscript := nil
+]
+
+ChangeSet >> removePreamble
+[
+	preamble := nil
+]
+
+ChangeSet >> removeSelector: selector class: class priorMethod: priorMethod lastMethodInfo: info
+[
+	"Include indication that a method has been forgotten.
+	info is a pair of the source code pointer and message category
+	for the method that was removed."
+
+	class wantsChangeSetLogging
+		ifFalse: [ ^ self ].
+	(self changeRecorderFor: class) noteRemoveSelector: selector priorMethod: priorMethod lastMethodInfo: info
+]
+
+ChangeSet >> removeSelectorChanges: selector class: class
+[
+	"Remove all memory of changes associated with the argument, selector, in 
+	this class."
+
+	| chgRecord |
+	(chgRecord := changeRecords at: class name ifAbsent: [ ^ self ]) removeSelector: selector.
+	chgRecord hasNoChanges
+		ifTrue: [ changeRecords removeKey: class name ]
+]
+
+ChangeSet >> renameClass: class from: oldName to: newName
+[
+	"Include indication that a class has been renamed."
+
+	| recorder oldMetaClassName newMetaClassName |
+	(recorder := self changeRecorderFor: oldName)
+		noteChangeType: #rename;
+		noteNewName: newName asSymbol.	"store under new name (metaclass too)"
+	changeRecords at: newName put: recorder.
+	changeRecords removeKey: oldName.
+	newMetaClassName := newName , ' class'.
+	oldMetaClassName := oldName , ' class'.
+	recorder := changeRecords at: oldMetaClassName ifAbsent: [ ^ nil ].
+	changeRecords at: newMetaClassName put: recorder.
+	changeRecords removeKey: oldMetaClassName.
+	recorder noteNewName: newMetaClassName
+]
+
+ChangeSet >> reorganizeClass: class
+[
+	"Include indication that a class was reorganized."
+
+	self atClass: class add: #reorganize
+]
+
+ChangeSet >> selectorsInClass: aClassName
+[
+	"Used by a ChangeSorter to access the list methods."
+
+	^ (changeRecords at: aClassName ifAbsent: [ ^ #() ]) changedSelectors
+]
+
+ChangeSet >> trimHistory
+[
+	"Drop non-essential history:  methods added and then removed, as well as rename and reorganization of newly-added classes."
+
+	changeRecords do: [ :chgRecord | chgRecord trimHistory ]
+]
+
+ChangeSet >> veryDeepCopyWith: deepCopier
+[
+	"Return self; this is NOT the way to launch new change sets! Having this method here allows Change Sorters to be in parts bins"
+
+	
+]
+
+ChangeSet >> wither
+[
+	"The receiver is to be clobbered. Clear it out."
+
+	self clear.
+	name := nil
+]
+
+ChangeSet class >> allChangeSetNames
+[
+	^ self allChangeSets collect: [ :c | c name ]
+]
+
+ChangeSet class >> allChangeSets
+[
+	"Return the list of all current ChangeSets"
+
+	^ AllChangeSets
+]
+
+ChangeSet class >> allChangeSets: aCollection
+[
+	"Return the list of all current ChangeSets"
+
+	AllChangeSets := aCollection
+]
+
+ChangeSet class >> allChangeSetsWithClass: class selector: selector
+[
+	class ifNil: [ ^ #() ].
+	^ self allChangeSets select: [ :cs | (cs atSelector: selector class: class) ~~ #none ]
+]
+
+ChangeSet class >> assuredChangeSetNamed: aName
+[
+	"Answer a change set of the given name.  If one already exists, answer that, else create a new one and answer it."
+
+	^ (self named: aName) ifNotNil: [ :existing | existing ] ifNil: [ self basicNewChangeSet: aName ]
+]
+
+ChangeSet class >> basicNewChangeSet: newName
+[
+	| newSet |
+	newName ifNil: [ ^ nil ].
+	(self named: newName) ifNotNil: [ self inform: 'Sorry that name is already used'.
+			^ nil ].
+	newSet := self basicNewNamed: newName.
+	AllChangeSets add: newSet.
+	^ newSet
+]
+
+ChangeSet class >> basicNewNamed: aName
+[
+	^ (self basicNew name: aName) initialize
+]
+
+ChangeSet class >> changeSetsNamedSuchThat: nameBlock
+[
+	"(ChangeSet changeSetsNamedSuchThat:
+		[:name | name first isDigit and: [name initialInteger >= 373]])
+		do: [:cs | AllChangeSets remove: cs wither]"
+
+	^ AllChangeSets select: [ :aChangeSet | nameBlock value: aChangeSet name ]
+]
+
+ChangeSet class >> classesOrder: classes
+[
+	"Answer a collection with the classes ordered so they can be filed in."
+
+	| listInOrder |
+	"SharedPools need to go first"
+	listInOrder := Class superclassOrder: (classes select: [ :each | each inheritsFrom: SharedPool ]).
+	listInOrder addAll: (Class superclassOrder: (classes reject: [ :each | each inheritsFrom: SharedPool ])).
+	^ listInOrder
+]
+
+ChangeSet class >> cleanUp: aggressive
+[
+	"Only delete change sets when being aggressive"
+
+	aggressive
+		ifTrue: [ ChangeSet removeChangeSetsNamedSuchThat: [ :each | true ].
+			ChangeSet resetCurrentToNewUnnamedChangeSet ]
+]
+
+ChangeSet class >> countOfChangeSetsWithClass: aClass andSelector: aSelector
+[
+	"Answer how many change sets record a change for the given class and selector"
+
+	^ (self allChangeSetsWithClass: aClass selector: aSelector) size
+]
+
+ChangeSet class >> current
+[
+	"return the current changeset assure first that we have a named changeset."
+
+	(current isNil or: [ current isMoribund ])
+		ifTrue: [ self newChanges: (self assuredChangeSetNamed: 'Unnamed') withOld: current ].
+	^ current
+]
+
+ChangeSet class >> defaultChangeSetDirectory
+[
+	"Answer the directory in which to store ChangeSets. 
+	Answer the default directory if the preferred directory doesn't exist."
+
+	| dir directoryName |
+	directoryName := self defaultChangeSetDirectoryName.
+	dir := directoryName isEmptyOrNil
+		ifTrue: [ FileSystem workingDirectory ]
+		ifFalse: [ FileSystem workingDirectory / directoryName ].
+	dir exists
+		ifTrue: [ ^ dir ].
+	^ FileSystem workingDirectory
+]
+
+ChangeSet class >> defaultChangeSetDirectory: dirOrName
+[
+	"Set the Preference for storing change sets to the given directory or name (possibly relative).
+	Rewrite directory names below the default directory as relative names.
+	If dirOrName is an empty string, use the default directory."
+
+	"ChangeSet defaultChangeSetDirectory: 'changeSets'"
+
+	| dirName defaultFullName |
+	dirName := dirOrName isString
+		ifTrue: [ dirOrName asFileReference fullName ]
+		ifFalse: [ dirOrName fullName ].
+	defaultFullName := FileSystem workingDirectory fullName.
+	dirName = defaultFullName
+		ifTrue: [ dirName := '' ]
+		ifFalse: [ (dirName beginsWith: defaultFullName , FileSystem disk delimiter asString)
+				ifTrue: [ dirName := dirName copyFrom: defaultFullName size + 2 to: dirName size ] ].
+	self defaultChangeSetDirectoryName: dirName
+]
+
+ChangeSet class >> defaultChangeSetDirectoryName
+[
+	^ DefaultChangeSetDirectoryName ifNil: [ DefaultChangeSetDirectoryName := '.' ]
+]
+
+ChangeSet class >> defaultChangeSetDirectoryName: aName
+[
+	DefaultChangeSetDirectoryName := aName
+]
+
+ChangeSet class >> defaultName
+[
+	^ self uniqueNameLike: 'Unnamed' translated
+]
+
+ChangeSet class >> doesAnyChangeSetHaveClass: aClass andSelector: aSelector
+[
+	"Answer whether any known change set bears a change for the given class and selector"
+
+	^ (self countOfChangeSetsWithClass: aClass andSelector: aSelector) > 0
+]
+
+ChangeSet class >> existingOrNewChangeSetNamed: aName
+[
+	| newSet |
+	^ (self named: aName) ifNil: [ newSet := self basicNewNamed: aName.
+			AllChangeSets add: newSet.
+			newSet ]
+]
+
+ChangeSet class >> fileIntoNewChangeSet: fullName
+[
+	"File in all of the contents of the currently selected file, if any, into a new change set."
+
+	| fn ff |
+	fullName ifNil: [ ^ Beeper beep ].
+	fn := (Smalltalk hasClassNamed: #GZipReadStream)
+		ifTrue: [ (Smalltalk classNamed: #GZipReadStream) uncompressedFileName: fullName ]
+		ifFalse: [ fullName ].
+	[ ff := FileStream readOnlyFileNamed: fn.
+	self newChangesFromStream: ff named: fn asFileReference basename ]
+		ensure: [ ff ifNotNil: [ ff close ] ]
+]
+
+ChangeSet class >> fileOutChangeSetsNamed: nameList
+[
+	"File out the list of change sets whose names are provided"
+
+	"ChangesOrganizer fileOutChangeSetsNamed: #('New Changes' 'miscTidies-sw')"
+
+	| notFound empty infoString |
+	notFound := OrderedCollection new.
+	empty := OrderedCollection new.
+	nameList
+		do: [ :aName | | aChangeSet |
+			(aChangeSet := self named: aName)
+				ifNotNil: [ aChangeSet isEmpty
+						ifTrue: [ empty add: aName ]
+						ifFalse: [ aChangeSet fileOut ] ]
+				ifNil: [ notFound add: aName ] ].
+	infoString := (nameList size - notFound size) printString , ' change set(s) filed out'.
+	notFound size > 0
+		ifTrue: [ 
+			infoString := infoString
+				,
+					'' , notFound size printString , ' change set(s) not found:'.
+			notFound
+				do: [ :aName | 
+					infoString := infoString
+						,
+							'' , aName ] ].
+	empty size > 0
+		ifTrue: [ 
+			infoString := infoString
+				,
+					'' , empty size printString , ' change set(s) were empty:'.
+			empty
+				do: [ :aName | 
+					infoString := infoString
+						,
+							'' , aName ] ].
+	self inform: infoString
+]
+
+ChangeSet class >> gatherChangeSets
+[
+	"ChangeSet gatherChangeSets"
+
+	"Collect any change sets created in other projects"
+
+	| allChangeSets |
+	allChangeSets := AllChangeSets asSet.
+	ChangeSet allSubInstances
+		do: [ :each | | obsolete |
+			(allChangeSets includes: each) == (obsolete := each isMoribund)
+				ifTrue: [ obsolete
+						ifTrue: [ "Was included and is obsolete."
+							AllChangeSets remove: each ]
+						ifFalse: [ "Was not included and is not obsolete."
+							AllChangeSets add: each ] ] ].
+	^ AllChangeSets
+]
+
+ChangeSet class >> hasNoDependenciesFor: aTrait in: traits
+[
+	"Answer if the trait does not depend on a trait in the collection."
+
+	^ traits
+		allSatisfy: [ :another | aTrait == another
+				or: [ "are the same"
+					aTrait ~= another classSide
+						and: [ "is not the classTrait of another"
+							(aTrait traitComposition allTraits includes: another) not ] ] ]
+]
+
+ChangeSet class >> initialize
+[
+	"ChangeSet initialize"
+
+	AllChangeSets ifNil: [ AllChangeSets := OrderedCollection new ].
+	self gatherChangeSets.
+	FileServices registerFileReader: self
+]
+
+ChangeSet class >> mostRecentChangeSetWithChangeForClass: class selector: selector
+[
+	| hits |
+	hits := self allChangeSets select: [ :cs | (cs atSelector: selector class: class) ~~ #none ].
+	hits isEmpty
+		ifTrue: [ ^ 'not in any change set' ].
+	^ 'recent cs: ' , hits last name
+]
+
+ChangeSet class >> mustCheckForSlips
+[
+	^ MustCheckForSlips ifNil: [ MustCheckForSlips := true ]
+]
+
+ChangeSet class >> mustCheckForSlips: aBoolean
+[
+	MustCheckForSlips := aBoolean
+]
+
+ChangeSet class >> named: aName
+[
+	"Return the change set of the given name, or nil if none found."
+
+	^ AllChangeSets detect: [ :aChangeSet | aChangeSet name = aName ] ifNone: [ nil ]
+]
+
+ChangeSet class >> new
+[
+	"All current changeSets must be registered in the AllChangeSets collection.
+	Due to a quirk of history, this is maintained as class variable of ChangeSorter."
+
+	^ self basicNewChangeSet: ChangeSet defaultName
+]
+
+ChangeSet class >> newChangeSet
+[
+	"Prompt the user for a name, and establish a new change set of
+	that name (if ok), making it the current changeset.  Return nil
+	of not ok, else return the actual changeset."
+
+	| newName newSet |
+	newName := UIManager default request: 'Please name the new change set:' initialAnswer: ChangeSet defaultName.
+	newName isEmptyOrNil
+		ifTrue: [ ^ nil ].
+	newSet := self basicNewChangeSet: newName.
+	newSet ifNotNil: [ self newChanges: newSet ].
+	^ newSet
+]
+
+ChangeSet class >> newChangeSet: aName
+[
+	"Makes a new change set called aName, add author full name to try to
+	ensure a unique change set name."
+
+	| newName |
+	newName := aName , '.' , Author fullName.
+	^ self basicNewChangeSet: newName
+]
+
+ChangeSet class >> newChanges: aChangeSet
+[
+	"Set the system ChangeSet to be the argument, aChangeSet."
+
+	"pay attention not to use newChanges in current and other methods to avoid infinite cycles."
+
+	self newChanges: aChangeSet withOld: self current
+]
+
+ChangeSet class >> newChanges: aChangeSet withOld: old
+[
+	"Set the system ChangeSet to be the argument, aChangeSet."
+
+	SystemAnnouncer uniqueInstance unsubscribe: old.
+	current := aChangeSet.
+	SystemAnnouncer uniqueInstance private weak
+		on: ClassRemoved send: #classRemoved: to: aChangeSet;
+		on: ClassAdded send: #classAdded: to: aChangeSet;
+		on: ClassCommented send: #classCommented: to: aChangeSet;
+		on: ClassRenamed send: #classRenamed: to: aChangeSet;
+		on: ClassReorganized send: #classReorganized: to: aChangeSet;
+		on: ClassRecategorized send: #classRecategorized: to: aChangeSet;
+		on: ClassModifiedClassDefinition send: #classModified: to: aChangeSet.
+	SystemAnnouncer uniqueInstance private weak
+		on: MethodAdded send: #methodAdded: to: aChangeSet;
+		on: MethodModified send: #methodModified: to: aChangeSet;
+		on: MethodRemoved send: #methodRemoved: to: aChangeSet;
+		on: MethodRecategorized send: #methodRecategorized: to: aChangeSet.
+	SystemAnnouncer uniqueInstance announce: (CurrentChangeSetChanged new
+				old: old;
+				new: aChangeSet;
+				yourself)
+]
+
+ChangeSet class >> newChangesFromStream: aStream named: aName
+[
+	"File in the code from the stream into a new change set whose
+	name is derived from aName. Leave the 'current change set'
+	unchanged. Return the new change set or nil on failure."
+
+	| oldChanges newName newSet |
+	oldChanges := ChangeSet current.
+	newName := aName withoutPeriodSuffix.
+	newSet := self basicNewChangeSet: newName.
+	[ | newStream |
+	newSet
+		ifNotNil: [ (aStream respondsTo: #converter:)
+				ifFalse: [ newStream := MultiByteBinaryOrTextStream with: aStream contentsOfEntireFile.
+					newStream reset ]
+				ifTrue: [ newStream := aStream ].
+			self newChanges: newSet.
+			newStream setConverterForCode.
+			CodeImporter evaluateReadStream: newStream readStream ].
+	aStream close ]
+		ensure: [ self newChanges: oldChanges ].
+	^ newSet
+]
+
+ChangeSet class >> noChanges
+[
+	"Initialize the system ChangeSet."
+
+	current initialize
+]
+
+ChangeSet class >> promoteToTop: aChangeSet
+[
+	"Make aChangeSet the first in the list from now on"
+
+	AllChangeSets remove: aChangeSet ifAbsent: [ ^ self ].
+	AllChangeSets add: aChangeSet
+]
+
+ChangeSet class >> promptForDefaultChangeSetDirectoryIfNecessary
+[
+	"Check the Preference (if any), and prompt the
+	user to change it if necessary.
+	The default if the Preference is unset is the current
+	directory. Answer the directory."
+
+	"ChangeSet
+	promptForDefaultChangeSetDirectoryIfNecessary"
+
+	| choice directoryPath dir message |
+	directoryPath := self defaultChangeSetDirectoryName.
+	[ dir := directoryPath asFileReference.
+	dir exists ]
+		whileFalse: [ 
+			message := 'The preferred change set directory' translated , ' (''{1}'') ' , 'does not exist.' translated
+				,
+					'' , 'Create it or use the default directory' translated , ' ({2})?'
+				format: {directoryPath.
+					(FileSystem workingDirectory fullName)}.
+			choice := UIManager default
+				chooseFrom:
+					(#('Create directory' 'Use default directory and forget preference' 'Choose another directory')
+						collect: [ :ea | ea translated ])
+				message: message.
+			choice = 1
+				ifTrue: [ dir ensureCreateDirectory ].
+			choice = 3
+				ifTrue: [ dir := UIManager default chooseDirectory.
+					directoryPath := dir ifNil: [ '' ] ifNotNil: [ dir pathName ] ] ].
+	self defaultChangeSetDirectory: directoryPath.
+	^ dir
+]
+
+ChangeSet class >> registerInterestToSystemAnnouncer
+[
+	<systemEventRegistration>
+	self newChanges: self current
+]
+
+ChangeSet class >> removeChangeSet: aChangeSet
+[
+	"Remove the given changeSet.  Caller must assure that it's cool to do this"
+
+	AllChangeSets remove: aChangeSet ifAbsent: [  ].
+	aChangeSet wither
+]
+
+ChangeSet class >> removeChangeSetsNamedSuchThat: nameBlock
+[
+	(self changeSetsNamedSuchThat: nameBlock) do: [ :cs | self removeChangeSet: cs ]
+]
+
+ChangeSet class >> removeEmptyUnnamedChangeSets
+[
+	"Remove all change sets that are empty, whose names start with Unnamed."
+
+	"ChangeSet removeEmptyUnnamedChangeSets"
+
+	| toGo |
+	(toGo := (self changeSetsNamedSuchThat: [ :csName | csName beginsWith: 'Unnamed' ])
+		select: [ :cs | cs isEmpty and: [ cs okayToRemoveInforming: false ] ]) do: [ :cs | self removeChangeSet: cs ].
+	self inform: toGo size printString , ' change set(s) removed.'
+]
+
+ChangeSet class >> reorderChangeSets
+[
+	"Change the order of the change sets to something more convenient:
+		First come all numbered updates.
+		Next come all remaining changesets"
+
+	"self reorderChangeSets"
+
+	| newMid newTail |
+	newMid := OrderedCollection new.
+	newTail := OrderedCollection new.
+	self allChangeSets
+		do: [ :aChangeSet | aChangeSet isNumbered
+				ifTrue: [ newMid add: aChangeSet ]
+				ifFalse: [ newTail add: aChangeSet ] ].
+	self allChangeSets: newMid , newTail
+]
+
+ChangeSet class >> resetCurrentToNewUnnamedChangeSet
+[
+	current := self new.
+	self newChanges: current
+]
+
+ChangeSet class >> scanCategory: file
+[
+	"Scan anything that involves more than one chunk; method name is historical only"
+
+	| itemPosition item tokens stamp isComment anIndex |
+	itemPosition := file position.
+	item := file nextChunk.
+	isComment := item includesSubstring: 'commentStamp:'.
+	(isComment or: [ item includesSubstring: 'methodsFor:' ])
+		ifFalse: [ "Maybe a preamble, but not one we recognize; bail out with the preamble trick"
+			^ {(ChangeRecord new file: file position: itemPosition type: #preamble)} ].
+	tokens := item parseLiterals.
+	tokens size >= 3
+		ifTrue: [ stamp := ''.
+			anIndex := tokens indexOf: #stamp: ifAbsent: [ nil ].
+			anIndex ifNotNil: [ stamp := tokens at: anIndex + 1 ].
+			tokens second == #methodsFor:
+				ifTrue: [ ^ self
+						scanFile: file
+						category: tokens third
+						class: tokens first
+						meta: false
+						stamp: stamp ].
+			tokens third == #methodsFor:
+				ifTrue: [ ^ self
+						scanFile: file
+						category: tokens fourth
+						class: tokens first
+						meta: true
+						stamp: stamp ] ].
+	tokens second == #commentStamp:
+		ifTrue: [ stamp := tokens third.
+			item := ChangeRecord new
+				file: file
+				position: file position
+				type: #classComment
+				class: tokens first
+				category: nil
+				meta: false
+				stamp: stamp.
+			file nextChunk.
+			file skipStyleChunk.
+			^ Array with: item ].
+	^ #()
+]
+
+ChangeSet class >> scanFile: file category: cat class: class meta: meta stamp: stamp
+[
+	| itemPosition method items |
+	items := OrderedCollection new.
+	[ itemPosition := file position.
+	method := file nextChunk.
+	file skipStyleChunk.
+	method size > 0 ]
+		whileTrue: [ items
+				add:
+					(ChangeRecord new
+						file: file
+						position: itemPosition
+						type: #method
+						class: class
+						category: cat
+						meta: meta
+						stamp: stamp) ].
+	^ items
+]
+
+ChangeSet class >> scanFile: file from: startPosition to: stopPosition
+[
+	| changeList |
+	changeList := OrderedCollection new.
+	file position: startPosition.
+	'Scanning ' , file localName , '...'
+		displayProgressFrom: startPosition
+		to: stopPosition
+		during: [ :bar | | prevChar itemPosition item |
+			[ file position < stopPosition ]
+				whileTrue: [ bar current: file position.
+					[ file atEnd not and: [ file peek isSeparator ] ] whileTrue: [ prevChar := file next ].
+					(file peekFor: $!)
+						ifTrue: [ (prevChar = Character cr or: [ prevChar = Character lf ])
+								ifTrue: [ changeList addAll: (self scanCategory: file) ] ]
+						ifFalse: [ itemPosition := file position.
+							item := file nextChunk.
+							file skipStyleChunk.
+							item size > 0
+								ifTrue: [ changeList add: (ChangeRecord new file: file position: itemPosition type: #doIt) ] ] ] ].
+	^ changeList
+]
+
+ChangeSet class >> scanVersionsOf: aMethod class: aClass meta: isMeta category: aCategory selector: aSelector
+[
+	| changeRecords |
+	changeRecords := OrderedCollection new.
+	SourceFiles
+		changeRecordsFrom: aMethod sourcePointer
+		className: aClass name
+		isMeta: isMeta
+		do: [ :changeRecord | changeRecords add: changeRecord ].
+	^ changeRecords
+]
+
+ChangeSet class >> secondaryChangeSet
+[
+	"Answer a likely change set to use as the second initial one in a Dual Change Sorter.  "
+
+	AllChangeSets size = 1
+		ifTrue: [ ^ AllChangeSets first ].
+	AllChangeSets last == ChangeSet current
+		ifTrue: [ ^ AllChangeSets at: AllChangeSets size - 1 ]
+		ifFalse: [ ^ AllChangeSets last ]
+]
+
+ChangeSet class >> traitsOrder: aCollection
+[
+	"Arrange the traits in the collection, first who don't depend on others."
+
+	| unprocessed |
+	unprocessed := aCollection asSet.
+	^ Array
+		new: unprocessed size
+		streamContents: [ :stream | unprocessed size
+				timesRepeat: [ | aTrait |
+					aTrait := unprocessed detect: [ :each | self hasNoDependenciesFor: each in: unprocessed ].
+					stream nextPut: aTrait.
+					unprocessed remove: aTrait ] ]
+]
+
+ChangeSet class >> uniqueNameLike: aString
+[
+	| try index |
+	(self named: aString) ifNil: [ ^ aString ].
+	index := 1.
+	[ try := aString , index printString.
+	(self named: try) ifNil: [ ^ try ].
+	index := index + 1 ] repeat
+]
+

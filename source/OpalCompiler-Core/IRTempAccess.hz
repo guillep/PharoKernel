@@ -1,0 +1,26 @@
+IRTempAccess
+	superclass: #IRAccess;
+	package: #'OpalCompiler-Core'.
+
+IRTempAccess >> accept: aVisitor
+[
+	^ aVisitor visitTempAccess: self
+]
+
+IRTempAccess >> executeOn: interpreter
+[
+	store
+		ifFalse: [ interpreter pushTemp: name ]
+		ifTrue: [ interpreter storeTemp: name ]
+]
+
+IRTempAccess >> isRemoteTemp
+[
+	^ false
+]
+
+IRTempAccess >> isTemp
+[
+	^ true
+]
+

@@ -1,0 +1,52 @@
+AbstractModification
+	instanceVariables: #(#slotShift #modificationMap );
+	package: #Slot.
+
+AbstractModification >> initialize: anInteger
+[
+	self initialize.
+	modificationMap := Array new: anInteger
+]
+
+AbstractModification >> installAddedSlot: addedSlot
+[
+	self subclassResponsibility
+]
+
+AbstractModification >> installModifiedSlot: modifiedSlot
+[
+	self subclassResponsibility
+]
+
+AbstractModification >> installRemovedSlot: removedSlot
+[
+	self subclassResponsibility
+]
+
+AbstractModification >> installUnmodifiedSlot: unmodifiedSlot
+[
+	modificationMap at: unmodifiedSlot fieldIndex put: unmodifiedSlot
+]
+
+AbstractModification >> modificationAt: idx
+[
+	idx > modificationMap size
+		ifTrue: [ ^ slotShift ].
+	^ modificationMap at: idx
+]
+
+AbstractModification >> size
+[
+	^ modificationMap size
+]
+
+AbstractModification >> slotShift: aShift
+[
+	slotShift := aShift
+]
+
+AbstractModification class >> new: anInteger
+[
+	^ self new initialize: anInteger
+]
+

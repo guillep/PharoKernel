@@ -1,0 +1,29 @@
+OCLiteralList
+	superclass: #OrderedCollection;
+	instanceVariables: #(#equalitySet );
+	package: #'OpalCompiler-Core'.
+
+OCLiteralList >> addLast: object
+[
+	"Only add if not already in list"
+
+	(equalitySet includes: object)
+		ifTrue: [ ^ object ].
+	equalitySet add: object.
+	super addLast: object.
+	^ object
+]
+
+OCLiteralList >> indexOf: anElement startingAt: start ifAbsent: exceptionBlock
+[
+	start to: self size do: [ :index | ((self at: index) literalEqual: anElement)
+			ifTrue: [ ^ index ] ].
+	^ exceptionBlock value
+]
+
+OCLiteralList >> setCollection: anArray
+[
+	super setCollection: anArray.
+	equalitySet := OCLiteralSet new: anArray size
+]
+

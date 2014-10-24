@@ -1205,46 +1205,34 @@ Integer >> normalize
 Integer >> nthRoot: aPositiveInteger
 [
 	"Answer the nth root of the receiver.
-	See #nthRootAlt: for an alternative implementation."
+	Answer an Integer if root is exactly this Integer, else answer the Float nearest the exact root."
 
-	| selfAsFloat floatResult guess delta higher lower raised |
-	selfAsFloat := self asFloat.	"If we can't do Float arithmetic because we are too big, then look for an exact answer in exact arithmetic"
-	selfAsFloat isInfinite
-		ifTrue: [ 
-			guess := self nthRootTruncated: aPositiveInteger.
-			(guess raisedToInteger: aPositiveInteger) = self
-				ifTrue: [ ^ guess ].	"Nothing else can be done. No exact answer means answer must be a Float.		Answer the best we have."
-			^ guess asFloat ].
-	floatResult := selfAsFloat nthRoot: aPositiveInteger.
-	guess := floatResult rounded.	"If got an exact answer, answer it."
-	raised := guess raisedToInteger: aPositiveInteger.
-	raised = self
-		ifTrue: [ ^ guess ].	"In this case, maybe it failed because we are such a big integer that the Float	method gets inexact, even if we are a whole square number.	Note 1(jmv): This algorithm is faster than #nthRootTruncated: for big n (aPositiveInteger)	but fails if self asFloat isInfinite.	Note 2(jmv): The algorithms I found for computing the nthRoot would havily use	very large fractions. I wrote this one, that doesn't create fractions."
-	selfAsFloat abs >= (Float maxExactInteger asFloat raisedToInteger: aPositiveInteger)
-		ifTrue: [ raised > self
-				ifTrue: [ higher := guess.
-					delta := floatResult predecessor - floatResult.
-					[ floatResult := floatResult + delta.
-					lower := floatResult rounded.
-					(lower raisedToInteger: aPositiveInteger) > self ]
-						whileTrue: [ delta := delta * 2.
-							higher := lower ] ]
-				ifFalse: [ lower := guess.
-					delta := floatResult successor - floatResult.
-					[ floatResult := floatResult + delta.
-					higher := floatResult rounded.
-					(higher raisedToInteger: aPositiveInteger) < self ]
-						whileTrue: [ delta := delta * 2.
-							lower := higher ] ].
-			[ higher - lower > 1 ]
-				whileTrue: [ guess := (lower + higher) // 2.
-					raised := guess raisedToInteger: aPositiveInteger.
-					raised = self
-						ifTrue: [ ^ guess ].
-					raised > self
-						ifTrue: [ higher := guess ]
-						ifFalse: [ lower := guess ] ] ].	"We need an approximate result"
-	^ floatResult
+	| guess p |
+	guess := self nthRootRounded: aPositiveInteger.
+	(guess raisedTo: aPositiveInteger) = self
+		ifTrue: [ ^ guess ].
+	p := Float precision - guess highBitOfMagnitude.
+	p < 0
+		ifTrue: [ ^ guess asFloat ].
+	guess := self << (p * aPositiveInteger) nthRootRounded: aPositiveInteger.
+	^ (guess / (1 << p)) asFloat
+]
+
+Integer >> nthRootRounded: aPositiveInteger
+[
+	"Answer the integer nearest the nth root of the receiver."
+
+	| guess |
+	self = 0
+		ifTrue: [ ^ 0 ].
+	self negative
+		ifTrue: [ aPositiveInteger even
+				ifTrue: [ ArithmeticError signal: 'Negative numbers don''t have even roots.' ].
+			^ (self negated nthRootRounded: aPositiveInteger) negated ].
+	guess := self nthRootTruncated: aPositiveInteger.
+	^ self * 2 > ((guess + 1 raisedTo: aPositiveInteger) + (guess raisedTo: aPositiveInteger))
+		ifTrue: [ guess + 1 ]
+		ifFalse: [ guess ]
 ]
 
 Integer >> nthRootTruncated: aPositiveInteger
@@ -1439,7 +1427,7 @@ Integer >> printSeparatedBy: aDelimiter every: offset signed: printSigned base: 
 				ifTrue: [ aStream nextPut: $+ ] ].
 	1 to: digits size do: [ :i | aStream nextPut: (digits at: i).
 		(i < digits size and: [ (i - digits size) \\ offset = 0 ])
-			ifTrue: [ aStream nextPut: $, ] ]
+			ifTrue: [ aStream nextPut: aDelimiter ] ]
 ]
 
 Integer >> printSeparatedBy: aDelimiter every: offset signed: printSigned on: aStream
@@ -1633,7 +1621,7 @@ Integer >> reciprocalModulo: n
 	v := (self bitShift: b) + 1.
 	u := n bitShift: b.
 	fPlusN := f + n.
-	[ v >= fPlusN ] whileTrue: [ v := u \\\ (u := v) ].
+	[ v >= fPlusN ] whileTrue: [ v := u \\ (u := v) ].
 	result := v - f.
 	(result2 := result + n) > 0
 		ifFalse: [ self error: 'no inverse' ].
@@ -1692,22 +1680,22 @@ Integer >> slidingLeftRightRaisedTo: n modulo: m
 	w := (k highBit - 1 >> 1 min: 16) max: 1.
 	oddPowersOfSelf := Array new: 1 << w.
 	oddPowersOfSelf at: 1 put: (pow := self).
-	square := self * self \\\ m.
-	2 to: oddPowersOfSelf size do: [ :i | pow := oddPowersOfSelf at: i put: pow * square \\\ m ].	"Now exponentiate by searching precomputed bit patterns with a sliding window"
+	square := self * self \\ m.
+	2 to: oddPowersOfSelf size do: [ :i | pow := oddPowersOfSelf at: i put: pow * square \\ m ].	"Now exponentiate by searching precomputed bit patterns with a sliding window"
 	pow := 1.
 	[ k > 0 ]
 		whileTrue: [ 
-			pow := pow * pow \\\ m.	"Skip bits set to zero (the sliding window)"
+			pow := pow * pow \\ m.	"Skip bits set to zero (the sliding window)"
 			(n bitAt: k) = 0
 				ifFalse: [ 
 					"Find longest odd bit pattern up to window length (w + 1)"
 					j := k - w max: 1.
 					[ j < k and: [ (n bitAt: j) = 0 ] ] whileTrue: [ j := j + 1 ].	"We found an odd bit pattern of length k-j+1;					perform the square powers for each bit					(same cost as bitwise algorithm);					compute the index of this bit pattern in the precomputed powers."
 					index := 0.
-					[ k > j ] whileTrue: [ pow := pow * pow \\\ m.
+					[ k > j ] whileTrue: [ pow := pow * pow \\ m.
 							index := (index << 1) + (n bitAt: k).
 							k := k - 1 ].	"Perform a single multiplication for the whole bit pattern.					This saves up to (k-j) multiplications versus a naive algorithm operating bit by bit"
-					pow := pow * (oddPowersOfSelf at: index + 1) \\\ m ].
+					pow := pow * (oddPowersOfSelf at: index + 1) \\ m ].
 			k := k - 1 ].
 	^ pow normalize
 ]

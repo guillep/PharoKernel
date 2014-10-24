@@ -1,0 +1,87 @@
+TextAttribute
+	package: #'Text-Core'.
+
+TextAttribute >> anchoredMorph
+[
+	"If one hides here, return it"
+
+	^ nil
+]
+
+TextAttribute >> dominatedByCmd0
+[
+	"Subclasses may override if cmd-0 should turn them off"
+
+	^ false
+]
+
+TextAttribute >> dominates: another
+[
+	"Subclasses may override condense multiple attributes"
+
+	^ false
+]
+
+TextAttribute >> emphasisCode
+[
+	"Subclasses may override to add bold, italic, etc"
+
+	^ 0
+]
+
+TextAttribute >> emphasizeScanner: scanner
+[
+	"Subclasses may override to set, eg, font, color, etc"
+
+	
+]
+
+TextAttribute >> forFontInStyle: aTextStyle do: aBlock
+[
+	"No action is the default.  Overridden by font specs"
+
+	
+]
+
+TextAttribute >> isKern
+[
+	^ false
+]
+
+TextAttribute >> mayActOnEvent: anEvent
+[
+	"Subclasses may override to provide, eg, hot-spot actions"
+
+	^ false
+]
+
+TextAttribute >> mayBeExtended
+[
+	"A quality that may be overridden by subclasses, such as TextAnchors, that really only apply to a single character"
+
+	^ true
+]
+
+TextAttribute >> oldEmphasisCode: default
+[
+	"Allows running thorugh possibly multiple attributes
+	and getting the emphasis out of any that has an emphasis (font number)"
+
+	^ default
+]
+
+TextAttribute >> reset
+[
+	"Allow subclasses to prepare themselves for merging attributes"
+
+	
+]
+
+TextAttribute >> set
+[
+	"Respond true to include this attribute (as opposed to, eg, a bold
+	emphasizer that is clearing the property"
+
+	^ true
+]
+

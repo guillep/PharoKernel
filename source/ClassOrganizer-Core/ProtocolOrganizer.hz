@@ -1,0 +1,214 @@
+ProtocolOrganizer
+	instanceVariables: #(#allProtocol #protocols );
+	package: #'ClassOrganizer-Core'.
+
+ProtocolOrganizer >> addProtocol: aProtocol
+[
+	^ protocols add: aProtocol
+]
+
+ProtocolOrganizer >> addProtocolNamed: aName
+[
+	^ protocols add: (Protocol name: aName)
+]
+
+ProtocolOrganizer >> allMethods
+[
+	^ self protocols gather: [ :p | p methods ]
+]
+
+ProtocolOrganizer >> allProtocol
+[
+	^ allProtocol
+]
+
+ProtocolOrganizer >> allProtocols
+[
+	^ {allProtocol} , protocols asArray
+]
+
+ProtocolOrganizer >> allProtocolsNames
+[
+	^ self allProtocols collect: #name
+]
+
+ProtocolOrganizer >> classify: aSymbol inProtocolNamed: aProtocolName
+[
+	| name protocol |
+	name := aProtocolName.
+	name = allProtocol name
+		ifTrue: [ name := Protocol unclassified ].	"maybe here we should check if this method already belong to another protocol"
+	(self protocolsOfSelector: aSymbol) do: [ :p | p removeMethod: aSymbol ].
+	protocol := self getProtocolNamed: name ifNone: [ self addProtocolNamed: name ].
+	protocol addMethod: aSymbol
+]
+
+ProtocolOrganizer >> classify: aSymbol inProtocolNamed: aProtocolName suppressIfDefault: aBoolean
+[
+	| oldProtocols |
+	oldProtocols := self protocolsOfSelector: aSymbol.
+	self classify: aSymbol inProtocolNamed: aProtocolName.
+	aBoolean
+		ifTrue: [ (oldProtocols select: #canBeRemoved) do: [ :e | self removeProtocol: e ] ]
+]
+
+ProtocolOrganizer >> existsProtocolNamed: aProtocolName
+[
+	^ self allProtocols anySatisfy: [ :e | e name = aProtocolName ]
+]
+
+ProtocolOrganizer >> extensionProtocols
+[
+	^ self protocols select: #isExtensionProtocol
+]
+
+ProtocolOrganizer >> fromSpec: aSpec
+[
+	aSpec
+		do: [ :spec | | name methods |
+			name := spec first asSymbol.
+			methods := spec allButFirst asSet.
+			self addProtocol: (Protocol name: name methods: methods) ]
+]
+
+ProtocolOrganizer >> getProtocolNamed: aByteString ifNone: aBlockClosure
+[
+	^ protocols detect: [ :e | e name = aByteString ] ifNone: aBlockClosure
+]
+
+ProtocolOrganizer >> hasProtocolNamed: aString
+[
+	^ self allProtocols anySatisfy: [ :each | each name = aString ]
+]
+
+ProtocolOrganizer >> importFrom: aClassOrganizer
+[
+	aClassOrganizer categories
+		do: [ :cat | | protocol methods |
+			cat = Protocol nullCategory
+				ifFalse: [ methods := aClassOrganizer listAtCategoryNamed: cat.
+					protocol := self addProtocolNamed: cat asString.
+					methods do: [ :m | protocol addMethod: m ] ] ]
+]
+
+ProtocolOrganizer >> includesSelector: selector
+[
+	^ protocols anySatisfy: [ :each | each includesSelector: selector ]
+]
+
+ProtocolOrganizer >> initialize
+[
+	super initialize.
+	protocols := IdentitySet new.
+	allProtocol := AllProtocol protocolOrganizer: self
+]
+
+ProtocolOrganizer >> methodsInProtocolNamed: aName
+[
+	aName = AllProtocol defaultName
+		ifTrue: [ ^ self allMethods ].
+	^ (self protocolNamed: aName) methods
+]
+
+ProtocolOrganizer >> moveMethodsFrom: fromProtocolNamed to: toProtocolNamed
+[
+	| fromProtocol toProtocol |
+	fromProtocol := self protocolNamed: fromProtocolNamed.
+	toProtocol := self protocolNamed: toProtocolNamed.
+	toProtocol addAllMethodsFrom: fromProtocol.
+	fromProtocol removeAllMethods.
+	^ toProtocol
+]
+
+ProtocolOrganizer >> protocolNamed: aName
+[
+	^ self protocolNamed: aName ifAbsent: [ Protocol empty ]
+]
+
+ProtocolOrganizer >> protocolNamed: aString ifAbsent: aBlock
+[
+	^ self allProtocols detect: [ :e | e name = aString ] ifNone: aBlock
+]
+
+ProtocolOrganizer >> protocols
+[
+	^ protocols asArray
+]
+
+ProtocolOrganizer >> protocolsNames
+[
+	^ protocols collect: #name as: Array
+]
+
+ProtocolOrganizer >> protocolsOfSelector: aSelector
+[
+	^ (self protocols select: [ :each | each includesSelector: aSelector ]) asArray
+]
+
+ProtocolOrganizer >> protocolsSorted
+[
+	^ (self protocols collect: #name as: Array) sort copyWithFirst: allProtocol name
+]
+
+ProtocolOrganizer >> removeEmptyProtocols
+[
+	(self protocols select: [ :e | e isEmpty and: [ e canBeRemoved ] ]) do: [ :p | self removeProtocol: p ]
+]
+
+ProtocolOrganizer >> removeMethod: aSymbol
+[
+	(self protocolsOfSelector: aSymbol) do: [ :p | p removeMethod: aSymbol ]
+]
+
+ProtocolOrganizer >> removeProtocol: aProtocol
+[
+	aProtocol canBeRemoved
+		ifFalse: [ "Virtual protocols who cannot be removed should not raise an error"
+			aProtocol isVirtualProtocol
+				ifTrue: [ ^ self ].
+			ProtocolRemovalException signal ].
+	^ protocols remove: aProtocol ifAbsent: [  ]
+]
+
+ProtocolOrganizer >> removeProtocolNamed: aName
+[
+	| protocolToRemove |
+	protocolToRemove := self protocolNamed: aName.
+	^ self removeProtocol: protocolToRemove
+]
+
+ProtocolOrganizer >> renameProtocol: oldName into: newName
+[
+	(self existsProtocolNamed: newName)
+		ifTrue: [ self moveMethodsFrom: oldName to: newName.
+			self removeProtocolNamed: oldName ]
+		ifFalse: [ ^ (self protocolNamed: oldName)
+				name: newName;
+				yourself ]
+]
+
+ProtocolOrganizer >> stringForFileOut
+[
+	^ String
+		streamContents: [ :aStream | self protocols
+				do: [ :p | aStream << $( << p name printString.
+					p methods do: [ :m | aStream << ' ' << m asString ].
+					aStream
+						<< $);
+						cr ] ]
+]
+
+ProtocolOrganizer class >> fromSpec: aSpec
+[
+	^ self new
+		fromSpec: aSpec;
+		yourself
+]
+
+ProtocolOrganizer class >> importFrom: aClassOrganizer
+[
+	^ self new
+		importFrom: aClassOrganizer;
+		yourself
+]
+

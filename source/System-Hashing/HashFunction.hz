@@ -1,0 +1,62 @@
+HashFunction
+	package: #'System-Hashing'.
+
+HashFunction >> blockSize
+[
+	^ self class blockSize
+]
+
+HashFunction >> doubleHashMessage: aStringOrByteArray
+[
+	"SHA1 new doubleHashMessage: 'foo'"
+
+	^ self doubleHashStream: aStringOrByteArray asByteArray readStream
+]
+
+HashFunction >> doubleHashStream: aStream
+[
+	^ self hashStream: (self hashStream: aStream) asByteArray readStream
+]
+
+HashFunction >> hashMessage: aStringOrByteArray
+[
+	"MD5 new hashMessage: 'foo'"
+
+	^ self hashStream: aStringOrByteArray asByteArray readStream
+]
+
+HashFunction >> hashSize
+[
+	^ self class hashSize
+]
+
+HashFunction >> hashStream: aStream
+[
+	^ self subclassResponsibility
+]
+
+HashFunction >> hmac
+[
+	^ HMAC on: self
+]
+
+HashFunction class >> blockSize
+[
+	^ self subclassResponsibility
+]
+
+HashFunction class >> hashMessage: aStringOrByteArray
+[
+	^ self new hashMessage: aStringOrByteArray
+]
+
+HashFunction class >> hashSize
+[
+	^ self subclassResponsibility
+]
+
+HashFunction class >> hashStream: aPositionableStream
+[
+	^ self new hashStream: aPositionableStream
+]
+

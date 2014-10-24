@@ -1,0 +1,32 @@
+IRRemoteTempAccess
+	superclass: #IRTempAccess;
+	instanceVariables: #(#tempVectorName );
+	package: #'OpalCompiler-Core'.
+
+IRRemoteTempAccess >> accept: aVisitor
+[
+	^ aVisitor visitRemoteTempAccess: self
+]
+
+IRRemoteTempAccess >> executeOn: interpreter
+[
+	^ store
+		ifFalse: [ interpreter pushRemoteTemp: name inVector: tempVectorName ]
+		ifTrue: [ interpreter storeRemoteTemp: name inVector: tempVectorName ]
+]
+
+IRRemoteTempAccess >> isRemoteTemp
+[
+	^ true
+]
+
+IRRemoteTempAccess >> tempVectorName
+[
+	^ tempVectorName
+]
+
+IRRemoteTempAccess >> tempVectorName: anObject
+[
+	tempVectorName := anObject
+]
+

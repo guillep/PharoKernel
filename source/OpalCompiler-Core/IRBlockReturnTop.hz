@@ -1,0 +1,32 @@
+IRBlockReturnTop
+	superclass: #IRReturn;
+	instanceVariables: #(#successor );
+	package: #'OpalCompiler-Core'.
+
+IRBlockReturnTop >> accept: aVisitor
+[
+	^ aVisitor visitBlockReturnTop: self
+]
+
+IRBlockReturnTop >> executeOn: interpreter
+[
+	interpreter blockReturnTop
+]
+
+IRBlockReturnTop >> isBlockReturnTop
+[
+	^ true
+]
+
+IRBlockReturnTop >> successor: anObject
+[
+	successor := anObject
+]
+
+IRBlockReturnTop >> successorSequences
+[
+	"sent to last instruction in sequence which is expected to be a jump and return instruction"
+
+	^ {successor}
+]
+

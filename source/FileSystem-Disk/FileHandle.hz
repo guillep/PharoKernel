@@ -36,6 +36,13 @@ FileHandle >> at: index write: buffer startingAt: start count: count
 			count: count
 ]
 
+FileHandle >> binaryReadStream
+[
+	^ (FileStream onHandle: self) ifNil: [ self streamError ] ifNotNilDo: [ :stream | stream
+				binary;
+				yourself ]
+]
+
 FileHandle >> close
 [
 	Primitives close: id.

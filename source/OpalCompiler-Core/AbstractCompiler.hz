@@ -1,0 +1,282 @@
+AbstractCompiler
+	package: #'OpalCompiler-Core'.
+
+AbstractCompiler >> category: aCategory
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> class: aClass
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> compilationContext
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> compilationContext: anObject
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> compilationContextClass
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> compilationContextClass: aClass
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> compile
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> compile: textOrStream in: aClass classified: aCategory notifying: aRequestor ifFail: aFailBlock
+[
+	^ self
+		source: textOrStream;
+		class: aClass;
+		requestor: aRequestor;
+		category: aCategory;
+		failBlock: aFailBlock;
+		translate
+]
+
+AbstractCompiler >> compile: textOrStream in: aClass notifying: aRequestor ifFail: aFailBlock
+[
+	^ self
+		source: textOrStream;
+		class: aClass;
+		requestor: aRequestor;
+		failBlock: aFailBlock;
+		translate
+]
+
+AbstractCompiler >> compileNoPattern: textOrStream in: aClass context: aContext notifying: aRequestor ifFail: aFailBlock
+[
+	^ self
+		source: textOrStream;
+		class: aClass;
+		context: aContext;
+		requestor: aRequestor;
+		noPattern: true;
+		failBlock: aFailBlock;
+		translate
+]
+
+AbstractCompiler >> compiledMethodTrailer: aClass
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> context: aContext
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> decompileMethod: aCompiledMethod
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> environment: anSmallTalkImage
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> evaluate
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> evaluate: textOrString
+[
+	^ self
+		source: textOrString;
+		evaluate
+]
+
+AbstractCompiler >> evaluate: textOrString for: anObject logged: logFlag
+[
+	^ self
+		source: textOrString;
+		logged: logFlag;
+		receiver: anObject;
+		evaluate
+]
+
+AbstractCompiler >> evaluate: textOrString for: anObject notifying: aController logged: logFlag
+[
+	^ self
+		source: textOrString;
+		logged: logFlag;
+		receiver: anObject;
+		requestor: aController;
+		evaluate
+]
+
+AbstractCompiler >> evaluate: aString in: aContext to: aReceiver
+[
+	^ self
+		source: aString;
+		context: aContext;
+		receiver: aReceiver;
+		failBlock: [ ^ #failedDoit ];
+		evaluate
+]
+
+AbstractCompiler >> evaluate: textOrStream in: aContext to: aReceiver notifying: aRequestor ifFail: aFailBlock
+[
+	^ self
+		source: textOrStream;
+		context: aContext;
+		receiver: aReceiver;
+		requestor: aRequestor;
+		failBlock: aFailBlock;
+		evaluate
+]
+
+AbstractCompiler >> evaluate: textOrStream in: aContext to: aReceiver notifying: aRequestor ifFail: aFailBlock logged: logFlag
+[
+	^ self
+		source: textOrStream;
+		context: aContext;
+		receiver: aReceiver;
+		requestor: aRequestor;
+		failBlock: aFailBlock;
+		logged: logFlag;
+		evaluate
+]
+
+AbstractCompiler >> evaluate: textOrString logged: logFlag
+[
+	^ self
+		source: textOrString;
+		logged: logFlag;
+		evaluate
+]
+
+AbstractCompiler >> evaluate: textOrString notifying: aController logged: logFlag
+[
+	^ self
+		source: textOrString;
+		logged: logFlag;
+		requestor: aController;
+		evaluate
+]
+
+AbstractCompiler >> failBlock: aBlock
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> format
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> format: textOrStream in: aClass notifying: aRequestor
+[
+	^ self
+		source: textOrStream;
+		class: aClass;
+		requestor: aRequestor;
+		format
+]
+
+AbstractCompiler >> logged: aBoolean
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> noPattern: aBoolean
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> options: anArray
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> parse
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> parse: aString class: aClass
+[
+	^ self
+		source: aString;
+		class: aClass;
+		parse
+]
+
+AbstractCompiler >> parse: aString class: aClass noPattern: aBoolean context: aContext notifying: req ifFail: aBlock
+[
+	"Backwards compatibilty"
+
+	^ self
+		source: aString;
+		class: aClass;
+		noPattern: aBoolean;
+		context: aContext;
+		requestor: req;
+		failBlock: aBlock;
+		translate
+]
+
+AbstractCompiler >> parse: textOrStream in: aClass notifying: req
+[
+	^ self
+		source: textOrStream;
+		class: aClass;
+		requestor: req;
+		translate
+]
+
+AbstractCompiler >> parseLiterals: aString
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> parseSelector: aString
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> receiver: anObject
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> requestor: aRequestor
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> source: aString
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> translate
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> useFaultyForParsing
+[
+	self subclassResponsibility
+]
+
+AbstractCompiler >> useFaultyForParsing: anObject
+[
+	self subclassResponsibility
+]
+

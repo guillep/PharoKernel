@@ -1,0 +1,150 @@
+RBMethodNode >> compiledMethod
+[
+	^ self ir compiledMethod
+]
+
+RBMethodNode >> decompileString
+[
+	^ self formattedCode
+]
+
+RBMethodNode >> doSemanticAnalysis
+[
+	self compilationContext ifNil: [ self methodClass: nil class ].
+	self compilationContext semanticAnalyzerClass new
+		compilationContext: self compilationContext;
+		analyze: self
+]
+
+RBMethodNode >> doSemanticAnalysisIn: behavior
+[
+	self methodClass: behavior.
+	self doSemanticAnalysis
+]
+
+RBMethodNode >> doSemanticAnalysisInContext: aCompilationContext
+[
+	self compilationContext: aCompilationContext.
+	self doSemanticAnalysis
+]
+
+RBMethodNode >> generate
+[
+	"The receiver is the root of a parse tree. Answer a CompiledMethod. The
+	argument, trailer, is the references to the source code that is stored with 
+	every CompiledMethod."
+
+	^ self generate: CompiledMethodTrailer empty
+]
+
+RBMethodNode >> generate: trailer
+[
+	^ self generateIR compiledMethodWith: trailer
+]
+
+RBMethodNode >> generateIR
+[
+	| ir |
+	scope ifNil: [ self doSemanticAnalysisInContext: self compilationContext ].
+	ir := (self compilationContext astTranslatorClass new visitNode: self) ir.
+	^ self ir: ir
+]
+
+RBMethodNode >> generateWithSource
+[
+	"Answer a CompiledMethod with source encoded in trailer."
+
+	"for doits, we need to store the source pretty printed from the 
+	AST to get the return and methodName correct"
+
+	self selector isDoIt
+		ifTrue: [ source := self formattedCode ].
+	^ self generate: (CompiledMethodTrailer new sourceCode: source)
+]
+
+RBMethodNode >> ir
+[
+	^ self propertyAt: #ir ifAbsent: [ self generateIR ]
+]
+
+RBMethodNode >> ir: aIRMethodNode
+[
+	^ self propertyAt: #ir put: aIRMethodNode
+]
+
+RBMethodNode >> methodOrBlockNode
+[
+	"^ self"
+
+	
+]
+
+RBMethodNode >> owningScope
+[
+	^ self scope
+]
+
+RBMethodNode >> primitiveFromPragma
+[
+	pragmas ifNil: [ ^ IRPrimitive null ].
+	^ pragmas
+		detect: [ :each | each isPrimitive ]
+		ifFound: [ :aPragmaPrimitive | aPragmaPrimitive asPrimitive ]
+		ifNone: [ IRPrimitive null ]
+]
+
+RBMethodNode >> properties
+[
+	^ self propertyAt: #methodProperties ifAbsent: nil
+]
+
+RBMethodNode >> properties: aMethodeProperties
+[
+	^ self propertyAt: #methodProperties put: aMethodeProperties
+]
+
+RBMethodNode >> rewriteTempNamedRead: aTempName forContext: aContext
+[
+	| rewriter offset |
+	offset := aContext tempNames indexOf: aTempName.
+	rewriter := RBParseTreeRewriter new.
+	rewriter replace: aTempName with: 'ThisContext namedTempAt:' , offset asString.
+	(rewriter executeTree: self)
+		ifTrue: [ ^ rewriter tree ]
+		ifFalse: [ ^ self ]
+]
+
+RBMethodNode >> rewriteTempNamedWrite: aTempName forContext: aContext
+[
+	| rewriter offset |
+	offset := aContext tempNames indexOf: aTempName.
+	rewriter := RBParseTreeRewriter new.
+	rewriter replace: aTempName , ' := ``@object' with: 'ThisContext namedTempAt:' , offset asString , 'put: ``@object'.
+	(rewriter executeTree: self)
+		ifTrue: [ ^ rewriter tree ]
+		ifFalse: [ ^ self ]
+]
+
+RBMethodNode >> sourceNodeForPC: anInteger
+[
+	^ (self ir instructionForPC: anInteger) sourceNode
+]
+
+RBMethodNode >> sourceText: aString
+[
+	self source: aString
+]
+
+RBMethodNode >> startWithoutParentheses
+[
+	^ 1
+]
+
+RBMethodNode >> tempNames
+[
+	"compatibility method to old MethodNode"
+
+	self flag: #Clean.
+	^ self argumentNames , self temporaryNames
+]
+

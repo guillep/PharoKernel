@@ -1,0 +1,73 @@
+TextAlignment
+	superclass: #TextAttribute;
+	instanceVariables: #(#alignment );
+	sharedPools: #(#TextConstants );
+	package: #'Text-Core'.
+
+TextAlignment >> = other
+[
+	^ other class == self class and: [ other alignment = alignment ]
+]
+
+TextAlignment >> alignment
+[
+	^ alignment
+]
+
+TextAlignment >> alignment: aNumber
+[
+	alignment := aNumber
+]
+
+TextAlignment >> dominates: other
+[
+	"There can be only one..."
+
+	^ self class == other class
+]
+
+TextAlignment >> emphasizeScanner: scanner
+[
+	"Set the emphasist for text scanning"
+
+	scanner setAlignment: alignment
+]
+
+TextAlignment >> hash
+[
+	"#hash is re-implemented because #= is re-implemented"
+
+	^ alignment hash
+]
+
+TextAlignment >> writeScanOn: strm
+[
+	strm nextPut: $a.
+	alignment printOn: strm
+]
+
+TextAlignment class >> alignmentSymbol: alignmentCode
+[
+	^ #(#leftFlush #rightFlush #centered #justified) at: alignmentCode + 1
+]
+
+TextAlignment class >> centered
+[
+	^ self new alignment: Centered
+]
+
+TextAlignment class >> justified
+[
+	^ self new alignment: Justified
+]
+
+TextAlignment class >> leftFlush
+[
+	^ self new alignment: LeftFlush
+]
+
+TextAlignment class >> rightFlush
+[
+	^ self new alignment: RightFlush
+]
+

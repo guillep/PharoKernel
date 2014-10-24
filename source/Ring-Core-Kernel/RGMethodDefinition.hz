@@ -1,0 +1,501 @@
+RGMethodDefinition
+	superclass: #RGElementDefinition;
+	instanceVariables: #(#protocol #sourceCode #stamp #package );
+	package: #'Ring-Core-Kernel'.
+
+RGMethodDefinition >> <= aRGMethodDefinition
+[
+	"Sort method definitions according to: 1. class name - 2. class comment - 3. method selector - 4. timestamp"
+
+	self parentName < aRGMethodDefinition parentName
+		ifTrue: [ ^ true ].
+	self parentName > aRGMethodDefinition parentName
+		ifTrue: [ ^ false ].
+	self
+		flag:
+			'This ugly test is needed right now because the old system is used to represent 	class comment as method with Comment selector. And to mix comment and methods'.
+	aRGMethodDefinition isComment
+		ifTrue: [ ^ false ].
+	^ self selector < aRGMethodDefinition selector
+		or: [ self selector == aRGMethodDefinition selector and: [ self timeStamp <= aRGMethodDefinition timeStamp ] ]
+]
+
+RGMethodDefinition >> = aRGMethodDefinition
+[
+	"This method look for equality of the key properties of the receiver"
+
+	^ super = aRGMethodDefinition and: [ self selector == aRGMethodDefinition selector ]
+]
+
+RGMethodDefinition >> addInContainer: aRGContainer
+[
+	aRGContainer addMethod: self
+]
+
+RGMethodDefinition >> argumentNames
+[
+	"Return an array with the argument names of the method's selector"
+
+	^ self compiledMethod argumentNames
+]
+
+RGMethodDefinition >> asActive
+[
+	"Sets the receiver as active object, which will allow itself to retrieve its data from the compiled method"
+
+	self annotationNamed: self class statusKey put: #active
+]
+
+RGMethodDefinition >> asHistorical
+[
+	"Sets the receiver as historical object, which will allow itself to retrieve its data using the sourcePointer"
+
+	self annotationNamed: self class statusKey put: #historical.
+	self sourcePointer
+		ifNil: [ | pointer compiledMethod |
+			pointer := 0.
+			compiledMethod := self compiledMethod.
+			compiledMethod notNil
+				ifTrue: [ pointer := compiledMethod sourcePointer ].
+			pointer isZero
+				ifFalse: [ self sourcePointer: pointer ] ]
+]
+
+RGMethodDefinition >> asPassive
+[
+	"Sets the receiver as passive object, which will allow itself to retrieve its data that was assigned in its creation"
+
+	self annotationNamed: self class statusKey put: #passive
+]
+
+RGMethodDefinition >> asStringOrText
+[
+	| text |
+	self realClass ifNil: [ ^ self fullName ].
+	text := (self fullName , ' {' , (self protocol ifNil: '') , '} ') asText.
+	self isLocalSelector
+		ifFalse: [ text addAttribute: TextEmphasis italic ].
+	^ text
+]
+
+RGMethodDefinition >> author
+[
+	^ self annotationNamed: self class authorKey ifAbsentPut: [ self class parseAuthorAliasFrom: self stamp ]
+]
+
+RGMethodDefinition >> author: aString
+[
+	self annotationNamed: self class authorKey put: aString
+]
+
+RGMethodDefinition >> browse
+[
+	^ Smalltalk tools browser
+		fullOnClass: self realClass
+		selector: (self isDefined
+				ifTrue: [ self selector ]
+				ifFalse: [ nil ])
+]
+
+RGMethodDefinition >> category
+[
+	^ self protocol
+]
+
+RGMethodDefinition >> classIsMeta
+[
+	^ self isMetaSide
+]
+
+RGMethodDefinition >> classSymbol
+[
+	self flag: #DONOTUSEITPLEASE.	"we will deprecate it"
+	^ self className
+]
+
+RGMethodDefinition >> compiledMethod
+[
+	"Retrieves the compiled method of this definition if exists"
+
+	| rClass |
+	(rClass := self realClass) notNil
+		ifTrue: [ (rClass includesSelector: self selector)
+				ifTrue: [ ^ rClass >> self selector ] ].
+	^ nil
+]
+
+RGMethodDefinition >> fileIndex
+[
+	^ SourceFiles fileIndexFromSourcePointer: self sourcePointer
+]
+
+RGMethodDefinition >> filePosition
+[
+	^ SourceFiles filePositionFromSourcePointer: self sourcePointer
+]
+
+RGMethodDefinition >> fromActiveToHistorical
+[
+	"If the receiver was generated as an active method, it can be converted to a historical one by reading the data of the compiled method (if exists)"
+
+	self isActive
+		ifTrue: [ self asHistorical ]
+]
+
+RGMethodDefinition >> fromActiveToPassive
+[
+	"If the receiver was generated as an active method, it can be converted to a passive one by reading the data of the compiled method (if exists)"
+
+	self isActive
+		ifTrue: [ | compiledMethod |
+			compiledMethod := self compiledMethod.
+			compiledMethod notNil
+				ifTrue: [ self protocol: compiledMethod category.
+					self sourceCode: compiledMethod sourceCode.
+					self stamp: compiledMethod timeStamp ].
+			self asPassive ]
+]
+
+RGMethodDefinition >> fullName
+[
+	"Keeps a unique description for the receiver. As annotation to avoid converting each time is invoked"
+
+	^ self annotationNamed: self class fullNameKey ifAbsentPut: [ (self parentName , '>>' , self selector) asSymbol ]
+]
+
+RGMethodDefinition >> getPreambleFrom: aFileStream at: position
+[
+	^ SourceFiles getPreambleFrom: aFileStream at: position
+]
+
+RGMethodDefinition >> hasBreakpoint
+[
+	^ self compiledMethod hasBreakpoint
+]
+
+RGMethodDefinition >> hasStamp
+[
+	^ stamp isEmptyOrNil not
+]
+
+RGMethodDefinition >> hash
+[
+	^ super hash bitXor: self selector hash
+]
+
+RGMethodDefinition >> isAbstract
+[
+	^ self compiledMethod isAbstract
+]
+
+RGMethodDefinition >> isActive
+[
+	"A ring method isActive when it needs to access the compiledMethod for retrieving its data"
+
+	^ (self annotationNamed: self class statusKey) ifNil: [ false ] ifNotNil: [ :status | status == #active ]
+]
+
+RGMethodDefinition >> isBinarySelector
+[
+	^ self selector allSatisfy: [ :each | each isSpecial ]
+]
+
+RGMethodDefinition >> isClassMethodReference
+[
+	^ self isMetaSide
+]
+
+RGMethodDefinition >> isCommentReference
+[
+	^ false
+]
+
+RGMethodDefinition >> isDefined
+[
+	"Answer whether the receiver exists in the environment"
+
+	| rClass |
+	self selector isDoIt
+		ifTrue: [ ^ false ].
+	rClass := self realClass.
+	^ rClass notNil and: [ rClass includesSelector: self selector ]
+]
+
+RGMethodDefinition >> isExtension
+[
+	"The receiver is an extension when is defined in a different package to the one of its parent.
+	Ring allows to set this property. If not assigned tries to find its value "
+
+	^ self
+		annotationNamed: self class isExtensionKey
+		ifAbsent: [ (self parent notNil and: [ self package notNil ])
+				ifTrue: [ | value |
+					value := self parent package ~= self package.
+					self annotationNamed: self class isExtensionKey put: value.
+					value ]
+				ifFalse: [ self protocol ifNil: [ false ] ifNotNil: [ :prot | prot beginsWith: '*' ] ] ]
+]
+
+RGMethodDefinition >> isExtension: aBoolean
+[
+	"Explicitily set that the receiver is an extension"
+
+	self annotationNamed: self class isExtensionKey put: aBoolean
+]
+
+RGMethodDefinition >> isFromTrait
+[
+	"Return true for methods that have been included from Traits"
+
+	^ self origin isTrait and: [ self origin ~= self methodClass ]
+]
+
+RGMethodDefinition >> isHistorical
+[
+	"A ring method can be used to point an old version of the receiver, in this case it will use the sourcePointer to retrieve its information"
+
+	^ (self annotationNamed: self class statusKey) ifNil: [ false ] ifNotNil: [ :status | status == #historical ]
+]
+
+RGMethodDefinition >> isIncludedInContainer: aRGContainer
+[
+	^ aRGContainer includesMethod: self
+]
+
+RGMethodDefinition >> isLocalSelector
+[
+	"Answer whether the receiver exists in the environment as a local implementation"
+
+	| rClass |
+	rClass := self realClass.
+	^ rClass notNil and: [ rClass includesLocalSelector: self selector ]
+]
+
+RGMethodDefinition >> isMethod
+[
+	^ true
+]
+
+RGMethodDefinition >> isOverridden
+[
+	^ self compiledMethod isOverridden
+]
+
+RGMethodDefinition >> isPassive
+[
+	"A ring method isPassive when it retrieves the data that was assigned in its creation.
+	By default is passive"
+
+	^ (self annotationNamed: self class statusKey) ifNil: [ true ] ifNotNil: [ :status | status == #passive ]
+]
+
+RGMethodDefinition >> isSameRevisionAs: aRGMethodDefinition
+[
+	"This method look for equality of the properties of the receiver"
+
+	"Stamp is ignored as in many cases a method is saved without containing any change. However it appears as changed due to a different stamp"
+
+	self flag: 'needs to be evaluated'.
+	^ (super isSameRevisionAs: aRGMethodDefinition)
+		and: [ self selector = aRGMethodDefinition selector
+				and: [ self protocol = aRGMethodDefinition protocol and: [ self sourceCode = aRGMethodDefinition sourceCode ] ] ]
+]
+
+RGMethodDefinition >> isValid
+[
+	"verifies that the receiver is locally defined in the class and that is not a DoIt"
+
+	^ self isDefined
+]
+
+RGMethodDefinition >> method
+[
+	^ self compiledMethod
+]
+
+RGMethodDefinition >> methodClass
+[
+	"Return the class to which the receiver belongs to."
+
+	^ self realClass
+]
+
+RGMethodDefinition >> methodSymbol
+[
+	^ self selector
+]
+
+RGMethodDefinition >> numberOfLinesOfCode
+[
+	^ self annotationNamed: #numberOfLinesOfCode ifAbsentPut: [ self sourceCode lineCount ]
+]
+
+RGMethodDefinition >> origin
+[
+	"Return the real oring of this method."
+
+	^ self compiledMethod ifNil: [ self methodClass ] ifNotNil: [ :compileMethod | compileMethod origin ]
+]
+
+RGMethodDefinition >> package
+[
+	"Retrieves the package in which this class is contained, if exists"
+
+	^ package
+]
+
+RGMethodDefinition >> package: aRGPackage
+[
+	package := aRGPackage
+]
+
+RGMethodDefinition >> printOn: aStream
+[
+	self parentName ifNotNil: [ aStream
+				nextPutAll: self parentName;
+				nextPutAll: '>>' ].
+	aStream print: self selector
+]
+
+RGMethodDefinition >> protocol
+[
+	self isActive
+		ifTrue: [ ^ self compiledMethod ifNil: [ protocol ] ifNotNil: [ self compiledMethod category ] ].
+	self isHistorical
+		ifTrue: [ ^ self protocolAtPointer ifNil: [ self compiledMethod ifNil: [ protocol ] ifNotNil: [ :cm | cm category ] ] ].
+	^ protocol
+]
+
+RGMethodDefinition >> protocol: anObject
+[
+	protocol := anObject
+]
+
+RGMethodDefinition >> protocolAtPointer
+[
+	"A RGMethodDefinition that was set as historical will retrieve the protocol using the sourcePointer"
+
+	^ self sourcePointer notNil
+		ifTrue: [ SourceFiles protocolAt: self sourcePointer ]
+		ifFalse: [ nil ]
+]
+
+RGMethodDefinition >> removeFromContainer: aRGContainer
+[
+	aRGContainer removeMethod: self
+]
+
+RGMethodDefinition >> selector
+[
+	"Retrieves the name of the method"
+
+	^ name
+]
+
+RGMethodDefinition >> selector: aSymbol
+[
+	"The name of a method is known as #selector"
+
+	name := aSymbol
+]
+
+RGMethodDefinition >> sourceCode
+[
+	self isActive
+		ifTrue: [ ^ self compiledMethod ifNil: [ sourceCode ] ifNotNil: [ self compiledMethod sourceCode ] ].
+	self isHistorical
+		ifTrue: [ ^ self sourceCodeAtPointer ifNil: [ self compiledMethod ifNil: [ sourceCode ] ifNotNil: [ :cm | cm sourceCode ] ] ].
+	^ sourceCode
+]
+
+RGMethodDefinition >> sourceCode: anObject
+[
+	sourceCode := anObject
+]
+
+RGMethodDefinition >> sourceCodeAtPointer
+[
+	"A RGMethodDefinition that was set as historical will retrieve the sourceCode using the sourcePointer"
+
+	^ self sourcePointer notNil
+		ifTrue: [ SourceFiles sourceCodeAt: self sourcePointer ]
+		ifFalse: [ nil ]
+]
+
+RGMethodDefinition >> sourcePointer
+[
+	"Retrieves the sourcePointer for this definition if exists"
+
+	^ self annotationNamed: self class sourcePointerKey
+]
+
+RGMethodDefinition >> sourcePointer: aNumber
+[
+	self annotationNamed: self class sourcePointerKey put: aNumber
+]
+
+RGMethodDefinition >> stamp
+[
+	self isActive
+		ifTrue: [ ^ self compiledMethod timeStamp ].
+	self isHistorical
+		ifTrue: [ ^ self stampAtPointer ifNil: [ self compiledMethod ifNil: [ stamp ] ifNotNil: [ :cm | cm timeStamp ] ] ].
+	^ stamp
+]
+
+RGMethodDefinition >> stamp: anObject
+[
+	"stores an author alias and a timestamp"
+
+	stamp := anObject
+]
+
+RGMethodDefinition >> stampAtPointer
+[
+	"A RGMethodDefinition that was set as historical will retrieve the stamp using the sourcePointer"
+
+	^ self sourcePointer notNil
+		ifTrue: [ SourceFiles timeStampAt: self sourcePointer ]
+		ifFalse: [ nil ]
+]
+
+RGMethodDefinition >> timeStamp
+[
+	^ self
+		annotationNamed: self class timeStampKey
+		ifAbsentPut: [ self class parseTimestampFrom: self stamp default: DateAndTime epoch ]
+]
+
+RGMethodDefinition >> timeStamp: aTimestamp
+[
+	self annotationNamed: self class timeStampKey put: aTimestamp
+]
+
+RGMethodDefinition class >> class: aRGBehaviorDefinition selector: aString
+[
+	"Create a ring method definition from a ring class and a selector"
+
+	^ (self class: aRGBehaviorDefinition)
+		selector: aString asSymbol;
+		yourself
+]
+
+RGMethodDefinition class >> isExtensionKey
+[
+	^ #isExtension
+]
+
+RGMethodDefinition class >> realClass: aClass selector: aString
+[
+	"Creates a ring method definition from a Smalltalk class and a selector <compiledMethod>"
+
+	^ (aClass >> aString asSymbol) asActiveRingDefinition
+]
+
+RGMethodDefinition class >> unclassifiedProtocolName
+[
+	"Return the string labeling the unclassified protocol."
+
+	^ 'as yet unclassified'
+]
+

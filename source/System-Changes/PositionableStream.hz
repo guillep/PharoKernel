@@ -1,0 +1,193 @@
+PositionableStream >> backChunk
+[
+	"Answer the contents of the receiver back to the previous terminator character.  Doubled terminators indicate an embedded terminator character."
+
+	| terminator out ch |
+	terminator := $!.
+	out := (String new: 1000) writeStream.
+	[ (ch := self back) == nil ]
+		whileFalse: [ ch == terminator
+				ifTrue: [ self oldPeekBack == terminator
+						ifTrue: [ self oldBack	"skip doubled terminator" ]
+						ifFalse: [ ^ out contents reversed	"we're done!" ] ].
+			out nextPut: ch ].
+	^ out contents reversed
+]
+
+PositionableStream >> basicNextChunk
+[
+	"Answer the contents of the receiver, up to the next terminator character. Doubled terminators indicate an embedded terminator character."
+
+	| terminator out ch |
+	terminator := $!.
+	out := (String new: 1000) writeStream.
+	self skipSeparators.
+	[ (ch := self next) == nil ]
+		whileFalse: [ ch == terminator
+				ifTrue: [ self peek == terminator
+						ifTrue: [ self next	"skip doubled terminator" ]
+						ifFalse: [ ^ out contents	"terminator is not doubled; we're done!" ] ].
+			out nextPut: ch ].
+	^ out contents
+]
+
+PositionableStream >> checkForPreamble: chunk
+[
+	((chunk beginsWith: '"Change Set:') and: [ ChangeSet current preambleString == nil ])
+		ifTrue: [ ChangeSet current preambleString: chunk ].
+	((chunk beginsWith: '"Postscript:') and: [ ChangeSet current postscriptString == nil ])
+		ifTrue: [ ChangeSet current postscriptString: chunk ]
+]
+
+PositionableStream >> copyMethodChunkFrom: aStream
+[
+	"Copy the next chunk from aStream (must be different from the receiver)."
+
+	self nextChunkPut: aStream nextChunkText
+]
+
+PositionableStream >> copyMethodChunkFrom: aStream at: pos
+[
+	"Copy the next chunk from aStream (must be different from the receiver)."
+
+	aStream position: pos.
+	self nextChunkPut: aStream nextChunkText
+]
+
+PositionableStream >> copyPreamble: preamble from: aStream at: pos
+[
+	"Look for a changeStamp for this method by peeking backward.
+	Write a method preamble, with that stamp if found."
+
+	| terminator last50 stamp i |
+	terminator := $!.	"Look back to find stamp in old preamble, such as...	Polygon methodsFor: 'private' stamp: 'di 6/25/97 21:42' prior: 34957598! "
+	aStream position: pos.
+	aStream backChunk.	"to beginning of method"
+	last50 := aStream backChunk.	"to get preamble"
+	aStream position: pos.
+	stamp := String new.
+	(i := last50 findLastOccurrenceOfString: 'stamp:' startingAt: 1) > 0
+		ifTrue: [ stamp := (last50 copyFrom: i + 8 to: last50 size) copyUpTo: $' ].	"Write the new preamble, with old stamp if any."
+	self
+		cr;
+		nextPut: terminator.
+	self
+		nextChunkPut:
+			(String
+				streamContents: [ :strm | strm nextPutAll: preamble.
+					stamp size > 0
+						ifTrue: [ strm
+								nextPutAll: ' stamp: ';
+								print: stamp ] ]).
+	self cr
+]
+
+PositionableStream >> decodeString: string andRuns: runsRaw
+[
+	| strm runLength runValues newString index |
+	strm := ReadStream on: runsRaw from: 1 to: runsRaw size.
+	(strm peekFor: $()
+		ifFalse: [ ^ nil ].
+	runLength := OrderedCollection new.
+	[ strm skipSeparators.
+	strm peekFor: $) ] whileFalse: [ runLength add: (Number readFrom: strm) ].
+	runValues := OrderedCollection new.
+	[ strm atEnd ] whileFalse: [ runValues add: (Number readFrom: strm).
+			strm next ].
+	newString := WideString new: string size.
+	index := 1.
+	runLength
+		with: runValues
+		do: [ :length :leadingChar | index to: index + length - 1 do: [ :pos | newString at: pos put: (Character leadingChar: leadingChar code: (string at: pos) charCode) ].
+			index := index + length ].
+	^ newString
+]
+
+PositionableStream >> header
+[
+	"If the stream requires a standard header, override this message.  See HtmlFileStream"
+
+	
+]
+
+PositionableStream >> nextChunk
+[
+	"Answer the contents of the receiver, up to the next terminator character. Doubled terminators indicate an embedded terminator character."
+
+	| terminator out ch |
+	terminator := $!.
+	out := (String new: 1000) writeStream.
+	self skipSeparators.
+	[ (ch := self next) == nil ]
+		whileFalse: [ ch == terminator
+				ifTrue: [ self peek == terminator
+						ifTrue: [ self next	"skip doubled terminator" ]
+						ifFalse: [ ^ self parseLangTagFor: out contents	"terminator is not doubled; we're done!" ] ].
+			out nextPut: ch ].
+	^ self parseLangTagFor: out contents
+]
+
+PositionableStream >> nextChunkText
+[
+	"Deliver the next chunk as a Text.  Decode the following ]style[ chunk if present.  Position at start of next real chunk."
+
+	| string runsRaw strm runs peek pos |
+	"Read the plain text"
+	string := self nextChunk.	"Test for ]style[ tag"
+	pos := self position.
+	peek := self skipSeparatorsAndPeekNext.
+	peek = $]
+		ifFalse: [ self position: pos.
+			^ string asText ].	"no tag"
+	(self upTo: $[) = ']style'
+		ifFalse: [ self position: pos.
+			^ string asText ].	"different tag"	"Read and decode the style chunk"
+	runsRaw := self basicNextChunk.	"style encoding"
+	strm := ReadStream on: runsRaw from: 1 to: runsRaw size.
+	runs := RunArray scanFrom: strm.
+	^ Text basicNew setString: string setRunsChecking: runs
+]
+
+PositionableStream >> parseLangTagFor: aString
+[
+	| string peek runsRaw pos |
+	string := aString.	"Test for ]lang[ tag"
+	pos := self position.
+	peek := self skipSeparatorsAndPeekNext.
+	peek = $]
+		ifFalse: [ self position: pos.
+			^ string ].	"no tag"
+	(self upTo: $[) = ']lang'
+		ifTrue: [ runsRaw := self basicNextChunk.
+			string := self decodeString: aString andRuns: runsRaw ]
+		ifFalse: [ self position: pos ].
+	^ string
+]
+
+PositionableStream >> skipStyleChunk
+[
+	"Get to the start of the next chunk that is not a style for the previous chunk"
+
+	| pos |
+	pos := self position.
+	self skipSeparators.
+	self peek == $]
+		ifTrue: [ (self upTo: $[) = ']text'
+				ifFalse: [ self nextChunk ]	"old -- no longer needed"	"now positioned past the open bracket" ]
+		ifFalse: [ self position: pos ]	"absorb ]style[ and its whole chunk"	"leave untouched"
+]
+
+PositionableStream >> trailer
+[
+	"If the stream requires a standard trailer, override this message.  See HtmlFileStream"
+
+	
+]
+
+PositionableStream >> verbatim: aString
+[
+	"Do not attempt to translate the characters.  Use to override nextPutAll:"
+
+	^ self nextPutAll: aString
+]
+

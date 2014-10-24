@@ -1,0 +1,61 @@
+OCCopyingTempVariable
+	superclass: #OCTempVariable;
+	instanceVariables: #(#originalVar );
+	package: #'OpalCompiler-Core'.
+
+OCCopyingTempVariable >> definingScope
+[
+	^ originalVar scope
+]
+
+OCCopyingTempVariable >> indexInTempVectorFromIR: aName
+[
+	^ (scope node irInstruction tempVectorNamed: name) indexForVarNamed: aName
+]
+
+OCCopyingTempVariable >> isCopying
+[
+	^ true
+]
+
+OCCopyingTempVariable >> originalVar
+[
+	^ originalVar
+]
+
+OCCopyingTempVariable >> originalVar: anObject
+[
+	originalVar := anObject
+]
+
+OCCopyingTempVariable >> tempVectorForTempStoringIt
+[
+	"If I am stroring a temp Vector, this method returns this victor.
+	useful for analysis e.g. which variables are active in a context"
+
+	| searchScope |
+	self isStoringTempVector
+		ifFalse: [ ^ nil ].
+	searchScope := scope.
+	[ searchScope isInstanceScope or: [ searchScope tempVectorName = name ] ]
+		whileFalse: [ searchScope := searchScope outerScope ].
+	searchScope isInstanceScope
+		ifTrue: [ ^ nil ]
+		ifFalse: [ ^ searchScope tempVector ]	"not found"
+]
+
+OCCopyingTempVariable >> writeFromContext: aContext scope: contextScope value: aValue
+[
+	| myContext myScope |
+	"take care to set the copy correctly up to the definition"
+	myContext := aContext.
+	myScope := contextScope.
+	[ myScope hasCopyingTempNamed: name ]
+		whileTrue: [ super writeFromContext: myContext scope: myScope value: aValue.
+			myContext := myContext outerContext.
+			myScope := myScope outerScope.
+			myScope isInstanceScope
+				ifTrue: [ ^ aValue ] ].
+	^ aValue
+]
+

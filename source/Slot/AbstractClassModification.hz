@@ -1,0 +1,85 @@
+AbstractClassModification
+	instanceVariables: #(#target #layout #propagations #newClass );
+	package: #Slot.
+
+AbstractClassModification >> allPropagationsDo: aBlock
+[
+	propagations do: [ :aPropagation | aBlock value: aPropagation.
+			aPropagation allPropagationsDo: aBlock ]
+]
+
+AbstractClassModification >> apply
+[
+	^ newClass := target shallowCopy superclass: self superclass layout: layout
+]
+
+AbstractClassModification >> checkSanity
+[
+	layout checkSanity
+]
+
+AbstractClassModification >> computeChange
+[
+	self checkSanity
+]
+
+AbstractClassModification >> initialize
+[
+	propagations := OrderedCollection new
+]
+
+AbstractClassModification >> isPropagation
+[
+	^ self subclassResponsibility
+]
+
+AbstractClassModification >> layout
+[
+	^ layout
+]
+
+AbstractClassModification >> layout: aLayout
+[
+	layout := aLayout.
+	layout host: target.
+	layout finalize.
+	layout = target layout
+		ifFalse: [ self computeChange ]
+]
+
+AbstractClassModification >> newClass
+[
+	^ newClass
+]
+
+AbstractClassModification >> newLayout
+[
+	^ layout
+]
+
+AbstractClassModification >> oldLayout
+[
+	^ target layout
+]
+
+AbstractClassModification >> propagate
+[
+	target subclassesDo: [ :subclass | propagations add: (ClassModificationPropagation propagate: self to: subclass) ].	"recursively propagate this change down"
+	propagations do: [ :propagation | propagation propagate ]
+]
+
+AbstractClassModification >> result
+[
+	^ target
+]
+
+AbstractClassModification >> target
+[
+	^ target
+]
+
+AbstractClassModification >> target: aTarget
+[
+	target := aTarget
+]
+

@@ -1,0 +1,172 @@
+LayoutClassScope
+	superclass: #LayoutAbstractScope;
+	instanceSpecification: #(#variable #pointers #words );
+	instanceVariables: #(#parentScope );
+	package: #Slot.
+
+LayoutClassScope >> = other
+[
+	super = other
+		ifFalse: [ ^ false ].
+	self size = other size
+		ifFalse: [ ^ false ].
+	1 to: self size do: [ :index | (self at: index) = (other at: index)
+			ifFalse: [ ^ false ] ].
+	^ self parentScope = other parentScope
+]
+
+LayoutClassScope >> allSlotsDo: aBlock
+[
+	parentScope allSlotsDo: aBlock.
+	self do: aBlock
+]
+
+LayoutClassScope >> allSlotsReverseDo: aBlock
+[
+	self reverseDo: aBlock.
+	parentScope allSlotsReverseDo: aBlock
+]
+
+LayoutClassScope >> allVisibleSlots
+[
+	| result |
+	result := parentScope allVisibleSlots.
+	self do: [ :slot | slot isVisible
+				ifTrue: [ result add: slot ] ].
+	^ result
+]
+
+LayoutClassScope >> do: aBlock
+[
+	1 to: self size do: [ :index | aBlock value: (self at: index) ]
+]
+
+LayoutClassScope >> fieldSize
+[
+	^ parentScope fieldSize + self ownFieldSize
+]
+
+LayoutClassScope >> flatten
+[
+	| result |
+	result := parentScope flatten.
+	result addAll: self.
+	^ result
+]
+
+LayoutClassScope >> hasFields
+[
+	self do: [ :slot | slot size > 0
+				ifTrue: [ ^ true ] ].
+	^ parentScope hasFields
+]
+
+LayoutClassScope >> hasSlots
+[
+	self size > 0
+		ifTrue: [ ^ true ].
+	^ parentScope hasSlots
+]
+
+LayoutClassScope >> hash
+[
+	| hash |
+	hash := super hash.
+	1 to: self size do: [ :i | hash := (hash + (self at: i) hash) hashMultiply ].
+	^ hash bitXor: self parentScope hash
+]
+
+LayoutClassScope >> ownFieldSize
+[
+	| result |
+	result := 0.
+	self do: [ :slot | result := result + slot size ].
+	^ result
+]
+
+LayoutClassScope >> parentScope
+[
+	^ parentScope
+]
+
+LayoutClassScope >> parentScope: aLayoutScope
+[
+	parentScope := aLayoutScope
+]
+
+LayoutClassScope >> postCopy
+[
+	parentScope := parentScope copy.
+	1 to: self size do: [ :index | self at: index put: (self at: index) copy ]
+]
+
+LayoutClassScope >> printOn: aStream
+[
+	super printOn: aStream.
+	self allVisibleSlots printElementsOn: aStream
+]
+
+LayoutClassScope >> printSlotDefinitionOn: aStream
+[
+	| printedAtLeastOnSlot |
+	aStream << '{'.
+	printedAtLeastOnSlot := false.
+	self
+		do: [ :slot | slot isVisible
+				ifTrue: [ aStream
+						lf;
+						tab;
+						tab;
+						store: slot;
+						<< '.'.
+					printedAtLeastOnSlot := true ] ].
+	printedAtLeastOnSlot
+		ifTrue: [ aStream
+				lf;
+				tab ].
+	aStream << '}'
+]
+
+LayoutClassScope >> rebase: originalScope to: newScope
+[
+	| newParent result fieldIndex |
+	newParent := parentScope == originalScope
+		ifTrue: [ newScope ]
+		ifFalse: [ parentScope rebase: originalScope to: newScope ].
+	result := self copy.
+	result parentScope: newParent.
+	fieldIndex := newParent firstFieldIndex.
+	result do: [ :slot | slot index: fieldIndex.
+			fieldIndex := fieldIndex + slot size ].
+	^ result
+]
+
+LayoutClassScope >> reverseDo: aBlock
+[
+	| size |
+	size := self size.
+	1 to: size do: [ :index | aBlock value: (self at: 1 + size - index) ]
+]
+
+LayoutClassScope >> visibleSlotNames
+[
+	| result |
+	result := OrderedCollection new.
+	self do: [ :slot | slot isVisible
+				ifTrue: [ result add: slot name ] ].
+	^ result asArray
+]
+
+LayoutClassScope >> withIndexDo: elementAndIndexBlock
+[
+	"Just like with:do: except that the iteration index supplies the second argument to the block."
+
+	1 to: self size do: [ :index | elementAndIndexBlock value: (self at: index) value: index ]
+]
+
+LayoutClassScope >> withParentScopesDo: aBlock
+[
+	aBlock value: self.
+	parentScope withParentScopesDo: aBlock
+]
+

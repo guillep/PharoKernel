@@ -1,0 +1,509 @@
+RGBehaviorDefinition
+	superclass: #RGGlobalDefinition;
+	instanceVariables: #(#superclass #methods #protocols );
+	package: #'Ring-Core-Kernel'.
+
+RGBehaviorDefinition >> addInContainer: aRGContainer
+[
+	aRGContainer addClass: self
+]
+
+RGBehaviorDefinition >> addMethod: aRGMethodDefinition
+[
+	"Adds aRGMethodDefinition in the methods dictionary.
+	 Adds the protocol of such method too"
+
+	self addMethod: aRGMethodDefinition in: methods.
+	self addProtocol: aRGMethodDefinition protocol
+]
+
+RGBehaviorDefinition >> addMethod: aRGMethodDefinition in: aCollection
+[
+	"Adds aRGMethodDefinition in the collection received"
+
+	aRGMethodDefinition parent ifNil: [ aRGMethodDefinition parent: self ].
+	aCollection at: aRGMethodDefinition selector put: aRGMethodDefinition
+]
+
+RGBehaviorDefinition >> addProtocol: anObject
+[
+	"Adds a protocol named anObject.
+	Protocols are not repeated"
+
+	anObject ifNil: [ ^ self ].
+	protocols add: anObject
+]
+
+RGBehaviorDefinition >> addSelector: selectorName classified: protocolName sourced: source
+[
+	self
+		addMethod:
+			((self factory createMethodNamed: selectorName parent: self)
+				protocol: protocolName;
+				sourceCode: source;
+				yourself)
+]
+
+RGBehaviorDefinition >> addSubclass: aRGBehaviorDefinition
+[
+	"Adds a direct subclass of the receiver"
+
+	(self subclasses includes: aRGBehaviorDefinition)
+		ifFalse: [ self subclasses add: aRGBehaviorDefinition ]
+]
+
+RGBehaviorDefinition >> allSelectors
+[
+	"Retrieves all the selectos of the receiver in the chain hierarchy"
+
+	| class selectors |
+	class := self.
+	selectors := Set new.
+	[ class notNil ] whileTrue: [ selectors addAll: class selectors.
+			class := class superclass ].
+	^ selectors
+]
+
+RGBehaviorDefinition >> allSubclasses
+[
+	"Retrieves all the subclasses of the receiver in the chan hiearchy - value is kept as an annotation"
+
+	"is a good idea storing this?"
+
+	^ self
+		annotationNamed: self class allSubclassesKey
+		ifAbsentPut: [ | collection index |
+			index := 1.
+			collection := OrderedCollection withAll: self subclasses.
+			[ index <= collection size ]
+				whileTrue: [ collection addAll: (collection at: index) subclasses.
+					index := index + 1 ].
+			collection ]
+]
+
+RGBehaviorDefinition >> allSubclasses: aCollection
+[
+	"Stores all the subclasses (direct and indirect) as an annotation"
+
+	self annotationNamed: self class allSubclassesKey ifAbsentPut: [ aCollection ]
+]
+
+RGBehaviorDefinition >> allSuperclasses
+[
+	"Answer an OrderedCollection of the receiver's and the receiver's  
+	ancestor's superclasses"
+
+	"Is implementation of Behavior more efficient?"
+
+	^ self
+		annotationNamed: self class allSuperclassesKey
+		ifAbsentPut: [ | supers sprClass |
+			supers := OrderedCollection new.
+			sprClass := self superclass.
+			[ sprClass notNil ] whileTrue: [ supers add: sprClass.
+					sprClass := sprClass superclass ].
+			supers ]
+]
+
+RGBehaviorDefinition >> allSuperclasses: aCollection
+[
+	"Stores all the superclasses (direct and indirect) as an annotation"
+
+	self annotationNamed: self class allSuperclassesKey ifAbsentPut: [ aCollection ]
+]
+
+RGBehaviorDefinition >> allSuperclassesDo: aBlock
+[
+	"Evaluate the argument, aBlock, for each of the receiver's superclasses."
+
+	self superclass isNil
+		ifFalse: [ aBlock value: superclass.
+			superclass allSuperclassesDo: aBlock ]
+]
+
+RGBehaviorDefinition >> browse
+[
+	^ Smalltalk tools browser fullOnClass: self realClass selector: nil
+]
+
+RGBehaviorDefinition >> compiledMethodNamed: selector
+[
+	"Retrieves the compiled method from aRGMethodDefinition"
+
+	| method |
+	^ (method := self methodNamed: selector) notNil
+		ifTrue: [ method compiledMethod ]
+		ifFalse: [ nil ]
+]
+
+RGBehaviorDefinition >> definitionSource
+[
+	"Retrieves the definition template of the receiver -> aString.
+	This value is kept as an annotation"
+
+	^ self annotationNamed: self class definitionSourceKey
+]
+
+RGBehaviorDefinition >> definitionSource: aString
+[
+	"Sets the definition template of the receiver -> aString.
+	It's stored as an annotation"
+
+	self annotationNamed: self class definitionSourceKey put: aString
+]
+
+RGBehaviorDefinition >> extensionMethods
+[
+	^ self methods select: [ :each | each isExtension ]
+]
+
+RGBehaviorDefinition >> hasMetaclass
+[
+	^ false
+]
+
+RGBehaviorDefinition >> hasMethods
+[
+	"validates the existance of methods"
+
+	^ methods notEmpty
+]
+
+RGBehaviorDefinition >> hasProtocols
+[
+	"Validates the existance of protocols"
+
+	^ protocols notEmpty
+]
+
+RGBehaviorDefinition >> hasSuperclass
+[
+	^ superclass notNil
+]
+
+RGBehaviorDefinition >> hasTraitComposition
+[
+	^ self traitCompositionSource ~= '{}'
+]
+
+RGBehaviorDefinition >> includesBehavior: aClass
+[
+	^ self == aClass or: [ self inheritsFrom: aClass ]
+]
+
+RGBehaviorDefinition >> includesProtocol: aString
+[
+	"Looks for a protocols named = aString"
+
+	^ protocols includes: aString
+]
+
+RGBehaviorDefinition >> includesSelector: selector
+[
+	"Looks if selector is a key in the methods dictionary"
+
+	^ methods includesKey: selector asSymbol
+]
+
+RGBehaviorDefinition >> initialize
+[
+	super initialize.
+	methods := IdentityDictionary new.
+	protocols := Set new
+]
+
+RGBehaviorDefinition >> isDefined
+[
+	"If the class exists in the environment"
+
+	^ self realClass notNil
+]
+
+RGBehaviorDefinition >> isIncludedInContainer: aRGContainer
+[
+	^ aRGContainer includesClass: self
+]
+
+RGBehaviorDefinition >> isMeta
+[
+	"By default is considered a non-meta class"
+
+	^ false
+]
+
+RGBehaviorDefinition >> isSameRevisionAs: aRGBehaviorDefinition
+[
+	"This method look for equality of the properties of the receiver"
+
+	^ self class = aRGBehaviorDefinition class and: [ self name == aRGBehaviorDefinition name ]
+]
+
+RGBehaviorDefinition >> methodDict
+[
+	^ methods
+]
+
+RGBehaviorDefinition >> methodNamed: selector
+[
+	"Retrieves aRGMethodDefinition that matches the selector given as argument"
+
+	"RB defines methodFor:"
+
+	^ methods at: selector asSymbol ifAbsent: [ nil ]
+]
+
+RGBehaviorDefinition >> methods
+[
+	^ methods
+]
+
+RGBehaviorDefinition >> methods: aDictionary
+[
+	methods := aDictionary
+]
+
+RGBehaviorDefinition >> methodsInProtocol: aString
+[
+	"Retrieves the methods classified in protocol named aString"
+
+	^ methods select: [ :each | each protocol = aString ]
+]
+
+RGBehaviorDefinition >> package
+[
+	self subclassResponsibility
+]
+
+RGBehaviorDefinition >> printOn: aStream
+[
+	aStream nextPutAll: self name
+]
+
+RGBehaviorDefinition >> protocols
+[
+	"retrieves the protocols of the class"
+
+	^ protocols
+]
+
+RGBehaviorDefinition >> protocols: aCollection
+[
+	"set the protocols of the class"
+
+	protocols := aCollection
+]
+
+RGBehaviorDefinition >> realClass
+[
+	"Retrieves the current class existing in the runtime environment"
+
+	^ self rootEnvironment classNamed: self name
+]
+
+RGBehaviorDefinition >> removeFromContainer: aRGContainer
+[
+	aRGContainer removeClass: self
+]
+
+RGBehaviorDefinition >> removeMethod: aRGMethodDefinition
+[
+	"Removes aRGMethodDefinition from the methods dictionary"
+
+	self removeMethod: aRGMethodDefinition from: methods
+]
+
+RGBehaviorDefinition >> removeMethod: aRGMethodDefinition from: aCollection
+[
+	"Removes aRGMethodDefinition from the collection received"
+
+	aCollection removeKey: aRGMethodDefinition selector ifAbsent: [  ]
+]
+
+RGBehaviorDefinition >> removeProtocol: aString
+[
+	"Removes a protocol named aString (if exists)"
+
+	protocols remove: aString ifAbsent: [  ]
+]
+
+RGBehaviorDefinition >> removeSelector: selector
+[
+	"Removes a method named as selector"
+
+	methods removeKey: selector ifAbsent: [  ]
+]
+
+RGBehaviorDefinition >> removeSubclass: aRGBehaviorDefinition
+[
+	"Removes aRGAbstractClassDefinition from the direct subclasses - without failing if does not exist"
+
+	self subclasses remove: aRGBehaviorDefinition ifAbsent: [  ]
+]
+
+RGBehaviorDefinition >> selectors
+[
+	"Retrieves the method selectors"
+
+	^ methods keys
+]
+
+RGBehaviorDefinition >> soleInstance
+[
+	"to be depracated in the future"
+
+	^ self theNonMetaClass
+]
+
+RGBehaviorDefinition >> storeOn: aStream
+[
+	aStream nextPutAll: self name
+]
+
+RGBehaviorDefinition >> subclasses
+[
+	"Retrieves the direct subclasses of the receiver.
+	This value is kept as an annotation"
+
+	^ self annotationNamed: self class subclassesKey ifAbsentPut: [ OrderedCollection new ]
+]
+
+RGBehaviorDefinition >> subclasses: aCollection
+[
+	"Stores direct subclasses of the receiver as an annotation"
+
+	self annotationNamed: self class subclassesKey ifAbsentPut: [ aCollection ]
+]
+
+RGBehaviorDefinition >> superclass
+[
+	^ superclass
+]
+
+RGBehaviorDefinition >> superclass: aRGBehaviorDefinition
+[
+	"The superclass is assigned.
+	If aRGBehaviorDefinition is not nil the receiver is added as a subclass and the superclass assignment also happens for theMetaClass"
+
+	superclass := aRGBehaviorDefinition.
+	superclass notNil
+		ifTrue: [ self superclassName: aRGBehaviorDefinition name.
+			aRGBehaviorDefinition addSubclass: self.
+			self hasMetaclass
+				ifTrue: [ self theMetaClass superclass: aRGBehaviorDefinition theMetaClass ] ]
+]
+
+RGBehaviorDefinition >> superclassName
+[
+	"Retrieves the name of the superclass if exists"
+
+	^ self annotationNamed: self class superclassNameKey
+]
+
+RGBehaviorDefinition >> superclassName: aSymbol
+[
+	self annotationNamed: self class superclassNameKey put: aSymbol
+]
+
+RGBehaviorDefinition >> theMetaClass
+[
+	self subclassResponsibility
+]
+
+RGBehaviorDefinition >> theNonMetaClass
+[
+	self subclassResponsibility
+]
+
+RGBehaviorDefinition >> traitCompositionSource
+[
+	"Retrieves aString representing the used traits"
+
+	^ self annotationNamed: self class traitCompositionSourceKey ifAbsentPut: [ '{}' ]
+]
+
+RGBehaviorDefinition >> traitCompositionSource: anString
+[
+	"Stores aString representing the traits used by the receiver "
+
+	self annotationNamed: self class traitCompositionSourceKey put: anString
+]
+
+RGBehaviorDefinition >> traitNames
+[
+	"Assuming that traits in a composition can be identified by
+	testing for the first character being an uppercase character
+	(and thus not a special character such as {, # etc.)"
+
+	| tokens |
+	tokens := self traitCompositionSource parseLiterals flattened.
+	^ tokens select: [ :each | each first isUppercase ]
+]
+
+RGBehaviorDefinition >> traits
+[
+	"Retrieves ring traits based on the names in the traitComposition and from the environment if it is a ring object"
+
+	^ self environment isRingObject
+		ifTrue: [ self traitNames collect: [ :each | self environment traitNamed: each ] ]
+		ifFalse: [ #() ]
+]
+
+RGBehaviorDefinition >> withAllSubclasses
+[
+	"if allSubclasses is stored should not affect the collection"
+
+	^ self allSubclasses , {self}
+]
+
+RGBehaviorDefinition >> withAllSuperclasses
+[
+	"if allSuperclasses is stored should not affect the collection"
+
+	^ self allSuperclasses , {self}
+]
+
+RGBehaviorDefinition class >> allSubclassesKey
+[
+	^ #allSubclasses
+]
+
+RGBehaviorDefinition class >> allSuperclassesKey
+[
+	^ #allSuperclasses
+]
+
+RGBehaviorDefinition class >> definitionSourceKey
+[
+	^ #definitionSource
+]
+
+RGBehaviorDefinition class >> isPoolKey
+[
+	^ #isPool
+]
+
+RGBehaviorDefinition class >> subclassesKey
+[
+	^ #subclasses
+]
+
+RGBehaviorDefinition class >> superclassNameKey
+[
+	^ #superclassName
+]
+
+RGBehaviorDefinition class >> superclassesKey
+[
+	^ #superclasses
+]
+
+RGBehaviorDefinition class >> traitCompositionSourceKey
+[
+	^ #traitCompositionSource
+]
+
+RGBehaviorDefinition class >> usersKey
+[
+	^ #users
+]
+

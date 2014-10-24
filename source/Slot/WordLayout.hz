@@ -1,0 +1,29 @@
+WordLayout
+	superclass: #BitsLayout;
+	package: #Slot.
+
+WordLayout >> extendByte
+[
+	IncompatibleLayoutConflict new
+		layout: self;
+		subType: #byte;
+		signal
+]
+
+WordLayout >> instanceSpecification
+[
+	^ 6
+]
+
+WordLayout >> isBytes
+[
+	^ false
+]
+
+WordLayout class >> extending: superLayout scope: aScope host: aClass
+[
+	^ superLayout extendWord
+		host: aClass;
+		yourself
+]
+

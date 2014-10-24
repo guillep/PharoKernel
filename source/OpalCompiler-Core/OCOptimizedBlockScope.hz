@@ -1,0 +1,33 @@
+OCOptimizedBlockScope
+	superclass: #OCBlockScope;
+	instanceVariables: #(#isInlinedLoop );
+	package: #'OpalCompiler-Core'.
+
+OCOptimizedBlockScope >> initialize
+[
+	super initialize.
+	isInlinedLoop := false
+]
+
+OCOptimizedBlockScope >> isInsideOptimizedLoop
+[
+	^ isInlinedLoop
+		ifTrue: [ true ]
+		ifFalse: [ self outerScope isInsideOptimizedLoop ]
+]
+
+OCOptimizedBlockScope >> isOptimizedBlockScope
+[
+	^ true
+]
+
+OCOptimizedBlockScope >> markInlinedLoop
+[
+	isInlinedLoop := true
+]
+
+OCOptimizedBlockScope >> outerNotOptimizedScope
+[
+	^ self outerScope outerNotOptimizedScope
+]
+

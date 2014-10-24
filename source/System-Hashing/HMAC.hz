@@ -1,0 +1,47 @@
+HMAC
+	instanceVariables: #(#hash #key #ipad #epad );
+	package: #'System-Hashing'.
+
+HMAC >> destroy
+[
+	key destroy
+]
+
+HMAC >> digestMessage: aByteArray
+[
+	^ hash hashMessage: (key bitXor: epad) , (hash hashMessage: (key bitXor: ipad) , aByteArray)
+]
+
+HMAC >> digestSize
+[
+	^ hash hashSize
+]
+
+HMAC >> key: aByteArray
+[
+	key := aByteArray.
+	key size > hash blockSize
+		ifTrue: [ key := hash hashMessage: key ].
+	key size < hash blockSize
+		ifTrue: [ key := key , (ByteArray new: hash blockSize - key size) ]
+]
+
+HMAC >> printOn: aStream
+[
+	aStream
+		nextPutAll: 'HMAC-';
+		print: hash
+]
+
+HMAC >> setHash: aHash
+[
+	hash := aHash.
+	ipad := ByteArray new: aHash blockSize withAll: 54.
+	epad := ByteArray new: aHash blockSize withAll: 92
+]
+
+HMAC class >> on: aHashFunction
+[
+	^ self new setHash: aHashFunction
+]
+
