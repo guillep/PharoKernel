@@ -194,19 +194,22 @@ UndefinedObject >> storeOn: aStream
 	aStream nextPutAll: 'nil'
 ]
 
-UndefinedObject >> subclass: nameOfClass instanceVariableNames: instVarNames classVariableNames: classVarNames poolDictionaries: poolDictnames category: category
+UndefinedObject >> subclass: name type: type uses: aTraitComposition instanceVariableNames: instanceVariableNames classVariableNames: classVariableNames classInstanceVariableNames: classInstanceVariableNames poolDictionaries: sharedPoolString compactClassIndex: index category: category
 [
-
-	| class |
-	class := self classBuilder
-		superclass: self
-		subclass: nameOfClass
-		instanceVariableNames: instVarNames
-		classVariableNames: classVarNames
-		poolDictionaries: poolDictnames
-		category: category.
-	class ifNotNil:  [ class setTraitComposition: {} asTraitComposition ].
-	^ class
+	| newClass |
+	newClass := PharoClassInstaller make: [ :builder |
+		builder
+			superclass: self;
+			name: name;
+			layoutClass: type;
+			slots: instanceVariableNames asSlotCollection;
+			sharedVariables: classVariableNames;
+			sharedPools: sharedPoolString;
+			category: category;
+			environment: self environment;
+			classSlots: classInstanceVariableNames asSlotCollection ].
+	newClass setTraitComposition: aTraitComposition asTraitComposition.
+	newClass layout compactClassIndex: index.
 ]
 
 UndefinedObject >> subclassDefinerClass
