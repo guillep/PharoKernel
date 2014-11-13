@@ -22,7 +22,8 @@ cd $RESULTS_FOLDER
 #Load image for this project
 
 wget -O - guillep.github.io/files/get/OzVmLatest | bash
-wget -O - get.pharo.org/20 | bash
+wget -O - get.pharo.org/30 | bash
+wget http://files.pharo.org/sources/PharoV30.sources
 ./oz Pharo.image save PharoBootstrap --delete-old
 
 
@@ -34,26 +35,7 @@ REPO=http://smalltalkhub.com/mc/Guille/Seed/main
 echo "Configuration Loaded. Opening script..."
 
 echo -e "
-\"I am a builder for a Pharo Candle system. I bootstrap the system using an object space. You configure myself by providing mi a kernelSpec, and sending me the message #buildKernel.\"
-
-skipped := #('FloatArrayTest.hz' 'MatrixTest.hz' 'ArrayTest.hz' 'AppRegistry class.hz' 'MIMEDocument.hz' 'Color.hz' 'CodeImporter.hz').
-\"Load a seed from the folder of the downloaded sources\"
-seed := PharoSeed new
-	fromDirectoryNamed: '../source';
-	except: [ :a | skipped includes: a basename ];
-	buildSeed.
-
-\"Create an object space that will use an AST evaluator to run some code\"
-objectSpace := AtObjectSpace new.
-objectSpace worldConfiguration: OzPharo20 world.
-objectSpace interpreter: (AtASTEvaluator new codeProvider: seed; yourself).
-
-\"Create a builder, and tell it to bootstrap. Voilá, the objectSpace will be full\"
-builder := Pharo30Builder new.
-builder kernelSpec: seed.
-builder objectSpace: objectSpace.
-builder	buildKernel.
-
+objectSpace := PharoKernelBuilder2 bootstrap.
 objectSpace serializeInFileNamed: 'PharoKernel.image'.
 Smalltalk snapshot: false andQuit: true.
 " > ./script.st
