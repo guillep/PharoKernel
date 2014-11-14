@@ -193,18 +193,18 @@ Class >> subclass: t instanceVariableNames: f classVariableNames: d poolDictiona
 	^ class
 ]
 
-Class >> subclass: name type: type uses: aTraitComposition instanceVariableNames: instanceVariableNames classVariableNames: classVariableNames classInstanceVariableNames: classInstanceVariableNames poolDictionaries: sharedPoolString compactClassIndex: index category: category
+Class >> subclass: className type: type uses: aTraitComposition instanceVariableNames: instanceVariableNames classVariableNames: classVariableNames classInstanceVariableNames: classInstanceVariableNames poolDictionaries: sharedPoolString compactClassIndex: index category: newCategory
 [
 	| newClass |
 	newClass := PharoClassInstaller make: [ :builder |
 		builder
 			superclass: self;
-			name: name;
+			name: className;
 			layoutClass: type;
 			slots: instanceVariableNames asSlotCollection;
 			sharedVariables: classVariableNames;
 			sharedPools: sharedPoolString;
-			category: category;
+			category: newCategory;
 			environment: self environment;
 			classSlots: classInstanceVariableNames asSlotCollection ].
 	newClass setTraitComposition: aTraitComposition asTraitComposition.
