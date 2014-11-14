@@ -1,0 +1,85 @@
+RBBlockReplaceRule
+	superclass: #RBReplaceRule;
+	instanceVariables: #(#replaceBlock );
+	package: #'AST-Core'.
+
+RBBlockReplaceRule >> foundMatchFor: aProgramNode
+[
+	| newNode |
+	newNode := replaceBlock value: aProgramNode.
+	aProgramNode replaceMethodSource: newNode.
+	^ newNode
+]
+
+RBBlockReplaceRule >> initialize
+[
+	super initialize.
+	replaceBlock := [ :aNode | aNode ]
+]
+
+RBBlockReplaceRule >> searchFor: searchString replaceWith: aBlock
+[
+	self searchString: searchString.
+	replaceBlock := aBlock
+]
+
+RBBlockReplaceRule >> searchFor: searchString replaceWith: replBlock when: verifyBlock
+[
+	self searchFor: searchString replaceWith: replBlock.
+	verificationBlock := verifyBlock
+]
+
+RBBlockReplaceRule >> searchForMethod: searchString replaceWith: aBlock
+[
+	self methodSearchString: searchString.
+	replaceBlock := aBlock
+]
+
+RBBlockReplaceRule >> searchForMethod: searchString replaceWith: replBlock when: verifyBlock
+[
+	self searchForMethod: searchString replaceWith: replBlock.
+	verificationBlock := verifyBlock
+]
+
+RBBlockReplaceRule >> searchForTree: aBRProgramNode replaceWith: aBlock
+[
+	searchTree := aBRProgramNode.
+	replaceBlock := aBlock
+]
+
+RBBlockReplaceRule >> searchForTree: aBRProgramNode replaceWith: replBlock when: verifyBlock
+[
+	self searchForTree: aBRProgramNode replaceWith: replBlock.
+	verificationBlock := verifyBlock
+]
+
+RBBlockReplaceRule class >> searchFor: searchString replaceWith: replaceBlock
+[
+	^ self new searchFor: searchString replaceWith: replaceBlock
+]
+
+RBBlockReplaceRule class >> searchFor: searchString replaceWith: replaceBlock when: aBlock
+[
+	^ self new searchFor: searchString replaceWith: replaceBlock when: aBlock
+]
+
+RBBlockReplaceRule class >> searchForMethod: searchString replaceWith: replaceBlock
+[
+	^ self new searchForMethod: searchString replaceWith: replaceBlock
+]
+
+RBBlockReplaceRule class >> searchForMethod: searchString replaceWith: replaceBlock when: aBlock
+[
+	^ self new searchForMethod: searchString replaceWith: replaceBlock when: aBlock
+]
+
+RBBlockReplaceRule class >> searchForTree: aRBProgramNode replaceWith: replaceBlock
+[
+	^ self new searchForTree: aRBProgramNode replaceWith: replaceBlock
+]
+
+RBBlockReplaceRule class >> searchForTree: aRBProgramNode replaceWith: replaceBlock when: aBlock
+[
+	^ self new searchForTree: aRBProgramNode replaceWith: replaceBlock when: aBlock
+]
+

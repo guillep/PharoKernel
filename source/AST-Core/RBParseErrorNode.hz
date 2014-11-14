@@ -1,0 +1,60 @@
+RBParseErrorNode
+	superclass: #RBProgramNode;
+	instanceVariables: #(#token #errorMessage );
+	package: #'AST-Core'.
+
+RBParseErrorNode >> acceptVisitor: aProgramNodeVisitor
+[
+	^ aProgramNodeVisitor visitParseErrorNode: self
+]
+
+RBParseErrorNode >> binding: anOCTempVariable
+[
+	"only for compatibility"
+
+	
+]
+
+RBParseErrorNode >> errorMessage
+[
+	^ errorMessage
+]
+
+RBParseErrorNode >> errorMessage: anObject
+[
+	errorMessage := anObject
+]
+
+RBParseErrorNode >> isFaulty
+[
+	^ true
+]
+
+RBParseErrorNode >> start
+[
+	^ token start
+]
+
+RBParseErrorNode >> stop
+[
+	^ token stop
+]
+
+RBParseErrorNode >> token
+[
+	^ token
+]
+
+RBParseErrorNode >> token: anObject
+[
+	token := anObject
+]
+
+RBParseErrorNode class >> errorMessage: aString token: anRBToken
+[
+	^ self new
+		errorMessage: aString;
+		token: anRBToken;
+		yourself
+]
+

@@ -1,0 +1,10 @@
+CompiledMethod >> ast
+[
+	^ ASTCache at: self
+]
+
+CompiledMethod >> parseTree
+[
+	^ (RBExplicitVariableParser parseMethod: self sourceCode onError: [ :msg :pos | ^ nil ]) methodClass: self methodClass
+]
+

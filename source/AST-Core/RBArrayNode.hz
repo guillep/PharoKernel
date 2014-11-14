@@ -1,0 +1,243 @@
+RBArrayNode
+	superclass: #RBValueNode;
+	instanceVariables: #(#left #right #statements #periods );
+	package: #'AST-Core'.
+
+RBArrayNode >> = anObject
+[
+	self == anObject
+		ifTrue: [ ^ true ].
+	self class = anObject class
+		ifFalse: [ ^ false ].
+	self statements size = anObject statements size
+		ifFalse: [ ^ false ].
+	1 to: self statements size do: [ :i | (self statements at: i) = (anObject statements at: i)
+			ifFalse: [ ^ false ] ].
+	^ true
+]
+
+RBArrayNode >> acceptVisitor: aProgramNodeVisitor
+[
+	^ aProgramNodeVisitor visitArrayNode: self
+]
+
+RBArrayNode >> addNode: aNode
+[
+	statements := statements asOrderedCollection
+		add: aNode;
+		yourself.
+	aNode parent: self.
+	^ aNode
+]
+
+RBArrayNode >> addNode: aNode before: anotherNode
+[
+	| index |
+	aNode isReturn
+		ifTrue: [ self error: 'Cannot add return node' ].
+	index := self indexOfNode: anotherNode.
+	index = 0
+		ifTrue: [ ^ self addNode: aNode ].
+	statements := statements asOrderedCollection
+		add: aNode beforeIndex: index;
+		yourself.
+	aNode parent: self.
+	^ aNode
+]
+
+RBArrayNode >> addNodeFirst: aNode
+[
+	statements := statements asOrderedCollection
+		addFirst: aNode;
+		yourself.
+	aNode parent: self.
+	^ aNode
+]
+
+RBArrayNode >> addNodes: aCollection
+[
+	statements := statements asOrderedCollection
+		addAll: aCollection;
+		yourself.
+	aCollection do: [ :each | each parent: self ].
+	^ aCollection
+]
+
+RBArrayNode >> addNodes: aCollection before: anotherNode
+[
+	aCollection do: [ :each | self addNode: each before: anotherNode ].
+	^ aCollection
+]
+
+RBArrayNode >> addNodesFirst: aCollection
+[
+	statements := statements asOrderedCollection
+		addAllFirst: aCollection;
+		yourself.
+	aCollection do: [ :each | each parent: self ].
+	^ aCollection
+]
+
+RBArrayNode >> children
+[
+	^ self statements
+]
+
+RBArrayNode >> copyInContext: aDictionary
+[
+	^ self class statements: (self copyList: self statements inContext: aDictionary)
+]
+
+RBArrayNode >> equalTo: anObject withMapping: aDictionary
+[
+	self class = anObject class
+		ifFalse: [ ^ false ].
+	self statements size = anObject statements size
+		ifFalse: [ ^ false ].
+	self statements
+		with: anObject statements
+		do: [ :first :second | (first equalTo: second withMapping: aDictionary)
+				ifFalse: [ ^ false ] ].
+	aDictionary values asSet size = aDictionary size
+		ifFalse: [ ^ false ].
+	^ true
+]
+
+RBArrayNode >> hash
+[
+	^ self hashForCollection: self statements
+]
+
+RBArrayNode >> indexOfNode: aNode
+[
+	"Try to find the node by first looking for ==, and then for ="
+
+	^ (1 to: statements size) detect: [ :each | (statements at: each) == aNode ] ifNone: [ statements indexOf: aNode ]
+]
+
+RBArrayNode >> initialize
+[
+	super initialize.
+	statements := periods := #()
+]
+
+RBArrayNode >> isArray
+[
+	^ true
+]
+
+RBArrayNode >> isFaulty
+[
+	^ self statements anySatisfy: #isFaulty
+]
+
+RBArrayNode >> lastIsReturn
+[
+	statements isEmpty
+		ifTrue: [ ^ false ].
+	^ statements last lastIsReturn
+]
+
+RBArrayNode >> left
+[
+	^ left
+]
+
+RBArrayNode >> left: anInteger
+[
+	left := anInteger
+]
+
+RBArrayNode >> match: aNode inContext: aDictionary
+[
+	aNode class = self class
+		ifFalse: [ ^ false ].
+	^ self matchList: statements against: aNode statements inContext: aDictionary
+]
+
+RBArrayNode >> needsParenthesis
+[
+	^ false
+]
+
+RBArrayNode >> periods
+[
+	^ periods
+]
+
+RBArrayNode >> periods: anArray
+[
+	periods := anArray
+]
+
+RBArrayNode >> postCopy
+[
+	super postCopy.
+	self statements: (self statements collect: [ :each | each copy ])
+]
+
+RBArrayNode >> precedence
+[
+	^ 0
+]
+
+RBArrayNode >> references: aVariableName
+[
+	^ statements anySatisfy: [ :each | each references: aVariableName ]
+]
+
+RBArrayNode >> replaceNode: oldNode withNode: newNode
+[
+	self
+		statements:
+			(statements collect: [ :statement | statement == oldNode
+						ifTrue: [ newNode ]
+						ifFalse: [ statement ] ])
+]
+
+RBArrayNode >> right
+[
+	^ right
+]
+
+RBArrayNode >> right: anInteger
+[
+	right := anInteger
+]
+
+RBArrayNode >> startWithoutParentheses
+[
+	^ left
+]
+
+RBArrayNode >> statementComments
+[
+	^ self comments
+]
+
+RBArrayNode >> statements
+[
+	^ statements
+]
+
+RBArrayNode >> statements: statements0
+[
+	statements := statements0.
+	statements do: [ :statement | statement parent: self ]
+]
+
+RBArrayNode >> stopWithoutParentheses
+[
+	^ right
+]
+
+RBArrayNode >> uses: aNode
+[
+	^ (statements anySatisfy: [ :each | each == aNode ]) or: [ self isUsed ]
+]
+
+RBArrayNode class >> statements: statements
+[
+	^ self new statements: statements
+]
+

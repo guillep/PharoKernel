@@ -1,0 +1,292 @@
+RBParseTreeRewriter
+	superclass: #RBParseTreeSearcher;
+	instanceVariables: #(#tree );
+	package: #'AST-Core'.
+
+RBParseTreeRewriter >> executeTree: aParseTree
+[
+	| oldContext |
+	oldContext := context.
+	context := SmallDictionary new.
+	answer := false.
+	tree := self visitNode: aParseTree.
+	context := oldContext.
+	^ answer
+]
+
+RBParseTreeRewriter >> foundMatch
+[
+	answer := true
+]
+
+RBParseTreeRewriter >> lookForMoreMatchesInContext: oldContext
+[
+	oldContext
+		keysAndValuesDo: [ :key :value | (key isString not and: [ key recurseInto ])
+				ifTrue: [ oldContext at: key put: (value collect: [ :each | self visitNode: each ]) ] ]
+]
+
+RBParseTreeRewriter >> replace: searchString with: replaceString
+[
+	self addRule: (RBStringReplaceRule searchFor: searchString replaceWith: replaceString)
+]
+
+RBParseTreeRewriter >> replace: searchString with: replaceString when: aBlock
+[
+	self addRule: (RBStringReplaceRule searchFor: searchString replaceWith: replaceString when: aBlock)
+]
+
+RBParseTreeRewriter >> replace: searchString withValueFrom: replaceBlock
+[
+	self addRule: (RBBlockReplaceRule searchFor: searchString replaceWith: replaceBlock)
+]
+
+RBParseTreeRewriter >> replace: searchString withValueFrom: replaceBlock when: conditionBlock
+[
+	self addRule: (RBBlockReplaceRule searchFor: searchString replaceWith: replaceBlock when: conditionBlock)
+]
+
+RBParseTreeRewriter >> replaceArgument: searchString with: replaceString
+[
+	self addArgumentRule: (RBStringReplaceRule searchFor: searchString replaceWith: replaceString)
+]
+
+RBParseTreeRewriter >> replaceArgument: searchString with: replaceString when: aBlock
+[
+	self addArgumentRule: (RBStringReplaceRule searchFor: searchString replaceWith: replaceString when: aBlock)
+]
+
+RBParseTreeRewriter >> replaceArgument: searchString withValueFrom: replaceBlock
+[
+	self addArgumentRule: (RBBlockReplaceRule searchFor: searchString replaceWith: replaceBlock)
+]
+
+RBParseTreeRewriter >> replaceArgument: searchString withValueFrom: replaceBlock when: conditionBlock
+[
+	self addArgumentRule: (RBBlockReplaceRule searchFor: searchString replaceWith: replaceBlock when: conditionBlock)
+]
+
+RBParseTreeRewriter >> replaceMethod: searchString with: replaceString
+[
+	self addRule: (RBStringReplaceRule searchForMethod: searchString replaceWith: replaceString)
+]
+
+RBParseTreeRewriter >> replaceMethod: searchString with: replaceString when: aBlock
+[
+	self addRule: (RBStringReplaceRule searchForMethod: searchString replaceWith: replaceString when: aBlock)
+]
+
+RBParseTreeRewriter >> replaceMethod: searchString withValueFrom: replaceBlock
+[
+	self addRule: (RBBlockReplaceRule searchForMethod: searchString replaceWith: replaceBlock)
+]
+
+RBParseTreeRewriter >> replaceMethod: searchString withValueFrom: replaceBlock when: conditionBlock
+[
+	self addRule: (RBBlockReplaceRule searchForMethod: searchString replaceWith: replaceBlock when: conditionBlock)
+]
+
+RBParseTreeRewriter >> replaceTree: searchTree withTree: replaceTree
+[
+	self addRule: (RBStringReplaceRule searchForTree: searchTree replaceWith: replaceTree)
+]
+
+RBParseTreeRewriter >> replaceTree: searchTree withTree: replaceTree when: aBlock
+[
+	self addRule: (RBStringReplaceRule searchForTree: searchTree replaceWith: replaceTree when: aBlock)
+]
+
+RBParseTreeRewriter >> tree
+[
+	^ tree
+]
+
+RBParseTreeRewriter >> visitArgumentNodes: aNodeCollection
+[
+	^ aNodeCollection collect: [ :each | self visitArgumentNode: each ]
+]
+
+RBParseTreeRewriter >> visitArrayNode: anArrayNode
+[
+	anArrayNode statements: (anArrayNode statements collect: [ :each | self visitNode: each ])
+]
+
+RBParseTreeRewriter >> visitAssignmentNode: anAssignmentNode
+[
+	anAssignmentNode variable: (self visitNode: anAssignmentNode variable).
+	anAssignmentNode value: (self visitNode: anAssignmentNode value)
+]
+
+RBParseTreeRewriter >> visitBlockNode: aBlockNode
+[
+	aBlockNode arguments: (self visitArgumentNodes: aBlockNode arguments).
+	aBlockNode body: (self visitNode: aBlockNode body)
+]
+
+RBParseTreeRewriter >> visitCascadeNode: aCascadeNode
+[
+	| newMessages notFound |
+	newMessages := OrderedCollection new: aCascadeNode messages size.
+	notFound := OrderedCollection new: aCascadeNode messages size.
+	aCascadeNode messages
+		do: [ :each | | newNode |
+			newNode := self performSearches: searches on: each.
+			newNode isNil
+				ifTrue: [ newNode := each.
+					notFound add: newNode ].
+			newNode isMessage
+				ifTrue: [ newMessages add: newNode ]
+				ifFalse: [ newNode isCascade
+						ifTrue: [ newMessages addAll: newNode messages ]
+						ifFalse: [ Transcript
+								show: 'Cannot replace message node inside of cascaded node with non-message node.';
+								cr.
+							newMessages add: each ] ] ].
+	notFound size = aCascadeNode messages size
+		ifTrue: [ | receiver |
+			receiver := self visitNode: aCascadeNode messages first receiver.
+			newMessages do: [ :each | each receiver: receiver ] ].
+	notFound do: [ :each | each arguments: (each arguments collect: [ :arg | self visitNode: arg ]) ].
+	aCascadeNode messages: newMessages
+]
+
+RBParseTreeRewriter >> visitLiteralArrayNode: aRBArrayLiteralNode
+[
+	aRBArrayLiteralNode contents: (aRBArrayLiteralNode contents collect: [ :each | self visitNode: each ])
+]
+
+RBParseTreeRewriter >> visitMessageNode: aMessageNode
+[
+	aMessageNode receiver: (self visitNode: aMessageNode receiver).
+	aMessageNode arguments: (aMessageNode arguments collect: [ :each | self visitNode: each ])
+]
+
+RBParseTreeRewriter >> visitMethodNode: aMethodNode
+[
+	aMethodNode arguments: (self visitArgumentNodes: aMethodNode arguments).
+	aMethodNode pragmas: (aMethodNode pragmas collect: [ :each | self visitNode: each ]).
+	aMethodNode body: (self visitNode: aMethodNode body)
+]
+
+RBParseTreeRewriter >> visitPragmaNode: aPragmaNode
+[
+	aPragmaNode arguments: (aPragmaNode arguments collect: [ :each | self visitNode: each ])
+]
+
+RBParseTreeRewriter >> visitReturnNode: aReturnNode
+[
+	aReturnNode value: (self visitNode: aReturnNode value)
+]
+
+RBParseTreeRewriter >> visitSequenceNode: aSequenceNode
+[
+	aSequenceNode temporaries: (self visitTemporaryNodes: aSequenceNode temporaries).
+	aSequenceNode statements: (aSequenceNode statements collect: [ :each | self visitNode: each ])
+]
+
+RBParseTreeRewriter class >> removeTemporaryNamed: aName
+[
+	| rewriteRule |
+	rewriteRule := self new.
+	rewriteRule replace: '| `@temps1 ' , aName , ' `@temps2 | ``@.Statements' with: '| `@temps1  `@temps2 | ``@.Statements'.
+	^ rewriteRule
+]
+
+RBParseTreeRewriter class >> rename: varName to: newVarName
+[
+	| rewriteRule |
+	rewriteRule := self new.
+	rewriteRule
+		replace: varName with: newVarName;
+		replaceArgument: varName with: newVarName.
+	^ rewriteRule
+]
+
+RBParseTreeRewriter class >> rename: varName to: newVarName handler: aBlock
+[
+	"Rename varName to newVarName, evaluating aBlock if there is a 
+	temporary variable with the same name as newVarName. This 
+	does not change temporary variables with varName."
+
+	| rewriteRule |
+	rewriteRule := self new.
+	rewriteRule
+		replace: varName with: newVarName;
+		replaceArgument: newVarName withValueFrom: [ :aNode | aBlock value.
+					aNode ].
+	^ rewriteRule
+]
+
+RBParseTreeRewriter class >> replace: code with: newCode in: aParseTree
+[
+	^ (self replace: code with: newCode method: false)
+		executeTree: aParseTree;
+		tree
+]
+
+RBParseTreeRewriter class >> replace: code with: newCode in: aParseTree onInterval: anInterval
+[
+	| rewriteRule |
+	rewriteRule := self new.
+	^ rewriteRule
+		replace: code with: newCode when: [ :aNode | aNode intersectsInterval: anInterval ];
+		executeTree: aParseTree;
+		tree
+]
+
+RBParseTreeRewriter class >> replace: code with: newCode method: aBoolean
+[
+	| rewriteRule |
+	rewriteRule := self new.
+	aBoolean
+		ifTrue: [ rewriteRule replaceMethod: code with: newCode ]
+		ifFalse: [ rewriteRule replace: code with: newCode ].
+	^ rewriteRule
+]
+
+RBParseTreeRewriter class >> replaceLiteral: literal with: newLiteral
+[
+	| rewriteRule |
+	rewriteRule := self new.
+	rewriteRule replaceTree: (RBLiteralNode value: literal) withTree: (RBLiteralNode value: newLiteral).
+	^ rewriteRule
+]
+
+RBParseTreeRewriter class >> replaceStatements: code with: newCode in: aParseTree onInterval: anInterval
+[
+	| tree replaceStmt |
+	tree := self buildTree: code method: false.
+	tree isSequence
+		ifFalse: [ tree := RBSequenceNode statements: (Array with: tree) ].
+	tree temporaries: (Array with: (RBPatternVariableNode named: '`@temps')).
+	tree addNodeFirst: (RBPatternVariableNode named: '`@.S1').
+	tree lastIsReturn
+		ifTrue: [ replaceStmt := '| `@temps | `@.S1. ^' , newCode ]
+		ifFalse: [ tree addNode: (RBPatternVariableNode named: '`@.S2').
+			replaceStmt := '| `@temps | `@.S1. ' , newCode , '. `@.S2' ].
+	^ self
+		replace: tree formattedCode
+		with: replaceStmt
+		in: aParseTree
+		onInterval: anInterval
+]
+
+RBParseTreeRewriter class >> variable: aVarName getter: getMethod setter: setMethod
+[
+	^ self
+		variable: aVarName
+		getter: getMethod
+		setter: setMethod
+		receiver: 'self'
+]
+
+RBParseTreeRewriter class >> variable: aVarName getter: getMethod setter: setMethod receiver: aString
+[
+	| rewriteRule |
+	rewriteRule := self new.
+	rewriteRule
+		replace: aVarName , ' := ``@object' with: aString , ' ' , setMethod , ' ``@object';
+		replace: aVarName with: aString , ' ' , getMethod.
+	^ rewriteRule
+]
+

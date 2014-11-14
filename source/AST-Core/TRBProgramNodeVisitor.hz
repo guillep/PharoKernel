@@ -1,0 +1,134 @@
+Trait named: #TRBProgramNodeVisitor
+	package: #'AST-Core-Visitors'.TRBProgramNodeVisitor >> visitArgumentNode: anArgumentNode
+[
+	"Sent *each time* an argument node is found"
+
+	^ self visitVariableNode: anArgumentNode
+]
+
+TRBProgramNodeVisitor >> visitArgumentNodes: aNodeCollection
+[
+	"Sent *once* when visiting method and block nodes"
+
+	^ aNodeCollection do: [ :each | self visitArgumentNode: each ]
+]
+
+TRBProgramNodeVisitor >> visitArrayNode: anArrayNode
+[
+	anArrayNode children do: [ :each | self visitNode: each ]
+]
+
+TRBProgramNodeVisitor >> visitAssignmentNode: anAssignmentNode
+[
+	self visitNode: anAssignmentNode variable.
+	self visitNode: anAssignmentNode value
+]
+
+TRBProgramNodeVisitor >> visitBlockNode: aBlockNode
+[
+	self visitArgumentNodes: aBlockNode arguments.
+	self visitNode: aBlockNode body
+]
+
+TRBProgramNodeVisitor >> visitCascadeNode: aCascadeNode
+[
+	aCascadeNode messages do: [ :each | self visitNode: each ]
+]
+
+TRBProgramNodeVisitor >> visitLiteralArrayNode: aRBLiteralArrayNode
+[
+	aRBLiteralArrayNode contents do: [ :each | self visitNode: each ]
+]
+
+TRBProgramNodeVisitor >> visitLiteralNode: aLiteralNode
+[
+	
+]
+
+TRBProgramNodeVisitor >> visitMessageNode: aMessageNode
+[
+	(aMessageNode isCascaded not or: [ aMessageNode isFirstCascaded ])
+		ifTrue: [ self visitNode: aMessageNode receiver ].
+	aMessageNode arguments do: [ :each | self visitNode: each ]
+]
+
+TRBProgramNodeVisitor >> visitMethodNode: aMethodNode
+[
+	self visitArgumentNodes: aMethodNode arguments.
+	aMethodNode pragmas do: [ :each | self visitNode: each ].
+	self visitNode: aMethodNode body
+]
+
+TRBProgramNodeVisitor >> visitNode: aNode
+[
+	^ aNode acceptVisitor: self
+]
+
+TRBProgramNodeVisitor >> visitParseErrorNode: anErrorNode
+[
+	
+]
+
+TRBProgramNodeVisitor >> visitPatternBlockNode: aRBPatternBlockNode
+[
+	self visitArgumentNodes: aRBPatternBlockNode arguments.
+	self visitNode: aRBPatternBlockNode body
+]
+
+TRBProgramNodeVisitor >> visitPatternWrapperBlockNode: aRBPatternWrapperBlockNode
+[
+	self visitNode: aRBPatternWrapperBlockNode wrappedNode.
+	self visitArgumentNodes: aRBPatternWrapperBlockNode arguments.
+	self visitNode: aRBPatternWrapperBlockNode body
+]
+
+TRBProgramNodeVisitor >> visitPragmaNode: aPragmaNode
+[
+	aPragmaNode arguments do: [ :each | self visitNode: each ]
+]
+
+TRBProgramNodeVisitor >> visitReturnNode: aReturnNode
+[
+	^ self visitNode: aReturnNode value
+]
+
+TRBProgramNodeVisitor >> visitSelfNode: aSelfNode
+[
+	^ self visitVariableNode: aSelfNode
+]
+
+TRBProgramNodeVisitor >> visitSequenceNode: aSequenceNode
+[
+	self visitTemporaryNodes: aSequenceNode temporaries.
+	aSequenceNode statements do: [ :each | self visitNode: each ]
+]
+
+TRBProgramNodeVisitor >> visitSuperNode: aSuperNode
+[
+	^ self visitVariableNode: aSuperNode
+]
+
+TRBProgramNodeVisitor >> visitTemporaryNode: aNode
+[
+	"Sent *each time* a temporary node is found"
+
+	^ self visitVariableNode: aNode
+]
+
+TRBProgramNodeVisitor >> visitTemporaryNodes: aNodeCollection
+[
+	"This is triggered when defining the temporaries between the pipes"
+
+	^ self visitArgumentNodes: aNodeCollection
+]
+
+TRBProgramNodeVisitor >> visitThisContextNode: aThisContextNode
+[
+	^ self visitVariableNode: aThisContextNode
+]
+
+TRBProgramNodeVisitor >> visitVariableNode: aVariableNode
+[
+	^ aVariableNode
+]
+

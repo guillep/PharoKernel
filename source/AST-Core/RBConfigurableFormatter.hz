@@ -1,0 +1,885 @@
+RBConfigurableFormatter
+	superclass: #RBProgramNodeVisitor;
+	instanceVariables: #(#codeStream #indent #lookaheadCode #originalSource #lineStart );
+	classVariables: #(#MaxLineLength #MultiLineMessages #NewLinesAfterMethodComment #KeepBlockInMessage #CascadedMessageInsideParentheses #RetainBlankLinesBetweenStatements #IndentString #MethodSignatureOnMultipleLines #TraditionalBinaryPrecedence #LineUpBlockBrackets #MinimumNewLinesBetweenStatements #StringFollowingReturn #StringInsideParentheses #PeriodsAtEndOfBlock #FormatCommentWithStatements #NewLineBeforeFirstKeyword #IndentsForKeywords #OneLineMessages #UseTraditionalBinaryPrecedenceForParentheses #NewLinesAfterTemporaries #StringInsideBlocks #NumberOfArgumentsForMultiLine #NewLineAfterCascade #NewLineBeforeFirstCascade #PeriodsAtEndOfMethod #NewLinesAfterMethodPattern );
+	package: #'AST-Core'.
+
+RBConfigurableFormatter >> addNewLinesBeforeStatementStartingAt: anInteger
+[
+	| newLines |
+	newLines := MinimumNewLinesBetweenStatements
+		max: (RetainBlankLinesBetweenStatements
+				ifTrue: [ self newLinesBeforeStartingAt: anInteger ]
+				ifFalse: [ 0 ]).
+	newLines = 0
+		ifTrue: [ self space ]
+		ifFalse: [ self newLines: newLines ]
+]
+
+RBConfigurableFormatter >> bracketWith: bracketString around: aBlock
+[
+	bracketString isEmpty
+		ifTrue: [ ^ aBlock value ].
+	codeStream nextPut: bracketString first.
+	^ aBlock
+		ensure: [ codeStream nextPut: bracketString last ]
+]
+
+RBConfigurableFormatter >> currentLineLength
+[
+	^ codeStream position - lineStart
+]
+
+RBConfigurableFormatter >> format: aParseTree
+[
+	originalSource := aParseTree source.
+	self visitNode: aParseTree.
+	^ codeStream contents
+]
+
+RBConfigurableFormatter >> formatArray: anArrayNode
+[
+	self formatSequenceCommentsFor: anArrayNode.
+	self formatSequenceNodeStatementsFor: anArrayNode
+]
+
+RBConfigurableFormatter >> formatBlock: aBlockNode
+[
+	(LineUpBlockBrackets and: [ self willBeMultiline: aBlockNode body ])
+		ifTrue: [ self newLine ]
+		ifFalse: [ codeStream nextPutAll: StringInsideBlocks ].
+	self formatBlockArgumentsFor: aBlockNode.
+	(self willBeMultiline: aBlockNode body)
+		ifTrue: [ self newLine ].
+	self visitNode: aBlockNode body.
+	(LineUpBlockBrackets and: [ self willBeMultiline: aBlockNode body ])
+		ifTrue: [ self newLine ]
+		ifFalse: [ codeStream nextPutAll: StringInsideBlocks ]
+]
+
+RBConfigurableFormatter >> formatBlockArgumentsFor: aBlockNode
+[
+	aBlockNode arguments isEmpty
+		ifTrue: [ ^ self ].
+	aBlockNode arguments
+		do: [ :each | codeStream nextPut: $:.
+			self visitNode: each.
+			FormatCommentWithStatements
+				ifTrue: [ self formatCommentsFor: each ].
+			self space ].
+	codeStream nextPutAll: '| '
+]
+
+RBConfigurableFormatter >> formatCommentsFor: aNode
+[
+	originalSource isNil
+		ifTrue: [ ^ self ].
+	aNode comments
+		do: [ :each | codeStream
+				space;
+				nextPutAll: (originalSource copyFrom: each first to: each last) ]
+]
+
+RBConfigurableFormatter >> formatMethodBodyFor: aMethodNode
+[
+	self
+		indentAround: [ self newLines: NewLinesAfterMethodPattern.
+			self formatMethodCommentFor: aMethodNode.
+			self formatPragmasFor: aMethodNode.
+			self visitNode: aMethodNode body ]
+]
+
+RBConfigurableFormatter >> formatMethodCommentFor: aMethodNode
+[
+	originalSource isNil
+		ifTrue: [ ^ self ].
+	(FormatCommentWithStatements
+		ifTrue: [ aMethodNode methodComments ]
+		ifFalse: [ aMethodNode comments ])
+		do: [ :each | codeStream nextPutAll: (originalSource copyFrom: each first to: each last).
+			self newLines: NewLinesAfterMethodComment ]
+]
+
+RBConfigurableFormatter >> formatMethodPatternFor: aMethodNode
+[
+	aMethodNode arguments isEmpty
+		ifTrue: [ codeStream nextPutAll: aMethodNode selector ]
+		ifFalse: [ self
+				with: aMethodNode selectorParts
+				and: aMethodNode arguments
+				do: [ :key :arg | codeStream nextPutAll: key value.
+					self space.
+					self visitNode: arg ]
+				separatedBy: [ MethodSignatureOnMultipleLines
+						ifTrue: [ self newLine ]
+						ifFalse: [ self space ] ] ]
+]
+
+RBConfigurableFormatter >> formatPragmasFor: aMethodNode
+[
+	aMethodNode pragmas do: [ :each | self
+				visitNode: each;
+				newLine ]
+]
+
+RBConfigurableFormatter >> formatSelectorAndArguments: aMessageNode
+[
+	| newLineBetweenArguments |
+	newLineBetweenArguments := self isMultiLineMessage: aMessageNode.
+	self
+		indent: (newLineBetweenArguments
+				ifTrue: [ IndentsForKeywords ]
+				ifFalse: [ 0 ])
+		around: [ self
+				formatSelectorAndArguments: aMessageNode
+				firstSeparator:
+					((newLineBetweenArguments or: [ NewLineBeforeFirstKeyword ])
+						ifTrue: [ [ self newLine ] ]
+						ifFalse: [ [ self space ] ])
+				restSeparator: (newLineBetweenArguments
+						ifTrue: [ [ self newLine ] ]
+						ifFalse: [ [ self space ] ]) ]
+]
+
+RBConfigurableFormatter >> formatSelectorAndArguments: aMessageNode firstSeparator: firstBlock restSeparator: restBlock
+[
+	| separatorBlock |
+	separatorBlock := firstBlock.
+	aMessageNode isUnary
+		ifTrue: [ self handleLineForSelector: aMessageNode selector withSeparatorBlock: separatorBlock.
+			codeStream nextPutAll: aMessageNode selector ]
+		ifFalse: [ aMessageNode selectorParts
+				with: aMessageNode arguments
+				do: [ :selector :argument | self handleLineForSelector: selector value withSeparatorBlock: separatorBlock.
+					separatorBlock := restBlock.
+					self
+						indentAround: [ codeStream nextPutAll: selector value.
+							(KeepBlockInMessage and: [ argument isBlock ])
+								ifTrue: [ self
+										space;
+										visitNode: argument ]
+								ifFalse: [ ((self willBeMultiline: argument) or: [ self isLineTooLong: (self formattedSourceFor: argument) ])
+										ifTrue: [ self newLine ]
+										ifFalse: [ self space ].
+									self visitNode: argument ] ] ] ]
+]
+
+RBConfigurableFormatter >> formatSequenceCommentsFor: aSequenceNode
+[
+	originalSource isNil
+		ifTrue: [ ^ self ].
+	aSequenceNode comments
+		do: [ :each | codeStream nextPutAll: (originalSource copyFrom: each first to: each last).
+			self newLine ]
+]
+
+RBConfigurableFormatter >> formatSequenceNodeStatementsFor: aSequenceNode
+[
+	| statements |
+	statements := aSequenceNode statements.
+	statements isEmpty
+		ifTrue: [ ^ self ].
+	1 to: statements size do: [ :i | self visitNode: (statements at: i).
+		(i < statements size
+			or: [ aSequenceNode parent
+					ifNil: [ self class periodsAsTerminators ]
+					ifNotNil: [ :parent | parent isBlock
+							ifTrue: [ self class periodsAtEndOfBlock ]
+							ifFalse: [ self class periodsAtEndOfMethod ] ] ])
+			ifTrue: [ codeStream nextPut: $. ].
+		self formatStatementCommentsFor: (statements at: i).
+		i < statements size
+			ifTrue: [ self addNewLinesBeforeStatementStartingAt: (statements at: i + 1) start ] ]
+]
+
+RBConfigurableFormatter >> formatStatementCommentsFor: aStatementNode
+[
+	originalSource isNil
+		ifTrue: [ ^ self ].
+	FormatCommentWithStatements
+		ifFalse: [ ^ self ].
+	aStatementNode statementComments
+		do: [ :each | codeStream
+				tab;
+				nextPutAll: (originalSource copyFrom: each first to: each last) ]
+]
+
+RBConfigurableFormatter >> formatTemporariesFor: aSequenceNode
+[
+	aSequenceNode temporaries isEmpty
+		ifTrue: [ ^ self ].
+	self
+		bracketWith: '|'
+		around: [ self space.
+			aSequenceNode temporaries
+				do: [ :each | self visitNode: each.
+					FormatCommentWithStatements
+						ifTrue: [ self formatCommentsFor: each ].
+					self space ] ].
+	self newLines: NewLinesAfterTemporaries
+]
+
+RBConfigurableFormatter >> formattedSourceFor: aNode
+[
+	^ lookaheadCode at: aNode ifAbsentPut: [ self class format: aNode withIndents: indent ]
+]
+
+RBConfigurableFormatter >> handleLineForSelector: selector withSeparatorBlock: aBlock
+[
+	^ (self isLineTooLong: selector)
+		ifTrue: [ self newLine ]
+		ifFalse: [ aBlock value ]
+]
+
+RBConfigurableFormatter >> indent: anInteger
+[
+	indent := anInteger
+]
+
+RBConfigurableFormatter >> indent: anInteger around: aBlock
+[
+	indent := indent + anInteger.
+	^ aBlock
+		ensure: [ indent := indent - anInteger ]
+]
+
+RBConfigurableFormatter >> indentAround: aBlock
+[
+	self indent: 1 around: aBlock
+]
+
+RBConfigurableFormatter >> initialize
+[
+	super initialize.
+	lineStart := 0.
+	indent := 0.
+	lookaheadCode := IdentityDictionary new.
+	codeStream := WriteStream on: (String new: 256)
+]
+
+RBConfigurableFormatter >> isLineTooLong: aString
+[
+	^ self currentLineLength + (aString indexOf: Character cr ifAbsent: [ aString size ]) >= MaxLineLength
+]
+
+RBConfigurableFormatter >> isMultiLineMessage: aMessageNode
+[
+	| messageStream |
+	(MultiLineMessages includes: aMessageNode selector)
+		ifTrue: [ ^ true ].
+	(OneLineMessages includes: aMessageNode selector)
+		ifTrue: [ ^ false ].
+	NumberOfArgumentsForMultiLine <= aMessageNode arguments size
+		ifTrue: [ ^ true ].
+	(aMessageNode arguments
+		anySatisfy: [ :each | self indent: IndentsForKeywords + 1 around: [ self willBeMultiline: each ] ])
+		ifTrue: [ ^ true ].
+	aMessageNode isUnary
+		ifTrue: [ ^ self isLineTooLong: aMessageNode selector ].
+	messageStream := WriteStream on: (String new: 100).
+	self
+		with: aMessageNode selectorParts
+		and: aMessageNode arguments
+		do: [ :sel :arg | messageStream
+				nextPutAll: sel value;
+				space;
+				nextPutAll: (self formattedSourceFor: arg) ]
+		separatedBy: [ messageStream space ].
+	^ self isLineTooLong: messageStream contents
+]
+
+RBConfigurableFormatter >> needsParenthesisFor: aNode
+[
+	| parent grandparent |
+	aNode ifNil: [ ^ false ].
+	aNode isValue
+		ifFalse: [ ^ false ].
+	parent := aNode parent ifNil: [ ^ false ].
+	(CascadedMessageInsideParentheses and: [ aNode isMessage and: [ parent isMessage and: [ parent receiver == aNode ] ] ])
+		ifTrue: [ grandparent := parent parent.
+			(grandparent notNil and: [ grandparent isCascade ])
+				ifTrue: [ ^ true ] ].
+	aNode precedence < parent precedence
+		ifTrue: [ ^ false ].
+	(aNode isAssignment and: [ parent isAssignment ])
+		ifTrue: [ ^ false ].
+	(aNode isAssignment and: [ aNode isCascade ])
+		ifTrue: [ ^ true ].
+	aNode precedence = 0
+		ifTrue: [ ^ false ].
+	aNode isMessage
+		ifFalse: [ ^ true ].
+	aNode precedence = parent precedence
+		ifFalse: [ ^ true ].
+	aNode isUnary
+		ifTrue: [ ^ false ].
+	aNode isKeyword
+		ifTrue: [ ^ true ].
+	parent receiver == aNode
+		ifFalse: [ ^ true ].
+	^ UseTraditionalBinaryPrecedenceForParentheses and: [ self precedenceOf: parent selector greaterThan: aNode selector ]
+]
+
+RBConfigurableFormatter >> newLine
+[
+	self newLines: 1
+]
+
+RBConfigurableFormatter >> newLines: anInteger
+[
+	anInteger + IndentString size = 0
+		ifTrue: [ codeStream space ].
+	anInteger timesRepeat: [ codeStream cr ].
+	lineStart := codeStream position.
+	indent timesRepeat: [ codeStream nextPutAll: IndentString ]
+]
+
+RBConfigurableFormatter >> newLinesBeforeStartingAt: anIndex
+[
+	| count cr lf index char |
+	(anIndex isNil or: [ anIndex > originalSource size ])
+		ifTrue: [ ^ 0 ].
+	cr := Character value: 13.
+	lf := Character value: 10.
+	count := 0.
+	index := anIndex - 1.
+	[ index > 0 and: [ (char := originalSource at: index) isSeparator ] ]
+		whileTrue: [ char == lf
+				ifTrue: [ count := count + 1.
+					(originalSource at: (index - 1 max: 1)) == cr
+						ifTrue: [ index := index - 1 ] ].
+			char == cr
+				ifTrue: [ count := count + 1 ].
+			index := index - 1 ].
+	^ count
+]
+
+RBConfigurableFormatter >> precedenceOf: parentSelector greaterThan: childSelector
+[
+	"Put parenthesis around things that are preceived to have 'lower' precedence. For example, 'a + b * c' 
+	-> '(a + b) * c' but 'a * b + c' -> 'a * b + c'"
+
+	| childIndex parentIndex |
+	childIndex := 0.
+	parentIndex := 0.
+	1 to: TraditionalBinaryPrecedence size do: [ :i | ((TraditionalBinaryPrecedence at: i) includes: parentSelector first)
+			ifTrue: [ parentIndex := i ].
+		((TraditionalBinaryPrecedence at: i) includes: childSelector first)
+			ifTrue: [ childIndex := i ] ].
+	^ childIndex < parentIndex
+]
+
+RBConfigurableFormatter >> space
+[
+	codeStream space
+]
+
+RBConfigurableFormatter >> visitArrayNode: anArrayNode
+[
+	self bracketWith: '{}' around: [ self formatArray: anArrayNode ]
+]
+
+RBConfigurableFormatter >> visitAssignmentNode: anAssignmentNode
+[
+	self visitNode: anAssignmentNode variable.
+	codeStream
+		space;
+		nextPutAll: anAssignmentNode assignmentOperator;
+		space.
+	self visitNode: anAssignmentNode value
+]
+
+RBConfigurableFormatter >> visitBlockNode: aBlockNode
+[
+	self bracketWith: '[]' around: [ self formatBlock: aBlockNode ]
+]
+
+RBConfigurableFormatter >> visitCascadeNode: aCascadeNode
+[
+	self visitNode: aCascadeNode receiver.
+	self
+		indentAround: [ NewLineBeforeFirstCascade
+				ifTrue: [ self newLine ]
+				ifFalse: [ self space ].
+			aCascadeNode messages
+				do: [ :each | self
+						indentAround: [ self
+								formatSelectorAndArguments: each
+								firstSeparator: [  ]
+								restSeparator:
+									((self isMultiLineMessage: each)
+										ifTrue: [ [ self newLine ] ]
+										ifFalse: [ [ self space ] ]) ] ]
+				separatedBy: [ codeStream nextPut: $;.
+					NewLineAfterCascade
+						ifTrue: [ self newLine ]
+						ifFalse: [ self space ] ] ]
+]
+
+RBConfigurableFormatter >> visitLiteralArrayNode: aRBArrayLiteralNode
+[
+	| brackets |
+	codeStream nextPut: $#.
+	brackets := aRBArrayLiteralNode isForByteArray
+		ifTrue: [ '[]' ]
+		ifFalse: [ '()' ].
+	self
+		bracketWith: brackets
+		around: [ aRBArrayLiteralNode contents do: [ :each | self visitNode: each ] separatedBy: [ self space ] ]
+]
+
+RBConfigurableFormatter >> visitLiteralNode: aLiteralNode
+[
+	aLiteralNode value isLiteral
+		ifFalse: [ self writeString: '''<an unprintable nonliteral value>''' ]
+		ifTrue: [ self writeString: aLiteralNode token storeString ]
+]
+
+RBConfigurableFormatter >> visitMessageNode: aMessageNode
+[
+	self visitNode: aMessageNode receiver.
+	self formatSelectorAndArguments: aMessageNode
+]
+
+RBConfigurableFormatter >> visitMethodNode: aMethodNode
+[
+	self formatMethodPatternFor: aMethodNode.
+	self formatMethodBodyFor: aMethodNode
+]
+
+RBConfigurableFormatter >> visitNode: aNode
+[
+	| needsParenthesis |
+	(lookaheadCode includesKey: aNode)
+		ifTrue: [ ^ self writeString: (lookaheadCode at: aNode) ].
+	needsParenthesis := self needsParenthesisFor: aNode.
+	self
+		bracketWith: (needsParenthesis
+				ifTrue: [ '()' ]
+				ifFalse: [ '' ])
+		around: [ needsParenthesis
+				ifTrue: [ codeStream nextPutAll: StringInsideParentheses ].
+			super visitNode: aNode.
+			(FormatCommentWithStatements or: [ aNode isMethod or: [ aNode isSequence ] ])
+				ifFalse: [ self formatCommentsFor: aNode ].
+			needsParenthesis
+				ifTrue: [ codeStream nextPutAll: StringInsideParentheses ] ]
+]
+
+RBConfigurableFormatter >> visitPatternBlockNode: aRBPatternBlockNode
+[
+	codeStream nextPut: $`.
+	self bracketWith: '{}' around: [ self formatBlock: aRBPatternBlockNode ]
+]
+
+RBConfigurableFormatter >> visitPatternWrapperBlockNode: aRBPatternWrapperBlockNode
+[
+	self visitNode: aRBPatternWrapperBlockNode wrappedNode.
+	codeStream nextPut: $`.
+	self bracketWith: '{}' around: [ self formatBlock: aRBPatternWrapperBlockNode ]
+]
+
+RBConfigurableFormatter >> visitPragmaNode: aPragmaNode
+[
+	codeStream nextPut: $<.
+	self
+		formatSelectorAndArguments: aPragmaNode
+		firstSeparator: [ aPragmaNode selector isInfix
+				ifTrue: [ self space ] ]
+		restSeparator: [ self space ].
+	codeStream nextPut: $>
+]
+
+RBConfigurableFormatter >> visitReturnNode: aReturnNode
+[
+	codeStream
+		nextPut: $^;
+		nextPutAll: StringFollowingReturn.
+	self visitNode: aReturnNode value
+]
+
+RBConfigurableFormatter >> visitSequenceNode: aSequenceNode
+[
+	self formatTemporariesFor: aSequenceNode.
+	self formatSequenceCommentsFor: aSequenceNode.
+	self formatSequenceNodeStatementsFor: aSequenceNode
+]
+
+RBConfigurableFormatter >> visitVariableNode: aVariableNode
+[
+	codeStream nextPutAll: aVariableNode name
+]
+
+RBConfigurableFormatter >> willBeMultiline: aNode
+[
+	^ (self formattedSourceFor: aNode) includes: Character cr
+]
+
+RBConfigurableFormatter >> with: firstCollection and: secondCollection do: aBlock separatedBy: separatorBlock
+[
+	firstCollection isEmpty
+		ifTrue: [ ^ self ].
+	aBlock value: firstCollection first value: secondCollection first.
+	2 to: firstCollection size do: [ :i | separatorBlock value.
+		aBlock value: (firstCollection at: i) value: (secondCollection at: i) ]
+]
+
+RBConfigurableFormatter >> writeString: aString
+[
+	| index |
+	index := aString lastIndexOf: Character cr ifAbsent: [ 0 ].
+	codeStream nextPutAll: aString.
+	index > 0
+		ifTrue: [ lineStart := codeStream position - (aString size - index) ]
+]
+
+RBConfigurableFormatter class >> cascadedMessageInsideParentheses
+[
+	^ CascadedMessageInsideParentheses
+]
+
+RBConfigurableFormatter class >> cascadedMessageInsideParentheses: aBoolean
+[
+	CascadedMessageInsideParentheses := aBoolean
+]
+
+RBConfigurableFormatter class >> format: aParseTree
+[
+	^ self format: aParseTree withIndents: 0
+]
+
+RBConfigurableFormatter class >> format: aParseTree withIndents: anInteger
+[
+	^ self new
+		indent: anInteger;
+		format: aParseTree
+]
+
+RBConfigurableFormatter class >> formatCommentWithStatements
+[
+	^ FormatCommentWithStatements
+]
+
+RBConfigurableFormatter class >> formatCommentWithStatements: aBoolean
+[
+	FormatCommentWithStatements := aBoolean
+]
+
+RBConfigurableFormatter class >> indentString
+[
+	^ IndentString
+]
+
+RBConfigurableFormatter class >> indentString: aString
+[
+	IndentString := aString
+]
+
+RBConfigurableFormatter class >> indentsForKeywords
+[
+	^ IndentsForKeywords
+]
+
+RBConfigurableFormatter class >> indentsForKeywords: anInteger
+[
+	IndentsForKeywords := anInteger
+]
+
+RBConfigurableFormatter class >> initialize
+[
+	CascadedMessageInsideParentheses := false.
+	FormatCommentWithStatements := true.
+	IndentString := String with: Character tab.
+	IndentsForKeywords := 1.
+	KeepBlockInMessage := true.
+	LineUpBlockBrackets := false.
+	MaxLineLength := 120.
+	MethodSignatureOnMultipleLines := false.
+	MinimumNewLinesBetweenStatements := 1.
+	MultiLineMessages := #(#ifTrue:ifFalse: #ifFalse:ifTrue: #ifTrue: #ifFalse: #on:do: #ensure: #ifCurtailed:).
+	NewLineAfterCascade := true.
+	NewLineBeforeFirstCascade := true.
+	NewLineBeforeFirstKeyword := false.
+	NewLinesAfterMethodComment := 2.
+	NewLinesAfterMethodPattern := 1.
+	NewLinesAfterTemporaries := 1.
+	NumberOfArgumentsForMultiLine := 4.
+	OneLineMessages := #(#to: #to:do: #to:by: #to:by:do:).
+	PeriodsAtEndOfBlock := false.
+	PeriodsAtEndOfMethod := false.
+	RetainBlankLinesBetweenStatements := false.
+	StringFollowingReturn := ' '.
+	StringInsideBlocks := ' '.
+	StringInsideParentheses := ''.
+	TraditionalBinaryPrecedence := #(#($| $& $?) #($= $~ $< $>) #($- $+) #($* $/ $% $\) #($@)).
+	UseTraditionalBinaryPrecedenceForParentheses := true
+]
+
+RBConfigurableFormatter class >> keepBlockInMessage
+[
+	^ KeepBlockInMessage
+]
+
+RBConfigurableFormatter class >> keepBlockInMessage: aBoolean
+[
+	KeepBlockInMessage := aBoolean
+]
+
+RBConfigurableFormatter class >> lineUpBlockBrackets
+[
+	^ LineUpBlockBrackets
+]
+
+RBConfigurableFormatter class >> lineUpBlockBrackets: aBoolean
+[
+	LineUpBlockBrackets := aBoolean
+]
+
+RBConfigurableFormatter class >> maxLineLength
+[
+	^ MaxLineLength
+]
+
+RBConfigurableFormatter class >> maxLineLength: anInteger
+[
+	MaxLineLength := anInteger
+]
+
+RBConfigurableFormatter class >> methodSignatureOnMultipleLines
+[
+	^ MethodSignatureOnMultipleLines
+]
+
+RBConfigurableFormatter class >> methodSignatureOnMultipleLines: aBoolean
+[
+	MethodSignatureOnMultipleLines := aBoolean
+]
+
+RBConfigurableFormatter class >> minimumNewLinesBetweenStatements
+[
+	^ MinimumNewLinesBetweenStatements
+]
+
+RBConfigurableFormatter class >> minimumNewLinesBetweenStatements: anInteger
+[
+	MinimumNewLinesBetweenStatements := anInteger
+]
+
+RBConfigurableFormatter class >> multiLineMessages
+[
+	^ MultiLineMessages printString
+]
+
+RBConfigurableFormatter class >> multiLineMessages: aString
+[
+	MultiLineMessages := self compiler evaluate: aString
+]
+
+RBConfigurableFormatter class >> newLineAfterCascade
+[
+	^ NewLineAfterCascade
+]
+
+RBConfigurableFormatter class >> newLineAfterCascade: aBoolean
+[
+	NewLineAfterCascade := aBoolean
+]
+
+RBConfigurableFormatter class >> newLineBeforeFirstCascade
+[
+	^ NewLineBeforeFirstCascade
+]
+
+RBConfigurableFormatter class >> newLineBeforeFirstCascade: aBoolean
+[
+	NewLineBeforeFirstCascade := aBoolean
+]
+
+RBConfigurableFormatter class >> newLineBeforeFirstKeyword
+[
+	^ NewLineBeforeFirstKeyword
+]
+
+RBConfigurableFormatter class >> newLineBeforeFirstKeyword: aBoolean
+[
+	NewLineBeforeFirstKeyword := aBoolean
+]
+
+RBConfigurableFormatter class >> newLinesAfterMethodComment
+[
+	^ NewLinesAfterMethodComment
+]
+
+RBConfigurableFormatter class >> newLinesAfterMethodComment: anInteger
+[
+	NewLinesAfterMethodComment := anInteger
+]
+
+RBConfigurableFormatter class >> newLinesAfterMethodPattern
+[
+	^ NewLinesAfterMethodPattern
+]
+
+RBConfigurableFormatter class >> newLinesAfterMethodPattern: anInteger
+[
+	NewLinesAfterMethodPattern := anInteger
+]
+
+RBConfigurableFormatter class >> newLinesAfterTemporaries
+[
+	^ NewLinesAfterTemporaries
+]
+
+RBConfigurableFormatter class >> newLinesAfterTemporaries: anInteger
+[
+	NewLinesAfterTemporaries := anInteger
+]
+
+RBConfigurableFormatter class >> numberOfArgumentsForMultiLine
+[
+	^ NumberOfArgumentsForMultiLine
+]
+
+RBConfigurableFormatter class >> numberOfArgumentsForMultiLine: anInteger
+[
+	NumberOfArgumentsForMultiLine := anInteger
+]
+
+RBConfigurableFormatter class >> oneLineMessages
+[
+	^ OneLineMessages printString
+]
+
+RBConfigurableFormatter class >> oneLineMessages: aString
+[
+	OneLineMessages := self compiler evaluate: aString
+]
+
+RBConfigurableFormatter class >> periodsAsTerminators
+[
+	^ PeriodsAtEndOfBlock and: [ PeriodsAtEndOfMethod ]
+]
+
+RBConfigurableFormatter class >> periodsAsTerminators: aBoolean
+[
+	PeriodsAtEndOfBlock := aBoolean.
+	PeriodsAtEndOfMethod := aBoolean
+]
+
+RBConfigurableFormatter class >> periodsAtEndOfBlock
+[
+	^ PeriodsAtEndOfBlock
+]
+
+RBConfigurableFormatter class >> periodsAtEndOfBlock: aBoolean
+[
+	PeriodsAtEndOfBlock := aBoolean
+]
+
+RBConfigurableFormatter class >> periodsAtEndOfMethod
+[
+	^ PeriodsAtEndOfMethod
+]
+
+RBConfigurableFormatter class >> periodsAtEndOfMethod: aBoolean
+[
+	PeriodsAtEndOfMethod := aBoolean
+]
+
+RBConfigurableFormatter class >> retainBlankLinesBetweenStatements
+[
+	^ RetainBlankLinesBetweenStatements
+]
+
+RBConfigurableFormatter class >> retainBlankLinesBetweenStatements: aBoolean
+[
+	RetainBlankLinesBetweenStatements := aBoolean
+]
+
+RBConfigurableFormatter class >> settingsOn: aBuilder
+[
+	<systemsettings>
+	(aBuilder group: #configurableFormatter)
+		target: self;
+		parentName: #refactoring;
+		label: 'Configurable Formatter';
+		description: 'Settings related to the formatter';
+		with: [ (aBuilder setting: #cascadedMessageInsideParentheses) label: 'Cascaded message inside parentheses'.
+					(aBuilder setting: #formatCommentWithStatements) label: 'Format comment with statements'.
+					(aBuilder setting: #indentString) label: 'Indent string'.
+					(aBuilder setting: #indentsForKeywords) label: 'Indents for keywords'.
+					(aBuilder setting: #keepBlockInMessage) label: 'Keep block in message'.
+					(aBuilder setting: #lineUpBlockBrackets) label: 'Line up block brackets'.
+					(aBuilder setting: #methodSignatureOnMultipleLines) label: 'Method signature on multiple lines'.
+					(aBuilder setting: #maxLineLength) label: 'Max line length'.
+					(aBuilder setting: #oneLineMessages) label: 'One line messages'.
+					(aBuilder setting: #multiLineMessages) label: 'Multi line messages'.
+					(aBuilder setting: #minimumNewLinesBetweenStatements) label: 'Minimum new lines between statements'.
+					(aBuilder setting: #newLineAfterCascade) label: 'New line after cascade'.
+					(aBuilder setting: #newLineBeforeFirstCascade) label: 'New line before first cascade'.
+					(aBuilder setting: #newLineBeforeFirstKeyword) label: 'New line before first keyword'.
+					(aBuilder setting: #newLinesAfterMethodComment) label: 'New lines after method comment'.
+					(aBuilder setting: #newLinesAfterMethodPattern) label: 'New lines after method pattern'.
+					(aBuilder setting: #newLinesAfterTemporaries) label: 'New lines after temporaries'.
+					(aBuilder setting: #numberOfArgumentsForMultiLine) label: 'Number of arguments for multi line'.
+					(aBuilder setting: #periodsAsTerminators) label: 'Periods as terminators'.
+					(aBuilder setting: #periodsAtEndOfBlock) label: 'Periods at end of block'.
+					(aBuilder setting: #periodsAtEndOfMethod) label: 'Periods at end of method'.
+					(aBuilder setting: #stringFollowingReturn) label: 'String following return'.
+					(aBuilder setting: #stringInsideBlocks) label: 'String inside blocks'.
+					(aBuilder setting: #stringInsideParentheses) label: 'String inside parentheses'.
+					(aBuilder setting: #traditionalBinaryPrecedence) label: 'Traditional binary precedence'.
+					(aBuilder setting: #useTraditionalBinaryPrecedenceForParentheses)
+						label: 'Use traditional binary precedence for parentheses' ]
+]
+
+RBConfigurableFormatter class >> stringFollowingReturn
+[
+	^ StringFollowingReturn
+]
+
+RBConfigurableFormatter class >> stringFollowingReturn: aString
+[
+	StringFollowingReturn := aString
+]
+
+RBConfigurableFormatter class >> stringInsideBlocks
+[
+	^ StringInsideBlocks
+]
+
+RBConfigurableFormatter class >> stringInsideBlocks: aString
+[
+	StringInsideBlocks := aString
+]
+
+RBConfigurableFormatter class >> stringInsideParentheses
+[
+	^ StringInsideParentheses
+]
+
+RBConfigurableFormatter class >> stringInsideParentheses: aString
+[
+	StringInsideParentheses := aString
+]
+
+RBConfigurableFormatter class >> traditionalBinaryPrecedence
+[
+	^ TraditionalBinaryPrecedence printString
+]
+
+RBConfigurableFormatter class >> traditionalBinaryPrecedence: aString
+[
+	TraditionalBinaryPrecedence := self compiler evaluate: aString
+]
+
+RBConfigurableFormatter class >> useTraditionalBinaryPrecedenceForParentheses
+[
+	^ UseTraditionalBinaryPrecedenceForParentheses
+]
+
+RBConfigurableFormatter class >> useTraditionalBinaryPrecedenceForParentheses: aBoolean
+[
+	UseTraditionalBinaryPrecedenceForParentheses := aBoolean
+]
+

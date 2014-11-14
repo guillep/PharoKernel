@@ -1,0 +1,56 @@
+RBReplaceRule
+	superclass: #RBParseTreeRule;
+	instanceVariables: #(#verificationBlock );
+	package: #'AST-Core'.
+
+RBReplaceRule >> canMatch: aProgramNode
+[
+	^ verificationBlock value: aProgramNode
+]
+
+RBReplaceRule >> foundMatchFor: aProgramNode
+[
+	self subclassResponsibility
+]
+
+RBReplaceRule >> initialize
+[
+	super initialize.
+	verificationBlock := [ :aNode | true ]
+]
+
+RBReplaceRule >> replace: aProgramNode with: newNode
+[
+	aProgramNode replaceMethodSource: newNode
+]
+
+RBReplaceRule >> searchFor: searchString replaceWith: replaceString
+[
+	self subclassResponsibility
+]
+
+RBReplaceRule >> searchFor: searchString replaceWith: replaceString when: aBlock
+[
+	self subclassResponsibility
+]
+
+RBReplaceRule >> searchForMethod: searchString replaceWith: replaceString
+[
+	self subclassResponsibility
+]
+
+RBReplaceRule >> searchForMethod: searchString replaceWith: replaceString when: aBlock
+[
+	self subclassResponsibility
+]
+
+RBReplaceRule >> searchForTree: aBRProgramNode replaceWith: replaceNode
+[
+	self subclassResponsibility
+]
+
+RBReplaceRule >> searchForTree: aBRProgramNode replaceWith: replaceString when: aBlock
+[
+	self subclassResponsibility
+]
+

@@ -1,0 +1,132 @@
+RBVariableNode
+	superclass: #RBValueNode;
+	instanceVariables: #(#token );
+	package: #'AST-Core'.
+
+RBVariableNode >> = anObject
+[
+	self == anObject
+		ifTrue: [ ^ true ].
+	((anObject isKindOf: self class) or: [ self isKindOf: anObject class ])
+		ifFalse: [ ^ false ].
+	^ self name = anObject name
+]
+
+RBVariableNode >> acceptVisitor: aProgramNodeVisitor
+[
+	^ aProgramNodeVisitor visitVariableNode: self
+]
+
+RBVariableNode >> copyInContext: aDictionary
+[
+	^ self class identifierToken: token copy removePositions
+]
+
+RBVariableNode >> equalTo: anObject withMapping: aDictionary
+[
+	^ self class = anObject class and: [ (aDictionary at: self name ifAbsentPut: [ anObject name ]) = anObject name ]
+]
+
+RBVariableNode >> hash
+[
+	^ self name hash
+]
+
+RBVariableNode >> identifierToken: anIdentifierToken
+[
+	token := anIdentifierToken
+]
+
+RBVariableNode >> isFaulty
+[
+	^ false
+]
+
+RBVariableNode >> isImmediateNode
+[
+	^ true
+]
+
+RBVariableNode >> isRead
+[
+	^ self isWrite not and: [ self isUsed ]
+]
+
+RBVariableNode >> isVariable
+[
+	^ true
+]
+
+RBVariableNode >> isWrite
+[
+	^ self parent notNil and: [ self parent isAssignment and: [ self parent variable == self ] ]
+]
+
+RBVariableNode >> name
+[
+	^ token value asSymbol
+]
+
+RBVariableNode >> needsParenthesis
+[
+	^ false
+]
+
+RBVariableNode >> precedence
+[
+	^ 0
+]
+
+RBVariableNode >> references: aVariableName
+[
+	^ self name = aVariableName
+]
+
+RBVariableNode >> replaceSourceFrom: aNode
+[
+	self addReplacement: (RBStringReplacement replaceFrom: aNode start to: aNode stop with: self name)
+]
+
+RBVariableNode >> replaceSourceWith: aNode
+[
+	self addReplacement: (RBStringReplacement replaceFrom: self start to: self stop with: aNode formattedCode)
+]
+
+RBVariableNode >> startWithoutParentheses
+[
+	^ token start
+]
+
+RBVariableNode >> stopWithoutParentheses
+[
+	^ token stop
+]
+
+RBVariableNode >> token
+[
+	^ token
+]
+
+RBVariableNode class >> identifierToken: anIdentifierToken
+[
+	anIdentifierToken value = 'self'
+		ifTrue: [ ^ RBSelfNode withToken: anIdentifierToken ].
+	anIdentifierToken value = 'thisContext'
+		ifTrue: [ ^ RBThisContextNode withToken: anIdentifierToken ].
+	anIdentifierToken value = 'super'
+		ifTrue: [ ^ RBSuperNode withToken: anIdentifierToken ].
+	^ self withToken: anIdentifierToken
+]
+
+RBVariableNode class >> named: aString
+[
+	^ self identifierToken: (RBIdentifierToken value: aString start: 0)
+]
+
+RBVariableNode class >> withToken: anIdentifierToken
+[
+	^ self new
+		identifierToken: anIdentifierToken;
+		yourself
+]
+
