@@ -59,7 +59,7 @@ TBehavior >> addTraitSelector: aSymbol withMethod: aCompiledMethod
 	| source method |
 	[ (self includesLocalSelector: aSymbol) not ] assert.
 	self ensureLocalSelectors.
-	source := aCompiledMethod getSourceReplacingSelectorWith: aSymbol.
+	"source := aCompiledMethod getSourceReplacingSelectorWith: aSymbol.
 	method := self compiler
 		source: source;
 		category: aCompiledMethod category;
@@ -72,7 +72,9 @@ TBehavior >> addTraitSelector: aSymbol withMethod: aCompiledMethod
 				cr;
 				nextPut: $!;
 				nextChunkPut: 'Trait method';
-				cr ].
+				cr ]."
+	method := aCompiledMethod copy.
+	method classBinding: self binding.
 	self isTrait
 		ifFalse: [ method properties at: #traitSource put: aCompiledMethod ].
 	self basicAddSelector: aSymbol withMethod: method
