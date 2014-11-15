@@ -24,6 +24,11 @@ ProcessorScheduler >> anyProcessesAbove: highestPriority
 	^ (Process allInstances select: [ :aProcess | aProcess priority > highestPriority ]) isEmpty	"allSubInstances"	"If anyone ever makes a subclass of Process, be sure to use allSubInstances."
 ]
 
+ProcessorScheduler >> initProcessLists
+[
+	quiescentProcessLists := (1 to: 80) collect: [ :index | LinkedList new ]
+]
+
 ProcessorScheduler >> backgroundProcess
 [
 	"Answer the background process"
