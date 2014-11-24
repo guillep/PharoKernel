@@ -36,7 +36,7 @@ echo "Configuration Loaded. Opening script..."
 
 echo -e "
 Workspace openContents: '
-objectSpace := PharoKernelBuilder2 bootstrap.
+objectSpace := PharoKernelBuilder3PhaseZero bootstrap.
 objectSpace serializeInFileNamed: ''PharoKernel.image''.'.
 Smalltalk snapshot: true andQuit: true.
 " > ./script.st

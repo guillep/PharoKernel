@@ -35,7 +35,7 @@ REPO=http://smalltalkhub.com/mc/Guille/Seed/main
 echo "Configuration Loaded. Opening script..."
 
 echo -e "|objectSpace|
-objectSpace := PharoKernelBuilder2 bootstrap.
+objectSpace := PharoKernelBuilder3PhaseZero bootstrap.
 objectSpace serializeInFileNamed: 'PharoKernel.image'.
 Smalltalk snapshot: false andQuit: true.
 " > ./script.st
